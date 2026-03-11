@@ -4,13 +4,14 @@
  * MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 import { useClickOutside } from "./useClickOutside";
+import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
@@ -28,13 +29,30 @@ export function MiniDropdown({ value, options, onChange }: {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const id = useId();
   const closeDropdown = useCallback(() => setOpen(false), []);
   useClickOutside(ref, open, closeDropdown);
+
+  const optionLabels = options.map(o => o.label);
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: options.length,
+    selectedIndex: options.findIndex((o) => o.value === value),
+    onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+    labels: optionLabels,
+  });
 
   return (
     <div ref={ref} style={{ position: "relative", flex: 1 }}>
       <button
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls={`${id}-listbox`}
+        aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={onTriggerKeyDown}
         style={{
           width: "100%", height: "22px", display: "flex", alignItems: "center",
           justifyContent: "space-between", padding: "0 6px",
@@ -47,24 +65,35 @@ export function MiniDropdown({ value, options, onChange }: {
         <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.3)", marginLeft: "4px", flexShrink: 0 }} />
       </button>
       {open && (
-        <div style={{
-          position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "80px",
-          background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
-        }}>
-          {options.map((opt) => {
+        <div
+          id={`${id}-listbox`}
+          role="listbox"
+          onKeyDown={onListKeyDown}
+          style={{
+            position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "80px",
+            background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
+          }}
+        >
+          {options.map((opt, i) => {
             const active = opt.value === value;
+            const isHighlighted = i === highlightedIndex;
             return (
               <div
                 key={opt.value}
+                id={`${id}-opt-${i}`}
+                ref={i === highlightedIndex ? optionRefCallback : undefined}
+                role="option"
+                aria-selected={active}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
                 style={{
                   padding: "3px 8px", fontSize: "10px", fontFamily: "ui-monospace, 'SF Mono', monospace",
                   color: active ? "#fff" : "rgba(255,255,255,0.6)",
-                  background: active ? "#6366f1" : "transparent", cursor: "pointer",
+                  background: active ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
+                  cursor: "pointer",
                 }}
                 onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = isHighlighted && !active ? "rgba(255,255,255,0.08)" : active ? "#6366f1" : "transparent"; }}
               >
                 {opt.label}
               </div>
@@ -246,14 +275,14 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span style={{ fontSize: "11px", flexShrink: 0, ...(value !== "block" ? { background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)", borderRadius: "3px", padding: "2px 6px" } : { color: "rgba(255,255,255,0.5)", width: "64px" }) }}>Display</span>
       <div ref={containerRef} style={{ display: "flex", flex: 1, position: "relative" }}>
-        <div role="tablist" aria-label="Display type" style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
+        <div role="radiogroup" aria-label="Display mode" style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
           {DISPLAY_TABS.map((tab) => {
             const active = value === tab;
             return (
               <button
                 key={tab}
-                role="tab"
-                aria-selected={active}
+                role="radio"
+                aria-checked={active}
                 tabIndex={active ? 0 : -1}
                 onClick={() => onChange(tab)}
                 onKeyDown={(e) => {

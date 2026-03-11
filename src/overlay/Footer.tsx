@@ -27,6 +27,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const messageCounterRef = useRef(0);
 
   // Clear timer on unmount to prevent stale setState calls
   useEffect(() => {
@@ -35,6 +36,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
   const showMessage = useCallback((text: string, duration: number) => {
     if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    messageCounterRef.current += 1;
     setMessage(text);
     messageTimerRef.current = setTimeout(() => setMessage(null), duration);
   }, []);
@@ -142,7 +144,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           <AnimatePresence mode="wait">
             {(clipboardMessage || message) && (
               <motion.span
-                key={clipboardMessage || message}
+                key={`${clipboardMessage || message}-${messageCounterRef.current}`}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}

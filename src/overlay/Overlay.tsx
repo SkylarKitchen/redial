@@ -701,6 +701,60 @@ export function Overlay() {
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .__tuner-enter { animation: tuner-enter ${ms("expand")} ease-out both; }
+
+        /* Slider thumb styling — replaces browser defaults with dark-theme matching thumb */
+        .__tuner-root input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          cursor: pointer;
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-runnable-track {
+          height: 3px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 2px;
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          margin-top: -4.5px;
+          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
+          transform: scale(1.15);
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
+          transform: scale(1.1);
+          background: #818cf8;
+        }
+        .__tuner-root input[type="range"]::-moz-range-track {
+          height: 3px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 2px;
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb:hover {
+          transform: scale(1.15);
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb:active {
+          transform: scale(1.1);
+          background: #818cf8;
+        }
       `}} />
 
       {/* Selector overlay (full viewport, invisible until hover) */}

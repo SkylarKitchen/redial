@@ -1198,7 +1198,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 </div>
               </div>
 
-              {/* Columns + Column gap — compact row */}
+              {/* Columns + Column gap — compact row (column-gap only shown when multi-column is active to avoid duplicate with Layout section) */}
               <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
                 <div style={{ flex: 1 }}>
                   <TypoValueCell
@@ -1210,16 +1210,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                   />
                   <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <TypoValueCell
-                    value={columnGap}
-                    onChange={handleColumnGapChange}
-                    unit="px"
-                    step={1}
-                    keyword={columnGap === 0 ? "Normal" : null}
-                  />
-                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Column gap</div>
-                </div>
+                {columnCount > 1 && (
+                  <div style={{ flex: 1 }}>
+                    <TypoValueCell
+                      value={columnGap}
+                      onChange={handleColumnGapChange}
+                      unit="px"
+                      step={1}
+                      keyword={columnGap === 0 ? "Normal" : null}
+                    />
+                    <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Column gap</div>
+                  </div>
+                )}
               </div>
 
               {/* Word spacing + Hyphens — compact row */}
