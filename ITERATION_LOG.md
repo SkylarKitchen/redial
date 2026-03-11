@@ -139,6 +139,16 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Kept `BezierPreview` (small 40x40 non-interactive canvas) next to easing dropdown
 - Typecheck: PASS, Tests: 24/24 PASS
 
+### Iteration 16 — Redo support (Cmd+Shift+Z) (2026-03-11)
+- Added `redoStack` in `apply.ts` alongside existing `undoStack`
+- `undo()` now captures forward state onto `redoStack` before restoring
+- Added `redo()` function: pops from `redoStack`, re-applies the change, pushes undo entry
+- Both single and batch entries fully supported in redo
+- New actions (`applyInlineStyle`) clear `redoStack` (standard undo/redo invalidation)
+- `reset()` and `resetAll()` clear both stacks
+- Wired `Cmd+Shift+Z` / `Ctrl+Shift+Z` in `Overlay.tsx` (checks shift before the undo handler)
+- Typecheck: PASS, Tests: 24/24 PASS
+
 ---
 
 ## Done

@@ -152,6 +152,19 @@ export function Overlay() {
       const target = e.target instanceof Element ? e.target as HTMLElement : null;
       const insidePanel = target?.closest(".__tuner-root");
 
+      // Cmd+Shift+Z / Ctrl+Shift+Z for redo
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
+        if (diffMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const result = redo();
+        if (result) {
+          setInferResult(infer(result.el));
+          setPanelKey((k) => k + 1);
+        }
+        return;
+      }
+
       // Cmd+Z / Ctrl+Z for undo — must fire even when focus is inside panel inputs
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
         if (diffMode) return; // Block undo during diff
