@@ -455,6 +455,7 @@ function SliderRow({
   units,
   onUnitChange,
   onChange,
+  indicator,
 }: {
   label: string;
   value: number;
@@ -466,6 +467,7 @@ function SliderRow({
   units?: string[];
   onUnitChange?: (unit: string) => void;
   onChange: (value: number) => void;
+  indicator?: IndicatorType;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
@@ -477,9 +479,12 @@ function SliderRow({
             fontSize: "11px",
             color: "rgba(255,255,255,0.5)",
             flexShrink: 0,
-            display: "inline-block",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
+          {indicator && <StyleIndicator type={indicator} />}
           {label}
         </span>
       </LabelScrub>
