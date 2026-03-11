@@ -257,7 +257,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode]);
+  }, [selectedEl, selecting, diffMode, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
 
   // --- Element selection ---
   const handleSelect = useCallback((el: Element) => {

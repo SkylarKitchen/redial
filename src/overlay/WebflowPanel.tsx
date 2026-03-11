@@ -1445,13 +1445,68 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 3. Size */}
       <Section title="Size">
-        <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={setWidthUnit} onChange={handleWidthChange} />
-        <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={setHeightUnit} onChange={handleHeightChange} />
+        {widthAuto ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Width</span>
+            <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>auto</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={setWidthUnit} onChange={handleWidthChange} />
+            </div>
+            <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
+          </div>
+        )}
+        {heightAuto ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Height</span>
+            <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>auto</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={setHeightUnit} onChange={handleHeightChange} />
+            </div>
+            <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
+          </div>
+        )}
         <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMinWidthUnit} onChange={handleMinWidthChange} />
-        <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMaxWidthUnit} onChange={handleMaxWidthChange} />
+        {maxWidthNone ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max W</span>
+            <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>none</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMaxWidthUnit} onChange={handleMaxWidthChange} />
+            </div>
+            <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
+          </div>
+        )}
         <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMinHeightUnit} onChange={handleMinHeightChange} />
-        <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMaxHeightUnit} onChange={handleMaxHeightChange} />
+        {maxHeightNone ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max H</span>
+            <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>none</button>
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMaxHeightUnit} onChange={handleMaxHeightChange} />
+            </div>
+            <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
+          </div>
+        )}
         <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} />
+        <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} />
+        {isMedia && (
+          <>
+            <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} />
+            <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} />
+          </>
+        )}
       </Section>
 
       {/* 4. Position */}
