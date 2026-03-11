@@ -138,16 +138,11 @@ function EditableValue({
       } else if (e.key === "Escape") {
         setDraft(String(value));
         setEditing(false);
-      } else if (e.key === "ArrowUp") {
+      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
         const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        const next = Math.round((value + step) * 10) / 10;
-        setDraft(String(next));
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        const next = Math.round((value - step) * 10) / 10;
+        const direction = e.key === "ArrowUp" ? 1 : -1;
+        const next = Math.round((value + step * direction) * 10) / 10;
         setDraft(String(next));
         onChange(next);
       }

@@ -429,16 +429,12 @@ function ValueInput({ value, onChange }: { value: number; onChange: (v: number) 
       if (e.key === "Enter") {
         commit();
         (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
+      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
         e.stopPropagation();
         const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        onChange(Math.round((value + step) * 10) / 10);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        onChange(Math.round((value - step) * 10) / 10);
+        const direction = e.key === "ArrowUp" ? 1 : -1;
+        onChange(Math.round((value + step * direction) * 10) / 10);
       }
     },
     [commit, value, onChange]
@@ -951,7 +947,7 @@ function GapRow({ value, unit, onChange, onUnitChange }: {
   onChange: (v: number) => void; onUnitChange: (u: string) => void;
 }) {
   const [gapLinked, setGapLinked] = useState(true);
-  const pct = ((value) / 200) * 100;
+  const pct = (value / 200) * 100;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <LabelScrub value={value} onChange={onChange} step={1} min={0} max={200}>

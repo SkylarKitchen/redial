@@ -186,15 +186,12 @@ export function reset(el: Element): void {
 }
 
 export function resetAll(): void {
-  for (const [el] of overrides) {
-    // Inline the reset logic to avoid double-persist per element
-    const elOverrides = overrides.get(el);
-    if (!elOverrides) continue;
-    for (const [prop] of elOverrides) {
+  for (const [el, props] of overrides) {
+    for (const [prop] of props) {
       (el as HTMLElement).style.removeProperty(prop);
     }
-    overrides.delete(el);
   }
+  overrides.clear();
   // Clear entire undo stack
   undoStack.length = 0;
   clearPersistedSession();
