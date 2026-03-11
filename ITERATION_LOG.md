@@ -131,6 +131,14 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Removed stale `ColorPickerEnhanced` import from `WebflowPanel.tsx`
 - Typecheck: PASS
 
+### Iteration 15 — BezierEditor wired into TransitionEditor (2026-03-11)
+- Replaced 4 raw numeric `BezierInput` fields with full visual `BezierEditor` component
+- Custom cubic-bezier easing now shows: draggable 200x200 canvas, preset buttons, animation preview
+- Simplified `handleBezierChange` from per-index to single tuple callback
+- Removed dead `BezierInput` component (~75 lines)
+- Kept `BezierPreview` (small 40x40 non-interactive canvas) next to easing dropdown
+- Typecheck: PASS, Tests: 24/24 PASS
+
 ---
 
 ## Done
