@@ -45,6 +45,16 @@ export const DIRECTION_OPTIONS = [
   { value: "rtl", title: "Right to Left", icon: <PilcrowRight size={12} strokeWidth={1.5} /> },
 ];
 
+// ─── Display Tabs ────────────────────────────────────────────────────
+
+export const DISPLAY_TABS = ["block", "flex", "grid", "none"] as const;
+export const DISPLAY_MORE = [
+  { value: "inline-flex", label: "Inline Flex" },
+  { value: "inline-grid", label: "Inline Grid" },
+  { value: "inline-block", label: "Inline Block" },
+  { value: "inline", label: "Inline" },
+];
+
 // ─── Font Options ────────────────────────────────────────────────────
 
 export const FONT_WEIGHT_OPTIONS = [

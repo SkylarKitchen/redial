@@ -46,7 +46,7 @@ import {
   ALIGN_SELF_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS,
 } from "./panelConstants";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronRight, Link, MoreHorizontal } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
