@@ -18,6 +18,7 @@ import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
+import { PositionSelector } from "./PositionSelector";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { LabelScrub } from "./LabelScrub";
@@ -812,13 +813,6 @@ const OBJECT_POSITION_OPTIONS = [
   { value: "bottom right", label: "Bottom Right" },
 ];
 
-const POSITION_OPTIONS = [
-  { value: "static", label: "Static" },
-  { value: "relative", label: "Relative" },
-  { value: "absolute", label: "Absolute" },
-  { value: "fixed", label: "Fixed" },
-  { value: "sticky", label: "Sticky" },
-];
 
 const BORDER_STYLE_OPTIONS = [
   { value: "solid", label: "Solid" },
@@ -1736,7 +1730,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 4. Position */}
       <Section title="Position" collapsed={position === "static"}>
-        <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} indicator={ind("position")} />
+        <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
         {position !== "static" && (
           <>
             <PositionOffsetDiagram

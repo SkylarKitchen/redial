@@ -149,6 +149,13 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Wired `Cmd+Shift+Z` / `Ctrl+Shift+Z` in `Overlay.tsx` (checks shift before the undo handler)
 - Typecheck: PASS, Tests: 24/24 PASS
 
+### Iteration 17 — GradientEditor wired into Backgrounds section (2026-03-11)
+- Replaced static gradient preview bar in `BackgroundLayerList` with full inline `GradientEditor`
+- Gradient layers now show: type selector (linear/radial/conic), angle slider, draggable stop bar, per-stop color + position controls
+- `GradientEditor.onChange` routes through `updateLayer()` to update the layer's gradient data and trigger CSS re-apply
+- Removed unused `onEditGradient` prop from `BackgroundLayerListProps` (editor is now inline, no external callback needed)
+- Typecheck: PASS, Tests: 24/24 PASS
+
 ---
 
 ## Done

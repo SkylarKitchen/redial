@@ -6,6 +6,8 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { GradientEditor } from "./GradientEditor";
+import type { GradientStop } from "./GradientEditor";
 
 export interface BackgroundLayer {
   id: string;
@@ -31,7 +33,6 @@ export type BackgroundLayerType = "color" | "gradient" | "image";
 export interface BackgroundLayerListProps {
   layers: BackgroundLayer[];
   onChange: (layers: BackgroundLayer[]) => void;
-  onEditGradient?: (layerId: string) => void;
   onEditColor?: (layerId: string) => void;
 }
 
@@ -144,7 +145,6 @@ function Select({
 export function BackgroundLayerList({
   layers,
   onChange,
-  onEditGradient,
   onEditColor,
 }: BackgroundLayerListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -400,18 +400,21 @@ export function BackgroundLayerList({
                   </div>
                 )}
 
-                {/* Gradient layer */}
+                {/* Gradient layer — full inline editor */}
                 {layer.type === "gradient" && layer.gradient && (
-                  <div
-                    onClick={() => onEditGradient?.(layer.id)}
-                    style={{
-                      width: "100%",
-                      height: "24px",
-                      borderRadius: "4px",
-                      background: gradientCSS(layer.gradient),
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      cursor: onEditGradient ? "pointer" : "default",
-                    }}
+                  <GradientEditor
+                    type={layer.gradient.type}
+                    angle={layer.gradient.angle}
+                    stops={layer.gradient.stops as GradientStop[]}
+                    onChange={(g) =>
+                      updateLayer(layer.id, {
+                        gradient: {
+                          type: g.type as "linear" | "radial" | "conic",
+                          angle: g.angle,
+                          stops: g.stops,
+                        },
+                      })
+                    }
                   />
                 )}
 
