@@ -10,6 +10,10 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 
+const FOCUS_RING = "0 0 0 2px rgba(99,102,241,0.3)";
+const onFocusRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_RING; };
+const onBlurRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; };
+
 // ─── Section ────────────────────────────────────────────────────────
 
 export function Section({
@@ -25,12 +29,19 @@ export function Section({
   return (
     <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div
+        tabIndex={0}
+        role="button"
         onClick={() => setOpen(!open)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(!open); } }}
+        onFocus={onFocusRing}
+        onBlur={onBlurRing}
         style={{
           padding: "10px 12px 6px",
           cursor: "pointer",
           display: "flex",
           justifyContent: "space-between",
+          borderRadius: "2px",
+          outline: "none",
         }}
       >
         <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
@@ -100,6 +111,7 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
         padding: "2px",
         outline: "none",
         flexShrink: 0,
+        boxShadow: focused ? FOCUS_RING : "none",
       }}
     />
   );
@@ -157,6 +169,8 @@ export function SliderRow({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
+        onFocus={onFocusRing}
+        onBlur={onBlurRing}
         style={{
           flex: 1,
           height: "3px",
@@ -227,6 +241,8 @@ export function SelectRow({
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
           onClick={() => setOpen((o) => !o)}
+          onFocus={onFocusRing}
+          onBlur={onBlurRing}
           style={{
             width: "100%",
             height: "24px",
@@ -242,7 +258,7 @@ export function SelectRow({
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
-            transition: "background 80ms",
+            transition: "background 80ms, box-shadow 80ms",
           }}
           onMouseEnter={(e) => {
             if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -396,6 +412,7 @@ export function TextRow({ label, value, placeholder, onChange }: {
           border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
           borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none",
+          boxShadow: focused ? FOCUS_RING : "none",
         }}
       />
     </div>
@@ -482,6 +499,7 @@ export function EditableValue({
 
   return (
     <span
+      tabIndex={0}
       onClick={(e) => {
         e.stopPropagation();
         if (e.altKey && onAltClick) {
@@ -490,6 +508,9 @@ export function EditableValue({
         }
         setEditing(true);
       }}
+      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
+      onFocus={onFocusRing}
+      onBlur={onBlurRing}
       style={{
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
@@ -499,7 +520,8 @@ export function EditableValue({
         borderRadius: "2px",
         minWidth: "16px",
         textAlign: "center",
-        transition: "background 100ms",
+        outline: "none",
+        transition: "background 100ms, box-shadow 80ms",
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

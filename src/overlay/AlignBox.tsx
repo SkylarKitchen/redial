@@ -120,7 +120,12 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
             return (
               <div
                 key={key}
+                tabIndex={0}
+                role="button"
                 onClick={() => handleCellClick(col, row)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(col, row); } }}
+                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+                onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 onMouseEnter={() => setHoveredCell(key)}
                 onMouseLeave={() => setHoveredCell(null)}
                 style={{
@@ -130,6 +135,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
+                  outline: "none",
                   background: isActive
                     ? "#6366f1"
                     : isHovered
@@ -138,7 +144,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
                   color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
                   borderRight: col < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
                   borderBottom: row < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                  transition: "background 80ms, color 80ms",
+                  transition: "background 80ms, color 80ms, box-shadow 80ms",
                 }}
               >
                 <CellIcon col={col} row={row} />

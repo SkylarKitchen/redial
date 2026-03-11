@@ -59,8 +59,27 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Sub-section starts collapsed by default, separated by a thin border-top
 - Typecheck: PASS
 
+### Iteration 8 — Parallel agent batch: 6 tasks (2026-03-11)
+- Alt+Arrow fine-grained steps (0.1) in ValueInput with `e.stopPropagation()`
+- Size keyword toggles: auto/none pills on width/height/maxWidth/maxHeight, aspect-ratio TextRow, object-fit/position for media
+- Position visual offset diagram (`PositionOffsetDiagram.tsx`) replacing 4 individual SliderRows
+- Font-family dropdown with page font detection via `document.fonts.ready`
+- Spacing color zones: warm orange margins, cool blue padding, alt+click for both-sides
+- Keyboard shortcuts: S (scope), R (reset), Cmd+S (save), Cmd+C (copy CSS) in Overlay.tsx
+- StyleIndicator pink dots on all key property rows (inline override detection)
+- Typecheck: PASS
+
+### Iteration 9 — Tab/Shift+Tab focus rings (2026-03-11)
+- Added `FOCUS_RING` constant (`0 0 0 2px rgba(99,102,241,0.3)`) and `onFocusRing`/`onBlurRing` helpers in controls.tsx
+- Section headers: `tabIndex={0}`, `role="button"`, Enter/Space keyboard toggle
+- ValueInput + TextRow: `boxShadow` focus ring via existing `focused` state
+- SliderRow range input: `onFocus`/`onBlur` direct style manipulation
+- SelectRow button: focus ring on keyboard focus
+- EditableValue span: `tabIndex={0}`, Enter to start editing, focus ring
+- IconButtonGroup buttons: focus ring, `outline: none`
+- AlignBox cells: `tabIndex={0}`, `role="button"`, Enter/Space to click, focus ring
+- Typecheck: PASS
+
 ---
 
-## Next Up
-
-**Phase B-10:** Position visual offset diagram
+## Done
