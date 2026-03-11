@@ -57,7 +57,7 @@ export interface WebflowPanelProps {
   onDirtyChange?: () => void;
 }
 
-// ─── CSS Value Helpers ───────────────────────────────────────────────
+// ─── Local Helpers ──────────────────────────────────────────────────
 
 /** CSS properties that are inherited by default */
 const INHERITABLE_PROPERTIES = new Set([
@@ -68,11 +68,6 @@ const INHERITABLE_PROPERTIES = new Set([
   "hyphens", "tab-size", "text-shadow",
 ]);
 
-/** Determine indicator type for a given CSS property on an element.
- *  - "element" (pink): inline style override present
- *  - "inherited" (orange): inheritable property differs from parent's computed value
- *  - "none": default / no special indicator
- */
 function getIndicatorType(
   el: Element,
   prop: string,
@@ -88,17 +83,9 @@ function getIndicatorType(
   return "none";
 }
 
-/**
- * Check whether a CSS property is explicitly set on an element
- * (via inline style or a stylesheet rule) rather than using the browser default.
- * Returns the authored value if found, or null if the property is at its initial value.
- */
 function getAuthoredValue(el: Element, prop: string): string | null {
-  // 1. Check inline style (highest priority)
   const inline = (el as HTMLElement).style.getPropertyValue(prop);
   if (inline) return inline;
-
-  // 2. Walk matched stylesheet rules (last match wins due to cascade)
   let found: string | null = null;
   try {
     for (const sheet of document.styleSheets) {
@@ -115,8 +102,6 @@ function getAuthoredValue(el: Element, prop: string): string | null {
   return found;
 }
 
-// ─── Text Detection ──────────────────────────────────────────────────
-
 const TEXT_TAGS = new Set([
   "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "a", "label",
   "button", "li", "td", "th", "input", "textarea", "strong", "em",
@@ -131,50 +116,6 @@ function isTextBearing(el: Element): boolean {
   }
   return false;
 }
-
-// ─── Text Alignment Icons ────────────────────────────────────────────
-
-const TEXT_ALIGN_OPTIONS = [
-  { value: "left", title: "Align left", icon: <AlignLeft size={12} strokeWidth={1.5} /> },
-  { value: "center", title: "Align center", icon: <AlignCenter size={12} strokeWidth={1.5} /> },
-  { value: "right", title: "Align right", icon: <AlignRight size={12} strokeWidth={1.5} /> },
-  { value: "justify", title: "Justify", icon: <AlignJustify size={12} strokeWidth={1.5} /> },
-];
-
-const TEXT_DECORATION_OPTIONS = [
-  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
-  { value: "line-through", title: "Strikethrough", icon: <Strikethrough size={12} strokeWidth={1.5} /> },
-  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
-  { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
-];
-
-const CAPITALIZE_OPTIONS = [
-  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
-  { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
-  { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
-  { value: "lowercase", title: "Lowercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>aa</span> },
-];
-
-const ITALIC_OPTIONS = [
-  { value: "normal", title: "Normal", icon: <span style={{ fontSize: "12px", fontFamily: "Georgia, serif", lineHeight: 1 }}>I</span> },
-  { value: "italic", title: "Italic", icon: <Italic size={12} strokeWidth={1.5} /> },
-];
-
-const DIRECTION_OPTIONS = [
-  { value: "ltr", title: "Left to Right", icon: <PilcrowLeft size={12} strokeWidth={1.5} /> },
-  { value: "rtl", title: "Right to Left", icon: <PilcrowRight size={12} strokeWidth={1.5} /> },
-];
-
-
-// ─── Display Tabs ───────────────────────────────────────────────────
-
-const DISPLAY_TABS = ["block", "flex", "grid", "none"] as const;
-const DISPLAY_MORE = [
-  { value: "inline-flex", label: "Inline Flex" },
-  { value: "inline-grid", label: "Inline Grid" },
-  { value: "inline-block", label: "Inline Block" },
-  { value: "inline", label: "Inline" },
-];
 
 /** Mini dropdown for X/Y alignment values */
 function MiniDropdown({ value, options, onChange }: {

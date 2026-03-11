@@ -534,6 +534,13 @@ export function BackgroundLayerList({
           </div>
         );
       })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
+      </div>
     </div>
   );
 }
