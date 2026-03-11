@@ -156,6 +156,13 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Removed unused `onEditGradient` prop from `BackgroundLayerListProps` (editor is now inline, no external callback needed)
 - Typecheck: PASS, Tests: 24/24 PASS
 
+### Iteration 18 — Custom scrollbar (Webflow-style auto-hide) (2026-03-11)
+- Added scoped `<style>` tag with WebKit + Firefox scrollbar rules under `.__tuner-root`
+- Scrollbar: 5px wide, fully transparent by default, fades to `rgba(255,255,255,0.15)` while scrolling or on hover
+- Added `panelScrollRef` + scroll event listener that toggles `is-scrolling` class (800ms debounce)
+- Extended rules to `.__tuner-root *` so inner scrollable containers (dropdowns, etc.) also get the thin auto-hide scrollbar
+- Typecheck: PASS
+
 ---
 
 ## Done
