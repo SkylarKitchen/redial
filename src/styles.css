@@ -1,0 +1,95 @@
+/*
+ * redial/styles.css — Base styles for the Tuner overlay.
+ *
+ * These are scoped via .__tuner-* class prefix to avoid conflicts.
+ * Consumer imports this alongside DialKit's styles.css.
+ *
+ * Section styling follows Webflow's style panel conventions:
+ * - Uppercase section headers with muted color
+ * - Consistent dividers between sections
+ * - Compact padding for dense information display
+ */
+
+/* Panel container reset — only reset our own elements, not DialKit's */
+.__tuner-root {
+  box-sizing: border-box;
+}
+
+.__tuner-header,
+.__tuner-footer,
+.__tuner-header *,
+.__tuner-footer * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.__tuner-root {
+  font-family: system-ui, -apple-system, 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+.__tuner-root::-webkit-scrollbar {
+  width: 4px;
+}
+
+.__tuner-root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.__tuner-root::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.__tuner-root::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Webflow-style section headers — clean, bold, spaced */
+.__tuner-root .dialkit-folder > summary,
+.__tuner-root .dialkit-folder-header {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 10px 12px 6px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0;
+}
+
+/* First section has no top border */
+.__tuner-root .dialkit-folder:first-child > summary,
+.__tuner-root .dialkit-folder-header:first-child {
+  border-top: none;
+}
+
+/* Tighter control spacing within sections */
+.__tuner-root .dialkit-control {
+  padding: 2px 12px !important;
+}
+
+/* Property label styling — compact, muted */
+.__tuner-root .dialkit-label {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  text-transform: capitalize;
+}
+
+/* Selection mode highlight pulse */
+.__tuner-selector-outline {
+  animation: __tuner-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes __tuner-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  }
+}

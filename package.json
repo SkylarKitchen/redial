@@ -1,0 +1,58 @@
+{
+  "name": "redial",
+  "version": "0.1.0",
+  "description": "A floating CSS tuning panel for Next.js. Click any element, get context-aware controls, drag to tune, save directly to source.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    },
+    "./next-plugin": "./next-plugin.cjs",
+    "./styles.css": "./src/styles.css"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "css",
+    "tuner",
+    "nextjs",
+    "devtool",
+    "dialkit"
+  ],
+  "files": [
+    "dist",
+    "src/styles.css",
+    "next-plugin.cjs"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "dialkit": "^1.1.0",
+    "motion": "^12.35.2"
+  },
+  "peerDependencies": {
+    "next": ">=13",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}
