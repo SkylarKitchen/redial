@@ -16,6 +16,12 @@ export function parseNum(val: string): number {
   return isNaN(n) ? 0 : n;
 }
 
+/** Extract the CSS unit suffix from a value string (e.g., "16px" → "px", "50%" → "%"). */
+export function extractUnit(value: string, fallback: string = "px"): string {
+  const match = value.trim().match(/^-?[\d.]+(\w+|%)$/);
+  return match?.[1] ?? fallback;
+}
+
 // ─── Box Shadow ──────────────────────────────────────────────────────
 
 export function parseBoxShadow(raw: string): ShadowValue[] {

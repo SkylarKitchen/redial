@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseNum,
+  extractUnit,
   parseBoxShadow,
   shadowToCSS,
   parseFilter,

@@ -114,6 +114,7 @@ export function ColorPickerEnhanced({
   const [bri, setBri] = useState(initialHsb.b);
   const [alpha, setAlpha] = useState(opacity);
   const [hexInput, setHexInput] = useState(color.toUpperCase());
+  const [colorMode, setColorMode] = useState<"hex" | "rgb" | "hsb">("hex");
 
   // Derived hex from HSB
   const currentRgb = hsbToRgb(hue, sat, bri);
@@ -291,6 +292,38 @@ export function ColorPickerEnhanced({
     }
   }, [hexInput, alpha, currentHex, emitChange]);
 
+  const cycleMode = useCallback(() => {
+    setColorMode((m) => (m === "hex" ? "hsb" : m === "hsb" ? "rgb" : "hex"));
+  }, []);
+
+  const applyRgbChannel = useCallback(
+    (channel: "r" | "g" | "b", raw: string) => {
+      const v = Math.max(0, Math.min(255, parseInt(raw) || 0));
+      const rgb = { ...currentRgb, [channel]: v };
+      const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
+      setHue(hsb.h);
+      setSat(hsb.s);
+      setBri(hsb.b);
+      emitChange(hsb.h, hsb.s, hsb.b, alpha);
+    },
+    [currentRgb, alpha, emitChange],
+  );
+
+  const applyHsbChannel = useCallback(
+    (channel: "h" | "s" | "b", raw: string) => {
+      const num = parseFloat(raw) || 0;
+      let h = hue, s = sat, b = bri;
+      if (channel === "h") h = Math.max(0, Math.min(360, num));
+      else if (channel === "s") s = Math.max(0, Math.min(100, num)) / 100;
+      else b = Math.max(0, Math.min(100, num)) / 100;
+      setHue(h);
+      setSat(s);
+      setBri(b);
+      emitChange(h, s, b, alpha);
+    },
+    [hue, sat, bri, alpha, emitChange],
+  );
+
   // ─── Render ───────────────────────────────────────────────────
 
   // Canvas handle position
@@ -419,84 +452,115 @@ export function ColorPickerEnhanced({
         />
       </div>
 
-      {/* ── Hex Input + Opacity ────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        {/* Hex input */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            flex: 1,
-          }}
-        >
+      {/* ── Color Mode Inputs ────────────────────────────── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {/* Mode toggle + inputs */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Clickable mode label */}
           <span
+            onClick={cycleMode}
             style={{
               fontSize: 10,
-              color: "rgba(255,255,255,0.4)",
+              color: "rgba(255,255,255,0.5)",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
+              cursor: "pointer",
+              userSelect: "none",
+              minWidth: 22,
+              textTransform: "uppercase",
+              letterSpacing: "0.02em",
+              transition: "color 100ms",
             }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
+            title="Click to switch color mode"
           >
-            HEX
+            {colorMode}
           </span>
-          <input
-            type="text"
-            value={hexInput}
-            maxLength={7}
-            onChange={(e) => setHexInput(e.target.value)}
-            onBlur={applyHexInput}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") applyHexInput();
-            }}
-            style={{
-              flex: 1,
-              background: "#1e1e1e",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 4,
-              padding: "3px 6px",
-              fontSize: 11,
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.8)",
-              outline: "none",
-              minWidth: 0,
-            }}
-          />
-        </div>
 
-        {/* Opacity display */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 10,
-              color: "rgba(255,255,255,0.4)",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-            }}
-          >
-            A
-          </span>
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.7)",
-              minWidth: 28,
-              textAlign: "right",
-            }}
-          >
-            {Math.round(alpha * 100)}%
-          </span>
+          {colorMode === "hex" ? (
+            <input
+              type="text"
+              value={hexInput}
+              maxLength={7}
+              onChange={(e) => setHexInput(e.target.value)}
+              onBlur={applyHexInput}
+              onKeyDown={(e) => { if (e.key === "Enter") applyHexInput(); }}
+              style={{
+                flex: 1,
+                background: "#1e1e1e",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 4,
+                padding: "3px 6px",
+                fontSize: 11,
+                fontFamily: "ui-monospace, 'SF Mono', monospace",
+                color: "rgba(255,255,255,0.8)",
+                outline: "none",
+                minWidth: 0,
+              }}
+            />
+          ) : colorMode === "rgb" ? (
+            <div style={{ display: "flex", gap: 4, flex: 1 }}>
+              {(["r", "g", "b"] as const).map((ch) => (
+                <div key={ch} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase" }}>{ch}</span>
+                  <input
+                    type="text"
+                    value={currentRgb[ch]}
+                    onChange={(e) => applyRgbChannel(ch, e.target.value)}
+                    style={{
+                      width: 0, flex: 1,
+                      background: "#1e1e1e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 4,
+                      padding: "3px 4px",
+                      fontSize: 11,
+                      fontFamily: "ui-monospace, 'SF Mono', monospace",
+                      color: "rgba(255,255,255,0.8)",
+                      outline: "none",
+                      textAlign: "center",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 4, flex: 1 }}>
+              {([
+                { key: "h" as const, val: Math.round(hue) },
+                { key: "s" as const, val: Math.round(sat * 100) },
+                { key: "b" as const, val: Math.round(bri * 100) },
+              ]).map(({ key, val }) => (
+                <div key={key} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
+                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase" }}>{key}</span>
+                  <input
+                    type="text"
+                    value={val}
+                    onChange={(e) => applyHsbChannel(key, e.target.value)}
+                    style={{
+                      width: 0, flex: 1,
+                      background: "#1e1e1e",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: 4,
+                      padding: "3px 4px",
+                      fontSize: 11,
+                      fontFamily: "ui-monospace, 'SF Mono', monospace",
+                      color: "rgba(255,255,255,0.8)",
+                      outline: "none",
+                      textAlign: "center",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Opacity display */}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+            <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", fontFamily: "ui-monospace, 'SF Mono', monospace" }}>A</span>
+            <span style={{ fontSize: 11, fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.7)", minWidth: 26, textAlign: "right" }}>
+              {Math.round(alpha * 100)}%
+            </span>
+          </div>
         </div>
       </div>
     </div>

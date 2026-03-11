@@ -255,3 +255,33 @@ export const ALIGN_ITEMS_OPTIONS = [
   { value: "stretch", label: "Stretch" },
   { value: "baseline", label: "Baseline" },
 ];
+
+// ─── Background Options ─────────────────────────────────────────────
+
+export const BG_CLIP_OPTIONS = [
+  { value: "border-box", label: "Border Box" },
+  { value: "padding-box", label: "Padding Box" },
+  { value: "content-box", label: "Content Box" },
+  { value: "text", label: "Text" },
+];
+
+// ─── Interaction Options ────────────────────────────────────────────
+
+export const USER_SELECT_OPTIONS = [
+  { value: "auto", label: "Auto" },
+  { value: "none", label: "None" },
+  { value: "text", label: "Text" },
+  { value: "all", label: "All" },
+];
+
+export const BACKFACE_OPTIONS = [
+  { value: "visible", label: "Visible" },
+  { value: "hidden", label: "Hidden" },
+];
+
+// ─── Box Model Options ──────────────────────────────────────────────
+
+export const BOX_SIZING_OPTIONS = [
+  { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
+  { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
+];

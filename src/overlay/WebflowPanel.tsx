@@ -6,7 +6,7 @@
  * Layout, Spacing, Size, Position, Typography, Backgrounds, Borders, Effects.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SideSelector } from "./SideSelector";
@@ -29,7 +29,7 @@ import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import {
-  parseNum, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
+  parseNum, extractUnit, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
   shadowToCSS, filterToCSS, transformToCSS, transitionsToCSS,
 } from "./cssParsers";
 import {
@@ -106,8 +106,7 @@ function getAuthoredValue(el: Element, prop: string): string | null {
 function detectUnit(el: Element, prop: string, fallback: string = "px"): string {
   const authored = getAuthoredValue(el, prop);
   if (!authored) return fallback;
-  const match = authored.trim().match(/^-?[\d.]+(\w+|%)$/);
-  return match?.[1] ?? fallback;
+  return extractUnit(authored, fallback);
 }
 
 const TEXT_TAGS = new Set([
@@ -263,8 +262,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     return fs > 0 ? Math.round((lh / fs) * 100) / 100 : 1.4;
   });
   const [letterSpacing, setLetterSpacing] = useState(() => parseNum(cs.letterSpacing));
-  const [fontSizeUnit, setFontSizeUnit] = useState("px");
-  const [letterSpacingUnit, setLetterSpacingUnit] = useState("px");
+  const [fontSizeUnit, setFontSizeUnit] = useState(() => detectUnit(element, "font-size"));
+  const [letterSpacingUnit, setLetterSpacingUnit] = useState(() => detectUnit(element, "letter-spacing"));
   const [color, setColor] = useState(() => rgbToHex(cs.color));
   const [textAlign, setTextAlign] = useState(() => cs.textAlign);
   const [textDecoration, setTextDecoration] = useState(() => {
@@ -279,18 +278,22 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     let alive = true;
     document.fonts.ready.then(() => {
       if (!alive) return;
+      const seen = new Set<string>();
       const fonts: string[] = [];
       document.fonts.forEach(f => {
         const family = f.family.replace(/['"]/g, "");
-        if (!fonts.includes(family)) fonts.push(family);
+        if (!seen.has(family)) { seen.add(family); fonts.push(family); }
       });
       setPageFonts(fonts);
     });
     return () => { alive = false; };
   }, []);
-  const FONT_OPTIONS = [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f }));
-  const [lineHeightUnit, setLineHeightUnit] = useState("—");
-  const [textIndentUnit, setTextIndentUnit] = useState("px");
+  const fontOptions = useMemo(
+    () => [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f })),
+    [pageFonts],
+  );
+  const [lineHeightUnit, setLineHeightUnit] = useState(() => detectUnit(element, "line-height", "—"));
+  const [textIndentUnit, setTextIndentUnit] = useState(() => detectUnit(element, "text-indent"));
   const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
   const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
   const [textIndent, setTextIndent] = useState(() => parseNum(cs.textIndent));
@@ -326,8 +329,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [radiusTR, setRadiusTR] = useState(() => parseNum(cs.borderTopRightRadius));
   const [radiusBR, setRadiusBR] = useState(() => parseNum(cs.borderBottomRightRadius));
   const [radiusBL, setRadiusBL] = useState(() => parseNum(cs.borderBottomLeftRadius));
-  const [radiusUnit, setRadiusUnit] = useState("px");
-  const [borderWidthUnit, setBorderWidthUnit] = useState("px");
+  const [radiusUnit, setRadiusUnit] = useState(() => detectUnit(element, "border-top-left-radius"));
+  const [borderWidthUnit, setBorderWidthUnit] = useState(() => detectUnit(element, "border-width"));
   const [radiusLinked, setRadiusLinked] = useState(() => {
     const tl = parseNum(cs.borderTopLeftRadius);
     const tr = parseNum(cs.borderTopRightRadius);
@@ -355,17 +358,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
   // Spacing units
-  const [marginUnit, setMarginUnit] = useState("px");
-  const [paddingUnit, setPaddingUnit] = useState("px");
+  const [marginUnit, setMarginUnit] = useState(() => detectUnit(element, "margin-top"));
+  const [paddingUnit, setPaddingUnit] = useState(() => detectUnit(element, "padding-top"));
 
   // ── Derived flags ──
   const isFlex = display === "flex" || display === "inline-flex";
   const isGrid = display === "grid" || display === "inline-grid";
-  const parentIsFlex = (() => {
-    if (!parentCs) return false;
-    const pd = parentCs.display;
-    return pd === "flex" || pd === "inline-flex";
-  })();
+  const parentIsFlex = parentCs != null && (parentCs.display === "flex" || parentCs.display === "inline-flex");
   const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
@@ -559,7 +558,6 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
   const handleDirectionChange = useCallback((v: string) => { setDirection(v); apply("direction", v); }, [apply]);
-  const handleTypoColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
   const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
     setTextShadows(newShadows);
     apply("text-shadow", shadowToCSS(newShadows));
@@ -1027,7 +1025,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {showTypography && (
         <Section title="Typography">
           {/* Font family dropdown */}
-          <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
+          <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
 
           {/* Weight dropdown */}
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
