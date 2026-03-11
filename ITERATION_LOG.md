@@ -197,6 +197,23 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
   - Native double-click selects only a "word" (stops at `.` or `-`); this override selects the full value for quick replacement
 - Typecheck: PASS
 
+### Iteration 22 — Panel Polish Phase (2026-03-11)
+
+**Bug fixes:**
+- **1C Unit detection**: Replaced all 20 `useState("px")` calls with `detectUnit()` which walks `document.styleSheets` to find the authored CSS unit (em, rem, %, vw, etc.). Added `extractUnit()` to `cssParsers.ts` with 11 tests.
+- **1E Scroll preservation**: Wrapped `setPanelKey` to save `scrollTop` before remount, restore after via `useEffect`. Panel no longer jumps to top after undo/redo/save/paste.
+- **1F Copy format unification**: Extracted `formatCSSDiff()` to `util.ts`. All 3 copy paths (Cmd+C, Footer Copy, Session Copy All) now produce identical output with selector and `/* was */` comments.
+- **1B ShadowEditor color**: Replaced native `<input type="color">` with `ColorPickerEnhanced` popover (HSB canvas, opacity support).
+
+**Polish:**
+- **Section collapse animation**: CSS Grid `0fr/1fr` transition (150ms ease) replaces instant show/hide. Chevron rotates with toggle. Added `aria-expanded`.
+- **Panel entrance animation**: 150ms fade+slide CSS keyframe animation on mount.
+
+**Tests:**
+- Added 33 tests for `apply.ts` (undo/redo, batch, diff, clipboard, strip/restore) using happy-dom environment.
+- Total: 162 tests passing across 5 files.
+- Typecheck: PASS
+
 ---
 
 ## Done
