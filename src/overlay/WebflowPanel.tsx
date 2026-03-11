@@ -521,11 +521,13 @@ function SelectRow({
   value,
   options,
   onChange,
+  indicator,
 }: {
   label: string;
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
+  indicator?: IndicatorType;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -550,6 +552,9 @@ function SelectRow({
           fontSize: "11px",
           color: "rgba(255,255,255,0.5)",
           flexShrink: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
         }}
       >
         {label}
