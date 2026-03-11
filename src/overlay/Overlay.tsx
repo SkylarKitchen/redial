@@ -724,7 +724,7 @@ export function Overlay() {
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
-          className="__tuner-root"
+          className="__tuner-root __tuner-enter"
           style={{
             position: "fixed",
             top: pos.y,

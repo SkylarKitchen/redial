@@ -185,6 +185,18 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Opacity display remains constant across all modes
 - Typecheck: PASS
 
+### Iteration 21 — Arrow key navigation + double-click select all (2026-03-11)
+- **Arrow key navigation hardened** (items #29 + #30 from spec §13):
+  - Added `isNavigableElement()` helper in `util.ts` — skips `<script>`, `<style>`, `<template>`, `<noscript>`, `<head>`, `<link>`, `<meta>`, `<base>`, `<title>`, tuner overlay elements, and `display:none` elements
+  - ArrowDown now walks `nextElementSibling` to find first *visible* child (skips non-visual tags)
+  - ArrowLeft/Right now walk siblings to skip non-visual elements
+  - Moved `e.preventDefault()` after target validation — no longer consumes arrow keys when there's nowhere to navigate (preserves page scrolling)
+- **Double-click select all** on value inputs:
+  - Added shared `selectAllOnDoubleClick` handler exported from `controls.tsx`
+  - Wired into: `ValueInput`, `EditableValue`, `TextRow`, `SizeInputCell`, `TypoValueCell`, `SpacingValuePopover` input
+  - Native double-click selects only a "word" (stops at `.` or `-`); this override selects the full value for quick replacement
+- Typecheck: PASS
+
 ---
 
 ## Done

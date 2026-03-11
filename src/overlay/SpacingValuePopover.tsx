@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { selectAllOnDoubleClick } from "./controls";
 
 // Webflow's standard spacing presets
 const PRESETS = [0, 10, 20, 40, 60, 100, 140, 220];
@@ -226,6 +227,7 @@ export function SpacingValuePopover({
             (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
           }}
           onKeyDown={handleInputKeyDown}
+          onDoubleClick={selectAllOnDoubleClick}
           style={{
             width: "36px",
             height: "24px",
