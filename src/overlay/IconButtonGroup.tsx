@@ -26,9 +26,11 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
         } else {
           current.add(optValue);
         }
-        onChange(Array.from(current).join(" "));
+        const result = Array.from(current).join(" ");
+        onChange(result || "none");
       } else {
-        onChange(optValue);
+        // Toggle-deselect: clicking active option returns to "none"
+        onChange(optValue === value ? "none" : optValue);
       }
     },
     [value, onChange, multi]

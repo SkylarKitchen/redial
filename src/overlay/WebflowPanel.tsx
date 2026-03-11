@@ -293,16 +293,6 @@ const TEXT_DECORATION_OPTIONS = [
       </svg>
     ),
   },
-  {
-    value: "none",
-    title: "None",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1" />
-        <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-  },
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
@@ -330,16 +320,6 @@ const TEXT_TRANSFORM_OPTIONS = [
     icon: (
       <svg width="12" height="12" viewBox="0 0 12 12">
         <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">aa</text>
-      </svg>
-    ),
-  },
-  {
-    value: "none",
-    title: "None",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="2" x2="10" y2="10" stroke="currentColor" strokeWidth="1" />
-        <line x1="10" y1="2" x2="2" y2="10" stroke="currentColor" strokeWidth="1" />
       </svg>
     ),
   },
