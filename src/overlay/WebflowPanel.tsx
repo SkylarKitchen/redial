@@ -150,6 +150,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   /** Shorthand for getIndicatorType bound to this element's cached styles */
   const ind = useCallback((prop: string) => getIndicatorType(element, prop, cs, parentCs), [element, cs, parentCs]);
 
+  /** Highest-priority indicator across a set of properties (for section headers) */
+  const sectionInd = useCallback(
+    (props: string[]): IndicatorType => {
+      const PRIORITY: IndicatorType[] = ["element", "direct", "state", "inherited"];
+      for (const p of PRIORITY) {
+        if (props.some(prop => ind(prop) === p)) return p;
+      }
+      return "none";
+    },
+    [ind],
+  );
+
   // ── Layout state ──
   const [display, setDisplay] = useState(() => cs.display);
   const [flexDirection, setFlexDirection] = useState(() => cs.flexDirection);
@@ -727,7 +739,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {/* 1. Layout */}
-      <Section title="Layout">
+      <Section title="Layout" indicator={sectionInd(["display", "flex-direction", "justify-content", "align-items", "flex-wrap", "gap", "row-gap", "column-gap"])}>
         <DisplayTabs value={display} onChange={handleDisplayChange} />
 
         {isFlex && (
@@ -883,7 +895,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 2. Spacing */}
-      <Section title="Spacing">
+      <Section title="Spacing" indicator={sectionInd(["margin-top", "margin-right", "margin-bottom", "margin-left", "padding-top", "padding-right", "padding-bottom", "padding-left"])}>
         <SpacingBoxModel
           margin={spacing.margin}
           padding={spacing.padding}
@@ -914,7 +926,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 3. Size */}
-      <Section title="Size">
+      <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "aspect-ratio", "object-fit", "object-position"])}>
         {/* Row 1: Width + Height */}
         <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
           <SizeInputCell
@@ -1052,7 +1064,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 4. Position */}
-      <Section title="Position" collapsed={position === "static"}>
+      <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])}>
         <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
         {position !== "static" && (
           <>
@@ -1086,7 +1098,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 5. Typography */}
       {showTypography && (
-        <Section title="Typography">
+        <Section title="Typography" indicator={sectionInd(["font-family", "font-weight", "font-size", "line-height", "letter-spacing", "color", "text-align", "text-decoration", "text-transform"])}>
           {/* Font family dropdown */}
           <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview />
 
@@ -1340,7 +1352,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       )}
 
       {/* 6. Backgrounds */}
-      <Section title="Backgrounds">
+      <Section title="Backgrounds" indicator={sectionInd(["background-color", "background-image", "background-clip"])}>
         {bgLayers.length > 0 ? (
           <div style={{ padding: "0 12px" }}>
             <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
@@ -1352,7 +1364,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 7. Borders */}
-      <Section title="Borders">
+      <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])}>
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
         <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} />
@@ -1375,7 +1387,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 8. Effects */}
-      <Section title="Effects">
+      <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])}>
         <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); onDirtyChange?.(); }} indicator={ind("opacity")} />
         <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} />
 

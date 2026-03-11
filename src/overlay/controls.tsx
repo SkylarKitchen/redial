@@ -42,10 +42,12 @@ export function Section({
   title,
   collapsed,
   children,
+  indicator,
 }: {
   title: string;
   collapsed?: boolean;
   children: React.ReactNode;
+  indicator?: IndicatorType;
 }) {
   const [open, setOpen] = useState(!collapsed);
   return (
@@ -67,8 +69,9 @@ export function Section({
           outline: "none",
         }}
       >
-        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
+        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", gap: "6px" }}>
           {title}
+          {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
         </span>
         <span style={{
           color: "rgba(255,255,255,0.3)",

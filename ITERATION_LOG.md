@@ -276,4 +276,15 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 28 — StyleIndicator on section headers (2026-03-11)
+- Added optional `indicator` prop to `Section` component (controls.tsx)
+- Renders a `StyleIndicator` dot next to the section title when any property in that section has a non-"none" indicator
+- Added `sectionInd()` helper in WebflowPanel that takes an array of CSS property names and returns the highest-priority indicator type (element > direct > state > inherited > none)
+- Wired into all 8 sections: Layout, Spacing, Size, Position, Typography, Backgrounds, Borders, Effects
+- Each section checks its representative properties — e.g., Typography checks font-family, font-weight, font-size, line-height, letter-spacing, color, text-align, text-decoration, text-transform
+- Fills spec §2 "Inheritance indicator colors on section labels" requirement
+- Typecheck: PASS
+
+---
+
 ## Done
