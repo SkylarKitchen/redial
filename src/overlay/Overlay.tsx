@@ -15,6 +15,7 @@ import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
+import { CommonPanel } from "./CommonPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
