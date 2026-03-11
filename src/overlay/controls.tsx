@@ -28,6 +28,11 @@ const FOCUS_RING = "0 0 0 2px rgba(99,102,241,0.3)";
 const onFocusRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_RING; };
 const onBlurRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; };
 
+/** Double-click on a value input selects all text for quick replacement. */
+export const selectAllOnDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+  e.currentTarget.select();
+};
+
 // ─── Section ────────────────────────────────────────────────────────
 
 export function Section({
@@ -45,6 +50,7 @@ export function Section({
       <div
         tabIndex={0}
         role="button"
+        aria-expanded={open}
         onClick={() => setOpen(!open)}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(!open); } }}
         onFocus={onFocusRing}
@@ -61,11 +67,25 @@ export function Section({
         <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
           {title}
         </span>
-        <span style={{ color: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center" }}>
-          {open ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />}
+        <span style={{
+          color: "rgba(255,255,255,0.3)",
+          display: "flex",
+          alignItems: "center",
+          transition: "transform 150ms ease",
+          transform: open ? "rotate(90deg)" : "rotate(0deg)",
+        }}>
+          <ChevronRight size={12} strokeWidth={2} />
         </span>
       </div>
-      {open && <div style={{ paddingBottom: "8px" }}>{children}</div>}
+      <div style={{
+        display: "grid",
+        gridTemplateRows: open ? "1fr" : "0fr",
+        transition: "grid-template-rows 150ms ease",
+      }}>
+        <div style={{ overflow: "hidden" }}>
+          <div style={{ paddingBottom: "8px" }}>{children}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -118,6 +138,7 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
       onFocus={() => setFocused(true)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
+      onDoubleClick={selectAllOnDoubleClick}
       style={{
         width: "40px",
         background: "rgba(255,255,255,0.06)",
@@ -463,6 +484,7 @@ export function TextRow({ label, value, placeholder, onChange }: {
       <input
         type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
+        onDoubleClick={selectAllOnDoubleClick}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           flex: 1, height: "24px", background: "rgba(255,255,255,0.06)",
@@ -533,6 +555,7 @@ export const EditableValue = memo(
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={handleKeyDown}
+          onDoubleClick={selectAllOnDoubleClick}
           autoFocus
           style={{
             width: "28px",

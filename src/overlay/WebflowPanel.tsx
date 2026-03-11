@@ -366,6 +366,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const isFlex = display === "flex" || display === "inline-flex";
   const isGrid = display === "grid" || display === "inline-grid";
   const parentIsFlex = parentCs != null && (parentCs.display === "flex" || parentCs.display === "inline-flex");
+  const parentIsGrid = parentCs != null && (parentCs.display === "grid" || parentCs.display === "inline-grid");
+  const parentIsFlexOrGrid = parentIsFlex || parentIsGrid;
   const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
@@ -814,16 +816,63 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </>
         )}
 
-        {parentIsFlex && (
+        {parentIsFlexOrGrid && (
           <>
             <div style={{ padding: "6px 12px 2px", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Flex Child
+              {parentIsFlex ? "Flex Child" : "Grid Child"}
             </div>
-            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} onReset={() => resetCss("flex-grow", setFlexGrow)} indicator={ind("flex-grow")} />
-            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} onReset={() => resetCss("flex-shrink", setFlexShrink)} indicator={ind("flex-shrink")} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} onReset={() => resetCss("flex-basis", setFlexBasis)} indicator={ind("flex-basis")} />
+
+            {/* Grow / Shrink — compact inline inputs, flex children only */}
+            {parentIsFlex && (
+              <div style={{ display: "flex", gap: "6px", padding: "2px 12px" }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
+                    </span>
+                  </LabelScrub>
+                  <ValueInput value={flexGrow} onChange={handleFlexGrowChange} />
+                </div>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
+                    </span>
+                  </LabelScrub>
+                  <ValueInput value={flexShrink} onChange={handleFlexShrinkChange} />
+                </div>
+              </div>
+            )}
+
+            {/* Basis — compact input with unit selector, flex children only */}
+            {parentIsFlex && (
+              <div style={{ padding: "2px 12px" }}>
+                <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
+                    </span>
+                  </LabelScrub>
+                  <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: "2px" }}>
+                    <ValueInput value={flexBasis} onChange={handleFlexBasisChange} />
+                  </div>
+                  <div style={{ flexShrink: 0, paddingRight: "3px" }}>
+                    <UnitSelector value={flexBasisUnit} options={LAYOUT_UNITS} onChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={ind("align-self")} />
-            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} onReset={() => resetCss("order", setFlexOrder)} indicator={ind("order")} />
+
+            {/* Order — simple number input, not a slider */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}
+                Order
+              </span>
+              <ValueInput value={flexOrder} onChange={handleFlexOrderChange} />
+            </div>
           </>
         )}
       </Section>

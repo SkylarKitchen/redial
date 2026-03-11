@@ -8,7 +8,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
-import { ValueInput } from "./controls";
+import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { useClickOutside } from "./useClickOutside";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
@@ -422,6 +422,7 @@ export function TypoValueCell({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={handleKeyDown}
+          onDoubleClick={selectAllOnDoubleClick}
           autoFocus
           style={{ flex: 1, width: 0, background: "transparent", border: "none", color: "rgba(255,255,255,0.9)", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none" }}
         />

@@ -14,6 +14,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption } from "./UnitSelector";
+import { selectAllOnDoubleClick } from "./controls";
 
 export interface SizeInputCellProps {
   label: string;
@@ -199,6 +200,7 @@ export function SizeInputCell({
             onChange={(e) => setDraft(e.target.value)}
             onBlur={commit}
             onKeyDown={handleKeyDown}
+            onDoubleClick={selectAllOnDoubleClick}
             autoFocus
             style={{
               width: "36px",
