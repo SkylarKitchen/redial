@@ -515,6 +515,8 @@ function SliderRow({
       </LabelScrub>
       <input
         type="range"
+        className="tuner-focusable"
+        tabIndex={0}
         min={min}
         max={max}
         step={step}
