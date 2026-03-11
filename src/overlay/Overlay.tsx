@@ -84,6 +84,10 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, []);
 
+  // Tab state: "common" (flat simplified view) or "custom" (full WebflowPanel)
+  type TabId = "common" | "custom";
+  const [activeTab, setActiveTab] = useState<TabId>("common");
+
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
   const [dirtyTick, setDirtyTick] = useState(0);
@@ -364,9 +368,10 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope on new selection
+    // Reset scope and tab on new selection
     setScope("element");
     setActiveClassName(null);
+    setActiveTab("common");
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -767,6 +772,40 @@ export function Overlay() {
             state={activeState}
             onStateChange={setActiveState}
           />
+          {/* ── Tab bar ──────────────────────────────── */}
+          <div
+            style={{
+              display: "flex",
+              gap: 0,
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              padding: "0 12px",
+              flexShrink: 0,
+            }}
+          >
+            {(["common", "custom"] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    borderBottom: isActive ? "2px solid #c45d35" : "2px solid transparent",
+                    padding: "7px 10px 5px",
+                    fontSize: 11,
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
+                    cursor: "pointer",
+                    transition: "color 100ms, border-color 100ms",
+                    fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
+                  }}
+                >
+                  {tab === "common" ? "Common" : "Custom"}
+                </button>
+              );
+            })}
+          </div>
           <div
             ref={panelScrollRef}
             className="__tuner-root"
@@ -786,13 +825,23 @@ export function Overlay() {
               }}
             >
               <PanelErrorBoundary onError={handleClose}>
-                <WebflowPanel
-                  key={panelKey}
-                  element={selectedEl}
-                  spacing={inferResult.spacing}
-                  onSpacingChange={handleSpacingChange}
-                  onDirtyChange={handleDirtyChange}
-                />
+                {activeTab === "common" ? (
+                  <CommonPanel
+                    key={panelKey}
+                    element={selectedEl}
+                    spacing={inferResult.spacing}
+                    onSpacingChange={handleSpacingChange}
+                    onDirtyChange={handleDirtyChange}
+                  />
+                ) : (
+                  <WebflowPanel
+                    key={panelKey}
+                    element={selectedEl}
+                    spacing={inferResult.spacing}
+                    onSpacingChange={handleSpacingChange}
+                    onDirtyChange={handleDirtyChange}
+                  />
+                )}
               </PanelErrorBoundary>
             </div>
             <SessionDrawer
