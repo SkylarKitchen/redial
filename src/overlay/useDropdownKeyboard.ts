@@ -5,7 +5,7 @@
  * a highlighted-index tracker for any listbox-style dropdown.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 
 export interface UseDropdownKeyboardOptions {
   open: boolean;
