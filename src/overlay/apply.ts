@@ -252,31 +252,60 @@ export function getInitial(el: Element, prop: string): string | null {
  * check if any inline overrides are now redundant (real styles caught up).
  * Remove those overrides so the amber indicators clear.
  *
+ * Batches DOM reads/writes to avoid N forced reflows:
+ * 1. Remove all inline overrides (write phase)
+ * 2. Read all computed values at once (single reflow)
+ * 3. Restore non-redundant overrides (write phase)
+ *
  * Returns the number of overrides that were auto-cleared.
  */
 export function clearRedundantOverrides(): number {
-  let cleared = 0;
-
+  // Collect all (element, prop, current) tuples
+  const entries: Array<{ el: Element; prop: string; current: string }> = [];
   for (const [el, props] of overrides) {
     for (const [prop, { current }] of props) {
-      // Temporarily remove our inline override to see the real computed value
-      (el as HTMLElement).style.removeProperty(prop);
-      const real = getComputedStyle(el).getPropertyValue(prop).trim();
-      const currentTrimmed = current.trim();
-
-      if (
-        real === currentTrimmed ||
-        parseFloat(real) === parseFloat(currentTrimmed)
-      ) {
-        // Real styles caught up — remove override permanently
-        props.delete(prop);
-        cleared++;
-      } else {
-        // Real styles didn't match — restore the override
-        (el as HTMLElement).style.setProperty(prop, current, "important");
-      }
+      entries.push({ el, prop, current });
     }
+  }
+  if (entries.length === 0) return 0;
 
+  // Phase 1: Remove all inline overrides (batched writes)
+  for (const { el, prop } of entries) {
+    (el as HTMLElement).style.removeProperty(prop);
+  }
+
+  // Phase 2: Read all computed values (single reflow per element)
+  const computedCache = new Map<Element, CSSStyleDeclaration>();
+  const realValues: string[] = [];
+  for (const { el, prop } of entries) {
+    if (!computedCache.has(el)) {
+      computedCache.set(el, getComputedStyle(el));
+    }
+    realValues.push(computedCache.get(el)!.getPropertyValue(prop).trim());
+  }
+
+  // Phase 3: Restore non-redundant overrides (batched writes)
+  let cleared = 0;
+  for (let i = 0; i < entries.length; i++) {
+    const { el, prop, current } = entries[i];
+    const real = realValues[i];
+    const currentTrimmed = current.trim();
+
+    if (
+      real === currentTrimmed ||
+      parseFloat(real) === parseFloat(currentTrimmed)
+    ) {
+      // Real styles caught up — remove override permanently
+      overrides.get(el)?.delete(prop);
+      cleared++;
+    } else {
+      // Real styles didn't match — restore the override
+      (el as HTMLElement).style.setProperty(prop, current, "important");
+    }
+  }
+
+  // Clean up empty override maps
+  for (const [el, props] of overrides) {
     if (props.size === 0) overrides.delete(el);
   }
 

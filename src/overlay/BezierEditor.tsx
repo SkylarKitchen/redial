@@ -22,7 +22,6 @@ const PRESETS: Record<string, [number, number, number, number]> = {
 };
 
 const CANVAS_SIZE = 200;
-const CANVAS_RES = 400; // retina resolution
 const PAD = 20;
 
 export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
@@ -210,7 +209,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
         width: "240px",
         display: "flex",
         flexDirection: "column",
-        gap: "0px",
+        gap: 0,
       }}
     >
       {/* Close button (if onClose provided) */}
@@ -258,8 +257,8 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
       >
         <canvas
           ref={canvasRef}
-          width={CANVAS_RES}
-          height={CANVAS_RES}
+          width={CANVAS_SIZE * 2}
+          height={CANVAS_SIZE * 2}
           onMouseDown={handleMouseDown}
           style={{
             width: `${CANVAS_SIZE}px`,
