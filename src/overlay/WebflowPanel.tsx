@@ -19,6 +19,8 @@ import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
+import { LabelScrub } from "./LabelScrub";
+import { UnitSelector } from "./UnitSelector";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -421,6 +423,8 @@ function SliderRow({
   max,
   step,
   unit,
+  units,
+  onUnitChange,
   onChange,
 }: {
   label: string;
@@ -429,21 +433,27 @@ function SliderRow({
   max: number;
   step: number;
   unit: string;
+  /** If provided, shows a UnitSelector dropdown instead of a static unit label */
+  units?: string[];
+  onUnitChange?: (unit: string) => void;
   onChange: (value: number) => void;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
+      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max}>
+        <span
+          style={{
+            width: "64px",
+            fontSize: "11px",
+            color: "rgba(255,255,255,0.5)",
+            flexShrink: 0,
+            display: "inline-block",
+          }}
+        >
+          {label}
+        </span>
+      </LabelScrub>
       <input
         type="range"
         min={min}
@@ -463,9 +473,11 @@ function SliderRow({
         }}
       />
       <ValueInput value={value} onChange={onChange} />
-      {unit && (
+      {units && onUnitChange ? (
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+      ) : unit ? (
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -796,6 +808,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
   const [overflow, setOverflow] = useState(() => cs.overflow);
 
+  // Size units
+  const [widthUnit, setWidthUnit] = useState("px");
+  const [heightUnit, setHeightUnit] = useState("px");
+  const [minWidthUnit, setMinWidthUnit] = useState("px");
+  const [maxWidthUnit, setMaxWidthUnit] = useState("px");
+  const [minHeightUnit, setMinHeightUnit] = useState("px");
+  const [maxHeightUnit, setMaxHeightUnit] = useState("px");
+
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
   const [top, setTop] = useState(() => parseNum(cs.top));
@@ -962,12 +982,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   );
 
   // Size
-  const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}px`); }, [apply]);
-  const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}px`); }, [apply]);
-  const handleMinWidthChange = useCallback((v: number) => { setMinWidth(v); apply("min-width", `${v}px`); }, [apply]);
-  const handleMaxWidthChange = useCallback((v: number) => { setMaxWidth(v); apply("max-width", v === 0 ? "none" : `${v}px`); }, [apply]);
-  const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}px`); }, [apply]);
-  const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}px`); }, [apply]);
+  const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
+  const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}${heightUnit}`); }, [apply, heightUnit]);
+  const handleMinWidthChange = useCallback((v: number) => { setMinWidth(v); apply("min-width", `${v}${minWidthUnit}`); }, [apply, minWidthUnit]);
+  const handleMaxWidthChange = useCallback((v: number) => { setMaxWidth(v); apply("max-width", v === 0 ? "none" : `${v}${maxWidthUnit}`); }, [apply, maxWidthUnit]);
+  const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
+  const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
 
   // Position
@@ -1135,12 +1155,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 3. Size */}
       <Section title="Size">
-        <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit="px" onChange={handleWidthChange} />
-        <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit="px" onChange={handleHeightChange} />
-        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit="px" onChange={handleMinWidthChange} />
-        <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit="px" onChange={handleMaxWidthChange} />
-        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit="px" onChange={handleMinHeightChange} />
-        <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit="px" onChange={handleMaxHeightChange} />
+        <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={setWidthUnit} onChange={handleWidthChange} />
+        <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={setHeightUnit} onChange={handleHeightChange} />
+        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMinWidthUnit} onChange={handleMinWidthChange} />
+        <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMaxWidthUnit} onChange={handleMaxWidthChange} />
+        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMinHeightUnit} onChange={handleMinHeightChange} />
+        <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMaxHeightUnit} onChange={handleMaxHeightChange} />
         <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} />
       </Section>
 

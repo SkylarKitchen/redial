@@ -6,10 +6,14 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 
 ## Completed
 
-_None yet — starting iterations._
+### Iteration 1 — LabelScrub + UnitSelector in SliderRow (2026-03-11)
+- Wrapped SliderRow label text with `<LabelScrub>` so every numeric slider label is now drag-to-scrub
+- Added optional `units` and `onUnitChange` props to SliderRow for UnitSelector dropdown
+- When `units` is provided, renders `<UnitSelector>` instead of a static unit label
+- Typecheck: PASS
 
 ---
 
 ## Next Up
 
-**Phase A-1:** Integrate AlignBox into Layout section (replace justify/align dropdowns with visual 3x3 grid)
+**Phase A-3:** Wire unit state into Size section (width, height, min/max with UnitSelector)
