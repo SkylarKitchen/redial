@@ -22,6 +22,7 @@ import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
+import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -44,6 +45,11 @@ function rgbToHex(rgb: string): string {
       .map((c) => parseInt(c).toString(16).padStart(2, "0"))
       .join("")
   );
+}
+
+/** Simple inline-style-only indicator: pink dot if property has an inline override */
+function getIndicatorType(el: Element, prop: string): IndicatorType {
+  return (el as HTMLElement).style.getPropertyValue(prop) !== "" ? "element" : "none";
 }
 
 function parseNum(val: string): number {
