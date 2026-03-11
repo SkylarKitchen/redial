@@ -54,6 +54,9 @@ export function LabelScrub({
   const onScrubEndRef = useRef(onScrubEnd);
   onScrubEndRef.current = onScrubEnd;
 
+  const onClickRef = useRef(onClick);
+  onClickRef.current = onClick;
+
   const isDraggingRef = useRef(false);
 
   const clamp = useCallback(
@@ -130,7 +133,9 @@ export function LabelScrub({
       }
 
       function handleUp() {
+        const wasDragging = isDraggingRef.current;
         cleanup();
+        if (!wasDragging) onClickRef.current?.();
       }
 
       // Attach listeners synchronously — no useEffect gap

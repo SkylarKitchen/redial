@@ -18,7 +18,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
-import { buildBreadcrumb, getStableSelector } from "./util";
+import { buildBreadcrumb, getStableSelector, formatCSSDiff } from "./util";
 
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
@@ -151,8 +151,7 @@ export function Overlay() {
     if (!selectedEl) return;
     const changes = diff(selectedEl);
     if (changes.length === 0) return;
-    const lines = changes.map((c) => `  ${c.prop}: ${c.to};`);
-    navigator.clipboard.writeText(`{\n${lines.join("\n")}\n}`).catch(() => {
+    navigator.clipboard.writeText(formatCSSDiff(selectedEl, changes)).catch(() => {
       // Clipboard API unavailable (non-HTTPS or permission denied) — silent fallback
     });
   }, [selectedEl]);
@@ -292,21 +291,29 @@ export function Overlay() {
         setDiffMode(true);
       }
 
-      // Arrow key navigation (Phase 2)
+      // Arrow key element navigation: ↑ parent, ↓ first visible child, ←/→ siblings
       if (selectedEl && !selecting && !diffMode && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-        e.preventDefault();
         let next: Element | null = null;
 
-        if (e.key === "ArrowUp") next = selectedEl.parentElement;
-        else if (e.key === "ArrowDown") next = selectedEl.firstElementChild;
-        else if (e.key === "ArrowLeft") next = selectedEl.previousElementSibling;
-        else if (e.key === "ArrowRight") next = selectedEl.nextElementSibling;
+        if (e.key === "ArrowUp") {
+          next = selectedEl.parentElement;
+        } else if (e.key === "ArrowDown") {
+          let child = selectedEl.firstElementChild;
+          while (child && !isNavigableElement(child)) child = child.nextElementSibling;
+          next = child;
+        } else if (e.key === "ArrowLeft") {
+          let sib = selectedEl.previousElementSibling;
+          while (sib && !isNavigableElement(sib)) sib = sib.previousElementSibling;
+          next = sib;
+        } else if (e.key === "ArrowRight") {
+          let sib = selectedEl.nextElementSibling;
+          while (sib && !isNavigableElement(sib)) sib = sib.nextElementSibling;
+          next = sib;
+        }
 
-        if (!next) return;
-        const nextTag = next.tagName.toLowerCase();
-        if (nextTag === "body" || nextTag === "html") return;
-        if ((next as HTMLElement).closest?.(".__tuner-root")) return;
+        if (!next || !isNavigableElement(next)) return;
 
+        e.preventDefault();
         setSelectedEl(next);
         selectedSelectorRef.current = getStableSelector(next);
         setInferResult(infer(next));

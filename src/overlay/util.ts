@@ -124,3 +124,37 @@ export function getSelector(el: Element): string {
 
   return `.${classes.split(/\s+/)[0]}`;
 }
+
+/**
+ * Format a diff as a CSS rule block with selector and "// was" comments.
+ * Shared by all copy operations (Cmd+C, Footer Copy, Session Copy All).
+ */
+export function formatCSSDiff(
+  el: Element,
+  changes: { prop: string; from: string; to: string }[],
+): string {
+  const selector = getSelector(el);
+  const lines = changes.map(
+    (c) => `  ${c.prop}: ${c.to}; /* was ${c.from} */`
+  );
+  return `${selector} {\n${lines.join("\n")}\n}`;
+}
+
+/** Tags that are never useful targets for visual element navigation. */
+const NON_VISUAL_TAGS = new Set([
+  "script", "style", "template", "noscript", "head", "html", "body",
+  "link", "meta", "base", "title",
+]);
+
+/**
+ * Returns true if an element is a valid target for arrow-key element navigation.
+ * Skips non-visual tags, the tuner overlay itself, and elements hidden via display:none.
+ */
+export function isNavigableElement(el: Element): boolean {
+  const tag = el.tagName.toLowerCase();
+  if (NON_VISUAL_TAGS.has(tag)) return false;
+  if ((el as HTMLElement).closest?.(".__tuner-root")) return false;
+  // Skip display:none elements (cheap check via offsetParent, falls back for fixed/body)
+  if (el instanceof HTMLElement && el.offsetParent === null && getComputedStyle(el).display === "none") return false;
+  return true;
+}

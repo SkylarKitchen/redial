@@ -9,7 +9,7 @@ import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getSelector, getDisplayClass } from "./util";
+import { getSelector, getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 
 interface SessionDrawerProps {
@@ -37,15 +37,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
 
   const handleCopyAll = useCallback(() => {
     if (allDiffs.length === 0) return;
-
-    const blocks = allDiffs.map(({ el, changes }) => {
-      const selector = getSelector(el);
-      const lines = changes.map(
-        (c) => `  ${c.prop}: ${c.to}; // was ${c.from}`
-      );
-      return `${selector} {\n${lines.join("\n")}\n}`;
-    });
-
+    const blocks = allDiffs.map(({ el, changes }) => formatCSSDiff(el, changes));
     navigator.clipboard.writeText(blocks.join("\n\n"));
     setMessage("Copied!");
     setTimeout(() => setMessage(null), 1500);

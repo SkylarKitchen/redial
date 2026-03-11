@@ -7,7 +7,7 @@ import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
-import { getSelector } from "./util";
+import { formatCSSDiff } from "./util";
 
 interface FooterProps {
   element: Element;
@@ -40,14 +40,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const handleCopy = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-
-    const className = getSelector(element);
-    const lines = changes.map(
-      (c) => `  ${c.prop}: ${c.to}; // was ${c.from}`
-    );
-    const scss = `${className} {\n${lines.join("\n")}\n}`;
-
-    navigator.clipboard.writeText(scss);
+    navigator.clipboard.writeText(formatCSSDiff(element, changes));
     showMessage("Copied!", 1200);
   }, [element, showMessage]);
 

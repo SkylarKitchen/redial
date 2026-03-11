@@ -148,6 +148,7 @@ export function SliderRow({
   units,
   onUnitChange,
   onChange,
+  onReset,
   indicator,
 }: {
   label: string;
@@ -160,12 +161,14 @@ export function SliderRow({
   units?: string[];
   onUnitChange?: (unit: string) => void;
   onChange: (value: number) => void;
+  /** Called when the label is clicked (not dragged) to reset the property */
+  onReset?: () => void;
   indicator?: IndicatorType;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max}>
+      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
         <span
           style={{
             width: "64px",

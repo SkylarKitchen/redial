@@ -20,7 +20,7 @@ import { SpacingBoxModel } from "./SpacingBoxModel";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
 import type { SpacingValues } from "./infer";
-import { applyInlineStyle, isDirty } from "./apply";
+import { applyInlineStyle, isDirty, resetProp } from "./apply";
 import { LabelScrub } from "./LabelScrub";
 import { SizeInputCell } from "./SizeInputCell";
 import { UnitSelector } from "./UnitSelector";
@@ -373,6 +373,17 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const apply = useCallback(
     (prop: string, value: string) => {
       applyInlineStyle(element, prop, value);
+      onDirtyChange?.();
+    },
+    [element, onDirtyChange]
+  );
+
+  /** Reset a CSS property to its computed value and update React state via setter */
+  const resetCss = useCallback(
+    (prop: string, setter: (v: number) => void) => {
+      resetProp(element, prop);
+      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
+      setter(parseFloat(fresh) || 0);
       onDirtyChange?.();
     },
     [element, onDirtyChange]
@@ -785,7 +796,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             {gapLocked ? (
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ flex: 1 }}>
-                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={ind("gap")} />
+                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} onReset={() => resetCss("gap", setGap)} indicator={ind("gap")} />
                 </div>
                 <button onClick={handleGapLockToggle} title="Unlock row/column gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
               </div>
@@ -793,11 +804,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               <>
                 <div style={{ display: "flex", alignItems: "center" }}>
                   <div style={{ flex: 1 }}>
-                    <SliderRow label="Row Gap" value={rowGap} min={0} max={200} step={1} unit="px" onChange={handleRowGapChange} indicator={ind("row-gap")} />
+                    <SliderRow label="Row Gap" value={rowGap} min={0} max={200} step={1} unit="px" onChange={handleRowGapChange} onReset={() => resetCss("row-gap", setRowGap)} indicator={ind("row-gap")} />
                   </div>
                   <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
                 </div>
-                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} indicator={ind("column-gap")} />
+                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} onReset={() => resetCss("column-gap", setColumnGap)} indicator={ind("column-gap")} />
               </>
             )}
           </>
@@ -808,11 +819,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <div style={{ padding: "6px 12px 2px", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               Flex Child
             </div>
-            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} indicator={ind("flex-grow")} />
-            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} indicator={ind("flex-shrink")} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} indicator={ind("flex-basis")} />
+            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} onReset={() => resetCss("flex-grow", setFlexGrow)} indicator={ind("flex-grow")} />
+            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} onReset={() => resetCss("flex-shrink", setFlexShrink)} indicator={ind("flex-shrink")} />
+            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} onReset={() => resetCss("flex-basis", setFlexBasis)} indicator={ind("flex-basis")} />
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={ind("align-self")} />
-            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} indicator={ind("order")} />
+            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} onReset={() => resetCss("order", setFlexOrder)} indicator={ind("order")} />
           </>
         )}
       </Section>
@@ -1012,7 +1023,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, getConversionCtx(),axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
               }}
             />
-            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} indicator={ind("z-index")} />
+            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => resetCss("z-index", setZIndex)} indicator={ind("z-index")} />
           </>
         )}
         <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} />
@@ -1258,7 +1269,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} indicator={ind("border-width")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} />
         <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
@@ -1279,7 +1290,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 8. Effects */}
       <Section title="Effects">
-        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} indicator={ind("opacity")} />
+        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); onDirtyChange?.(); }} indicator={ind("opacity")} />
         <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -1318,7 +1329,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} />
         <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
         <SelectRow label="User Sel" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} />
-        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} indicator={ind("perspective")} />
+        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} />
         <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
       </Section>
     </div>
