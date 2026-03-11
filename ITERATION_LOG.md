@@ -36,8 +36,16 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - StateSelector shows green text when non-base state is active
 - Typecheck: PASS
 
+### Iteration 5 — Flex-direction toggle buttons (2026-03-11)
+- Replaced `FLEX_DIRECTION_OPTIONS` (SelectRow dropdown) with `FLEX_DIRECTION_ICONS` (IconButtonGroup)
+- Added arrow SVG icons for all 4 directions: row (→), column (↓), row-reverse (←), column-reverse (↑)
+- Layout section now shows 4 toggle buttons instead of a dropdown for flex-direction
+- Handler guards against deselecting to "none" — falls back to "row"
+- Matches existing IconButtonGroup pattern from Typography (text-align, decoration, transform)
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase B-9:** Typography advanced section + Phase B-12: auto/none toggles on Size
+**Phase B-8:** Layout order control for flex children

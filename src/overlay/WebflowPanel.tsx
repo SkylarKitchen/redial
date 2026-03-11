@@ -73,8 +73,8 @@ function parseBoxShadow(raw: string): ShadowValue[] {
     const inset = part.includes("inset");
     const cleaned = part.replace("inset", "").trim();
     // Extract color (rgb/rgba/hex/named) — browsers may place color first or last
-    const colorStartMatch = cleaned.match(/^(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})\s+/i);
-    const colorEndMatch = cleaned.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b(?!(?:\d|inset\b))[a-z]{3,}\b)$/i);
+    const colorStartMatch = cleaned.match(/^(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})\s+/i);
+    const colorEndMatch = cleaned.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b(?!(?:\d|inset\b))[a-z]{3,}\b)$/i);
     const color = (colorStartMatch?.[1] ?? colorEndMatch?.[1]) || "rgba(0,0,0,0.1)";
     // Strip the matched color from the string before parsing numbers
     let numStr = cleaned;
@@ -83,7 +83,7 @@ function parseBoxShadow(raw: string): ShadowValue[] {
     } else if (colorEndMatch) {
       numStr = numStr.slice(0, colorEndMatch.index).trim();
     }
-    numStr = numStr.replace(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
+    numStr = numStr.replace(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
     const nums = numStr.split(/\s+/).map(parseFloat).filter((n) => !isNaN(n));
     shadows.push({
       x: nums[0] ?? 0,
@@ -830,11 +830,47 @@ const FLEX_WRAP_OPTIONS = [
   { value: "wrap-reverse", label: "Wrap Reverse" },
 ];
 
-const FLEX_DIRECTION_OPTIONS = [
-  { value: "row", label: "Row" },
-  { value: "column", label: "Column" },
-  { value: "row-reverse", label: "Row Reverse" },
-  { value: "column-reverse", label: "Col Reverse" },
+const FLEX_DIRECTION_ICONS = [
+  {
+    value: "row",
+    title: "Row (→)",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 12 12">
+        <line x1="2" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.2" />
+        <polyline points="7,3.5 9.5,6 7,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: "column",
+    title: "Column (↓)",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 12 12">
+        <line x1="6" y1="2" x2="6" y2="9" stroke="currentColor" strokeWidth="1.2" />
+        <polyline points="3.5,7 6,9.5 8.5,7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: "row-reverse",
+    title: "Row Reverse (←)",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 12 12">
+        <line x1="3" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="1.2" />
+        <polyline points="5,3.5 2.5,6 5,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: "column-reverse",
+    title: "Column Reverse (↑)",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 12 12">
+        <line x1="6" y1="3" x2="6" y2="10" stroke="currentColor" strokeWidth="1.2" />
+        <polyline points="3.5,5 6,2.5 8.5,5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ];
 
 const ALIGN_SELF_OPTIONS = [
@@ -886,6 +922,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [maxWidthUnit, setMaxWidthUnit] = useState("px");
   const [minHeightUnit, setMinHeightUnit] = useState("px");
   const [maxHeightUnit, setMaxHeightUnit] = useState("px");
+
+  // Size keyword toggles
+  const [widthAuto, setWidthAuto] = useState(() => cs.width === "auto");
+  const [heightAuto, setHeightAuto] = useState(() => cs.height === "auto");
+  const [maxWidthNone, setMaxWidthNone] = useState(() => cs.maxWidth === "none");
+  const [maxHeightNone, setMaxHeightNone] = useState(() => cs.maxHeight === "none");
 
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
@@ -998,8 +1040,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
   const handleFlexDirectionChange = useCallback(
     (v: string) => {
-      setFlexDirection(v);
-      apply("flex-direction", v);
+      const dir = v === "none" ? "row" : v;
+      setFlexDirection(dir);
+      apply("flex-direction", dir);
     },
     [apply]
   );
@@ -1079,6 +1122,31 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
+
+  // Size keyword toggles
+  const handleWidthAutoToggle = useCallback(() => {
+    const next = !widthAuto;
+    setWidthAuto(next);
+    apply("width", next ? "auto" : `${width}${widthUnit}`);
+  }, [widthAuto, width, widthUnit, apply]);
+
+  const handleHeightAutoToggle = useCallback(() => {
+    const next = !heightAuto;
+    setHeightAuto(next);
+    apply("height", next ? "auto" : `${height}${heightUnit}`);
+  }, [heightAuto, height, heightUnit, apply]);
+
+  const handleMaxWidthNoneToggle = useCallback(() => {
+    const next = !maxWidthNone;
+    setMaxWidthNone(next);
+    apply("max-width", next ? "none" : `${maxWidth}${maxWidthUnit}`);
+  }, [maxWidthNone, maxWidth, maxWidthUnit, apply]);
+
+  const handleMaxHeightNoneToggle = useCallback(() => {
+    const next = !maxHeightNone;
+    setMaxHeightNone(next);
+    apply("max-height", next ? "none" : `${maxHeight}${maxHeightUnit}`);
+  }, [maxHeightNone, maxHeight, maxHeightUnit, apply]);
 
   // Position
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);
@@ -1235,7 +1303,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
         {isFlex && (
           <>
-            <SelectRow label="Direction" value={flexDirection} options={FLEX_DIRECTION_OPTIONS} onChange={handleFlexDirectionChange} />
+            <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
+                Direction
+              </span>
+              <IconButtonGroup options={FLEX_DIRECTION_ICONS} value={flexDirection} onChange={handleFlexDirectionChange} />
+            </div>
             <div style={{ padding: "6px 12px" }}>
               <AlignBox
                 justify={justifyContent}
