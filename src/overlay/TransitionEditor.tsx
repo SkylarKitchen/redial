@@ -219,6 +219,15 @@ function TransitionCard({
         position: "relative",
       }}
     >
+      {/* Drag handle */}
+      {dragHandleProps && (
+        <DragHandle
+          isDragging={isDragging}
+          onPointerDown={dragHandleProps.onPointerDown}
+          style={{ position: "absolute", top: "4px", left: "4px" }}
+        />
+      )}
+
       {/* Remove button */}
       <button
         onClick={onRemove}

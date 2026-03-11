@@ -33,14 +33,20 @@ import {
   shadowToCSS, filterToCSS, transformToCSS, transitionsToCSS,
 } from "./cssParsers";
 import {
-  AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Underline, Strikethrough, Baseline,
-  Eye, EyeOff, Scissors, ScrollText,
-  ArrowRight, ArrowDown, WrapText,
-  Link, Unlink,
-  ChevronDown, ChevronRight,
-  Italic, X, MoreHorizontal, PilcrowLeft, PilcrowRight,
-} from "lucide-react";
+  TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
+  ITALIC_OPTIONS, DIRECTION_OPTIONS,
+  FONT_WEIGHT_OPTIONS, WHITE_SPACE_OPTIONS, WORD_BREAK_OPTIONS, LINE_BREAK_OPTIONS,
+  FLOAT_OPTIONS, CLEAR_OPTIONS,
+  SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS,
+  LAYOUT_UNITS, BORDER_UNITS, SPACING_UNITS, LINE_HEIGHT_UNITS,
+  OVERFLOW_OPTIONS, OVERFLOW_ICON_OPTIONS,
+  OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
+  BORDER_STYLE_OPTIONS, BLEND_MODE_OPTIONS, FALLBACK_FONTS,
+  CURSOR_OPTIONS, POINTER_EVENTS_OPTIONS, VISIBILITY_OPTIONS,
+  ALIGN_SELF_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS,
+} from "./panelConstants";
+import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
 

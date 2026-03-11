@@ -150,6 +150,7 @@ export function BackgroundLayerList({
   onChange,
   onEditColor,
 }: BackgroundLayerListProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(layers, onChange);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -275,17 +276,22 @@ export function BackgroundLayerList({
       </div>
 
       {/* Layer rows */}
-      {layers.map((layer) => {
+      <div style={{ position: "relative" }}>
+      {layers.map((layer, index) => {
         const isExpanded = expandedId === layer.id;
         const typeLabel = layer.type === "color" ? "Color" : layer.type === "gradient" ? "Gradient" : "Image";
+        const dragProps = handleProps(index);
 
         return (
           <div
             key={layer.id}
+            ref={registerRef(index)}
             style={{
+              ...itemStyle(index),
               background: isExpanded ? "rgba(255,255,255,0.04)" : "transparent",
               borderRadius: "4px",
               border: "1px solid rgba(255,255,255,0.08)",
+              marginBottom: "4px",
             }}
           >
             {/* Collapsed row */}
@@ -299,6 +305,15 @@ export function BackgroundLayerList({
                 cursor: "pointer",
               }}
             >
+              {/* Drag handle */}
+              <DragHandle
+                isDragging={isDragging}
+                onPointerDown={(e) => {
+                  e.stopPropagation(); // Don't toggle expand on drag
+                  dragProps.onPointerDown(e);
+                }}
+              />
+
               {/* Preview swatch */}
               <div
                 style={{
