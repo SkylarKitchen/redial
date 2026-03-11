@@ -146,11 +146,61 @@ export function Overlay() {
         return;
       }
 
+      // Cmd+S for save — must fire even when focus is inside panel inputs
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (overrideCount(selectedEl) > 0) {
+          handleSaveShortcut();
+        }
+        return;
+      }
+
+      // Cmd+C for copy CSS — must fire even when focus is inside panel inputs
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "c") {
+        // Only intercept if no text is selected (don't break normal copy)
+        const selection = window.getSelection();
+        if (!selection || selection.toString() === "") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (overrideCount(selectedEl) > 0) {
+            handleCopyShortcut();
+          }
+          return;
+        }
+      }
+
       // For all other shortcuts, skip when typing in inputs or inside our panel
       const tag = target?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
       if (target?.isContentEditable) return;
       if (insidePanel) return;
+
+      // S to cycle scope
+      if (e.key === "s" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        // cycle between "element" and "class" scope
+        // Only cycle if there are CSS classes available
+        if (cssClasses.length > 0) {
+          if (scope === "element") {
+            handleScopeChange("class", cssClasses[0]);
+          } else {
+            handleScopeChange("element");
+          }
+        }
+        return;
+      }
+
+      // R to reset
+      if (e.key === "r" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting && !diffMode) {
+        e.preventDefault();
+        if (overrideCount(selectedEl) > 0) {
+          reset(selectedEl);
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+        }
+        return;
+      }
 
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
