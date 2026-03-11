@@ -72,10 +72,14 @@ function ValueCell({
   label,
   value,
   onChange,
+  keyword,
+  onClearKeyword,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  keyword?: string;
+  onClearKeyword?: () => void;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -90,7 +94,29 @@ function ValueCell({
       >
         {label}
       </span>
-      <ValueInput value={value} onChange={onChange} />
+      {keyword ? (
+        <div
+          onClick={onClearKeyword}
+          style={{
+            flex: 1,
+            height: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.04)",
+            borderRadius: 3,
+            cursor: "pointer",
+            userSelect: "none",
+          }}
+        >
+          {keyword}
+        </div>
+      ) : (
+        <ValueInput value={value} onChange={onChange} />
+      )}
     </div>
   );
 }
@@ -108,6 +134,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
   // --- Size group state ---
   const [width, setWidth] = useState(() => parseNum(cs.width));
   const [height, setHeight] = useState(() => parseNum(cs.height));
+  const [widthAuto, setWidthAuto] = useState(() => isAutoSize(element, "width"));
+  const [heightAuto, setHeightAuto] = useState(() => isAutoSize(element, "height"));
 
   // --- Position group state ---
   const position = cs.position;
@@ -311,16 +339,26 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
           <ValueCell
             label="W"
             value={width}
+            keyword={widthAuto ? "auto" : undefined}
+            onClearKeyword={() => {
+              setWidthAuto(false);
+            }}
             onChange={(v) => {
               setWidth(v);
+              setWidthAuto(false);
               apply("width", `${v}px`);
             }}
           />
           <ValueCell
             label="H"
             value={height}
+            keyword={heightAuto ? "auto" : undefined}
+            onClearKeyword={() => {
+              setHeightAuto(false);
+            }}
             onChange={(v) => {
               setHeight(v);
+              setHeightAuto(false);
               apply("height", `${v}px`);
             }}
           />

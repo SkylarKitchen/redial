@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { getAuthoredValue } from "./getAuthoredValue";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SideSelector } from "./SideSelector";
@@ -84,24 +85,6 @@ function getIndicatorType(
   return "none";
 }
 
-function getAuthoredValue(el: Element, prop: string): string | null {
-  const inline = (el as HTMLElement).style.getPropertyValue(prop);
-  if (inline) return inline;
-  let found: string | null = null;
-  try {
-    for (const sheet of document.styleSheets) {
-      try {
-        for (const rule of sheet.cssRules) {
-          if (rule instanceof CSSStyleRule && el.matches(rule.selectorText)) {
-            const val = rule.style.getPropertyValue(prop);
-            if (val) found = val;
-          }
-        }
-      } catch { /* cross-origin sheet */ }
-    }
-  } catch { /* no access */ }
-  return found;
-}
 
 /** Extract the CSS unit from the authored value of a property, falling back to `fallback` */
 function detectUnit(el: Element, prop: string, fallback: string = "px"): string {
