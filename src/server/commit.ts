@@ -31,6 +31,18 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Check if a line contains a non-literal CSS value expression:
+ * var(), calc(), env(), hex colors (#xxx or #xxxxxx), or SCSS $variables.
+ */
+function hasNonLiteralValue(line: string): boolean {
+  return /\$[\w-]+/.test(line)
+    || /var\s*\(/.test(line)
+    || /calc\s*\(/.test(line)
+    || /env\s*\(/.test(line)
+    || /:\s*#[0-9a-fA-F]{3,8}\b/.test(line);
+}
+
 // --- File resolution ---
 
 const EXCLUDE_DIRS = new Set([
@@ -132,7 +144,7 @@ function searchWindow(
   const end = Math.min(lines.length - 1, targetLine + windowSize);
 
   for (let i = start; i <= end; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
+    if (lines[i].includes(prop) && (lines[i].includes(value) || hasNonLiteralValue(lines[i]))) {
       return i;
     }
   }
@@ -177,7 +189,7 @@ function searchClassBlock(
 
       // Search within the block for our property
       if (j > blockStart && depth >= 0) {
-        if (lines[j].includes(prop) && (lines[j].includes(value) || /\$[\w-]+/.test(lines[j]))) {
+        if (lines[j].includes(prop) && (lines[j].includes(value) || hasNonLiteralValue(lines[j]))) {
           return j;
         }
       }
@@ -198,7 +210,7 @@ function searchFullFile(
   value: string
 ): number | null {
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
+    if (lines[i].includes(prop) && (lines[i].includes(value) || hasNonLiteralValue(lines[i]))) {
       return i;
     }
   }

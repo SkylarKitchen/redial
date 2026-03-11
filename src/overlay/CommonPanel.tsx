@@ -6,7 +6,7 @@
  * Position (when non-static), and Typography (for text elements).
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ColorRow, SliderRow, ValueInput } from "./controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { applyInlineStyle } from "./apply";
@@ -210,94 +210,19 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
 
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
 
-      {/* ── Margin ───────────────────────────────── */}
-      <FlatGroup title="Margin">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 6,
-          }}
-        >
-          <ValueCell
-            label="T"
-            value={mt}
-            onChange={(v) => {
-              setMt(v);
-              applySpacing("margin-top", v);
-            }}
-          />
-          <ValueCell
-            label="R"
-            value={mr}
-            onChange={(v) => {
-              setMr(v);
-              applySpacing("margin-right", v);
-            }}
-          />
-          <ValueCell
-            label="B"
-            value={mb}
-            onChange={(v) => {
-              setMb(v);
-              applySpacing("margin-bottom", v);
-            }}
-          />
-          <ValueCell
-            label="L"
-            value={ml}
-            onChange={(v) => {
-              setMl(v);
-              applySpacing("margin-left", v);
-            }}
-          />
-        </div>
-      </FlatGroup>
-
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
-
-      {/* ── Padding ──────────────────────────────── */}
-      <FlatGroup title="Padding">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 6,
-          }}
-        >
-          <ValueCell
-            label="T"
-            value={pt}
-            onChange={(v) => {
-              setPt(v);
-              applySpacing("padding-top", v);
-            }}
-          />
-          <ValueCell
-            label="R"
-            value={pr}
-            onChange={(v) => {
-              setPr(v);
-              applySpacing("padding-right", v);
-            }}
-          />
-          <ValueCell
-            label="B"
-            value={pb}
-            onChange={(v) => {
-              setPb(v);
-              applySpacing("padding-bottom", v);
-            }}
-          />
-          <ValueCell
-            label="L"
-            value={pl}
-            onChange={(v) => {
-              setPl(v);
-              applySpacing("padding-left", v);
-            }}
-          />
-        </div>
+      {/* ── Spacing (Webflow box-model diagram) ─── */}
+      <FlatGroup title="Spacing">
+        <SpacingBoxModel
+          margin={spacing.margin}
+          padding={spacing.padding}
+          onChange={onSpacingChange}
+          marginUnit={marginUnit}
+          paddingUnit={paddingUnit}
+          marginUnits={SPACING_UNITS}
+          paddingUnits={SPACING_UNITS}
+          onMarginUnitChange={setMarginUnit}
+          onPaddingUnitChange={setPaddingUnit}
+        />
       </FlatGroup>
 
       <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
