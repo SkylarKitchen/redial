@@ -32,7 +32,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
           position: "relative",
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "4px",
-          background: "rgba(255,255,255,0.02)",
+          background: "rgba(255, 152, 87, 0.08)",
           padding: "0",
         }}
       >
@@ -54,7 +54,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
 
         {/* Margin top */}
         <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-          <EditableValue value={margin.top} onChange={(v) => onChange("margin-top", v)} />
+          <EditableValue value={margin.top} onChange={(v) => onChange("margin-top", v)} onAltClick={() => { onChange("margin-top", margin.top); onChange("margin-bottom", margin.top); }} />
         </div>
 
         {/* Margin left / Padding box / Margin right */}
@@ -69,7 +69,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
               flex: 1,
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "3px",
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(87, 168, 255, 0.08)",
               margin: "2px 0",
               position: "relative",
             }}
@@ -105,7 +105,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
                 style={{
                   flex: 1,
                   height: "20px",
-                  background: "rgba(255,255,255,0.06)",
+                  background: "rgba(255, 255, 255, 0.08)",
                   borderRadius: "2px",
                   margin: "0 4px",
                 }}
@@ -140,9 +140,11 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
 function EditableValue({
   value,
   onChange,
+  onAltClick,
 }: {
   value: number;
   onChange: (value: number) => void;
+  onAltClick?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -215,6 +217,10 @@ function EditableValue({
     <span
       onClick={(e) => {
         e.stopPropagation();
+        if (e.altKey && onAltClick) {
+          onAltClick();
+          return;
+        }
         setEditing(true);
       }}
       style={{

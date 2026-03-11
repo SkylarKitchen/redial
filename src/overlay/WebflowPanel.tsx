@@ -401,10 +401,14 @@ function ValueInput({ value, onChange }: { value: number; onChange: (v: number) 
         (e.target as HTMLInputElement).blur();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        onChange(value + (e.shiftKey ? 10 : 1));
+        e.stopPropagation();
+        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
+        onChange(Math.round((value + step) * 10) / 10);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        onChange(value - (e.shiftKey ? 10 : 1));
+        e.stopPropagation();
+        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
+        onChange(Math.round((value - step) * 10) / 10);
       }
     },
     [commit, value, onChange]
@@ -773,6 +777,19 @@ const OVERFLOW_OPTIONS = [
   { value: "auto", label: "Auto" },
 ];
 
+const OBJECT_FIT_OPTIONS = [
+  { value: "fill", label: "Fill" }, { value: "contain", label: "Contain" },
+  { value: "cover", label: "Cover" }, { value: "none", label: "None" },
+  { value: "scale-down", label: "Scale Down" },
+];
+const OBJECT_POSITION_OPTIONS = [
+  { value: "center", label: "Center" }, { value: "top", label: "Top" },
+  { value: "bottom", label: "Bottom" }, { value: "left", label: "Left" },
+  { value: "right", label: "Right" }, { value: "top left", label: "Top Left" },
+  { value: "top right", label: "Top Right" }, { value: "bottom left", label: "Bottom Left" },
+  { value: "bottom right", label: "Bottom Right" },
+];
+
 const POSITION_OPTIONS = [
   { value: "static", label: "Static" },
   { value: "relative", label: "Relative" },
@@ -811,6 +828,8 @@ const BLEND_MODE_OPTIONS = [
   { value: "color", label: "Color" },
   { value: "luminosity", label: "Luminosity" },
 ];
+
+const FALLBACK_FONTS = ["system-ui", "Georgia", "Times New Roman", "Courier New", "monospace", "sans-serif", "serif"];
 
 const CURSOR_OPTIONS = [
   { value: "auto", label: "Auto" },
@@ -931,6 +950,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [minHeight, setMinHeight] = useState(() => parseNum(cs.minHeight));
   const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
+  const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
+  const [objectFit, setObjectFit] = useState(() => cs.objectFit);
+  const [objectPosition, setObjectPosition] = useState(() => cs.objectPosition);
 
   // Size units
   const [widthUnit, setWidthUnit] = useState("px");
@@ -981,6 +1003,19 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   });
   const [textTransform, setTextTransform] = useState(() => cs.textTransform);
   const [fontStyle, setFontStyle] = useState(() => cs.fontStyle);
+  const [fontFamily, setFontFamily] = useState(() => cs.fontFamily.replace(/['"]/g, ""));
+  const [pageFonts, setPageFonts] = useState<string[]>([]);
+  useEffect(() => {
+    document.fonts.ready.then(() => {
+      const fonts: string[] = [];
+      document.fonts.forEach(f => {
+        const family = f.family.replace(/['"]/g, "");
+        if (!fonts.includes(family)) fonts.push(family);
+      });
+      setPageFonts(fonts);
+    });
+  }, []);
+  const FONT_OPTIONS = [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f }));
   const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
   const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
   const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
@@ -1042,6 +1077,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     const pd = getComputedStyle(parent).display;
     return pd === "flex" || pd === "inline-flex";
   })();
+  const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
   // ── Apply helper ──
@@ -1156,6 +1192,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
+  const handleAspectRatioChange = useCallback((v: string) => { setAspectRatio(v); apply("aspect-ratio", v || "auto"); }, [apply]);
+  const handleObjectFitChange = useCallback((v: string) => { setObjectFit(v); apply("object-fit", v); }, [apply]);
+  const handleObjectPositionChange = useCallback((v: string) => { setObjectPosition(v); apply("object-position", v); }, [apply]);
 
   // Size keyword toggles
   const handleWidthAutoToggle = useCallback(() => {
@@ -1206,6 +1245,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     setFontStyle(next);
     apply("font-style", next);
   }, [fontStyle, apply]);
+  const handleFontFamilyChange = useCallback((v: string) => { setFontFamily(v); apply("font-family", v); }, [apply]);
 
   const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}px`); }, [apply]);
   const handleWhiteSpaceChange = useCallback((v: string) => { setWhiteSpace(v); apply("white-space", v); }, [apply]);
@@ -1432,6 +1472,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
+          <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} />
           <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} />
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} />
           <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} />
