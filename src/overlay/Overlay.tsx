@@ -595,6 +595,16 @@ export function Overlay() {
     return cleanup ?? undefined;
   }, [selectedEl]);
 
+  // --- Scroll position preservation across panelKey remounts ---
+  const savedScrollRef = useRef(0);
+  useEffect(() => {
+    // After panelKey changes and WebflowPanel remounts, restore scroll position
+    const el = panelScrollRef.current;
+    if (el && savedScrollRef.current > 0) {
+      el.scrollTop = savedScrollRef.current;
+    }
+  }, [panelKey]);
+
   // --- Auto-hiding scrollbar ---
   const panelScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

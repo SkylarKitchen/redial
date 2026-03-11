@@ -31,6 +31,7 @@ export function LabelScrub({
   onChange,
   onScrubStart,
   onScrubEnd,
+  onClick,
   step = 1,
   min,
   max,
