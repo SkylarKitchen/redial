@@ -9,6 +9,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { cssColorToHex } from "./colorUtils";
 
 export interface ShadowValue {
   x: number;
@@ -165,7 +167,7 @@ function ShadowRow({
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
 }) {
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const updateField = useCallback(
     (field: keyof ShadowValue) => (val: number | boolean) => {
       onUpdate(index, { ...shadow, [field]: val });
@@ -200,7 +202,7 @@ function ShadowRow({
         {/* Color swatch */}
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => colorInputRef.current?.click()}
+            onClick={() => setPickerOpen(!pickerOpen)}
             title={`Shadow color: ${shadow.color}`}
             style={{
               width: "16px",
@@ -213,24 +215,20 @@ function ShadowRow({
               flexShrink: 0,
             }}
           />
-          <input
-            ref={colorInputRef}
-            type="color"
-            value={shadow.color.startsWith("#") ? shadow.color : (() => {
-              // Convert rgba/hsla to closest hex for native color picker (no alpha support)
-              const m = shadow.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-              if (m) return "#" + [m[1], m[2], m[3]].map(c => parseInt(c).toString(16).padStart(2, "0")).join("");
-              return "#000000";
-            })()}
-            onChange={(e) => onUpdate(index, { ...shadow, color: e.target.value })}
-            style={{
-              position: "absolute",
-              width: 0,
-              height: 0,
-              opacity: 0,
-              overflow: "hidden",
-            }}
-          />
+          {pickerOpen && (
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 99999, marginTop: "4px" }}>
+              <ColorPickerEnhanced
+                color={cssColorToHex(shadow.color)}
+                onChange={(hex, opacity) => {
+                  const color = opacity < 1
+                    ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
+                    : hex;
+                  onUpdate(index, { ...shadow, color });
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Inset toggle */}
