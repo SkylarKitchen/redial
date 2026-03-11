@@ -745,6 +745,245 @@ const DISPLAY_MORE = [
   { value: "inline", label: "Inline" },
 ];
 
+/** Mini dropdown for X/Y alignment values */
+function MiniDropdown({ value, options, onChange }: {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", flex: 1 }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", height: "22px", display: "flex", alignItems: "center",
+          justifyContent: "space-between", padding: "0 6px",
+          background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
+          fontFamily: "ui-monospace, 'SF Mono', monospace", cursor: "pointer", outline: "none",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.label ?? value}</span>
+        <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", marginLeft: "4px" }}>▾</span>
+      </button>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "80px",
+          background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
+        }}>
+          {options.map((opt) => {
+            const active = opt.value === value;
+            return (
+              <div
+                key={opt.value}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                style={{
+                  padding: "3px 8px", fontSize: "10px", fontFamily: "ui-monospace, 'SF Mono', monospace",
+                  color: active ? "#fff" : "rgba(255,255,255,0.6)",
+                  background: active ? "#6366f1" : "transparent", cursor: "pointer",
+                }}
+                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                {opt.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Direction row: row/column/wrap icons + dropdown chevron for reverse options */
+function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange }: {
+  direction: string;
+  wrap: string;
+  onDirectionChange: (v: string) => void;
+  onWrapChange: (v: string) => void;
+}) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
+  const isSet = direction !== "row" || isWrap;
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [moreOpen]);
+
+  return (
+    <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+      <span style={{
+        fontSize: "11px", flexShrink: 0,
+        ...(isSet ? {
+          background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)",
+          borderRadius: "3px", padding: "2px 6px",
+        } : {
+          color: "rgba(255,255,255,0.5)", width: "64px",
+        }),
+      }}>Direction</span>
+      <div ref={containerRef} style={{ display: "flex", position: "relative" }}>
+        <div style={{ display: "inline-flex" }}>
+          {DIRECTION_ICONS_SHORT.map((opt, i) => {
+            const isFirst = i === 0;
+            const isLast = i === DIRECTION_ICONS_SHORT.length - 1;
+            const isActive = opt.value === "__wrap__" ? isWrap : opt.value === direction.replace("-reverse", "");
+            return (
+              <button
+                key={opt.value}
+                title={opt.title}
+                onClick={() => {
+                  if (opt.value === "__wrap__") {
+                    onWrapChange(isWrap ? "nowrap" : "wrap");
+                  } else {
+                    onDirectionChange(opt.value);
+                  }
+                }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  height: "28px", minWidth: "32px", padding: "0 8px", cursor: "pointer",
+                  background: isActive ? "rgba(255,255,255,0.12)" : "transparent",
+                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
+                  fontWeight: isActive ? 500 : 400,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  borderLeft: isFirst ? "1px solid rgba(255,255,255,0.15)" : "none",
+                  borderRadius: isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : "0",
+                  outline: "none", transition: "background 80ms, color 80ms",
+                }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = isActive ? "rgba(255,255,255,0.12)" : "transparent"; }}
+              >
+                {opt.icon}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => setMoreOpen((o) => !o)}
+          style={{
+            width: "20px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center",
+            background: direction.includes("reverse") ? "rgba(99,102,241,0.2)" : "transparent",
+            border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)",
+            fontSize: "10px", outline: "none", flexShrink: 0, marginLeft: "2px",
+          }}
+        >▾</button>
+        {moreOpen && (
+          <div style={{
+            position: "absolute", top: "calc(100% + 2px)", right: 0, minWidth: "120px",
+            background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
+          }}>
+            {DIRECTION_MORE_OPTIONS.map((opt) => {
+              const active = opt.value === direction;
+              return (
+                <div
+                  key={opt.value}
+                  onClick={() => { onDirectionChange(opt.value); setMoreOpen(false); }}
+                  style={{
+                    padding: "4px 8px", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    color: active ? "#fff" : "rgba(255,255,255,0.6)",
+                    background: active ? "#6366f1" : "transparent", cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  {opt.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Gap row: color swatch + slider + value input + unit + lock icon */
+function GapRow({ value, unit, onChange, onUnitChange }: {
+  value: number; unit: string;
+  onChange: (v: number) => void; onUnitChange: (u: string) => void;
+}) {
+  const [gapLinked, setGapLinked] = useState(true);
+  const pct = ((value) / 200) * 100;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+      <LabelScrub value={value} onChange={onChange} step={1} min={0} max={200}>
+        <span style={{ width: "48px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, cursor: "ew-resize" }}>Gap</span>
+      </LabelScrub>
+      {/* Color swatch indicator */}
+      <div style={{
+        width: "10px", height: "10px", borderRadius: "2px", flexShrink: 0,
+        background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)",
+      }} />
+      {/* Slider */}
+      <input
+        type="range" min={0} max={200} step={1} value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        style={{
+          flex: 1, height: "3px", appearance: "none", WebkitAppearance: "none",
+          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
+          borderRadius: "2px", outline: "none", cursor: "pointer",
+        }}
+      />
+      {/* Value input */}
+      <ValueInput value={value} onChange={onChange} />
+      {/* Unit label */}
+      <span style={{
+        fontSize: "9px", color: "rgba(255,255,255,0.4)", width: "16px",
+        fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase",
+      }}>{unit.toUpperCase()}</span>
+      {/* Link/lock icon */}
+      <button
+        onClick={() => setGapLinked(!gapLinked)}
+        title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
+        style={{
+          width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center",
+          background: "transparent", border: "none", cursor: "pointer", padding: 0,
+          color: gapLinked ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
+          fontSize: "11px", flexShrink: 0,
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12">
+          {gapLinked ? (
+            <>
+              <rect x="3" y="1" width="6" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              <line x1="5" y1="5" x2="5" y2="8" stroke="currentColor" strokeWidth="1.2" />
+              <line x1="7" y1="5" x2="7" y2="8" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="2" y="7" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            </>
+          ) : (
+            <>
+              <rect x="3" y="0" width="6" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              <line x1="5" y1="4" x2="5" y2="6" stroke="currentColor" strokeWidth="1.2" />
+              <line x1="7" y1="4" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="2" y="8" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            </>
+          )}
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

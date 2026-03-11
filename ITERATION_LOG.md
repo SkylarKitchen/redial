@@ -102,6 +102,12 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Removed broken `hooks/` directory (orphaned from partial Phase 0 extraction)
 - Typecheck: PASS, Tests: 24/24 PASS
 
+### Iteration 12 — Complete unit selector JSX wiring (2026-03-11)
+- Wired remaining SliderRow `unit`/`units`/`onUnitChange` props for: word-spacing, text-indent, border-width, line-height
+- Line-height now has dynamic min/max/step based on unit ("—": 0.8–3, px: 8–200, %: 80–300)
+- Confirmed zero hardcoded `unit="px"` remaining (all length controls use state-driven units)
+- Typecheck: PASS, Tests: 24/24 PASS
+
 ---
 
 ## Done
