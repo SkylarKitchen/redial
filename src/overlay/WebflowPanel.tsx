@@ -1513,15 +1513,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [transformOrigin, setTransformOrigin] = useState(() => cs.transformOrigin || "center");
   const [filterValues, setFilterValues] = useState<Partial<FilterValues>>(() => parseFilter(cs.filter));
   const [backdropFilterValues, setBackdropFilterValues] = useState<Partial<FilterValues>>(() =>
-    parseFilter((cs as unknown as Record<string, string>).backdropFilter || (cs as unknown as Record<string, string>).webkitBackdropFilter || "")
+    parseFilter(cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "")
   );
   const [transitions, setTransitions] = useState<TransitionValue[]>(() => parseTransitions(cs));
   const [cursor, setCursor] = useState(() => cs.cursor);
   const [pointerEvents, setPointerEvents] = useState(() => cs.pointerEvents);
   const [visibility, setVisibility] = useState(() => cs.visibility);
   const [userSelect, setUserSelect] = useState(() => cs.userSelect || "auto");
-  const [perspective, setPerspective] = useState(() => parseNum((cs as any).perspective));
-  const [backfaceVisibility, setBackfaceVisibility] = useState(() => (cs as any).backfaceVisibility || "visible");
+  const [perspective, setPerspective] = useState(() => parseNum(cs.getPropertyValue("perspective")));
+  const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
   // Spacing units
   const [marginUnit, setMarginUnit] = useState("px");
@@ -1531,9 +1531,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const isFlex = display === "flex" || display === "inline-flex";
   const isGrid = display === "grid" || display === "inline-grid";
   const parentIsFlex = (() => {
-    const parent = element.parentElement;
-    if (!parent) return false;
-    const pd = getComputedStyle(parent).display;
+    if (!parentCs) return false;
+    const pd = parentCs.display;
     return pd === "flex" || pd === "inline-flex";
   })();
   const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());

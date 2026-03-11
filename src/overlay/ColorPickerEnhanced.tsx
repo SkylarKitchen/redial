@@ -260,10 +260,9 @@ export function ColorPickerEnhanced({
 
   const handleHueMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      const target = e.currentTarget as HTMLElement;
       startDrag((clientX) => {
-        const rect = (
-          e.currentTarget as HTMLElement
-        ).getBoundingClientRect();
+        const rect = target.getBoundingClientRect();
         const h = Math.max(
           0,
           Math.min(360, ((clientX - rect.left) / rect.width) * 360),
@@ -279,10 +278,9 @@ export function ColorPickerEnhanced({
 
   const handleOpacityMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      const target = e.currentTarget as HTMLElement;
       startDrag((clientX) => {
-        const rect = (
-          e.currentTarget as HTMLElement
-        ).getBoundingClientRect();
+        const rect = target.getBoundingClientRect();
         const a = Math.max(
           0,
           Math.min(1, (clientX - rect.left) / rect.width),
