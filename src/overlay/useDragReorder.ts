@@ -1,0 +1,249 @@
+/**
+ * useDragReorder.ts — Shared hook for drag-to-reorder lists
+ *
+ * State machine: idle → pending (pointerdown, awaiting 3px dead zone) → dragging
+ *
+ * Follows LabelScrub.tsx pattern: PointerEvent + setPointerCapture(),
+ * synchronous listener attachment in pointerdown, userSelect: none during drag.
+ *
+ * Visual feedback:
+ * - Dragged item: translateY(offset), elevated shadow, zIndex 50
+ * - Displaced items: translateY(±rowHeight) with 200ms transition
+ * - Drop indicator: 2px indigo line between items
+ */
+
+import { useRef, useState, useCallback } from "react";
+
+interface DragState {
+  dragIndex: number;
+  overIndex: number;
+  startY: number;
+  offsetY: number;
+  heights: number[];
+  tops: number[];
+}
+
+export function useDragReorder<T>(
+  items: T[],
+  onChange: (items: T[]) => void,
+): {
+  registerRef: (index: number) => (el: HTMLElement | null) => void;
+  handleProps: (index: number) => {
+    onPointerDown: (e: React.PointerEvent) => void;
+    style: React.CSSProperties;
+  };
+  itemStyle: (index: number) => React.CSSProperties;
+  dropLineStyle: () => React.CSSProperties | null;
+  isDragging: boolean;
+} {
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const stateRef = useRef<DragState | null>(null);
+  const refsMap = useRef<Map<number, HTMLElement>>(new Map());
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const registerRef = useCallback(
+    (index: number) => (el: HTMLElement | null) => {
+      if (el) {
+        refsMap.current.set(index, el);
+      } else {
+        refsMap.current.delete(index);
+      }
+    },
+    [],
+  );
+
+  const handleProps = useCallback(
+    (index: number) => {
+      const onPointerDown = (e: React.PointerEvent) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const handle = e.currentTarget as HTMLElement;
+        handle.setPointerCapture(e.pointerId);
+
+        const startY = e.clientY;
+        const heights: number[] = [];
+        const tops: number[] = [];
+        for (let i = 0; i < itemsRef.current.length; i++) {
+          const el = refsMap.current.get(i);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            heights.push(rect.height);
+            tops.push(rect.top);
+          } else {
+            heights.push(0);
+            tops.push(0);
+          }
+        }
+
+        let isDragging = false;
+        const DEAD_ZONE = 3;
+
+        const prevSelect = document.body.style.userSelect;
+        const prevCursor = document.body.style.cursor;
+
+        function getOverIndex(dragIdx: number, offsetY: number): number {
+          const dragCenter = tops[dragIdx] + heights[dragIdx] / 2 + offsetY;
+          let best = dragIdx;
+          let bestDist = Infinity;
+          for (let i = 0; i < heights.length; i++) {
+            const center = tops[i] + heights[i] / 2;
+            const dist = Math.abs(dragCenter - center);
+            if (dist < bestDist) {
+              bestDist = dist;
+              best = i;
+            }
+          }
+          return best;
+        }
+
+        function handleMove(ev: PointerEvent) {
+          const dy = ev.clientY - startY;
+
+          if (!isDragging) {
+            if (Math.abs(dy) < DEAD_ZONE) return;
+            isDragging = true;
+            document.body.style.userSelect = "none";
+            document.body.style.cursor = "grabbing";
+          }
+
+          const overIdx = getOverIndex(index, dy);
+          const state: DragState = {
+            dragIndex: index,
+            overIndex: overIdx,
+            startY,
+            offsetY: dy,
+            heights,
+            tops,
+          };
+          stateRef.current = state;
+          setDragState(state);
+        }
+
+        let cleaned = false;
+        function cleanup() {
+          if (cleaned) return;
+          cleaned = true;
+          handle.removeEventListener("pointermove", handleMove);
+          handle.removeEventListener("pointerup", handleUp);
+          handle.removeEventListener("lostpointercapture", handleUp);
+          window.removeEventListener("blur", handleUp);
+
+          if (isDragging) {
+            document.body.style.userSelect = prevSelect;
+            document.body.style.cursor = prevCursor;
+
+            // Perform the reorder
+            const final = stateRef.current;
+            if (final && final.dragIndex !== final.overIndex) {
+              const next = [...itemsRef.current];
+              const [moved] = next.splice(final.dragIndex, 1);
+              next.splice(final.overIndex, 0, moved);
+              onChangeRef.current(next);
+            }
+          }
+
+          stateRef.current = null;
+          setDragState(null);
+        }
+
+        function handleUp() {
+          cleanup();
+        }
+
+        handle.addEventListener("pointermove", handleMove);
+        handle.addEventListener("pointerup", handleUp);
+        handle.addEventListener("lostpointercapture", handleUp);
+        window.addEventListener("blur", handleUp);
+      };
+
+      return {
+        onPointerDown,
+        style: {
+          cursor: dragState?.dragIndex === index ? "grabbing" : "grab",
+          touchAction: "none" as const,
+        },
+      };
+    },
+    [dragState],
+  );
+
+  const itemStyle = useCallback(
+    (index: number): React.CSSProperties => {
+      if (!dragState) return { position: "relative" };
+
+      const { dragIndex, overIndex, offsetY, heights } = dragState;
+
+      if (index === dragIndex) {
+        return {
+          position: "relative",
+          zIndex: 50,
+          transform: `translateY(${offsetY}px)`,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+          opacity: 0.95,
+        };
+      }
+
+      // Items between dragIndex and overIndex need to shift
+      let shift = 0;
+      if (dragIndex < overIndex) {
+        // Dragging down: items between (dragIndex, overIndex] shift up
+        if (index > dragIndex && index <= overIndex) {
+          shift = -heights[dragIndex];
+        }
+      } else if (dragIndex > overIndex) {
+        // Dragging up: items between [overIndex, dragIndex) shift down
+        if (index >= overIndex && index < dragIndex) {
+          shift = heights[dragIndex];
+        }
+      }
+
+      return {
+        position: "relative",
+        transform: shift !== 0 ? `translateY(${shift}px)` : undefined,
+        transition: "transform 200ms ease",
+      };
+    },
+    [dragState],
+  );
+
+  const dropLineStyle = useCallback((): React.CSSProperties | null => {
+    if (!dragState || dragState.dragIndex === dragState.overIndex) return null;
+
+    const { overIndex, dragIndex, tops, heights } = dragState;
+
+    // Position the drop line at the boundary where the item will be inserted
+    let top: number;
+    if (dragIndex < overIndex) {
+      // Dragging down: line at bottom of overIndex item
+      top = tops[overIndex] + heights[overIndex] - tops[0];
+    } else {
+      // Dragging up: line at top of overIndex item
+      top = tops[overIndex] - tops[0];
+    }
+
+    return {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: `${top}px`,
+      height: "2px",
+      background: "#6366f1",
+      borderRadius: "1px",
+      zIndex: 51,
+      pointerEvents: "none",
+    };
+  }, [dragState]);
+
+  return {
+    registerRef,
+    handleProps,
+    itemStyle,
+    dropLineStyle,
+    isDragging: dragState !== null,
+  };
+}

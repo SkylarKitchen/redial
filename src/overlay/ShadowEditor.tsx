@@ -6,6 +6,11 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { X } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
+import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { cssColorToHex } from "./colorUtils";
 
 export interface ShadowValue {
   x: number;
@@ -152,13 +157,17 @@ function ShadowRow({
   index,
   onUpdate,
   onDelete,
+  dragHandleProps,
+  isDragging,
 }: {
   shadow: ShadowValue;
   index: number;
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
 }) {
-  const colorInputRef = useRef<HTMLInputElement>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const updateField = useCallback(
     (field: keyof ShadowValue) => (val: number | boolean) => {
       onUpdate(index, { ...shadow, [field]: val });
@@ -173,8 +182,15 @@ function ShadowRow({
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* Row 1: numeric inputs */}
-      <div style={{ display: "flex", gap: "6px", marginBottom: "4px" }}>
+      {/* Row 1: drag handle + numeric inputs */}
+      <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-end" }}>
+        {dragHandleProps && (
+          <DragHandle
+            isDragging={isDragging}
+            onPointerDown={dragHandleProps.onPointerDown}
+            style={{ alignSelf: "center" }}
+          />
+        )}
         <NumericInput value={shadow.x} label="X" onChange={updateField("x") as (v: number) => void} />
         <NumericInput value={shadow.y} label="Y" onChange={updateField("y") as (v: number) => void} />
         <NumericInput value={shadow.blur} label="Blur" onChange={updateField("blur") as (v: number) => void} />
@@ -186,7 +202,7 @@ function ShadowRow({
         {/* Color swatch */}
         <div style={{ position: "relative" }}>
           <button
-            onClick={() => colorInputRef.current?.click()}
+            onClick={() => setPickerOpen(!pickerOpen)}
             title={`Shadow color: ${shadow.color}`}
             style={{
               width: "16px",
@@ -199,24 +215,20 @@ function ShadowRow({
               flexShrink: 0,
             }}
           />
-          <input
-            ref={colorInputRef}
-            type="color"
-            value={shadow.color.startsWith("#") ? shadow.color : (() => {
-              // Convert rgba/hsla to closest hex for native color picker (no alpha support)
-              const m = shadow.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-              if (m) return "#" + [m[1], m[2], m[3]].map(c => parseInt(c).toString(16).padStart(2, "0")).join("");
-              return "#000000";
-            })()}
-            onChange={(e) => onUpdate(index, { ...shadow, color: e.target.value })}
-            style={{
-              position: "absolute",
-              width: 0,
-              height: 0,
-              opacity: 0,
-              overflow: "hidden",
-            }}
-          />
+          {pickerOpen && (
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 99999, marginTop: "4px" }}>
+              <ColorPickerEnhanced
+                color={cssColorToHex(shadow.color)}
+                onChange={(hex, opacity) => {
+                  const color = opacity < 1
+                    ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
+                    : hex;
+                  onUpdate(index, { ...shadow, color });
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Inset toggle */}
@@ -263,7 +275,7 @@ function ShadowRow({
             (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)";
           }}
         >
-          ×
+          <X size={12} strokeWidth={2} />
         </button>
       </div>
     </div>
@@ -271,6 +283,8 @@ function ShadowRow({
 }
 
 export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(shadows, onChange);
+
   const handleAdd = useCallback(() => {
     onChange([...shadows, { ...DEFAULT_SHADOW }]);
   }, [shadows, onChange]);
@@ -292,7 +306,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
   );
 
   return (
-    <div style={{ padding: "4px 12px" }}>
+    <div style={{ padding: "4px 12px", position: "relative" }}>
       {/* Add button */}
       <button
         onClick={handleAdd}
@@ -320,15 +334,27 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
       </button>
 
       {/* Shadow rows */}
-      {shadows.map((shadow, i) => (
-        <ShadowRow
-          key={i}
-          shadow={shadow}
-          index={i}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
-      ))}
+      {shadows.map((shadow, i) => {
+        const dragProps = handleProps(i);
+        return (
+          <div key={i} ref={registerRef(i)} style={itemStyle(i)}>
+            <ShadowRow
+              shadow={shadow}
+              index={i}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+              dragHandleProps={dragProps}
+              isDragging={isDragging}
+            />
+          </div>
+        );
+      })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
 
       {shadows.length === 0 && (
         <div

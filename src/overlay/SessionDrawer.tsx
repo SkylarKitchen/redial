@@ -8,7 +8,8 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "./apply";
-import { getSelector, getDisplayClass } from "./util";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 
 interface SessionDrawerProps {
@@ -36,15 +37,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
 
   const handleCopyAll = useCallback(() => {
     if (allDiffs.length === 0) return;
-
-    const blocks = allDiffs.map(({ el, changes }) => {
-      const selector = getSelector(el);
-      const lines = changes.map(
-        (c) => `  ${c.prop}: ${c.to}; // was ${c.from}`
-      );
-      return `${selector} {\n${lines.join("\n")}\n}`;
-    });
-
+    const blocks = allDiffs.map(({ el, changes }) => formatCSSDiff(el, changes));
     navigator.clipboard.writeText(blocks.join("\n\n"));
     setMessage("Copied!");
     setTimeout(() => setMessage(null), 1500);
@@ -212,8 +205,8 @@ function ElementGroup({
           color: "rgba(255, 255, 255, 0.95)",
         }}
       >
-        <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "9px" }}>
-          {expanded ? "▼" : "▶"}
+        <span style={{ color: "rgba(255, 255, 255, 0.3)", display: "flex", alignItems: "center" }}>
+          {expanded ? <ChevronDown size={10} strokeWidth={2} /> : <ChevronRight size={10} strokeWidth={2} />}
         </span>
         <span style={{ color: "#fff" }}>{"<"}{tag}{">"}</span>
         {cls && <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>.{cls}</span>}

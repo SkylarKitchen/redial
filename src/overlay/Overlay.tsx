@@ -17,11 +17,12 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
-import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle } from "./apply";
-import { buildBreadcrumb } from "./util";
-import { ViewportBar } from "./ViewportBar";
+import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
+import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
+
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
+import { Plus } from "lucide-react";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -71,7 +72,16 @@ export function Overlay() {
   const [selecting, setSelecting] = useState(false);
   const [selectedEl, setSelectedEl] = useState<Element | null>(null);
   const [inferResult, setInferResult] = useState<InferResult | null>(null);
-  const [panelKey, setPanelKey] = useState(0); // force re-mount on new selection
+  const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
+  const panelScrollRef = useRef<HTMLDivElement>(null);
+  const savedScrollRef = useRef(0);
+  /** Wrapper that saves scroll position before triggering a remount */
+  const setPanelKey: typeof setPanelKeyRaw = useCallback((v) => {
+    if (panelScrollRef.current) {
+      savedScrollRef.current = panelScrollRef.current.scrollTop;
+    }
+    setPanelKeyRaw(v);
+  }, []);
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -85,19 +95,66 @@ export function Overlay() {
   // State selector
   const [activeState, setActiveState] = useState("none");
 
+  // Style clipboard message
+  const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
+
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle
 
-  // Viewport preview (Phase 3)
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
 
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
 
+  // Stable selector for re-resolving after HMR
+  const selectedSelectorRef = useRef<string | null>(null);
+
+  // Save-in-flight guard to prevent double-save
+  const savingRef = useRef(false);
+
   // Panel position (draggable)
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+
+  const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
+    setScope(newScope);
+    setActiveClassName(newScope === "class" ? (cls ?? null) : null);
+  }, []);
+
+  // --- Keyboard shortcut helpers ---
+  const handleSaveShortcut = useCallback(async () => {
+    if (!selectedEl || savingRef.current) return;
+    const changes = diff(selectedEl);
+    if (changes.length === 0) return;
+    savingRef.current = true;
+    try {
+      const res = await fetch("/api/tuner/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ changes }),
+      });
+      if (res.ok) {
+        setInferResult(infer(selectedEl));
+        setPanelKey((k) => k + 1);
+      } else {
+        console.warn("[Tuner] Save failed:", res.status, res.statusText);
+      }
+    } catch (err) {
+      console.warn("[Tuner] Save error:", err);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [selectedEl]);
+
+  const handleCopyShortcut = useCallback(() => {
+    if (!selectedEl) return;
+    const changes = diff(selectedEl);
+    if (changes.length === 0) return;
+    navigator.clipboard.writeText(formatCSSDiff(selectedEl, changes)).catch(() => {
+      // Clipboard API unavailable (non-HTTPS or permission denied) — silent fallback
+    });
+  }, [selectedEl]);
 
   // --- Hotkey: backtick toggles selection ---
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
@@ -105,6 +162,19 @@ export function Overlay() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target instanceof Element ? e.target as HTMLElement : null;
       const insidePanel = target?.closest(".__tuner-root");
+
+      // Cmd+Shift+Z / Ctrl+Shift+Z for redo
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
+        if (diffMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const result = redo();
+        if (result) {
+          setInferResult(infer(result.el));
+          setPanelKey((k) => k + 1);
+        }
+        return;
+      }
 
       // Cmd+Z / Ctrl+Z for undo — must fire even when focus is inside panel inputs
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
@@ -120,11 +190,87 @@ export function Overlay() {
         return;
       }
 
+      // Cmd+Alt+C for copy styles to clipboard
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.altKey && e.key === "c") {
+        e.preventDefault();
+        e.stopPropagation();
+        const count = copyStyles(selectedEl);
+        if (count > 0) {
+          setClipboardMessage(`${count} style${count === 1 ? "" : "s"} copied`);
+        }
+        return;
+      }
+
+      // Cmd+Alt+V for paste styles from clipboard
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.altKey && e.key === "v") {
+        if (diffMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const count = pasteStyles(selectedEl);
+        if (count > 0) {
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+          setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
+        }
+        return;
+      }
+
+      // Cmd+S for save — must fire even when focus is inside panel inputs
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (diffMode) return; // Block save during diff peek (overrides are stripped)
+        if (overrideCount(selectedEl) > 0) {
+          handleSaveShortcut();
+        }
+        return;
+      }
+
+      // Cmd+C for copy CSS — must fire even when focus is inside panel inputs
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "c") {
+        // Only intercept if no text is selected (don't break normal copy)
+        const selection = window.getSelection();
+        if (!selection || selection.toString() === "") {
+          e.preventDefault();
+          e.stopPropagation();
+          if (overrideCount(selectedEl) > 0) {
+            handleCopyShortcut();
+          }
+          return;
+        }
+      }
+
       // For all other shortcuts, skip when typing in inputs or inside our panel
       const tag = target?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
       if (target?.isContentEditable) return;
       if (insidePanel) return;
+
+      // S to cycle scope
+      if (e.key === "s" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        // cycle between "element" and "class" scope
+        // Only cycle if there are CSS classes available
+        if (cssClasses.length > 0) {
+          if (scope === "element") {
+            handleScopeChange("class", cssClasses[0]);
+          } else {
+            handleScopeChange("element");
+          }
+        }
+        return;
+      }
+
+      // R to reset
+      if (e.key === "r" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting && !diffMode) {
+        e.preventDefault();
+        if (overrideCount(selectedEl) > 0) {
+          reset(selectedEl);
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+        }
+        return;
+      }
 
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
@@ -145,22 +291,31 @@ export function Overlay() {
         setDiffMode(true);
       }
 
-      // Arrow key navigation (Phase 2)
+      // Arrow key element navigation: ↑ parent, ↓ first visible child, ←/→ siblings
       if (selectedEl && !selecting && !diffMode && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
-        e.preventDefault();
         let next: Element | null = null;
 
-        if (e.key === "ArrowUp") next = selectedEl.parentElement;
-        else if (e.key === "ArrowDown") next = selectedEl.firstElementChild;
-        else if (e.key === "ArrowLeft") next = selectedEl.previousElementSibling;
-        else if (e.key === "ArrowRight") next = selectedEl.nextElementSibling;
+        if (e.key === "ArrowUp") {
+          next = selectedEl.parentElement;
+        } else if (e.key === "ArrowDown") {
+          let child = selectedEl.firstElementChild;
+          while (child && !isNavigableElement(child)) child = child.nextElementSibling;
+          next = child;
+        } else if (e.key === "ArrowLeft") {
+          let sib = selectedEl.previousElementSibling;
+          while (sib && !isNavigableElement(sib)) sib = sib.previousElementSibling;
+          next = sib;
+        } else if (e.key === "ArrowRight") {
+          let sib = selectedEl.nextElementSibling;
+          while (sib && !isNavigableElement(sib)) sib = sib.nextElementSibling;
+          next = sib;
+        }
 
-        if (!next) return;
-        const nextTag = next.tagName.toLowerCase();
-        if (nextTag === "body" || nextTag === "html") return;
-        if ((next as HTMLElement).closest?.(".__tuner-root")) return;
+        if (!next || !isNavigableElement(next)) return;
 
+        e.preventDefault();
         setSelectedEl(next);
+        selectedSelectorRef.current = getStableSelector(next);
         setInferResult(infer(next));
         setPanelKey((k) => k + 1);
       }
@@ -181,12 +336,31 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode]);
+  }, [selectedEl, selecting, diffMode, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+
+  // --- Clipboard message auto-clear ---
+  useEffect(() => {
+    if (!clipboardMessage) return;
+    const timer = setTimeout(() => setClipboardMessage(null), 1500);
+    return () => clearTimeout(timer);
+  }, [clipboardMessage]);
+
+  // --- Paste handler for Footer ---
+  const handlePasteStyles = useCallback(() => {
+    if (!selectedEl || diffMode) return;
+    const count = pasteStyles(selectedEl);
+    if (count > 0) {
+      setInferResult(infer(selectedEl));
+      setPanelKey((k) => k + 1);
+      setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
+    }
+  }, [selectedEl, diffMode]);
 
   // --- Element selection ---
   const handleSelect = useCallback((el: Element) => {
     setSelecting(false);
     setSelectedEl(el);
+    selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
     // Reset scope on new selection
@@ -202,6 +376,7 @@ export function Overlay() {
 
   const handleClose = useCallback(() => {
     setSelectedEl(null);
+    selectedSelectorRef.current = null;
     setInferResult(null);
     setScope("element");
     setActiveClassName(null);
@@ -231,19 +406,31 @@ export function Overlay() {
     }
   }, [selectedEl]);
 
-  const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
-    setScope(newScope);
-    setActiveClassName(newScope === "class" ? (cls ?? null) : null);
-  }, []);
-
   const handleToggleSession = useCallback(() => {
     setSessionOpen((s) => !s);
   }, []);
 
   // --- Spacing box model change handler ---
-  const handleSpacingChange = useCallback((prop: string, value: number) => {
+  // Updates both the DOM (via applyInlineStyle) and the inferResult.spacing
+  // so the panel re-renders with fresh values during drag-scrub.
+  const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
-    applyInlineStyle(selectedEl, prop, `${value}px`);
+    applyInlineStyle(selectedEl, prop, `${value}${unit}`);
+    // Update inferResult.spacing so the panel receives fresh prop values
+    setInferResult((prev) => {
+      if (!prev) return prev;
+      const [group, side] = prop.split("-") as [string, string];
+      if ((group === "margin" || group === "padding") && side) {
+        return {
+          ...prev,
+          spacing: {
+            ...prev.spacing,
+            [group]: { ...prev.spacing[group], [side]: value },
+          },
+        };
+      }
+      return prev;
+    });
     handleDirtyChange();
   }, [selectedEl, handleDirtyChange]);
 
@@ -282,6 +469,8 @@ export function Overlay() {
   // --- Diff toggle (button click) ---
   const handleToggleDiff = useCallback(() => {
     if (!selectedEl || overrideCount(selectedEl) === 0) return;
+    // Don't toggle via button while keyboard hold is active
+    if (diffHoldRef.current) return;
     setDiffMode((prev) => {
       if (prev) {
         restoreAllOverrides();
@@ -305,6 +494,7 @@ export function Overlay() {
   // --- Breadcrumb click handler (Phase 2) ---
   const handleBreadcrumbClick = useCallback((el: Element) => {
     setSelectedEl(el);
+    selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
   }, []);
@@ -315,8 +505,15 @@ export function Overlay() {
 
     const outline = selectedOutlineRef.current;
     let rafId: number;
+    let cancelled = false;
 
     const updatePosition = () => {
+      if (cancelled) return;
+      // If the element was removed from the DOM (HMR, navigation), stop tracking
+      if (!selectedEl.isConnected) {
+        outline.style.display = "none";
+        return;
+      }
       const rect = selectedEl.getBoundingClientRect();
       outline.style.top = `${rect.top}px`;
       outline.style.left = `${rect.left}px`;
@@ -329,44 +526,11 @@ export function Overlay() {
     rafId = requestAnimationFrame(updatePosition);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafId);
       outline.style.display = "none";
     };
   }, [selectedEl, selecting]);
-
-  // --- Viewport constraint style injection (Phase 3) ---
-  useEffect(() => {
-    const STYLE_ID = "__tuner-viewport-constraint";
-
-    if (viewportWidth === null) {
-      document.getElementById(STYLE_ID)?.remove();
-      return;
-    }
-
-    let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-    if (!style) {
-      style = document.createElement("style");
-      style.id = STYLE_ID;
-      document.head.appendChild(style);
-    }
-
-    style.textContent = `body > *:not(.__tuner-root):not(.__tuner-selector-outline):not(.__tuner-selected-outline) { max-width: ${viewportWidth}px !important; margin-left: auto !important; margin-right: auto !important; }`;
-
-    return () => {
-      document.getElementById(STYLE_ID)?.remove();
-    };
-  }, [viewportWidth]);
-
-  // --- Viewport change: re-infer after width change ---
-  const handleViewportChange = useCallback((width: number | null) => {
-    setViewportWidth(width);
-    if (selectedEl) {
-      requestAnimationFrame(() => {
-        setInferResult(infer(selectedEl));
-        setPanelKey((k) => k + 1);
-      });
-    }
-  }, [selectedEl]);
 
   // --- Breadcrumb computation (Phase 2) ---
   const breadcrumb = selectedEl ? buildBreadcrumb(selectedEl) : [];
@@ -404,10 +568,41 @@ export function Overlay() {
     return () => { document.getElementById(STYLE_ID)?.remove(); };
   }, []);
 
+  // --- Focus ring styles (global, scoped to tuner root) ---
+  useEffect(() => {
+    const STYLE_ID = "__tuner-focus-ring";
+    if (document.getElementById(STYLE_ID)) return;
+
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
+    document.head.appendChild(style);
+
+    return () => { document.getElementById(STYLE_ID)?.remove(); };
+  }, []);
+
   // --- HMR auto-reset (Turbopack + Vite + webpack) ---
   useEffect(() => {
     const cleanup = onHmrUpdate(() => {
       const cleared = clearRedundantOverrides();
+
+      // Re-resolve the selected element if it was detached by HMR
+      if (selectedEl && !selectedEl.isConnected && selectedSelectorRef.current) {
+        const resolved = document.querySelector(selectedSelectorRef.current);
+        if (resolved) {
+          setSelectedEl(resolved);
+          setInferResult(infer(resolved));
+          setPanelKey((k) => k + 1);
+          return;
+        } else {
+          // Element no longer exists after HMR — close panel
+          setSelectedEl(null);
+          selectedSelectorRef.current = null;
+          setInferResult(null);
+          return;
+        }
+      }
+
       if (cleared > 0 && selectedEl) {
         setInferResult(infer(selectedEl));
         setPanelKey((k) => k + 1);
@@ -416,8 +611,97 @@ export function Overlay() {
     return cleanup ?? undefined;
   }, [selectedEl]);
 
+  // --- Scroll position preservation across panelKey remounts ---
+  useEffect(() => {
+    const el = panelScrollRef.current;
+    if (el && savedScrollRef.current > 0) {
+      el.scrollTop = savedScrollRef.current;
+    }
+  }, [panelKey]);
+
+  // --- Auto-hiding scrollbar ---
+  useEffect(() => {
+    const el = panelScrollRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      el.classList.add("is-scrolling");
+      clearTimeout(timer);
+      timer = setTimeout(() => el.classList.remove("is-scrolling"), 800);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, [selectedEl]);
+
+  // --- Click-to-switch: clicking a page element while panel is open re-selects ---
+  useEffect(() => {
+    if (!selectedEl || selecting) return;
+
+    const handlePageClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (target.closest(".__tuner-root")) return;
+      if (target.closest(".__tuner-selected-outline")) return;
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el || el.closest(".__tuner-root")) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      handleSelect(el);
+    };
+
+    document.addEventListener("click", handlePageClick, true);
+    return () => document.removeEventListener("click", handlePageClick, true);
+  }, [selectedEl, selecting, handleSelect]);
+
   return (
     <>
+      {/* Scoped scrollbar styles for the tuner panel */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .__tuner-root::-webkit-scrollbar,
+        .__tuner-root *::-webkit-scrollbar {
+          width: 5px;
+          height: 5px;
+        }
+        .__tuner-root::-webkit-scrollbar-track,
+        .__tuner-root *::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .__tuner-root::-webkit-scrollbar-thumb,
+        .__tuner-root *::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0);
+          border-radius: 4px;
+          transition: background 0.3s;
+        }
+        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
+        .__tuner-root:hover::-webkit-scrollbar-thumb,
+        .__tuner-root *:hover::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.15);
+        }
+        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb:hover,
+        .__tuner-root:hover::-webkit-scrollbar-thumb:hover,
+        .__tuner-root *:hover::-webkit-scrollbar-thumb:hover {
+          background: rgba(255,255,255,0.25);
+        }
+        .__tuner-root, .__tuner-root * {
+          scrollbar-width: thin;
+          scrollbar-color: transparent transparent;
+        }
+        .__tuner-root.is-scrolling,
+        .__tuner-root:hover,
+        .__tuner-root *:hover {
+          scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+        @keyframes tuner-enter {
+          from { opacity: 0; transform: translateY(8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .__tuner-enter { animation: tuner-enter 150ms ease-out both; }
+      `}} />
+
       {/* Selector overlay (full viewport, invisible until hover) */}
       <Selector
         active={selecting}
@@ -445,15 +729,16 @@ export function Overlay() {
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
-          className="__tuner-root"
+          className="__tuner-root __tuner-enter"
           style={{
             position: "fixed",
             top: pos.y,
             left: pos.x,
             width: 300,
             maxHeight: "85vh",
-            overflowY: "auto",
-            overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             zIndex: 2147483647,
             background: "#1e1e1e",
             borderRadius: "10px",
@@ -481,39 +766,47 @@ export function Overlay() {
             state={activeState}
             onStateChange={setActiveState}
           />
-          <ViewportBar
-            active={viewportWidth}
-            onChange={handleViewportChange}
-          />
           <div
+            ref={panelScrollRef}
+            className="__tuner-root"
             style={{
-              padding: "4px 0",
-              pointerEvents: diffMode ? "none" : "auto",
-              opacity: diffMode ? 0.6 : 1,
-              transition: "opacity 150ms",
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              minHeight: 0,
             }}
           >
-            <PanelErrorBoundary onError={handleClose}>
-              <WebflowPanel
-                key={panelKey}
-                element={selectedEl}
-                spacing={inferResult.spacing}
-                onSpacingChange={handleSpacingChange}
-                onDirtyChange={handleDirtyChange}
-              />
-            </PanelErrorBoundary>
+            <div
+              style={{
+                padding: "4px 0",
+                pointerEvents: diffMode ? "none" : "auto",
+                opacity: diffMode ? 0.6 : 1,
+                transition: "opacity 150ms",
+              }}
+            >
+              <PanelErrorBoundary onError={handleClose}>
+                <WebflowPanel
+                  key={panelKey}
+                  element={selectedEl}
+                  spacing={inferResult.spacing}
+                  onSpacingChange={handleSpacingChange}
+                  onDirtyChange={handleDirtyChange}
+                />
+              </PanelErrorBoundary>
+            </div>
+            <SessionDrawer
+              open={sessionOpen}
+              onResetAll={handleResetAll}
+            />
           </div>
-          <SessionDrawer
-            open={sessionOpen}
-            onResetAll={handleResetAll}
-          />
           <Footer
             element={selectedEl}
             onReset={handleReset}
-            diffMode={diffMode}
-            onToggleDiff={handleToggleDiff}
             scope={scope}
             activeClassName={activeClassName}
+            clipboardMessage={clipboardMessage}
+            hasClipboard={hasClipboardStyles()}
+            onPasteStyles={handlePasteStyles}
           />
         </div>
       )}
@@ -540,6 +833,51 @@ export function Overlay() {
           Click an element to inspect • Esc to cancel
         </div>
       )}
+
+      {/* Floating action button — bottom-right activation trigger */}
+      <div
+        className="__tuner-root"
+        onClick={() => {
+          if (selectedEl) {
+            // If panel is open, close it
+            handleClose();
+          } else {
+            // Toggle selection mode
+            setSelecting((s) => !s);
+          }
+        }}
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 2147483647,
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#1e1e1e",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: selecting || selectedEl
+            ? "0 0 0 1px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.5)"
+            : "0 4px 20px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "box-shadow 200ms ease, border-color 200ms ease",
+          ...(selecting || selectedEl ? { borderColor: "rgba(99,102,241,0.4)" } : {}),
+        }}
+        title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
+      >
+        <Plus
+          size={20}
+          strokeWidth={1.5}
+          color="rgba(255,255,255,0.8)"
+          style={{
+            transition: "transform 200ms ease",
+            transform: selecting || selectedEl ? "rotate(45deg)" : "rotate(0deg)",
+          }}
+        />
+      </div>
     </>
   );
 }

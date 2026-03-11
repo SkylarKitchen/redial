@@ -2,388 +2,500 @@
 title: "Complete Remaining Webflow Panel Spec Items (Phase B + C)"
 type: feat
 date: 2026-03-11
+deepened: 2026-03-11
 ---
 
 # Complete Remaining Webflow Panel Spec Items (Phase B + C)
 
+## Enhancement Summary
+
+**Deepened on:** 2026-03-11
+**Agents used:** TypeScript reviewer, Performance oracle, Simplicity reviewer, Architecture strategist, Pattern recognition specialist, Frontend races reviewer, Best practices researcher, Framework docs researcher
+
+### Key Improvements
+1. **Added Phase 0 (prerequisite refactoring)** — extract WebflowPanel.tsx into sections, hooks, controls, and utilities before adding features. All 8 agents independently identified this as critical.
+2. **Simplified StyleIndicator** — track user modifications via existing `apply.ts` override map instead of unreliable DOM archaeology. Eliminates ~160 LOC of fragile detection logic.
+3. **Simplified unit conversion** — only px↔em and px↔rem using px as pivot unit. Skip full conversion matrix (YAGNI).
+4. **Eliminated Item 22** (Tab navigation) — browser defaults with `tabIndex={0}` suffice. Custom focus interception fights the browser.
+5. **Reduced agent count** — 5 agents (down from 11) grouped by file ownership to prevent merge conflicts.
+
+### Critical Findings
+- `getComputedStyle()` returns a **live** object — must snapshot into plain object at mount
+- 7 duplicate editable-input implementations across codebase — extract shared `NumericInput`
+- Alt+click in SpacingBoxModel must check `e.altKey` BEFORE `setEditing(true)` to avoid race
+- `Cmd+C` shortcut must not steal native copy from focused text inputs
+- `parentIsFlex` derivation calls `getComputedStyle(parent)` on every render — needs `useMemo`
+
+---
+
 ## Overview
 
-14 remaining spec items across Phase B (missing controls) and Phase C (cross-cutting polish). Item 7 (flex-direction toggles) is already done. These items complete the Webflow-style CSS panel to full spec parity.
+13 remaining spec items across Phase B (missing controls) and Phase C (cross-cutting polish), plus a prerequisite refactoring phase. Item 7 (flex-direction toggles) is already done. Item 22 (Tab navigation) eliminated as YAGNI.
 
 ## Remaining Items
 
-### Phase B — Missing Controls (9 items)
+### Phase B — Missing Controls (8 items)
 
 | # | Item | Section | Complexity | Files |
 |---|------|---------|-----------|-------|
-| 8 | Flex child `order` control | Layout | S | `WebflowPanel.tsx` |
-| 9 | Typography advanced sub-section | Typography | M | `WebflowPanel.tsx` |
-| 10 | Position visual offset diagram | Position | M | New: `PositionOffsetDiagram.tsx`, `WebflowPanel.tsx` |
-| 12 | Size auto/none keyword toggles (UI only — state exists) | Size | S | `WebflowPanel.tsx` |
-| 13 | `aspect-ratio` control | Size | S | `WebflowPanel.tsx` |
-| 14 | `object-position` for media elements | Size | S | `WebflowPanel.tsx` |
+| 8 | Flex child `order` control | Layout | S | `useLayoutState.ts` |
+| 9 | Typography advanced sub-section | Typography | M | `useTypographyState.ts` |
+| 10 | Position visual offset diagram | Position | M | Inline in Position JSX (reuse exported `EditableValue`) |
+| 12 | Size auto/none keyword toggles (UI only — state exists) | Size | S | `useSizeState.ts` |
+| 13 | `aspect-ratio` control | Size | S | `useSizeState.ts` |
+| 14 | `object-position` for media elements | Size | S | `useSizeState.ts` |
 | 15 | Spacing color zones (warm margin, cool padding) | Spacing | S | `SpacingBoxModel.tsx` |
 | 16 | Spacing alt+click shortcuts | Spacing | M | `SpacingBoxModel.tsx` |
 
-### Phase C — Cross-Cutting Polish (6 items)
+### Phase C — Cross-Cutting Polish (5 items)
 
 | # | Item | Section | Complexity | Files |
 |---|------|---------|-----------|-------|
-| 18 | Unit conversion logic (px→em, etc.) | All numeric | M | `UnitSelector.tsx`, `WebflowPanel.tsx` |
-| 19 | StyleIndicator detection logic | Cross-cutting | L | New: `detectStyleSource.ts`, `StyleIndicator.tsx` |
-| 20 | StyleIndicator integration into sections | Cross-cutting | M | `WebflowPanel.tsx` |
+| 18 | Unit conversion (px↔em, px↔rem only) | All numeric | S | `unitConversion.ts`, section hooks |
+| 19 | StyleIndicator detection (override-tracking) | Cross-cutting | S | `apply.ts` (extend), `StyleIndicator.tsx` |
+| 20 | StyleIndicator integration into sections | Cross-cutting | M | `controls.tsx` (SliderRow/SelectRow) |
 | 21 | Keyboard shortcuts (S, R, Cmd+S, Cmd+C) | Cross-cutting | M | `Overlay.tsx` |
-| 22 | Tab/Shift+Tab navigation within sections | Cross-cutting | M | `WebflowPanel.tsx` or new focus manager |
+| ~~22~~ | ~~Tab/Shift+Tab navigation~~ | ~~Cross-cutting~~ | ~~ELIMINATED~~ | ~~YAGNI~~ |
 
-## Implementation Plan
+---
 
-### Work Unit 1: Size Section Completion (Items 12, 13, 14) — PARALLEL
+## Phase 0: Prerequisite Refactoring (MUST DO FIRST)
 
-Three small, independent additions to the Size section in `WebflowPanel.tsx`.
+All 8 review agents independently identified this as critical. WebflowPanel.tsx at 1533 lines with ~57 useState calls cannot absorb 5 parallel agents without merge conflicts. Extract first, then add features.
+
+### 0a. Extract Utilities → `src/overlay/cssHelpers.ts`
+
+Move from WebflowPanel.tsx lines 36-217:
+- `rgbToHex`, `parseNum`, `parseBoxShadow`, `parseFilter`, `parseTransform`
+- `shadowToCSS`, `filterToCSS`, `transformToCSS`, `parseTransitions`, `transitionsToCSS`
+
+These are pure functions with zero React dependency. Also deduplicate `rgbToHex` and `parseNum` which exist in both `infer.ts` and `WebflowPanel.tsx`.
+
+### 0b. Extract Controls → `src/overlay/controls.tsx`
+
+Move from WebflowPanel.tsx lines 348-707:
+- `Section`, `ValueInput`, `SliderRow`, `SelectRow`, `ColorRow`, `TextRow`
+- Export `EditableValue` from `SpacingBoxModel.tsx` (currently file-private, needed by Position offset diagram)
+
+### Research Insights
+
+**Pattern recognition finding:** There are **7 independent implementations** of the click-to-edit numeric input pattern (`EditableValue`, `NumericInput`, `RadiusInput`, `ValueInput`, `AxisInput`, + 2 in TransitionEditor). Extract a shared component to `controls.tsx` to prevent an 8th copy.
+
+**Imperative hover bug:** 58+ instances use `onMouseEnter`/`onMouseLeave` with inconsistent `e.target` vs `e.currentTarget`. The `e.target` version (older components) is buggy when the element has children. Standardize on `e.currentTarget` during extraction.
+
+### 0c. Extract Constants → `src/overlay/constants.ts`
+
+Move all option arrays from WebflowPanel.tsx lines 709-883:
+- `DISPLAY_OPTIONS`, `FONT_WEIGHT_OPTIONS`, `OVERFLOW_OPTIONS`, `POSITION_OPTIONS`, etc.
+- `FLEX_DIRECTION_ICONS`, `TEXT_ALIGN_OPTIONS`, `TEXT_DECORATION_OPTIONS`, etc.
+- `SIZE_UNITS_W`, `SIZE_UNITS_H`, `POSITION_UNITS`, `TYPO_SIZE_UNITS`
+
+### 0d. Extract Section Hooks → `src/overlay/hooks/`
+
+One hook per section. Each takes `(element: Element, apply: (prop: string, value: string) => void)` and returns `{ state, handlers }`.
+
+```
+src/overlay/hooks/useLayoutState.ts    — display, flexDirection, gap, gridCols, etc.
+src/overlay/hooks/useSizeState.ts      — width, height, min/max, overflow, units, keyword toggles
+src/overlay/hooks/usePositionState.ts  — position, top/right/bottom/left, zIndex, float, clear
+src/overlay/hooks/useTypographyState.ts — fontSize, fontWeight, color, textAlign, etc.
+src/overlay/hooks/useBorderState.ts    — borderSide, style, width, color, radius
+src/overlay/hooks/useEffectsState.ts   — opacity, shadows, transforms, filters, transitions
+```
+
+### Research Insights — State Management
+
+**Best practices finding:** With 50+ fields, `useReducer` with discriminated union actions is preferred over `useState`:
+- Dispatch is referentially stable → safe to pass to memoized children
+- Reducer is pure → testable with Vitest without rendering
+- Single dispatch for correlated updates (e.g., changing `display` mode)
+
+**However:** For this refactoring step, keep the `useState` pattern within each hook. Converting to `useReducer` is a follow-up optimization. The immediate goal is file-level isolation for parallel agents.
+
+### 0e. Snapshot getComputedStyle
+
+**Race condition finding (CRITICAL):** `getComputedStyle()` returns a **live** `CSSStyleDeclaration`. The current `useState(() => getComputedStyle(element))` stores a live reference. Any property access after mount triggers a style recalculation if the DOM is dirty.
+
+**Fix:** Snapshot into a plain object at mount:
+
+```tsx
+const [snapshot] = useState(() => {
+  const cs = getComputedStyle(element);
+  return {
+    display: cs.display,
+    flexDirection: cs.flexDirection,
+    width: cs.width,
+    // ... all properties needed by section hooks
+  };
+});
+```
+
+Pass `snapshot` (not `cs`) to section hooks. This freezes the observation point.
+
+### 0f. Memoize Derived Flags
+
+**Performance finding:** `parentIsFlex` at line 1014 calls `getComputedStyle(parent)` on every render. Wrap in `useMemo`:
+
+```tsx
+const parentIsFlex = useMemo(() => {
+  const parent = element.parentElement;
+  if (!parent) return false;
+  const pd = getComputedStyle(parent).display;
+  return pd === "flex" || pd === "inline-flex";
+}, [element]);
+```
+
+### Post-Refactoring Result
+
+WebflowPanel.tsx shrinks from ~1533 lines to ~400 (hook calls + JSX). Each section's state lives in its own file. Parallel agents can safely modify different hooks without merge conflicts.
+
+---
+
+## Phase B Implementation
+
+### Work Unit 1: Size Section Completion (Items 12, 13, 14)
+
+**File:** `src/overlay/hooks/useSizeState.ts`
 
 #### 12. Auto/None Keyword Toggles
 
-State and handlers already exist (`widthAuto`, `heightAuto`, `maxWidthNone`, `maxHeightNone` + toggle handlers). Need to render toggle buttons in the Size section JSX.
+State and handlers already exist. Add `KeywordToggle` to `controls.tsx` (~15 lines) and render next to Width, Height (auto), Max W, Max H (none).
 
 ```tsx
-// src/overlay/WebflowPanel.tsx — Size section
-// Add a small toggle button next to each SliderRow
-// Pattern: pill button that reads "auto" or "none", toggles keyword
-<SliderRow label="Width" ... disabled={widthAuto} />
-// Add: <KeywordToggle label="auto" active={widthAuto} onClick={handleWidthAutoToggle} />
+// In controls.tsx
+function KeywordToggle({ label, active, onClick }: {
+  label: "auto" | "none"; active: boolean; onClick: () => void;
+}) { /* 28px pill button, indigo when active */ }
 ```
 
-- Add `KeywordToggle` inline component (small pill button, ~15 lines)
-- Render next to Width, Height (auto), Max W, Max H (none)
-- When active: disable slider, show keyword text in value position
+When active: disable slider, show keyword text in value position.
 
 #### 13. Aspect Ratio Control
 
 ```tsx
-// src/overlay/WebflowPanel.tsx
-// New state:
-const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio || "auto");
-
-// New handler:
-const handleAspectRatioChange = useCallback((v: string) => {
-  setAspectRatio(v);
-  apply("aspect-ratio", v);
-}, [apply]);
-
-// Render: TextRow or SelectRow with common presets
-// Options: "auto", "1 / 1", "16 / 9", "4 / 3", "3 / 2", "custom"
+// In useSizeState.ts
+const [aspectRatio, setAspectRatio] = useState(() => snapshot.aspectRatio || "auto");
 ```
+
+**Simplicity finding:** Drop "custom" from options — no follow-through for custom input defined. Use `SelectRow` with presets only: `"auto"`, `"1 / 1"`, `"16 / 9"`, `"4 / 3"`, `"3 / 2"`.
 
 #### 14. Object Position for Media Elements
 
 ```tsx
-// src/overlay/WebflowPanel.tsx
-// Detect media: const isMedia = element.tagName === 'IMG' || element.tagName === 'VIDEO' || element.tagName === 'CANVAS';
-// New state:
-const [objectPosition, setObjectPosition] = useState(() => cs.objectPosition || "center");
-
-// Render: SelectRow with position presets (center, top, bottom, left, right, top left, etc.)
-// Only render when isMedia is true
+const isMedia = element.tagName === 'IMG' || element.tagName === 'VIDEO' || element.tagName === 'CANVAS';
+const [objectPosition, setObjectPosition] = useState(() => snapshot.objectPosition || "center");
+// Render: SelectRow, only when isMedia
+// Options: "center", "top", "bottom", "left", "right", "top left", "top right", "bottom left", "bottom right"
 ```
 
-### Work Unit 2: Layout Order Control (Item 8) — PARALLEL
+### Work Unit 2: Layout Order + Typography Advanced (Items 8, 9)
 
-Small addition to the flex child section.
+**Files:** `src/overlay/hooks/useLayoutState.ts`, `src/overlay/hooks/useTypographyState.ts`
+
+#### 8. Flex Child Order
 
 ```tsx
-// src/overlay/WebflowPanel.tsx — Layout section, inside parentIsFlex block
-// New state:
-const [order, setOrder] = useState(() => parseInt(cs.order) || 0);
-
-// New handler:
-const handleOrderChange = useCallback((v: number) => {
-  setOrder(v);
-  apply("order", String(v));
-}, [apply]);
-
-// Render: SliderRow label="Order" value={order} min={-10} max={100} step={1} unit=""
-// Add after Align Self in the flex child section
+// In useLayoutState.ts
+const [order, setOrder] = useState(() => parseInt(snapshot.order) || 0);
+// Render: SliderRow after Align Self in flex child section
 ```
 
-### Work Unit 3: Typography Advanced Sub-section (Item 9) — PARALLEL
+**TypeScript finding:** Name the state variable `order` not `flexOrder` — match the CSS property name like all other state variables do.
 
-Collapsed sub-section within Typography with 7 controls.
+#### 9. Typography Advanced Sub-section
+
+**Simplicity finding:** Drop `column-count` and `column-gap` (multi-column layout is too niche for a first pass). Keep 4 controls: `word-spacing`, `white-space`, `text-indent`, `word-break`.
 
 ```tsx
-// src/overlay/WebflowPanel.tsx — Typography section
-// New state:
-const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
-const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
-const [textIndent, setTextIndent] = useState(() => parseNum(cs.textIndent));
-const [wordBreak, setWordBreak] = useState(() => cs.wordBreak || "normal");
-const [columnCount, setColumnCount] = useState(() => parseInt(cs.columnCount) || 1);
-const [columnGap, setColumnGap] = useState(() => parseNum(cs.columnGap));
-
-// Add collapsed section using existing Section pattern with collapsed prop
-// Use a sub-header row with toggle chevron, starting collapsed:
-// ── Advanced ── ▸ (click to expand)
-//   Word Spacing  [slider] [0] [px]
-//   White Space   [dropdown]
-//   Text Indent   [slider] [0] [px]
-//   Word Break    [dropdown]
-//   Columns       [slider] [1]
-//   Column Gap    [slider] [0] [px]
+// In useTypographyState.ts
+const [wordSpacing, setWordSpacing] = useState(() => parseNum(snapshot.wordSpacing));
+const [whiteSpace, setWhiteSpace] = useState(() => snapshot.whiteSpace);
+const [textIndent, setTextIndent] = useState(() => parseNum(snapshot.textIndent));
+const [wordBreak, setWordBreak] = useState(() => snapshot.wordBreak || "normal");
 ```
 
-Constants needed:
+Add a collapsible sub-header in the Typography section JSX, starting collapsed.
+
+Constants (`WHITE_SPACE_OPTIONS`, `WORD_BREAK_OPTIONS`) go in `constants.ts`.
+
+### Work Unit 3: Position Offset Diagram (Item 10)
+
+**Simplicity finding:** Do NOT create a new component file. The position diagram is simpler than SpacingBoxModel (one box, not two nested). Build it as ~40 lines of inline JSX in the Position section, reusing the exported `EditableValue` from `controls.tsx`.
+
+**TypeScript finding:** Type `onChange` with a union, not `string`:
+
 ```tsx
-const WHITE_SPACE_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "nowrap", label: "No Wrap" },
-  { value: "pre", label: "Pre" },
-  { value: "pre-wrap", label: "Pre Wrap" },
-  { value: "pre-line", label: "Pre Line" },
-  { value: "break-spaces", label: "Break Spaces" },
-];
-
-const WORD_BREAK_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "break-all", label: "Break All" },
-  { value: "keep-all", label: "Keep All" },
-  { value: "break-word", label: "Break Word" },
-];
+onChange: (side: "top" | "right" | "bottom" | "left", value: number) => void
 ```
 
-### Work Unit 4: Position Offset Diagram (Item 10)
+The diagram replaces the 4 SliderRows for top/right/bottom/left when position !== static.
 
-New component similar to `SpacingBoxModel.tsx` but for position offsets.
+### Work Unit 4: Spacing Enhancements (Items 15, 16)
 
-```
-// New file: src/overlay/PositionOffsetDiagram.tsx
-// Pattern: mirror SpacingBoxModel structure
-// ┌───────────────────────┐
-// │        [top: 0]       │
-// │  [l: 0] ┌────┐ [r: 0]│
-// │         │    │        │
-// │        [bottom: 0]    │
-// └───────────────────────┘
-
-interface PositionOffsetDiagramProps {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-  onChange: (side: string, value: number) => void;
-}
-```
-
-- Reuses `EditableValue` pattern from SpacingBoxModel
-- Single nested box with clickable values on each edge
-- Only shown when position !== static (already gated in WebflowPanel)
-- Replace the 4 SliderRows for top/right/bottom/left with this diagram
-
-### Work Unit 5: Spacing Enhancements (Items 15, 16) — PARALLEL
+**File:** `src/overlay/SpacingBoxModel.tsx`
 
 #### 15. Color Zones
 
 ```tsx
-// src/overlay/SpacingBoxModel.tsx
-// Margin box: background: "rgba(255, 152, 0, 0.06)" (warm orange tint)
-// Padding box: background: "rgba(59, 130, 246, 0.06)" (cool blue tint)
+// Margin box (outer): background: "rgba(255, 152, 0, 0.06)" (warm orange)
+// Padding box (inner): background: "rgba(59, 130, 246, 0.06)" (cool blue)
 // Content center: keep "rgba(255,255,255,0.06)"
-// Hover highlights: same colors but higher opacity (0.15)
+// On hover: increase alpha to 0.12 for the hovered zone
 ```
 
 #### 16. Alt+Click Shortcuts
 
+**Race condition finding (HIGH):** Must check `e.altKey` BEFORE `setEditing(true)`. Otherwise alt+click both mirrors the value AND enters edit mode — the input flashes open and steals focus.
+
+**Simplicity finding:** No new `onAltClick` prop needed. Handle entirely inside existing `EditableValue.onClick`:
+
 ```tsx
-// src/overlay/SpacingBoxModel.tsx — EditableValue
-// On click: check if altKey is held
-// altKey + click on a side value → apply to complementary side too
-//   e.g., click margin-left with alt → also set margin-right
-// altKey + click on a corner → apply to all 4 sides
-//
-// Implementation:
-// - Pass `altKey` context from click event
-// - EditableValue onClick handler checks e.altKey
-// - If alt: call onChange for complementary sides
-// Need to pass prop: onAltClick?: (value: number, sides: string[]) => void
+onClick={(e) => {
+  e.stopPropagation();
+  if (e.altKey) {
+    // Mirror to complementary side(s) and return early
+    // Side values (top/bottom, left/right): mirror to opposite
+    // Corner values: mirror to all 4
+    onChange(/* complementary prop */, value);
+    return; // DO NOT enter edit mode
+  }
+  setEditing(true);
+}}
 ```
 
-### Work Unit 6: Unit Conversion Logic (Item 18) — SEQUENTIAL (after Unit 1)
+Need to pass the property name to `EditableValue` so it knows which complementary sides to target. Add a `prop` string parameter.
 
-When user changes units in `UnitSelector`, convert the current value.
+### Work Unit 5: Keyboard Shortcuts (Item 21)
 
-```tsx
-// src/overlay/UnitSelector.tsx or new utility: src/overlay/unitConversion.ts
-// Conversion functions:
-// px → em: value / parentFontSize (or rootFontSize for rem)
-// px → %: (value / parentDimension) * 100
-// px → vw: (value / viewportWidth) * 100
-// em → px: value * parentFontSize
-// etc.
+**File:** `src/overlay/Overlay.tsx`
 
-// Need element context to compute conversions
-// UnitSelector gets optional `element` prop for computing parent/root sizes
+Add to existing `handleKeyDown` (line 105):
 
-function convertUnit(value: number, fromUnit: string, toUnit: string, context: {
-  parentFontSize: number;
-  rootFontSize: number;
-  parentWidth: number;
-  parentHeight: number;
-  viewportWidth: number;
-  viewportHeight: number;
-}): number
-```
+**Race condition findings:**
 
-- Add `onUnitChangeWithConversion` callback to SliderRow
-- When unit changes: compute new value, update both unit and numeric value
+1. **`S` and `R` must work when focus is in the panel but NOT in an input.** The existing `insidePanel` guard on line 128 returns early for all panel-internal events. Need a more nuanced check: `insidePanel && !isInputFocused`.
 
-### Work Unit 7: StyleIndicator System (Items 19, 20) — SEQUENTIAL
+2. **`Cmd+C` must NOT steal native copy** from focused inputs/textareas. Only intercept when `window.getSelection()?.toString()` is empty AND no input has focus.
 
-#### 19. Detection Logic
-
-New file: `src/overlay/detectStyleSource.ts`
+3. **`Cmd+S` must `e.preventDefault()`** to block browser's Save dialog.
 
 ```tsx
-// Determine whether a CSS property value is:
-// - "direct" (set on current element's inline/class styles)
-// - "inherited" (cascading from parent)
-// - "state" (pseudo-class specific)
-// - "element" (inline override, element scope)
-// - "none" (browser default)
+// Focus-aware guard:
+const isInputFocused = tag === "input" || tag === "textarea" || tag === "select";
 
-function detectStyleSource(
-  element: Element,
-  property: string,
-  scope: "element" | "class",
-  activeState: string | null,
-): IndicatorType {
-  const computed = getComputedStyle(element);
-  const value = computed.getPropertyValue(property);
-  const defaultValue = getDefaultValue(property);
-
-  // If element scope → any non-default is "element" (pink)
-  if (scope === "element") {
-    return value !== defaultValue ? "element" : "none";
-  }
-
-  // If a state is active → green for state-specific
-  if (activeState && activeState !== "none") {
-    // Compare computed with vs without pseudo
-    return "state";
-  }
-
-  // Check if parent has same value (inherited)
-  const parent = element.parentElement;
-  if (parent) {
-    const parentValue = getComputedStyle(parent).getPropertyValue(property);
-    if (value === parentValue && isInheritableProperty(property)) {
-      return "inherited";
-    }
-  }
-
-  // If different from parent/default → direct
-  return value !== defaultValue ? "direct" : "none";
-}
-```
-
-#### 20. Integration
-
-- Wrap each property label in SliderRow/SelectRow/ColorRow with StyleIndicator
-- Pass detection result as `type` prop
-- Need to thread `element`, `scope`, and `activeState` into inner components
-- SliderRow/SelectRow get optional `indicatorType` prop
-
-### Work Unit 8: Keyboard Shortcuts (Item 21) — PARALLEL
-
-Add to existing `handleKeyDown` in `Overlay.tsx`:
-
-```tsx
-// src/overlay/Overlay.tsx — inside handleKeyDown
-// New shortcuts (only when panel is open, no input focused):
-
-// S → cycle scope (element → class → element)
-if (e.key === "s" && !insideInput) {
-  // cycle scope state
+// S → cycle scope (only when panel open, no input focused)
+if (e.key === "s" && !isInputFocused && selectedEl) {
+  e.preventDefault();
+  // cycle scope
 }
 
-// R → reset current element
-if (e.key === "r" && !insideInput) {
-  // call restoreAllOverrides()
+// R → reset (only when panel open, no input focused)
+if (e.key === "r" && !isInputFocused && selectedEl) {
+  e.preventDefault();
+  restoreAllOverrides();
 }
 
 // Cmd+S → save to source
-if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+if ((e.metaKey || e.ctrlKey) && e.key === "s" && selectedEl) {
   e.preventDefault();
-  // trigger save action from Footer
+  // trigger Footer save action
 }
 
-// Cmd+C → copy CSS (when panel focused)
-if ((e.metaKey || e.ctrlKey) && e.key === "c" && !insideInput) {
-  // copy computed overrides as CSS text to clipboard
+// Cmd+C → copy CSS (only when nothing selected and no input focused)
+if ((e.metaKey || e.ctrlKey) && e.key === "c" && !isInputFocused && !window.getSelection()?.toString()) {
+  e.preventDefault();
+  // copy overrides as CSS text to clipboard
 }
 ```
 
-### Work Unit 9: Tab Navigation (Item 22) — SEQUENTIAL (after Unit 7)
+**Performance finding:** Store `scope` in a `useRef` to avoid expanding the effect dependency array. The handler reads scope on keypress but doesn't need re-registration when scope changes.
 
-Focus management within sections.
+---
+
+## Phase C Implementation
+
+### Work Unit 6: Unit Conversion (Item 18)
+
+**File:** New `src/overlay/unitConversion.ts`
+
+**Simplicity finding:** Only support `px↔em` and `px↔rem`. Skip %, vw, vh conversion — users switching to those units expect to type a new value anyway.
 
 ```tsx
-// Approach: each interactive control gets tabIndex={0}
-// Section component manages focus group
-// Tab → next control in section
-// Shift+Tab → previous control
-// ArrowDown/Up → next/previous section
+// src/overlay/unitConversion.ts
 
-// Implementation in WebflowPanel.tsx:
-// - Add tabIndex={0} to SliderRow inputs, SelectRow selects, ColorRow swatches
-// - Use data-section attribute on section containers
-// - Add onKeyDown handler at section level that intercepts Tab
-//   and moves focus to next/previous focusable child
+export interface UnitConversionContext {
+  elementFontSize: number;  // px — for em conversion
+  rootFontSize: number;     // px — for rem conversion
+}
+
+export function convertUnit(
+  value: number,
+  fromUnit: string,
+  toUnit: string,
+  ctx: UnitConversionContext,
+): number {
+  if (fromUnit === toUnit) return value;
+  // Convert to px first (pivot unit)
+  let px = value;
+  if (fromUnit === "em") px = value * ctx.elementFontSize;
+  else if (fromUnit === "rem") px = value * ctx.rootFontSize;
+  // Convert px to target
+  if (toUnit === "px") return Math.round(px);
+  if (toUnit === "em") return Math.round((px / ctx.elementFontSize) * 100) / 100;
+  if (toUnit === "rem") return Math.round((px / ctx.rootFontSize) * 100) / 100;
+  // Unsupported conversion — return value unchanged
+  return value;
+}
 ```
+
+**Performance finding:** Compute `UnitConversionContext` once at panel level in a `useMemo`, not per-UnitSelector:
+
+```tsx
+const unitCtx = useMemo(() => ({
+  elementFontSize: parseFloat(getComputedStyle(element).fontSize),
+  rootFontSize: parseFloat(getComputedStyle(document.documentElement).fontSize),
+}), [element]);
+```
+
+**Pattern finding:** Current `onUnitChange` callbacks are passed directly as `setWidthUnit` — these need to become handler-wrapped to also call `apply()` with the converted value. Each section hook should expose `handleUnitChange(prop, newUnit)` that converts + applies.
+
+### Work Unit 7: StyleIndicator System (Items 19, 20)
+
+**Simplicity finding (MAJOR CHANGE):** Do NOT detect inheritance via DOM. The plan's original `detectStyleSource` requires:
+- A `getDefaultValue()` lookup table for every CSS property (varies by element type)
+- An `isInheritableProperty()` table
+- Unreliable parent comparison via `getComputedStyle`
+- Hand-waved pseudo-class detection
+
+**Instead:** Track which properties the user has modified in this session. The override map in `apply.ts` already knows this.
+
+#### 19. Detection Logic — Override-Based
+
+Extend `apply.ts` to expose per-property override tracking:
+
+```tsx
+// In apply.ts — add to existing module
+const modifiedProps = new Set<string>();
+
+export function getModifiedProps(): ReadonlySet<string> {
+  return modifiedProps;
+}
+
+// In applyInlineStyle(), add: modifiedProps.add(prop);
+// In restoreAllOverrides(), add: modifiedProps.clear();
+```
+
+Then in `StyleIndicator.tsx`, the detection is simple:
+
+```tsx
+function getIndicatorType(
+  prop: string,
+  scope: "element" | "class",
+  activeState: string | null,
+  modifiedProps: ReadonlySet<string>,
+): IndicatorType {
+  if (!modifiedProps.has(prop)) return "none";
+  if (activeState && activeState !== "none") return "state";  // green
+  if (scope === "element") return "element";                   // pink
+  return "direct";                                              // blue
+}
+```
+
+This is **100% reliable** (no DOM inspection), **zero performance cost** (Set lookup), and **3 lines of logic** instead of 80.
+
+"Inherited" (orange) indicator is deferred — it requires CSSOM rule walking with `element.matches(rule.selectorText)` which hits `SecurityError` on cross-origin sheets. Not worth the complexity for v1.
+
+#### 20. Integration
+
+Add optional `indicatorType` prop to `SliderRow`, `SelectRow`, `ColorRow` in `controls.tsx`. Render `<StyleIndicator>` to the left of the label when provided:
+
+```tsx
+// In SliderRow (controls.tsx)
+{indicatorType && <StyleIndicator type={indicatorType} />}
+<LabelScrub ...>
+```
+
+Compute indicators once at panel level as a `Map<string, IndicatorType>`:
+
+```tsx
+const modifiedProps = getModifiedProps();
+const indicators = useMemo(() => {
+  const map = new Map<string, IndicatorType>();
+  for (const prop of modifiedProps) {
+    map.set(prop, getIndicatorType(prop, scope, activeState, modifiedProps));
+  }
+  return map;
+}, [modifiedProps.size, scope, activeState]);
+```
+
+Pass `indicators.get("width")` etc. to each control row.
+
+---
 
 ## Execution Order for Swarm
 
-### Parallel Batch 1 (7 agents, all independent):
+### Phase 0: Sequential (1 agent, must complete before Phase B)
 
-1. **Agent: Size Completion** → Items 12, 13, 14 in `WebflowPanel.tsx`
-2. **Agent: Layout Order** → Item 8 in `WebflowPanel.tsx`
-3. **Agent: Typography Advanced** → Item 9 in `WebflowPanel.tsx`
-4. **Agent: Position Offset Diagram** → Item 10, new `PositionOffsetDiagram.tsx` + wire into `WebflowPanel.tsx`
-5. **Agent: Spacing Colors** → Item 15 in `SpacingBoxModel.tsx`
-6. **Agent: Spacing Alt-Click** → Item 16 in `SpacingBoxModel.tsx`
-7. **Agent: Keyboard Shortcuts** → Item 21 in `Overlay.tsx`
+**Agent: Refactoring** → Extract cssHelpers.ts, controls.tsx, constants.ts, section hooks. Snapshot getComputedStyle. Memoize derived flags.
 
-### Sequential Batch 2 (after Batch 1):
+### Phase B: Parallel Batch (5 agents, all different files)
 
-8. **Agent: Unit Conversion** → Item 18, `UnitSelector.tsx` + `WebflowPanel.tsx`
+| Agent | Items | Primary File |
+|-------|-------|-------------|
+| A: Size Completion | 12, 13, 14 | `hooks/useSizeState.ts` + Size JSX |
+| B: Layout + Typography | 8, 9 | `hooks/useLayoutState.ts` + `hooks/useTypographyState.ts` + JSX |
+| C: Position Diagram | 10 | Position section JSX only (~40 lines) |
+| D: Spacing Polish | 15, 16 | `SpacingBoxModel.tsx` |
+| E: Keyboard Shortcuts | 21 | `Overlay.tsx` |
 
-### Sequential Batch 3 (after Batch 2):
+### Phase C: Sequential (2 agents, after Phase B)
 
-9. **Agent: StyleIndicator Detection** → Item 19, new `detectStyleSource.ts`
-10. **Agent: StyleIndicator Integration** → Item 20, `WebflowPanel.tsx`
+6. **Agent: Unit Conversion** → Item 18, new `unitConversion.ts` + section hooks
+7. **Agent: StyleIndicator** → Items 19+20 combined, `apply.ts` + `controls.tsx`
 
-### Sequential Batch 4 (after Batch 3):
-
-11. **Agent: Tab Navigation** → Item 22, `WebflowPanel.tsx`
+**Total: 8 agents (down from 11).** Phase 0 is serial. Phase B is fully parallel with zero file overlap. Phase C is serial because it modifies shared infrastructure.
 
 ## Acceptance Criteria
 
-- [ ] All 14 items pass `npm run typecheck`
-- [ ] No regressions to existing sections (Layout, Size, Position, Typography, Spacing, Borders, Effects, Backgrounds)
-- [ ] StyleIndicator dots visible next to property labels, correct colors
-- [ ] Keyboard shortcuts S/R/Cmd+S/Cmd+C functional when panel open
-- [ ] Tab navigation cycles through controls within a section
-- [ ] Unit conversion preserves visual value when switching units (e.g., 16px → 1em)
-- [ ] Position offset diagram matches SpacingBoxModel visual style
-- [ ] Typography advanced section starts collapsed, expands on click
-- [ ] Spacing box model shows warm (orange) margin zones, cool (blue) padding zones
+- [ ] All 13 items pass `npm run typecheck`
+- [ ] WebflowPanel.tsx < 500 lines after refactoring
+- [ ] No regressions to existing sections
+- [ ] StyleIndicator dots visible next to modified property labels
+- [ ] Keyboard shortcuts S/R/Cmd+S/Cmd+C functional (focus-aware)
+- [ ] Unit conversion works for px↔em and px↔rem (2 decimal places)
+- [ ] Position offset diagram shows clickable values on each edge
+- [ ] Typography advanced starts collapsed, has 4 controls
+- [ ] Spacing shows warm margin zones, cool padding zones
+- [ ] Alt+click in spacing mirrors to complementary sides WITHOUT entering edit mode
+- [ ] Cmd+C does NOT steal native copy from focused inputs
+- [ ] `npm run typecheck` passes after each phase
 
 ## Technical Considerations
 
-- **WebflowPanel.tsx is 1500+ lines**: Each agent modifying it should work on clearly separated sections to minimize merge conflicts
-- **State count**: Already ~50 state variables. Items 9+19 add ~10 more. Consider grouping related state into reducer pattern in a follow-up
-- **Performance**: `detectStyleSource` calls `getComputedStyle` per property — cache per render cycle
-- **Existing patterns**: All UI is inline-styled React, dark theme colors, monospace values, 300px panel width — maintain consistency
+### Performance
+- `getComputedStyle` snapshot at mount — never touch the live object during interaction
+- Single-pass indicator computation via `Set<string>` lookup — zero DOM inspection
+- `UnitConversionContext` computed once via `useMemo`, not per-UnitSelector
+- `parentIsFlex` wrapped in `useMemo([element])`
+- Section hooks isolate re-renders to the section that changed
+
+### Testing Requirements
+- `convertUnit()` — pure function, add Vitest unit tests for px→em, px→rem, em→px, rem→px, round-trip
+- `getIndicatorType()` — pure function, add Vitest tests for all 4 indicator types
+- `parseBoxShadow`, `parseFilter`, `parseTransform` — existing untested parsers, add tests during extraction to cssHelpers.ts
+
+### Edge Cases
+- `font-size` em conversion: uses element's OWN computed font-size, but the element may inherit it. Capture at mount time to avoid circular dependency.
+- Cross-origin stylesheets throw `SecurityError` — any future CSSOM walk must wrap in try/catch
+- `aspect-ratio` computed value may be `"auto"` or `"16 / 9"` (with spaces) — handle both formats
+- `object-position` defaults to `"50% 50%"` in computed styles, display as "center" in UI
 
 ## References
 
 - Spec: `webflow-style-panel-spec.md` (sections 3-7, 11-13)
 - Existing components: `SpacingBoxModel.tsx:26`, `StyleIndicator.tsx:28`, `UnitSelector.tsx`, `Overlay.tsx:105`
-- Constants: `WebflowPanel.tsx:833` (FLEX_DIRECTION_ICONS pattern for toggle buttons)
+- Constants: `WebflowPanel.tsx:833` (FLEX_DIRECTION_ICONS pattern)
+- [Paul Irish: What Forces Layout/Reflow](https://gist.github.com/paulirish/5d52fb081b3570c81e3a)
+- [MDN: Window.getComputedStyle()](https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle)
+- [W3C WAI-ARIA APG: Keyboard Interface](https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/)
+- [MDN: CSS Values and Units](https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Values_and_units)

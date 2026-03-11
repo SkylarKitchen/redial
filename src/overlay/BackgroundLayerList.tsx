@@ -6,6 +6,11 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { GradientEditor } from "./GradientEditor";
+import type { GradientStop } from "./GradientEditor";
+import { X } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface BackgroundLayer {
   id: string;
@@ -31,7 +36,6 @@ export type BackgroundLayerType = "color" | "gradient" | "image";
 export interface BackgroundLayerListProps {
   layers: BackgroundLayer[];
   onChange: (layers: BackgroundLayer[]) => void;
-  onEditGradient?: (layerId: string) => void;
   onEditColor?: (layerId: string) => void;
 }
 
@@ -144,9 +148,9 @@ function Select({
 export function BackgroundLayerList({
   layers,
   onChange,
-  onEditGradient,
   onEditColor,
 }: BackgroundLayerListProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(layers, onChange);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -272,17 +276,22 @@ export function BackgroundLayerList({
       </div>
 
       {/* Layer rows */}
-      {layers.map((layer) => {
+      <div style={{ position: "relative" }}>
+      {layers.map((layer, index) => {
         const isExpanded = expandedId === layer.id;
         const typeLabel = layer.type === "color" ? "Color" : layer.type === "gradient" ? "Gradient" : "Image";
+        const dragProps = handleProps(index);
 
         return (
           <div
             key={layer.id}
+            ref={registerRef(index)}
             style={{
+              ...itemStyle(index),
               background: isExpanded ? "rgba(255,255,255,0.04)" : "transparent",
               borderRadius: "4px",
               border: "1px solid rgba(255,255,255,0.08)",
+              marginBottom: "4px",
             }}
           >
             {/* Collapsed row */}
@@ -296,6 +305,15 @@ export function BackgroundLayerList({
                 cursor: "pointer",
               }}
             >
+              {/* Drag handle */}
+              <DragHandle
+                isDragging={isDragging}
+                onPointerDown={(e) => {
+                  e.stopPropagation(); // Don't toggle expand on drag
+                  dragProps.onPointerDown(e);
+                }}
+              />
+
               {/* Preview swatch */}
               <div
                 style={{
@@ -353,7 +371,7 @@ export function BackgroundLayerList({
                   fontFamily: "system-ui, sans-serif",
                 }}
               >
-                ×
+                <X size={14} strokeWidth={2} />
               </button>
             </div>
 
@@ -400,18 +418,21 @@ export function BackgroundLayerList({
                   </div>
                 )}
 
-                {/* Gradient layer */}
+                {/* Gradient layer — full inline editor */}
                 {layer.type === "gradient" && layer.gradient && (
-                  <div
-                    onClick={() => onEditGradient?.(layer.id)}
-                    style={{
-                      width: "100%",
-                      height: "24px",
-                      borderRadius: "4px",
-                      background: gradientCSS(layer.gradient),
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      cursor: onEditGradient ? "pointer" : "default",
-                    }}
+                  <GradientEditor
+                    type={layer.gradient.type}
+                    angle={layer.gradient.angle}
+                    stops={layer.gradient.stops as GradientStop[]}
+                    onChange={(g) =>
+                      updateLayer(layer.id, {
+                        gradient: {
+                          type: g.type as "linear" | "radial" | "conic",
+                          angle: g.angle,
+                          stops: g.stops,
+                        },
+                      })
+                    }
                   />
                 )}
 
@@ -513,6 +534,13 @@ export function BackgroundLayerList({
           </div>
         );
       })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
+      </div>
     </div>
   );
 }

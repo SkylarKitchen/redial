@@ -2,42 +2,47 @@
  * Footer.tsx — Save, Copy, Reset action buttons
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
-import { getSelector } from "./util";
+import { formatCSSDiff } from "./util";
 
 interface FooterProps {
   element: Element;
   onReset: () => void;
   onSaved?: () => void;
-  diffMode?: boolean;
-  onToggleDiff?: () => void;
   scope?: Scope;
   activeClassName?: string | null;
+  clipboardMessage?: string | null;
+  hasClipboard?: boolean;
+  onPasteStyles?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scope = "element", activeClassName }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Clear timer on unmount to prevent stale setState calls
+  useEffect(() => {
+    return () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); };
+  }, []);
+
+  const showMessage = useCallback((text: string, duration: number) => {
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    setMessage(text);
+    messageTimerRef.current = setTimeout(() => setMessage(null), duration);
+  }, []);
 
   const handleCopy = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-
-    const className = getSelector(element);
-    const lines = changes.map(
-      (c) => `  ${c.prop}: ${c.to}; // was ${c.from}`
-    );
-    const scss = `${className} {\n${lines.join("\n")}\n}`;
-
-    navigator.clipboard.writeText(scss);
-    setMessage("Copied!");
-    setTimeout(() => setMessage(null), 1500);
-  }, [element]);
+    navigator.clipboard.writeText(formatCSSDiff(element, changes));
+    showMessage("Copied!", 1200);
+  }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
     const changes = diff(element);
@@ -67,25 +72,24 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
       });
 
       if (!res.ok) {
-        setMessage("Save failed");
+        showMessage("Save failed", 2000);
       } else {
         const result = await res.json();
         const written = result.written?.length ?? 0;
         const failed = result.failed?.length ?? 0;
         if (failed > 0) {
-          setMessage(`Saved ${written}, ${failed} failed`);
+          showMessage(`Saved ${written}, ${failed} failed`, 2000);
         } else {
-          setMessage(`Saved ${written} change${written === 1 ? "" : "s"}`);
+          showMessage(`Saved ${written} change${written === 1 ? "" : "s"}`, 2000);
         }
         onSaved?.();
       }
     } catch {
-      setMessage("Save failed — no route?");
+      showMessage("Save failed — no route?", 2000);
     }
 
     setSaving(false);
-    setTimeout(() => setMessage(null), 2000);
-  }, [element, onSaved]);
+  }, [element, onSaved, showMessage]);
 
   const handleReset = useCallback(() => {
     reset(element);
@@ -109,19 +113,18 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
     >
       <div style={{ display: "flex", gap: "6px" }}>
         <ActionButton
-          onClick={onToggleDiff ?? (() => {})}
-          disabled={count === 0}
-          title="Toggle diff (D)"
-          active={diffMode}
-        >
-          Diff
-        </ActionButton>
-        <ActionButton
           onClick={handleCopy}
           disabled={count === 0}
           title="Copy SCSS"
         >
           Copy
+        </ActionButton>
+        <ActionButton
+          onClick={onPasteStyles ?? (() => {})}
+          disabled={!hasClipboard}
+          title="Paste styles (Cmd+Alt+V)"
+        >
+          Paste
         </ActionButton>
         <ActionButton
           onClick={handleSave}
@@ -133,8 +136,8 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
         </ActionButton>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {message && (
-          <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}>{message}</span>
+        {(clipboardMessage || message) && (
+          <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}>{clipboardMessage || message}</span>
         )}
         <ActionButton
           onClick={handleReset}
@@ -171,8 +174,9 @@ function ActionButton({
       disabled={disabled}
       title={title}
       style={{
-        padding: "4px 10px",
-        fontSize: "12px",
+        padding: primary ? "5px 16px" : "4px 10px",
+        fontSize: primary ? "13px" : "12px",
+        fontWeight: primary ? 600 : 400,
         fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
         border: active
           ? "1px solid rgba(250, 204, 21, 0.4)"
@@ -185,14 +189,15 @@ function ActionButton({
         background: active
           ? "rgba(250, 204, 21, 0.12)"
           : primary
-            ? "rgba(255, 255, 255, 0.15)"
+            ? "#2680EB"
             : "rgba(255,255,255,0.08)",
         color: active
           ? "rgba(250, 204, 21, 0.9)"
           : primary
             ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
-        transition: "opacity 100ms",
+        transition: "opacity 100ms, background 100ms",
+        boxShadow: primary && !disabled ? "0 1px 3px rgba(38, 128, 235, 0.4)" : "none",
       }}
     >
       {children}

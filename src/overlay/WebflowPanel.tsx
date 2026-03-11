@@ -6,7 +6,7 @@
  * Layout, Spacing, Size, Position, Typography, Backgrounds, Borders, Effects.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SideSelector } from "./SideSelector";
@@ -17,206 +17,98 @@ import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { SpacingBoxModel } from "./SpacingBoxModel";
+import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
+import { PositionSelector } from "./PositionSelector";
 import type { SpacingValues } from "./infer";
-import { applyInlineStyle } from "./apply";
+import { applyInlineStyle, isDirty, resetProp } from "./apply";
 import { LabelScrub } from "./LabelScrub";
+import { SizeInputCell } from "./SizeInputCell";
 import { UnitSelector } from "./UnitSelector";
+import { buildConversionContext, convertUnit } from "./unitConversion";
+import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
+import { cssColorToHex as rgbToHex } from "./colorUtils";
+import {
+  parseNum, extractUnit, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
+  shadowToCSS, filterToCSS, transformToCSS, transitionsToCSS,
+} from "./cssParsers";
+import {
+  TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
+  ITALIC_OPTIONS, DIRECTION_OPTIONS,
+  FONT_WEIGHT_OPTIONS, WHITE_SPACE_OPTIONS, WORD_BREAK_OPTIONS, LINE_BREAK_OPTIONS,
+  FLOAT_OPTIONS, CLEAR_OPTIONS,
+  SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS,
+  LAYOUT_UNITS, BORDER_UNITS, SPACING_UNITS, LINE_HEIGHT_UNITS,
+  OVERFLOW_ICON_OPTIONS,
+  OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
+  BORDER_STYLE_OPTIONS, BLEND_MODE_OPTIONS, FALLBACK_FONTS,
+  CURSOR_OPTIONS, POINTER_EVENTS_OPTIONS, VISIBILITY_OPTIONS,
+  ALIGN_SELF_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS,
+  BG_CLIP_OPTIONS, USER_SELECT_OPTIONS, BACKFACE_OPTIONS, BOX_SIZING_OPTIONS,
+} from "./panelConstants";
+import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
+import { ChevronRight, Link } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
 export interface WebflowPanelProps {
   element: Element;
   spacing: SpacingValues;
-  onSpacingChange: (prop: string, value: number) => void;
+  onSpacingChange: (prop: string, value: number, unit: string) => void;
   onDirtyChange?: () => void;
 }
 
-// ─── CSS Value Helpers ───────────────────────────────────────────────
+// ─── Local Helpers ──────────────────────────────────────────────────
 
-function rgbToHex(rgb: string): string {
-  if (rgb === "rgba(0, 0, 0, 0)" || rgb === "transparent") return "transparent";
-  const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (!match) return rgb;
-  return (
-    "#" +
-    [match[1], match[2], match[3]]
-      .map((c) => parseInt(c).toString(16).padStart(2, "0"))
-      .join("")
-  );
+/** CSS properties that are inherited by default */
+const INHERITABLE_PROPERTIES = new Set([
+  "color", "font-family", "font-size", "font-style", "font-weight", "font-variant",
+  "line-height", "letter-spacing", "word-spacing", "text-align", "text-indent",
+  "text-transform", "text-decoration", "white-space", "word-break", "word-wrap",
+  "direction", "visibility", "cursor", "list-style", "list-style-type", "quotes",
+  "hyphens", "tab-size", "text-shadow",
+]);
+
+function getIndicatorType(
+  el: Element,
+  prop: string,
+  cs?: CSSStyleDeclaration,
+  parentCs?: CSSStyleDeclaration | null,
+): IndicatorType {
+  if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "element";
+  if (INHERITABLE_PROPERTIES.has(prop) && parentCs) {
+    const computedValue = cs?.getPropertyValue(prop) ?? "";
+    const parentValue = parentCs.getPropertyValue(prop);
+    if (computedValue !== parentValue) return "inherited";
+  }
+  return "none";
 }
 
-function parseNum(val: string): number {
-  const n = parseFloat(val);
-  return isNaN(n) ? 0 : n;
-}
-
-function parseBoxShadow(raw: string): ShadowValue[] {
-  if (!raw || raw === "none") return [];
-  const shadows: ShadowValue[] = [];
-  // Split on commas that are NOT inside parentheses (for rgba colors)
-  const parts: string[] = [];
-  let depth = 0;
-  let current = "";
-  for (const ch of raw) {
-    if (ch === "(") depth++;
-    else if (ch === ")") depth--;
-    if (ch === "," && depth === 0) {
-      parts.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
+function getAuthoredValue(el: Element, prop: string): string | null {
+  const inline = (el as HTMLElement).style.getPropertyValue(prop);
+  if (inline) return inline;
+  let found: string | null = null;
+  try {
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule instanceof CSSStyleRule && el.matches(rule.selectorText)) {
+            const val = rule.style.getPropertyValue(prop);
+            if (val) found = val;
+          }
+        }
+      } catch { /* cross-origin sheet */ }
     }
-  }
-  if (current.trim()) parts.push(current.trim());
-
-  for (const part of parts) {
-    const inset = part.includes("inset");
-    const cleaned = part.replace("inset", "").trim();
-    // Extract color (rgb/rgba/hex/named) — browsers may place color first or last
-    const colorStartMatch = cleaned.match(/^(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})\s+/i);
-    const colorEndMatch = cleaned.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b(?!(?:\d|inset\b))[a-z]{3,}\b)$/i);
-    const color = (colorStartMatch?.[1] ?? colorEndMatch?.[1]) || "rgba(0,0,0,0.1)";
-    // Strip the matched color from the string before parsing numbers
-    let numStr = cleaned;
-    if (colorStartMatch) {
-      numStr = numStr.slice(colorStartMatch[0].length);
-    } else if (colorEndMatch) {
-      numStr = numStr.slice(0, colorEndMatch.index).trim();
-    }
-    numStr = numStr.replace(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
-    const nums = numStr.split(/\s+/).map(parseFloat).filter((n) => !isNaN(n));
-    shadows.push({
-      x: nums[0] ?? 0,
-      y: nums[1] ?? 0,
-      blur: nums[2] ?? 0,
-      spread: nums[3] ?? 0,
-      color,
-      inset,
-    });
-  }
-  return shadows;
+  } catch { /* no access */ }
+  return found;
 }
 
-function parseFilter(raw: string): Partial<FilterValues> {
-  if (!raw || raw === "none") return {};
-  const result: Partial<FilterValues> = {};
-  const regex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const key = m[1] as keyof FilterValues;
-    let val = parseFloat(m[2]);
-    // brightness/contrast/saturate come as decimals from computed style, need * 100
-    if (key === "brightness" || key === "contrast" || key === "saturate") {
-      val = Math.round(val * 100);
-    } else if (key === "grayscale" || key === "invert" || key === "sepia") {
-      val = Math.round(val * 100);
-    }
-    result[key] = val;
-  }
-  return result;
+/** Extract the CSS unit from the authored value of a property, falling back to `fallback` */
+function detectUnit(el: Element, prop: string, fallback: string = "px"): string {
+  const authored = getAuthoredValue(el, prop);
+  if (!authored) return fallback;
+  return extractUnit(authored, fallback);
 }
-
-function parseTransform(raw: string): TransformValue[] {
-  if (!raw || raw === "none") return [];
-  const transforms: TransformValue[] = [];
-  const regex = /(translate3d|translate|scale|rotate|skew)\(([^)]+)\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const fn = m[1];
-    const args = m[2].split(",").map((s) => parseFloat(s.trim()));
-    if (fn === "translate3d" || fn === "translate") {
-      transforms.push({ type: "translate", x: args[0] ?? 0, y: args[1] ?? 0, z: args[2] ?? 0 });
-    } else if (fn === "scale") {
-      transforms.push({ type: "scale", x: args[0] ?? 1, y: args[1] ?? args[0] ?? 1 });
-    } else if (fn === "rotate") {
-      transforms.push({ type: "rotate", x: args[0] ?? 0, y: 0 });
-    } else if (fn === "skew") {
-      transforms.push({ type: "skew", x: args[0] ?? 0, y: args[1] ?? 0 });
-    }
-  }
-  // Also handle matrix() — extract rough rotation from a 2D matrix
-  if (transforms.length === 0 && raw.startsWith("matrix(")) {
-    const nums = raw.match(/matrix\(([^)]+)\)/)?.[1]?.split(",").map(Number);
-    if (nums && nums.length >= 6) {
-      const angle = Math.round(Math.atan2(nums[1], nums[0]) * (180 / Math.PI));
-      const scaleX = Math.sqrt(nums[0] * nums[0] + nums[1] * nums[1]);
-      const scaleY = Math.sqrt(nums[2] * nums[2] + nums[3] * nums[3]);
-      if (Math.abs(angle) > 0.5) transforms.push({ type: "rotate", x: angle, y: 0 });
-      if (Math.abs(scaleX - 1) > 0.01 || Math.abs(scaleY - 1) > 0.01) {
-        transforms.push({ type: "scale", x: Math.round(scaleX * 100) / 100, y: Math.round(scaleY * 100) / 100 });
-      }
-      if (Math.abs(nums[4]) > 0.5 || Math.abs(nums[5]) > 0.5) {
-        transforms.push({ type: "translate", x: Math.round(nums[4]), y: Math.round(nums[5]) });
-      }
-    }
-  }
-  return transforms;
-}
-
-function shadowToCSS(shadows: ShadowValue[]): string {
-  if (shadows.length === 0) return "none";
-  return shadows
-    .map((s) => {
-      const inset = s.inset ? "inset " : "";
-      return `${inset}${s.x}px ${s.y}px ${s.blur}px ${s.spread}px ${s.color}`;
-    })
-    .join(", ");
-}
-
-function filterToCSS(values: Partial<FilterValues>): string {
-  const parts: string[] = [];
-  for (const [key, val] of Object.entries(values)) {
-    if (val === undefined) continue;
-    const k = key as keyof FilterValues;
-    if (k === "blur") parts.push(`blur(${val}px)`);
-    else if (k === "hue-rotate") parts.push(`hue-rotate(${val}deg)`);
-    else if (k === "brightness" || k === "contrast" || k === "saturate") parts.push(`${k}(${val / 100})`);
-    else parts.push(`${k}(${val / 100})`);
-  }
-  return parts.length > 0 ? parts.join(" ") : "none";
-}
-
-function transformToCSS(transforms: TransformValue[]): string {
-  if (transforms.length === 0) return "none";
-  return transforms
-    .map((t) => {
-      switch (t.type) {
-        case "translate":
-          return t.z ? `translate3d(${t.x}px, ${t.y}px, ${t.z}px)` : `translate(${t.x}px, ${t.y}px)`;
-        case "scale":
-          return `scale(${t.x}, ${t.y})`;
-        case "rotate":
-          return `rotate(${t.x}deg)`;
-        case "skew":
-          return `skew(${t.x}deg, ${t.y}deg)`;
-      }
-    })
-    .join(" ");
-}
-
-function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
-  const props = cs.transitionProperty;
-  if (!props || props === "none") return [];
-  const properties = props.split(",").map((s) => s.trim());
-  const durations = cs.transitionDuration.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  const easings = cs.transitionTimingFunction.split(",").map((s) => s.trim());
-  const delays = cs.transitionDelay.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  return properties.map((p, i) => ({
-    property: p,
-    duration: durations[i % durations.length] ?? 300,
-    easing: easings[i % easings.length] ?? "ease",
-    delay: delays[i % delays.length] ?? 0,
-  }));
-}
-
-function transitionsToCSS(transitions: TransitionValue[]): string {
-  if (transitions.length === 0) return "none";
-  return transitions
-    .map((t) => `${t.property} ${t.duration}ms ${t.easing} ${t.delay}ms`)
-    .join(", ");
-}
-
-// ─── Text Detection ──────────────────────────────────────────────────
 
 const TEXT_TAGS = new Set([
   "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "a", "label",
@@ -233,676 +125,29 @@ function isTextBearing(el: Element): boolean {
   return false;
 }
 
-// ─── Text Alignment Icons ────────────────────────────────────────────
-
-const TEXT_ALIGN_OPTIONS = [
-  {
-    value: "left",
-    title: "Align left",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="10" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="6" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="9" x2="9" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "center",
-    title: "Align center",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="3" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "right",
-    title: "Align right",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="5" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "justify",
-    title: "Justify",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-];
-
-const TEXT_DECORATION_OPTIONS = [
-  {
-    value: "underline",
-    title: "Underline",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="8" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">U</text>
-        <line x1="2" y1="11" x2="10" y2="11" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-  },
-  {
-    value: "line-through",
-    title: "Strikethrough",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">S</text>
-        <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-  },
-  {
-    value: "overline",
-    title: "Overline",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="1" x2="10" y2="1" stroke="currentColor" strokeWidth="1" />
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">O</text>
-      </svg>
-    ),
-  },
-];
-
-const TEXT_TRANSFORM_OPTIONS = [
-  {
-    value: "uppercase",
-    title: "Uppercase",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">AA</text>
-      </svg>
-    ),
-  },
-  {
-    value: "capitalize",
-    title: "Capitalize",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">Aa</text>
-      </svg>
-    ),
-  },
-  {
-    value: "lowercase",
-    title: "Lowercase",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">aa</text>
-      </svg>
-    ),
-  },
-];
-
-// ─── Shared Inline Components ────────────────────────────────────────
-
-function Section({
-  title,
-  collapsed,
-  children,
-}: {
-  title: string;
-  collapsed?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(!collapsed);
-  return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{
-          padding: "10px 12px 6px",
-          cursor: "pointer",
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
-          {title}
-        </span>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-          {open ? "\u25BE" : "\u25B8"}
-        </span>
-      </div>
-      {open && <div style={{ paddingBottom: "8px" }}>{children}</div>}
-    </div>
-  );
-}
-
-function ValueInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [draft, setDraft] = useState(String(value));
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) onChange(parsed);
-  }, [draft, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        onChange(value + (e.shiftKey ? 10 : 1));
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        onChange(value - (e.shiftKey ? 10 : 1));
-      }
-    },
-    [commit, value, onChange]
-  );
-
-  return (
-    <input
-      value={focused ? draft : String(value)}
-      onChange={(e) => setDraft(e.target.value)}
-      onFocus={() => setFocused(true)}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
-      style={{
-        width: "40px",
-        background: "rgba(255,255,255,0.06)",
-        border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "2px",
-        color: "rgba(255,255,255,0.8)",
-        fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        textAlign: "center",
-        padding: "2px",
-        outline: "none",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-function SliderRow({
-  label,
-  value,
-  min,
-  max,
-  step,
-  unit,
-  units,
-  onUnitChange,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  /** If provided, shows a UnitSelector dropdown instead of a static unit label */
-  units?: string[];
-  onUnitChange?: (unit: string) => void;
-  onChange: (value: number) => void;
-}) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max}>
-        <span
-          style={{
-            width: "64px",
-            fontSize: "11px",
-            color: "rgba(255,255,255,0.5)",
-            flexShrink: 0,
-            display: "inline-block",
-          }}
-        >
-          {label}
-        </span>
-      </LabelScrub>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        style={{
-          flex: 1,
-          height: "3px",
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          borderRadius: "2px",
-          outline: "none",
-          cursor: "pointer",
-        }}
-      />
-      <ValueInput value={value} onChange={onChange} />
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
-      ) : unit ? (
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function SelectRow({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: Array<{ value: string; label: string }>;
-  onChange: (value: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const current = options.find((o) => o.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          style={{
-            width: "100%",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "3px",
-            color: "rgba(255,255,255,0.8)",
-            fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            padding: "0 6px",
-            cursor: "pointer",
-            outline: "none",
-            transition: "background 80ms",
-          }}
-          onMouseEnter={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-          }}
-          onMouseLeave={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-          }}
-        >
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {current?.label ?? value}
-          </span>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }}>▾</span>
-        </button>
-
-        {open && (
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              minWidth: "100%",
-              maxHeight: "180px",
-              overflowY: "auto",
-              background: "#2a2a2a",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "4px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-              zIndex: 200,
-              padding: "2px 0",
-            }}
-          >
-            {options.map((opt) => {
-              const isActive = opt.value === value;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : "transparent",
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    transition: "background 60ms",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-                  }}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ColorRow({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ position: "relative", width: "24px", height: "24px", flexShrink: 0 }}>
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "4px",
-            background: value === "transparent" ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px" : value,
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
-        />
-        <input
-          type="color"
-          value={value === "transparent" ? "#000000" : value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            cursor: "pointer",
-            width: "24px",
-            height: "24px",
-          }}
-        />
-      </div>
-      <span
-        style={{
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(255,255,255,0.5)",
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function TextRow({ label, value, placeholder, onChange }: {
-  label: string; value: string; placeholder?: string; onChange: (value: string) => void;
-}) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
-      <input
-        type="text" value={value} placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{
-          flex: 1, height: "24px", background: "rgba(255,255,255,0.06)",
-          border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none",
-        }}
-      />
-    </div>
-  );
-}
-
-// ─── Display Options ─────────────────────────────────────────────────
-
-const DISPLAY_OPTIONS = [
-  { value: "block", label: "Block" },
-  { value: "flex", label: "Flex" },
-  { value: "inline-flex", label: "Inline Flex" },
-  { value: "grid", label: "Grid" },
-  { value: "inline-grid", label: "Inline Grid" },
-  { value: "inline-block", label: "Inline Block" },
-  { value: "inline", label: "Inline" },
-  { value: "none", label: "None" },
-];
-
-const FONT_WEIGHT_OPTIONS = [
-  { value: "100", label: "100 - Thin" },
-  { value: "200", label: "200 - Extra Light" },
-  { value: "300", label: "300 - Light" },
-  { value: "400", label: "400 - Regular" },
-  { value: "500", label: "500 - Medium" },
-  { value: "600", label: "600 - Semi Bold" },
-  { value: "700", label: "700 - Bold" },
-  { value: "800", label: "800 - Extra Bold" },
-  { value: "900", label: "900 - Black" },
-];
-
-const WHITE_SPACE_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "nowrap", label: "No Wrap" },
-  { value: "pre", label: "Pre" },
-  { value: "pre-wrap", label: "Pre Wrap" },
-  { value: "pre-line", label: "Pre Line" },
-  { value: "break-spaces", label: "Break Spaces" },
-];
-
-const WORD_BREAK_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "break-all", label: "Break All" },
-  { value: "keep-all", label: "Keep All" },
-  { value: "break-word", label: "Break Word" },
-];
-
-const FLOAT_OPTIONS = [
-  { value: "none", label: "None" },
-  { value: "left", label: "Left" },
-  { value: "right", label: "Right" },
-];
-
-const CLEAR_OPTIONS = [
-  { value: "none", label: "None" },
-  { value: "left", label: "Left" },
-  { value: "right", label: "Right" },
-  { value: "both", label: "Both" },
-];
-
-// Unit option lists for SliderRow unit selectors
-const SIZE_UNITS_W = ["px", "%", "vw", "em", "rem", "ch"];
-const SIZE_UNITS_H = ["px", "%", "vh", "em", "rem"];
-const POSITION_UNITS = ["px", "%", "vw", "vh"];
-const TYPO_SIZE_UNITS = ["px", "em", "rem"];
-
-const OVERFLOW_OPTIONS = [
-  { value: "visible", label: "Visible" },
-  { value: "hidden", label: "Hidden" },
-  { value: "scroll", label: "Scroll" },
-  { value: "auto", label: "Auto" },
-];
-
-const POSITION_OPTIONS = [
-  { value: "static", label: "Static" },
-  { value: "relative", label: "Relative" },
-  { value: "absolute", label: "Absolute" },
-  { value: "fixed", label: "Fixed" },
-  { value: "sticky", label: "Sticky" },
-];
-
-const BORDER_STYLE_OPTIONS = [
-  { value: "solid", label: "Solid" },
-  { value: "dashed", label: "Dashed" },
-  { value: "dotted", label: "Dotted" },
-  { value: "double", label: "Double" },
-  { value: "groove", label: "Groove" },
-  { value: "ridge", label: "Ridge" },
-  { value: "inset", label: "Inset" },
-  { value: "outset", label: "Outset" },
-  { value: "none", label: "None" },
-];
-
-const BLEND_MODE_OPTIONS = [
-  { value: "normal", label: "Normal" },
-  { value: "multiply", label: "Multiply" },
-  { value: "screen", label: "Screen" },
-  { value: "overlay", label: "Overlay" },
-  { value: "darken", label: "Darken" },
-  { value: "lighten", label: "Lighten" },
-  { value: "color-dodge", label: "Color Dodge" },
-  { value: "color-burn", label: "Color Burn" },
-  { value: "hard-light", label: "Hard Light" },
-  { value: "soft-light", label: "Soft Light" },
-  { value: "difference", label: "Difference" },
-  { value: "exclusion", label: "Exclusion" },
-  { value: "hue", label: "Hue" },
-  { value: "saturation", label: "Saturation" },
-  { value: "color", label: "Color" },
-  { value: "luminosity", label: "Luminosity" },
-];
-
-const CURSOR_OPTIONS = [
-  { value: "auto", label: "Auto" },
-  { value: "pointer", label: "Pointer" },
-  { value: "default", label: "Default" },
-  { value: "text", label: "Text" },
-  { value: "move", label: "Move" },
-  { value: "grab", label: "Grab" },
-  { value: "grabbing", label: "Grabbing" },
-  { value: "not-allowed", label: "Not Allowed" },
-  { value: "crosshair", label: "Crosshair" },
-  { value: "wait", label: "Wait" },
-  { value: "help", label: "Help" },
-  { value: "zoom-in", label: "Zoom In" },
-  { value: "zoom-out", label: "Zoom Out" },
-  { value: "none", label: "None" },
-];
-
-const POINTER_EVENTS_OPTIONS = [
-  { value: "auto", label: "Auto" },
-  { value: "none", label: "None" },
-];
-
-const VISIBILITY_OPTIONS = [
-  { value: "visible", label: "Visible" },
-  { value: "hidden", label: "Hidden" },
-  { value: "collapse", label: "Collapse" },
-];
-
-const FLEX_WRAP_OPTIONS = [
-  { value: "nowrap", label: "No Wrap" },
-  { value: "wrap", label: "Wrap" },
-  { value: "wrap-reverse", label: "Wrap Reverse" },
-];
-
-const FLEX_DIRECTION_ICONS = [
-  {
-    value: "row",
-    title: "Row (→)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="7,3.5 9.5,6 7,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "column",
-    title: "Column (↓)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="6" y1="2" x2="6" y2="9" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="3.5,7 6,9.5 8.5,7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "row-reverse",
-    title: "Row Reverse (←)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="3" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="5,3.5 2.5,6 5,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "column-reverse",
-    title: "Column Reverse (↑)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="6" y1="3" x2="6" y2="10" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="3.5,5 6,2.5 8.5,5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-];
-
-const ALIGN_SELF_OPTIONS = [
-  { value: "auto", label: "Auto" },
-  { value: "flex-start", label: "Start" },
-  { value: "center", label: "Center" },
-  { value: "flex-end", label: "End" },
-  { value: "stretch", label: "Stretch" },
-  { value: "baseline", label: "Baseline" },
-];
-
 // ─── Main Component ──────────────────────────────────────────────────
 
 export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
+  const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
+  /** Build fresh conversion context on demand (not cached — avoids stale font-size/parent dims) */
+  const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
+
+  // Inject :focus-visible styles for keyboard navigation
+  useEffect(() => {
+    const id = 'tuner-focus-styles';
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }`;
+      document.head.appendChild(style);
+    }
+    return () => { document.getElementById(id)?.remove(); };
+  }, []);
+
+  /** Shorthand for getIndicatorType bound to this element's cached styles */
+  const ind = useCallback((prop: string) => getIndicatorType(element, prop, cs, parentCs), [element, cs, parentCs]);
 
   // ── Layout state ──
   const [display, setDisplay] = useState(() => cs.display);
@@ -911,6 +156,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [alignItems, setAlignItems] = useState(() => cs.alignItems);
   const [flexWrap, setFlexWrap] = useState(() => cs.flexWrap);
   const [gap, setGap] = useState(() => parseNum(cs.gap));
+  const [gapLocked, setGapLocked] = useState(true);
+  const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
+  const [columnGap, setColumnGap] = useState(() => parseNum(cs.columnGap));
 
   // Grid track definitions
   const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
@@ -923,28 +171,72 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [alignSelf, setAlignSelf] = useState(() => cs.alignSelf);
   const [flexOrder, setFlexOrder] = useState(() => parseNum(cs.order));
 
+  // Layout units
+  const [gapUnit, setGapUnit] = useState(() => detectUnit(element, "gap"));
+  const [flexBasisUnit, setFlexBasisUnit] = useState(() => detectUnit(element, "flex-basis"));
+
   // ── Size state ──
-  const [width, setWidth] = useState(() => parseNum(cs.width));
-  const [height, setHeight] = useState(() => parseNum(cs.height));
-  const [minWidth, setMinWidth] = useState(() => parseNum(cs.minWidth));
-  const [maxWidth, setMaxWidth] = useState(() => parseNum(cs.maxWidth === "none" ? "0" : cs.maxWidth));
-  const [minHeight, setMinHeight] = useState(() => parseNum(cs.minHeight));
-  const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
+  // For width/height: use 0 as the fallback numeric value when auto (the keyword handles display)
+  const [width, setWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "width");
+    return (!authored || authored === "auto") ? 0 : parseNum(cs.width);
+  });
+  const [height, setHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "height");
+    return (!authored || authored === "auto") ? 0 : parseNum(cs.height);
+  });
+  const [minWidth, setMinWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "min-width");
+    return authored ? parseNum(authored) : 0;
+  });
+  const [maxWidth, setMaxWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "max-width");
+    return (!authored || authored === "none") ? 0 : parseNum(authored);
+  });
+  const [minHeight, setMinHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "min-height");
+    return authored ? parseNum(authored) : 0;
+  });
+  const [maxHeight, setMaxHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "max-height");
+    return (!authored || authored === "none") ? 0 : parseNum(authored);
+  });
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
+  const [overflowLocked, setOverflowLocked] = useState(true);
+  const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
+  const [overflowY, setOverflowY] = useState(() => cs.overflowY || "visible");
+  const [boxSizing, setBoxSizing] = useState(() => cs.boxSizing || "border-box");
+  const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
+  const [objectFit, setObjectFit] = useState(() => cs.objectFit);
+  const [objectPosition, setObjectPosition] = useState(() => cs.objectPosition);
+  const [showMoreSize, setShowMoreSize] = useState(false);
 
   // Size units
-  const [widthUnit, setWidthUnit] = useState("px");
-  const [heightUnit, setHeightUnit] = useState("px");
-  const [minWidthUnit, setMinWidthUnit] = useState("px");
-  const [maxWidthUnit, setMaxWidthUnit] = useState("px");
-  const [minHeightUnit, setMinHeightUnit] = useState("px");
-  const [maxHeightUnit, setMaxHeightUnit] = useState("px");
+  const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));
+  const [heightUnit, setHeightUnit] = useState(() => detectUnit(element, "height"));
+  const [minWidthUnit, setMinWidthUnit] = useState(() => detectUnit(element, "min-width"));
+  const [maxWidthUnit, setMaxWidthUnit] = useState(() => detectUnit(element, "max-width"));
+  const [minHeightUnit, setMinHeightUnit] = useState(() => detectUnit(element, "min-height"));
+  const [maxHeightUnit, setMaxHeightUnit] = useState(() => detectUnit(element, "max-height"));
 
   // Size keyword toggles
-  const [widthAuto, setWidthAuto] = useState(() => cs.width === "auto");
-  const [heightAuto, setHeightAuto] = useState(() => cs.height === "auto");
-  const [maxWidthNone, setMaxWidthNone] = useState(() => cs.maxWidth === "none");
-  const [maxHeightNone, setMaxHeightNone] = useState(() => cs.maxHeight === "none");
+  // getComputedStyle always resolves to pixels — detect "auto"/"none" from authored CSS
+  const [widthAuto, setWidthAuto] = useState(() => {
+    const authored = getAuthoredValue(element, "width");
+    return !authored || authored === "auto";
+  });
+  const [heightAuto, setHeightAuto] = useState(() => {
+    const authored = getAuthoredValue(element, "height");
+    return !authored || authored === "auto";
+  });
+  const [maxWidthNone, setMaxWidthNone] = useState(() => {
+    const authored = getAuthoredValue(element, "max-width");
+    return !authored || authored === "none";
+  });
+  const [maxHeightNone, setMaxHeightNone] = useState(() => {
+    const authored = getAuthoredValue(element, "max-height");
+    return !authored || authored === "none";
+  });
 
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
@@ -957,10 +249,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [clear_, setClear] = useState(() => cs.clear || "none");
 
   // Position units
-  const [topUnit, setTopUnit] = useState("px");
-  const [rightUnit, setRightUnit] = useState("px");
-  const [bottomUnit, setBottomUnit] = useState("px");
-  const [leftUnit, setLeftUnit] = useState("px");
+  const [topUnit, setTopUnit] = useState(() => detectUnit(element, "top"));
+  const [rightUnit, setRightUnit] = useState(() => detectUnit(element, "right"));
+  const [bottomUnit, setBottomUnit] = useState(() => detectUnit(element, "bottom"));
+  const [leftUnit, setLeftUnit] = useState(() => detectUnit(element, "left"));
 
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
@@ -971,8 +263,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     return fs > 0 ? Math.round((lh / fs) * 100) / 100 : 1.4;
   });
   const [letterSpacing, setLetterSpacing] = useState(() => parseNum(cs.letterSpacing));
-  const [fontSizeUnit, setFontSizeUnit] = useState("px");
-  const [letterSpacingUnit, setLetterSpacingUnit] = useState("px");
+  const [fontSizeUnit, setFontSizeUnit] = useState(() => detectUnit(element, "font-size"));
+  const [letterSpacingUnit, setLetterSpacingUnit] = useState(() => detectUnit(element, "letter-spacing"));
   const [color, setColor] = useState(() => rgbToHex(cs.color));
   const [textAlign, setTextAlign] = useState(() => cs.textAlign);
   const [textDecoration, setTextDecoration] = useState(() => {
@@ -981,8 +273,29 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   });
   const [textTransform, setTextTransform] = useState(() => cs.textTransform);
   const [fontStyle, setFontStyle] = useState(() => cs.fontStyle);
+  const [fontFamily, setFontFamily] = useState(() => cs.fontFamily.replace(/['"]/g, ""));
+  const [pageFonts, setPageFonts] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    document.fonts.ready.then(() => {
+      if (!alive) return;
+      const seen = new Set<string>();
+      const fonts: string[] = [];
+      document.fonts.forEach(f => {
+        const family = f.family.replace(/['"]/g, "");
+        if (!seen.has(family)) { seen.add(family); fonts.push(family); }
+      });
+      setPageFonts(fonts);
+    });
+    return () => { alive = false; };
+  }, []);
+  const fontOptions = useMemo(
+    () => [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f })),
+    [pageFonts],
+  );
+  const [lineHeightUnit, setLineHeightUnit] = useState(() => detectUnit(element, "line-height", "—"));
+  const [textIndentUnit, setTextIndentUnit] = useState(() => detectUnit(element, "text-indent"));
   const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
-  const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
   const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
   const [textIndent, setTextIndent] = useState(() => parseNum(cs.textIndent));
   const [wordBreak, setWordBreak] = useState(() => cs.wordBreak);
@@ -990,6 +303,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     const v = cs.columnCount;
     return v === "auto" ? 1 : parseNum(cs.columnCount);
   });
+  const [direction, setDirection] = useState(() => cs.direction || "ltr");
+  const [textShadows, setTextShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.textShadow || "none"));
+  const [textOverflow, setTextOverflow] = useState(() => cs.getPropertyValue("text-overflow") || "clip");
+  const [textStrokeWidth, setTextStrokeWidth] = useState(() => parseNum(cs.getPropertyValue("-webkit-text-stroke-width") || "0"));
+  const [textStrokeColor, setTextStrokeColor] = useState(() => rgbToHex(cs.getPropertyValue("-webkit-text-stroke-color") || cs.color));
+  const [lineBreak, setLineBreak] = useState(() => cs.getPropertyValue("line-break") || "auto");
 
   // ── Background state ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -1000,6 +319,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     }
     return [];
   });
+  const [bgClip, setBgClip] = useState(() => cs.getPropertyValue("background-clip") || "border-box");
 
   // ── Border state ──
   const [borderSide, setBorderSide] = useState<"all" | "top" | "right" | "bottom" | "left">("all");
@@ -1010,6 +330,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [radiusTR, setRadiusTR] = useState(() => parseNum(cs.borderTopRightRadius));
   const [radiusBR, setRadiusBR] = useState(() => parseNum(cs.borderBottomRightRadius));
   const [radiusBL, setRadiusBL] = useState(() => parseNum(cs.borderBottomLeftRadius));
+  const [radiusUnit, setRadiusUnit] = useState(() => detectUnit(element, "border-top-left-radius"));
+  const [borderWidthUnit, setBorderWidthUnit] = useState(() => detectUnit(element, "border-width"));
   const [radiusLinked, setRadiusLinked] = useState(() => {
     const tl = parseNum(cs.borderTopLeftRadius);
     const tr = parseNum(cs.borderTopRightRadius);
@@ -1026,28 +348,44 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [transformOrigin, setTransformOrigin] = useState(() => cs.transformOrigin || "center");
   const [filterValues, setFilterValues] = useState<Partial<FilterValues>>(() => parseFilter(cs.filter));
   const [backdropFilterValues, setBackdropFilterValues] = useState<Partial<FilterValues>>(() =>
-    parseFilter((cs as unknown as Record<string, string>).backdropFilter || (cs as unknown as Record<string, string>).webkitBackdropFilter || "")
+    parseFilter(cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "")
   );
   const [transitions, setTransitions] = useState<TransitionValue[]>(() => parseTransitions(cs));
   const [cursor, setCursor] = useState(() => cs.cursor);
   const [pointerEvents, setPointerEvents] = useState(() => cs.pointerEvents);
   const [visibility, setVisibility] = useState(() => cs.visibility);
+  const [userSelect, setUserSelect] = useState(() => cs.userSelect || "auto");
+  const [perspective, setPerspective] = useState(() => parseNum(cs.getPropertyValue("perspective")));
+  const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
+
+  // Spacing units
+  const [marginUnit, setMarginUnit] = useState(() => detectUnit(element, "margin-top"));
+  const [paddingUnit, setPaddingUnit] = useState(() => detectUnit(element, "padding-top"));
 
   // ── Derived flags ──
   const isFlex = display === "flex" || display === "inline-flex";
   const isGrid = display === "grid" || display === "inline-grid";
-  const parentIsFlex = (() => {
-    const parent = element.parentElement;
-    if (!parent) return false;
-    const pd = getComputedStyle(parent).display;
-    return pd === "flex" || pd === "inline-flex";
-  })();
+  const parentIsFlex = parentCs != null && (parentCs.display === "flex" || parentCs.display === "inline-flex");
+  const parentIsGrid = parentCs != null && (parentCs.display === "grid" || parentCs.display === "inline-grid");
+  const parentIsFlexOrGrid = parentIsFlex || parentIsGrid;
+  const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
   // ── Apply helper ──
   const apply = useCallback(
     (prop: string, value: string) => {
       applyInlineStyle(element, prop, value);
+      onDirtyChange?.();
+    },
+    [element, onDirtyChange]
+  );
+
+  /** Reset a CSS property to its computed value and update React state via setter */
+  const resetCss = useCallback(
+    (prop: string, setter: (v: number) => void) => {
+      resetProp(element, prop);
+      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
+      setter(parseFloat(fresh) || 0);
       onDirtyChange?.();
     },
     [element, onDirtyChange]
@@ -1094,10 +432,19 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleGapChange = useCallback(
     (v: number) => {
       setGap(v);
-      apply("gap", `${v}px`);
+      apply("gap", `${v}${gapUnit}`);
+      if (gapLocked) { setRowGap(v); setColumnGap(v); }
     },
-    [apply]
+    [apply, gapUnit, gapLocked]
   );
+  const handleRowGapChange = useCallback((v: number) => { setRowGap(v); apply("row-gap", `${v}px`); }, [apply]);
+  const handleColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
+  const handleGapLockToggle = useCallback(() => {
+    setGapLocked(prev => {
+      if (!prev) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}px`); apply("column-gap", `${gap}px`); }
+      return !prev;
+    });
+  }, [gap, apply]);
 
   const handleGridColsChange = useCallback(
     (v: string) => { setGridCols(v); if (v.trim()) apply("grid-template-columns", v); },
@@ -1127,9 +474,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleFlexBasisChange = useCallback(
     (v: number) => {
       setFlexBasis(v);
-      apply("flex-basis", `${v}px`);
+      apply("flex-basis", `${v}${flexBasisUnit}`);
     },
-    [apply]
+    [apply, flexBasisUnit]
   );
 
   const handleAlignSelfChange = useCallback(
@@ -1156,6 +503,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
+  const handleOverflowXChange = useCallback((v: string) => { setOverflowX(v); apply("overflow-x", v); }, [apply]);
+  const handleOverflowYChange = useCallback((v: string) => { setOverflowY(v); apply("overflow-y", v); }, [apply]);
+  const handleOverflowLockToggle = useCallback(() => {
+    setOverflowLocked(prev => {
+      if (!prev) { setOverflowX(overflow); setOverflowY(overflow); apply("overflow-x", overflow); apply("overflow-y", overflow); }
+      return !prev;
+    });
+  }, [overflow, apply]);
+  const handleBoxSizingChange = useCallback((v: string) => { setBoxSizing(v); apply("box-sizing", v); }, [apply]);
+  const handleAspectRatioChange = useCallback((v: string) => { setAspectRatio(v); apply("aspect-ratio", v || "auto"); }, [apply]);
+  const handleObjectFitChange = useCallback((v: string) => { setObjectFit(v); apply("object-fit", v); }, [apply]);
+  const handleObjectPositionChange = useCallback((v: string) => { setObjectPosition(v); apply("object-position", v); }, [apply]);
 
   // Size keyword toggles
   const handleWidthAutoToggle = useCallback(() => {
@@ -1195,23 +554,43 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   // Typography
   const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
   const handleFontWeightChange = useCallback((v: string) => { setFontWeight(v); apply("font-weight", v); }, [apply]);
-  const handleLineHeightChange = useCallback((v: number) => { setLineHeight(v); apply("line-height", String(v)); }, [apply]);
+  const handleLineHeightChange = useCallback((v: number) => {
+    setLineHeight(v);
+    if (lineHeightUnit === "—") apply("line-height", String(v));
+    else if (lineHeightUnit === "%") apply("line-height", `${v}%`);
+    else apply("line-height", `${v}${lineHeightUnit}`);
+  }, [apply, lineHeightUnit]);
   const handleLetterSpacingChange = useCallback((v: number) => { setLetterSpacing(v); apply("letter-spacing", `${v}${letterSpacingUnit}`); }, [apply, letterSpacingUnit]);
   const handleColorChange = useCallback((v: string) => { setColor(v); apply("color", v); }, [apply]);
   const handleTextAlignChange = useCallback((v: string) => { setTextAlign(v); apply("text-align", v); }, [apply]);
   const handleTextDecorationChange = useCallback((v: string) => { setTextDecoration(v); apply("text-decoration-line", v); }, [apply]);
   const handleTextTransformChange = useCallback((v: string) => { setTextTransform(v); apply("text-transform", v); }, [apply]);
-  const handleFontStyleChange = useCallback(() => {
-    const next = fontStyle === "italic" ? "normal" : "italic";
-    setFontStyle(next);
-    apply("font-style", next);
-  }, [fontStyle, apply]);
+  const handleFontFamilyChange = useCallback((v: string) => { setFontFamily(v); apply("font-family", v); }, [apply]);
 
-  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}px`); }, [apply]);
   const handleWhiteSpaceChange = useCallback((v: string) => { setWhiteSpace(v); apply("white-space", v); }, [apply]);
-  const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}px`); }, [apply]);
+  const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}${textIndentUnit}`); }, [apply, textIndentUnit]);
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
+  const handleDirectionChange = useCallback((v: string) => { setDirection(v); apply("direction", v); }, [apply]);
+  const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
+    setTextShadows(newShadows);
+    apply("text-shadow", shadowToCSS(newShadows));
+  }, [apply]);
+  const handleTextOverflowChange = useCallback((v: string) => { setTextOverflow(v); apply("text-overflow", v); }, [apply]);
+  const handleTextStrokeWidthChange = useCallback((v: number) => { setTextStrokeWidth(v); apply("-webkit-text-stroke-width", `${v}px`); }, [apply]);
+  const handleTextStrokeColorChange = useCallback((v: string) => { setTextStrokeColor(v); apply("-webkit-text-stroke-color", v); }, [apply]);
+  const handleLineBreakChange = useCallback((v: string) => { setLineBreak(v); apply("line-break", v); }, [apply]);
+  // IconButtonGroup-compatible handlers (map "none" → valid defaults)
+  const handleFontStyleIconChange = useCallback((v: string) => {
+    const val = v === "none" ? "normal" : v;
+    setFontStyle(val);
+    apply("font-style", val);
+  }, [apply]);
+  const handleDirectionIconChange = useCallback((v: string) => {
+    const val = v === "none" ? "ltr" : v;
+    setDirection(val);
+    apply("direction", val);
+  }, [apply]);
 
   // Backgrounds
   const handleBgColorChange = useCallback((v: string) => { setBgColor(v); apply("background-color", v); }, [apply]);
@@ -1254,6 +633,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     },
     [apply]
   );
+  const handleBgClipChange = useCallback((v: string) => { setBgClip(v); apply("background-clip", v); if (v === "text") { apply("-webkit-background-clip", "text"); } }, [apply]);
 
   // Borders
   const handleBorderStyleChange = useCallback((v: string) => {
@@ -1264,8 +644,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleBorderWidthChange = useCallback((v: number) => {
     setBorderWidth(v);
     const prop = borderSide === "all" ? "border-width" : `border-${borderSide}-width`;
-    apply(prop, `${v}px`);
-  }, [apply, borderSide]);
+    apply(prop, `${v}${borderWidthUnit}`);
+  }, [apply, borderSide, borderWidthUnit]);
   const handleBorderColorChange = useCallback((v: string) => {
     setBorderColor(v);
     const prop = borderSide === "all" ? "border-color" : `border-${borderSide}-color`;
@@ -1273,13 +653,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   }, [apply, borderSide]);
   const handleCornerChange = useCallback(
     (corner: string, value: number) => {
-      apply(corner, `${value}px`);
+      apply(corner, `${value}${radiusUnit}`);
       if (corner === "border-top-left-radius") setRadiusTL(value);
       else if (corner === "border-top-right-radius") setRadiusTR(value);
       else if (corner === "border-bottom-right-radius") setRadiusBR(value);
       else if (corner === "border-bottom-left-radius") setRadiusBL(value);
     },
-    [apply]
+    [apply, radiusUnit]
   );
 
   // Effects
@@ -1333,6 +713,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleCursorChange = useCallback((v: string) => { setCursor(v); apply("cursor", v); }, [apply]);
   const handlePointerEventsChange = useCallback((v: string) => { setPointerEvents(v); apply("pointer-events", v); }, [apply]);
   const handleVisibilityChange = useCallback((v: string) => { setVisibility(v); apply("visibility", v); }, [apply]);
+  const handleUserSelectChange = useCallback((v: string) => { setUserSelect(v); apply("user-select", v); }, [apply]);
+  const handlePerspectiveChange = useCallback((v: number) => { setPerspective(v); apply("perspective", v > 0 ? `${v}px` : "none"); }, [apply]);
+  const handleBackfaceVisibilityChange = useCallback((v: string) => { setBackfaceVisibility(v); apply("backface-visibility", v); }, [apply]);
 
   // ─── Render ────────────────────────────────────────────────────────
 
@@ -1340,26 +723,63 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {/* 1. Layout */}
       <Section title="Layout">
-        <SelectRow label="Display" value={display} options={DISPLAY_OPTIONS} onChange={handleDisplayChange} />
+        <DisplayTabs value={display} onChange={handleDisplayChange} />
 
         {isFlex && (
           <>
-            <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-                Direction
-              </span>
-              <IconButtonGroup options={FLEX_DIRECTION_ICONS} value={flexDirection} onChange={handleFlexDirectionChange} />
+            {/* Direction row: row/column/wrap icons + dropdown for reverse */}
+            <DirectionRow
+              direction={flexDirection}
+              wrap={flexWrap}
+              onDirectionChange={handleFlexDirectionChange}
+              onWrapChange={handleFlexWrapChange}
+            />
+
+            {/* Align row: 3x3 grid + X/Y dropdowns side-by-side */}
+            <div style={{ padding: "4px 12px", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ width: "48px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "6px" }}>Align</span>
+              <div style={{ flexShrink: 0 }}>
+                <AlignBox justify={justifyContent} align={alignItems} onChange={handleAlignChange} mode="flex" compact />
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px", paddingTop: "2px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>X</span>
+                  <MiniDropdown
+                    value={flexDirection.startsWith("column") ? alignItems : justifyContent}
+                    options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
+                    onChange={(v) => {
+                      if (flexDirection.startsWith("column")) {
+                        setAlignItems(v); apply("align-items", v);
+                      } else {
+                        setJustifyContent(v); apply("justify-content", v);
+                      }
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>Y</span>
+                  <MiniDropdown
+                    value={flexDirection.startsWith("column") ? justifyContent : alignItems}
+                    options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
+                    onChange={(v) => {
+                      if (flexDirection.startsWith("column")) {
+                        setJustifyContent(v); apply("justify-content", v);
+                      } else {
+                        setAlignItems(v); apply("align-items", v);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <div style={{ padding: "6px 12px" }}>
-              <AlignBox
-                justify={justifyContent}
-                align={alignItems}
-                onChange={handleAlignChange}
-                mode="flex"
-              />
-            </div>
-            <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} />
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
+
+            {/* Gap row: swatch + slider + value + unit + lock */}
+            <GapRow
+              value={gap}
+              unit={gapUnit}
+              onChange={handleGapChange}
+              onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }}
+            />
           </>
         )}
 
@@ -1375,20 +795,84 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="grid"
               />
             </div>
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
+            {gapLocked ? (
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ flex: 1 }}>
+                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} onReset={() => resetCss("gap", setGap)} indicator={ind("gap")} />
+                </div>
+                <button onClick={handleGapLockToggle} title="Unlock row/column gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <SliderRow label="Row Gap" value={rowGap} min={0} max={200} step={1} unit="px" onChange={handleRowGapChange} onReset={() => resetCss("row-gap", setRowGap)} indicator={ind("row-gap")} />
+                  </div>
+                  <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+                </div>
+                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} onReset={() => resetCss("column-gap", setColumnGap)} indicator={ind("column-gap")} />
+              </>
+            )}
           </>
         )}
 
-        {parentIsFlex && (
+        {parentIsFlexOrGrid && (
           <>
             <div style={{ padding: "6px 12px 2px", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Flex Child
+              {parentIsFlex ? "Flex Child" : "Grid Child"}
             </div>
-            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} />
-            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit="px" onChange={handleFlexBasisChange} />
-            <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} />
-            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} />
+
+            {/* Grow / Shrink — compact inline inputs, flex children only */}
+            {parentIsFlex && (
+              <div style={{ display: "flex", gap: "6px", padding: "2px 12px" }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
+                    </span>
+                  </LabelScrub>
+                  <ValueInput value={flexGrow} onChange={handleFlexGrowChange} />
+                </div>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
+                    </span>
+                  </LabelScrub>
+                  <ValueInput value={flexShrink} onChange={handleFlexShrinkChange} />
+                </div>
+              </div>
+            )}
+
+            {/* Basis — compact input with unit selector, flex children only */}
+            {parentIsFlex && (
+              <div style={{ padding: "2px 12px" }}>
+                <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
+                  <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500}>
+                    <span style={{ padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                      {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
+                    </span>
+                  </LabelScrub>
+                  <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: "2px" }}>
+                    <ValueInput value={flexBasis} onChange={handleFlexBasisChange} />
+                  </div>
+                  <div style={{ flexShrink: 0, paddingRight: "3px" }}>
+                    <UnitSelector value={flexBasisUnit} options={LAYOUT_UNITS} onChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={ind("align-self")} />
+
+            {/* Order — simple number input, not a slider */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}
+                Order
+              </span>
+              <ValueInput value={flexOrder} onChange={handleFlexOrderChange} />
+            </div>
           </>
         )}
       </Section>
@@ -1399,118 +883,420 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           margin={spacing.margin}
           padding={spacing.padding}
           onChange={onSpacingChange}
+          marginUnit={marginUnit}
+          paddingUnit={paddingUnit}
+          marginUnits={SPACING_UNITS}
+          paddingUnits={SPACING_UNITS}
+          onMarginUnitChange={(u) => {
+            const ctx = buildConversionContext(element);
+            const sides = ["top", "right", "bottom", "left"] as const;
+            for (const s of sides) {
+              const converted = convertUnit(spacing.margin[s], marginUnit, u, ctx);
+              onSpacingChange(`margin-${s}`, converted, u);
+            }
+            setMarginUnit(u);
+          }}
+          onPaddingUnitChange={(u) => {
+            const ctx = buildConversionContext(element);
+            const sides = ["top", "right", "bottom", "left"] as const;
+            for (const s of sides) {
+              const converted = convertUnit(spacing.padding[s], paddingUnit, u, ctx);
+              onSpacingChange(`padding-${s}`, converted, u);
+            }
+            setPaddingUnit(u);
+          }}
         />
       </Section>
 
       {/* 3. Size */}
       <Section title="Size">
-        <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={setWidthUnit} onChange={handleWidthChange} />
-        <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={setHeightUnit} onChange={handleHeightChange} />
-        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMinWidthUnit} onChange={handleMinWidthChange} />
-        <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMaxWidthUnit} onChange={handleMaxWidthChange} />
-        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMinHeightUnit} onChange={handleMinHeightChange} />
-        <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMaxHeightUnit} onChange={handleMaxHeightChange} />
-        <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} />
+        {/* Row 1: Width + Height */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Width"
+            value={width}
+            unit={widthUnit}
+            units={SIZE_UNITS_W}
+            keyword={widthAuto ? "auto" : null}
+            onValueChange={handleWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, getConversionCtx(), "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
+            onKeywordChange={(k) => { setWidthAuto(k === "auto"); apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`); }}
+            isModified={isDirty(element, "width")}
+            supportsAuto
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Height"
+            value={height}
+            unit={heightUnit}
+            units={SIZE_UNITS_H}
+            keyword={heightAuto ? "auto" : null}
+            onValueChange={handleHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, getConversionCtx(), "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
+            onKeywordChange={(k) => { setHeightAuto(k === "auto"); apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`); }}
+            isModified={isDirty(element, "height")}
+            supportsAuto
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Row 2: Min W + Min H */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Min W"
+            value={minWidth}
+            unit={minWidthUnit}
+            units={SIZE_UNITS_W}
+            keyword={null}
+            onValueChange={handleMinWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, getConversionCtx(), "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
+            onKeywordChange={() => {}}
+            isModified={isDirty(element, "min-width")}
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Min H"
+            value={minHeight}
+            unit={minHeightUnit}
+            units={SIZE_UNITS_H}
+            keyword={null}
+            onValueChange={handleMinHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, getConversionCtx(), "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
+            onKeywordChange={() => {}}
+            isModified={isDirty(element, "min-height")}
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Row 3: Max W + Max H */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Max W"
+            value={maxWidth}
+            unit={maxWidthUnit}
+            units={SIZE_UNITS_W}
+            keyword={maxWidthNone ? "none" : null}
+            onValueChange={handleMaxWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, getConversionCtx(), "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
+            onKeywordChange={(k) => { setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${maxWidthUnit}`); }}
+            isModified={isDirty(element, "max-width")}
+            supportsNone
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Max H"
+            value={maxHeight}
+            unit={maxHeightUnit}
+            units={SIZE_UNITS_H}
+            keyword={maxHeightNone ? "none" : null}
+            onValueChange={handleMaxHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, getConversionCtx(), "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
+            onKeywordChange={(k) => { setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
+            isModified={isDirty(element, "max-height")}
+            supportsNone
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Overflow: icon button row */}
+        {overflowLocked ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Overflow</span>
+            <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
+            <button onClick={handleOverflowLockToggle} title="Per-axis overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over X</span>
+              <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
+              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over Y</span>
+              <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowY} onChange={handleOverflowYChange} />
+            </div>
+          </>
+        )}
+        <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>More size options</span>
+        </div>
+        {showMoreSize && (
+          <>
+            <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} />
+            <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Box Size</span>
+              <IconButtonGroup
+                options={BOX_SIZING_OPTIONS}
+                value={boxSizing}
+                onChange={handleBoxSizingChange}
+              />
+            </div>
+            {isMedia && (
+              <>
+                <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} />
+                <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} />
+              </>
+            )}
+          </>
+        )}
       </Section>
 
       {/* 4. Position */}
       <Section title="Position" collapsed={position === "static"}>
-        <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} />
+        <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
         {position !== "static" && (
           <>
-            <SliderRow label="Top" value={top} min={-200} max={200} step={1} unit={topUnit} units={POSITION_UNITS} onUnitChange={setTopUnit} onChange={handleTopChange} />
-            <SliderRow label="Right" value={right} min={-200} max={200} step={1} unit={rightUnit} units={POSITION_UNITS} onUnitChange={setRightUnit} onChange={handleRightChange} />
-            <SliderRow label="Bottom" value={bottom} min={-200} max={200} step={1} unit={bottomUnit} units={POSITION_UNITS} onUnitChange={setBottomUnit} onChange={handleBottomChange} />
-            <SliderRow label="Left" value={left} min={-200} max={200} step={1} unit={leftUnit} units={POSITION_UNITS} onUnitChange={setLeftUnit} onChange={handleLeftChange} />
-            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} />
+            <PositionOffsetDiagram
+              top={top}
+              right={right}
+              bottom={bottom}
+              left={left}
+              onChange={(prop, v) => {
+                if (prop === "top") handleTopChange(v);
+                else if (prop === "right") handleRightChange(v);
+                else if (prop === "bottom") handleBottomChange(v);
+                else if (prop === "left") handleLeftChange(v);
+              }}
+              units={{ top: topUnit, right: rightUnit, bottom: bottomUnit, left: leftUnit }}
+              availableUnits={POSITION_UNITS}
+              onUnitChange={(prop: string, unit: string) => {
+                const axis = (prop === "top" || prop === "bottom") ? "height" as const : "width" as const;
+                if (prop === "top") { const c = convertUnit(top, topUnit, unit, getConversionCtx(),axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
+                else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, getConversionCtx(),axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
+                else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, getConversionCtx(),axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
+                else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, getConversionCtx(),axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
+              }}
+            />
+            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => resetCss("z-index", setZIndex)} indicator={ind("z-index")} />
           </>
         )}
-        <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} />
-        <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} />
+        <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} />
+        <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} />
       </Section>
 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} />
-          <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} />
-          <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} />
-          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setLetterSpacingUnit} onChange={handleLetterSpacingChange} />
-          <ColorRow label="Color" value={color} onChange={handleColorChange} />
+          {/* Font family dropdown */}
+          <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
 
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Align
+          {/* Weight dropdown */}
+          <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
+
+          {/* Size + Height side-by-side compact cells */}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 12px" }}>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
+              Size
             </span>
+            <TypoValueCell
+              value={fontSize}
+              onChange={handleFontSizeChange}
+              unit={fontSizeUnit}
+              units={TYPO_SIZE_UNITS}
+              onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, getConversionCtx()); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
+              step={1}
+            />
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
+              Height
+            </span>
+            <TypoValueCell
+              value={lineHeight}
+              onChange={handleLineHeightChange}
+              unit={lineHeightUnit === "—" ? "–" : lineHeightUnit}
+              units={LINE_HEIGHT_UNITS}
+              onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, getConversionCtx()); setLineHeight(c); } setLineHeightUnit(u); }}
+              step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
+            />
+          </div>
+
+          {/* Color */}
+          <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} />
+
+          {/* Align */}
+          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Align</span>
             <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
           </div>
 
+          {/* Decor — with none X button + ... overflow */}
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Decorate
-            </span>
-            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Decor</span>
+            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} />
           </div>
 
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Transform
-            </span>
-            <IconButtonGroup options={TEXT_TRANSFORM_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-          </div>
-
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Style
-            </span>
+          {/* More type options toggle */}
+          <div style={{ padding: "4px 12px" }}>
             <button
-              onClick={handleFontStyleChange}
+              onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
               style={{
-                height: "28px",
-                minWidth: "28px",
-                padding: "0 8px",
-                cursor: "pointer",
-                background: fontStyle === "italic" ? "#6366f1" : "transparent",
-                color: fontStyle === "italic" ? "#fff" : "rgba(255,255,255,0.5)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "4px",
-                fontSize: "12px",
-                fontStyle: "italic",
-                fontFamily: "Georgia, serif",
-                lineHeight: 1,
-                transition: "background 80ms, color 80ms",
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                padding: "6px 0", cursor: "pointer",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px",
+                color: "rgba(255,255,255,0.45)", fontSize: "11px",
+                fontFamily: "system-ui, sans-serif", outline: "none",
+                transition: "background 80ms",
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
             >
-              I
+              <ChevronRight size={10} strokeWidth={2} style={{ transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
+              More type options
             </button>
           </div>
 
-          {/* Advanced typography sub-section */}
-          <div
-            onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
-            style={{
-              padding: "6px 12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }}>
-              ▶
-            </span>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Advanced
-            </span>
-          </div>
           {showTypoAdvanced && (
             <>
-              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit="px" onChange={handleWordSpacingChange} />
-              <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
-              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit="px" onChange={handleTextIndentChange} />
-              <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
-              <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
+              {/* Letter spacing + Text indent + Columns — compact row with labels below */}
+              <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={letterSpacing}
+                    onChange={handleLetterSpacingChange}
+                    unit={letterSpacingUnit}
+                    units={TYPO_SIZE_UNITS}
+                    onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, getConversionCtx()); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
+                    step={0.25}
+                    keyword={letterSpacing === 0 ? "Normal" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Letter spacing</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={textIndent}
+                    onChange={handleTextIndentChange}
+                    unit={textIndentUnit}
+                    units={LAYOUT_UNITS}
+                    onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, getConversionCtx()); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }}
+                    step={1}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Text indent</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={columnCount}
+                    onChange={handleColumnCountChange}
+                    unit=""
+                    step={1}
+                    keyword={columnCount <= 1 ? "Auto" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
+                </div>
+              </div>
+
+              {/* Italicize + Capitalize + Direction — toggle groups with labels below */}
+              <div style={{ display: "flex", gap: "6px", padding: "6px 12px", alignItems: "flex-start" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+                  <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Italicize</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", flex: 1 }}>
+                  <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Capitalize</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+                  <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Direction</span>
+                </div>
+              </div>
+
+              {/* Breaking — Word + Line side by side */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Breaking</span>
+                <div style={{ flex: 1 }}>
+                  <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Word</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <MiniDropdown value={lineBreak} options={LINE_BREAK_OPTIONS} onChange={handleLineBreakChange} />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Line</div>
+                </div>
+              </div>
+
+              {/* Wrap */}
+              <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
+
+              {/* Truncate — Clip / Ellipsis segmented toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Truncate</span>
+                <div style={{ display: "flex", flex: 1, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {(["clip", "ellipsis"] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleTextOverflowChange(opt)}
+                      style={{
+                        flex: 1, height: "28px", cursor: "pointer",
+                        background: textOverflow === opt ? "rgba(255,255,255,0.12)" : "transparent",
+                        color: textOverflow === opt ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                        border: "none", borderRight: opt === "clip" ? "1px solid rgba(255,255,255,0.15)" : "none",
+                        fontSize: "11px", fontFamily: "system-ui, sans-serif",
+                        fontWeight: textOverflow === opt ? 500 : 400,
+                        outline: "none", transition: "background 80ms, color 80ms",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {opt === "clip" ? "Clip" : "Ellipsis"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stroke — width + color side by side */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Stroke</span>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={textStrokeWidth}
+                    onChange={handleTextStrokeWidthChange}
+                    unit="px"
+                    step={1}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Width</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden", padding: "0 6px", gap: "6px", position: "relative" }}>
+                    <label style={{ width: "16px", height: "16px", borderRadius: "2px", background: textStrokeColor, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0, cursor: "pointer", display: "block" }}>
+                      <input
+                        type="color"
+                        value={textStrokeColor}
+                        onChange={(e) => handleTextStrokeColorChange(e.target.value)}
+                        style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
+                      />
+                    </label>
+                    <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {textStrokeColor}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Color</div>
+                </div>
+              </div>
+
+              {/* Text shadows */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px 2px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>Text shadows</span>
+                <button
+                  onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false }])}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: "22px", height: "22px", cursor: "pointer",
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: "3px", color: "rgba(255,255,255,0.5)", fontSize: "14px",
+                    lineHeight: 1, outline: "none", transition: "background 80ms",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  +
+                </button>
+              </div>
+              {textShadows.length > 0 && <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />}
             </>
           )}
         </Section>
@@ -1523,16 +1309,17 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
           </div>
         ) : (
-          <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} />
+          <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} />
         )}
+        <SelectRow label="Clip" value={bgClip} options={BG_CLIP_OPTIONS} onChange={handleBgClipChange} indicator={ind("background-clip")} />
       </Section>
 
       {/* 7. Borders */}
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
-        <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit="px" onChange={handleBorderWidthChange} />
-        <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} />
+        <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} />
+        <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
         </div>
@@ -1544,13 +1331,16 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           linked={radiusLinked}
           onChange={handleCornerChange}
           onLinkedChange={setRadiusLinked}
+          unit={radiusUnit}
+          units={BORDER_UNITS}
+          onUnitChange={(u: string) => { setRadiusUnit(u); }}
         />
       </Section>
 
       {/* 8. Effects */}
       <Section title="Effects">
-        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} />
-        <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} />
+        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); onDirtyChange?.(); }} indicator={ind("opacity")} />
+        <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Box Shadow
@@ -1584,9 +1374,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} />
         </div>
 
-        <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} />
-        <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} />
-        <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} />
+        <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} />
+        <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} />
+        <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
+        <SelectRow label="User Sel" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} />
+        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} />
+        <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
       </Section>
     </div>
   );

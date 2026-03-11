@@ -7,6 +7,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { UnitSelector } from "./UnitSelector";
+import { Link, Unlink } from "lucide-react";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -16,6 +18,9 @@ export interface CornerRadiusEditorProps {
   linked: boolean;
   onChange: (corner: string, value: number) => void;
   onLinkedChange: (linked: boolean) => void;
+  unit: string;
+  units: string[];
+  onUnitChange: (unit: string) => void;
 }
 
 const CORNER_PROPS = [
@@ -122,10 +127,10 @@ function RadiusInput({
         transition: "background 100ms",
       }}
       onMouseEnter={(e) => {
-        (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
       }}
       onMouseLeave={(e) => {
-        (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
       }}
     >
       {value}
@@ -134,31 +139,9 @@ function RadiusInput({
 }
 
 function LinkIcon({ linked }: { linked: boolean }) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
-      {linked ? (
-        <>
-          <path
-            d="M3.5 6h5M7 4l1.5 0a2 2 0 0 1 0 4H7M5 4l-1.5 0a2 2 0 0 0 0 4H5"
-            fill="none"
-            stroke="#6366f1"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </>
-      ) : (
-        <>
-          <path
-            d="M7.5 4l1 0a2 2 0 0 1 0 4H7.5M4.5 4l-1 0a2 2 0 0 0 0 4H4.5"
-            fill="none"
-            stroke="rgba(255,255,255,0.35)"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-    </svg>
-  );
+  return linked
+    ? <Link size={12} strokeWidth={1.5} color="#6366f1" style={{ display: "block" }} />
+    : <Unlink size={12} strokeWidth={1.5} color="rgba(255,255,255,0.35)" style={{ display: "block" }} />;
 }
 
 export function CornerRadiusEditor({
@@ -169,6 +152,9 @@ export function CornerRadiusEditor({
   linked,
   onChange,
   onLinkedChange,
+  unit,
+  units,
+  onUnitChange,
 }: CornerRadiusEditorProps) {
   const values = { topLeft, topRight, bottomRight, bottomLeft };
 
@@ -195,7 +181,7 @@ export function CornerRadiusEditor({
   const previewBL = Math.min(bottomLeft, maxPreviewR);
 
   if (linked) {
-    // Single input mode — show one input and the preview
+    // Single input mode — show one input, unit selector, and the preview
     return (
       <div style={{ padding: "8px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -204,6 +190,7 @@ export function CornerRadiusEditor({
             onChange={handleChange("border-top-left-radius", "topLeft")}
             label="All corners"
           />
+          <UnitSelector value={unit} options={units} onChange={onUnitChange} />
           <div
             style={{
               width: "24px",
@@ -258,7 +245,7 @@ export function CornerRadiusEditor({
           />
         </div>
 
-        {/* Preview rectangle with link button in center */}
+        {/* Preview rectangle with link button + unit selector in center */}
         <div style={{ position: "relative", margin: "0 32px" }}>
           <div
             style={{
@@ -270,34 +257,43 @@ export function CornerRadiusEditor({
               transition: "border-radius 100ms",
             }}
           />
-          {/* Link/unlink button centered */}
-          <button
-            onClick={() => onLinkedChange(true)}
-            title="Link corners"
+          {/* Link/unlink button + unit selector centered */}
+          <div
             style={{
               position: "absolute",
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "3px",
-              cursor: "pointer",
-              padding: "3px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              transition: "background 100ms",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+              gap: "4px",
             }}
           >
-            <LinkIcon linked={false} />
-          </button>
+            <button
+              onClick={() => onLinkedChange(true)}
+              title="Link corners"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "3px",
+                cursor: "pointer",
+                padding: "3px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 100ms",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+              }}
+            >
+              <LinkIcon linked={false} />
+            </button>
+            <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+          </div>
         </div>
 
         {/* Bottom row: BL and BR */}

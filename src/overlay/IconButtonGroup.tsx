@@ -48,6 +48,8 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
             key={opt.value}
             title={opt.title ?? opt.value}
             onClick={() => handleClick(opt.value)}
+            onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+            onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -68,7 +70,8 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
               fontSize: "13px",
               lineHeight: 1,
               fontFamily: "system-ui, sans-serif",
-              transition: "background 80ms, color 80ms",
+              outline: "none",
+              transition: "background 80ms, color 80ms, box-shadow 80ms",
             }}
             onMouseEnter={(e) => {
               if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

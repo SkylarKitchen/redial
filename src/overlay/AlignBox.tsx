@@ -22,6 +22,8 @@ export interface AlignBoxProps {
   align: string;
   onChange: (justify: string, align: string) => void;
   mode?: "flex" | "grid";
+  /** When true, hides spacing buttons and shows only the 3x3 grid */
+  compact?: boolean;
 }
 
 const JUSTIFY_COLS_FLEX = ["flex-start", "center", "flex-end"] as const;
@@ -80,7 +82,7 @@ function CellIcon({ col, row }: { col: number; row: number }) {
   );
 }
 
-export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxProps) {
+export function AlignBox({ justify, align, onChange, mode = "flex", compact = false }: AlignBoxProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
 
   const justifyCols = mode === "flex" ? JUSTIFY_COLS_FLEX : JUSTIFY_COLS_GRID;
@@ -120,7 +122,12 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
             return (
               <div
                 key={key}
+                tabIndex={0}
+                role="button"
                 onClick={() => handleCellClick(col, row)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(col, row); } }}
+                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+                onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 onMouseEnter={() => setHoveredCell(key)}
                 onMouseLeave={() => setHoveredCell(null)}
                 style={{
@@ -130,6 +137,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
+                  outline: "none",
                   background: isActive
                     ? "#6366f1"
                     : isHovered
@@ -138,7 +146,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
                   color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
                   borderRight: col < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
                   borderBottom: row < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                  transition: "background 80ms, color 80ms",
+                  transition: "background 80ms, color 80ms, box-shadow 80ms",
                 }}
               >
                 <CellIcon col={col} row={row} />
@@ -148,38 +156,40 @@ export function AlignBox({ justify, align, onChange, mode = "flex" }: AlignBoxPr
         )}
       </div>
 
-      {/* Spacing options */}
-      <div style={{ display: "flex", gap: "4px" }}>
-        {SPACING_OPTIONS.map((opt) => {
-          const active = justify === opt.value;
-          return (
-            <button
-              key={opt.value}
-              onClick={() => onChange(opt.value, align)}
-              style={{
-                background: active ? "#6366f1" : "transparent",
-                color: active ? "#fff" : "rgba(255,255,255,0.45)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: "3px",
-                fontSize: "9px",
-                fontFamily: "system-ui, sans-serif",
-                padding: "2px 6px",
-                cursor: "pointer",
-                lineHeight: "16px",
-                transition: "background 80ms, color 80ms",
-              }}
-              onMouseEnter={(e) => {
-                if (!active) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-              }}
-              onMouseLeave={(e) => {
-                if (!active) (e.target as HTMLElement).style.background = "transparent";
-              }}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Spacing options (hidden in compact mode) */}
+      {!compact && (
+        <div style={{ display: "flex", gap: "4px" }}>
+          {SPACING_OPTIONS.map((opt) => {
+            const active = justify === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => onChange(opt.value, align)}
+                style={{
+                  background: active ? "#6366f1" : "transparent",
+                  color: active ? "#fff" : "rgba(255,255,255,0.45)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "3px",
+                  fontSize: "9px",
+                  fontFamily: "system-ui, sans-serif",
+                  padding: "2px 6px",
+                  cursor: "pointer",
+                  lineHeight: "16px",
+                  transition: "background 80ms, color 80ms",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,9 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { BezierEditor } from "./BezierEditor";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface TransitionValue {
   property: string;
@@ -88,6 +91,8 @@ const DEFAULT_TRANSITION: TransitionValue = {
 };
 
 export function TransitionEditor({ transitions, onChange }: TransitionEditorProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transitions, onChange);
+
   const handleAdd = useCallback(() => {
     onChange([...transitions, { ...DEFAULT_TRANSITION }]);
   }, [transitions, onChange]);
@@ -111,16 +116,28 @@ export function TransitionEditor({ transitions, onChange }: TransitionEditorProp
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", position: "relative" }}>
       {/* Transition cards */}
-      {transitions.map((t, index) => (
-        <TransitionCard
-          key={index}
-          transition={t}
-          onUpdate={(updates) => handleUpdate(index, updates)}
-          onRemove={() => handleRemove(index)}
-        />
-      ))}
+      {transitions.map((t, index) => {
+        const dragProps = handleProps(index);
+        return (
+          <div key={index} ref={registerRef(index)} style={itemStyle(index)}>
+            <TransitionCard
+              transition={t}
+              onUpdate={(updates) => handleUpdate(index, updates)}
+              onRemove={() => handleRemove(index)}
+              dragHandleProps={dragProps}
+              isDragging={isDragging}
+            />
+          </div>
+        );
+      })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
 
       {/* Add button */}
       <button
@@ -153,10 +170,14 @@ function TransitionCard({
   transition,
   onUpdate,
   onRemove,
+  dragHandleProps,
+  isDragging,
 }: {
   transition: TransitionValue;
   onUpdate: (updates: Partial<TransitionValue>) => void;
   onRemove: () => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
 }) {
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);
@@ -165,12 +186,10 @@ function TransitionCard({
   const [cx1, cy1, cx2, cy2] = bezierPoints ?? [0.25, 0.1, 0.25, 1];
 
   const handleBezierChange = useCallback(
-    (i: number, value: number) => {
-      const pts: [number, number, number, number] = [cx1, cy1, cx2, cy2];
-      pts[i] = value;
+    (pts: [number, number, number, number]) => {
       onUpdate({ easing: `cubic-bezier(${pts[0]}, ${pts[1]}, ${pts[2]}, ${pts[3]})` });
     },
-    [cx1, cy1, cx2, cy2, onUpdate]
+    [onUpdate]
   );
 
   const handleEasingChange = useCallback(
@@ -200,6 +219,15 @@ function TransitionCard({
         position: "relative",
       }}
     >
+      {/* Drag handle */}
+      {dragHandleProps && (
+        <DragHandle
+          isDragging={isDragging}
+          onPointerDown={dragHandleProps.onPointerDown}
+          style={{ position: "absolute", top: "4px", left: "4px" }}
+        />
+      )}
+
       {/* Remove button */}
       <button
         onClick={onRemove}
@@ -285,18 +313,12 @@ function TransitionCard({
         </div>
       </Row>
 
-      {/* Custom bezier inputs */}
+      {/* Visual bezier curve editor */}
       {isCustomBezier && (
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", paddingLeft: "52px" }}>
-          {[cx1, cy1, cx2, cy2].map((v, i) => (
-            <BezierInput
-              key={i}
-              value={v}
-              onChange={(val) => handleBezierChange(i, val)}
-              label={["x1", "y1", "x2", "y2"][i]}
-            />
-          ))}
-        </div>
+        <BezierEditor
+          value={[cx1, cy1, cx2, cy2]}
+          onChange={handleBezierChange}
+        />
       )}
 
       {/* Delay */}
@@ -450,83 +472,6 @@ function MsInput({ value, onChange }: { value: number; onChange: (v: number) => 
         flexShrink: 0,
       }}
     />
-  );
-}
-
-/** Cubic bezier control point input */
-function BezierInput({
-  value,
-  onChange,
-  label,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  label: string;
-}) {
-  const [draft, setDraft] = useState(String(value));
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDraft(String(Math.round(value * 100) / 100));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) {
-      onChange(Math.round(parsed * 100) / 100);
-    }
-  }, [draft, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const step = e.shiftKey ? 0.1 : 0.01;
-        onChange(Math.round((value + step) * 100) / 100);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.shiftKey ? 0.1 : 0.01;
-        onChange(Math.round((value - step) * 100) / 100);
-      }
-    },
-    [commit, value, onChange]
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
-      <span
-        style={{
-          fontSize: "8px",
-          fontFamily: "system-ui, sans-serif",
-          color: "rgba(255,255,255,0.3)",
-        }}
-      >
-        {label}
-      </span>
-      <input
-        value={focused ? draft : String(Math.round(value * 100) / 100)}
-        onChange={(e) => setDraft(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-        style={{
-          width: "34px",
-          background: "rgba(255,255,255,0.06)",
-          border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "2px",
-          color: "rgba(255,255,255,0.8)",
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          textAlign: "center",
-          padding: "2px 2px",
-          outline: "none",
-        }}
-      />
-    </div>
   );
 }
 

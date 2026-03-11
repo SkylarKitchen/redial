@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { ChevronDown } from "lucide-react";
 
 export interface StateSelectorProps {
   value: string;
@@ -90,15 +91,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
         >
           {isBase ? "State" : current.label}
         </span>
-        <span
-          style={{
-            fontSize: "10px",
-            color: "rgba(255,255,255,0.35)",
-            lineHeight: 1,
-          }}
-        >
-          ▾
-        </span>
+        <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)" }} />
       </button>
 
       {/* Dropdown menu */}

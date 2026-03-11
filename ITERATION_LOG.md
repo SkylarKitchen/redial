@@ -59,8 +59,161 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Sub-section starts collapsed by default, separated by a thin border-top
 - Typecheck: PASS
 
+### Iteration 8 — Parallel agent batch: 6 tasks (2026-03-11)
+- Alt+Arrow fine-grained steps (0.1) in ValueInput with `e.stopPropagation()`
+- Size keyword toggles: auto/none pills on width/height/maxWidth/maxHeight, aspect-ratio TextRow, object-fit/position for media
+- Position visual offset diagram (`PositionOffsetDiagram.tsx`) replacing 4 individual SliderRows
+- Font-family dropdown with page font detection via `document.fonts.ready`
+- Spacing color zones: warm orange margins, cool blue padding, alt+click for both-sides
+- Keyboard shortcuts: S (scope), R (reset), Cmd+S (save), Cmd+C (copy CSS) in Overlay.tsx
+- StyleIndicator pink dots on all key property rows (inline override detection)
+- Typecheck: PASS
+
+### Iteration 9 — Tab/Shift+Tab focus rings (2026-03-11)
+- Added `FOCUS_RING` constant (`0 0 0 2px rgba(99,102,241,0.3)`) and `onFocusRing`/`onBlurRing` helpers in controls.tsx
+- Section headers: `tabIndex={0}`, `role="button"`, Enter/Space keyboard toggle
+- ValueInput + TextRow: `boxShadow` focus ring via existing `focused` state
+- SliderRow range input: `onFocus`/`onBlur` direct style manipulation
+- SelectRow button: focus ring on keyboard focus
+- EditableValue span: `tabIndex={0}`, Enter to start editing, focus ring
+- IconButtonGroup buttons: focus ring, `outline: none`
+- AlignBox cells: `tabIndex={0}`, `role="button"`, Enter/Space to click, focus ring
+- Typecheck: PASS
+
+### Iteration 10 — Review fixes: CSS focus ring + DisplayTabs polish (2026-03-11)
+- Replaced all DOM mutation focus ring handlers (`onFocusRing`/`onBlurRing`) with single CSS `<style>` tag using `:focus-visible`
+- Injected in Overlay.tsx: `.__tuner-root *:focus-visible { box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }`
+- Removed ~30 lines of scattered `onFocus`/`onBlur` handlers across controls.tsx, AlignBox.tsx, IconButtonGroup.tsx, WebflowPanel.tsx
+- Removed unused `inputRef` in EditableValue (dead code from SpacingBoxModel extraction)
+- Simplified DisplayTabs capitalize: CSS `textTransform: "capitalize"` handles it, removed redundant JS
+- Added Escape key handler to DisplayTabs dropdown (close on Escape)
+- Changed DisplayTabs dropdown items from `<div>` to `<button>` (accessibility)
+- SpacingBoxModel + CornerRadiusEditor: unit support wired in by background agents
+- Typecheck: PASS
+
+### Iteration 11 — Unit conversion wired into all unit selectors (2026-03-11)
+- Created `unitConversion.ts` with `buildConversionContext()` and `convertUnit()` (px as pivot)
+- Supports px↔em, px↔rem, px↔%, px↔vw/vh conversions using element/parent/viewport dimensions
+- Wired `convertUnit()` into all 17 `onUnitChange` handlers across Size, Layout, Typography, Borders
+- Line-height conversion guards against "—" (auto) unit
+- Max-width/max-height handle 0 → "none" edge case
+- Fixed `WebflowPanelProps.onSpacingChange` signature to include unit parameter
+- Added missing unit/units/onUnitChange props to CornerRadiusEditor JSX
+- Removed broken `hooks/` directory (orphaned from partial Phase 0 extraction)
+- Typecheck: PASS, Tests: 24/24 PASS
+
+### Iteration 12 — Complete unit selector JSX wiring (2026-03-11)
+- Wired remaining SliderRow `unit`/`units`/`onUnitChange` props for: word-spacing, text-indent, border-width, line-height
+- Line-height now has dynamic min/max/step based on unit ("—": 0.8–3, px: 8–200, %: 80–300)
+- Confirmed zero hardcoded `unit="px"` remaining (all length controls use state-driven units)
+- Typecheck: PASS, Tests: 24/24 PASS
+
+### Iteration 13 — Swarm merge: 10 parallel agents (2026-03-11)
+Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
+- **Tab navigation**: `:focus-visible` CSS injection + `tuner-focusable` className on all interactive controls
+- **Gap lock**: locked/unlocked row-gap/column-gap pattern in grid section with sync toggle buttons
+- **Size enhancements**: per-axis overflow lock, box-sizing toggle, collapsible "More size options"
+- **Effects**: user-select, perspective (0-2000px), backface-visibility controls
+- **Typography**: hyphens, direction, column-gap, text-shadow (reusing ShadowEditor)
+- **Background-clip**: border-box/padding-box/content-box/text with webkit compat
+- **StyleIndicator**: enhanced getIndicatorType with INHERITABLE_PROPERTIES + parent comparison
+- **Color picker**: standalone `ColorPickerEnhanced.tsx` (HSB 2D canvas, hue/opacity sliders)
+- **Bezier editor**: standalone `BezierEditor.tsx` (cubic-bezier canvas, presets, animation preview)
+- **apply.ts**: added `captureInitials()` for batched property reads
+- Replaced all `getIndicatorType(element, ...)` calls with `ind(...)` shorthand
+- Typecheck: PASS
+
+### Iteration 14 — ColorPickerEnhanced wired into ColorRow (2026-03-11)
+- Replaced native `<input type="color">` in `ColorRow` with `ColorPickerEnhanced` popover
+- Swatch click toggles HSB color picker (2D canvas, hue slider, opacity slider, hex input)
+- Keyboard accessible: Enter/Space to toggle, click-outside to dismiss
+- Import added to `controls.tsx` (where `ColorRow` now lives after extraction)
+- Removed stale `ColorPickerEnhanced` import from `WebflowPanel.tsx`
+- Typecheck: PASS
+
+### Iteration 15 — BezierEditor wired into TransitionEditor (2026-03-11)
+- Replaced 4 raw numeric `BezierInput` fields with full visual `BezierEditor` component
+- Custom cubic-bezier easing now shows: draggable 200x200 canvas, preset buttons, animation preview
+- Simplified `handleBezierChange` from per-index to single tuple callback
+- Removed dead `BezierInput` component (~75 lines)
+- Kept `BezierPreview` (small 40x40 non-interactive canvas) next to easing dropdown
+- Typecheck: PASS, Tests: 24/24 PASS
+
+### Iteration 16 — Redo support (Cmd+Shift+Z) (2026-03-11)
+- Added `redoStack` in `apply.ts` alongside existing `undoStack`
+- `undo()` now captures forward state onto `redoStack` before restoring
+- Added `redo()` function: pops from `redoStack`, re-applies the change, pushes undo entry
+- Both single and batch entries fully supported in redo
+- New actions (`applyInlineStyle`) clear `redoStack` (standard undo/redo invalidation)
+- `reset()` and `resetAll()` clear both stacks
+- Wired `Cmd+Shift+Z` / `Ctrl+Shift+Z` in `Overlay.tsx` (checks shift before the undo handler)
+- Typecheck: PASS, Tests: 24/24 PASS
+
+### Iteration 17 — GradientEditor wired into Backgrounds section (2026-03-11)
+- Replaced static gradient preview bar in `BackgroundLayerList` with full inline `GradientEditor`
+- Gradient layers now show: type selector (linear/radial/conic), angle slider, draggable stop bar, per-stop color + position controls
+- `GradientEditor.onChange` routes through `updateLayer()` to update the layer's gradient data and trigger CSS re-apply
+- Removed unused `onEditGradient` prop from `BackgroundLayerListProps` (editor is now inline, no external callback needed)
+- Typecheck: PASS, Tests: 24/24 PASS
+
+### Iteration 18 — Custom scrollbar (Webflow-style auto-hide) (2026-03-11)
+- Added scoped `<style>` tag with WebKit + Firefox scrollbar rules under `.__tuner-root`
+- Scrollbar: 5px wide, fully transparent by default, fades to `rgba(255,255,255,0.15)` while scrolling or on hover
+- Added `panelScrollRef` + scroll event listener that toggles `is-scrolling` class (800ms debounce)
+- Extended rules to `.__tuner-root *` so inner scrollable containers (dropdowns, etc.) also get the thin auto-hide scrollbar
+- Typecheck: PASS
+
+### Iteration 19 — Code review bug fixes (2026-03-11)
+- Removed dead "More" (`MoreHorizontal`) button on Typography Decor row (no `onClick` handler)
+- Removed unused `MoreHorizontal` import from lucide-react
+- Fixed `SizeInputCell` arrow key handlers: added `min`/`max` clamping to prevent values exceeding bounds
+- Fixed `SizeInputCell` keyword trap: keyword text is now clickable to clear keyword and enter numeric editing
+- Fixed `TypoValueCell` keyword trap: keyword text is now clickable to switch to editing mode
+- Fixed `TypoValueCell` ArrowUp/ArrowDown: now updates `draft` state alongside `onChange` to prevent stale revert on blur
+- Fixed missing `setTypoColumnGap` → uses existing `setColumnGap` (same CSS property)
+- Removed phantom imports (`BG_CLIP_OPTIONS`, `USER_SELECT_OPTIONS`, `BACKFACE_OPTIONS`, `BOX_SIZING_OPTIONS`) that were never exported from `panelConstants.tsx`
+- Typecheck: PASS
+
+### Iteration 20 — Color picker HSB/RGB/Hex mode toggle (2026-03-11)
+- Added `colorMode` state (`"hex" | "rgb" | "hsb"`) to `ColorPickerEnhanced`
+- Clickable mode label cycles through modes (hex → hsb → rgb → hex)
+- **Hex mode**: single text input for `#RRGGBB` (existing behavior)
+- **RGB mode**: three inline inputs (R/G/B, 0–255) that update HSB state + canvas in real-time
+- **HSB mode**: three inline inputs (H: 0–360°, S: 0–100%, B: 0–100%) for direct HSB editing
+- Added `applyRgbChannel()` and `applyHsbChannel()` handlers with clamping
+- Mode label shows hover highlight and "Click to switch color mode" tooltip
+- Opacity display remains constant across all modes
+- Typecheck: PASS
+
+### Iteration 21 — Arrow key navigation + double-click select all (2026-03-11)
+- **Arrow key navigation hardened** (items #29 + #30 from spec §13):
+  - Added `isNavigableElement()` helper in `util.ts` — skips `<script>`, `<style>`, `<template>`, `<noscript>`, `<head>`, `<link>`, `<meta>`, `<base>`, `<title>`, tuner overlay elements, and `display:none` elements
+  - ArrowDown now walks `nextElementSibling` to find first *visible* child (skips non-visual tags)
+  - ArrowLeft/Right now walk siblings to skip non-visual elements
+  - Moved `e.preventDefault()` after target validation — no longer consumes arrow keys when there's nowhere to navigate (preserves page scrolling)
+- **Double-click select all** on value inputs:
+  - Added shared `selectAllOnDoubleClick` handler exported from `controls.tsx`
+  - Wired into: `ValueInput`, `EditableValue`, `TextRow`, `SizeInputCell`, `TypoValueCell`, `SpacingValuePopover` input
+  - Native double-click selects only a "word" (stops at `.` or `-`); this override selects the full value for quick replacement
+- Typecheck: PASS
+
+### Iteration 22 — Panel Polish Phase (2026-03-11)
+
+**Bug fixes:**
+- **1C Unit detection**: Replaced all 20 `useState("px")` calls with `detectUnit()` which walks `document.styleSheets` to find the authored CSS unit (em, rem, %, vw, etc.). Added `extractUnit()` to `cssParsers.ts` with 11 tests.
+- **1E Scroll preservation**: Wrapped `setPanelKey` to save `scrollTop` before remount, restore after via `useEffect`. Panel no longer jumps to top after undo/redo/save/paste.
+- **1F Copy format unification**: Extracted `formatCSSDiff()` to `util.ts`. All 3 copy paths (Cmd+C, Footer Copy, Session Copy All) now produce identical output with selector and `/* was */` comments.
+- **1B ShadowEditor color**: Replaced native `<input type="color">` with `ColorPickerEnhanced` popover (HSB canvas, opacity support).
+
+**Polish:**
+- **Section collapse animation**: CSS Grid `0fr/1fr` transition (150ms ease) replaces instant show/hide. Chevron rotates with toggle. Added `aria-expanded`.
+- **Panel entrance animation**: 150ms fade+slide CSS keyframe animation on mount.
+
+**Tests:**
+- Added 33 tests for `apply.ts` (undo/redo, batch, diff, clipboard, strip/restore) using happy-dom environment.
+- Total: 162 tests passing across 5 files.
+- Typecheck: PASS
+
 ---
 
-## Next Up
-
-**Phase B-10:** Position visual offset diagram
+## Done
