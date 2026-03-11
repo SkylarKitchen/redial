@@ -102,6 +102,14 @@ function getAuthoredValue(el: Element, prop: string): string | null {
   return found;
 }
 
+/** Extract the CSS unit from the authored value of a property, falling back to `fallback` */
+function detectUnit(el: Element, prop: string, fallback: string = "px"): string {
+  const authored = getAuthoredValue(el, prop);
+  if (!authored) return fallback;
+  const match = authored.trim().match(/^-?[\d.]+(\w+|%)$/);
+  return match?.[1] ?? fallback;
+}
+
 const TEXT_TAGS = new Set([
   "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "a", "label",
   "button", "li", "td", "th", "input", "textarea", "strong", "em",
@@ -164,8 +172,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [flexOrder, setFlexOrder] = useState(() => parseNum(cs.order));
 
   // Layout units
-  const [gapUnit, setGapUnit] = useState("px");
-  const [flexBasisUnit, setFlexBasisUnit] = useState("px");
+  const [gapUnit, setGapUnit] = useState(() => detectUnit(element, "gap"));
+  const [flexBasisUnit, setFlexBasisUnit] = useState(() => detectUnit(element, "flex-basis"));
 
   // ── Size state ──
   // For width/height: use 0 as the fallback numeric value when auto (the keyword handles display)
@@ -204,12 +212,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [showMoreSize, setShowMoreSize] = useState(false);
 
   // Size units
-  const [widthUnit, setWidthUnit] = useState("px");
-  const [heightUnit, setHeightUnit] = useState("px");
-  const [minWidthUnit, setMinWidthUnit] = useState("px");
-  const [maxWidthUnit, setMaxWidthUnit] = useState("px");
-  const [minHeightUnit, setMinHeightUnit] = useState("px");
-  const [maxHeightUnit, setMaxHeightUnit] = useState("px");
+  const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));
+  const [heightUnit, setHeightUnit] = useState(() => detectUnit(element, "height"));
+  const [minWidthUnit, setMinWidthUnit] = useState(() => detectUnit(element, "min-width"));
+  const [maxWidthUnit, setMaxWidthUnit] = useState(() => detectUnit(element, "max-width"));
+  const [minHeightUnit, setMinHeightUnit] = useState(() => detectUnit(element, "min-height"));
+  const [maxHeightUnit, setMaxHeightUnit] = useState(() => detectUnit(element, "max-height"));
 
   // Size keyword toggles
   // getComputedStyle always resolves to pixels — detect "auto"/"none" from authored CSS
@@ -241,10 +249,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [clear_, setClear] = useState(() => cs.clear || "none");
 
   // Position units
-  const [topUnit, setTopUnit] = useState("px");
-  const [rightUnit, setRightUnit] = useState("px");
-  const [bottomUnit, setBottomUnit] = useState("px");
-  const [leftUnit, setLeftUnit] = useState("px");
+  const [topUnit, setTopUnit] = useState(() => detectUnit(element, "top"));
+  const [rightUnit, setRightUnit] = useState(() => detectUnit(element, "right"));
+  const [bottomUnit, setBottomUnit] = useState(() => detectUnit(element, "bottom"));
+  const [leftUnit, setLeftUnit] = useState(() => detectUnit(element, "left"));
 
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));

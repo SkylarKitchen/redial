@@ -742,8 +742,6 @@ export function Overlay() {
           <Footer
             element={selectedEl}
             onReset={handleReset}
-            diffMode={diffMode}
-            onToggleDiff={handleToggleDiff}
             scope={scope}
             activeClassName={activeClassName}
             clipboardMessage={clipboardMessage}
