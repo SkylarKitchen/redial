@@ -226,6 +226,20 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Fixed pre-existing typecheck errors: added missing `ms` import from `timing.ts` to `controls.tsx` and `ViewportBar.tsx`
 - Typecheck: PASS
 
+### Iteration 24 — Font family: searchable dropdown with font preview (2026-03-11)
+- Added `searchable` and `fontPreview` optional props to `SelectRow` in `controls.tsx`
+- When `searchable` is true and dropdown is open, a sticky search input appears at the top
+- Options are filtered in real-time by case-insensitive substring match
+- "No matches" empty state when filter yields zero results
+- Search input auto-focuses on open, clears on close
+- ArrowUp/ArrowDown in search input delegates to list keyboard navigation, Enter selects
+- When `fontPreview` is true, each option label renders in its own font-face
+- The trigger button also renders in the selected font (font preview in collapsed state)
+- Dropdown height increased to 240px when searchable (vs 180px default) for more visible results
+- Wired `searchable fontPreview` onto the Typography font-family `SelectRow` in `WebflowPanel.tsx`
+- Fixed pre-existing typecheck error: added missing `timing` import to `SessionDrawer.tsx`
+- Typecheck: PASS
+
 ---
 
 ## Done
