@@ -62,7 +62,7 @@ export function Header({
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span
             style={{
-              color: "#E8764B",
+              color: "#fff",
               fontSize: "13px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
             }}
@@ -120,7 +120,7 @@ export function Header({
                       if (!isLast) onBreadcrumbClick?.(seg.el);
                     }}
                     style={{
-                      color: isLast ? "#E8764B" : "rgba(255, 255, 255, 0.4)",
+                      color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
                       cursor: isLast ? "default" : "pointer",
                       whiteSpace: "nowrap",
                     }}
@@ -167,10 +167,10 @@ export function Header({
             onClick={onShowSession}
             title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} — click to view session`}
             style={{
-              background: "rgba(232, 118, 75, 0.15)",
-              border: "1px solid rgba(232, 118, 75, 0.25)",
+              background: "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.15)",
               borderRadius: "8px",
-              color: "#E8764B",
+              color: "#fff",
               fontSize: "10px",
               fontWeight: 600,
               padding: "1px 7px",
@@ -225,12 +225,12 @@ function ScopePill({
         fontSize: "10px",
         fontFamily: "monospace",
         border: active
-          ? "1px solid rgba(232, 118, 75, 0.4)"
+          ? "1px solid rgba(255, 255, 255, 0.3)"
           : "1px solid rgba(255,255,255,0.15)",
         borderRadius: "8px",
         cursor: "pointer",
-        background: active ? "rgba(232, 118, 75, 0.12)" : "transparent",
-        color: active ? "#E8764B" : "rgba(255, 255, 255, 0.6)",
+        background: active ? "rgba(255, 255, 255, 0.1)" : "transparent",
+        color: active ? "#fff" : "rgba(255, 255, 255, 0.6)",
         lineHeight: "16px",
         whiteSpace: "nowrap",
       }}

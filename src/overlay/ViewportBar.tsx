@@ -53,8 +53,8 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
               border: "none",
               borderRadius: "6px",
               cursor: "pointer",
-              background: isActive ? "rgba(232, 118, 75, 0.15)" : "rgba(255,255,255,0.08)",
-              color: isActive ? "#E8764B" : "rgba(255, 255, 255, 0.6)",
+              background: isActive ? "rgba(255, 255, 255, 0.15)" : "rgba(255,255,255,0.08)",
+              color: isActive ? "#fff" : "rgba(255, 255, 255, 0.6)",
               transition: "background 100ms, color 100ms",
             }}
           >

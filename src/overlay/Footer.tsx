@@ -185,12 +185,12 @@ function ActionButton({
         background: active
           ? "rgba(250, 204, 21, 0.12)"
           : primary
-            ? "rgba(232, 118, 75, 0.2)"
+            ? "rgba(255, 255, 255, 0.15)"
             : "rgba(255,255,255,0.08)",
         color: active
           ? "rgba(250, 204, 21, 0.9)"
           : primary
-            ? "#E8764B"
+            ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
         transition: "opacity 100ms",
       }}

@@ -215,7 +215,7 @@ function ElementGroup({
         <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "9px" }}>
           {expanded ? "▼" : "▶"}
         </span>
-        <span style={{ color: "#E8764B" }}>{"<"}{tag}{">"}</span>
+        <span style={{ color: "#fff" }}>{"<"}{tag}{">"}</span>
         {cls && <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>.{cls}</span>}
         <span style={{ color: "rgba(255, 255, 255, 0.4)", marginLeft: "auto", fontSize: "10px" }}>
           {changes.length} change{changes.length === 1 ? "" : "s"}
@@ -246,7 +246,7 @@ function ElementGroup({
                 <span style={{ color: "rgba(255, 255, 255, 0.6)", minWidth: "100px" }}>{c.prop}</span>
                 <span style={{ color: "rgba(255, 255, 255, 0.4)" }}>{c.from}</span>
                 <span style={{ color: "rgba(255, 255, 255, 0.3)" }}>→</span>
-                <span style={{ color: "#E8764B" }}>{c.to}</span>
+                <span style={{ color: "#fff" }}>{c.to}</span>
               </div>
             ))}
           </motion.div>
@@ -279,8 +279,8 @@ function SmallButton({
         borderRadius: "6px",
         cursor: disabled ? "default" : "pointer",
         opacity: disabled ? 0.35 : 1,
-        background: primary ? "rgba(232, 118, 75, 0.2)" : "rgba(255,255,255,0.08)",
-        color: primary ? "#E8764B" : "rgba(255, 255, 255, 0.7)",
+        background: primary ? "rgba(255, 255, 255, 0.15)" : "rgba(255,255,255,0.08)",
+        color: primary ? "#fff" : "rgba(255, 255, 255, 0.7)",
       }}
     >
       {children}
