@@ -27,6 +27,7 @@ export interface BackgroundLayer {
     size: string;
     position: string;
     repeat: string;
+    attachment: string;
   };
   opacity: number;
   blendMode: string;
@@ -72,6 +73,7 @@ const POSITION_OPTIONS = [
   "bottom right",
 ];
 const REPEAT_OPTIONS = ["no-repeat", "repeat", "repeat-x", "repeat-y"];
+const ATTACHMENT_OPTIONS = ["scroll", "fixed", "local"];
 
 let _idCounter = 0;
 function uid() {
@@ -92,7 +94,7 @@ function makeDefault(type: BackgroundLayerType): BackgroundLayer {
       ],
     };
   } else {
-    base.image = { url: "", size: "cover", position: "center", repeat: "no-repeat" };
+    base.image = { url: "", size: "cover", position: "center", repeat: "no-repeat", attachment: "scroll" };
   }
   return base;
 }
@@ -506,6 +508,24 @@ export function BackgroundLayerList({
                           value={layer.image.repeat}
                           options={REPEAT_OPTIONS}
                           onChange={(v) => updateImage(layer.id, { repeat: v })}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontFamily: "system-ui, sans-serif",
+                            color: "rgba(255,255,255,0.4)",
+                          }}
+                        >
+                          Attachment
+                        </span>
+                        <Select
+                          value={layer.image.attachment}
+                          options={ATTACHMENT_OPTIONS}
+                          onChange={(v) => updateImage(layer.id, { attachment: v })}
                         />
                       </div>
                     </div>

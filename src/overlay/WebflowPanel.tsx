@@ -616,6 +616,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       setBgLayers(layers);
       // Build background parts from all layers
       const bgParts: string[] = [];
+      const attachments: string[] = [];
       let bgColor = "transparent";
       for (const layer of layers) {
         if (layer.type === "color") {
@@ -637,15 +638,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           bgParts.push(
             `url(${img.url}) ${img.position} / ${img.size} ${img.repeat}`
           );
+          attachments.push(img.attachment || "scroll");
         }
       }
       // CSS background: gradients/images first, then color as the last layer
       if (bgParts.length > 0) {
         apply("background", bgParts.join(", "));
         apply("background-color", bgColor);
+        if (attachments.some(a => a !== "scroll")) {
+          apply("background-attachment", attachments.join(", "));
+        }
       } else {
         apply("background", "none");
         apply("background-color", bgColor);
+        apply("background-attachment", "");
       }
     },
     [apply]

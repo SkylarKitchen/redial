@@ -287,4 +287,14 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 29 — Background image attachment control (2026-03-11)
+- Added `attachment` field to `BackgroundLayer.image` interface (scroll/fixed/local)
+- Added `ATTACHMENT_OPTIONS` constant and `Select` dropdown in expanded image layer controls
+- Default value: `"scroll"` in `makeDefault()`
+- Updated CSS generation in WebflowPanel: `background-attachment` applied as separate property when any layer uses non-scroll attachment
+- Fills spec §8 line 483: `background-attachment` select with scroll/fixed options
+- Typecheck: PASS
+
+---
+
 ## Done
