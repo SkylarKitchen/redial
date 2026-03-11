@@ -946,13 +946,26 @@ export function Overlay() {
       {/* Floating action button — bottom-right activation trigger */}
       <div
         className="__tuner-root"
-        onClick={() => {
+        onClick={(e) => {
           if (selectedEl) {
             // If panel is open, close it
             handleClose();
+          } else if (selecting) {
+            // Cancel selection mode
+            setSelecting(false);
           } else {
-            // Toggle selection mode
-            setSelecting((s) => !s);
+            // First click: try to select element under the cursor, behind the FAB
+            // Temporarily hide the FAB to find the element beneath it
+            const fab = e.currentTarget as HTMLElement;
+            const prevPointerEvents = fab.style.pointerEvents;
+            fab.style.pointerEvents = "none";
+            const elBehind = document.elementFromPoint(e.clientX, e.clientY);
+            fab.style.pointerEvents = prevPointerEvents;
+
+            const target = elBehind && !elBehind.closest(".__tuner-root")
+              ? elBehind
+              : document.body;
+            handleSelect(target);
           }
         }}
         style={{

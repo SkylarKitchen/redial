@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { ColorRow, SliderRow, ValueInput } from "./controls";
+import { SpacingBoxModel } from "./SpacingBoxModel";
 import { applyInlineStyle } from "./apply";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
@@ -151,29 +152,10 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
   const [fontColor, setFontColor] = useState(() => rgbToHex(cs.color));
   const [fontWeight, setFontWeight] = useState(() => parseNum(cs.fontWeight));
 
-  // --- Margin state (from spacing prop) ---
-  const [mt, setMt] = useState(spacing.margin.top);
-  const [mr, setMr] = useState(spacing.margin.right);
-  const [mb, setMb] = useState(spacing.margin.bottom);
-  const [ml, setMl] = useState(spacing.margin.left);
-
-  // --- Padding state ---
-  const [pt, setPt] = useState(spacing.padding.top);
-  const [pr, setPr] = useState(spacing.padding.right);
-  const [pb, setPb] = useState(spacing.padding.bottom);
-  const [pl, setPl] = useState(spacing.padding.left);
-
-  // Sync spacing from props on re-mount
-  useEffect(() => {
-    setMt(spacing.margin.top);
-    setMr(spacing.margin.right);
-    setMb(spacing.margin.bottom);
-    setMl(spacing.margin.left);
-    setPt(spacing.padding.top);
-    setPr(spacing.padding.right);
-    setPb(spacing.padding.bottom);
-    setPl(spacing.padding.left);
-  }, [spacing]);
+  // --- Spacing units ---
+  const SPACING_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
+  const [marginUnit, setMarginUnit] = useState("px");
+  const [paddingUnit, setPaddingUnit] = useState("px");
 
   // --- Wrappers ---
   const apply = useCallback(
@@ -182,13 +164,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
       onDirtyChange?.();
     },
     [element, onDirtyChange],
-  );
-
-  const applySpacing = useCallback(
-    (prop: string, value: number) => {
-      onSpacingChange(prop, value, "px");
-    },
-    [onSpacingChange],
   );
 
   return (

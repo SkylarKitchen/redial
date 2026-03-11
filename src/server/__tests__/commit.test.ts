@@ -342,6 +342,67 @@ describe("handleCommit", () => {
     expect(result.failed[0].reason).toContain("no source file");
   });
 
+  it("handles hex color in source when from value is computed rgb()", async () => {
+    const filePath = "src/Badge.module.css";
+    await writeFixture(filePath, [
+      ".badge {",
+      "  background-color: #eef2ff;",
+      "  color: #6366f1;",
+      "  font-size: 13px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "background-color",
+        // getComputedStyle returns rgb(), but source has hex
+        from: "rgb(238, 242, 255)",
+        to: "rgb(200, 210, 255)",
+        sourceFile: filePath,
+        className: "badge",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("background-color: rgb(200, 210, 255)");
+  });
+
+  it("handles CSS var() in source when from value is computed", async () => {
+    const filePath = "src/Page.module.css";
+    await writeFixture(filePath, [
+      ".page {",
+      "  --accent: #6366f1;",
+      "}",
+      "",
+      ".badge {",
+      "  color: var(--accent);",
+      "  font-size: 13px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        // getComputedStyle resolves var(--accent) to the computed rgb value
+        from: "rgb(99, 102, 241)",
+        to: "rgb(255, 0, 0)",
+        sourceFile: filePath,
+        className: "badge",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("color: rgb(255, 0, 0)");
+  });
+
   it("uses className for class-scoped search to find correct block", async () => {
     const filePath = "src/Page.module.scss";
     await writeFixture(filePath, [
