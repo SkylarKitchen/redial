@@ -357,8 +357,19 @@ export function ColorRow({
   onChange: (value: string) => void;
   indicator?: IndicatorType;
 }) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const swatchRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "2px 12px",
+        position: "relative",
+      }}
+    >
       <span
         style={{
           width: "64px",
@@ -373,32 +384,31 @@ export function ColorRow({
         {indicator && <StyleIndicator type={indicator} />}
         {label}
       </span>
-      <div style={{ position: "relative", width: "24px", height: "24px", flexShrink: 0 }}>
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "4px",
-            background: value === "transparent" ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px" : value,
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
-        />
-        <input
-          type="color"
-          className="tuner-focusable"
-          tabIndex={0}
-          value={value === "transparent" ? "#000000" : value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            cursor: "pointer",
-            width: "24px",
-            height: "24px",
-          }}
-        />
-      </div>
+      <div
+        ref={swatchRef}
+        className="tuner-focusable"
+        tabIndex={0}
+        role="button"
+        onClick={() => setPickerOpen(!pickerOpen)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setPickerOpen(!pickerOpen);
+          }
+        }}
+        style={{
+          width: "24px",
+          height: "24px",
+          borderRadius: "4px",
+          background:
+            value === "transparent"
+              ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
+              : value,
+          border: "1px solid rgba(255,255,255,0.15)",
+          cursor: "pointer",
+          flexShrink: 0,
+        }}
+      />
       <span
         style={{
           fontSize: "10px",
@@ -408,6 +418,23 @@ export function ColorRow({
       >
         {value}
       </span>
+      {pickerOpen && swatchRef.current && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: "12px",
+            zIndex: 99999,
+            marginTop: "4px",
+          }}
+        >
+          <ColorPickerEnhanced
+            color={value === "transparent" ? "#000000" : value}
+            onChange={(hex) => onChange(hex)}
+            onClose={() => setPickerOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }

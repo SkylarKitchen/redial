@@ -123,6 +123,14 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Replaced all `getIndicatorType(element, ...)` calls with `ind(...)` shorthand
 - Typecheck: PASS
 
+### Iteration 14 — ColorPickerEnhanced wired into ColorRow (2026-03-11)
+- Replaced native `<input type="color">` in `ColorRow` with `ColorPickerEnhanced` popover
+- Swatch click toggles HSB color picker (2D canvas, hue slider, opacity slider, hex input)
+- Keyboard accessible: Enter/Space to toggle, click-outside to dismiss
+- Import added to `controls.tsx` (where `ColorRow` now lives after extraction)
+- Removed stale `ColorPickerEnhanced` import from `WebflowPanel.tsx`
+- Typecheck: PASS
+
 ---
 
 ## Done

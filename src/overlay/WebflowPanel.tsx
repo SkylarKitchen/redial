@@ -25,7 +25,6 @@ import { UnitSelector } from "./UnitSelector";
 import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
-import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
