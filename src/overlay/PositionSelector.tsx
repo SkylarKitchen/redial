@@ -8,7 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
