@@ -178,10 +178,10 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   transition: "background 80ms, color 80ms",
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                  if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!active) (e.target as HTMLElement).style.background = "transparent";
+                  if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
                 }}
               >
                 {opt.label}

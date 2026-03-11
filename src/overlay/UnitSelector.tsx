@@ -64,10 +64,10 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange }: UnitS
           transition: "background 80ms, color 80ms",
         }}
         onMouseEnter={(e) => {
-          if (!open) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.1)";
+          if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
         }}
         onMouseLeave={(e) => {
-          if (!open) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+          if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
         }}
       >
         {value}
@@ -107,10 +107,10 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange }: UnitS
                   transition: "background 60ms",
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) (e.target as HTMLElement).style.background = "transparent";
+                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
                 }}
               >
                 {unit}

@@ -140,7 +140,9 @@ export function Overlay() {
     const changes = diff(selectedEl);
     if (changes.length === 0) return;
     const lines = changes.map((c) => `  ${c.prop}: ${c.to};`);
-    navigator.clipboard.writeText(`{\n${lines.join("\n")}\n}`);
+    navigator.clipboard.writeText(`{\n${lines.join("\n")}\n}`).catch(() => {
+      // Clipboard API unavailable (non-HTTPS or permission denied) — silent fallback
+    });
   }, [selectedEl]);
 
   // --- Hotkey: backtick toggles selection ---

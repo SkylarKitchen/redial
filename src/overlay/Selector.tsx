@@ -17,19 +17,28 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
   const [hovered, setHovered] = useState<Element | null>(null);
   const outlineRef = useRef<HTMLDivElement>(null);
 
-  // Position the outline over the hovered element
+  // Position the outline over the hovered element (updates on scroll/resize)
   useEffect(() => {
     if (!active || !hovered || !outlineRef.current) return;
 
-    const rect = hovered.getBoundingClientRect();
     const outline = outlineRef.current;
-    outline.style.top = `${rect.top}px`;
-    outline.style.left = `${rect.left}px`;
-    outline.style.width = `${rect.width}px`;
-    outline.style.height = `${rect.height}px`;
-    outline.style.display = "block";
+
+    const updatePosition = () => {
+      const rect = hovered.getBoundingClientRect();
+      outline.style.top = `${rect.top}px`;
+      outline.style.left = `${rect.left}px`;
+      outline.style.width = `${rect.width}px`;
+      outline.style.height = `${rect.height}px`;
+      outline.style.display = "block";
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
 
     return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
       outline.style.display = "none";
     };
   }, [active, hovered]);

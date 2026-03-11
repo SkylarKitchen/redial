@@ -37,6 +37,7 @@ function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
 
 const overrides = new Map<Element, Map<string, Override>>();
 const undoStack: UndoEntry[] = [];
+const redoStack: UndoEntry[] = [];
 const MAX_UNDO = 200;
 
 // --- Batch API ---

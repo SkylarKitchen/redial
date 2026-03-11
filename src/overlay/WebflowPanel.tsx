@@ -1067,7 +1067,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [fontFamily, setFontFamily] = useState(() => cs.fontFamily.replace(/['"]/g, ""));
   const [pageFonts, setPageFonts] = useState<string[]>([]);
   useEffect(() => {
+    let alive = true;
     document.fonts.ready.then(() => {
+      if (!alive) return;
       const fonts: string[] = [];
       document.fonts.forEach(f => {
         const family = f.family.replace(/['"]/g, "");
@@ -1075,6 +1077,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       });
       setPageFonts(fonts);
     });
+    return () => { alive = false; };
   }, []);
   const FONT_OPTIONS = [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f }));
   const [lineHeightUnit, setLineHeightUnit] = useState("—");
