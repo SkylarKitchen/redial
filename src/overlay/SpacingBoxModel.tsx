@@ -20,7 +20,7 @@
  * - Tab/Shift+Tab navigation in visual order
  */
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { EditableValue } from "./controls";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
@@ -106,6 +106,19 @@ export function SpacingBoxModel({ margin, padding, onChange, marginUnit, padding
     scrubActiveRef.current = false;
     shiftHeldRef.current = false;
     endBatch();
+    // Reset zone highlights that may be stuck during scrub
+    if (marginZoneRef.current) marginZoneRef.current.style.background = MARGIN_BASE;
+    if (paddingZoneRef.current) paddingZoneRef.current.style.background = PADDING_BASE;
+  }, []);
+
+  // Safety: if component unmounts mid-scrub, close the batch to avoid corrupting global undo
+  useEffect(() => {
+    return () => {
+      if (scrubActiveRef.current) {
+        scrubActiveRef.current = false;
+        endBatch();
+      }
+    };
   }, []);
 
   // --- Capture shift key on pointer down (before LabelScrub handles it) ---

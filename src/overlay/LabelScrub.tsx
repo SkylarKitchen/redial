@@ -67,6 +67,9 @@ export function LabelScrub({
     (e: React.PointerEvent<HTMLSpanElement>) => {
       // Only primary button
       if (e.button !== 0) return;
+      // Let child inputs handle their own pointer events
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
       e.preventDefault();
 
       const el = e.currentTarget;
@@ -106,7 +109,10 @@ export function LabelScrub({
         onChangeRef.current(clamp(rounded));
       }
 
+      let cleaned = false;
       function cleanup() {
+        if (cleaned) return;
+        cleaned = true;
         el.removeEventListener("pointermove", handleMove);
         el.removeEventListener("pointerup", handleUp);
         el.removeEventListener("lostpointercapture", handleUp);
