@@ -377,11 +377,30 @@ export async function handleCommit(
         );
 
         if (pattern.test(lines[found.lineIdx])) {
+          // Exact literal match — replace directly
           lines[found.lineIdx] = lines[found.lineIdx].replace(
             pattern,
             `$1${change.to}`
           );
           modified = true;
+        } else if (found.strategy !== "fuzzy" && hasNonLiteralValue(lines[found.lineIdx])) {
+          // The line has a non-literal value (var(), hex, calc(), etc.)
+          // Replace the entire value between the colon and the semicolon/end
+          const broadPattern = new RegExp(
+            `(${escapeRegex(change.prop)}\\s*:\\s*)[^;!}]+`
+          );
+          if (broadPattern.test(lines[found.lineIdx])) {
+            lines[found.lineIdx] = lines[found.lineIdx].replace(
+              broadPattern,
+              `$1${change.to}`
+            );
+            modified = true;
+          } else {
+            result.failed.push({
+              ...change,
+              reason: `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
+            });
+          }
         } else if (found.strategy === "fuzzy") {
           // Fuzzy match found the property but not the exact value — report it
           result.failed.push({
