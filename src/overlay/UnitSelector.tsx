@@ -28,6 +28,7 @@ const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
 export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const id = useId();
 
   // Build a flat list of all items for keyboard navigation
   const allItems = useMemo(() => {
@@ -40,7 +41,9 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     return items;
   }, [options, specialOptions]);
 
-  const { highlightedIndex, onTriggerKeyDown, onListKeyDown } = useDropdownKeyboard({
+  const labels = useMemo(() => allItems.map(item => item.value), [allItems]);
+
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
     open,
     setOpen,
     optionCount: allItems.length,
@@ -54,6 +57,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       }
       setOpen(false);
     },
+    labels,
   });
 
   // Close on outside click

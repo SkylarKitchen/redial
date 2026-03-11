@@ -239,7 +239,7 @@ export function useDragReorder<T>(
         transition: "transform 200ms ease",
       };
     },
-    [dragState],
+    [dragState, settling],
   );
 
   const dropLineStyle = useCallback((): React.CSSProperties | null => {
@@ -275,6 +275,6 @@ export function useDragReorder<T>(
     handleProps,
     itemStyle,
     dropLineStyle,
-    isDragging: dragState !== null,
+    isDragging: dragState !== null || settling,
   };
 }
