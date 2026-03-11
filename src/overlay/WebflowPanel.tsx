@@ -318,7 +318,7 @@ const TEXT_DECORATION_OPTIONS = [
   { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
 ];
 
-const CAPITALIZE_OPTIONS = [
+const TEXT_TRANSFORM_OPTIONS = [
   { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
   { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
@@ -684,6 +684,101 @@ function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string)
   );
 }
 
+/** Compact bordered input cell for typography properties (Size, Height, etc.) */
+function TypoValueCell({
+  value,
+  onChange,
+  unit,
+  onUnitChange,
+  units,
+  step = 1,
+  keyword,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  unit: string;
+  onUnitChange?: (u: string) => void;
+  units?: string[];
+  step?: number;
+  keyword?: string | null;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    if (!editing) setDraft(String(Math.round(value * 100) / 100));
+  }, [value, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const n = parseFloat(draft);
+    if (!isNaN(n) && n !== value) onChange(n);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commit();
+    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
+    else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
+      onChange(Math.round((value + s) * 100) / 100);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
+      onChange(Math.round((value - s) * 100) / 100);
+    }
+  };
+
+  const isKeyword = keyword != null;
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        height: "28px",
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "4px",
+        overflow: "hidden",
+        minWidth: 0,
+      }}
+    >
+      {isKeyword ? (
+        <span style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", padding: "0 6px", cursor: "default" }}>
+          {keyword}
+        </span>
+      ) : editing ? (
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          style={{ flex: 1, width: 0, background: "transparent", border: "none", color: "rgba(255,255,255,0.9)", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none" }}
+        />
+      ) : (
+        <span
+          tabIndex={0}
+          onClick={() => setEditing(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
+          style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.8)", padding: "0 6px", cursor: "text", outline: "none" }}
+        >
+          {value}
+        </span>
+      )}
+      {units && onUnitChange ? (
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+      ) : (
+        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", padding: "0 6px 0 0", flexShrink: 0, fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
+          {unit}
+        </span>
+      )}
+    </div>
+  );
+}
+
 const FONT_WEIGHT_OPTIONS = [
   { value: "100", label: "100 - Thin" },
   { value: "200", label: "200 - Extra Light" },
@@ -710,6 +805,14 @@ const WORD_BREAK_OPTIONS = [
   { value: "break-all", label: "Break All" },
   { value: "keep-all", label: "Keep All" },
   { value: "break-word", label: "Break Word" },
+];
+
+const LINE_BREAK_OPTIONS = [
+  { value: "auto", label: "Auto" },
+  { value: "normal", label: "Normal" },
+  { value: "loose", label: "Loose" },
+  { value: "strict", label: "Strict" },
+  { value: "anywhere", label: "Anywhere" },
 ];
 
 const FLOAT_OPTIONS = [
@@ -915,8 +1018,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [flexBasisUnit, setFlexBasisUnit] = useState("px");
 
   // ── Size state ──
-  const [width, setWidth] = useState(() => parseNum(cs.width));
-  const [height, setHeight] = useState(() => parseNum(cs.height));
+  // For width/height: use 0 as the fallback numeric value when auto (the keyword handles display)
+  const [width, setWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "width");
+    return (!authored || authored === "auto") ? 0 : parseNum(cs.width);
+  });
+  const [height, setHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "height");
+    return (!authored || authored === "auto") ? 0 : parseNum(cs.height);
+  });
   const [minWidth, setMinWidth] = useState(() => {
     const authored = getAuthoredValue(element, "min-width");
     return authored ? parseNum(authored) : 0;
@@ -1037,6 +1147,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [direction, setDirection] = useState(() => cs.direction || "ltr");
   const [typoColumnGap, setTypoColumnGap] = useState(() => parseNum(cs.columnGap));
   const [textShadows, setTextShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.textShadow || "none"));
+  const [textOverflow, setTextOverflow] = useState(() => cs.getPropertyValue("text-overflow") || "clip");
+  const [textStrokeWidth, setTextStrokeWidth] = useState(() => parseNum(cs.getPropertyValue("-webkit-text-stroke-width") || "0"));
+  const [textStrokeColor, setTextStrokeColor] = useState(() => rgbToHex(cs.getPropertyValue("-webkit-text-stroke-color") || cs.color));
+  const [lineBreak, setLineBreak] = useState(() => cs.getPropertyValue("line-break") || "auto");
 
   // ── Background state ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
