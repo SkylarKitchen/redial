@@ -1115,6 +1115,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     [apply]
   );
 
+  const handleFlexOrderChange = useCallback(
+    (v: number) => {
+      setFlexOrder(v);
+      apply("order", String(v));
+    },
+    [apply]
+  );
+
   // Size
   const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
   const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}${heightUnit}`); }, [apply, heightUnit]);
@@ -1349,6 +1357,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} />
             <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit="px" onChange={handleFlexBasisChange} />
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} />
+            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} />
           </>
         )}
       </Section>

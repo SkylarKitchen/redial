@@ -44,8 +44,15 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Matches existing IconButtonGroup pattern from Typography (text-align, decoration, transform)
 - Typecheck: PASS
 
+### Iteration 6 — Flex child order control (2026-03-11)
+- Added `flexOrder` state initialized from `cs.order`
+- Added `handleFlexOrderChange` handler applying `order` CSS property
+- Added SliderRow for Order (range -10 to 100, step 1) in Flex Child sub-section
+- Placed after Align Self dropdown, matching the spec's property table order
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase B-8:** Layout order control for flex children
+**Phase B-9:** Typography advanced collapsed sub-section
