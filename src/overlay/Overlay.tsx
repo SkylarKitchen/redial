@@ -100,7 +100,7 @@ export function Overlay() {
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
+      const target = e.target instanceof Element ? e.target as HTMLElement : null;
       const insidePanel = target?.closest(".__tuner-root");
 
       // Cmd+Z / Ctrl+Z for undo — must fire even when focus is inside panel inputs
