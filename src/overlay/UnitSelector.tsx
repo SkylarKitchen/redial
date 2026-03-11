@@ -7,15 +7,24 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 
+export interface SpecialOption {
+  value: string;
+  label: string;
+}
+
 export interface UnitSelectorProps {
   value: string;
   options?: string[];
   onChange: (unit: string) => void;
+  /** Keyword items (AUTO, NONE) rendered below a divider at the bottom of the dropdown */
+  specialOptions?: SpecialOption[];
+  /** Called when a special option is selected */
+  onSpecialSelect?: (value: string) => void;
 }
 
 const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
 
-export function UnitSelector({ value, options = DEFAULT_UNITS, onChange }: UnitSelectorProps) {
+export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -117,6 +126,33 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange }: UnitS
               </div>
             );
           })}
+          {specialOptions && specialOptions.length > 0 && (
+            <>
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "2px 0" }} />
+              {specialOptions.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
+                  style={{
+                    padding: "3px 8px",
+                    fontSize: "10px",
+                    fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    color: "rgba(255,255,255,0.6)",
+                    background: "transparent",
+                    cursor: "pointer",
+                    lineHeight: "16px",
+                    transition: "background 60ms",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.03em",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>

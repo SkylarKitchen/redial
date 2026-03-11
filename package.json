@@ -38,6 +38,7 @@
   "type": "module",
   "dependencies": {
     "dialkit": "^1.1.0",
+    "lucide-react": "^0.577.0",
     "motion": "^12.35.2"
   },
   "peerDependencies": {

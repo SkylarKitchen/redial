@@ -20,8 +20,9 @@ import { SpacingBoxModel } from "./SpacingBoxModel";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
 import type { SpacingValues } from "./infer";
-import { applyInlineStyle } from "./apply";
+import { applyInlineStyle, isDirty } from "./apply";
 import { LabelScrub } from "./LabelScrub";
+import { SizeInputCell } from "./SizeInputCell";
 import { UnitSelector } from "./UnitSelector";
 import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
@@ -798,6 +799,14 @@ const OVERFLOW_OPTIONS = [
   { value: "hidden", label: "Hidden" },
   { value: "scroll", label: "Scroll" },
   { value: "auto", label: "Auto" },
+];
+
+const OVERFLOW_ICON_OPTIONS = [
+  { value: "visible", icon: <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 3C4 3 1.5 7 1.5 7s2.5 4 5.5 4 5.5-4 5.5-4S10 3 7 3z" fill="none" stroke="currentColor" strokeWidth="1.2"/><circle cx="7" cy="7" r="1.8" fill="none" stroke="currentColor" strokeWidth="1.2"/></svg>, title: "Visible" },
+  { value: "hidden", icon: <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2l10 10M7 3C4 3 1.5 7 1.5 7s1 1.6 2.5 2.8M7 11c3 0 5.5-4 5.5-4s-1-1.6-2.5-2.8" fill="none" stroke="currentColor" strokeWidth="1.2"/></svg>, title: "Hidden" },
+  { value: "clip", icon: <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2"/><path d="M6 1v3M8 10v3M1 8h3M10 6h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>, title: "Clip" },
+  { value: "scroll", icon: <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="1" width="8" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.2"/><path d="M7 4v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>, title: "Scroll" },
+  { value: "auto", icon: <span style={{ fontSize: "9px", fontFamily: "system-ui, sans-serif", fontWeight: 500 }}>Auto</span>, title: "Auto" },
 ];
 
 const OBJECT_FIT_OPTIONS = [
@@ -1628,76 +1637,115 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 3. Size */}
       <Section title="Size">
-        {widthAuto ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Width</span>
-            <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>auto</button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, getConversionCtx(),"width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }} onChange={handleWidthChange} />
-            </div>
-            <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
-          </div>
-        )}
-        {heightAuto ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Height</span>
-            <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>auto</button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, getConversionCtx(),"height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }} onChange={handleHeightChange} />
-            </div>
-            <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
-          </div>
-        )}
-        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, getConversionCtx(),"width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }} onChange={handleMinWidthChange} />
-        {maxWidthNone ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max W</span>
-            <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>none</button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, getConversionCtx(),"width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxWidthChange} />
-            </div>
-            <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
-          </div>
-        )}
-        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, getConversionCtx(),"height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }} onChange={handleMinHeightChange} />
-        {maxHeightNone ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max H</span>
-            <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "#6366f1", color: "#fff" }}>none</button>
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, getConversionCtx(),"height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxHeightChange} />
-            </div>
-            <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
-          </div>
-        )}
+        {/* Row 1: Width + Height */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Width"
+            value={width}
+            unit={widthUnit}
+            units={SIZE_UNITS_W}
+            keyword={widthAuto ? "auto" : null}
+            onValueChange={handleWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, getConversionCtx(), "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
+            onKeywordChange={(k) => { setWidthAuto(k === "auto"); apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`); }}
+            isModified={isDirty(element, "width")}
+            supportsAuto
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Height"
+            value={height}
+            unit={heightUnit}
+            units={SIZE_UNITS_H}
+            keyword={heightAuto ? "auto" : null}
+            onValueChange={handleHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, getConversionCtx(), "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
+            onKeywordChange={(k) => { setHeightAuto(k === "auto"); apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`); }}
+            isModified={isDirty(element, "height")}
+            supportsAuto
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Row 2: Min W + Min H */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Min W"
+            value={minWidth}
+            unit={minWidthUnit}
+            units={SIZE_UNITS_W}
+            keyword={null}
+            onValueChange={handleMinWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, getConversionCtx(), "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
+            onKeywordChange={() => {}}
+            isModified={isDirty(element, "min-width")}
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Min H"
+            value={minHeight}
+            unit={minHeightUnit}
+            units={SIZE_UNITS_H}
+            keyword={null}
+            onValueChange={handleMinHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, getConversionCtx(), "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
+            onKeywordChange={() => {}}
+            isModified={isDirty(element, "min-height")}
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Row 3: Max W + Max H */}
+        <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+          <SizeInputCell
+            label="Max W"
+            value={maxWidth}
+            unit={maxWidthUnit}
+            units={SIZE_UNITS_W}
+            keyword={maxWidthNone ? "none" : null}
+            onValueChange={handleMaxWidthChange}
+            onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, getConversionCtx(), "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
+            onKeywordChange={(k) => { setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${maxWidthUnit}`); }}
+            isModified={isDirty(element, "max-width")}
+            supportsNone
+            min={0}
+            max={1920}
+          />
+          <SizeInputCell
+            label="Max H"
+            value={maxHeight}
+            unit={maxHeightUnit}
+            units={SIZE_UNITS_H}
+            keyword={maxHeightNone ? "none" : null}
+            onValueChange={handleMaxHeightChange}
+            onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, getConversionCtx(), "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
+            onKeywordChange={(k) => { setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
+            isModified={isDirty(element, "max-height")}
+            supportsNone
+            min={0}
+            max={1200}
+          />
+        </div>
+        {/* Overflow: icon button row */}
         {overflowLocked ? (
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} indicator={ind("overflow")} />
-            </div>
-            <button onClick={handleOverflowLockToggle} title="Per-axis overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>🔗</button>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Overflow</span>
+            <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
+            <button onClick={handleOverflowLockToggle} title="Per-axis overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}>🔗</button>
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ flex: 1 }}>
-                <SelectRow label="Overflow X" value={overflowX} options={OVERFLOW_OPTIONS} onChange={handleOverflowXChange} />
-              </div>
-              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over X</span>
+              <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
+              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
             </div>
-            <SelectRow label="Overflow Y" value={overflowY} options={OVERFLOW_OPTIONS} onChange={handleOverflowYChange} />
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+              <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over Y</span>
+              <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowY} onChange={handleOverflowYChange} />
+            </div>
           </>
         )}
         <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
