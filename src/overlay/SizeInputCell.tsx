@@ -237,23 +237,13 @@ export function SizeInputCell({
 
       {/* Unit / keyword toggle */}
       <div style={{ flexShrink: 0, paddingRight: "3px" }}>
-        {isKeyword ? (
-          <UnitSelector
-            value="–"
-            options={units}
-            onChange={handleUnitSelect}
-            specialOptions={specialOptions}
-            onSpecialSelect={handleSpecialSelect}
-          />
-        ) : (
-          <UnitSelector
-            value={unit}
-            options={units}
-            onChange={handleUnitSelect}
-            specialOptions={specialOptions}
-            onSpecialSelect={handleSpecialSelect}
-          />
-        )}
+        <UnitSelector
+          value={isKeyword ? "–" : unit}
+          options={units}
+          onChange={handleUnitSelect}
+          specialOptions={specialOptions}
+          onSpecialSelect={handleSpecialSelect}
+        />
       </div>
     </div>
   );

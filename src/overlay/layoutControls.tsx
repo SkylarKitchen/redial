@@ -4,11 +4,12 @@
  * MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { ValueInput } from "./controls";
+import { useClickOutside } from "./useClickOutside";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
   DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
@@ -25,15 +26,8 @@ export function MiniDropdown({ value, options, onChange }: {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, open, closeDropdown);
 
   return (
     <div ref={ref} style={{ position: "relative", flex: 1 }}>
@@ -93,15 +87,8 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
   const containerRef = useRef<HTMLDivElement>(null);
   const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
   const isSet = direction !== "row" || isWrap;
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setMoreOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [moreOpen]);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useClickOutside(containerRef, moreOpen, closeMore);
 
   return (
     <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -248,15 +235,8 @@ export function GapRow({ value, unit, onChange, onUnitChange }: {
 export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setMoreOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [moreOpen]);
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useClickOutside(containerRef, moreOpen, closeMore);
 
   const isTabValue = (DISPLAY_TABS as readonly string[]).includes(value);
 
