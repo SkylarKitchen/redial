@@ -25,17 +25,20 @@ export type DiffEntry = {
   to: string;
 };
 
-type UndoEntry = {
-  el: Element;
-  prop: string;
-  prev: string;
-};
+type SingleUndoEntry = { el: Element; prop: string; prev: string };
+type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
+type UndoEntry = SingleUndoEntry | BatchUndoEntry;
 
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
 const undoStack: UndoEntry[] = [];
 const MAX_UNDO = 200;
+
+// --- Batch API ---
+
+let batchDepth = 0;
+let batchEntries: SingleUndoEntry[] = [];
 
 // --- Public API ---
 

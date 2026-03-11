@@ -589,6 +589,8 @@ function SelectRow({
       </span>
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
+          className="tuner-focusable"
+          tabIndex={0}
           onClick={() => setOpen((o) => !o)}
           style={{
             width: "100%",
@@ -714,6 +716,8 @@ function ColorRow({
         />
         <input
           type="color"
+          className="tuner-focusable"
+          tabIndex={0}
           value={value === "transparent" ? "#000000" : value}
           onChange={(e) => onChange(e.target.value)}
           style={{
@@ -747,7 +751,7 @@ function TextRow({ label, value, placeholder, onChange }: {
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
       <input
-        type="text" value={value} placeholder={placeholder}
+        type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
@@ -1389,6 +1393,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
   const [conversionCtx] = useState(() => buildConversionContext(element));
 
+  // Inject :focus-visible styles for keyboard navigation
+  useEffect(() => {
+    const id = 'tuner-focus-styles';
+    if (!document.getElementById(id)) {
+      const style = document.createElement('style');
+      style.id = id;
+      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }`;
+      document.head.appendChild(style);
+    }
+    return () => { document.getElementById(id)?.remove(); };
+  }, []);
+
   /** Shorthand for getIndicatorType bound to this element's cached styles */
   const ind = useCallback((prop: string) => getIndicatorType(element, prop, cs, parentCs), [element, cs, parentCs]);
 
@@ -1501,6 +1517,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     const v = cs.columnCount;
     return v === "auto" ? 1 : parseNum(cs.columnCount);
   });
+  const [hyphens, setHyphens] = useState(() => (cs as any).hyphens || "none");
+  const [direction, setDirection] = useState(() => cs.direction || "ltr");
+  const [typoColumnGap, setTypoColumnGap] = useState(() => parseNum(cs.columnGap));
+  const [textShadows, setTextShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.textShadow || "none"));
 
   // ── Background state ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -1545,6 +1565,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [cursor, setCursor] = useState(() => cs.cursor);
   const [pointerEvents, setPointerEvents] = useState(() => cs.pointerEvents);
   const [visibility, setVisibility] = useState(() => cs.visibility);
+  const [userSelect, setUserSelect] = useState(() => cs.userSelect || "auto");
+  const [perspective, setPerspective] = useState(() => parseNum((cs as any).perspective));
+  const [backfaceVisibility, setBackfaceVisibility] = useState(() => (cs as any).backfaceVisibility || "visible");
 
   // Spacing units
   const [marginUnit, setMarginUnit] = useState("px");
@@ -1739,6 +1762,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}${textIndentUnit}`); }, [apply, textIndentUnit]);
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
+  const handleHyphensChange = useCallback((v: string) => { setHyphens(v); apply("hyphens", v); }, [apply]);
+  const handleDirectionChange = useCallback((v: string) => { setDirection(v); apply("direction", v); }, [apply]);
+  const handleTypoColumnGapChange = useCallback((v: number) => { setTypoColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
+  const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
+    setTextShadows(newShadows);
+    apply("text-shadow", shadowToCSS(newShadows));
+  }, [apply]);
 
   // Backgrounds
   const handleBgColorChange = useCallback((v: string) => { setBgColor(v); apply("background-color", v); }, [apply]);
@@ -1860,6 +1890,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleCursorChange = useCallback((v: string) => { setCursor(v); apply("cursor", v); }, [apply]);
   const handlePointerEventsChange = useCallback((v: string) => { setPointerEvents(v); apply("pointer-events", v); }, [apply]);
   const handleVisibilityChange = useCallback((v: string) => { setVisibility(v); apply("visibility", v); }, [apply]);
+  const handleUserSelectChange = useCallback((v: string) => { setUserSelect(v); apply("user-select", v); }, [apply]);
+  const handlePerspectiveChange = useCallback((v: number) => { setPerspective(v); apply("perspective", v > 0 ? `${v}px` : "none"); }, [apply]);
+  const handleBackfaceVisibilityChange = useCallback((v: string) => { setBackfaceVisibility(v); apply("backface-visibility", v); }, [apply]);
 
   // ─── Render ────────────────────────────────────────────────────────
 
@@ -2241,9 +2274,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} />
         </div>
 
-        <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} />
-        <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} />
-        <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} />
+        <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} />
+        <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} />
+        <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
+        <SelectRow label="User Sel" value={userSelect} options={[
+          { value: "auto", label: "Auto" },
+          { value: "none", label: "None" },
+          { value: "text", label: "Text" },
+          { value: "all", label: "All" },
+        ]} onChange={handleUserSelectChange} indicator={ind("user-select")} />
+        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} indicator={ind("perspective")} />
+        <SelectRow label="Backface" value={backfaceVisibility} options={[
+          { value: "visible", label: "Visible" },
+          { value: "hidden", label: "Hidden" },
+        ]} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
       </Section>
     </div>
   );

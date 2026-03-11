@@ -3,25 +3,55 @@
  *
  * Webflow-style interaction: click and drag horizontally on a label
  * to adjust a numeric value. Shift = 10x, Alt = 0.1x.
+ *
+ * Uses PointerEvent + setPointerCapture for reliable cross-platform drag.
+ * Listeners are attached synchronously in pointerdown (no useEffect gap).
+ * A 3px dead zone distinguishes clicks from drags.
  */
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useState } from "react";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
   value: number;
   onChange: (value: number) => void;
+  onScrubStart?: () => void;
+  onScrubEnd?: () => void;
   step?: number;
   min?: number;
   max?: number;
+  deadZone?: number;
 }
 
-export function LabelScrub({ children, value, onChange, step = 1, min, max }: LabelScrubProps) {
+export function LabelScrub({
+  children,
+  value,
+  onChange,
+  onScrubStart,
+  onScrubEnd,
+  step = 1,
+  min,
+  max,
+  deadZone = 3,
+}: LabelScrubProps) {
   const [scrubbing, setScrubbing] = useState(false);
+
   const startXRef = useRef(0);
   const startValueRef = useRef(0);
   const latestRef = useRef(value);
   latestRef.current = value;
+
+  // Keep onChange in a ref so move handler never captures a stale closure
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  const onScrubStartRef = useRef(onScrubStart);
+  onScrubStartRef.current = onScrubStart;
+
+  const onScrubEndRef = useRef(onScrubEnd);
+  onScrubEndRef.current = onScrubEnd;
+
+  const isDraggingRef = useRef(false);
 
   const clamp = useCallback(
     (v: number) => {
@@ -30,64 +60,83 @@ export function LabelScrub({ children, value, onChange, step = 1, min, max }: La
       if (max !== undefined) clamped = Math.min(max, clamped);
       return clamped;
     },
-    [min, max]
+    [min, max],
   );
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<HTMLSpanElement>) => {
       // Only primary button
       if (e.button !== 0) return;
       e.preventDefault();
 
+      const el = e.currentTarget;
+      el.setPointerCapture(e.pointerId);
+
       startXRef.current = e.clientX;
       startValueRef.current = latestRef.current;
-      setScrubbing(true);
+      isDraggingRef.current = false;
+
+      // Save body styles to restore later
+      const prevSelect = document.body.style.userSelect;
+      const prevCursor = document.body.style.cursor;
+
+      function handleMove(ev: PointerEvent) {
+        const dx = ev.clientX - startXRef.current;
+
+        // Dead zone: ignore small movements
+        if (!isDraggingRef.current) {
+          if (Math.abs(dx) < deadZone) return;
+          // First time exceeding dead zone — start the scrub
+          isDraggingRef.current = true;
+          setScrubbing(true);
+          document.body.style.userSelect = "none";
+          document.body.style.cursor = "ew-resize";
+          onScrubStartRef.current?.();
+        }
+
+        let multiplier = 1;
+        if (ev.shiftKey) multiplier = 10;
+        else if (ev.altKey) multiplier = 0.1;
+
+        const delta = dx * step * multiplier;
+        const raw = startValueRef.current + delta;
+        // Round to avoid floating-point noise
+        const precision = multiplier < 1 ? 2 : 0;
+        const rounded = parseFloat(raw.toFixed(precision));
+        onChangeRef.current(clamp(rounded));
+      }
+
+      function cleanup() {
+        el.removeEventListener("pointermove", handleMove);
+        el.removeEventListener("pointerup", handleUp);
+        el.removeEventListener("lostpointercapture", handleUp);
+        window.removeEventListener("blur", handleUp);
+
+        if (isDraggingRef.current) {
+          document.body.style.userSelect = prevSelect;
+          document.body.style.cursor = prevCursor;
+          setScrubbing(false);
+          onScrubEndRef.current?.();
+        }
+      }
+
+      function handleUp() {
+        cleanup();
+      }
+
+      // Attach listeners synchronously — no useEffect gap
+      el.addEventListener("pointermove", handleMove);
+      el.addEventListener("pointerup", handleUp);
+      el.addEventListener("lostpointercapture", handleUp);
+      // Ghost drag safety: clean up if window loses focus
+      window.addEventListener("blur", handleUp);
     },
-    []
+    [step, clamp, deadZone],
   );
-
-  // Attach global move/up listeners while scrubbing
-  useEffect(() => {
-    if (!scrubbing) return;
-
-    function handleMove(e: MouseEvent) {
-      const dx = e.clientX - startXRef.current;
-      let multiplier = 1;
-      if (e.shiftKey) multiplier = 10;
-      else if (e.altKey) multiplier = 0.1;
-
-      const delta = dx * step * multiplier;
-      const raw = startValueRef.current + delta;
-      // Round to avoid floating-point noise
-      const precision = multiplier < 1 ? 2 : 0;
-      const rounded = parseFloat(raw.toFixed(precision));
-      onChange(clamp(rounded));
-    }
-
-    function handleUp() {
-      setScrubbing(false);
-    }
-
-    // Prevent text selection during drag
-    const prevSelect = document.body.style.userSelect;
-    const prevCursor = document.body.style.cursor;
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = "ew-resize";
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-      document.body.style.userSelect = prevSelect;
-      document.body.style.cursor = prevCursor;
-    };
-  }, [scrubbing, step, clamp, onChange]);
 
   return (
     <span
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
       style={{
         cursor: "ew-resize",
         userSelect: "none",
@@ -96,6 +145,7 @@ export function LabelScrub({ children, value, onChange, step = 1, min, max }: La
         fontFamily: "system-ui, sans-serif",
         lineHeight: "20px",
         transition: scrubbing ? "none" : "color 100ms",
+        touchAction: "none",
       }}
     >
       {children}
