@@ -75,9 +75,54 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 - Use a simple `onFocus`/`onBlur` pair to track focus state for inline styling (can't use `:focus-visible` pseudo in inline styles)
 - Alternative: inject a single `<style>` tag with `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }` and add `className="tuner-focusable"` to controls
 
-### Phase 2: Missing Per-Section Controls (10 tasks)
+### Phase 2: Missing Per-Section Controls (12 tasks)
 
-#### 2A: Effects Section Additions
+> **Reference**: `webflow-panel-reference.png` in project root shows the actual Webflow panel UI.
+
+#### 2A: Layout — Display Toggle Buttons
+**File**: `src/overlay/WebflowPanel.tsx` (Layout section, ~line 1407)
+**What**: Replace the Display `SelectRow` dropdown with an `IconButtonGroup` of toggle buttons matching the reference image: `Block`, `Flex`, `Grid`, `None` — with a dropdown chevron for inline variants.
+**Implementation**:
+- Create `DISPLAY_TOGGLE_OPTIONS` with 4 icon buttons (Block/Flex/Grid/None)
+- Add a small `▾` overflow button that opens a dropdown for `inline`, `inline-block`, `inline-flex`, `inline-grid`
+- Pattern: same as flex-direction toggle buttons already done
+
+#### 2B: Layout — Gap Lock (Row/Column Gap)
+**File**: `src/overlay/WebflowPanel.tsx` (Layout section, ~line 1426)
+**What**: Add a lock/unlock toggle next to Gap that splits into separate `row-gap` and `column-gap` sliders when unlocked (matching Webflow's lock icon).
+**Implementation**:
+- State: `gapLocked` boolean (default true), `rowGap`, `columnGap`
+- When locked: single Gap slider sets both `row-gap` and `column-gap`
+- When unlocked: two separate SliderRows for Row Gap and Col Gap
+- Lock icon: small `🔗` / chain-broken toggle button
+
+#### 2C: Size — Box Sizing Control
+**File**: `src/overlay/WebflowPanel.tsx` (Size section, ~line 1520)
+**What**: Add `box-sizing` toggle with `border-box` / `content-box` icon buttons (visible in reference image as two box icons).
+**Implementation**:
+- State: `boxSizing` initialized from `cs.boxSizing`
+- IconButtonGroup with 2 options, box icons for border-box (filled) and content-box (outline)
+- Place in "More size options" collapsible sub-section
+
+#### 2D: Size — "More Size Options" Collapsible
+**File**: `src/overlay/WebflowPanel.tsx` (Size section)
+**What**: Group Ratio, Box size, and Fit under a collapsible "More size options" sub-section matching the reference image.
+**Implementation**:
+- State: `showMoreSize` boolean (default false)
+- Disclosure triangle + "More size options" label
+- Contains: aspect-ratio TextRow, box-sizing toggle, object-fit/object-position (for media)
+- Same pattern as Typography Advanced collapsible
+
+#### 2E: Size — Overflow Icon Buttons
+**File**: `src/overlay/WebflowPanel.tsx` (Size section)
+**What**: Replace the Overflow `SelectRow` dropdown with icon buttons matching the reference image (eye, crossed eye, scroll arrows, auto text) + per-axis unlock.
+**Implementation**:
+- `IconButtonGroup` with 4 options: visible (eye), hidden (crossed), scroll (arrows), auto (text)
+- Lock/unlock toggle for per-axis control
+- When unlocked: show separate Overflow X and Overflow Y icon button groups
+- State: `overflowLocked`, `overflowX`, `overflowY`
+
+#### 2F: Effects Section Additions
 **File**: `src/overlay/WebflowPanel.tsx` (Effects section, ~line 1680)
 
 | Control | CSS Property | Type | Values |
@@ -90,7 +135,7 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 **Handlers**: 3 new `handleXxxChange` callbacks calling `apply()`.
 **JSX**: Add after Visibility SelectRow.
 
-#### 2B: Typography Advanced Additions
+#### 2G: Typography Advanced Additions
 **File**: `src/overlay/WebflowPanel.tsx` (Typography Advanced sub-section, ~line 1636)
 
 | Control | CSS Property | Type | Values |
@@ -101,23 +146,9 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 | Text Shadow | `text-shadow` | ShadowEditor | X, Y, blur, color (reuse ShadowEditor) |
 
 **State**: 4 new `useState` calls.
-**For text-shadow**: Reuse `ShadowEditor` component (already supports multi-value). Parse `text-shadow` the same way as `box-shadow` (same syntax). Need a `parseTextShadow` and `textShadowToCSS` pair (can reuse existing `parseBoxShadow`/`shadowToCSS` since text-shadow has no spread or inset).
+**For text-shadow**: Reuse `ShadowEditor` component (already supports multi-value). Parse `text-shadow` the same way as `box-shadow` (same syntax). Text-shadow has no spread or inset — use `parseBoxShadow`/`shadowToCSS` directly (spread defaults to 0, inset to false).
 
-#### 2C: Size Section Additions
-**File**: `src/overlay/WebflowPanel.tsx` (Size section, ~line 1520)
-
-| Control | CSS Property | Type | Values |
-|---------|-------------|------|--------|
-| Overflow X | `overflow-x` | SelectRow | `visible`, `hidden`, `scroll`, `auto` |
-| Overflow Y | `overflow-y` | SelectRow | `visible`, `hidden`, `scroll`, `auto` |
-
-**Implementation**: Replace the single `overflow` SelectRow with a "lock" pattern:
-- When locked: single Overflow dropdown applies to both axes
-- When unlocked: two separate Overflow X / Overflow Y dropdowns
-- Add a small 🔗 toggle button between label and dropdown
-- State: `overflowLocked` boolean, `overflowX`, `overflowY`
-
-#### 2D: Backgrounds Section Additions
+#### 2H: Backgrounds Section Additions
 **File**: `src/overlay/WebflowPanel.tsx` (Backgrounds section, ~line 1650)
 
 | Control | CSS Property | Type | Values |
@@ -156,19 +187,20 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 ## Parallel Execution Strategy
 
 ```
-Phase 0 (fix)              → MUST complete first
-                             ↓
-Phase 1 (3 tasks)    ──┐
-Phase 2A (Effects)   ──┤
-Phase 2B (Typography)──┼── all independent, run in parallel
-Phase 2C (Size)      ──┤
-Phase 2D (Backgrounds)──┘
-                        ↓
-Phase 3A (Color picker) ── after Phases 1+2 merge
-Phase 3B (Bezier editor)── after Phases 1+2 merge
+Phase 0 (fix)                  → MUST complete first (1 min)
+                                 ↓
+Stream A: Phase 1 tasks  ──┐
+Stream B: Layout (2A,2B)  ──┤
+Stream C: Size (2C,2D,2E) ──┼── all modify different sections, parallel-safe
+Stream D: Effects (2F)     ──┤
+Stream E: Typography (2G)  ──┤
+Stream F: Backgrounds (2H) ──┘
+                              ↓
+Phase 3A (Color picker) ── after all streams merge
+Phase 3B (Bezier editor)── after all streams merge
 ```
 
-Tasks within Phase 1 are independent of Phase 2 tasks. Within Phase 2, all sub-tasks (2A-2D) modify different sections of WebflowPanel.tsx and can be parallelized with careful merge.
+Streams modify non-overlapping sections of `WebflowPanel.tsx`. Stream A touches helpers + control internals. Streams B-F each touch their own section's state/handlers/JSX.
 
 ## Acceptance Criteria
 
@@ -191,23 +223,27 @@ Tasks within Phase 1 are independent of Phase 2 tasks. Within Phase 2, all sub-t
 
 ## Task Summary (ordered by priority)
 
-| # | Task | Phase | Files | Est. Lines |
-|---|------|-------|-------|-----------|
-| 0 | Revert broken refactoring | 0 | WebflowPanel.tsx, SpacingBoxModel.tsx | -1200 (revert) |
-| 1 | Unit conversion on unit change | 1 | WebflowPanel.tsx | +60 |
-| 2 | Enhanced StyleIndicator detection | 1 | StyleIndicator.tsx, WebflowPanel.tsx | +25 |
-| 3 | Tab/Shift+Tab focus navigation | 1 | WebflowPanel.tsx (controls) | +30 |
-| 4 | Effects: user-select, perspective, backface | 2A | WebflowPanel.tsx | +40 |
-| 5 | Typography: hyphens, direction, col-gap | 2B | WebflowPanel.tsx | +35 |
-| 6 | Typography: text-shadow editor | 2B | WebflowPanel.tsx | +25 |
-| 7 | Size: per-axis overflow (locked/unlocked) | 2C | WebflowPanel.tsx | +50 |
-| 8 | Backgrounds: background-clip | 2D | WebflowPanel.tsx | +15 |
-| 9 | Enhanced color picker (HSB + opacity) | 3A | ColorPickerEnhanced.tsx, WebflowPanel.tsx | +350 |
-| 10 | Bezier curve editor | 3B | BezierEditor.tsx, TransitionEditor.tsx | +250 |
+| # | Task | Phase | Stream | Files | Est. Lines |
+|---|------|-------|--------|-------|-----------|
+| 0 | Revert broken refactoring | 0 | — | WebflowPanel.tsx, SpacingBoxModel.tsx | revert |
+| 1 | Unit conversion on unit change | 1 | A | WebflowPanel.tsx | +60 |
+| 2 | Enhanced StyleIndicator detection | 1 | A | StyleIndicator.tsx, WebflowPanel.tsx | +25 |
+| 3 | Tab/Shift+Tab focus navigation | 1 | A | WebflowPanel.tsx (controls) | +30 |
+| 4 | Display toggle buttons | 2A | B | WebflowPanel.tsx (Layout) | +45 |
+| 5 | Gap lock (row/col gap) | 2B | B | WebflowPanel.tsx (Layout) | +35 |
+| 6 | Box sizing control | 2C | C | WebflowPanel.tsx (Size) | +20 |
+| 7 | "More size options" collapsible | 2D | C | WebflowPanel.tsx (Size) | +25 |
+| 8 | Overflow icon buttons + per-axis | 2E | C | WebflowPanel.tsx (Size) | +60 |
+| 9 | Effects: user-select, perspective, backface | 2F | D | WebflowPanel.tsx (Effects) | +40 |
+| 10 | Typography: hyphens, direction, col-gap, text-shadow | 2G | E | WebflowPanel.tsx (Typography) | +55 |
+| 11 | Backgrounds: background-clip | 2H | F | WebflowPanel.tsx (Backgrounds) | +15 |
+| 12 | Enhanced color picker (HSB + opacity) | 3A | — | ColorPickerEnhanced.tsx | +350 |
+| 13 | Bezier curve editor | 3B | — | BezierEditor.tsx | +250 |
 
 ## References
 
 - Spec: `webflow-style-panel-spec.md` (all 13 sections)
+- Reference image: `webflow-panel-reference.png` (project root) — actual Webflow Designer screenshot
 - Committed WebflowPanel.tsx: 1721 lines (HEAD) — the working baseline
 - Existing components: `StyleIndicator.tsx:28`, `ShadowEditor.tsx`, `FilterSliders.tsx`, `TransformEditor.tsx`, `TransitionEditor.tsx`, `BackgroundLayerList.tsx`, `SpacingBoxModel.tsx`, `PositionOffsetDiagram.tsx`
 - Controls: `controls.tsx` — SliderRow, SelectRow, ColorRow, TextRow, Section
