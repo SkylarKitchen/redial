@@ -72,7 +72,16 @@ export function Overlay() {
   const [selecting, setSelecting] = useState(false);
   const [selectedEl, setSelectedEl] = useState<Element | null>(null);
   const [inferResult, setInferResult] = useState<InferResult | null>(null);
-  const [panelKey, setPanelKey] = useState(0); // force re-mount on new selection
+  const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
+  const panelScrollRef = useRef<HTMLDivElement>(null);
+  const savedScrollRef = useRef(0);
+  /** Wrapper that saves scroll position before triggering a remount */
+  const setPanelKey: typeof setPanelKeyRaw = useCallback((v) => {
+    if (panelScrollRef.current) {
+      savedScrollRef.current = panelScrollRef.current.scrollTop;
+    }
+    setPanelKeyRaw(v);
+  }, []);
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -596,9 +605,7 @@ export function Overlay() {
   }, [selectedEl]);
 
   // --- Scroll position preservation across panelKey remounts ---
-  const savedScrollRef = useRef(0);
   useEffect(() => {
-    // After panelKey changes and WebflowPanel remounts, restore scroll position
     const el = panelScrollRef.current;
     if (el && savedScrollRef.current > 0) {
       el.scrollTop = savedScrollRef.current;
@@ -606,7 +613,6 @@ export function Overlay() {
   }, [panelKey]);
 
   // --- Auto-hiding scrollbar ---
-  const panelScrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = panelScrollRef.current;
     if (!el) return;
