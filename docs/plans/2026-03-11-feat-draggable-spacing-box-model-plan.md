@@ -107,52 +107,52 @@ The existing LabelScrub has a 1-frame gap between `setScrubbing(true)` and the `
 ## Acceptance Criteria
 
 ### Drag-to-Scrub
-- [ ] Dragging horizontally on any spacing value scrubs it in real-time
-- [ ] Cursor shows `ew-resize` on hover over values
-- [ ] Value text turns indigo (`#6366f1`) during active scrub
-- [ ] 3px dead zone: short clicks still enter edit mode
-- [ ] Text selection disabled during drag (`userSelect: none`)
-- [ ] No visible value jump at drag start (dead zone delta calculated from original position)
+- [x] Dragging horizontally on any spacing value scrubs it in real-time
+- [x] Cursor shows `ew-resize` on hover over values
+- [x] Value text turns indigo (`#6366f1`) during active scrub
+- [x] 3px dead zone: short clicks still enter edit mode
+- [x] Text selection disabled during drag (`userSelect: none`)
+- [x] No visible value jump at drag start (dead zone delta calculated from original position)
 
 ### Uniform Update
-- [ ] Shift+drag on any margin value updates all 4 margin values to match
-- [ ] Shift+drag on any padding value updates all 4 padding values to match
-- [ ] Visual feedback: all 4 values update live during drag
-- [ ] Alt modifier works during shift+drag for 0.1x fine scrub
-- [ ] Shift state locked at drag start (pressing Shift mid-drag does not switch modes)
+- [x] Shift+drag on any margin value updates all 4 margin values to match
+- [x] Shift+drag on any padding value updates all 4 padding values to match
+- [x] Visual feedback: all 4 values update live during drag
+- [x] Alt modifier works during shift+drag for 0.1x fine scrub
+- [x] Shift state locked at drag start (pressing Shift mid-drag does not switch modes)
 
 ### Alt+Click All Sides
-- [ ] Alt+clicking any margin value sets all 4 margins to that value
-- [ ] Alt+clicking any padding value sets all 4 paddings to that value
+- [x] Alt+clicking any margin value sets all 4 margins to that value
+- [x] Alt+clicking any padding value sets all 4 paddings to that value
 
 ### Keyboard
-- [ ] Alt+Arrow Up/Down steps by 0.1px (new — matches PositionOffsetDiagram)
-- [ ] Shift+Arrow Up/Down steps by 10px (existing, verify still works)
-- [ ] Tab cycles through all 8 values in visual order (top→right→bottom→left per group)
-- [ ] Shift+Tab reverses cycle direction
+- [x] Alt+Arrow Up/Down steps by 0.1px (new — matches PositionOffsetDiagram)
+- [x] Shift+Arrow Up/Down steps by 10px (existing, verify still works)
+- [x] Tab cycles through all 8 values in visual order (top→right→bottom→left per group)
+- [x] Shift+Tab reverses cycle direction
 
 ### Hover Highlighting
-- [ ] Hovering a value highlights the corresponding zone strip in the diagram
-- [ ] Margin zones highlight at `rgba(255, 152, 87, 0.16)` (2× base)
-- [ ] Padding zones highlight at `rgba(87, 168, 255, 0.16)` (2× base)
-- [ ] Highlight clears on mouse leave
-- [ ] Highlight suppressed during active scrub (no flicker on pointer leave)
+- [x] Hovering a value highlights the corresponding zone strip in the diagram
+- [x] Margin zones highlight at `rgba(255, 152, 87, 0.16)` (2× base)
+- [x] Padding zones highlight at `rgba(87, 168, 255, 0.16)` (2× base)
+- [x] Highlight clears on mouse leave
+- [x] Highlight suppressed during active scrub (no flicker on pointer leave)
 
 ### Undo
-- [ ] Entire drag gesture (single value) is one undo entry
-- [ ] Entire uniform drag gesture (4 values) is one undo entry
-- [ ] Cmd+Z reverts the full gesture, not individual pixels
+- [x] Entire drag gesture (single value) is one undo entry
+- [x] Entire uniform drag gesture (4 values) is one undo entry
+- [x] Cmd+Z reverts the full gesture, not individual pixels
 
 ### Robustness
-- [ ] Window blur / tab switch during drag ends the gesture cleanly
-- [ ] No orphaned global listeners after component unmount
-- [ ] No stale closure bugs during drag (callbacks stored in refs)
+- [x] Window blur / tab switch during drag ends the gesture cleanly
+- [x] No orphaned global listeners after component unmount
+- [x] No stale closure bugs during drag (callbacks stored in refs)
 
 ### Visual Polish
-- [ ] Box model appearance matches Webflow's spacing diagram proportions
-- [ ] Content placeholder centered with proper sizing
-- [ ] Labels ("MARGIN", "PADDING") positioned top-left with muted styling
-- [ ] Border colors and background opacities match dark theme spec
+- [x] Box model appearance matches Webflow's spacing diagram proportions
+- [x] Content placeholder centered with proper sizing
+- [x] Labels ("MARGIN", "PADDING") positioned top-left with muted styling
+- [x] Border colors and background opacities match dark theme spec
 
 ## Technical Approach
 

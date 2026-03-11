@@ -12,11 +12,19 @@
  * │          bottom                │
  * └────────────────────────────────┘
  *
- * Each value is click-to-edit with arrow key increment.
+ * Features:
+ * - Drag-to-scrub on values (via LabelScrub composition)
+ * - Shift+drag updates all 4 sides uniformly
+ * - Alt+click applies value to all 4 sides
+ * - Hover zone highlighting (ref-based, zero re-renders)
+ * - Tab/Shift+Tab navigation in visual order
  */
 
+import { useCallback, useRef } from "react";
 import { EditableValue } from "./controls";
+import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
+import { beginBatch, endBatch } from "./apply";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -30,16 +38,160 @@ interface SpacingBoxModelProps {
   onPaddingUnitChange: (unit: string) => void;
 }
 
+// Zone base/highlight colors
+const MARGIN_BASE = "rgba(255, 152, 87, 0.08)";
+const MARGIN_HIGHLIGHT = "rgba(255, 152, 87, 0.16)";
+const PADDING_BASE = "rgba(87, 168, 255, 0.08)";
+const PADDING_HIGHLIGHT = "rgba(87, 168, 255, 0.16)";
+
 export function SpacingBoxModel({ margin, padding, onChange, marginUnit, paddingUnit, marginUnits, paddingUnits, onMarginUnitChange, onPaddingUnitChange }: SpacingBoxModelProps) {
+  // --- Refs for zone highlighting (direct DOM mutation, zero re-renders) ---
+  const marginZoneRef = useRef<HTMLDivElement>(null);
+  const paddingZoneRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Track if shift was held at drag start (locked for duration)
+  const shiftHeldRef = useRef(false);
+  const scrubActiveRef = useRef(false);
+
+  // --- Zone highlight helpers ---
+  const highlightMargin = useCallback(() => {
+    if (!scrubActiveRef.current && marginZoneRef.current)
+      marginZoneRef.current.style.background = MARGIN_HIGHLIGHT;
+  }, []);
+  const clearMargin = useCallback(() => {
+    if (!scrubActiveRef.current && marginZoneRef.current)
+      marginZoneRef.current.style.background = MARGIN_BASE;
+  }, []);
+  const highlightPadding = useCallback(() => {
+    if (!scrubActiveRef.current && paddingZoneRef.current)
+      paddingZoneRef.current.style.background = PADDING_HIGHLIGHT;
+  }, []);
+  const clearPadding = useCallback(() => {
+    if (!scrubActiveRef.current && paddingZoneRef.current)
+      paddingZoneRef.current.style.background = PADDING_BASE;
+  }, []);
+
+  // --- Shift-aware change handlers ---
+  const handleMarginChange = useCallback((prop: string, value: number) => {
+    if (shiftHeldRef.current) {
+      onChange("margin-top", value, marginUnit);
+      onChange("margin-right", value, marginUnit);
+      onChange("margin-bottom", value, marginUnit);
+      onChange("margin-left", value, marginUnit);
+    } else {
+      onChange(prop, value, marginUnit);
+    }
+  }, [onChange, marginUnit]);
+
+  const handlePaddingChange = useCallback((prop: string, value: number) => {
+    if (shiftHeldRef.current) {
+      onChange("padding-top", value, paddingUnit);
+      onChange("padding-right", value, paddingUnit);
+      onChange("padding-bottom", value, paddingUnit);
+      onChange("padding-left", value, paddingUnit);
+    } else {
+      onChange(prop, value, paddingUnit);
+    }
+  }, [onChange, paddingUnit]);
+
+  // --- Scrub start/end (undo batching + shift capture) ---
+  const handleScrubStart = useCallback(() => {
+    // Capture shift state from the most recent pointer event
+    // LabelScrub fires onScrubStart when dead zone is exceeded
+    // The pointerdown event's shiftKey is not directly accessible here,
+    // so we read from the document's current keyboard state via a trick:
+    // we'll use a pointerdown wrapper instead — see the onPointerDown handler below
+    scrubActiveRef.current = true;
+    beginBatch();
+  }, []);
+
+  const handleScrubEnd = useCallback(() => {
+    scrubActiveRef.current = false;
+    shiftHeldRef.current = false;
+    endBatch();
+  }, []);
+
+  // --- Capture shift key on pointer down (before LabelScrub handles it) ---
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    shiftHeldRef.current = e.shiftKey;
+  }, []);
+
+  // --- Alt+Click: set all 4 sides ---
+  const setAllMargins = useCallback((value: number) => {
+    onChange("margin-top", value, marginUnit);
+    onChange("margin-right", value, marginUnit);
+    onChange("margin-bottom", value, marginUnit);
+    onChange("margin-left", value, marginUnit);
+  }, [onChange, marginUnit]);
+
+  const setAllPaddings = useCallback((value: number) => {
+    onChange("padding-top", value, paddingUnit);
+    onChange("padding-right", value, paddingUnit);
+    onChange("padding-bottom", value, paddingUnit);
+    onChange("padding-left", value, paddingUnit);
+  }, [onChange, paddingUnit]);
+
+  // --- Tab navigation ---
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const target = e.target as HTMLElement;
+    const idx = target.dataset.spacingIndex;
+    if (idx === undefined) return;
+    e.preventDefault();
+    const current = Number(idx);
+    const next = e.shiftKey ? (current + 7) % 8 : (current + 1) % 8;
+    containerRef.current?.querySelector<HTMLElement>(`[data-spacing-index="${next}"]`)?.focus();
+  }, []);
+
+  // --- Render helper for a scrub-wrapped value ---
+  const renderValue = (
+    prop: string,
+    value: number,
+    group: "margin" | "padding",
+    tabIndex: number,
+  ) => {
+    const isMargin = group === "margin";
+    const unit = isMargin ? marginUnit : paddingUnit;
+    const changeHandler = isMargin ? handleMarginChange : handlePaddingChange;
+    const highlight = isMargin ? highlightMargin : highlightPadding;
+    const clear = isMargin ? clearMargin : clearPadding;
+    const setAll = isMargin ? setAllMargins : setAllPaddings;
+
+    return (
+      <div
+        onPointerDown={handlePointerDown}
+        onMouseEnter={highlight}
+        onMouseLeave={clear}
+      >
+        <LabelScrub
+          value={value}
+          onChange={(v) => changeHandler(prop, v)}
+          onScrubStart={handleScrubStart}
+          onScrubEnd={handleScrubEnd}
+          min={isMargin ? undefined : 0}
+        >
+          <EditableValue
+            value={value}
+            onChange={(v) => onChange(prop, v, unit)}
+            onAltClick={() => setAll(value)}
+            data-spacing-index={tabIndex}
+          />
+        </LabelScrub>
+      </div>
+    );
+  };
+
   return (
-    <div style={{ padding: "8px 12px 4px" }}>
+    <div style={{ padding: "8px 12px 4px" }} ref={containerRef} onKeyDown={handleKeyDown}>
       {/* Margin box (outer) */}
       <div
+        ref={marginZoneRef}
         style={{
           position: "relative",
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "4px",
-          background: "rgba(255, 152, 87, 0.08)",
+          background: MARGIN_BASE,
           padding: "0",
         }}
       >
@@ -64,22 +216,23 @@ export function SpacingBoxModel({ margin, padding, onChange, marginUnit, padding
 
         {/* Margin top */}
         <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-          <EditableValue value={margin.top} onChange={(v) => onChange("margin-top", v, marginUnit)} onAltClick={() => { onChange("margin-top", margin.top, marginUnit); onChange("margin-bottom", margin.top, marginUnit); }} />
+          {renderValue("margin-top", margin.top, "margin", 0)}
         </div>
 
         {/* Margin left / Padding box / Margin right */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={margin.left} onChange={(v) => onChange("margin-left", v, marginUnit)} onAltClick={() => { onChange("margin-left", margin.left, marginUnit); onChange("margin-right", margin.left, marginUnit); }} />
+            {renderValue("margin-left", margin.left, "margin", 3)}
           </div>
 
           {/* Padding box (inner) */}
           <div
+            ref={paddingZoneRef}
             style={{
               flex: 1,
               border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "3px",
-              background: "rgba(87, 168, 255, 0.08)",
+              background: PADDING_BASE,
               margin: "2px 0",
               position: "relative",
             }}
@@ -105,13 +258,13 @@ export function SpacingBoxModel({ margin, padding, onChange, marginUnit, padding
 
             {/* Padding top */}
             <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-              <EditableValue value={padding.top} onChange={(v) => onChange("padding-top", v, paddingUnit)} onAltClick={() => { onChange("padding-top", padding.top, paddingUnit); onChange("padding-bottom", padding.top, paddingUnit); }} />
+              {renderValue("padding-top", padding.top, "padding", 4)}
             </div>
 
             {/* Padding left / content / Padding right */}
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                <EditableValue value={padding.left} onChange={(v) => onChange("padding-left", v, paddingUnit)} onAltClick={() => { onChange("padding-left", padding.left, paddingUnit); onChange("padding-right", padding.left, paddingUnit); }} />
+                {renderValue("padding-left", padding.left, "padding", 7)}
               </div>
               {/* Content placeholder */}
               <div
@@ -124,24 +277,24 @@ export function SpacingBoxModel({ margin, padding, onChange, marginUnit, padding
                 }}
               />
               <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                <EditableValue value={padding.right} onChange={(v) => onChange("padding-right", v, paddingUnit)} onAltClick={() => { onChange("padding-left", padding.right, paddingUnit); onChange("padding-right", padding.right, paddingUnit); }} />
+                {renderValue("padding-right", padding.right, "padding", 5)}
               </div>
             </div>
 
             {/* Padding bottom */}
             <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
-              <EditableValue value={padding.bottom} onChange={(v) => onChange("padding-bottom", v, paddingUnit)} onAltClick={() => { onChange("padding-top", padding.bottom, paddingUnit); onChange("padding-bottom", padding.bottom, paddingUnit); }} />
+              {renderValue("padding-bottom", padding.bottom, "padding", 6)}
             </div>
           </div>
 
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={margin.right} onChange={(v) => onChange("margin-right", v, marginUnit)} onAltClick={() => { onChange("margin-left", margin.right, marginUnit); onChange("margin-right", margin.right, marginUnit); }} />
+            {renderValue("margin-right", margin.right, "margin", 1)}
           </div>
         </div>
 
         {/* Margin bottom */}
         <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
-          <EditableValue value={margin.bottom} onChange={(v) => onChange("margin-bottom", v, marginUnit)} onAltClick={() => { onChange("margin-top", margin.bottom, marginUnit); onChange("margin-bottom", margin.bottom, marginUnit); }} />
+          {renderValue("margin-bottom", margin.bottom, "margin", 2)}
         </div>
       </div>
     </div>
