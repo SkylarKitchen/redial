@@ -91,6 +91,8 @@ const DEFAULT_TRANSITION: TransitionValue = {
 };
 
 export function TransitionEditor({ transitions, onChange }: TransitionEditorProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transitions, onChange);
+
   const handleAdd = useCallback(() => {
     onChange([...transitions, { ...DEFAULT_TRANSITION }]);
   }, [transitions, onChange]);
@@ -114,16 +116,28 @@ export function TransitionEditor({ transitions, onChange }: TransitionEditorProp
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "6px", position: "relative" }}>
       {/* Transition cards */}
-      {transitions.map((t, index) => (
-        <TransitionCard
-          key={index}
-          transition={t}
-          onUpdate={(updates) => handleUpdate(index, updates)}
-          onRemove={() => handleRemove(index)}
-        />
-      ))}
+      {transitions.map((t, index) => {
+        const dragProps = handleProps(index);
+        return (
+          <div key={index} ref={registerRef(index)} style={itemStyle(index)}>
+            <TransitionCard
+              transition={t}
+              onUpdate={(updates) => handleUpdate(index, updates)}
+              onRemove={() => handleRemove(index)}
+              dragHandleProps={dragProps}
+              isDragging={isDragging}
+            />
+          </div>
+        );
+      })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
 
       {/* Add button */}
       <button
@@ -156,10 +170,14 @@ function TransitionCard({
   transition,
   onUpdate,
   onRemove,
+  dragHandleProps,
+  isDragging,
 }: {
   transition: TransitionValue;
   onUpdate: (updates: Partial<TransitionValue>) => void;
   onRemove: () => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
 }) {
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);

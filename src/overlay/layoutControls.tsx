@@ -1,54 +1,18 @@
 /**
- * layoutControls.tsx — Layout-section sub-components extracted from WebflowPanel.tsx
+ * layoutControls.tsx — Sub-components extracted from WebflowPanel.tsx
  *
- * MiniDropdown, DirectionRow, GapRow, DisplayTabs.
- * Pure refactor — no logic changes.
+ * MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell.
  */
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Link, Unlink, ArrowRight, ArrowDown, WrapText } from "lucide-react";
+import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
+import { UnitSelector } from "./UnitSelector";
 import { ValueInput } from "./controls";
-
-// ─── Constants ──────────────────────────────────────────────────────
-
-export const DISPLAY_TABS = ["block", "flex", "grid", "none"] as const;
-export const DISPLAY_MORE = [
-  { value: "inline-flex", label: "Inline Flex" },
-  { value: "inline-grid", label: "Inline Grid" },
-  { value: "inline-block", label: "Inline Block" },
-  { value: "inline", label: "Inline" },
-];
-
-// Direction icons reduced to row + column + wrap, with reverse in dropdown
-export const DIRECTION_ICONS_SHORT = [
-  { value: "row", title: "Row", icon: <ArrowRight size={14} strokeWidth={1.8} /> },
-  { value: "column", title: "Column", icon: <ArrowDown size={14} strokeWidth={1.8} /> },
-  { value: "__wrap__", title: "Wrap", icon: <WrapText size={14} strokeWidth={1.8} /> },
-];
-
-export const DIRECTION_MORE_OPTIONS = [
-  { value: "row-reverse", label: "Row Reverse" },
-  { value: "column-reverse", label: "Column Reverse" },
-];
-
-// X/Y alignment dropdowns for the Align row
-export const JUSTIFY_OPTIONS = [
-  { value: "flex-start", label: "Start" },
-  { value: "center", label: "Center" },
-  { value: "flex-end", label: "End" },
-  { value: "space-between", label: "Between" },
-  { value: "space-around", label: "Around" },
-  { value: "space-evenly", label: "Evenly" },
-];
-
-export const ALIGN_ITEMS_OPTIONS = [
-  { value: "flex-start", label: "Top" },
-  { value: "center", label: "Center" },
-  { value: "flex-end", label: "Bottom" },
-  { value: "stretch", label: "Stretch" },
-  { value: "baseline", label: "Baseline" },
-];
+import {
+  DISPLAY_TABS, DISPLAY_MORE,
+  DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
+} from "./panelConstants";
 
 // ─── MiniDropdown ───────────────────────────────────────────────────
 
@@ -392,6 +356,103 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── TypoValueCell ──────────────────────────────────────────────────
+
+/** Compact bordered input cell for typography properties (Size, Height, etc.) */
+export function TypoValueCell({
+  value,
+  onChange,
+  unit,
+  onUnitChange,
+  units,
+  step = 1,
+  keyword,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  unit: string;
+  onUnitChange?: (u: string) => void;
+  units?: string[];
+  step?: number;
+  keyword?: string | null;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    if (!editing) setDraft(String(Math.round(value * 100) / 100));
+  }, [value, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const n = parseFloat(draft);
+    if (!isNaN(n) && n !== value) onChange(n);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commit();
+    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
+    else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
+      onChange(Math.round((value + s) * 100) / 100);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
+      onChange(Math.round((value - s) * 100) / 100);
+    }
+  };
+
+  const isKeyword = keyword != null;
+
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        height: "28px",
+        background: "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "4px",
+        overflow: "hidden",
+        minWidth: 0,
+      }}
+    >
+      {isKeyword ? (
+        <span style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", padding: "0 6px", cursor: "default" }}>
+          {keyword}
+        </span>
+      ) : editing ? (
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          style={{ flex: 1, width: 0, background: "transparent", border: "none", color: "rgba(255,255,255,0.9)", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none" }}
+        />
+      ) : (
+        <span
+          tabIndex={0}
+          onClick={() => setEditing(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
+          style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.8)", padding: "0 6px", cursor: "text", outline: "none" }}
+        >
+          {value}
+        </span>
+      )}
+      {units && onUnitChange ? (
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+      ) : (
+        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", padding: "0 6px 0 0", flexShrink: 0, fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
+          {unit}
+        </span>
+      )}
     </div>
   );
 }
