@@ -117,12 +117,12 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
 
             {/* Padding bottom */}
             <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
-              <EditableValue value={padding.bottom} onChange={(v) => onChange("padding-bottom", v)} />
+              <EditableValue value={padding.bottom} onChange={(v) => onChange("padding-bottom", v)} onAltClick={() => { onChange("padding-top", padding.bottom); onChange("padding-bottom", padding.bottom); }} />
             </div>
           </div>
 
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={margin.right} onChange={(v) => onChange("margin-right", v)} />
+            <EditableValue value={margin.right} onChange={(v) => onChange("margin-right", v)} onAltClick={() => { onChange("margin-left", margin.right); onChange("margin-right", margin.right); }} />
           </div>
         </div>
 
