@@ -244,7 +244,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
                 "rgba(255,255,255,0.4)";
             }}
           >
-            ×
+            <X size={14} strokeWidth={2} />
           </button>
         </div>
       )}

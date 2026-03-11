@@ -1455,7 +1455,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                   <div style={{ flex: 1 }}>
                     <SliderRow label="Row Gap" value={rowGap} min={0} max={200} step={1} unit="px" onChange={handleRowGapChange} indicator={ind("row-gap")} />
                   </div>
-                  <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
+                  <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
                 </div>
                 <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} indicator={ind("column-gap")} />
               </>
@@ -1613,7 +1613,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
               <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over X</span>
               <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
-              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
+              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
               <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over Y</span>
