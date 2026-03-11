@@ -97,11 +97,7 @@ export function SpacingBoxModel({ margin, padding, onChange, marginUnit, padding
 
   // --- Scrub start/end (undo batching + shift capture) ---
   const handleScrubStart = useCallback(() => {
-    // Capture shift state from the most recent pointer event
-    // LabelScrub fires onScrubStart when dead zone is exceeded
-    // The pointerdown event's shiftKey is not directly accessible here,
-    // so we read from the document's current keyboard state via a trick:
-    // we'll use a pointerdown wrapper instead — see the onPointerDown handler below
+    // Begin undo batch for multi-property scrub
     scrubActiveRef.current = true;
     beginBatch();
   }, []);

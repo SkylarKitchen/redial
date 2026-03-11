@@ -540,5 +540,4 @@ export const EditableValue = memo(
       </span>
     );
   },
-  (prev, next) => prev.value === next.value
 );
