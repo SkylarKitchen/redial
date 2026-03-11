@@ -616,6 +616,55 @@ export function Overlay() {
           Click an element to inspect • Esc to cancel
         </div>
       )}
+
+      {/* Floating action button — bottom-right activation trigger */}
+      <div
+        className="__tuner-root"
+        onClick={() => {
+          if (selectedEl) {
+            // If panel is open, close it
+            handleClose();
+          } else {
+            // Toggle selection mode
+            setSelecting((s) => !s);
+          }
+        }}
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 2147483647,
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#1e1e1e",
+          border: "1px solid rgba(255,255,255,0.12)",
+          boxShadow: selecting || selectedEl
+            ? "0 0 0 1px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.5)"
+            : "0 4px 20px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: "box-shadow 200ms ease, border-color 200ms ease",
+          ...(selecting || selectedEl ? { borderColor: "rgba(99,102,241,0.4)" } : {}),
+        }}
+        title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          style={{
+            transition: "transform 200ms ease",
+            transform: selecting || selectedEl ? "rotate(45deg)" : "rotate(0deg)",
+          }}
+        >
+          <line x1="10" y1="4" x2="10" y2="16" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="4" y1="10" x2="16" y2="10" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </div>
     </>
   );
 }

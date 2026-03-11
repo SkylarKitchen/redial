@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
+import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 
 // ─── Section ────────────────────────────────────────────────────────
 
@@ -116,6 +117,7 @@ export function SliderRow({
   units,
   onUnitChange,
   onChange,
+  indicator,
 }: {
   label: string;
   value: number;
@@ -127,6 +129,7 @@ export function SliderRow({
   units?: string[];
   onUnitChange?: (unit: string) => void;
   onChange: (value: number) => void;
+  indicator?: IndicatorType;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
@@ -138,9 +141,12 @@ export function SliderRow({
             fontSize: "11px",
             color: "rgba(255,255,255,0.5)",
             flexShrink: 0,
-            display: "inline-block",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
+          {indicator && <StyleIndicator type={indicator} />}
           {label}
         </span>
       </LabelScrub>
@@ -179,11 +185,13 @@ export function SelectRow({
   value,
   options,
   onChange,
+  indicator,
 }: {
   label: string;
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
+  indicator?: IndicatorType;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -208,8 +216,12 @@ export function SelectRow({
           fontSize: "11px",
           color: "rgba(255,255,255,0.5)",
           flexShrink: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
         }}
       >
+        {indicator && <StyleIndicator type={indicator} />}
         {label}
       </span>
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
@@ -306,10 +318,12 @@ export function ColorRow({
   label,
   value,
   onChange,
+  indicator,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  indicator?: IndicatorType;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
@@ -319,8 +333,12 @@ export function ColorRow({
           fontSize: "11px",
           color: "rgba(255,255,255,0.5)",
           flexShrink: 0,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
         }}
       >
+        {indicator && <StyleIndicator type={indicator} />}
         {label}
       </span>
       <div style={{ position: "relative", width: "24px", height: "24px", flexShrink: 0 }}>
