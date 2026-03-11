@@ -4,23 +4,19 @@
  * Manages the full lifecycle:
  * 1. Hotkey toggles selection mode
  * 2. Selector captures an element
- * 3. infer() generates a DialConfig
- * 4. Panel uses useDialKit() + DialRoot for controls
- * 5. Header/Footer provide chrome
+ * 3. WebflowPanel renders CSS property sections
+ * 4. Header/Footer provide chrome
  *
  * The overlay is a fixed-position container at max z-index.
- * DialKit styles.css is imported for control rendering.
  */
 
-import 'dialkit/styles.css';
 import { useState, useCallback, useEffect, useRef, Component, type ReactNode, type ErrorInfo } from "react";
 import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
-import { Panel } from "./Panel";
+import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
-import { infer, type InferResult, SPACING_PROPS } from "./infer";
-import { SpacingBoxModel } from "./SpacingBoxModel";
+import { infer, type InferResult } from "./infer";
 import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle } from "./apply";
 import { buildBreadcrumb } from "./util";
 import { ViewportBar } from "./ViewportBar";
@@ -232,14 +228,6 @@ export function Overlay() {
     }
   }, [selectedEl]);
 
-  // --- Structural change: re-infer when display/position changes ---
-  const handleStructuralChange = useCallback(() => {
-    if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-    }
-  }, [selectedEl]);
-
   const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
     setScope(newScope);
     setActiveClassName(newScope === "class" ? (cls ?? null) : null);
@@ -413,19 +401,6 @@ export function Overlay() {
     return () => { document.getElementById(STYLE_ID)?.remove(); };
   }, []);
 
-  // --- Fix DialKit dropdown z-index (portals to body, needs to sit above overlay) ---
-  useEffect(() => {
-    const STYLE_ID = "__tuner-dialkit-dropdown-fix";
-    if (document.getElementById(STYLE_ID)) return;
-
-    const style = document.createElement("style");
-    style.id = STYLE_ID;
-    style.textContent = `.dialkit-preset-dropdown { z-index: 2147483647 !important; }`;
-    document.head.appendChild(style);
-
-    return () => { document.getElementById(STYLE_ID)?.remove(); };
-  }, []);
-
   // --- HMR auto-reset (Turbopack + Vite + webpack) ---
   useEffect(() => {
     const cleanup = onHmrUpdate(() => {
@@ -514,23 +489,12 @@ export function Overlay() {
             }}
           >
             <PanelErrorBoundary onError={handleClose}>
-              <Panel
+              <WebflowPanel
                 key={panelKey}
-                config={inferResult.config}
-                name={inferResult.name}
-                varUnits={inferResult.varUnits}
                 element={selectedEl}
+                spacing={inferResult.spacing}
+                onSpacingChange={handleSpacingChange}
                 onDirtyChange={handleDirtyChange}
-                onStructuralChange={handleStructuralChange}
-                scope={scope}
-                activeClassName={activeClassName}
-                spacingSlot={
-                  <SpacingBoxModel
-                    margin={inferResult.spacing.margin}
-                    padding={inferResult.spacing.padding}
-                    onChange={handleSpacingChange}
-                  />
-                }
               />
             </PanelErrorBoundary>
           </div>
