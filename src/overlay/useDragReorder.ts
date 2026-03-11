@@ -12,7 +12,8 @@
  * - Drop indicator: 2px indigo line between items
  */
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
+import { timing, ms } from "./timing";
 
 interface DragState {
   dragIndex: number;
@@ -37,12 +38,18 @@ export function useDragReorder<T>(
   isDragging: boolean;
 } {
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [settling, setSettling] = useState(false);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const stateRef = useRef<DragState | null>(null);
   const refsMap = useRef<Map<number, HTMLElement>>(new Map());
   const itemsRef = useRef(items);
   itemsRef.current = items;
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+
+  useEffect(() => {
+    return () => { clearTimeout(settleTimerRef.current); };
+  }, []);
 
   const registerRef = useCallback(
     (index: number) => (el: HTMLElement | null) => {
@@ -61,6 +68,11 @@ export function useDragReorder<T>(
         if (e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
+
+        if (settling) {
+          clearTimeout(settleTimerRef.current);
+          setSettling(false);
+        }
 
         const handle = e.currentTarget as HTMLElement;
         handle.setPointerCapture(e.pointerId);
@@ -137,13 +149,24 @@ export function useDragReorder<T>(
             document.body.style.userSelect = prevSelect;
             document.body.style.cursor = prevCursor;
 
-            // Perform the reorder
             const final = stateRef.current;
             if (final && final.dragIndex !== final.overIndex) {
+              // Reorder array immediately
               const next = [...itemsRef.current];
               const [moved] = next.splice(final.dragIndex, 1);
               next.splice(final.overIndex, 0, moved);
               onChangeRef.current(next);
+
+              // Use rAF to start settling AFTER React commits the reorder
+              stateRef.current = null;
+              setDragState(null);
+              requestAnimationFrame(() => {
+                setSettling(true);
+                settleTimerRef.current = setTimeout(() => {
+                  setSettling(false);
+                }, timing.layout);
+              });
+              return;
             }
           }
 
@@ -169,11 +192,19 @@ export function useDragReorder<T>(
         },
       };
     },
-    [dragState],
+    [dragState, settling],
   );
 
   const itemStyle = useCallback(
     (index: number): React.CSSProperties => {
+      if (settling) {
+        return {
+          position: "relative",
+          transition: `transform ${ms("layout")} cubic-bezier(0.34, 1.56, 0.64, 1)`,
+          transform: "translateY(0)",
+        };
+      }
+
       if (!dragState) return { position: "relative" };
 
       const { dragIndex, overIndex, offsetY, heights } = dragState;

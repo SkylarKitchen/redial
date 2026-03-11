@@ -2,22 +2,50 @@
 title: "Panel Polish: Tier 2-3 (Timing, Thumbs, Keyboard, ARIA, Toast, DnD, Swatches)"
 type: feat
 date: 2026-03-11
+deepened: 2026-03-11
 ---
 
 # Panel Polish: Tier 2-3
 
-Seven cross-cutting polish features to bring the panel from functional to production-grade. Ordered by dependency chain — timing tokens first (enables clean implementation of everything else), visual polish next, then interaction and accessibility.
+## Enhancement Summary
+
+**Deepened on:** 2026-03-11
+**Sections enhanced:** 6 phases + new race-condition section
+**Research agents used:** simplicity-reviewer, architecture-strategist, performance-oracle, frontend-races-reviewer, best-practices-researcher, framework-docs-researcher, pattern-recognition-specialist, code-simplicity-reviewer
+
+### Key Improvements
+1. ~40% of originally planned work already exists on this branch — plan trimmed to delta-only
+2. Identified 6 race conditions (4 in planned features, 2 in existing code) with mitigations
+3. Motion's `spring()` generates CSS `linear()` easing — better than hand-tuned cubic-bezier for DnD settle
+4. WAI-ARIA APG patterns verified: activedescendant for combobox, roving tabindex for radiogroup/tablist
+
+### Status of Existing Code
+| Feature | Status | Remaining Work |
+|---------|--------|----------------|
+| Toast animation | **Done** (Footer.tsx) | Fix same-text key race, add timing tokens, minHeight |
+| SelectRow KB nav | **Done** (useDropdownKeyboard) | Add type-ahead, scrollIntoView, aria-activedescendant |
+| SelectRow ARIA | **Done** (controls.tsx) | Add aria-activedescendant + aria-controls |
+| UnitSelector ARIA | **Done** (UnitSelector.tsx) | Add aria-activedescendant + aria-controls |
+| IconButtonGroup ARIA | **Partial** | Fix: hardcodes radiogroup in multi-select (should be toolbar) |
+| DisplayTabs ARIA | **Wrong pattern** | Fix: uses radiogroup (should be tablist/tab/aria-selected) |
+| Slider thumb CSS | **Partial** (Overlay.tsx:728-752) | Enhance: 10→12px, add active state, scale, glow ring |
+| Timing tokens | Not started | Full implementation needed |
+| DnD settle | Not started | Full implementation needed |
+| Swatches | Not started | Full implementation needed |
+
+---
 
 ## Implementation Order & Dependency Chain
 
 ```
-7. Timing tokens ──> 1. Slider thumb ──> 2. Toast animation
-                 ──> 4+6. SelectRow KB + ARIA (together)
-                 ──> 3. DnD improvements
-                 ──> 5. Color picker swatches
+1. Timing tokens ──> 2. Slider thumb (enhance existing)
+                 ──> 3. Toast fixes (enhance existing)
+                 ──> 4. ARIA fixes (delta on existing)
+                 ──> 5. DnD settle animation
+                 ──> 6. Color picker swatches
 ```
 
-Features 4 (SelectRow keyboard) and 6 (ARIA roles) are co-dependent — ARIA `listbox` roles require keyboard navigation to be meaningful. Implement together.
+Phases 2-4 are small deltas on existing code. Phases 5-6 are new features.
 
 ---
 
@@ -41,9 +69,13 @@ export const timing = {
 
 export type TimingKey = keyof typeof timing;
 
-/** Convert number to CSS duration string: ms(80) → "80ms" */
-export const ms = (n: number) => `${n}ms`;
+/** Convert timing token to CSS duration string */
+export const ms = (key: TimingKey) => `${timing[key]}ms`;
 ```
+
+### Research Insight: `ms()` Signature
+
+The `ms()` helper should accept `TimingKey` (not raw `number`) to enforce that only sanctioned values flow into CSS strings. This catches typos at compile time — `ms("fst")` errors, `ms(80)` silently passes. Any one-off value that doesn't fit a token is a signal to add a new token or question the design.
 
 ### Refactor Scope (47 occurrences across 15+ files)
 
@@ -64,190 +96,254 @@ export const ms = (n: number) => `${n}ms`;
 
 ### Acceptance Criteria
 
-- [ ] `timing.ts` exports the token object and `ms()` helper
+- [ ] `timing.ts` exports the token object, `TimingKey` type, and `ms()` helper
+- [ ] `ms()` accepts `TimingKey` only (not arbitrary numbers)
 - [ ] All 47 magic-number timing values replaced with token references
 - [ ] `npm run typecheck` passes
 - [ ] Zero behavior change — visual output identical before/after
 
 ---
 
-## Phase 2: Slider Thumb Styling
+## Phase 2: Slider Thumb Styling (Enhance Existing)
 
-**Files:** `src/overlay/Overlay.tsx` (global `<style>` injection), retire `SpacingValuePopover.tsx` scoped styles
+**Files:** `src/overlay/Overlay.tsx` (lines 728-770, existing global `<style>`)
 
-### Approach
+### Current State
 
-Add global CSS targeting `.__tuner-root input[type="range"]` in the existing `<style>` block in `Overlay.tsx` (line ~663, where scrollbar styles already live). This covers all 5 slider locations: SliderRow, GapRow, FilterSliders, TransitionEditor, SpacingValuePopover.
+Slider thumb styles already exist at Overlay.tsx:728-770 with:
+- 10px diameter, white/gray appearance
+- Hover: changes to `#6366f1`
+- No active state, no scale, no glow ring
+
+### Changes Needed
+
+Update existing thumb styles — do NOT create new rules, edit in place:
 
 ```css
+/* EXISTING at line 740 — UPDATE these values: */
 .__tuner-root input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  appearance: none;
-  width: 12px;
-  height: 12px;
+  width: 12px;          /* was 10px */
+  height: 12px;         /* was 10px */
   border-radius: 50%;
-  background: #6366f1;
-  border: 2px solid rgba(255,255,255,0.9);
-  box-shadow: 0 0 3px rgba(0,0,0,0.4);
+  background: #6366f1;  /* was rgba(255,255,255,0.7) — use accent as default */
+  border: 2px solid rgba(255,255,255,0.9);  /* was 1px solid rgba(255,255,255,0.3) */
+  box-shadow: 0 0 3px rgba(0,0,0,0.4);     /* NEW */
+  margin-top: -4.5px;   /* was -3.5px — recalculate: (12-3)/2 = 4.5 */
   cursor: pointer;
-  transition: transform <timing.fast>ms, box-shadow <timing.fast>ms;
+  transition: transform ${ms("fast")}, box-shadow ${ms("fast")};  /* was background 80ms */
 }
 
+/* EXISTING at line 750 — ADD scale + glow: */
 .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.15);
   box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+  background: #6366f1;  /* keep */
 }
 
+/* NEW — add active state: */
 .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
   transform: scale(1.1);
   background: #818cf8;
 }
 
-/* Firefox */
-.__tuner-root input[type="range"]::-moz-range-thumb {
-  /* Same styles, minus -webkit prefix */
-}
+/* Firefox — mirror the same changes for ::-moz-range-thumb */
 ```
 
-### Rules
-- Retire the scoped `<style>` in `SpacingValuePopover.tsx` — the global style covers it
-- 12px diameter matches the existing SpacingValuePopover thumb size
-- Active state: slightly brighter (`#818cf8`) and scaled down from hover
+### Research Insight: margin-top Calculation
+
+The `margin-top` value for `::-webkit-slider-thumb` must be `-(thumbHeight - trackHeight) / 2` to vertically center the thumb on the track. Track is 3px, thumb is 12px → `-(12-3)/2 = -4.5px`.
 
 ### Acceptance Criteria
 
-- [ ] All range inputs in the panel show styled thumbs
-- [ ] Hover: scale up + glow ring
-- [ ] Active/pressed: brighter color
-- [ ] Works in Chrome and Firefox
-- [ ] SpacingValuePopover scoped `<style>` removed
+- [ ] Thumb size increased to 12px with accent color default
+- [ ] Hover: scale(1.15) + glow ring
+- [ ] Active/pressed: #818cf8 + scale(1.1)
+- [ ] Firefox `::-moz-range-thumb` mirrors webkit styles
+- [ ] margin-top recalculated for 12px thumb
+- [ ] Uses timing tokens from Phase 1
 - [ ] `npm run typecheck` passes
 
 ---
 
-## Phase 3: Toast Feedback Animation
+## Phase 3: Toast Feedback Fixes (Delta on Existing)
 
 **Files:** `src/overlay/Footer.tsx`
 
-### Approach
+### Current State
 
-Use Motion (`AnimatePresence` + `motion.span`) since it's already a project dependency (used in `SessionDrawer.tsx`) and handles exit animations cleanly. CSS transitions can't animate `display: none` → visible.
+Toast animation already implemented (Footer.tsx:140-154):
+- `AnimatePresence` + `motion.span` with fade+slide
+- `role="status"` + `aria-live="polite"` ✓
+- BUT: `key={clipboardMessage || message}` — same-text produces no re-animation
+- BUT: uses `duration: 0.15` not timing tokens
+- BUT: no `minHeight` on container — Reset button jumps
 
-### Implementation
+### Changes Needed (3 small fixes)
+
+**Fix 1: Monotonic counter key** — When rapid copy clicks produce identical text (e.g., "Copied!" twice), the key doesn't change and there's no re-animation. Add a counter:
 
 ```tsx
-import { AnimatePresence, motion } from "motion/react";
+const messageCounterRef = useRef(0);
+// In showMessage or wherever message state is set:
+messageCounterRef.current += 1;
 
-// In the message area (currently line 139):
-<AnimatePresence mode="wait">
-  {(clipboardMessage || message) && (
-    <motion.span
-      key={clipboardMessage || message}  // triggers exit/enter on text change
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: timing.normal / 1000 }}  // 100ms
-      style={{ color: "rgba(255,255,255,0.4)", fontSize: "11px" }}
-    >
-      {clipboardMessage || message}
-    </motion.span>
-  )}
-</AnimatePresence>
+// In JSX:
+<motion.span
+  key={`${clipboardMessage || message}-${messageCounterRef.current}`}
+  // ... rest unchanged
 ```
 
-### Decisions
-- `mode="wait"` — old message exits before new enters (no overlap)
-- Slide direction: up 4px on enter, up 4px on exit (feels like rising toast)
-- `clipboardMessage` also animates (it appears/disappears when clipboard state changes)
-- Layout stability: add `minHeight: "20px"` to the message container so Reset button doesn't jump
-- Rapid clicks: `key` change triggers exit→enter cycle; if same text, no re-animation
+**Fix 2: Timing tokens** — Replace `duration: 0.15` with `timing.normal / 1000`:
 
-### Accessibility
-- Add `role="status"` and `aria-live="polite"` to the message container so screen readers announce messages
+```tsx
+transition={{ duration: timing.normal / 1000 }}  // 100ms → 0.1
+```
+
+**Fix 3: Container minHeight** — Add to the message container div:
+
+```tsx
+<div role="status" aria-live="polite" style={{ minHeight: "20px" }}>
+```
+
+### Research Insight: AnimatePresence mode
+
+The current code uses default `mode="sync"` (not `mode="wait"`). This is correct — Motion v12 has documented race condition bugs with `mode="wait"` where rapid state changes can leave components stuck in exit state. Keep `mode="sync"`.
 
 ### Acceptance Criteria
 
-- [ ] Messages fade-slide in when appearing
-- [ ] Messages fade-slide out when disappearing
-- [ ] Rapid copy clicks produce smooth transitions (no flicker)
-- [ ] Reset button position is stable
-- [ ] `role="status"` and `aria-live="polite"` on message container
-- [ ] Uses timing tokens
+- [ ] Same-text rapid clicks produce re-animation (counter key fix)
+- [ ] Uses timing tokens (`timing.normal`)
+- [ ] Reset button doesn't jump (minHeight)
 - [ ] `npm run typecheck` passes
 
 ---
 
-## Phase 4: SelectRow Keyboard Navigation + ARIA Roles
+## Phase 4: ARIA Fixes (Delta on Existing)
 
-**Files:** `controls.tsx` (SelectRow), `UnitSelector.tsx`, `IconButtonGroup.tsx`, `layoutControls.tsx` (DisplayTabs)
+**Files:** `controls.tsx`, `UnitSelector.tsx`, `IconButtonGroup.tsx`, `layoutControls.tsx`, `useDropdownKeyboard.ts`
 
-These two features are implemented together because ARIA `listbox` roles require keyboard navigation to be meaningful.
+Most ARIA work is already done. This phase addresses the remaining gaps.
 
-### 4A: SelectRow Keyboard + ARIA
+### 4A: SelectRow + UnitSelector — Add Missing ARIA Attributes
 
-**ARIA pattern:** `combobox` trigger button + `listbox` popup
+Both components already have `role="combobox"`, `aria-expanded`, `aria-haspopup="listbox"`, `role="listbox"`, `role="option"`, `aria-selected`, and `useDropdownKeyboard` wired in.
+
+**Missing attributes to add:**
 
 ```tsx
-// Button additions:
-role="combobox"
-aria-expanded={open}
-aria-haspopup="listbox"
-aria-activedescendant={open ? `${id}-opt-${highlightedIndex}` : undefined}
+// On the combobox trigger button — add these two:
+aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
+aria-controls={`${id}-listbox`}
 
-// Dropdown container:
-role="listbox"
+// On the listbox container — add id:
+id={`${id}-listbox`}
 
-// Each option:
-role="option"
+// Each option needs an id matching activedescendant:
 id={`${id}-opt-${index}`}
-aria-selected={opt.value === value}
 ```
 
-**Keyboard behavior:**
-| Key | Action |
-|-----|--------|
-| `Enter` / `Space` | Open dropdown (if closed); select highlighted option (if open) |
-| `ArrowDown` | Open dropdown + highlight next option (wraps) |
-| `ArrowUp` | Open dropdown + highlight prev option (wraps) |
-| `Escape` | Close dropdown, restore focus to button |
-| `Tab` | Close dropdown, move focus to next control |
-| `Home` | Jump to first option |
-| `End` | Jump to last option |
-| Type characters | Type-ahead: 500ms buffer, prefix-match against option labels |
+Generate IDs with `useId()` (React 19 — already in use in this project).
 
-**New state:** `highlightedIndex: number` (default: index of current value when opening)
+### 4B: useDropdownKeyboard — Add Type-ahead + ScrollIntoView
 
-**Scroll into view:** Call `el.scrollIntoView({ block: "nearest" })` when highlighted index changes and dropdown has `maxHeight: 180px`.
+**Type-ahead** (opt-in via `labels` prop):
 
-**Generate IDs:** Use `React.useId()` for unique prefix per SelectRow instance.
+```typescript
+interface UseDropdownKeyboardOptions {
+  // ... existing props
+  labels?: string[];  // opt-in: option labels for type-ahead matching
+}
 
-### 4B: UnitSelector ARIA
+// Inside the hook:
+const typeBuffer = useRef("");
+const typeTimer = useRef<ReturnType<typeof setTimeout>>();
 
-Same `listbox` pattern as SelectRow, with keyboard navigation.
+// In onListKeyDown, add default case:
+default:
+  if (labels && e.key.length === 1) {
+    typeBuffer.current += e.key.toLowerCase();
+    clearTimeout(typeTimer.current);
+    typeTimer.current = setTimeout(() => { typeBuffer.current = ""; }, 500);
+    const match = labels.findIndex(l => l.toLowerCase().startsWith(typeBuffer.current));
+    if (match >= 0) setHighlightedIndex(match);
+  }
+```
 
-### 4C: IconButtonGroup ARIA
+**ScrollIntoView** — return a ref callback from the hook:
 
-**Single-select mode:** `role="radiogroup"` on container, `role="radio"` + `aria-checked` on each button.
+```typescript
+// In the hook return:
+const optionRefCallback = useCallback((el: HTMLElement | null) => {
+  el?.scrollIntoView({ block: "nearest" });
+}, []);
 
-**Multi-select mode:** `role="toolbar"` on container, `aria-pressed` on each button.
+// Usage in component — attach to the highlighted option:
+ref={index === highlightedIndex ? optionRefCallback : undefined}
+```
 
-Add `aria-label` prop to the component (passed by parent to describe the group, e.g., "Text alignment").
+**Fix stale closure bug** — The current Enter handler reads `highlightedIndex` directly from the closure, but `setHighlightedIndex` is async. Use a ref:
 
-### 4D: DisplayTabs ARIA
+```typescript
+const highlightedRef = useRef(highlightedIndex);
+highlightedRef.current = highlightedIndex;
 
-`role="tablist"` on container, `role="tab"` + `aria-selected` on each tab button.
+// In Enter handler:
+case "Enter":
+  e.preventDefault();
+  if (highlightedRef.current >= 0 && highlightedRef.current < optionCount) {
+    onSelect(highlightedRef.current);
+  }
+  break;
+```
 
-Arrow key navigation between tabs (left/right).
+### 4C: IconButtonGroup — Fix Multi-select Mode
+
+Currently hardcodes `role="radiogroup"` even in multi-select mode.
+
+```tsx
+// Container:
+role={multiSelect ? "toolbar" : "radiogroup"}
+
+// Each button:
+role={multiSelect ? undefined : "radio"}
+aria-checked={multiSelect ? undefined : isSelected}
+aria-pressed={multiSelect ? isSelected : undefined}
+```
+
+### 4D: DisplayTabs — Fix to Tablist Pattern
+
+Currently uses `role="radiogroup"` + `role="radio"` + `aria-checked`. Should be:
+
+```tsx
+// Container:
+role="tablist"
+
+// Each tab:
+role="tab"
+aria-selected={isActive}
+tabIndex={isActive ? 0 : -1}
+```
+
+Arrow key nav is already implemented (left/right). Change `aria-checked` → `aria-selected`.
+
+### Research Insight: activedescendant vs Roving Tabindex
+
+WAI-ARIA APG specifies two keyboard patterns:
+- **`aria-activedescendant`**: Required for combobox pattern (SelectRow, UnitSelector). Focus stays on the trigger; highlighted option is indicated via `aria-activedescendant`.
+- **Roving tabindex**: Required for radiogroup, toolbar, tablist (IconButtonGroup, DisplayTabs). Move `tabIndex={0}` to the focused item, all others get `tabIndex={-1}`.
+
+The existing code correctly uses arrow keys for both patterns. We just need to add `aria-activedescendant` to comboboxes and fix `tabIndex` for radiogroup/tablist.
 
 ### Acceptance Criteria
 
-- [ ] SelectRow: full keyboard navigation (arrows, enter, escape, type-ahead, home/end)
-- [ ] SelectRow: ARIA combobox + listbox pattern with activedescendant
-- [ ] UnitSelector: keyboard navigation + listbox ARIA
-- [ ] IconButtonGroup: radiogroup/toolbar roles + aria-checked/aria-pressed
-- [ ] DisplayTabs: tablist/tab roles + aria-selected + arrow key nav
-- [ ] All dropdowns: scroll-into-view on keyboard highlight
-- [ ] Unique IDs via `useId()`
+- [ ] SelectRow + UnitSelector: `aria-activedescendant` + `aria-controls` attributes
+- [ ] useDropdownKeyboard: type-ahead with 500ms buffer (opt-in via `labels`)
+- [ ] useDropdownKeyboard: scrollIntoView ref callback on highlighted option
+- [ ] useDropdownKeyboard: stale closure fix for Enter handler
+- [ ] IconButtonGroup: `toolbar` + `aria-pressed` in multi-select mode
+- [ ] DisplayTabs: `tablist` + `tab` + `aria-selected` (replace radiogroup)
+- [ ] IDs generated via `useId()`
 - [ ] `npm run typecheck` passes
 
 ---
@@ -256,41 +352,73 @@ Arrow key navigation between tabs (left/right).
 
 **Files:** `src/overlay/useDragReorder.ts`
 
-### Approach: CSS-based settle animation
+### Approach: CSS-based Settle Animation
 
-Add a `settling` phase to the hook's state machine: `idle → pending → dragging → settling → idle`
+Add a `settling` phase to the hook's state machine:
 
+```typescript
+type DragPhase =
+  | { type: "idle" }
+  | { type: "pending"; pointerId: number; startY: number }
+  | { type: "dragging"; pointerId: number; startY: number; currentY: number; dragIndex: number }
+  | { type: "settling" };
+```
+
+State flow:
 ```
 pointerdown → 3px dead zone → dragging → pointerup → settling (200ms) → idle
 ```
 
-During `settling`:
-- Reorder callback fires immediately (items move to final order)
-- CSS `transition: transform <timing.layout>ms cubic-bezier(0.34, 1.56, 0.64, 1)` on all items
-- The dragged item animates from its drag offset to `translateY(0)`
-- Displaced items animate back to `translateY(0)`
-- After 200ms timeout, clear the settling state
+### Settle Phase Implementation
 
-### Spring-like easing
+```typescript
+// On pointerup in dragging state:
+1. Call onReorder() immediately — items move to final array order
+2. Use requestAnimationFrame to set phase to "settling" AFTER React commits the reorder
+3. During settling: CSS transition on all items: transform ${ms("layout")} <spring-easing>
+4. The dragged item animates from its drag offset to translateY(0)
+5. Displaced items animate back to translateY(0)
+6. After timing.layout ms, clear to idle
 
-Use `cubic-bezier(0.34, 1.56, 0.64, 1)` — a CSS approximation of a spring with slight overshoot. This avoids pulling in Motion's imperative `animate()` and keeps the hook vanilla React.
+// Cancellable timeout:
+const settleTimer = useRef<ReturnType<typeof setTimeout>>();
+// On new pointerdown during settle: clearTimeout, skip to idle immediately
+```
 
-### Visual preview (already sufficient)
+### Research Insight: requestAnimationFrame for Settle
 
-The current dragged-item style (zIndex 50, boxShadow, opacity 0.95) is already a good preview. No ghost/clone needed.
+The `requestAnimationFrame` call between reorder and settle is critical. Without it, React batches the array reorder and the settling state change into one render — items jump to new positions with the transition already applied, causing them to animate FROM the correct position. The rAF separates them into two frames:
+1. Frame 1: Items move to new array order (no transition yet)
+2. Frame 2: Settle state applies transition + translateY(0) → items animate into place
 
-### DragHandle visibility fix
+### Spring Easing
 
-Verify that `DragHandle.tsx` opacity behavior works with inline styles. Currently relies on parent hover — ensure the parent row sets `onMouseEnter`/`onMouseLeave` to toggle handle visibility.
+Use Motion's `spring()` function to generate a CSS `linear()` easing curve. Motion v12 converts spring physics into a CSS `linear()` approximation that runs on the GPU:
+
+```typescript
+import { spring } from "motion";
+
+// In the settle phase CSS transition:
+transition: `transform ${ms("layout")} ${spring({ stiffness: 400, damping: 25 })}`
+```
+
+If `spring()` doesn't export a CSS string directly, fall back to `cubic-bezier(0.34, 1.56, 0.64, 1)` — a good CSS spring approximation with slight overshoot.
+
+### Race Condition: New Drag During Settle
+
+If the user starts a new drag while items are settling:
+1. `clearTimeout(settleTimer.current)`
+2. Immediately set phase to `idle`, then process the new `pointerdown` as normal
+3. Items snap to their settled positions (transition removed when phase exits settling)
 
 ### Acceptance Criteria
 
 - [ ] Drop animation: items spring-settle into place over 200ms
-- [ ] Spring easing: slight overshoot via cubic-bezier
-- [ ] No snap-to-position on drop
-- [ ] Cancel (drop in same position): no settle animation needed
+- [ ] Discriminated union for DragPhase type
+- [ ] requestAnimationFrame separates reorder from settle
+- [ ] New drag during settle: cancels settle cleanly
+- [ ] Cancel (drop in same position): no settle animation
 - [ ] Works for both ShadowEditor and TransformEditor
-- [ ] DragHandle visible on row hover
 - [ ] Uses timing tokens
 - [ ] `npm run typecheck` passes
 
@@ -300,23 +428,64 @@ Verify that `DragHandle.tsx` opacity behavior works with inline styles. Currentl
 
 **Files:** New `src/overlay/useSwatches.ts`, modify `src/overlay/ColorPickerEnhanced.tsx`
 
-### Storage: Module-level store + localStorage
+### Storage: Module-level Store + localStorage
 
 ```typescript
 // src/overlay/useSwatches.ts
+type HexColor = `#${string}`;
+
 interface Swatch {
-  hex: string;
+  hex: HexColor;
   opacity: number;
 }
 
 const STORAGE_KEY = "__tuner_swatches";
 const MAX_SWATCHES = 24;  // 3 rows of 8
 
-// Module-level store with useSyncExternalStore
-// Persists to localStorage with global key (not per-page)
+// Module-level source of truth — read localStorage ONCE at module load
+let swatches: Swatch[] = readFromStorage();
+const listeners = new Set<() => void>();
+
+function readFromStorage(): Swatch[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function notify() {
+  // Cache snapshot to return STABLE reference from getSnapshot
+  cachedSnapshot = [...swatches];
+  listeners.forEach(fn => fn());
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(swatches));
+}
+
+let cachedSnapshot = [...swatches];
+
+// useSyncExternalStore integration
+function subscribe(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+function getSnapshot() { return cachedSnapshot; }
+function getServerSnapshot() { return [] as Swatch[]; }  // SSR safety
+
+// Hook
+export function useSwatches() {
+  const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return { swatches: list, addSwatch, removeSwatch };
+}
 ```
 
-This approach avoids a React context provider (which would need to wrap the entire Overlay) and works across all ColorPickerEnhanced instances (ColorRow, ShadowEditor, BackgroundLayerList).
+### Research Insight: Stable getSnapshot Reference
+
+`useSyncExternalStore` compares snapshot references with `Object.is()`. If `getSnapshot` returns a new array every call, React re-renders every subscribed component on every store notification — even if the data hasn't changed. The `cachedSnapshot` pattern ensures the same reference is returned until `notify()` creates a new one.
+
+### Research Insight: HexColor Branded Type
+
+Using `type HexColor = \`#${string}\`` gives compile-time validation that hex strings always include the `#` prefix. This prevents bugs where `"ff0000"` and `"#ff0000"` are mixed.
 
 ### UI Layout
 
@@ -337,8 +506,9 @@ This approach avoids a React context provider (which would need to wrap the enti
 - Max 24 swatches; adding beyond max replaces oldest
 - Starts empty (no preset colors)
 - Duplicate prevention: skip if hex+opacity match exactly
+- Module-level variable is the source of truth; localStorage is persistence layer
 
-### ARIA for swatches
+### ARIA for Swatches
 - Grid: `role="grid"` with `aria-label="Saved color swatches"`
 - Each swatch: `role="gridcell"` with `aria-label` describing the color (e.g., "#FF0000 at 100%")
 
@@ -349,11 +519,29 @@ This approach avoids a React context provider (which would need to wrap the enti
 - [ ] "+" button adds current color
 - [ ] Hover shows X delete button
 - [ ] Persists to localStorage across page reloads
-- [ ] Shared across all picker instances
+- [ ] Shared across all picker instances (verified by opening two color pickers)
 - [ ] Max 24 swatches with oldest-replacement
 - [ ] Duplicate prevention
+- [ ] `getSnapshot` returns stable reference
+- [ ] `getServerSnapshot` returns empty array for SSR
+- [ ] `HexColor` branded type used
 - [ ] ARIA roles on grid
 - [ ] `npm run typecheck` passes
+
+---
+
+## Race Condition Mitigations
+
+Identified by the frontend-races-reviewer. Each must be addressed in its respective phase.
+
+| # | Location | Bug | Fix |
+|---|----------|-----|-----|
+| 1 | Footer.tsx toast | Same-text rapid clicks → no re-animation | Monotonic counter ref as part of motion key (Phase 3) |
+| 2 | useDragReorder.ts | New drag during settle reads mid-transition rects | Cancellable settle timeout; snap to idle on new pointerdown (Phase 5) |
+| 3 | useDropdownKeyboard.ts | Enter handler reads stale `highlightedIndex` from closure | Sync to ref: `highlightedRef.current = highlightedIndex` (Phase 4) |
+| 4 | useDropdownKeyboard.ts | Type-ahead timer leaks on unmount | `useEffect` cleanup: `return () => clearTimeout(typeTimer.current)` (Phase 4) |
+| 5 | useSwatches.ts | Torn read if localStorage written from another tab | `window.addEventListener("storage", ...)` to sync cross-tab (Phase 6, stretch) |
+| 6 | Footer.tsx save | Double-click Save fires two concurrent requests | Already guarded by `saving` state — verify ref-based guard (Phase 3, verify only) |
 
 ---
 
@@ -363,6 +551,7 @@ This approach avoids a React context provider (which would need to wrap the enti
 - Timing token refactor is zero-runtime-cost (same values, just imported from a module)
 - Swatch `useSyncExternalStore` triggers re-renders only in mounted ColorPickerEnhanced instances
 - DnD settle phase uses CSS transitions (GPU-accelerated), not JS animation loops
+- `getSnapshot` returns cached reference — prevents unnecessary React re-renders
 
 ### Bundle Impact
 - `timing.ts`: ~200 bytes (tree-shakeable)
@@ -371,21 +560,21 @@ This approach avoids a React context provider (which would need to wrap the enti
 
 ### Cross-browser
 - Slider thumb: `::-webkit-slider-thumb` (Chrome/Safari/Edge) + `::-moz-range-thumb` (Firefox)
-- `React.useId()` requires React 18+ (verify project version)
-- `useSyncExternalStore` requires React 18+ (same)
+- `React.useId()` available in React 19 (this project uses React 19)
+- `useSyncExternalStore` available in React 19
 
 ## References
 
 ### Internal
-- `src/overlay/controls.tsx:160-238` — SliderRow (thumb target)
-- `src/overlay/controls.tsx:242-376` — SelectRow (keyboard + ARIA target)
-- `src/overlay/Footer.tsx:34-38` — showMessage (toast target)
-- `src/overlay/useDragReorder.ts:128-152` — drop logic (DnD target)
-- `src/overlay/ColorPickerEnhanced.tsx:78-83` — picker interface (swatch target)
-- `src/overlay/IconButtonGroup.tsx:17-89` — no ARIA (ARIA target)
-- `src/overlay/layoutControls.tsx:235-341` — DisplayTabs (ARIA target)
-- `src/overlay/Overlay.tsx:663-703` — global `<style>` injection (thumb CSS target)
-- `src/overlay/SpacingValuePopover.tsx:176-198` — existing thumb pattern to retire
+- `src/overlay/controls.tsx:242-376` — SelectRow (ARIA delta target)
+- `src/overlay/UnitSelector.tsx` — UnitSelector (ARIA delta target)
+- `src/overlay/useDropdownKeyboard.ts` — Shared keyboard hook (type-ahead + fix target)
+- `src/overlay/Footer.tsx:140-154` — Existing toast animation (fix target)
+- `src/overlay/useDragReorder.ts:128-152` — Drop logic (DnD settle target)
+- `src/overlay/ColorPickerEnhanced.tsx:78-83` — Picker interface (swatch target)
+- `src/overlay/IconButtonGroup.tsx:17-89` — Multi-mode ARIA fix target
+- `src/overlay/layoutControls.tsx:235-341` — DisplayTabs ARIA fix target
+- `src/overlay/Overlay.tsx:728-770` — Existing slider thumb styles (enhance target)
 
 ### Spec
 - `webflow-style-panel-spec.md` line 740 — Section 12: Input Controls & Units

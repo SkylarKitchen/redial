@@ -3,9 +3,10 @@
  *
  * Provides ArrowUp/Down, Home/End, Enter/Escape handling plus
  * a highlighted-index tracker for any listbox-style dropdown.
+ * Opt-in type-ahead via `labels` prop.
  */
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 
 export interface UseDropdownKeyboardOptions {
   open: boolean;
@@ -13,12 +14,16 @@ export interface UseDropdownKeyboardOptions {
   optionCount: number;
   selectedIndex: number;
   onSelect: (index: number) => void;
+  /** Opt-in type-ahead: pass option labels to enable single-key search */
+  labels?: string[];
 }
 
 export interface UseDropdownKeyboardResult {
   highlightedIndex: number;
   onTriggerKeyDown: (e: React.KeyboardEvent) => void;
   onListKeyDown: (e: React.KeyboardEvent) => void;
+  /** Attach to the highlighted option to auto-scroll it into view */
+  optionRefCallback: (el: HTMLElement | null) => void;
 }
 
 export function useDropdownKeyboard({
@@ -27,8 +32,22 @@ export function useDropdownKeyboard({
   optionCount,
   selectedIndex,
   onSelect,
+  labels,
 }: UseDropdownKeyboardOptions): UseDropdownKeyboardResult {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  // Ref that mirrors highlightedIndex to avoid stale closures in Enter handler
+  const highlightedRef = useRef(highlightedIndex);
+  highlightedRef.current = highlightedIndex;
+
+  // Type-ahead state
+  const typeBuffer = useRef("");
+  const typeTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  // Cleanup type-ahead timer on unmount
+  useEffect(() => {
+    return () => clearTimeout(typeTimer.current);
+  }, []);
 
   // Reset highlight when dropdown opens/closes
   useEffect(() => {
@@ -76,18 +95,30 @@ export function useDropdownKeyboard({
           break;
         case "Enter":
           e.preventDefault();
-          if (highlightedIndex >= 0 && highlightedIndex < optionCount) {
-            onSelect(highlightedIndex);
+          if (highlightedRef.current >= 0 && highlightedRef.current < optionCount) {
+            onSelect(highlightedRef.current);
           }
           break;
         case "Escape":
           e.preventDefault();
           setOpen(false);
           break;
+        default:
+          if (labels && e.key.length === 1) {
+            typeBuffer.current += e.key.toLowerCase();
+            clearTimeout(typeTimer.current);
+            typeTimer.current = setTimeout(() => { typeBuffer.current = ""; }, 500);
+            const match = labels.findIndex(l => l.toLowerCase().startsWith(typeBuffer.current));
+            if (match >= 0) setHighlightedIndex(match);
+          }
       }
     },
-    [open, optionCount, highlightedIndex, onSelect, setOpen]
+    [open, optionCount, onSelect, setOpen, labels]
   );
 
-  return { highlightedIndex, onTriggerKeyDown, onListKeyDown };
+  const optionRefCallback = useCallback((el: HTMLElement | null) => {
+    el?.scrollIntoView({ block: "nearest" });
+  }, []);
+
+  return { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback };
 }

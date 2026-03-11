@@ -5,7 +5,7 @@
  * Closes on outside click.
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 
 export interface SpecialOption {

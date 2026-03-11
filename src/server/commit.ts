@@ -33,13 +33,23 @@ function escapeRegex(str: string): string {
 
 /**
  * Check if a line contains a non-literal CSS value expression:
- * var(), calc(), env(), hex colors (#xxx or #xxxxxx), or SCSS $variables.
+ * SCSS $variables, var() references, or hex color values.
+ * These are values that getComputedStyle() resolves to something different
+ * (e.g., var(--accent) → rgb(99,102,241), #eef2ff → rgb(238,242,255)).
  */
 function hasNonLiteralValue(line: string): boolean {
   return /\$[\w-]+/.test(line)
     || /var\s*\(/.test(line)
-    || /calc\s*\(/.test(line)
-    || /env\s*\(/.test(line)
+    || /:\s*#[0-9a-fA-F]{3,8}\b/.test(line);
+}
+
+/**
+ * Check if a line has a non-literal value that is safe to replace inline.
+ * This includes var() and hex colors, but NOT SCSS $variables
+ * (which are defined elsewhere and shouldn't be replaced at usage sites).
+ */
+function hasReplaceableNonLiteral(line: string): boolean {
+  return /var\s*\(/.test(line)
     || /:\s*#[0-9a-fA-F]{3,8}\b/.test(line);
 }
 
@@ -383,8 +393,8 @@ export async function handleCommit(
             `$1${change.to}`
           );
           modified = true;
-        } else if (found.strategy !== "fuzzy" && hasNonLiteralValue(lines[found.lineIdx])) {
-          // The line has a non-literal value (var(), hex, calc(), etc.)
+        } else if (found.strategy !== "fuzzy" && hasReplaceableNonLiteral(lines[found.lineIdx])) {
+          // The line has a replaceable non-literal value (var(), hex color)
           // Replace the entire value between the colon and the semicolon/end
           const broadPattern = new RegExp(
             `(${escapeRegex(change.prop)}\\s*:\\s*)[^;!}]+`

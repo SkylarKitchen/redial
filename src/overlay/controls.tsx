@@ -5,7 +5,7 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
@@ -256,13 +256,16 @@ export function SelectRow({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const id = useId();
 
-  const { highlightedIndex, onTriggerKeyDown, onListKeyDown } = useDropdownKeyboard({
+  const labels = options.map(o => o.label);
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
     open,
     setOpen,
     optionCount: options.length,
     selectedIndex: options.findIndex((o) => o.value === value),
     onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+    labels,
   });
 
   useEffect(() => {
@@ -299,6 +302,8 @@ export function SelectRow({
           role="combobox"
           aria-expanded={open}
           aria-haspopup="listbox"
+          aria-controls={`${id}-listbox`}
+          aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
           onClick={() => setOpen((o) => !o)}
           onKeyDown={onTriggerKeyDown}
           onFocus={onFocusRing}
@@ -335,6 +340,7 @@ export function SelectRow({
 
         {open && (
           <div
+            id={`${id}-listbox`}
             role="listbox"
             onKeyDown={onListKeyDown}
             style={{
@@ -359,6 +365,8 @@ export function SelectRow({
               return (
                 <div
                   key={opt.value}
+                  id={`${id}-opt-${i}`}
+                  ref={i === highlightedIndex ? optionRefCallback : undefined}
                   role="option"
                   aria-selected={isActive}
                   onClick={() => {

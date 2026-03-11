@@ -25,6 +25,7 @@ import { NavigationHistory, computePanelMaxHeight } from "./navigationHistory";
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
+import { ms } from "./timing";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -739,16 +740,22 @@ export function Overlay() {
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          background: rgba(255,255,255,0.7);
-          border: 1px solid rgba(255,255,255,0.3);
-          margin-top: -3.5px;
-          transition: background 80ms;
+          background: #6366f1;
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          margin-top: -4.5px;
+          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
-          background: #6366f1;
+          transform: scale(1.15);
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
+          transform: scale(1.1);
+          background: #818cf8;
         }
         .__tuner-root input[type="range"]::-moz-range-track {
           height: 3px;
@@ -756,14 +763,21 @@ export function Overlay() {
           border-radius: 2px;
         }
         .__tuner-root input[type="range"]::-moz-range-thumb {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          background: rgba(255,255,255,0.7);
-          border: 1px solid rgba(255,255,255,0.3);
+          background: #6366f1;
+          border: 2px solid rgba(255,255,255,0.9);
+          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {
-          background: #6366f1;
+          transform: scale(1.15);
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb:active {
+          transform: scale(1.1);
+          background: #818cf8;
         }
       `}} />
 

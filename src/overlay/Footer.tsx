@@ -9,6 +9,7 @@ import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff } from "./util";
+import { timing } from "./timing";
 
 interface FooterProps {
   element: Element;
@@ -26,6 +27,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const messageCounterRef = useRef(0);
 
   // Clear timer on unmount to prevent stale setState calls
   useEffect(() => {
@@ -34,6 +36,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
   const showMessage = useCallback((text: string, duration: number) => {
     if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    messageCounterRef.current += 1;
     setMessage(text);
     messageTimerRef.current = setTimeout(() => setMessage(null), duration);
   }, []);
@@ -137,15 +140,15 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </ActionButton>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <div role="status" aria-live="polite">
+        <div role="status" aria-live="polite" style={{ minHeight: "20px" }}>
           <AnimatePresence>
             {(clipboardMessage || message) && (
               <motion.span
-                key={clipboardMessage || message}
+                key={`${clipboardMessage || message}-${messageCounterRef.current}`}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: timing.normal / 1000 }}
                 style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
               >
                 {clipboardMessage || message}
