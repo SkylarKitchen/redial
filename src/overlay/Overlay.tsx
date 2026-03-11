@@ -674,7 +674,7 @@ export function Overlay() {
         .__tuner-root *::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0);
           border-radius: 4px;
-          transition: background 0.3s;
+          transition: background ${ms("slow")};
         }
         .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
         .__tuner-root:hover::-webkit-scrollbar-thumb,
@@ -699,7 +699,7 @@ export function Overlay() {
           from { opacity: 0; transform: translateY(8px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .__tuner-enter { animation: tuner-enter 150ms ease-out both; }
+        .__tuner-enter { animation: tuner-enter ${ms("expand")} ease-out both; }
       `}} />
 
       {/* Selector overlay (full viewport, invisible until hover) */}
@@ -721,7 +721,7 @@ export function Overlay() {
             zIndex: 2147483646,
             border: "1.5px solid #6366f1",
             borderRadius: "2px",
-            transition: "all 80ms ease-out",
+            transition: `all ${ms("fast")} ease-out`,
           }}
         />
       )}
