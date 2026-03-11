@@ -19,7 +19,7 @@ import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
 import { buildBreadcrumb, getStableSelector } from "./util";
-import { ViewportBar } from "./ViewportBar";
+
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
@@ -90,8 +90,7 @@ export function Overlay() {
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle
 
-  // Viewport preview (Phase 3)
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+
 
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
@@ -706,10 +705,6 @@ export function Overlay() {
             activeClassName={activeClassName}
             state={activeState}
             onStateChange={setActiveState}
-          />
-          <ViewportBar
-            active={viewportWidth}
-            onChange={handleViewportChange}
           />
           <div
             style={{

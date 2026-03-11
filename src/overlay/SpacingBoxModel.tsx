@@ -17,6 +17,7 @@
  * - Click: opens SpacingValuePopover (slider + presets)
  * - Drag-to-scrub with optimistic local state (real-time text updates)
  * - Shift+drag updates all 4 sides uniformly
+ * - Alt(Option)+drag updates axis pair (left+right or top+bottom)
  * - Alt+click applies value to all 4 sides
  * - Tab/Shift+Tab navigation in visual order
  */
@@ -246,28 +247,34 @@ export function SpacingBoxModel({
               beginBatch();
             }
 
-            let multiplier = 1;
-            if (ev.shiftKey) multiplier = 10;
-            else if (ev.altKey) multiplier = 0.1;
+            const multiplier = ev.shiftKey ? 10 : 1;
 
             const delta = dx * multiplier;
             const raw = startValue + delta;
             const clamped = isMargin ? raw : Math.max(0, raw);
-            const precision = multiplier < 1 ? 2 : 0;
-            const rounded = parseFloat(clamped.toFixed(precision));
+            const rounded = parseFloat(clamped.toFixed(0));
+
+            const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+            const prefix = isMargin ? "margin" : "padding";
 
             // Optimistic local state for instant text update
             if (shiftHeldRef.current) {
-              const prefix = isMargin ? "margin" : "padding";
+              // Shift+drag: all 4 sides
               const allSides: Record<string, number> = {};
               for (const s of SIDES) allSides[`${prefix}-${s}`] = rounded;
               setScrubValues((prev) => ({ ...prev, ...allSides }));
-              // Propagate all 4 sides
-              const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
               for (const s of SIDES) onChangeRef.current(`${prefix}-${s}`, rounded, unit);
+            } else if (altHeldRef.current) {
+              // Alt(Option)+drag: axis pair (left+right or top+bottom)
+              const side = prop.split("-")[1];
+              const partner = AXIS_PARTNER[side];
+              const partnerProp = `${prefix}-${partner}`;
+              setScrubValues((prev) => ({ ...prev, [prop]: rounded, [partnerProp]: rounded }));
+              onChangeRef.current(prop, rounded, unit);
+              onChangeRef.current(partnerProp, rounded, unit);
             } else {
+              // Regular drag: single side
               setScrubValues((prev) => ({ ...prev, [prop]: rounded }));
-              const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
               onChangeRef.current(prop, rounded, unit);
             }
           }
@@ -286,6 +293,7 @@ export function SpacingBoxModel({
               document.body.style.cursor = prevCursor;
               scrubActiveRef.current = false;
               shiftHeldRef.current = false;
+              altHeldRef.current = false;
               endBatch();
               setScrubValues({});
               // Reset zone highlights
