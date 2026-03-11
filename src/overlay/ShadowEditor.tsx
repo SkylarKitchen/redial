@@ -134,10 +134,10 @@ function NumericInput({
             transition: "background 100ms",
           }}
           onMouseEnter={(e) => {
-            (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
           }}
           onMouseLeave={(e) => {
-            (e.target as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
           }}
         >
           {value}
@@ -202,7 +202,12 @@ function ShadowRow({
           <input
             ref={colorInputRef}
             type="color"
-            value={shadow.color.startsWith("#") ? shadow.color : "#000000"}
+            value={shadow.color.startsWith("#") ? shadow.color : (() => {
+              // Convert rgba/hsla to closest hex for native color picker (no alpha support)
+              const m = shadow.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+              if (m) return "#" + [m[1], m[2], m[3]].map(c => parseInt(c).toString(16).padStart(2, "0")).join("");
+              return "#000000";
+            })()}
             onChange={(e) => onUpdate(index, { ...shadow, color: e.target.value })}
             style={{
               position: "absolute",
