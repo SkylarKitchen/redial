@@ -12,46 +12,11 @@ import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
-const StaticIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <line x1="4" y1="4" x2="12" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <line x1="12" y1="4" x2="4" y2="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-
-const RelativeIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="2" y="2" width="7" height="7" stroke="currentColor" strokeWidth="1" strokeDasharray="2 1" opacity="0.4" />
-    <rect x="5" y="5" width="7" height="7" stroke="currentColor" strokeWidth="1.2" fill="none" />
-    <path d="M5.5 5L3.5 3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" markerEnd="" />
-    <circle cx="3.5" cy="3" r="0.8" fill="currentColor" opacity="0.5" />
-  </svg>
-);
-
-const AbsoluteIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="1.5" y="1.5" width="13" height="13" stroke="currentColor" strokeWidth="1" strokeDasharray="2 1" opacity="0.4" />
-    <rect x="2" y="2" width="6" height="6" stroke="currentColor" strokeWidth="1.2" fill="none" />
-    <path d="M2 2L1.5 1.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-  </svg>
-);
-
-const FixedIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="1.5" y="1.5" width="13" height="13" rx="1" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-    <rect x="2" y="2" width="6" height="6" stroke="currentColor" strokeWidth="1.2" fill="none" />
-    <path d="M12 5V11M10 8h4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-  </svg>
-);
-
-const StickyIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-    <rect x="3" y="1.5" width="10" height="13" rx="1" stroke="currentColor" strokeWidth="1" opacity="0.4" />
-    <rect x="4" y="3" width="8" height="4" stroke="currentColor" strokeWidth="1.2" fill="none" />
-    <line x1="5" y1="10" x2="11" y2="10" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
-    <line x1="5" y1="12" x2="11" y2="12" stroke="currentColor" strokeWidth="0.8" opacity="0.3" />
-  </svg>
-);
+const StaticIcon = () => <X size={16} strokeWidth={1.5} />;
+const RelativeIcon = () => <Move size={16} strokeWidth={1.5} />;
+const AbsoluteIcon = () => <LocateFixed size={16} strokeWidth={1.5} />;
+const FixedIcon = () => <Pin size={16} strokeWidth={1.5} />;
+const StickyIcon = () => <StickyNote size={16} strokeWidth={1.5} />;
 
 // ─── Option data ────────────────────────────────────────────────────
 
