@@ -1442,9 +1442,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [minHeight, setMinHeight] = useState(() => parseNum(cs.minHeight));
   const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
+  const [overflowLocked, setOverflowLocked] = useState(true);
+  const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
+  const [overflowY, setOverflowY] = useState(() => cs.overflowY || "visible");
+  const [boxSizing, setBoxSizing] = useState(() => cs.boxSizing || "border-box");
   const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
   const [objectFit, setObjectFit] = useState(() => cs.objectFit);
   const [objectPosition, setObjectPosition] = useState(() => cs.objectPosition);
+  const [showMoreSize, setShowMoreSize] = useState(false);
 
   // Size units
   const [widthUnit, setWidthUnit] = useState("px");
@@ -1640,9 +1645,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     (v: number) => {
       setGap(v);
       apply("gap", `${v}${gapUnit}`);
+      if (gapLocked) { setRowGap(v); setColumnGap(v); }
     },
-    [apply, gapUnit]
+    [apply, gapUnit, gapLocked]
   );
+  const handleRowGapChange = useCallback((v: number) => { setRowGap(v); apply("row-gap", `${v}px`); }, [apply]);
+  const handleColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
+  const handleGapLockToggle = useCallback(() => {
+    setGapLocked(prev => {
+      if (!prev) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}px`); apply("column-gap", `${gap}px`); }
+      return !prev;
+    });
+  }, [gap, apply]);
 
   const handleGridColsChange = useCallback(
     (v: string) => { setGridCols(v); if (v.trim()) apply("grid-template-columns", v); },
@@ -1701,6 +1715,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
+  const handleOverflowXChange = useCallback((v: string) => { setOverflowX(v); apply("overflow-x", v); }, [apply]);
+  const handleOverflowYChange = useCallback((v: string) => { setOverflowY(v); apply("overflow-y", v); }, [apply]);
+  const handleOverflowLockToggle = useCallback(() => {
+    setOverflowLocked(prev => {
+      if (!prev) { setOverflowX(overflow); setOverflowY(overflow); apply("overflow-x", overflow); apply("overflow-y", overflow); }
+      return !prev;
+    });
+  }, [overflow, apply]);
+  const handleBoxSizingChange = useCallback((v: string) => { setBoxSizing(v); apply("box-sizing", v); }, [apply]);
   const handleAspectRatioChange = useCallback((v: string) => { setAspectRatio(v); apply("aspect-ratio", v || "auto"); }, [apply]);
   const handleObjectFitChange = useCallback((v: string) => { setObjectFit(v); apply("object-fit", v); }, [apply]);
   const handleObjectPositionChange = useCallback((v: string) => { setObjectPosition(v); apply("object-position", v); }, [apply]);
@@ -1977,7 +2000,24 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="grid"
               />
             </div>
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} />
+            {gapLocked ? (
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ flex: 1 }}>
+                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={ind("gap")} />
+                </div>
+                <button onClick={handleGapLockToggle} title="Unlock row/column gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>🔗</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <SliderRow label="Row Gap" value={rowGap} min={0} max={200} step={1} unit="px" onChange={handleRowGapChange} indicator={ind("row-gap")} />
+                  </div>
+                  <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
+                </div>
+                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} indicator={ind("column-gap")} />
+              </>
+            )}
           </>
         )}
 
@@ -2066,12 +2106,48 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
           </div>
         )}
-        <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} />
-        <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} />
-        {isMedia && (
+        {overflowLocked ? (
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} indicator={ind("overflow")} />
+            </div>
+            <button onClick={handleOverflowLockToggle} title="Per-axis overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>🔗</button>
+          </div>
+        ) : (
           <>
-            <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} />
-            <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} />
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
+                <SelectRow label="Overflow X" value={overflowX} options={OVERFLOW_OPTIONS} onChange={handleOverflowXChange} />
+              </div>
+              <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>⛓️‍💥</button>
+            </div>
+            <SelectRow label="Overflow Y" value={overflowY} options={OVERFLOW_OPTIONS} onChange={handleOverflowYChange} />
+          </>
+        )}
+        <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>More size options</span>
+        </div>
+        {showMoreSize && (
+          <>
+            <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} />
+            <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Box Size</span>
+              <IconButtonGroup
+                options={[
+                  { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
+                  { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
+                ]}
+                value={boxSizing}
+                onChange={handleBoxSizingChange}
+              />
+            </div>
+            {isMedia && (
+              <>
+                <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} />
+                <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} />
+              </>
+            )}
           </>
         )}
       </Section>

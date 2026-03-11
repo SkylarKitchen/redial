@@ -109,6 +109,30 @@ export function applyInlineStyle(
   schedulePersist();
 }
 
+/**
+ * Pre-capture initial values for a set of properties on an element.
+ * Batches all reads first (single layout computation), then records initials.
+ * Useful when you know which props will be touched and want to avoid
+ * layout thrash from interleaved reads/writes.
+ */
+export function captureInitials(el: Element, props: string[]): void {
+  if (!overrides.has(el)) overrides.set(el, new Map());
+  const elOverrides = overrides.get(el)!;
+  // Batch all reads first (single layout computation)
+  const values: Array<[string, string]> = [];
+  for (const prop of props) {
+    if (!elOverrides.has(prop)) {
+      values.push([prop, getComputedStyle(el).getPropertyValue(prop).trim()]);
+    }
+  }
+  // Then record all initials (no DOM writes between reads)
+  for (const [prop, initial] of values) {
+    if (!elOverrides.has(prop)) {
+      elOverrides.set(prop, { initial, current: initial });
+    }
+  }
+}
+
 export function undo(): { el: Element; prop: string } | null {
   const last = undoStack.pop();
   if (!last) return null;
@@ -137,7 +161,8 @@ export function undo(): { el: Element; prop: string } | null {
     return result;
   }
 
-  const { el, prop, prev } = last;
+  const single = last as SingleUndoEntry;
+  const { el, prop, prev } = single;
   const elOverrides = overrides.get(el);
   if (!elOverrides) return null;
 
