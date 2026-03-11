@@ -51,8 +51,16 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Placed after Align Self dropdown, matching the spec's property table order
 - Typecheck: PASS
 
+### Iteration 7 — Typography advanced collapsed sub-section (2026-03-11)
+- Added collapsible "Advanced" sub-section with disclosure triangle (▶/▼) inside Typography
+- Added state for: `wordSpacing`, `whiteSpace`, `textIndent`, `wordBreak`, `columnCount`, `showTypoAdvanced`
+- Added `WHITE_SPACE_OPTIONS` (6 values) and `WORD_BREAK_OPTIONS` (4 values) constants
+- Controls: word-spacing slider (0–20px), white-space dropdown, text-indent slider (0–100px), word-break dropdown, column-count slider (1–6)
+- Sub-section starts collapsed by default, separated by a thin border-top
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase B-9:** Typography advanced collapsed sub-section
+**Phase B-10:** Position visual offset diagram

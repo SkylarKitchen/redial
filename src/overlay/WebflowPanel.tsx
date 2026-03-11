@@ -1484,6 +1484,35 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               I
             </button>
           </div>
+
+          {/* Advanced typography sub-section */}
+          <div
+            onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
+            style={{
+              padding: "6px 12px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }}>
+              ▶
+            </span>
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Advanced
+            </span>
+          </div>
+          {showTypoAdvanced && (
+            <>
+              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit="px" onChange={handleWordSpacingChange} />
+              <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
+              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit="px" onChange={handleTextIndentChange} />
+              <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
+              <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
+            </>
+          )}
         </Section>
       )}
 
