@@ -1113,7 +1113,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               />
             </div>
             <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} />
-            <SliderRow label="Gap" value={gap} min={0} max={64} step={1} unit="px" onChange={handleGapChange} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
           </>
         )}
 
@@ -1127,7 +1127,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="grid"
               />
             </div>
-            <SliderRow label="Gap" value={gap} min={0} max={64} step={1} unit="px" onChange={handleGapChange} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
           </>
         )}
 
@@ -1155,11 +1155,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 3. Size */}
       <Section title="Size">
-        <SliderRow label="Width" value={width} min={0} max={1200} step={1} unit="px" onChange={handleWidthChange} />
-        <SliderRow label="Height" value={height} min={0} max={800} step={1} unit="px" onChange={handleHeightChange} />
-        <SliderRow label="Min W" value={minWidth} min={0} max={1200} step={1} unit="px" onChange={handleMinWidthChange} />
+        <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit="px" onChange={handleWidthChange} />
+        <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit="px" onChange={handleHeightChange} />
+        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit="px" onChange={handleMinWidthChange} />
         <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit="px" onChange={handleMaxWidthChange} />
-        <SliderRow label="Min H" value={minHeight} min={0} max={800} step={1} unit="px" onChange={handleMinHeightChange} />
+        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit="px" onChange={handleMinHeightChange} />
         <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit="px" onChange={handleMaxHeightChange} />
         <SelectRow label="Overflow" value={overflow} options={OVERFLOW_OPTIONS} onChange={handleOverflowChange} />
       </Section>
@@ -1181,10 +1181,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
-          <SliderRow label="Size" value={fontSize} min={8} max={120} step={1} unit="px" onChange={handleFontSizeChange} />
+          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit="px" onChange={handleFontSizeChange} />
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} />
           <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} />
-          <SliderRow label="Spacing" value={letterSpacing} min={-2} max={8} step={0.25} unit="px" onChange={handleLetterSpacingChange} />
+          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit="px" onChange={handleLetterSpacingChange} />
           <ColorRow label="Color" value={color} onChange={handleColorChange} />
 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1251,7 +1251,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={16} step={1} unit="px" onChange={handleBorderWidthChange} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit="px" onChange={handleBorderWidthChange} />
         <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
