@@ -27,6 +27,14 @@ import { UnitSelector } from "./UnitSelector";
 import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
+import {
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Underline, Strikethrough, Overline,
+  Eye, EyeOff, Scissors, ScrollText,
+  ArrowRight, ArrowDown, WrapText,
+  Link, Unlink,
+  ChevronDown, ChevronRight,
+} from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -269,83 +277,16 @@ function isTextBearing(el: Element): boolean {
 // ─── Text Alignment Icons ────────────────────────────────────────────
 
 const TEXT_ALIGN_OPTIONS = [
-  {
-    value: "left",
-    title: "Align left",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="10" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="6" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="9" x2="9" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "center",
-    title: "Align center",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="3" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="2" y1="9" x2="10" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "right",
-    title: "Align right",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="5" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="3" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    value: "justify",
-    title: "Justify",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="1" y1="3" x2="11" y2="3" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <line x1="1" y1="9" x2="11" y2="9" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
+  { value: "left", title: "Align left", icon: <AlignLeft size={12} strokeWidth={1.5} /> },
+  { value: "center", title: "Align center", icon: <AlignCenter size={12} strokeWidth={1.5} /> },
+  { value: "right", title: "Align right", icon: <AlignRight size={12} strokeWidth={1.5} /> },
+  { value: "justify", title: "Justify", icon: <AlignJustify size={12} strokeWidth={1.5} /> },
 ];
 
 const TEXT_DECORATION_OPTIONS = [
-  {
-    value: "underline",
-    title: "Underline",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="8" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">U</text>
-        <line x1="2" y1="11" x2="10" y2="11" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-  },
-  {
-    value: "line-through",
-    title: "Strikethrough",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">S</text>
-        <line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-  },
-  {
-    value: "overline",
-    title: "Overline",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="1" x2="10" y2="1" stroke="currentColor" strokeWidth="1" />
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">O</text>
-      </svg>
-    ),
-  },
+  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
+  { value: "line-through", title: "Strikethrough", icon: <Strikethrough size={12} strokeWidth={1.5} /> },
+  { value: "overline", title: "Overline", icon: <Overline size={12} strokeWidth={1.5} /> },
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
