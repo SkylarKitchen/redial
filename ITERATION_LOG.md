@@ -108,6 +108,21 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Confirmed zero hardcoded `unit="px"` remaining (all length controls use state-driven units)
 - Typecheck: PASS, Tests: 24/24 PASS
 
+### Iteration 13 — Swarm merge: 10 parallel agents (2026-03-11)
+Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
+- **Tab navigation**: `:focus-visible` CSS injection + `tuner-focusable` className on all interactive controls
+- **Gap lock**: locked/unlocked row-gap/column-gap pattern in grid section with sync toggle buttons
+- **Size enhancements**: per-axis overflow lock, box-sizing toggle, collapsible "More size options"
+- **Effects**: user-select, perspective (0-2000px), backface-visibility controls
+- **Typography**: hyphens, direction, column-gap, text-shadow (reusing ShadowEditor)
+- **Background-clip**: border-box/padding-box/content-box/text with webkit compat
+- **StyleIndicator**: enhanced getIndicatorType with INHERITABLE_PROPERTIES + parent comparison
+- **Color picker**: standalone `ColorPickerEnhanced.tsx` (HSB 2D canvas, hue/opacity sliders)
+- **Bezier editor**: standalone `BezierEditor.tsx` (cubic-bezier canvas, presets, animation preview)
+- **apply.ts**: added `captureInitials()` for batched property reads
+- Replaced all `getIndicatorType(element, ...)` calls with `ind(...)` shorthand
+- Typecheck: PASS
+
 ---
 
 ## Done
