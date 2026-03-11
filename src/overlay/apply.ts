@@ -70,6 +70,9 @@ export function applyInlineStyle(
   prop: string,
   value: string
 ): void {
+  // New action invalidates redo history (standard undo/redo semantics)
+  if (redoStack.length > 0) redoStack.length = 0;
+
   if (!overrides.has(el)) overrides.set(el, new Map());
   const elOverrides = overrides.get(el)!;
 
@@ -119,7 +122,8 @@ export function undo(): { el: Element; prop: string } | null {
   if (!last) return null;
 
   if (isBatch(last)) {
-    // Restore all entries in the batch (reverse order)
+    // Build redo batch: capture current values before restoring
+    const redoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
       const { el, prop, prev } = last.entries[i];
@@ -127,6 +131,8 @@ export function undo(): { el: Element; prop: string } | null {
       if (!elOverrides) continue;
       const entry = elOverrides.get(prop);
       if (!entry) continue;
+
+      redoEntries.push({ el, prop, prev: entry.current });
 
       if (prev === entry.initial) {
         (el as HTMLElement).style.removeProperty(prop);
@@ -137,6 +143,9 @@ export function undo(): { el: Element; prop: string } | null {
         entry.current = prev;
       }
       result = { el, prop };
+    }
+    if (redoEntries.length > 0) {
+      redoStack.push({ type: 'batch', entries: redoEntries });
     }
     schedulePersist();
     return result;
@@ -149,6 +158,9 @@ export function undo(): { el: Element; prop: string } | null {
 
   const entry = elOverrides.get(prop);
   if (!entry) return null;
+
+  // Capture forward state for redo before restoring
+  redoStack.push({ el, prop, prev: entry.current });
 
   if (prev === entry.initial) {
     // Undoing back to original — remove override entirely
@@ -164,6 +176,59 @@ export function undo(): { el: Element; prop: string } | null {
   return { el, prop };
 }
 
+export function redo(): { el: Element; prop: string } | null {
+  const last = redoStack.pop();
+  if (!last) return null;
+
+  if (isBatch(last)) {
+    // Re-apply batch entries and push an undo batch
+    const undoEntries: SingleUndoEntry[] = [];
+    let result: { el: Element; prop: string } | null = null;
+    for (const { el, prop, prev: redoValue } of last.entries) {
+      if (!overrides.has(el)) overrides.set(el, new Map());
+      const elOverrides = overrides.get(el)!;
+      const entry = elOverrides.get(prop);
+      const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+
+      undoEntries.push({ el, prop, prev: currentValue });
+
+      if (entry) {
+        entry.current = redoValue;
+      } else {
+        const initial = getComputedStyle(el).getPropertyValue(prop).trim();
+        elOverrides.set(prop, { initial, current: redoValue });
+      }
+      (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+      result = { el, prop };
+    }
+    if (undoEntries.length > 0) {
+      undoStack.push({ type: 'batch', entries: undoEntries });
+    }
+    schedulePersist();
+    return result;
+  }
+
+  const { el, prop, prev: redoValue } = last as SingleUndoEntry;
+  if (!overrides.has(el)) overrides.set(el, new Map());
+  const elOverrides = overrides.get(el)!;
+  const entry = elOverrides.get(prop);
+  const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+
+  // Push undo entry for this redo
+  undoStack.push({ el, prop, prev: currentValue });
+
+  if (entry) {
+    entry.current = redoValue;
+  } else {
+    const initial = getComputedStyle(el).getPropertyValue(prop).trim();
+    elOverrides.set(prop, { initial, current: redoValue });
+  }
+  (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+
+  schedulePersist();
+  return { el, prop };
+}
+
 export function reset(el: Element): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
@@ -173,14 +238,16 @@ export function reset(el: Element): void {
   }
   overrides.delete(el);
 
-  // Remove all undo entries for this element (handle both single and batch)
-  for (let i = undoStack.length - 1; i >= 0; i--) {
-    const entry = undoStack[i];
-    if (isBatch(entry)) {
-      entry.entries = entry.entries.filter((e) => e.el !== el);
-      if (entry.entries.length === 0) undoStack.splice(i, 1);
-    } else if (!isBatch(entry) && entry.el === el) {
-      undoStack.splice(i, 1);
+  // Remove all undo/redo entries for this element (handle both single and batch)
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const entry = stack[i];
+      if (isBatch(entry)) {
+        entry.entries = entry.entries.filter((e) => e.el !== el);
+        if (entry.entries.length === 0) stack.splice(i, 1);
+      } else if (!isBatch(entry) && entry.el === el) {
+        stack.splice(i, 1);
+      }
     }
   }
   schedulePersist();
@@ -193,8 +260,9 @@ export function resetAll(): void {
     }
   }
   overrides.clear();
-  // Clear entire undo stack
+  // Clear entire undo/redo stack
   undoStack.length = 0;
+  redoStack.length = 0;
   clearPersistedSession();
 }
 

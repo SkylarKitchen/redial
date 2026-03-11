@@ -17,7 +17,7 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
-import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
+import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
 import { buildBreadcrumb, getStableSelector } from "./util";
 import { ViewportBar } from "./ViewportBar";
 import { onHmrUpdate } from "./hmr";
@@ -554,8 +554,57 @@ export function Overlay() {
     return cleanup ?? undefined;
   }, [selectedEl]);
 
+  // --- Auto-hiding scrollbar ---
+  const panelScrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = panelScrollRef.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const onScroll = () => {
+      el.classList.add("is-scrolling");
+      clearTimeout(timer);
+      timer = setTimeout(() => el.classList.remove("is-scrolling"), 800);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      clearTimeout(timer);
+    };
+  }, [selectedEl]);
+
   return (
     <>
+      {/* Scoped scrollbar styles for the tuner panel */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .__tuner-root::-webkit-scrollbar {
+          width: 5px;
+        }
+        .__tuner-root::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .__tuner-root::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0);
+          border-radius: 4px;
+          transition: background 0.3s;
+        }
+        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
+        .__tuner-root:hover::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.15);
+        }
+        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb:hover,
+        .__tuner-root:hover::-webkit-scrollbar-thumb:hover {
+          background: rgba(255,255,255,0.25);
+        }
+        .__tuner-root {
+          scrollbar-width: thin;
+          scrollbar-color: transparent transparent;
+        }
+        .__tuner-root.is-scrolling,
+        .__tuner-root:hover {
+          scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+      `}} />
+
       {/* Selector overlay (full viewport, invisible until hover) */}
       <Selector
         active={selecting}
@@ -583,6 +632,7 @@ export function Overlay() {
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
+          ref={panelScrollRef}
           className="__tuner-root"
           style={{
             position: "fixed",
