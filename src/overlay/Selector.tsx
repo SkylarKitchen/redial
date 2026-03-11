@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { ms } from "./timing";
 
 interface SelectorProps {
   active: boolean;
@@ -113,7 +114,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
         border: "1.5px solid #6366f1",
         borderRadius: "2px",
         boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
-        transition: "all 50ms ease-out",
+        transition: `all ${ms("instant")} ease-out`,
       }}
     />
   );

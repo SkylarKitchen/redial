@@ -6,15 +6,17 @@
  */
 
 import { useCallback } from "react";
+import { ms } from "./timing";
 
 export interface IconButtonGroupProps {
-  options: Array<{ value: string; icon: React.ReactNode; title?: string }>;
+  options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
   value: string;
   onChange: (value: string) => void;
   multi?: boolean;
+  "aria-label"?: string;
 }
 
-export function IconButtonGroup({ options, value, onChange, multi = false }: IconButtonGroupProps) {
+export function IconButtonGroup({ options, value, onChange, multi = false, "aria-label": ariaLabel }: IconButtonGroupProps) {
   const activeValues = multi ? new Set(value.split(" ").filter(Boolean)) : new Set([value]);
 
   const handleClick = useCallback(
@@ -37,7 +39,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
   );
 
   return (
-    <div style={{ display: "inline-flex" }}>
+    <div role={multi ? "toolbar" : "radiogroup"} aria-label={ariaLabel} style={{ display: "inline-flex" }}>
       {options.map((opt, i) => {
         const isActive = activeValues.has(opt.value);
         const isFirst = i === 0;
@@ -46,8 +48,26 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
         return (
           <button
             key={opt.value}
+            role={multi ? undefined : "radio"}
+            aria-checked={multi ? undefined : isActive}
+            aria-pressed={multi ? isActive : undefined}
+            aria-label={opt.label ?? opt.title ?? opt.value}
+            tabIndex={isActive ? 0 : -1}
             title={opt.title ?? opt.value}
             onClick={() => handleClick(opt.value)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
+                const idx = siblings.indexOf(e.currentTarget as HTMLElement);
+                const next = e.key === "ArrowRight"
+                  ? siblings[(idx + 1) % siblings.length]
+                  : siblings[(idx - 1 + siblings.length) % siblings.length];
+                next.focus();
+                const nextOpt = options[siblings.indexOf(next)];
+                if (nextOpt != null) handleClick(nextOpt.value);
+              }
+            }}
             onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
             onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             style={{
@@ -71,7 +91,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
               lineHeight: 1,
               fontFamily: "system-ui, sans-serif",
               outline: "none",
-              transition: "background 80ms, color 80ms, box-shadow 80ms",
+              transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
             }}
             onMouseEnter={(e) => {
               if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

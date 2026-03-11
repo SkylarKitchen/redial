@@ -6,6 +6,7 @@
  */
 
 import { useCallback } from "react";
+import { ms } from "./timing";
 
 type Side = "all" | "top" | "right" | "bottom" | "left";
 
@@ -79,7 +80,7 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
               background: active ? "rgba(99,102,241,0.15)" : "transparent",
               cursor: "pointer",
               outline: "none",
-              transition: "background 100ms",
+              transition: `background ${ms("normal")}`,
             }}
             onMouseEnter={(e) => {
               if (!active) {

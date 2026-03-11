@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
+import { ms } from "./timing";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
@@ -477,7 +478,7 @@ function OriginPicker({ value, onChange }: { value: string; onChange: (v: string
                     : "transparent",
                 borderRight: ci < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
                 borderBottom: ri < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                transition: "background 80ms",
+                transition: `background ${ms("fast")}`,
               }}
             >
               <div

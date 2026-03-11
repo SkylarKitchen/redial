@@ -5,6 +5,8 @@
  * how styles behave at different breakpoints.
  */
 
+import { ms } from "./timing";
+
 const PRESETS: Array<{ label: string; width: number | null }> = [
   { label: "375", width: 375 },
   { label: "768", width: 768 },
@@ -55,7 +57,7 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
               cursor: "pointer",
               background: isActive ? "rgba(255, 255, 255, 0.15)" : "rgba(255,255,255,0.08)",
               color: isActive ? "#fff" : "rgba(255, 255, 255, 0.6)",
-              transition: "background 100ms, color 100ms",
+              transition: `background ${ms("normal")}, color ${ms("normal")}`,
             }}
           >
             {preset.label}

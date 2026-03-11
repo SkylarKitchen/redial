@@ -5,13 +5,15 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
+import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { ms } from "./timing";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -71,7 +73,7 @@ export function Section({
           color: "rgba(255,255,255,0.3)",
           display: "flex",
           alignItems: "center",
-          transition: "transform 150ms ease",
+          transition: `transform ${ms("expand")} ease`,
           transform: open ? "rotate(90deg)" : "rotate(0deg)",
         }}>
           <ChevronRight size={12} strokeWidth={2} />
@@ -80,7 +82,7 @@ export function Section({
       <div style={{
         display: "grid",
         gridTemplateRows: open ? "1fr" : "0fr",
-        transition: "grid-template-rows 150ms ease",
+        transition: `grid-template-rows ${ms("expand")} ease`,
       }}>
         <div style={{ overflow: "hidden" }}>
           <div style={{ paddingBottom: "8px" }}>{children}</div>
@@ -255,6 +257,17 @@ export function SelectRow({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const id = useId();
+
+  const optionLabels = options.map(o => o.label);
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: options.length,
+    selectedIndex: options.findIndex((o) => o.value === value),
+    onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+    labels: optionLabels,
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -287,7 +300,13 @@ export function SelectRow({
         <button
           className="tuner-focusable"
           tabIndex={0}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={`${id}-listbox`}
+          aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
           onClick={() => setOpen((o) => !o)}
+          onKeyDown={onTriggerKeyDown}
           onFocus={onFocusRing}
           onBlur={onBlurRing}
           style={{
@@ -305,7 +324,7 @@ export function SelectRow({
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
-            transition: "background 80ms, box-shadow 80ms",
+            transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
             if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -322,6 +341,9 @@ export function SelectRow({
 
         {open && (
           <div
+            id={`${id}-listbox`}
+            role="listbox"
+            onKeyDown={onListKeyDown}
             style={{
               position: "absolute",
               top: "calc(100% + 2px)",
@@ -338,11 +360,16 @@ export function SelectRow({
               padding: "2px 0",
             }}
           >
-            {options.map((opt) => {
+            {options.map((opt, i) => {
               const isActive = opt.value === value;
+              const isHighlighted = i === highlightedIndex;
               return (
                 <div
                   key={opt.value}
+                  id={`${id}-opt-${i}`}
+                  ref={i === highlightedIndex ? optionRefCallback : undefined}
+                  role="option"
+                  aria-selected={isActive}
                   onClick={() => {
                     onChange(opt.value);
                     setOpen(false);
@@ -352,16 +379,16 @@ export function SelectRow({
                     fontSize: "11px",
                     fontFamily: "ui-monospace, 'SF Mono', monospace",
                     color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : "transparent",
+                    background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
                     cursor: "pointer",
                     lineHeight: "16px",
-                    transition: "background 60ms",
+                    transition: `background ${ms("micro")}`,
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
                   }}
                 >
                   {opt.label}
@@ -599,7 +626,7 @@ export const EditableValue = memo(
           minWidth: "16px",
           textAlign: "center",
           outline: "none",
-          transition: "background 100ms, box-shadow 80ms",
+          transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

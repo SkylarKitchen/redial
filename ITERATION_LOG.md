@@ -214,6 +214,18 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Total: 162 tests passing across 5 files.
 - Typecheck: PASS
 
+### Iteration 23 — Color picker swatches/saved colors system (2026-03-11)
+- Added swatches section to `ColorPickerEnhanced` below the mode inputs (spec §12)
+- Swatches persist via `localStorage` under `__tuner-color-swatches` key (max 16 colors)
+- "+" button saves current color to swatches (prepends, deduplicates, caps at 16)
+- Click swatch → applies that color to picker and emits change
+- Right-click swatch → removes it from the saved list
+- Active swatch highlighted with thicker white border
+- Empty state shows italic hint: "Click + to save colors"
+- Hover effect: scale(1.1) + brighter border for visual feedback
+- Fixed pre-existing typecheck errors: added missing `ms` import from `timing.ts` to `controls.tsx` and `ViewportBar.tsx`
+- Typecheck: PASS
+
 ---
 
 ## Done

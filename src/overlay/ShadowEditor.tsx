@@ -11,6 +11,7 @@ import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
+import { ms } from "./timing";
 
 export interface ShadowValue {
   x: number;
@@ -136,7 +137,7 @@ function NumericInput({
             borderRadius: "2px",
             textAlign: "center",
             background: "rgba(255,255,255,0.04)",
-            transition: "background 100ms",
+            transition: `background ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
@@ -246,7 +247,7 @@ function ShadowRow({
             borderRadius: "2px",
             padding: "1px 4px",
             cursor: "pointer",
-            transition: "all 100ms",
+            transition: `all ${ms("normal")}`,
           }}
         >
           Inset
@@ -266,7 +267,7 @@ function ShadowRow({
             cursor: "pointer",
             padding: "0 4px",
             lineHeight: 1,
-            transition: "color 100ms",
+            transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
@@ -321,7 +322,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
-          transition: "background 100ms",
+          transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.15)";

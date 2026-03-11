@@ -27,6 +27,7 @@ import { createPortal } from "react-dom";
 import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch } from "./apply";
+import { ms } from "./timing";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -198,7 +199,7 @@ export function SpacingBoxModel({
           textAlign: "center",
           outline: "none",
           userSelect: "none",
-          transition: "background 80ms, color 80ms",
+          transition: `background ${ms("fast")}, color ${ms("fast")}`,
           position: "relative",
         }}
         // --- Hover: highlight + tooltip ---
