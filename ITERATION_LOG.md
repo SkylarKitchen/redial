@@ -91,6 +91,17 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - SpacingBoxModel + CornerRadiusEditor: unit support wired in by background agents
 - Typecheck: PASS
 
+### Iteration 11 — Unit conversion wired into all unit selectors (2026-03-11)
+- Created `unitConversion.ts` with `buildConversionContext()` and `convertUnit()` (px as pivot)
+- Supports px↔em, px↔rem, px↔%, px↔vw/vh conversions using element/parent/viewport dimensions
+- Wired `convertUnit()` into all 17 `onUnitChange` handlers across Size, Layout, Typography, Borders
+- Line-height conversion guards against "—" (auto) unit
+- Max-width/max-height handle 0 → "none" edge case
+- Fixed `WebflowPanelProps.onSpacingChange` signature to include unit parameter
+- Added missing unit/units/onUnitChange props to CornerRadiusEditor JSX
+- Removed broken `hooks/` directory (orphaned from partial Phase 0 extraction)
+- Typecheck: PASS, Tests: 24/24 PASS
+
 ---
 
 ## Done
