@@ -168,6 +168,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [justifyContent, setJustifyContent] = useState(() => cs.justifyContent);
   const [alignItems, setAlignItems] = useState(() => cs.alignItems);
   const [flexWrap, setFlexWrap] = useState(() => cs.flexWrap);
+  const [justifyItems, setJustifyItems] = useState(() => cs.getPropertyValue("justify-items") || "stretch");
+  const [alignContent, setAlignContent] = useState(() => cs.getPropertyValue("align-content") || "stretch");
   const [gap, setGap] = useState(() => parseNum(cs.gap));
   const [gapLocked, setGapLocked] = useState(true);
   const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
@@ -432,6 +434,16 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       setAlignItems(align);
       apply("justify-content", justify);
       apply("align-items", align);
+    },
+    [apply]
+  );
+
+  const handleGridAlignChange = useCallback(
+    (justify: string, align: string) => {
+      setJustifyItems(justify);
+      setAlignContent(align);
+      apply("justify-items", justify);
+      apply("align-content", align);
     },
     [apply]
   );
@@ -745,7 +757,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {/* 1. Layout */}
-      <Section title="Layout" indicator={sectionInd(["display", "flex-direction", "justify-content", "align-items", "flex-wrap", "gap", "row-gap", "column-gap"])}>
+      <Section title="Layout" indicator={sectionInd(["display", "flex-direction", "justify-content", "align-items", "justify-items", "align-content", "flex-wrap", "gap", "row-gap", "column-gap"])}>
         <DisplayTabs value={display} onChange={handleDisplayChange} />
 
         {isFlex && (
@@ -812,9 +824,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} />
             <div style={{ padding: "6px 12px" }}>
               <AlignBox
-                justify={justifyContent}
-                align={alignItems}
-                onChange={handleAlignChange}
+                justify={justifyItems}
+                align={alignContent}
+                onChange={handleGridAlignChange}
                 mode="grid"
               />
             </div>

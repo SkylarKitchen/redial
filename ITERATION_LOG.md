@@ -311,4 +311,15 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 31 — Grid AlignBox: justify-items / align-content (2026-03-11)
+- Added `justifyItems` and `alignContent` state (read from `getComputedStyle`)
+- Added `handleGridAlignChange` handler that applies `justify-items` and `align-content`
+- Grid AlignBox now maps X-axis → `justify-items` and Y-axis → `align-content` (per spec §3 lines 174-175)
+- Flex AlignBox unchanged — still maps to `justify-content`/`align-items`
+- Added grid alignment properties to Layout section indicator
+- Fills spec §3: "X axis maps to justify-items for grid, Y axis maps to align-content"
+- Typecheck: PASS
+
+---
+
 ## Done
