@@ -705,6 +705,47 @@ export function Overlay() {
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .__tuner-enter { animation: tuner-enter 150ms ease-out both; }
+
+        /* Slider thumb styling — replaces browser defaults with dark-theme matching thumb */
+        .__tuner-root input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          cursor: pointer;
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-runnable-track {
+          height: 3px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 2px;
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(255,255,255,0.3);
+          margin-top: -3.5px;
+          transition: background 80ms;
+        }
+        .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
+          background: #6366f1;
+        }
+        .__tuner-root input[type="range"]::-moz-range-track {
+          height: 3px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 2px;
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.7);
+          border: 1px solid rgba(255,255,255,0.3);
+        }
+        .__tuner-root input[type="range"]::-moz-range-thumb:hover {
+          background: #6366f1;
+        }
       `}} />
 
       {/* Selector overlay (full viewport, invisible until hover) */}

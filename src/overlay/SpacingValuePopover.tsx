@@ -173,30 +173,6 @@ export function SpacingValuePopover({
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* Scoped slider thumb styles (pseudo-elements can't be inline-styled) */}
-      <style
-        dangerouslySetInnerHTML={{
-          __html: `
-        .spacing-popover-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          width: 12px; height: 12px;
-          border-radius: 50%;
-          background: #6366f1;
-          border: 2px solid #fff;
-          cursor: pointer;
-          margin-top: -4.5px;
-        }
-        .spacing-popover-slider::-moz-range-thumb {
-          width: 12px; height: 12px;
-          border-radius: 50%;
-          background: #6366f1;
-          border: 2px solid #fff;
-          cursor: pointer;
-        }
-      `,
-        }}
-      />
-
       {/* Top row: icon, input, slider, unit */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
         {/* Direction indicator */}
@@ -259,7 +235,7 @@ export function SpacingValuePopover({
         >
           <input
             type="range"
-            className="spacing-popover-slider"
+            className="tuner-focusable"
             min={sliderMin}
             max={sliderMax}
             step={1}
