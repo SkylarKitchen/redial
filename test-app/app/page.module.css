@@ -16,7 +16,7 @@
 .main {
   display: flex;
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   flex-direction: column;
   align-items: flex-start;
   gap: 48px;
@@ -156,7 +156,7 @@
   border-radius: 20px;
   background-color: #eef2ff;
   color: var(--accent);
-  font-size: 12px;
+  font-size: 57px;
   font-weight: 500;
 }
 

@@ -21,6 +21,7 @@ import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
 import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
 
+import { NavigationHistory, computePanelMaxHeight } from "./navigationHistory";
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
@@ -76,6 +77,7 @@ export function Overlay() {
   const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
   const panelScrollRef = useRef<HTMLDivElement>(null);
   const savedScrollRef = useRef(0);
+  const navHistoryRef = useRef(new NavigationHistory());
   /** Wrapper that saves scroll position before triggering a remount */
   const setPanelKey: typeof setPanelKeyRaw = useCallback((v) => {
     if (panelScrollRef.current) {
@@ -371,6 +373,8 @@ export function Overlay() {
     setScope("element");
     setActiveClassName(null);
     setActiveTab("common");
+    // Clear breadcrumb navigation history on fresh selection
+    navHistoryRef.current.clear();
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -380,11 +384,22 @@ export function Overlay() {
   }, []);
 
   const handleClose = useCallback(() => {
+    // If there's breadcrumb navigation history, go back instead of closing
+    if (navHistoryRef.current.canGoBack()) {
+      const prev = navHistoryRef.current.goBack()!;
+      setSelectedEl(prev);
+      selectedSelectorRef.current = getStableSelector(prev);
+      setInferResult(infer(prev));
+      setPanelKey((k) => k + 1);
+      return;
+    }
+    // No history — actually close
     setSelectedEl(null);
     selectedSelectorRef.current = null;
     setInferResult(null);
     setScope("element");
     setActiveClassName(null);
+    navHistoryRef.current.clear();
   }, []);
 
   // --- Re-render after changes (for dirty indicators + session badge) ---
@@ -498,11 +513,15 @@ export function Overlay() {
 
   // --- Breadcrumb click handler (Phase 2) ---
   const handleBreadcrumbClick = useCallback((el: Element) => {
+    // Push current element onto history so close can navigate back
+    if (selectedEl) {
+      navHistoryRef.current.push(selectedEl);
+    }
     setSelectedEl(el);
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-  }, []);
+  }, [selectedEl]);
 
   // --- Persistent outline for selected element (Phase 2) ---
   useEffect(() => {
@@ -781,7 +800,7 @@ export function Overlay() {
             top: pos.y,
             left: pos.x,
             width: 300,
-            maxHeight: "85vh",
+            maxHeight: computePanelMaxHeight(pos.y, typeof window !== 'undefined' ? window.innerHeight : 900),
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
