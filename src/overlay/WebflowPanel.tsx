@@ -501,6 +501,21 @@ function SelectRow({
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const current = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [open]);
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span
@@ -513,31 +528,90 @@ function SelectRow({
       >
         {label}
       </span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          flex: 1,
-          height: "24px",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: "3px",
-          color: "rgba(255,255,255,0.8)",
-          fontSize: "11px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          padding: "0 4px",
-          cursor: "pointer",
-          outline: "none",
-          appearance: "none",
-          WebkitAppearance: "none",
-        }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          style={{
+            width: "100%",
+            height: "24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "3px",
+            color: "rgba(255,255,255,0.8)",
+            fontSize: "11px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            padding: "0 6px",
+            cursor: "pointer",
+            outline: "none",
+            transition: "background 80ms",
+          }}
+          onMouseEnter={(e) => {
+            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
+          }}
+          onMouseLeave={(e) => {
+            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+          }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {current?.label ?? value}
+          </span>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }}>▾</span>
+        </button>
+
+        {open && (
+          <div
+            style={{
+              position: "absolute",
+              top: "calc(100% + 2px)",
+              left: 0,
+              right: 0,
+              minWidth: "100%",
+              maxHeight: "180px",
+              overflowY: "auto",
+              background: "#2a2a2a",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "4px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+              zIndex: 200,
+              padding: "2px 0",
+            }}
+          >
+            {options.map((opt) => {
+              const isActive = opt.value === value;
+              return (
+                <div
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "11px",
+                    fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+                    background: isActive ? "#6366f1" : "transparent",
+                    cursor: "pointer",
+                    lineHeight: "16px",
+                    transition: "background 60ms",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                >
+                  {opt.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
