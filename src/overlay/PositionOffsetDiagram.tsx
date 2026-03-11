@@ -199,10 +199,10 @@ function EditableValue({
         transition: "background 100ms",
       }}
       onMouseEnter={(e) => {
-        (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
       }}
       onMouseLeave={(e) => {
-        (e.target as HTMLElement).style.background = "transparent";
+        (e.currentTarget as HTMLElement).style.background = "transparent";
       }}
     >
       {value}
