@@ -10,6 +10,7 @@ import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
+import { X, ChevronRight } from "lucide-react";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -118,7 +119,7 @@ export function Header({
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
               return (
                 <span key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                  {i > 0 && <span style={{ opacity: 0.4 }}>›</span>}
+                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
                   <span
                     onClick={(e) => {
                       e.stopPropagation();
@@ -204,7 +205,7 @@ export function Header({
           }}
           title="Close (Esc)"
         >
-          ✕
+          <X size={14} strokeWidth={2} />
         </button>
       </div>
     </div>

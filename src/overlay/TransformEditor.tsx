@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
@@ -324,7 +325,7 @@ function TransformCard({
           (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
         }}
       >
-        ×
+        <X size={11} strokeWidth={2} />
       </button>
     </div>
   );

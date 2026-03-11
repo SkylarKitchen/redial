@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
+import { X } from "lucide-react";
 
 export interface BackgroundLayer {
   id: string;
@@ -353,7 +354,7 @@ export function BackgroundLayerList({
                   fontFamily: "system-ui, sans-serif",
                 }}
               >
-                ×
+                <X size={14} strokeWidth={2} />
               </button>
             </div>
 

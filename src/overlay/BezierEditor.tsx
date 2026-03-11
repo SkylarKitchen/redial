@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 
 export interface BezierEditorProps {
   value: [number, number, number, number]; // [x1, y1, x2, y2]

@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 
 export interface ShadowValue {
   x: number;
@@ -263,7 +264,7 @@ function ShadowRow({
             (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)";
           }}
         >
-          ×
+          <X size={12} strokeWidth={2} />
         </button>
       </div>
     </div>

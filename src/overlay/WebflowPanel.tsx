@@ -796,37 +796,9 @@ const ALIGN_SELF_OPTIONS = [
 
 // Direction icons reduced to row + column + wrap, with reverse in dropdown
 const DIRECTION_ICONS_SHORT = [
-  {
-    value: "row",
-    title: "Row",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14">
-        <line x1="2" y1="7" x2="10" y2="7" stroke="currentColor" strokeWidth="1.4" />
-        <polyline points="8,4.5 10.5,7 8,9.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "column",
-    title: "Column",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14">
-        <line x1="7" y1="2" x2="7" y2="10" stroke="currentColor" strokeWidth="1.4" />
-        <polyline points="4.5,8 7,10.5 9.5,8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "__wrap__",
-    title: "Wrap",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 14 14">
-        <polyline points="2,4 8,4 10,4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        <path d="M10,4 C12,4 12,7 10,7 L4,7" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        <polyline points="6,5 4,7 6,9" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
-      </svg>
-    ),
-  },
+  { value: "row", title: "Row", icon: <ArrowRight size={14} strokeWidth={1.8} /> },
+  { value: "column", title: "Column", icon: <ArrowDown size={14} strokeWidth={1.8} /> },
+  { value: "__wrap__", title: "Wrap", icon: <WrapText size={14} strokeWidth={1.8} /> },
 ];
 
 const DIRECTION_MORE_OPTIONS = [
@@ -1650,7 +1622,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </>
         )}
         <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
+          <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>More size options</span>
         </div>
         {showMoreSize && (
@@ -1790,9 +1762,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               borderTop: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }}>
-              ▶
-            </span>
+            <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
             <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               Advanced
             </span>

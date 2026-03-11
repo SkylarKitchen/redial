@@ -22,6 +22,7 @@ import { buildBreadcrumb, getStableSelector } from "./util";
 import { ViewportBar } from "./ViewportBar";
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
+import { Plus } from "lucide-react";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -800,19 +801,15 @@ export function Overlay() {
         }}
         title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 20 20"
-          fill="none"
+        <Plus
+          size={20}
+          strokeWidth={1.5}
+          color="rgba(255,255,255,0.8)"
           style={{
             transition: "transform 200ms ease",
             transform: selecting || selectedEl ? "rotate(45deg)" : "rotate(0deg)",
           }}
-        >
-          <line x1="10" y1="4" x2="10" y2="16" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="4" y1="10" x2="16" y2="10" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        />
       </div>
     </>
   );

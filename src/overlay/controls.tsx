@@ -10,6 +10,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -59,8 +60,8 @@ export function Section({
         <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
           {title}
         </span>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-          {open ? "\u25BE" : "\u25B8"}
+        <span style={{ color: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center" }}>
+          {open ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />}
         </span>
       </div>
       {open && <div style={{ paddingBottom: "8px" }}>{children}</div>}
@@ -286,7 +287,7 @@ export function SelectRow({
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {current?.label ?? value}
           </span>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }}>▾</span>
+          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {open && (
