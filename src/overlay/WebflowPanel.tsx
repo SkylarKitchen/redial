@@ -1058,6 +1058,64 @@ const ALIGN_SELF_OPTIONS = [
   { value: "baseline", label: "Baseline" },
 ];
 
+// Direction icons reduced to row + column + wrap, with reverse in dropdown
+const DIRECTION_ICONS_SHORT = [
+  {
+    value: "row",
+    title: "Row",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <line x1="2" y1="7" x2="10" y2="7" stroke="currentColor" strokeWidth="1.4" />
+        <polyline points="8,4.5 10.5,7 8,9.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: "column",
+    title: "Column",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <line x1="7" y1="2" x2="7" y2="10" stroke="currentColor" strokeWidth="1.4" />
+        <polyline points="4.5,8 7,10.5 9.5,8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    value: "__wrap__",
+    title: "Wrap",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 14 14">
+        <polyline points="2,4 8,4 10,4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M10,4 C12,4 12,7 10,7 L4,7" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <polyline points="6,5 4,7 6,9" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+];
+
+const DIRECTION_MORE_OPTIONS = [
+  { value: "row-reverse", label: "Row Reverse" },
+  { value: "column-reverse", label: "Column Reverse" },
+];
+
+// X/Y alignment dropdowns for the Align row
+const JUSTIFY_OPTIONS = [
+  { value: "flex-start", label: "Start" },
+  { value: "center", label: "Center" },
+  { value: "flex-end", label: "End" },
+  { value: "space-between", label: "Between" },
+  { value: "space-around", label: "Around" },
+  { value: "space-evenly", label: "Evenly" },
+];
+
+const ALIGN_ITEMS_OPTIONS = [
+  { value: "flex-start", label: "Top" },
+  { value: "center", label: "Center" },
+  { value: "flex-end", label: "Bottom" },
+  { value: "stretch", label: "Stretch" },
+  { value: "baseline", label: "Baseline" },
+];
+
 // ─── Main Component ──────────────────────────────────────────────────
 
 export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange }: WebflowPanelProps) {
@@ -1544,22 +1602,59 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
         {isFlex && (
           <>
-            <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-                Direction
-              </span>
-              <IconButtonGroup options={FLEX_DIRECTION_ICONS} value={flexDirection} onChange={handleFlexDirectionChange} />
+            {/* Direction row: row/column/wrap icons + dropdown for reverse */}
+            <DirectionRow
+              direction={flexDirection}
+              wrap={flexWrap}
+              onDirectionChange={handleFlexDirectionChange}
+              onWrapChange={handleFlexWrapChange}
+            />
+
+            {/* Align row: 3x3 grid + X/Y dropdowns side-by-side */}
+            <div style={{ padding: "4px 12px", display: "flex", alignItems: "flex-start", gap: "8px" }}>
+              <span style={{ width: "48px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "6px" }}>Align</span>
+              <div style={{ flexShrink: 0 }}>
+                <AlignBox justify={justifyContent} align={alignItems} onChange={handleAlignChange} mode="flex" compact />
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px", paddingTop: "2px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>X</span>
+                  <MiniDropdown
+                    value={flexDirection.startsWith("column") ? alignItems : justifyContent}
+                    options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
+                    onChange={(v) => {
+                      if (flexDirection.startsWith("column")) {
+                        setAlignItems(v); apply("align-items", v);
+                      } else {
+                        setJustifyContent(v); apply("justify-content", v);
+                      }
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>Y</span>
+                  <MiniDropdown
+                    value={flexDirection.startsWith("column") ? justifyContent : alignItems}
+                    options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
+                    onChange={(v) => {
+                      if (flexDirection.startsWith("column")) {
+                        setJustifyContent(v); apply("justify-content", v);
+                      } else {
+                        setAlignItems(v); apply("align-items", v);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <div style={{ padding: "6px 12px" }}>
-              <AlignBox
-                justify={justifyContent}
-                align={alignItems}
-                onChange={handleAlignChange}
-                mode="flex"
-              />
-            </div>
-            <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} indicator={getIndicatorType(element, "flex-wrap")} />
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
+
+            {/* Gap row: swatch + slider + value + unit + lock */}
+            <GapRow
+              value={gap}
+              unit={gapUnit}
+              onChange={handleGapChange}
+              onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }}
+            />
           </>
         )}
 
