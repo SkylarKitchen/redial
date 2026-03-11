@@ -85,8 +85,7 @@ export function Overlay() {
   }, []);
 
   // Tab state: "common" (flat simplified view) or "custom" (full WebflowPanel)
-  type TabId = "common" | "custom";
-  const [activeTab, setActiveTab] = useState<TabId>("common");
+  const [activeTab, setActiveTab] = useState<"common" | "custom">("common");
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
