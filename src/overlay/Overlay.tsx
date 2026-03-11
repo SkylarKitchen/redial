@@ -701,7 +701,6 @@ export function Overlay() {
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
-          ref={panelScrollRef}
           className="__tuner-root"
           style={{
             position: "fixed",
@@ -709,8 +708,9 @@ export function Overlay() {
             left: pos.x,
             width: 300,
             maxHeight: "85vh",
-            overflowY: "auto",
-            overflowX: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             zIndex: 2147483647,
             background: "#1e1e1e",
             borderRadius: "10px",
@@ -739,27 +739,38 @@ export function Overlay() {
             onStateChange={setActiveState}
           />
           <div
+            ref={panelScrollRef}
+            className="__tuner-root"
             style={{
-              padding: "4px 0",
-              pointerEvents: diffMode ? "none" : "auto",
-              opacity: diffMode ? 0.6 : 1,
-              transition: "opacity 150ms",
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "hidden",
+              minHeight: 0,
             }}
           >
-            <PanelErrorBoundary onError={handleClose}>
-              <WebflowPanel
-                key={panelKey}
-                element={selectedEl}
-                spacing={inferResult.spacing}
-                onSpacingChange={handleSpacingChange}
-                onDirtyChange={handleDirtyChange}
-              />
-            </PanelErrorBoundary>
+            <div
+              style={{
+                padding: "4px 0",
+                pointerEvents: diffMode ? "none" : "auto",
+                opacity: diffMode ? 0.6 : 1,
+                transition: "opacity 150ms",
+              }}
+            >
+              <PanelErrorBoundary onError={handleClose}>
+                <WebflowPanel
+                  key={panelKey}
+                  element={selectedEl}
+                  spacing={inferResult.spacing}
+                  onSpacingChange={handleSpacingChange}
+                  onDirtyChange={handleDirtyChange}
+                />
+              </PanelErrorBoundary>
+            </div>
+            <SessionDrawer
+              open={sessionOpen}
+              onResetAll={handleResetAll}
+            />
           </div>
-          <SessionDrawer
-            open={sessionOpen}
-            onResetAll={handleResetAll}
-          />
           <Footer
             element={selectedEl}
             onReset={handleReset}

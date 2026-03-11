@@ -17,6 +17,8 @@ export interface LabelScrubProps {
   onChange: (value: number) => void;
   onScrubStart?: () => void;
   onScrubEnd?: () => void;
+  /** Called on a plain click (pointer up without exceeding dead zone) */
+  onClick?: () => void;
   step?: number;
   min?: number;
   max?: number;
