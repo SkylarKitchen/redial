@@ -762,7 +762,7 @@ function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string)
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Display</span>
+      <span style={{ fontSize: "11px", flexShrink: 0, ...(value !== "block" ? { background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)", borderRadius: "3px", padding: "2px 6px" } : { color: "rgba(255,255,255,0.5)", width: "64px" }) }}>Display</span>
       <div ref={containerRef} style={{ display: "flex", flex: 1, position: "relative" }}>
         <div style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
           {DISPLAY_TABS.map((tab) => {
@@ -1796,9 +1796,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </div>
           {showTypoAdvanced && (
             <>
-              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setWordSpacingUnit} onChange={handleWordSpacingChange} />
+              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(wordSpacing, wordSpacingUnit, u, conversionCtx); setWordSpacing(c); setWordSpacingUnit(u); apply("word-spacing", `${c}${u}`); }} onChange={handleWordSpacingChange} />
               <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
-              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={setTextIndentUnit} onChange={handleTextIndentChange} />
+              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, conversionCtx); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }} onChange={handleTextIndentChange} />
               <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
               <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
             </>
@@ -1821,7 +1821,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={getIndicatorType(element, "border-style")} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={setBorderWidthUnit} onChange={handleBorderWidthChange} indicator={getIndicatorType(element, "border-width")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, conversionCtx); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} indicator={getIndicatorType(element, "border-width")} />
         <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={getIndicatorType(element, "border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
