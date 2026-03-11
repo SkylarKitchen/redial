@@ -9,6 +9,7 @@ import React, { useState, useCallback, useRef, useEffect, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -175,6 +176,8 @@ export function SliderRow({
       </LabelScrub>
       <input
         type="range"
+        className="tuner-focusable"
+        tabIndex={0}
         min={min}
         max={max}
         step={step}
@@ -251,6 +254,8 @@ export function SelectRow({
       </span>
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
+          className="tuner-focusable"
+          tabIndex={0}
           onClick={() => setOpen((o) => !o)}
           onFocus={onFocusRing}
           onBlur={onBlurRing}
@@ -380,6 +385,8 @@ export function ColorRow({
         />
         <input
           type="color"
+          className="tuner-focusable"
+          tabIndex={0}
           value={value === "transparent" ? "#000000" : value}
           onChange={(e) => onChange(e.target.value)}
           style={{
@@ -415,7 +422,7 @@ export function TextRow({ label, value, placeholder, onChange }: {
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
       <input
-        type="text" value={value} placeholder={placeholder}
+        type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{

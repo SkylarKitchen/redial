@@ -24,6 +24,8 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
+import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -375,389 +377,6 @@ const TEXT_TRANSFORM_OPTIONS = [
   },
 ];
 
-// ─── Shared Inline Components ────────────────────────────────────────
-
-function Section({
-  title,
-  collapsed,
-  children,
-}: {
-  title: string;
-  collapsed?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(!collapsed);
-  return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{
-          padding: "10px 12px 6px",
-          cursor: "pointer",
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
-          {title}
-        </span>
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-          {open ? "\u25BE" : "\u25B8"}
-        </span>
-      </div>
-      {open && <div style={{ paddingBottom: "8px" }}>{children}</div>}
-    </div>
-  );
-}
-
-function ValueInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [draft, setDraft] = useState(String(value));
-  const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) onChange(parsed);
-  }, [draft, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        const direction = e.key === "ArrowUp" ? 1 : -1;
-        onChange(Math.round((value + step * direction) * 10) / 10);
-      }
-    },
-    [commit, value, onChange]
-  );
-
-  return (
-    <input
-      value={focused ? draft : String(value)}
-      onChange={(e) => setDraft(e.target.value)}
-      onFocus={() => setFocused(true)}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
-      style={{
-        width: "40px",
-        background: "rgba(255,255,255,0.06)",
-        border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "2px",
-        color: "rgba(255,255,255,0.8)",
-        fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        textAlign: "center",
-        padding: "2px",
-        outline: "none",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-function SliderRow({
-  label,
-  value,
-  min,
-  max,
-  step,
-  unit,
-  units,
-  onUnitChange,
-  onChange,
-  indicator,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  unit: string;
-  /** If provided, shows a UnitSelector dropdown instead of a static unit label */
-  units?: string[];
-  onUnitChange?: (unit: string) => void;
-  onChange: (value: number) => void;
-  indicator?: IndicatorType;
-}) {
-  const pct = ((value - min) / (max - min)) * 100;
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max}>
-        <span
-          style={{
-            width: "64px",
-            fontSize: "11px",
-            color: "rgba(255,255,255,0.5)",
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          {indicator && <StyleIndicator type={indicator} />}
-          {label}
-        </span>
-      </LabelScrub>
-      <input
-        type="range"
-        className="tuner-focusable"
-        tabIndex={0}
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        style={{
-          flex: 1,
-          height: "3px",
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          borderRadius: "2px",
-          outline: "none",
-          cursor: "pointer",
-        }}
-      />
-      <ValueInput value={value} onChange={onChange} />
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
-      ) : unit ? (
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function SelectRow({
-  label,
-  value,
-  options,
-  onChange,
-  indicator,
-}: {
-  label: string;
-  value: string;
-  options: Array<{ value: string; label: string }>;
-  onChange: (value: string) => void;
-  indicator?: IndicatorType;
-}) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const current = options.find((o) => o.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
-      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
-        <button
-          className="tuner-focusable"
-          tabIndex={0}
-          onClick={() => setOpen((o) => !o)}
-          style={{
-            width: "100%",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "3px",
-            color: "rgba(255,255,255,0.8)",
-            fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            padding: "0 6px",
-            cursor: "pointer",
-            outline: "none",
-            transition: "background 80ms",
-          }}
-          onMouseEnter={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-          }}
-          onMouseLeave={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-          }}
-        >
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {current?.label ?? value}
-          </span>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }}>▾</span>
-        </button>
-
-        {open && (
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              minWidth: "100%",
-              maxHeight: "180px",
-              overflowY: "auto",
-              background: "#2a2a2a",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "4px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-              zIndex: 200,
-              padding: "2px 0",
-            }}
-          >
-            {options.map((opt) => {
-              const isActive = opt.value === value;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : "transparent",
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    transition: "background 60ms",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-                  }}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ColorRow({
-  label,
-  value,
-  onChange,
-  indicator,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  indicator?: IndicatorType;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
-      <div style={{ position: "relative", width: "24px", height: "24px", flexShrink: 0 }}>
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "4px",
-            background: value === "transparent" ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px" : value,
-            border: "1px solid rgba(255,255,255,0.15)",
-          }}
-        />
-        <input
-          type="color"
-          className="tuner-focusable"
-          tabIndex={0}
-          value={value === "transparent" ? "#000000" : value}
-          onChange={(e) => onChange(e.target.value)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            cursor: "pointer",
-            width: "24px",
-            height: "24px",
-          }}
-        />
-      </div>
-      <span
-        style={{
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(255,255,255,0.5)",
-        }}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function TextRow({ label, value, placeholder, onChange }: {
-  label: string; value: string; placeholder?: string; onChange: (value: string) => void;
-}) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
-      <input
-        type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{
-          flex: 1, height: "24px", background: "rgba(255,255,255,0.06)",
-          border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none",
-        }}
-      />
-    </div>
-  );
-}
 
 // ─── Display Tabs ───────────────────────────────────────────────────
 
@@ -1336,7 +955,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
-  const [conversionCtx] = useState(() => buildConversionContext(element));
+  /** Build fresh conversion context on demand (not cached — avoids stale font-size/parent dims) */
+  const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
 
   // Inject :focus-visible styles for keyboard navigation
   useEffect(() => {
@@ -1927,7 +1547,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               value={gap}
               unit={gapUnit}
               onChange={handleGapChange}
-              onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }}
+              onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }}
             />
           </>
         )}
@@ -1947,7 +1567,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             {gapLocked ? (
               <div style={{ display: "flex", alignItems: "center" }}>
                 <div style={{ flex: 1 }}>
-                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={ind("gap")} />
+                  <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={ind("gap")} />
                 </div>
                 <button onClick={handleGapLockToggle} title="Unlock row/column gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}>🔗</button>
               </div>
@@ -1972,7 +1592,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             </div>
             <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} indicator={ind("flex-grow")} />
             <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} indicator={ind("flex-shrink")} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, conversionCtx); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} indicator={ind("flex-basis")} />
+            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx()); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} indicator={ind("flex-basis")} />
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={ind("align-self")} />
             <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} indicator={ind("order")} />
           </>
@@ -1989,8 +1609,24 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           paddingUnit={paddingUnit}
           marginUnits={SPACING_UNITS}
           paddingUnits={SPACING_UNITS}
-          onMarginUnitChange={setMarginUnit}
-          onPaddingUnitChange={setPaddingUnit}
+          onMarginUnitChange={(u) => {
+            const ctx = buildConversionContext(element);
+            const sides = ["top", "right", "bottom", "left"] as const;
+            for (const s of sides) {
+              const converted = convertUnit(spacing.margin[s], marginUnit, u, ctx);
+              onSpacingChange(`margin-${s}`, converted, u);
+            }
+            setMarginUnit(u);
+          }}
+          onPaddingUnitChange={(u) => {
+            const ctx = buildConversionContext(element);
+            const sides = ["top", "right", "bottom", "left"] as const;
+            for (const s of sides) {
+              const converted = convertUnit(spacing.padding[s], paddingUnit, u, ctx);
+              onSpacingChange(`padding-${s}`, converted, u);
+            }
+            setPaddingUnit(u);
+          }}
         />
       </Section>
 
@@ -2004,7 +1640,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, conversionCtx, "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }} onChange={handleWidthChange} />
+              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, getConversionCtx(),"width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }} onChange={handleWidthChange} />
             </div>
             <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
           </div>
@@ -2017,12 +1653,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, conversionCtx, "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }} onChange={handleHeightChange} />
+              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, getConversionCtx(),"height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }} onChange={handleHeightChange} />
             </div>
             <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
           </div>
         )}
-        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, conversionCtx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }} onChange={handleMinWidthChange} />
+        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, getConversionCtx(),"width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }} onChange={handleMinWidthChange} />
         {maxWidthNone ? (
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max W</span>
@@ -2031,12 +1667,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, conversionCtx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxWidthChange} />
+              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, getConversionCtx(),"width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxWidthChange} />
             </div>
             <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
           </div>
         )}
-        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, conversionCtx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }} onChange={handleMinHeightChange} />
+        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, getConversionCtx(),"height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }} onChange={handleMinHeightChange} />
         {maxHeightNone ? (
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max H</span>
@@ -2045,7 +1681,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, conversionCtx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxHeightChange} />
+              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, getConversionCtx(),"height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxHeightChange} />
             </div>
             <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
           </div>
@@ -2116,10 +1752,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               availableUnits={POSITION_UNITS}
               onUnitChange={(prop: string, unit: string) => {
                 const axis = (prop === "top" || prop === "bottom") ? "height" as const : "width" as const;
-                if (prop === "top") { const c = convertUnit(top, topUnit, unit, conversionCtx, axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
-                else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, conversionCtx, axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
-                else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, conversionCtx, axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
-                else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, conversionCtx, axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
+                if (prop === "top") { const c = convertUnit(top, topUnit, unit, getConversionCtx(),axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
+                else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, getConversionCtx(),axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
+                else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, getConversionCtx(),axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
+                else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, getConversionCtx(),axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
               }}
             />
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} indicator={ind("z-index")} />
@@ -2133,7 +1769,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {showTypography && (
         <Section title="Typography">
           <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, conversionCtx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }} onChange={handleFontSizeChange} indicator={ind("font-size")} />
+          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, getConversionCtx()); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }} onChange={handleFontSizeChange} indicator={ind("font-size")} />
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
           <SliderRow
             label="Line H"
@@ -2143,11 +1779,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
             unit={lineHeightUnit}
             units={LINE_HEIGHT_UNITS}
-            onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, conversionCtx); setLineHeight(c); } setLineHeightUnit(u); }}
+            onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, getConversionCtx()); setLineHeight(c); } setLineHeightUnit(u); }}
             onChange={handleLineHeightChange}
             indicator={ind("line-height")}
           />
-          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, conversionCtx); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }} onChange={handleLetterSpacingChange} />
+          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, getConversionCtx()); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }} onChange={handleLetterSpacingChange} />
           <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} />
 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -2218,9 +1854,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </div>
           {showTypoAdvanced && (
             <>
-              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(wordSpacing, wordSpacingUnit, u, conversionCtx); setWordSpacing(c); setWordSpacingUnit(u); apply("word-spacing", `${c}${u}`); }} onChange={handleWordSpacingChange} />
+              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(wordSpacing, wordSpacingUnit, u, getConversionCtx()); setWordSpacing(c); setWordSpacingUnit(u); apply("word-spacing", `${c}${u}`); }} onChange={handleWordSpacingChange} />
               <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
-              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, conversionCtx); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }} onChange={handleTextIndentChange} />
+              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, getConversionCtx()); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }} onChange={handleTextIndentChange} />
               <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
               <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
               <SelectRow label="Hyphens" value={hyphens} options={[
@@ -2263,7 +1899,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, conversionCtx); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} indicator={ind("border-width")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} indicator={ind("border-width")} />
         <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
