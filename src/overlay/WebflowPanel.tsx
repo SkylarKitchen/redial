@@ -731,6 +731,22 @@ const FONT_WEIGHT_OPTIONS = [
   { value: "900", label: "900 - Black" },
 ];
 
+const WHITE_SPACE_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "nowrap", label: "No Wrap" },
+  { value: "pre", label: "Pre" },
+  { value: "pre-wrap", label: "Pre Wrap" },
+  { value: "pre-line", label: "Pre Line" },
+  { value: "break-spaces", label: "Break Spaces" },
+];
+
+const WORD_BREAK_OPTIONS = [
+  { value: "normal", label: "Normal" },
+  { value: "break-all", label: "Break All" },
+  { value: "keep-all", label: "Keep All" },
+  { value: "break-word", label: "Break Word" },
+];
+
 const FLOAT_OPTIONS = [
   { value: "none", label: "None" },
   { value: "left", label: "Left" },
