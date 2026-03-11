@@ -906,6 +906,10 @@ const SIZE_UNITS_W = ["px", "%", "vw", "em", "rem", "ch"];
 const SIZE_UNITS_H = ["px", "%", "vh", "em", "rem"];
 const POSITION_UNITS = ["px", "%", "vw", "vh"];
 const TYPO_SIZE_UNITS = ["px", "em", "rem"];
+const LAYOUT_UNITS = ["px", "%", "em", "rem"];
+const BORDER_UNITS = ["px", "em", "rem"];
+const SPACING_UNITS = ["px", "%", "em", "rem"];
+const LINE_HEIGHT_UNITS = ["—", "px", "em", "%"];
 
 const OVERFLOW_OPTIONS = [
   { value: "visible", label: "Visible" },
@@ -1080,6 +1084,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [alignSelf, setAlignSelf] = useState(() => cs.alignSelf);
   const [flexOrder, setFlexOrder] = useState(() => parseNum(cs.order));
 
+  // Layout units
+  const [gapUnit, setGapUnit] = useState("px");
+  const [flexBasisUnit, setFlexBasisUnit] = useState("px");
+
   // ── Size state ──
   const [width, setWidth] = useState(() => parseNum(cs.width));
   const [height, setHeight] = useState(() => parseNum(cs.height));
@@ -1154,6 +1162,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     });
   }, []);
   const FONT_OPTIONS = [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f }));
+  const [lineHeightUnit, setLineHeightUnit] = useState("—");
+  const [wordSpacingUnit, setWordSpacingUnit] = useState("px");
+  const [textIndentUnit, setTextIndentUnit] = useState("px");
   const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
   const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
   const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
@@ -1183,6 +1194,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [radiusTR, setRadiusTR] = useState(() => parseNum(cs.borderTopRightRadius));
   const [radiusBR, setRadiusBR] = useState(() => parseNum(cs.borderBottomRightRadius));
   const [radiusBL, setRadiusBL] = useState(() => parseNum(cs.borderBottomLeftRadius));
+  const [radiusUnit, setRadiusUnit] = useState("px");
+  const [borderWidthUnit, setBorderWidthUnit] = useState("px");
   const [radiusLinked, setRadiusLinked] = useState(() => {
     const tl = parseNum(cs.borderTopLeftRadius);
     const tr = parseNum(cs.borderTopRightRadius);
@@ -1205,6 +1218,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [cursor, setCursor] = useState(() => cs.cursor);
   const [pointerEvents, setPointerEvents] = useState(() => cs.pointerEvents);
   const [visibility, setVisibility] = useState(() => cs.visibility);
+
+  // Spacing units
+  const [marginUnit, setMarginUnit] = useState("px");
+  const [paddingUnit, setPaddingUnit] = useState("px");
 
   // ── Derived flags ──
   const isFlex = display === "flex" || display === "inline-flex";
@@ -1268,9 +1285,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleGapChange = useCallback(
     (v: number) => {
       setGap(v);
-      apply("gap", `${v}px`);
+      apply("gap", `${v}${gapUnit}`);
     },
-    [apply]
+    [apply, gapUnit]
   );
 
   const handleGridColsChange = useCallback(
@@ -1301,9 +1318,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleFlexBasisChange = useCallback(
     (v: number) => {
       setFlexBasis(v);
-      apply("flex-basis", `${v}px`);
+      apply("flex-basis", `${v}${flexBasisUnit}`);
     },
-    [apply]
+    [apply, flexBasisUnit]
   );
 
   const handleAlignSelfChange = useCallback(
@@ -1372,7 +1389,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   // Typography
   const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
   const handleFontWeightChange = useCallback((v: string) => { setFontWeight(v); apply("font-weight", v); }, [apply]);
-  const handleLineHeightChange = useCallback((v: number) => { setLineHeight(v); apply("line-height", String(v)); }, [apply]);
+  const handleLineHeightChange = useCallback((v: number) => {
+    setLineHeight(v);
+    if (lineHeightUnit === "—") apply("line-height", String(v));
+    else if (lineHeightUnit === "%") apply("line-height", `${v}%`);
+    else apply("line-height", `${v}${lineHeightUnit}`);
+  }, [apply, lineHeightUnit]);
   const handleLetterSpacingChange = useCallback((v: number) => { setLetterSpacing(v); apply("letter-spacing", `${v}${letterSpacingUnit}`); }, [apply, letterSpacingUnit]);
   const handleColorChange = useCallback((v: string) => { setColor(v); apply("color", v); }, [apply]);
   const handleTextAlignChange = useCallback((v: string) => { setTextAlign(v); apply("text-align", v); }, [apply]);
@@ -1385,9 +1407,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   }, [fontStyle, apply]);
   const handleFontFamilyChange = useCallback((v: string) => { setFontFamily(v); apply("font-family", v); }, [apply]);
 
-  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}px`); }, [apply]);
+  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}${wordSpacingUnit}`); }, [apply, wordSpacingUnit]);
   const handleWhiteSpaceChange = useCallback((v: string) => { setWhiteSpace(v); apply("white-space", v); }, [apply]);
-  const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}px`); }, [apply]);
+  const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}${textIndentUnit}`); }, [apply, textIndentUnit]);
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
 
@@ -1442,8 +1464,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleBorderWidthChange = useCallback((v: number) => {
     setBorderWidth(v);
     const prop = borderSide === "all" ? "border-width" : `border-${borderSide}-width`;
-    apply(prop, `${v}px`);
-  }, [apply, borderSide]);
+    apply(prop, `${v}${borderWidthUnit}`);
+  }, [apply, borderSide, borderWidthUnit]);
   const handleBorderColorChange = useCallback((v: string) => {
     setBorderColor(v);
     const prop = borderSide === "all" ? "border-color" : `border-${borderSide}-color`;
@@ -1451,13 +1473,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   }, [apply, borderSide]);
   const handleCornerChange = useCallback(
     (corner: string, value: number) => {
-      apply(corner, `${value}px`);
+      apply(corner, `${value}${radiusUnit}`);
       if (corner === "border-top-left-radius") setRadiusTL(value);
       else if (corner === "border-top-right-radius") setRadiusTR(value);
       else if (corner === "border-bottom-right-radius") setRadiusBR(value);
       else if (corner === "border-bottom-left-radius") setRadiusBL(value);
     },
-    [apply]
+    [apply, radiusUnit]
   );
 
   // Effects
@@ -1537,7 +1559,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               />
             </div>
             <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} indicator={getIndicatorType(element, "flex-wrap")} />
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={setGapUnit} onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
           </>
         )}
 
@@ -1553,7 +1575,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="grid"
               />
             </div>
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={setGapUnit} onChange={handleGapChange} />
           </>
         )}
 
