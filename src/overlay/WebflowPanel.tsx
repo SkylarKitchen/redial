@@ -1201,17 +1201,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                   <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Width</div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden", padding: "0 6px", gap: "6px" }}>
-                    <div
-                      style={{ width: "16px", height: "16px", borderRadius: "2px", background: textStrokeColor, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0, cursor: "pointer" }}
-                      onClick={() => {
-                        const input = document.createElement("input");
-                        input.type = "color";
-                        input.value = textStrokeColor;
-                        input.addEventListener("input", (e) => handleTextStrokeColorChange((e.target as HTMLInputElement).value));
-                        input.click();
-                      }}
-                    />
+                  <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden", padding: "0 6px", gap: "6px", position: "relative" }}>
+                    <label style={{ width: "16px", height: "16px", borderRadius: "2px", background: textStrokeColor, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0, cursor: "pointer", display: "block" }}>
+                      <input
+                        type="color"
+                        value={textStrokeColor}
+                        onChange={(e) => handleTextStrokeColorChange(e.target.value)}
+                        style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
+                      />
+                    </label>
                     <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {textStrokeColor}
                     </span>

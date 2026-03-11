@@ -18,7 +18,7 @@ export function parseNum(val: string): number {
 
 /** Extract the CSS unit suffix from a value string (e.g., "16px" → "px", "50%" → "%"). */
 export function extractUnit(value: string, fallback: string = "px"): string {
-  const match = value.trim().match(/^-?[\d.]+(\w+|%)$/);
+  const match = value.trim().match(/^-?[\d.]+([a-zA-Z]+|%)$/);
   return match?.[1] ?? fallback;
 }
 
