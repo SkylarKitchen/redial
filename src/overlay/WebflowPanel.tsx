@@ -1470,7 +1470,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     const v = cs.columnCount;
     return v === "auto" ? 1 : parseNum(cs.columnCount);
   });
-  const [hyphens, setHyphens] = useState(() => (cs as any).hyphens || "none");
+  const [hyphens, setHyphens] = useState(() => cs.getPropertyValue("hyphens") || "none");
   const [direction, setDirection] = useState(() => cs.direction || "ltr");
   const [typoColumnGap, setTypoColumnGap] = useState(() => parseNum(cs.columnGap));
   const [textShadows, setTextShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.textShadow || "none"));
@@ -1484,7 +1484,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     }
     return [];
   });
-  const [bgClip, setBgClip] = useState(() => (cs as any).backgroundClip || "border-box");
+  const [bgClip, setBgClip] = useState(() => cs.getPropertyValue("background-clip") || "border-box");
 
   // ── Border state ──
   const [borderSide, setBorderSide] = useState<"all" | "top" | "right" | "bottom" | "left">("all");
