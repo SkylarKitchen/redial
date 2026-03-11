@@ -17,7 +17,7 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
-import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
+import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
 import { buildBreadcrumb, getStableSelector } from "./util";
 
 import { onHmrUpdate } from "./hmr";
@@ -85,6 +85,9 @@ export function Overlay() {
 
   // State selector
   const [activeState, setActiveState] = useState("none");
+
+  // Style clipboard message
+  const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
 
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
@@ -175,6 +178,31 @@ export function Overlay() {
           // Re-infer to update panel values
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
+        }
+        return;
+      }
+
+      // Cmd+Alt+C for copy styles to clipboard
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.altKey && e.key === "c") {
+        e.preventDefault();
+        e.stopPropagation();
+        const count = copyStyles(selectedEl);
+        if (count > 0) {
+          setClipboardMessage(`${count} style${count === 1 ? "" : "s"} copied`);
+        }
+        return;
+      }
+
+      // Cmd+Alt+V for paste styles from clipboard
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.altKey && e.key === "v") {
+        if (diffMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const count = pasteStyles(selectedEl);
+        if (count > 0) {
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+          setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
         }
         return;
       }

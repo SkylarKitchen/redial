@@ -10,6 +10,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { hexToRgba } from "./colorUtils";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
@@ -431,7 +432,9 @@ export function ColorRow({
         >
           <ColorPickerEnhanced
             color={value === "transparent" ? "#000000" : value}
-            onChange={(hex) => onChange(hex)}
+            onChange={(hex, opacity) => {
+              onChange(opacity < 1 ? hexToRgba(hex, opacity) : hex);
+            }}
             onClose={() => setPickerOpen(false)}
           />
         </div>

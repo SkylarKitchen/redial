@@ -129,10 +129,14 @@ export function ColorPickerEnhanced({
     [onChange],
   );
 
+  // ─── Drag state (suppresses click-outside during drag) ──────
+  const isDraggingRef = useRef(false);
+
   // ─── Click-outside dismissal ─────────────────────────────────
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      if (isDraggingRef.current) return;
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -195,9 +199,11 @@ export function ColorPickerEnhanced({
       onMove: (clientX: number, clientY: number) => void,
       e: React.MouseEvent,
     ) => {
+      isDraggingRef.current = true;
       onMove(e.clientX, e.clientY);
       const move = (ev: MouseEvent) => onMove(ev.clientX, ev.clientY);
       const up = () => {
+        isDraggingRef.current = false;
         document.removeEventListener("mousemove", move);
         document.removeEventListener("mouseup", up);
       };
