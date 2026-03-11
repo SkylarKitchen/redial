@@ -48,9 +48,33 @@ function rgbToHex(rgb: string): string {
   );
 }
 
-/** Simple inline-style-only indicator: pink dot if property has an inline override */
-function getIndicatorType(el: Element, prop: string): IndicatorType {
-  return (el as HTMLElement).style.getPropertyValue(prop) !== "" ? "element" : "none";
+/** CSS properties that are inherited by default */
+const INHERITABLE_PROPERTIES = new Set([
+  "color", "font-family", "font-size", "font-style", "font-weight", "font-variant",
+  "line-height", "letter-spacing", "word-spacing", "text-align", "text-indent",
+  "text-transform", "text-decoration", "white-space", "word-break", "word-wrap",
+  "direction", "visibility", "cursor", "list-style", "list-style-type", "quotes",
+  "hyphens", "tab-size", "text-shadow",
+]);
+
+/** Determine indicator type for a given CSS property on an element.
+ *  - "element" (pink): inline style override present
+ *  - "inherited" (orange): inheritable property differs from parent's computed value
+ *  - "none": default / no special indicator
+ */
+function getIndicatorType(
+  el: Element,
+  prop: string,
+  cs?: CSSStyleDeclaration,
+  parentCs?: CSSStyleDeclaration | null,
+): IndicatorType {
+  if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "element";
+  if (INHERITABLE_PROPERTIES.has(prop) && parentCs) {
+    const computedValue = cs?.getPropertyValue(prop) ?? "";
+    const parentValue = parentCs.getPropertyValue(prop);
+    if (computedValue !== parentValue) return "inherited";
+  }
+  return "none";
 }
 
 function parseNum(val: string): number {
