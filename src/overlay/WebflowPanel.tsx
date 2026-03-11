@@ -44,6 +44,7 @@ import {
   BORDER_STYLE_OPTIONS, BLEND_MODE_OPTIONS, FALLBACK_FONTS,
   CURSOR_OPTIONS, POINTER_EVENTS_OPTIONS, VISIBILITY_OPTIONS,
   ALIGN_SELF_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS,
+  BG_CLIP_OPTIONS, USER_SELECT_OPTIONS, BACKFACE_OPTIONS, BOX_SIZING_OPTIONS,
 } from "./panelConstants";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
 import { ChevronRight, Link } from "lucide-react";
@@ -970,10 +971,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Box Size</span>
               <IconButtonGroup
-                options={[
-                  { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
-                  { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
-                ]}
+                options={BOX_SIZING_OPTIONS}
                 value={boxSizing}
                 onChange={handleBoxSizingChange}
               />
@@ -1255,12 +1253,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} />
         )}
-        <SelectRow label="Clip" value={bgClip} options={[
-          { value: "border-box", label: "Border Box" },
-          { value: "padding-box", label: "Padding Box" },
-          { value: "content-box", label: "Content Box" },
-          { value: "text", label: "Text" },
-        ]} onChange={handleBgClipChange} indicator={ind("background-clip")} />
+        <SelectRow label="Clip" value={bgClip} options={BG_CLIP_OPTIONS} onChange={handleBgClipChange} indicator={ind("background-clip")} />
       </Section>
 
       {/* 7. Borders */}
@@ -1326,17 +1319,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} />
         <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} />
         <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
-        <SelectRow label="User Sel" value={userSelect} options={[
-          { value: "auto", label: "Auto" },
-          { value: "none", label: "None" },
-          { value: "text", label: "Text" },
-          { value: "all", label: "All" },
-        ]} onChange={handleUserSelectChange} indicator={ind("user-select")} />
+        <SelectRow label="User Sel" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} />
         <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} indicator={ind("perspective")} />
-        <SelectRow label="Backface" value={backfaceVisibility} options={[
-          { value: "visible", label: "Visible" },
-          { value: "hidden", label: "Hidden" },
-        ]} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
+        <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
       </Section>
     </div>
   );

@@ -174,6 +174,17 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Removed phantom imports (`BG_CLIP_OPTIONS`, `USER_SELECT_OPTIONS`, `BACKFACE_OPTIONS`, `BOX_SIZING_OPTIONS`) that were never exported from `panelConstants.tsx`
 - Typecheck: PASS
 
+### Iteration 20 — Color picker HSB/RGB/Hex mode toggle (2026-03-11)
+- Added `colorMode` state (`"hex" | "rgb" | "hsb"`) to `ColorPickerEnhanced`
+- Clickable mode label cycles through modes (hex → hsb → rgb → hex)
+- **Hex mode**: single text input for `#RRGGBB` (existing behavior)
+- **RGB mode**: three inline inputs (R/G/B, 0–255) that update HSB state + canvas in real-time
+- **HSB mode**: three inline inputs (H: 0–360°, S: 0–100%, B: 0–100%) for direct HSB editing
+- Added `applyRgbChannel()` and `applyHsbChannel()` handlers with clamping
+- Mode label shows hover highlight and "Click to switch color mode" tooltip
+- Opacity display remains constant across all modes
+- Typecheck: PASS
+
 ---
 
 ## Done

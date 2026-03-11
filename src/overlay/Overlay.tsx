@@ -613,6 +613,27 @@ export function Overlay() {
     };
   }, [selectedEl]);
 
+  // --- Click-to-switch: clicking a page element while panel is open re-selects ---
+  useEffect(() => {
+    if (!selectedEl || selecting) return;
+
+    const handlePageClick = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (target.closest(".__tuner-root")) return;
+      if (target.closest(".__tuner-selected-outline")) return;
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el || el.closest(".__tuner-root")) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      handleSelect(el);
+    };
+
+    document.addEventListener("click", handlePageClick, true);
+    return () => document.removeEventListener("click", handlePageClick, true);
+  }, [selectedEl, selecting, handleSelect]);
+
   return (
     <>
       {/* Scoped scrollbar styles for the tuner panel */}

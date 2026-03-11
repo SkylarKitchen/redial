@@ -36,6 +36,62 @@ describe("parseNum", () => {
   });
 });
 
+// ─── extractUnit ──────────────────────────────────────────────────────
+
+describe("extractUnit", () => {
+  it("extracts px from pixel values", () => {
+    expect(extractUnit("16px")).toBe("px");
+  });
+
+  it("extracts em from em values", () => {
+    expect(extractUnit("1.5em")).toBe("em");
+  });
+
+  it("extracts rem from rem values", () => {
+    expect(extractUnit("2rem")).toBe("rem");
+  });
+
+  it("extracts % from percentage values", () => {
+    expect(extractUnit("50%")).toBe("%");
+  });
+
+  it("extracts vw and vh", () => {
+    expect(extractUnit("100vw")).toBe("vw");
+    expect(extractUnit("80vh")).toBe("vh");
+  });
+
+  it("handles negative values", () => {
+    expect(extractUnit("-10px")).toBe("px");
+    expect(extractUnit("-0.5em")).toBe("em");
+  });
+
+  it("handles decimal values", () => {
+    expect(extractUnit("0.875rem")).toBe("rem");
+    expect(extractUnit(".5em")).toBe("em");
+  });
+
+  it("returns fallback for keyword values", () => {
+    expect(extractUnit("auto")).toBe("px");
+    expect(extractUnit("none")).toBe("px");
+    expect(extractUnit("inherit")).toBe("px");
+  });
+
+  it("returns fallback for unitless numbers", () => {
+    expect(extractUnit("1.5", "—")).toBe("—");
+    expect(extractUnit("0", "px")).toBe("px");
+  });
+
+  it("returns custom fallback", () => {
+    expect(extractUnit("auto", "em")).toBe("em");
+    expect(extractUnit("normal", "—")).toBe("—");
+  });
+
+  it("handles whitespace", () => {
+    expect(extractUnit("  16px  ")).toBe("px");
+    expect(extractUnit(" 2rem ")).toBe("rem");
+  });
+});
+
 // ─── parseBoxShadow ──────────────────────────────────────────────────
 
 describe("parseBoxShadow", () => {
