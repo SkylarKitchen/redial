@@ -303,6 +303,16 @@ const TEXT_DECORATION_OPTIONS = [
       </svg>
     ),
   },
+  {
+    value: "overline",
+    title: "Overline",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 12 12">
+        <line x1="2" y1="1" x2="10" y2="1" stroke="currentColor" strokeWidth="1" />
+        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="9" fontWeight="bold">O</text>
+      </svg>
+    ),
+  },
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
@@ -674,6 +684,28 @@ function ColorRow({
   );
 }
 
+function TextRow({ label, value, placeholder, onChange }: {
+  label: string; value: string; placeholder?: string; onChange: (value: string) => void;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
+      <input
+        type="text" value={value} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+        style={{
+          flex: 1, height: "24px", background: "rgba(255,255,255,0.06)",
+          border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
+          fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none",
+        }}
+      />
+    </div>
+  );
+}
+
 // ─── Display Options ─────────────────────────────────────────────────
 
 const DISPLAY_OPTIONS = [
@@ -725,6 +757,10 @@ const BORDER_STYLE_OPTIONS = [
   { value: "dashed", label: "Dashed" },
   { value: "dotted", label: "Dotted" },
   { value: "double", label: "Double" },
+  { value: "groove", label: "Groove" },
+  { value: "ridge", label: "Ridge" },
+  { value: "inset", label: "Inset" },
+  { value: "outset", label: "Outset" },
   { value: "none", label: "None" },
 ];
 
@@ -754,9 +790,13 @@ const CURSOR_OPTIONS = [
   { value: "text", label: "Text" },
   { value: "move", label: "Move" },
   { value: "grab", label: "Grab" },
+  { value: "grabbing", label: "Grabbing" },
   { value: "not-allowed", label: "Not Allowed" },
   { value: "crosshair", label: "Crosshair" },
   { value: "wait", label: "Wait" },
+  { value: "help", label: "Help" },
+  { value: "zoom-in", label: "Zoom In" },
+  { value: "zoom-out", label: "Zoom Out" },
   { value: "none", label: "None" },
 ];
 
@@ -824,7 +864,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [maxWidth, setMaxWidth] = useState(() => parseNum(cs.maxWidth === "none" ? "0" : cs.maxWidth));
   const [minHeight, setMinHeight] = useState(() => parseNum(cs.minHeight));
   const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
-  const [overflow, setOverflow] = useState(() => cs.overflow);
+  const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
 
   // Size units
   const [widthUnit, setWidthUnit] = useState("px");
@@ -972,6 +1012,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       setGap(v);
       apply("gap", `${v}px`);
     },
+    [apply]
+  );
+
+  const handleGridColsChange = useCallback(
+    (v: string) => { setGridCols(v); if (v.trim()) apply("grid-template-columns", v); },
+    [apply]
+  );
+  const handleGridRowsChange = useCallback(
+    (v: string) => { setGridRows(v); if (v.trim()) apply("grid-template-rows", v); },
     [apply]
   );
 
@@ -1334,8 +1383,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       </Section>
 
       {/* 8. Effects */}
-      <Section title="Effects" collapsed>
-        <SliderRow label="Opacity" value={opacity} min={0} max={1} step={0.01} unit="" onChange={handleOpacityChange} />
+      <Section title="Effects">
+        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={(v) => handleOpacityChange(v / 100)} />
         <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
