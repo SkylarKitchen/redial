@@ -17,7 +17,7 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
-import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle } from "./apply";
+import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
 import { buildBreadcrumb } from "./util";
 import { ViewportBar } from "./ViewportBar";
 import { onHmrUpdate } from "./hmr";
@@ -98,6 +98,32 @@ export function Overlay() {
   // Panel position (draggable)
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+
+  // --- Keyboard shortcut helpers ---
+  const handleSaveShortcut = useCallback(async () => {
+    if (!selectedEl) return;
+    const changes = diff(selectedEl);
+    if (changes.length === 0) return;
+    try {
+      const res = await fetch("/api/tuner/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ changes }),
+      });
+      if (res.ok) {
+        setInferResult(infer(selectedEl));
+        setPanelKey((k) => k + 1);
+      }
+    } catch {}
+  }, [selectedEl]);
+
+  const handleCopyShortcut = useCallback(() => {
+    if (!selectedEl) return;
+    const changes = diff(selectedEl);
+    if (changes.length === 0) return;
+    const lines = changes.map((c) => `  ${c.prop}: ${c.to};`);
+    navigator.clipboard.writeText(`{\n${lines.join("\n")}\n}`);
+  }, [selectedEl]);
 
   // --- Hotkey: backtick toggles selection ---
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers

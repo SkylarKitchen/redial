@@ -60,7 +60,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
         {/* Margin left / Padding box / Margin right */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={margin.left} onChange={(v) => onChange("margin-left", v)} />
+            <EditableValue value={margin.left} onChange={(v) => onChange("margin-left", v)} onAltClick={() => { onChange("margin-left", margin.left); onChange("margin-right", margin.left); }} />
           </div>
 
           {/* Padding box (inner) */}
@@ -92,13 +92,13 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
 
             {/* Padding top */}
             <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-              <EditableValue value={padding.top} onChange={(v) => onChange("padding-top", v)} />
+              <EditableValue value={padding.top} onChange={(v) => onChange("padding-top", v)} onAltClick={() => { onChange("padding-top", padding.top); onChange("padding-bottom", padding.top); }} />
             </div>
 
             {/* Padding left / content / Padding right */}
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                <EditableValue value={padding.left} onChange={(v) => onChange("padding-left", v)} />
+                <EditableValue value={padding.left} onChange={(v) => onChange("padding-left", v)} onAltClick={() => { onChange("padding-left", padding.left); onChange("padding-right", padding.left); }} />
               </div>
               {/* Content placeholder */}
               <div
@@ -111,7 +111,7 @@ export function SpacingBoxModel({ margin, padding, onChange }: SpacingBoxModelPr
                 }}
               />
               <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                <EditableValue value={padding.right} onChange={(v) => onChange("padding-right", v)} />
+                <EditableValue value={padding.right} onChange={(v) => onChange("padding-right", v)} onAltClick={() => { onChange("padding-left", padding.right); onChange("padding-right", padding.right); }} />
               </div>
             </div>
 

@@ -17,6 +17,7 @@ import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { SpacingBoxModel } from "./SpacingBoxModel";
+import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { LabelScrub } from "./LabelScrub";
@@ -1458,10 +1459,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} />
         {position !== "static" && (
           <>
-            <SliderRow label="Top" value={top} min={-200} max={200} step={1} unit={topUnit} units={POSITION_UNITS} onUnitChange={setTopUnit} onChange={handleTopChange} />
-            <SliderRow label="Right" value={right} min={-200} max={200} step={1} unit={rightUnit} units={POSITION_UNITS} onUnitChange={setRightUnit} onChange={handleRightChange} />
-            <SliderRow label="Bottom" value={bottom} min={-200} max={200} step={1} unit={bottomUnit} units={POSITION_UNITS} onUnitChange={setBottomUnit} onChange={handleBottomChange} />
-            <SliderRow label="Left" value={left} min={-200} max={200} step={1} unit={leftUnit} units={POSITION_UNITS} onUnitChange={setLeftUnit} onChange={handleLeftChange} />
+            <PositionOffsetDiagram
+              top={top}
+              right={right}
+              bottom={bottom}
+              left={left}
+              onChange={(prop, v) => {
+                if (prop === "top") handleTopChange(v);
+                else if (prop === "right") handleRightChange(v);
+                else if (prop === "bottom") handleBottomChange(v);
+                else if (prop === "left") handleLeftChange(v);
+              }}
+            />
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} />
           </>
         )}
