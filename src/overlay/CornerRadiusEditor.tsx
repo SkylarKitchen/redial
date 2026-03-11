@@ -8,6 +8,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
+import { Link, Unlink } from "lucide-react";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -138,31 +139,9 @@ function RadiusInput({
 }
 
 function LinkIcon({ linked }: { linked: boolean }) {
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
-      {linked ? (
-        <>
-          <path
-            d="M3.5 6h5M7 4l1.5 0a2 2 0 0 1 0 4H7M5 4l-1.5 0a2 2 0 0 0 0 4H5"
-            fill="none"
-            stroke="#6366f1"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </>
-      ) : (
-        <>
-          <path
-            d="M7.5 4l1 0a2 2 0 0 1 0 4H7.5M4.5 4l-1 0a2 2 0 0 0 0 4H4.5"
-            fill="none"
-            stroke="rgba(255,255,255,0.35)"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          />
-        </>
-      )}
-    </svg>
-  );
+  return linked
+    ? <Link size={12} strokeWidth={1.5} color="#6366f1" style={{ display: "block" }} />
+    : <Unlink size={12} strokeWidth={1.5} color="rgba(255,255,255,0.35)" style={{ display: "block" }} />;
 }
 
 export function CornerRadiusEditor({
