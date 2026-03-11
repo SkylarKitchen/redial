@@ -1,13 +1,15 @@
 /**
  * panelConstants.tsx — Option/constant arrays extracted from WebflowPanel.tsx
  *
- * Pure refactor — no logic changes. JSX-containing constants require .tsx extension.
+ * JSX-containing constants require .tsx extension.
  */
 
 import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Underline, Strikethrough, Overline,
+  Underline, Strikethrough, Baseline,
   Eye, EyeOff, Scissors, ScrollText,
+  ArrowRight, ArrowDown, WrapText,
+  Italic, X, PilcrowLeft, PilcrowRight,
 } from "lucide-react";
 
 // ─── Text Alignment Icons ────────────────────────────────────────────
@@ -20,15 +22,27 @@ export const TEXT_ALIGN_OPTIONS = [
 ];
 
 export const TEXT_DECORATION_OPTIONS = [
-  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
+  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "line-through", title: "Strikethrough", icon: <Strikethrough size={12} strokeWidth={1.5} /> },
-  { value: "overline", title: "Overline", icon: <Overline size={12} strokeWidth={1.5} /> },
+  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
+  { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
 ];
 
-export const TEXT_TRANSFORM_OPTIONS = [
+export const CAPITALIZE_OPTIONS = [
+  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
   { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
   { value: "lowercase", title: "Lowercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>aa</span> },
+];
+
+export const ITALIC_OPTIONS = [
+  { value: "normal", title: "Normal", icon: <span style={{ fontSize: "12px", fontFamily: "Georgia, serif", lineHeight: 1 }}>I</span> },
+  { value: "italic", title: "Italic", icon: <Italic size={12} strokeWidth={1.5} /> },
+];
+
+export const DIRECTION_OPTIONS = [
+  { value: "ltr", title: "Left to Right", icon: <PilcrowLeft size={12} strokeWidth={1.5} /> },
+  { value: "rtl", title: "Right to Left", icon: <PilcrowRight size={12} strokeWidth={1.5} /> },
 ];
 
 // ─── Font Options ────────────────────────────────────────────────────
@@ -61,6 +75,14 @@ export const WORD_BREAK_OPTIONS = [
   { value: "break-word", label: "Break Word" },
 ];
 
+export const LINE_BREAK_OPTIONS = [
+  { value: "auto", label: "Auto" },
+  { value: "normal", label: "Normal" },
+  { value: "loose", label: "Loose" },
+  { value: "strict", label: "Strict" },
+  { value: "anywhere", label: "Anywhere" },
+];
+
 // ─── Position Options ────────────────────────────────────────────────
 
 export const FLOAT_OPTIONS = [
@@ -85,7 +107,7 @@ export const TYPO_SIZE_UNITS = ["px", "em", "rem"];
 export const LAYOUT_UNITS = ["px", "%", "em", "rem"];
 export const BORDER_UNITS = ["px", "em", "rem"];
 export const SPACING_UNITS = ["px", "%", "em", "rem"];
-export const LINE_HEIGHT_UNITS = ["—", "px", "em", "%"];
+export const LINE_HEIGHT_UNITS = ["\u2014", "px", "em", "%"];
 
 // ─── Overflow / Size Options ─────────────────────────────────────────
 
@@ -190,6 +212,36 @@ export const ALIGN_SELF_OPTIONS = [
   { value: "flex-start", label: "Start" },
   { value: "center", label: "Center" },
   { value: "flex-end", label: "End" },
+  { value: "stretch", label: "Stretch" },
+  { value: "baseline", label: "Baseline" },
+];
+
+// Direction icons reduced to row + column + wrap, with reverse in dropdown
+export const DIRECTION_ICONS_SHORT = [
+  { value: "row", title: "Row", icon: <ArrowRight size={14} strokeWidth={1.8} /> },
+  { value: "column", title: "Column", icon: <ArrowDown size={14} strokeWidth={1.8} /> },
+  { value: "__wrap__", title: "Wrap", icon: <WrapText size={14} strokeWidth={1.8} /> },
+];
+
+export const DIRECTION_MORE_OPTIONS = [
+  { value: "row-reverse", label: "Row Reverse" },
+  { value: "column-reverse", label: "Column Reverse" },
+];
+
+// X/Y alignment dropdowns for the Align row
+export const JUSTIFY_OPTIONS = [
+  { value: "flex-start", label: "Start" },
+  { value: "center", label: "Center" },
+  { value: "flex-end", label: "End" },
+  { value: "space-between", label: "Between" },
+  { value: "space-around", label: "Around" },
+  { value: "space-evenly", label: "Evenly" },
+];
+
+export const ALIGN_ITEMS_OPTIONS = [
+  { value: "flex-start", label: "Top" },
+  { value: "center", label: "Center" },
+  { value: "flex-end", label: "Bottom" },
   { value: "stretch", label: "Stretch" },
   { value: "baseline", label: "Baseline" },
 ];

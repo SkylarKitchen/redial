@@ -91,6 +91,11 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
       if (e.key === "Enter") {
         commit();
         (e.target as HTMLInputElement).blur();
+      } else if (e.key === "Escape") {
+        e.stopPropagation();
+        setDraft(String(value));
+        setFocused(false);
+        (e.target as HTMLInputElement).blur();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         e.stopPropagation();
@@ -495,17 +500,20 @@ export const EditableValue = memo(
         if (e.key === "Enter") {
           commit();
         } else if (e.key === "Escape") {
+          e.stopPropagation();
           setDraft(String(value));
           setEditing(false);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
-          const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+          e.stopPropagation();
+          const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
           const next = Math.round((value + step) * 10) / 10;
           setDraft(String(next));
           onChange(next);
         } else if (e.key === "ArrowDown") {
           e.preventDefault();
-          const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+          e.stopPropagation();
+          const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
           const next = Math.round((value - step) * 10) / 10;
           setDraft(String(next));
           onChange(next);

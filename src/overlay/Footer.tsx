@@ -2,7 +2,7 @@
  * Footer.tsx — Save, Copy, Reset action buttons
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
@@ -22,10 +22,22 @@ interface FooterProps {
   onPasteStyles?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scope = "element", activeClassName }: FooterProps) {
+export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
+  const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Clear timer on unmount to prevent stale setState calls
+  useEffect(() => {
+    return () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); };
+  }, []);
+
+  const showMessage = useCallback((text: string, duration: number) => {
+    if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    setMessage(text);
+    messageTimerRef.current = setTimeout(() => setMessage(null), duration);
+  }, []);
 
   const handleCopy = useCallback(() => {
     const changes = diff(element);
@@ -38,9 +50,8 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
     const scss = `${className} {\n${lines.join("\n")}\n}`;
 
     navigator.clipboard.writeText(scss);
-    setMessage("Copied!");
-    setTimeout(() => setMessage(null), 1500);
-  }, [element]);
+    showMessage("Copied!", 1200);
+  }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
     const changes = diff(element);
@@ -70,25 +81,24 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
       });
 
       if (!res.ok) {
-        setMessage("Save failed");
+        showMessage("Save failed", 2000);
       } else {
         const result = await res.json();
         const written = result.written?.length ?? 0;
         const failed = result.failed?.length ?? 0;
         if (failed > 0) {
-          setMessage(`Saved ${written}, ${failed} failed`);
+          showMessage(`Saved ${written}, ${failed} failed`, 2000);
         } else {
-          setMessage(`Saved ${written} change${written === 1 ? "" : "s"}`);
+          showMessage(`Saved ${written} change${written === 1 ? "" : "s"}`, 2000);
         }
         onSaved?.();
       }
     } catch {
-      setMessage("Save failed — no route?");
+      showMessage("Save failed — no route?", 2000);
     }
 
     setSaving(false);
-    setTimeout(() => setMessage(null), 2000);
-  }, [element, onSaved]);
+  }, [element, onSaved, showMessage]);
 
   const handleReset = useCallback(() => {
     reset(element);
@@ -127,6 +137,13 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
           Copy
         </ActionButton>
         <ActionButton
+          onClick={onPasteStyles ?? (() => {})}
+          disabled={!hasClipboard}
+          title="Paste styles (Cmd+Alt+V)"
+        >
+          Paste
+        </ActionButton>
+        <ActionButton
           onClick={handleSave}
           disabled={count === 0 || saving}
           title="Save to source"
@@ -136,8 +153,8 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
         </ActionButton>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {message && (
-          <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}>{message}</span>
+        {(clipboardMessage || message) && (
+          <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}>{clipboardMessage || message}</span>
         )}
         <ActionButton
           onClick={handleReset}

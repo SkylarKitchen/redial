@@ -7,6 +7,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { BezierEditor } from "./BezierEditor";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface TransitionValue {
   property: string;

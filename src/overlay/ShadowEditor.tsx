@@ -7,6 +7,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface ShadowValue {
   x: number;
@@ -153,11 +155,15 @@ function ShadowRow({
   index,
   onUpdate,
   onDelete,
+  dragHandleProps,
+  isDragging,
 }: {
   shadow: ShadowValue;
   index: number;
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
 }) {
   const colorInputRef = useRef<HTMLInputElement>(null);
   const updateField = useCallback(
@@ -174,8 +180,15 @@ function ShadowRow({
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      {/* Row 1: numeric inputs */}
-      <div style={{ display: "flex", gap: "6px", marginBottom: "4px" }}>
+      {/* Row 1: drag handle + numeric inputs */}
+      <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-end" }}>
+        {dragHandleProps && (
+          <DragHandle
+            isDragging={isDragging}
+            onPointerDown={dragHandleProps.onPointerDown}
+            style={{ alignSelf: "center" }}
+          />
+        )}
         <NumericInput value={shadow.x} label="X" onChange={updateField("x") as (v: number) => void} />
         <NumericInput value={shadow.y} label="Y" onChange={updateField("y") as (v: number) => void} />
         <NumericInput value={shadow.blur} label="Blur" onChange={updateField("blur") as (v: number) => void} />
@@ -272,6 +285,8 @@ function ShadowRow({
 }
 
 export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(shadows, onChange);
+
   const handleAdd = useCallback(() => {
     onChange([...shadows, { ...DEFAULT_SHADOW }]);
   }, [shadows, onChange]);
@@ -293,7 +308,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
   );
 
   return (
-    <div style={{ padding: "4px 12px" }}>
+    <div style={{ padding: "4px 12px", position: "relative" }}>
       {/* Add button */}
       <button
         onClick={handleAdd}
@@ -321,15 +336,27 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
       </button>
 
       {/* Shadow rows */}
-      {shadows.map((shadow, i) => (
-        <ShadowRow
-          key={i}
-          shadow={shadow}
-          index={i}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
-      ))}
+      {shadows.map((shadow, i) => {
+        const dragProps = handleProps(i);
+        return (
+          <div key={i} ref={registerRef(i)} style={itemStyle(i)}>
+            <ShadowRow
+              shadow={shadow}
+              index={i}
+              onUpdate={handleUpdate}
+              onDelete={handleDelete}
+              dragHandleProps={dragProps}
+              isDragging={isDragging}
+            />
+          </div>
+        );
+      })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
 
       {shadows.length === 0 && (
         <div

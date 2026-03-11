@@ -9,6 +9,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
 import { X } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface BackgroundLayer {
   id: string;

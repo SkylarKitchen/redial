@@ -211,6 +211,7 @@ export function Overlay() {
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         e.stopPropagation();
+        if (diffMode) return; // Block save during diff peek (overrides are stripped)
         if (overrideCount(selectedEl) > 0) {
           handleSaveShortcut();
         }
@@ -320,6 +321,24 @@ export function Overlay() {
       document.removeEventListener("keyup", handleKeyUp);
     };
   }, [selectedEl, selecting, diffMode, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+
+  // --- Clipboard message auto-clear ---
+  useEffect(() => {
+    if (!clipboardMessage) return;
+    const timer = setTimeout(() => setClipboardMessage(null), 1500);
+    return () => clearTimeout(timer);
+  }, [clipboardMessage]);
+
+  // --- Paste handler for Footer ---
+  const handlePasteStyles = useCallback(() => {
+    if (!selectedEl || diffMode) return;
+    const count = pasteStyles(selectedEl);
+    if (count > 0) {
+      setInferResult(infer(selectedEl));
+      setPanelKey((k) => k + 1);
+      setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
+    }
+  }, [selectedEl, diffMode]);
 
   // --- Element selection ---
   const handleSelect = useCallback((el: Element) => {
@@ -540,7 +559,7 @@ export function Overlay() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; }";
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };
@@ -727,6 +746,9 @@ export function Overlay() {
             onToggleDiff={handleToggleDiff}
             scope={scope}
             activeClassName={activeClassName}
+            clipboardMessage={clipboardMessage}
+            hasClipboard={hasClipboardStyles()}
+            onPasteStyles={handlePasteStyles}
           />
         </div>
       )}
