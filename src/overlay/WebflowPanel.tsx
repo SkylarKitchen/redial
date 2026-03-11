@@ -27,6 +27,11 @@ import { UnitSelector } from "./UnitSelector";
 import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
+import { cssColorToHex as rgbToHex } from "./colorUtils";
+import {
+  parseNum, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
+  shadowToCSS, filterToCSS, transformToCSS, transitionsToCSS,
+} from "./cssParsers";
 import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Underline, Strikethrough, Baseline,
@@ -47,18 +52,6 @@ export interface WebflowPanelProps {
 }
 
 // ─── CSS Value Helpers ───────────────────────────────────────────────
-
-function rgbToHex(rgb: string): string {
-  if (rgb === "rgba(0, 0, 0, 0)" || rgb === "transparent") return "transparent";
-  const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (!match) return rgb;
-  return (
-    "#" +
-    [match[1], match[2], match[3]]
-      .map((c) => parseInt(c).toString(16).padStart(2, "0"))
-      .join("")
-  );
-}
 
 /** CSS properties that are inherited by default */
 const INHERITABLE_PROPERTIES = new Set([
@@ -89,11 +82,6 @@ function getIndicatorType(
   return "none";
 }
 
-function parseNum(val: string): number {
-  const n = parseFloat(val);
-  return isNaN(n) ? 0 : n;
-}
-
 /**
  * Check whether a CSS property is explicitly set on an element
  * (via inline style or a stylesheet rule) rather than using the browser default.
@@ -119,170 +107,6 @@ function getAuthoredValue(el: Element, prop: string): string | null {
     }
   } catch { /* no access */ }
   return found;
-}
-
-function parseBoxShadow(raw: string): ShadowValue[] {
-  if (!raw || raw === "none") return [];
-  const shadows: ShadowValue[] = [];
-  // Split on commas that are NOT inside parentheses (for rgba colors)
-  const parts: string[] = [];
-  let depth = 0;
-  let current = "";
-  for (const ch of raw) {
-    if (ch === "(") depth++;
-    else if (ch === ")") depth--;
-    if (ch === "," && depth === 0) {
-      parts.push(current.trim());
-      current = "";
-    } else {
-      current += ch;
-    }
-  }
-  if (current.trim()) parts.push(current.trim());
-
-  for (const part of parts) {
-    const inset = part.includes("inset");
-    const cleaned = part.replace("inset", "").trim();
-    // Extract color (rgb/rgba/hex/named) — browsers may place color first or last
-    const colorStartMatch = cleaned.match(/^(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})\s+/i);
-    const colorEndMatch = cleaned.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b(?!(?:\d|inset\b))[a-z]{3,}\b)$/i);
-    const color = (colorStartMatch?.[1] ?? colorEndMatch?.[1]) || "rgba(0,0,0,0.1)";
-    // Strip the matched color from the string before parsing numbers
-    let numStr = cleaned;
-    if (colorStartMatch) {
-      numStr = numStr.slice(colorStartMatch[0].length);
-    } else if (colorEndMatch) {
-      numStr = numStr.slice(0, colorEndMatch.index).trim();
-    }
-    numStr = numStr.replace(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
-    const nums = numStr.split(/\s+/).map(parseFloat).filter((n) => !isNaN(n));
-    shadows.push({
-      x: nums[0] ?? 0,
-      y: nums[1] ?? 0,
-      blur: nums[2] ?? 0,
-      spread: nums[3] ?? 0,
-      color,
-      inset,
-    });
-  }
-  return shadows;
-}
-
-function parseFilter(raw: string): Partial<FilterValues> {
-  if (!raw || raw === "none") return {};
-  const result: Partial<FilterValues> = {};
-  const regex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const key = m[1] as keyof FilterValues;
-    let val = parseFloat(m[2]);
-    // Most filter functions come as decimals from computed style, need * 100
-    // (blur uses px and hue-rotate uses deg — those stay as-is from parseFloat)
-    if (key !== "blur" && key !== "hue-rotate") {
-      val = Math.round(val * 100);
-    }
-    result[key] = val;
-  }
-  return result;
-}
-
-function parseTransform(raw: string): TransformValue[] {
-  if (!raw || raw === "none") return [];
-  const transforms: TransformValue[] = [];
-  const regex = /(translate3d|translate|scale|rotate|skew)\(([^)]+)\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const fn = m[1];
-    const args = m[2].split(",").map((s) => parseFloat(s.trim()));
-    if (fn === "translate3d" || fn === "translate") {
-      transforms.push({ type: "translate", x: args[0] ?? 0, y: args[1] ?? 0, z: args[2] ?? 0 });
-    } else if (fn === "scale") {
-      transforms.push({ type: "scale", x: args[0] ?? 1, y: args[1] ?? args[0] ?? 1 });
-    } else if (fn === "rotate") {
-      transforms.push({ type: "rotate", x: args[0] ?? 0, y: 0 });
-    } else if (fn === "skew") {
-      transforms.push({ type: "skew", x: args[0] ?? 0, y: args[1] ?? 0 });
-    }
-  }
-  // Also handle matrix() — extract rough rotation from a 2D matrix
-  if (transforms.length === 0 && raw.startsWith("matrix(")) {
-    const nums = raw.match(/matrix\(([^)]+)\)/)?.[1]?.split(",").map(Number);
-    if (nums && nums.length >= 6) {
-      const angle = Math.round(Math.atan2(nums[1], nums[0]) * (180 / Math.PI));
-      const scaleX = Math.sqrt(nums[0] * nums[0] + nums[1] * nums[1]);
-      const scaleY = Math.sqrt(nums[2] * nums[2] + nums[3] * nums[3]);
-      if (Math.abs(angle) > 0.5) transforms.push({ type: "rotate", x: angle, y: 0 });
-      if (Math.abs(scaleX - 1) > 0.01 || Math.abs(scaleY - 1) > 0.01) {
-        transforms.push({ type: "scale", x: Math.round(scaleX * 100) / 100, y: Math.round(scaleY * 100) / 100 });
-      }
-      if (Math.abs(nums[4]) > 0.5 || Math.abs(nums[5]) > 0.5) {
-        transforms.push({ type: "translate", x: Math.round(nums[4]), y: Math.round(nums[5]) });
-      }
-    }
-  }
-  return transforms;
-}
-
-function shadowToCSS(shadows: ShadowValue[]): string {
-  if (shadows.length === 0) return "none";
-  return shadows
-    .map((s) => {
-      const inset = s.inset ? "inset " : "";
-      return `${inset}${s.x}px ${s.y}px ${s.blur}px ${s.spread}px ${s.color}`;
-    })
-    .join(", ");
-}
-
-function filterToCSS(values: Partial<FilterValues>): string {
-  const parts: string[] = [];
-  for (const [key, val] of Object.entries(values)) {
-    if (val === undefined) continue;
-    const k = key as keyof FilterValues;
-    if (k === "blur") parts.push(`blur(${val}px)`);
-    else if (k === "hue-rotate") parts.push(`hue-rotate(${val}deg)`);
-    else parts.push(`${k}(${val / 100})`);
-  }
-  return parts.length > 0 ? parts.join(" ") : "none";
-}
-
-function transformToCSS(transforms: TransformValue[]): string {
-  if (transforms.length === 0) return "none";
-  return transforms
-    .map((t) => {
-      switch (t.type) {
-        case "translate":
-          return t.z ? `translate3d(${t.x}px, ${t.y}px, ${t.z}px)` : `translate(${t.x}px, ${t.y}px)`;
-        case "scale":
-          return `scale(${t.x}, ${t.y})`;
-        case "rotate":
-          return `rotate(${t.x}deg)`;
-        case "skew":
-          return `skew(${t.x}deg, ${t.y}deg)`;
-      }
-    })
-    .join(" ");
-}
-
-function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
-  const props = cs.transitionProperty;
-  if (!props || props === "none") return [];
-  const properties = props.split(",").map((s) => s.trim());
-  const durations = cs.transitionDuration.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  const easings = cs.transitionTimingFunction.split(",").map((s) => s.trim());
-  const delays = cs.transitionDelay.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  return properties.map((p, i) => ({
-    property: p,
-    duration: durations[i % durations.length] ?? 300,
-    easing: easings[i % easings.length] ?? "ease",
-    delay: delays[i % delays.length] ?? 0,
-  }));
-}
-
-function transitionsToCSS(transitions: TransitionValue[]): string {
-  if (transitions.length === 0) return "none";
-  return transitions
-    .map((t) => `${t.property} ${t.duration}ms ${t.easing} ${t.delay}ms`)
-    .join(", ");
 }
 
 // ─── Text Detection ──────────────────────────────────────────────────
@@ -318,7 +142,7 @@ const TEXT_DECORATION_OPTIONS = [
   { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
 ];
 
-const TEXT_TRANSFORM_OPTIONS = [
+const CAPITALIZE_OPTIONS = [
   { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
   { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
@@ -1417,6 +1241,21 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     setTextShadows(newShadows);
     apply("text-shadow", shadowToCSS(newShadows));
   }, [apply]);
+  const handleTextOverflowChange = useCallback((v: string) => { setTextOverflow(v); apply("text-overflow", v); }, [apply]);
+  const handleTextStrokeWidthChange = useCallback((v: number) => { setTextStrokeWidth(v); apply("-webkit-text-stroke-width", `${v}px`); }, [apply]);
+  const handleTextStrokeColorChange = useCallback((v: string) => { setTextStrokeColor(v); apply("-webkit-text-stroke-color", v); }, [apply]);
+  const handleLineBreakChange = useCallback((v: string) => { setLineBreak(v); apply("line-break", v); }, [apply]);
+  // IconButtonGroup-compatible handlers (map "none" → valid defaults)
+  const handleFontStyleIconChange = useCallback((v: string) => {
+    const val = v === "none" ? "normal" : v;
+    setFontStyle(val);
+    apply("font-style", val);
+  }, [apply]);
+  const handleDirectionIconChange = useCallback((v: string) => {
+    const val = v === "none" ? "ltr" : v;
+    setDirection(val);
+    apply("direction", val);
+  }, [apply]);
 
   // Backgrounds
   const handleBgColorChange = useCallback((v: string) => { setBgColor(v); apply("background-color", v); }, [apply]);
@@ -1864,110 +1703,238 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
+          {/* Font family dropdown */}
           <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, getConversionCtx()); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }} onChange={handleFontSizeChange} indicator={ind("font-size")} />
+
+          {/* Weight dropdown */}
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
-          <SliderRow
-            label="Line H"
-            value={lineHeight}
-            min={lineHeightUnit === "%" ? 80 : lineHeightUnit === "px" ? 8 : 0.8}
-            max={lineHeightUnit === "%" ? 300 : lineHeightUnit === "px" ? 200 : 3}
-            step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
-            unit={lineHeightUnit}
-            units={LINE_HEIGHT_UNITS}
-            onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, getConversionCtx()); setLineHeight(c); } setLineHeightUnit(u); }}
-            onChange={handleLineHeightChange}
-            indicator={ind("line-height")}
-          />
-          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, getConversionCtx()); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }} onChange={handleLetterSpacingChange} />
+
+          {/* Size + Height side-by-side compact cells */}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 12px" }}>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
+              Size
+            </span>
+            <TypoValueCell
+              value={fontSize}
+              onChange={handleFontSizeChange}
+              unit={fontSizeUnit}
+              units={TYPO_SIZE_UNITS}
+              onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, getConversionCtx()); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
+              step={1}
+            />
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+              {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
+              Height
+            </span>
+            <TypoValueCell
+              value={lineHeight}
+              onChange={handleLineHeightChange}
+              unit={lineHeightUnit === "—" ? "–" : lineHeightUnit}
+              units={LINE_HEIGHT_UNITS}
+              onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, getConversionCtx()); setLineHeight(c); } setLineHeightUnit(u); }}
+              step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
+            />
+          </div>
+
+          {/* Color */}
           <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} />
 
+          {/* Align */}
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Align
-            </span>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Align</span>
             <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
           </div>
 
+          {/* Decor — with none X button + ... overflow */}
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Decorate
-            </span>
-            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
-          </div>
-
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Transform
-            </span>
-            <IconButtonGroup options={TEXT_TRANSFORM_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-          </div>
-
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
-              Style
-            </span>
+            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Decor</span>
+            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} />
             <button
-              onClick={handleFontStyleChange}
               style={{
-                height: "28px",
-                minWidth: "28px",
-                padding: "0 8px",
-                cursor: "pointer",
-                background: fontStyle === "italic" ? "#6366f1" : "transparent",
-                color: fontStyle === "italic" ? "#fff" : "rgba(255,255,255,0.5)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "4px",
-                fontSize: "12px",
-                lineHeight: 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                height: "28px", minWidth: "28px", padding: "0 4px",
+                cursor: "pointer", background: "transparent",
+                color: "rgba(255,255,255,0.35)",
+                border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
+                fontSize: "13px", lineHeight: 1, outline: "none",
                 transition: "background 80ms, color 80ms",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
               }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <Italic size={14} strokeWidth={1.5} />
+              <MoreHorizontal size={14} strokeWidth={1.5} />
             </button>
           </div>
 
-          {/* Advanced typography sub-section */}
-          <div
-            onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
-            style={{
-              padding: "6px 12px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-              Advanced
-            </span>
+          {/* More type options toggle */}
+          <div style={{ padding: "4px 12px" }}>
+            <button
+              onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                padding: "6px 0", cursor: "pointer",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px",
+                color: "rgba(255,255,255,0.45)", fontSize: "11px",
+                fontFamily: "system-ui, sans-serif", outline: "none",
+                transition: "background 80ms",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+            >
+              <ChevronRight size={10} strokeWidth={2} style={{ transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
+              More type options
+            </button>
           </div>
+
           {showTypoAdvanced && (
             <>
-              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(wordSpacing, wordSpacingUnit, u, getConversionCtx()); setWordSpacing(c); setWordSpacingUnit(u); apply("word-spacing", `${c}${u}`); }} onChange={handleWordSpacingChange} />
-              <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
-              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, getConversionCtx()); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }} onChange={handleTextIndentChange} />
-              <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
-              <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
-              <SelectRow label="Hyphens" value={hyphens} options={[
-                { value: "none", label: "None" },
-                { value: "manual", label: "Manual" },
-                { value: "auto", label: "Auto" },
-              ]} onChange={handleHyphensChange} indicator={ind("hyphens")} />
-              <SelectRow label="Dir" value={direction} options={[
-                { value: "ltr", label: "LTR" },
-                { value: "rtl", label: "RTL" },
-              ]} onChange={handleDirectionChange} indicator={ind("direction")} />
-              <SliderRow label="Col Gap" value={typoColumnGap} min={0} max={100} step={1} unit="px" onChange={handleTypoColumnGapChange} indicator={ind("column-gap")} />
-              <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Text Shadow
+              {/* Letter spacing + Text indent + Columns — compact row with labels below */}
+              <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={letterSpacing}
+                    onChange={handleLetterSpacingChange}
+                    unit={letterSpacingUnit}
+                    units={TYPO_SIZE_UNITS}
+                    onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, getConversionCtx()); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
+                    step={0.25}
+                    keyword={letterSpacing === 0 ? "Normal" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Letter spacing</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={textIndent}
+                    onChange={handleTextIndentChange}
+                    unit={textIndentUnit}
+                    units={LAYOUT_UNITS}
+                    onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, getConversionCtx()); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }}
+                    step={1}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Text indent</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={columnCount}
+                    onChange={handleColumnCountChange}
+                    unit=""
+                    step={1}
+                    keyword={columnCount <= 1 ? "Auto" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
+                </div>
               </div>
-              <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />
+
+              {/* Italicize + Capitalize + Direction — toggle groups with labels below */}
+              <div style={{ display: "flex", gap: "6px", padding: "6px 12px", alignItems: "flex-start" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+                  <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Italicize</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", flex: 1 }}>
+                  <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Capitalize</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+                  <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
+                  <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Direction</span>
+                </div>
+              </div>
+
+              {/* Breaking — Word + Line side by side */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Breaking</span>
+                <div style={{ flex: 1 }}>
+                  <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Word</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <MiniDropdown value={lineBreak} options={LINE_BREAK_OPTIONS} onChange={handleLineBreakChange} />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Line</div>
+                </div>
+              </div>
+
+              {/* Wrap */}
+              <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
+
+              {/* Truncate — Clip / Ellipsis segmented toggle */}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Truncate</span>
+                <div style={{ display: "flex", flex: 1, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
+                  {(["clip", "ellipsis"] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleTextOverflowChange(opt)}
+                      style={{
+                        flex: 1, height: "28px", cursor: "pointer",
+                        background: textOverflow === opt ? "rgba(255,255,255,0.12)" : "transparent",
+                        color: textOverflow === opt ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
+                        border: "none", borderRight: opt === "clip" ? "1px solid rgba(255,255,255,0.15)" : "none",
+                        fontSize: "11px", fontFamily: "system-ui, sans-serif",
+                        fontWeight: textOverflow === opt ? 500 : 400,
+                        outline: "none", transition: "background 80ms, color 80ms",
+                        textTransform: "capitalize",
+                      }}
+                    >
+                      {opt === "clip" ? "Clip" : "Ellipsis"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Stroke — width + color side by side */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Stroke</span>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={textStrokeWidth}
+                    onChange={handleTextStrokeWidthChange}
+                    unit="px"
+                    step={1}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Width</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden", padding: "0 6px", gap: "6px" }}>
+                    <div
+                      style={{ width: "16px", height: "16px", borderRadius: "2px", background: textStrokeColor, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0, cursor: "pointer" }}
+                      onClick={() => {
+                        const input = document.createElement("input");
+                        input.type = "color";
+                        input.value = textStrokeColor;
+                        input.addEventListener("input", (e) => handleTextStrokeColorChange((e.target as HTMLInputElement).value));
+                        input.click();
+                      }}
+                    />
+                    <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {textStrokeColor}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Color</div>
+                </div>
+              </div>
+
+              {/* Text shadows */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px 2px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>Text shadows</span>
+                <button
+                  onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false }])}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: "22px", height: "22px", cursor: "pointer",
+                    background: "transparent", border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: "3px", color: "rgba(255,255,255,0.5)", fontSize: "14px",
+                    lineHeight: 1, outline: "none", transition: "background 80ms",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  +
+                </button>
+              </div>
+              {textShadows.length > 0 && <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />}
             </>
           )}
         </Section>

@@ -85,6 +85,15 @@ export function SpacingBoxModel({
   const paddingUnitRef = useRef(paddingUnit);
   paddingUnitRef.current = paddingUnit;
   const shiftHeldRef = useRef(false);
+  const altHeldRef = useRef(false);
+
+  /** Map each side to its axis partner */
+  const AXIS_PARTNER: Record<string, string> = {
+    top: "bottom",
+    bottom: "top",
+    left: "right",
+    right: "left",
+  };
 
   // --- Zone highlight helpers (direct DOM, zero re-renders) ---
   const highlightZone = useCallback((group: "margin" | "padding") => {
@@ -215,6 +224,7 @@ export function SpacingBoxModel({
           el.setPointerCapture(e.pointerId);
 
           shiftHeldRef.current = e.shiftKey;
+          altHeldRef.current = e.altKey;
           const startX = e.clientX;
           const startValue = value;
           let isDragging = false;

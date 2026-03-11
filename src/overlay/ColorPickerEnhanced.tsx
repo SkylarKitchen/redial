@@ -10,30 +10,9 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 
-// ─── Color Math (pure functions) ─────────────────────────────────
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const h = hex.replace("#", "");
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16),
-  };
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    "#" +
-    [r, g, b]
-      .map((c) =>
-        Math.round(Math.max(0, Math.min(255, c)))
-          .toString(16)
-          .padStart(2, "0"),
-      )
-      .join("")
-  );
-}
+// ─── Color Math (picker-specific — HSB conversions) ──────────────
 
 function rgbToHsb(
   r: number,
@@ -92,10 +71,6 @@ function hsbToRgb(
     g: Math.round((g + m) * 255),
     b: Math.round((bl + m) * 255),
   };
-}
-
-function isValidHex(hex: string): boolean {
-  return /^#[0-9a-fA-F]{6}$/.test(hex);
 }
 
 // ─── Types ───────────────────────────────────────────────────────

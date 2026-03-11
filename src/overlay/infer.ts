@@ -97,31 +97,8 @@ export function flattenValues(
 
 // --- Internal helpers ---
 
-function rgbToHex(rgb: string): string {
-  if (rgb === "rgba(0, 0, 0, 0)" || rgb === "transparent") return "transparent";
-
-  const match = rgb.match(
-    /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/
-  );
-  if (!match) return rgb;
-
-  const [, r, g, b] = match;
-  return (
-    "#" +
-    [r, g, b]
-      .map((c) =>
-        parseInt(c)
-          .toString(16)
-          .padStart(2, "0")
-      )
-      .join("")
-  );
-}
-
-function parseNum(val: string): number {
-  const n = parseFloat(val);
-  return isNaN(n) ? 0 : n;
-}
+import { cssColorToHex as rgbToHex } from "./colorUtils";
+import { parseNum } from "./cssParsers";
 
 /**
  * Magnitude-based slider range (matches dialkit's inferRange table).
