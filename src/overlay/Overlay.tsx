@@ -10,7 +10,7 @@
  * The overlay is a fixed-position container at max z-index.
  */
 
-import { useState, useCallback, useEffect, useRef, Component, type ReactNode, type ErrorInfo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
 import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -18,7 +18,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
 import { undo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset } from "./apply";
-import { buildBreadcrumb } from "./util";
+import { buildBreadcrumb, getStableSelector } from "./util";
 import { ViewportBar } from "./ViewportBar";
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
@@ -95,6 +95,12 @@ export function Overlay() {
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
 
+  // Stable selector for re-resolving after HMR
+  const selectedSelectorRef = useRef<string | null>(null);
+
+  // Save-in-flight guard to prevent double-save
+  const savingRef = useRef(false);
+
   // Panel position (draggable)
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
@@ -106,9 +112,10 @@ export function Overlay() {
 
   // --- Keyboard shortcut helpers ---
   const handleSaveShortcut = useCallback(async () => {
-    if (!selectedEl) return;
+    if (!selectedEl || savingRef.current) return;
     const changes = diff(selectedEl);
     if (changes.length === 0) return;
+    savingRef.current = true;
     try {
       const res = await fetch("/api/tuner/commit", {
         method: "POST",
@@ -118,8 +125,14 @@ export function Overlay() {
       if (res.ok) {
         setInferResult(infer(selectedEl));
         setPanelKey((k) => k + 1);
+      } else {
+        console.warn("[Tuner] Save failed:", res.status, res.statusText);
       }
-    } catch {}
+    } catch (err) {
+      console.warn("[Tuner] Save error:", err);
+    } finally {
+      savingRef.current = false;
+    }
   }, [selectedEl]);
 
   const handleCopyShortcut = useCallback(() => {
@@ -242,6 +255,7 @@ export function Overlay() {
         if ((next as HTMLElement).closest?.(".__tuner-root")) return;
 
         setSelectedEl(next);
+        selectedSelectorRef.current = getStableSelector(next);
         setInferResult(infer(next));
         setPanelKey((k) => k + 1);
       }
@@ -268,6 +282,7 @@ export function Overlay() {
   const handleSelect = useCallback((el: Element) => {
     setSelecting(false);
     setSelectedEl(el);
+    selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
     // Reset scope on new selection
@@ -283,6 +298,7 @@ export function Overlay() {
 
   const handleClose = useCallback(() => {
     setSelectedEl(null);
+    selectedSelectorRef.current = null;
     setInferResult(null);
     setScope("element");
     setActiveClassName(null);
@@ -358,6 +374,8 @@ export function Overlay() {
   // --- Diff toggle (button click) ---
   const handleToggleDiff = useCallback(() => {
     if (!selectedEl || overrideCount(selectedEl) === 0) return;
+    // Don't toggle via button while keyboard hold is active
+    if (diffHoldRef.current) return;
     setDiffMode((prev) => {
       if (prev) {
         restoreAllOverrides();
@@ -381,6 +399,7 @@ export function Overlay() {
   // --- Breadcrumb click handler (Phase 2) ---
   const handleBreadcrumbClick = useCallback((el: Element) => {
     setSelectedEl(el);
+    selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
   }, []);
@@ -391,8 +410,15 @@ export function Overlay() {
 
     const outline = selectedOutlineRef.current;
     let rafId: number;
+    let cancelled = false;
 
     const updatePosition = () => {
+      if (cancelled) return;
+      // If the element was removed from the DOM (HMR, navigation), stop tracking
+      if (!selectedEl.isConnected) {
+        outline.style.display = "none";
+        return;
+      }
       const rect = selectedEl.getBoundingClientRect();
       outline.style.top = `${rect.top}px`;
       outline.style.left = `${rect.left}px`;
@@ -405,6 +431,7 @@ export function Overlay() {
     rafId = requestAnimationFrame(updatePosition);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafId);
       outline.style.display = "none";
     };
@@ -436,10 +463,12 @@ export function Overlay() {
   // --- Viewport change: re-infer after width change ---
   const handleViewportChange = useCallback((width: number | null) => {
     setViewportWidth(width);
-    if (selectedEl) {
+    if (selectedEl && selectedEl.isConnected) {
       requestAnimationFrame(() => {
-        setInferResult(infer(selectedEl));
-        setPanelKey((k) => k + 1);
+        if (selectedEl.isConnected) {
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+        }
       });
     }
   }, [selectedEl]);
@@ -497,6 +526,24 @@ export function Overlay() {
   useEffect(() => {
     const cleanup = onHmrUpdate(() => {
       const cleared = clearRedundantOverrides();
+
+      // Re-resolve the selected element if it was detached by HMR
+      if (selectedEl && !selectedEl.isConnected && selectedSelectorRef.current) {
+        const resolved = document.querySelector(selectedSelectorRef.current);
+        if (resolved) {
+          setSelectedEl(resolved);
+          setInferResult(infer(resolved));
+          setPanelKey((k) => k + 1);
+          return;
+        } else {
+          // Element no longer exists after HMR — close panel
+          setSelectedEl(null);
+          selectedSelectorRef.current = null;
+          setInferResult(null);
+          return;
+        }
+      }
+
       if (cleared > 0 && selectedEl) {
         setInferResult(infer(selectedEl));
         setPanelKey((k) => k + 1);

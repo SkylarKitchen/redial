@@ -336,15 +336,8 @@ export function ColorPickerEnhanced({
   };
 
   const sliderHandleStyle: React.CSSProperties = {
-    position: "absolute",
-    width: HANDLE_SIZE,
-    height: HANDLE_SIZE,
-    borderRadius: "50%",
-    border: "2px solid #fff",
-    boxShadow: "0 0 2px rgba(0,0,0,0.6)",
-    pointerEvents: "none",
+    ...handleStyle,
     top: "50%",
-    transform: "translate(-50%, -50%)",
   };
 
   return (

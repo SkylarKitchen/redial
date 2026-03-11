@@ -137,10 +137,9 @@ function parseFilter(raw: string): Partial<FilterValues> {
   while ((m = regex.exec(raw)) !== null) {
     const key = m[1] as keyof FilterValues;
     let val = parseFloat(m[2]);
-    // brightness/contrast/saturate come as decimals from computed style, need * 100
-    if (key === "brightness" || key === "contrast" || key === "saturate") {
-      val = Math.round(val * 100);
-    } else if (key === "grayscale" || key === "invert" || key === "sepia") {
+    // Most filter functions come as decimals from computed style, need * 100
+    // (blur uses px and hue-rotate uses deg — those stay as-is from parseFloat)
+    if (key !== "blur" && key !== "hue-rotate") {
       val = Math.round(val * 100);
     }
     result[key] = val;
@@ -202,7 +201,6 @@ function filterToCSS(values: Partial<FilterValues>): string {
     const k = key as keyof FilterValues;
     if (k === "blur") parts.push(`blur(${val}px)`);
     else if (k === "hue-rotate") parts.push(`hue-rotate(${val}deg)`);
-    else if (k === "brightness" || k === "contrast" || k === "saturate") parts.push(`${k}(${val / 100})`);
     else parts.push(`${k}(${val / 100})`);
   }
   return parts.length > 0 ? parts.join(" ") : "none";
@@ -1267,55 +1265,6 @@ const VISIBILITY_OPTIONS = [
   { value: "visible", label: "Visible" },
   { value: "hidden", label: "Hidden" },
   { value: "collapse", label: "Collapse" },
-];
-
-const FLEX_WRAP_OPTIONS = [
-  { value: "nowrap", label: "No Wrap" },
-  { value: "wrap", label: "Wrap" },
-  { value: "wrap-reverse", label: "Wrap Reverse" },
-];
-
-const FLEX_DIRECTION_ICONS = [
-  {
-    value: "row",
-    title: "Row (→)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="2" y1="6" x2="9" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="7,3.5 9.5,6 7,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "column",
-    title: "Column (↓)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="6" y1="2" x2="6" y2="9" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="3.5,7 6,9.5 8.5,7" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "row-reverse",
-    title: "Row Reverse (←)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="3" y1="6" x2="10" y2="6" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="5,3.5 2.5,6 5,8.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    value: "column-reverse",
-    title: "Column Reverse (↑)",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <line x1="6" y1="3" x2="6" y2="10" stroke="currentColor" strokeWidth="1.2" />
-        <polyline points="3.5,5 6,2.5 8.5,5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
 ];
 
 const ALIGN_SELF_OPTIONS = [
