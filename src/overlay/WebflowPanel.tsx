@@ -981,6 +981,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   });
   const [textTransform, setTextTransform] = useState(() => cs.textTransform);
   const [fontStyle, setFontStyle] = useState(() => cs.fontStyle);
+  const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
+  const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
+  const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
+  const [textIndent, setTextIndent] = useState(() => parseNum(cs.textIndent));
+  const [wordBreak, setWordBreak] = useState(() => cs.wordBreak);
+  const [columnCount, setColumnCount] = useState(() => {
+    const v = cs.columnCount;
+    return v === "auto" ? 1 : parseNum(cs.columnCount);
+  });
 
   // ── Background state ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
