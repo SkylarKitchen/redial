@@ -9,6 +9,7 @@ import { getDisplayClass } from "./util";
 import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
+import { StateSelector } from "./StateSelector";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -24,6 +25,8 @@ interface HeaderProps {
   onScopeChange?: (scope: Scope, className?: string) => void;
   cssClasses?: string[];
   activeClassName?: string | null;
+  state?: string;
+  onStateChange?: (state: string) => void;
 }
 
 export function Header({
@@ -38,6 +41,8 @@ export function Header({
   onScopeChange,
   cssClasses = [],
   activeClassName,
+  state,
+  onStateChange,
 }: HeaderProps) {
   const tag = element.tagName.toLowerCase();
   const className = getDisplayClass(element);

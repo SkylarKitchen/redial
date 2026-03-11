@@ -20,8 +20,16 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Added `SIZE_UNITS_W`, `SIZE_UNITS_H`, `POSITION_UNITS`, `TYPO_SIZE_UNITS` constants
 - Typecheck: PASS
 
+### Iteration 3 — Typography units + Grid track editors (2026-03-11)
+- Added `fontSizeUnit`, `letterSpacingUnit` state to Typography section
+- Font-size and letter-spacing sliders now show UnitSelector (px/em/rem)
+- Added `TextRow` component for text input fields
+- Added `gridCols`, `gridRows` state + handlers for grid track definitions
+- Grid section now shows Columns and Rows text inputs above AlignBox
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase B-6:** Grid track editors (grid-template-columns, grid-template-rows text inputs)
+**Phase B-11:** Position float/clear + Header StateSelector

@@ -1234,6 +1234,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
         {isGrid && (
           <>
+            <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} />
+            <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} />
             <div style={{ padding: "6px 12px" }}>
               <AlignBox
                 justify={justifyContent}
