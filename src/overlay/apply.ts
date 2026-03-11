@@ -113,6 +113,30 @@ export function undo(): { el: Element; prop: string } | null {
   const last = undoStack.pop();
   if (!last) return null;
 
+  if ('type' in last && last.type === 'batch') {
+    // Restore all entries in the batch (reverse order)
+    let result: { el: Element; prop: string } | null = null;
+    for (let i = last.entries.length - 1; i >= 0; i--) {
+      const { el, prop, prev } = last.entries[i];
+      const elOverrides = overrides.get(el);
+      if (!elOverrides) continue;
+      const entry = elOverrides.get(prop);
+      if (!entry) continue;
+
+      if (prev === entry.initial) {
+        (el as HTMLElement).style.removeProperty(prop);
+        elOverrides.delete(prop);
+        if (elOverrides.size === 0) overrides.delete(el);
+      } else {
+        (el as HTMLElement).style.setProperty(prop, prev, "important");
+        entry.current = prev;
+      }
+      result = { el, prop };
+    }
+    schedulePersist();
+    return result;
+  }
+
   const { el, prop, prev } = last;
   const elOverrides = overrides.get(el);
   if (!elOverrides) return null;
@@ -143,9 +167,13 @@ export function reset(el: Element): void {
   }
   overrides.delete(el);
 
-  // Remove all undo entries for this element
+  // Remove all undo entries for this element (handle both single and batch)
   for (let i = undoStack.length - 1; i >= 0; i--) {
-    if (undoStack[i].el === el) {
+    const entry = undoStack[i];
+    if ('type' in entry && entry.type === 'batch') {
+      entry.entries = entry.entries.filter((e) => e.el !== el);
+      if (entry.entries.length === 0) undoStack.splice(i, 1);
+    } else if (!('type' in entry) && entry.el === el) {
       undoStack.splice(i, 1);
     }
   }
@@ -161,12 +189,9 @@ export function resetAll(): void {
       (el as HTMLElement).style.removeProperty(prop);
     }
     overrides.delete(el);
-    for (let i = undoStack.length - 1; i >= 0; i--) {
-      if (undoStack[i].el === el) {
-        undoStack.splice(i, 1);
-      }
-    }
   }
+  // Clear entire undo stack
+  undoStack.length = 0;
   clearPersistedSession();
 }
 
@@ -337,9 +362,13 @@ export function resetProp(el: Element, prop: string): void {
   (el as HTMLElement).style.removeProperty(prop);
   elOverrides.delete(prop);
   if (elOverrides.size === 0) overrides.delete(el);
-  // Remove undo entries for this prop
+  // Remove undo entries for this prop (handle both single and batch)
   for (let i = undoStack.length - 1; i >= 0; i--) {
-    if (undoStack[i].el === el && undoStack[i].prop === prop) {
+    const entry = undoStack[i];
+    if ('type' in entry && entry.type === 'batch') {
+      entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
+      if (entry.entries.length === 0) undoStack.splice(i, 1);
+    } else if (!('type' in entry) && entry.el === el && entry.prop === prop) {
       undoStack.splice(i, 1);
     }
   }

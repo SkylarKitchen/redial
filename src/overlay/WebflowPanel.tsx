@@ -1415,6 +1415,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [alignItems, setAlignItems] = useState(() => cs.alignItems);
   const [flexWrap, setFlexWrap] = useState(() => cs.flexWrap);
   const [gap, setGap] = useState(() => parseNum(cs.gap));
+  const [gapLocked, setGapLocked] = useState(true);
+  const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
+  const [columnGap, setColumnGap] = useState(() => parseNum(cs.columnGap));
 
   // Grid track definitions
   const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
@@ -1812,6 +1815,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     },
     [apply]
   );
+  const handleBgClipChange = useCallback((v: string) => { setBgClip(v); apply("background-clip", v); if (v === "text") { apply("-webkit-background-clip", "text"); } }, [apply]);
 
   // Borders
   const handleBorderStyleChange = useCallback((v: string) => {
@@ -2227,6 +2231,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} />
         )}
+        <SelectRow label="Clip" value={bgClip} options={[
+          { value: "border-box", label: "Border Box" },
+          { value: "padding-box", label: "Padding Box" },
+          { value: "content-box", label: "Content Box" },
+          { value: "text", label: "Text" },
+        ]} onChange={handleBgClipChange} indicator={ind("background-clip")} />
       </Section>
 
       {/* 7. Borders */}

@@ -432,116 +432,113 @@ export function TextRow({ label, value, placeholder, onChange }: {
 
 // ─── EditableValue (from SpacingBoxModel) ───────────────────────────
 
-export function EditableValue({
-  value,
-  onChange,
-  onAltClick,
-}: {
-  value: number;
-  onChange: (value: number) => void;
-  onAltClick?: () => void;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
-  const inputRef = useRef<HTMLInputElement>(null);
+export const EditableValue = memo(
+  function EditableValue(props: EditableValueProps) {
+    const { value, onChange, onAltClick } = props;
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState(String(value));
+    const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync draft when external value changes
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
+    // Sync draft when external value changes
+    useEffect(() => {
+      if (!editing) setDraft(String(value));
+    }, [value, editing]);
 
-  const commit = useCallback(() => {
-    setEditing(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed !== value) {
-      onChange(parsed);
-    }
-  }, [draft, value, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-      } else if (e.key === "Escape") {
-        setDraft(String(value));
-        setEditing(false);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = value + step;
-        setDraft(String(next));
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = value - step;
-        setDraft(String(next));
-        onChange(next);
+    const commit = useCallback(() => {
+      setEditing(false);
+      const parsed = parseFloat(draft);
+      if (!isNaN(parsed) && parsed !== value) {
+        onChange(parsed);
       }
-    },
-    [commit, value, onChange]
-  );
+    }, [draft, value, onChange]);
 
-  if (editing) {
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === "Enter") {
+          commit();
+        } else if (e.key === "Escape") {
+          setDraft(String(value));
+          setEditing(false);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+          const next = Math.round((value + step) * 10) / 10;
+          setDraft(String(next));
+          onChange(next);
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+          const next = Math.round((value - step) * 10) / 10;
+          setDraft(String(next));
+          onChange(next);
+        }
+      },
+      [commit, value, onChange]
+    );
+
+    if (editing) {
+      return (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          style={{
+            width: "28px",
+            background: "rgba(255,255,255,0.1)",
+            border: "1px solid rgba(99, 102, 241, 0.5)",
+            borderRadius: "2px",
+            color: "rgba(255,255,255,0.9)",
+            fontSize: "10px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            textAlign: "center",
+            padding: "1px 2px",
+            outline: "none",
+          }}
+          onClick={(e) => e.stopPropagation()}
+        />
+      );
+    }
+
     return (
-      <input
-        ref={inputRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-        autoFocus
+      <span
+        tabIndex={0}
+        data-spacing-index={props['data-spacing-index']}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (e.altKey && onAltClick) {
+            onAltClick();
+            return;
+          }
+          setEditing(true);
+        }}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
+        onFocus={onFocusRing}
+        onBlur={onBlurRing}
         style={{
-          width: "28px",
-          background: "rgba(255,255,255,0.1)",
-          border: "1px solid rgba(99, 102, 241, 0.5)",
-          borderRadius: "2px",
-          color: "rgba(255,255,255,0.9)",
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
+          color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+          cursor: "text",
+          padding: "1px 3px",
+          borderRadius: "2px",
+          minWidth: "16px",
           textAlign: "center",
-          padding: "1px 2px",
           outline: "none",
+          transition: "background 100ms, box-shadow 80ms",
         }}
-        onClick={(e) => e.stopPropagation()}
-      />
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "transparent";
+        }}
+      >
+        {value}
+      </span>
     );
-  }
-
-  return (
-    <span
-      tabIndex={0}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (e.altKey && onAltClick) {
-          onAltClick();
-          return;
-        }
-        setEditing(true);
-      }}
-      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-      onFocus={onFocusRing}
-      onBlur={onBlurRing}
-      style={{
-        fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
-        cursor: "text",
-        padding: "1px 3px",
-        borderRadius: "2px",
-        minWidth: "16px",
-        textAlign: "center",
-        outline: "none",
-        transition: "background 100ms, box-shadow 80ms",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "transparent";
-      }}
-    >
-      {value}
-    </span>
-  );
-}
+  },
+  (prev, next) => prev.value === next.value
+);
