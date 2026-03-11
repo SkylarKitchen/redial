@@ -99,6 +99,11 @@ export function Overlay() {
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
 
+  const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
+    setScope(newScope);
+    setActiveClassName(newScope === "class" ? (cls ?? null) : null);
+  }, []);
+
   // --- Keyboard shortcut helpers ---
   const handleSaveShortcut = useCallback(async () => {
     if (!selectedEl) return;
@@ -306,11 +311,6 @@ export function Overlay() {
       setPanelKey((k) => k + 1);
     }
   }, [selectedEl]);
-
-  const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
-    setScope(newScope);
-    setActiveClassName(newScope === "class" ? (cls ?? null) : null);
-  }, []);
 
   const handleToggleSession = useCallback(() => {
     setSessionOpen((s) => !s);
