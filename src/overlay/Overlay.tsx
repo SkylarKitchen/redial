@@ -348,9 +348,26 @@ export function Overlay() {
   }, []);
 
   // --- Spacing box model change handler ---
+  // Updates both the DOM (via applyInlineStyle) and the inferResult.spacing
+  // so the panel re-renders with fresh values during drag-scrub.
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
     applyInlineStyle(selectedEl, prop, `${value}${unit}`);
+    // Update inferResult.spacing so the panel receives fresh prop values
+    setInferResult((prev) => {
+      if (!prev) return prev;
+      const [group, side] = prop.split("-") as [string, string];
+      if ((group === "margin" || group === "padding") && side) {
+        return {
+          ...prev,
+          spacing: {
+            ...prev.spacing,
+            [group]: { ...prev.spacing[group], [side]: value },
+          },
+        };
+      }
+      return prev;
+    });
     handleDirtyChange();
   }, [selectedEl, handleDirtyChange]);
 
