@@ -163,6 +163,17 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Extended rules to `.__tuner-root *` so inner scrollable containers (dropdowns, etc.) also get the thin auto-hide scrollbar
 - Typecheck: PASS
 
+### Iteration 19 — Code review bug fixes (2026-03-11)
+- Removed dead "More" (`MoreHorizontal`) button on Typography Decor row (no `onClick` handler)
+- Removed unused `MoreHorizontal` import from lucide-react
+- Fixed `SizeInputCell` arrow key handlers: added `min`/`max` clamping to prevent values exceeding bounds
+- Fixed `SizeInputCell` keyword trap: keyword text is now clickable to clear keyword and enter numeric editing
+- Fixed `TypoValueCell` keyword trap: keyword text is now clickable to switch to editing mode
+- Fixed `TypoValueCell` ArrowUp/ArrowDown: now updates `draft` state alongside `onChange` to prevent stale revert on blur
+- Fixed missing `setTypoColumnGap` → uses existing `setColumnGap` (same CSS property)
+- Removed phantom imports (`BG_CLIP_OPTIONS`, `USER_SELECT_OPTIONS`, `BACKFACE_OPTIONS`, `BOX_SIZING_OPTIONS`) that were never exported from `panelConstants.tsx`
+- Typecheck: PASS
+
 ---
 
 ## Done

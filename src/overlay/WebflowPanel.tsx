@@ -39,14 +39,14 @@ import {
   FLOAT_OPTIONS, CLEAR_OPTIONS,
   SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS,
   LAYOUT_UNITS, BORDER_UNITS, SPACING_UNITS, LINE_HEIGHT_UNITS,
-  OVERFLOW_OPTIONS, OVERFLOW_ICON_OPTIONS,
+  OVERFLOW_ICON_OPTIONS,
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BORDER_STYLE_OPTIONS, BLEND_MODE_OPTIONS, FALLBACK_FONTS,
   CURSOR_OPTIONS, POINTER_EVENTS_OPTIONS, VISIBILITY_OPTIONS,
   ALIGN_SELF_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS,
 } from "./panelConstants";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
-import { ChevronRight, Link, MoreHorizontal } from "lucide-react";
+import { ChevronRight, Link } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -282,10 +282,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   }, []);
   const FONT_OPTIONS = [...new Set([...pageFonts, ...FALLBACK_FONTS])].map(f => ({ value: f, label: f }));
   const [lineHeightUnit, setLineHeightUnit] = useState("—");
-  const [wordSpacingUnit, setWordSpacingUnit] = useState("px");
   const [textIndentUnit, setTextIndentUnit] = useState("px");
   const [showTypoAdvanced, setShowTypoAdvanced] = useState(false);
-  const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
   const [whiteSpace, setWhiteSpace] = useState(() => cs.whiteSpace);
   const [textIndent, setTextIndent] = useState(() => parseNum(cs.textIndent));
   const [wordBreak, setWordBreak] = useState(() => cs.wordBreak);
@@ -293,9 +291,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     const v = cs.columnCount;
     return v === "auto" ? 1 : parseNum(cs.columnCount);
   });
-  const [hyphens, setHyphens] = useState(() => cs.getPropertyValue("hyphens") || "none");
   const [direction, setDirection] = useState(() => cs.direction || "ltr");
-  const [typoColumnGap, setTypoColumnGap] = useState(() => parseNum(cs.columnGap));
   const [textShadows, setTextShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.textShadow || "none"));
   const [textOverflow, setTextOverflow] = useState(() => cs.getPropertyValue("text-overflow") || "clip");
   const [textStrokeWidth, setTextStrokeWidth] = useState(() => parseNum(cs.getPropertyValue("-webkit-text-stroke-width") || "0"));
@@ -548,21 +544,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleTextAlignChange = useCallback((v: string) => { setTextAlign(v); apply("text-align", v); }, [apply]);
   const handleTextDecorationChange = useCallback((v: string) => { setTextDecoration(v); apply("text-decoration-line", v); }, [apply]);
   const handleTextTransformChange = useCallback((v: string) => { setTextTransform(v); apply("text-transform", v); }, [apply]);
-  const handleFontStyleChange = useCallback(() => {
-    const next = fontStyle === "italic" ? "normal" : "italic";
-    setFontStyle(next);
-    apply("font-style", next);
-  }, [fontStyle, apply]);
   const handleFontFamilyChange = useCallback((v: string) => { setFontFamily(v); apply("font-family", v); }, [apply]);
 
-  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}${wordSpacingUnit}`); }, [apply, wordSpacingUnit]);
   const handleWhiteSpaceChange = useCallback((v: string) => { setWhiteSpace(v); apply("white-space", v); }, [apply]);
   const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}${textIndentUnit}`); }, [apply, textIndentUnit]);
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
-  const handleHyphensChange = useCallback((v: string) => { setHyphens(v); apply("hyphens", v); }, [apply]);
   const handleDirectionChange = useCallback((v: string) => { setDirection(v); apply("direction", v); }, [apply]);
-  const handleTypoColumnGapChange = useCallback((v: number) => { setTypoColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
+  const handleTypoColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
   const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
     setTextShadows(newShadows);
     apply("text-shadow", shadowToCSS(newShadows));
@@ -1076,21 +1065,6 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Decor</span>
             <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} />
-            <button
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                height: "28px", minWidth: "28px", padding: "0 4px",
-                cursor: "pointer", background: "transparent",
-                color: "rgba(255,255,255,0.35)",
-                border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
-                fontSize: "13px", lineHeight: 1, outline: "none",
-                transition: "background 80ms, color 80ms",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-            >
-              <MoreHorizontal size={14} strokeWidth={1.5} />
-            </button>
           </div>
 
           {/* More type options toggle */}

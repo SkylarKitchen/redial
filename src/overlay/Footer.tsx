@@ -13,8 +13,6 @@ interface FooterProps {
   element: Element;
   onReset: () => void;
   onSaved?: () => void;
-  diffMode?: boolean;
-  onToggleDiff?: () => void;
   scope?: Scope;
   activeClassName?: string | null;
   clipboardMessage?: string | null;
@@ -22,7 +20,7 @@ interface FooterProps {
   onPasteStyles?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
@@ -121,14 +119,6 @@ export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scop
       }}
     >
       <div style={{ display: "flex", gap: "6px" }}>
-        <ActionButton
-          onClick={onToggleDiff ?? (() => {})}
-          disabled={count === 0}
-          title="Toggle diff (D)"
-          active={diffMode}
-        >
-          Diff
-        </ActionButton>
         <ActionButton
           onClick={handleCopy}
           disabled={count === 0}

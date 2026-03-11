@@ -74,13 +74,17 @@ export function SizeInputCell({
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-        const next = Math.round((value + s) * 10) / 10;
+        let next = Math.round((value + s) * 10) / 10;
+        if (max !== undefined) next = Math.min(next, max);
+        if (min !== undefined) next = Math.max(next, min);
         setDraft(String(next));
         onValueChange(next);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-        const next = Math.round((value - s) * 10) / 10;
+        let next = Math.round((value - s) * 10) / 10;
+        if (max !== undefined) next = Math.min(next, max);
+        if (min !== undefined) next = Math.max(next, min);
         setDraft(String(next));
         onValueChange(next);
       }
@@ -173,13 +177,17 @@ export function SizeInputCell({
       >
         {isKeyword ? (
           <span
+            tabIndex={0}
+            onClick={() => { onKeywordChange(null); setEditing(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
             style={{
               fontSize: "10px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               color: "rgba(255,255,255,0.6)",
               textTransform: "capitalize",
               paddingRight: "4px",
-              cursor: "default",
+              cursor: "text",
+              outline: "none",
             }}
           >
             {keyword}

@@ -399,11 +399,15 @@ export function TypoValueCell({
     else if (e.key === "ArrowUp") {
       e.preventDefault();
       const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-      onChange(Math.round((value + s) * 100) / 100);
+      const next = Math.round((value + s) * 100) / 100;
+      setDraft(String(next));
+      onChange(next);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-      onChange(Math.round((value - s) * 100) / 100);
+      const next = Math.round((value - s) * 100) / 100;
+      setDraft(String(next));
+      onChange(next);
     }
   };
 
@@ -424,7 +428,12 @@ export function TypoValueCell({
       }}
     >
       {isKeyword ? (
-        <span style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", padding: "0 6px", cursor: "default" }}>
+        <span
+          tabIndex={0}
+          onClick={() => setEditing(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
+          style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", padding: "0 6px", cursor: "text", outline: "none" }}
+        >
           {keyword}
         </span>
       ) : editing ? (
