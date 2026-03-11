@@ -11,6 +11,7 @@ import { UnitSelector } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 import { useClickOutside } from "./useClickOutside";
+import { useWheelAdjust } from "./useWheelAdjust";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
   DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
@@ -379,6 +380,8 @@ export function TypoValueCell({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const cellRef = useRef<HTMLDivElement>(null);
+  useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null });
 
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
@@ -412,6 +415,7 @@ export function TypoValueCell({
 
   return (
     <div
+      ref={cellRef}
       style={{
         flex: 1,
         display: "flex",

@@ -14,6 +14,7 @@ import { hexToRgba } from "./colorUtils";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
+import { useWheelAdjust } from "./useWheelAdjust";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -97,6 +98,8 @@ export function Section({
 export function ValueInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useWheelAdjust(inputRef, value, onChange);
 
   useEffect(() => {
     if (!focused) setDraft(String(value));
@@ -135,6 +138,7 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
 
   return (
     <input
+      ref={inputRef}
       value={focused ? draft : String(value)}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={() => setFocused(true)}

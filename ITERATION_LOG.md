@@ -242,4 +242,15 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 25 — Scroll-wheel-to-adjust on numeric inputs (2026-03-11)
+- Created `useWheelAdjust` hook (`src/overlay/useWheelAdjust.ts`) — attaches a non-passive native wheel listener that increments/decrements the value when the element has focus
+- Uses a ref-based pattern to avoid re-attaching the listener on every render
+- Modifier keys match arrow-key convention: Shift=10×, Alt=0.1×, default=base step
+- Wired into `ValueInput` (controls.tsx) — ref on the `<input>`, always active
+- Wired into `SizeInputCell` (SizeInputCell.tsx) — ref on container div, disabled in keyword mode
+- Wired into `TypoValueCell` (layoutControls.tsx) — ref on container div, disabled in keyword mode
+- Typecheck: PASS
+
+---
+
 ## Done

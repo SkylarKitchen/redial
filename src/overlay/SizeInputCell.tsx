@@ -17,6 +17,7 @@ import { UnitSelector, type SpecialOption } from "./UnitSelector";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
+import { useWheelAdjust } from "./useWheelAdjust";
 
 export interface SizeInputCellProps {
   label: string;
@@ -54,6 +55,8 @@ export function SizeInputCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
+  useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null });
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -133,6 +136,7 @@ export function SizeInputCell({
 
   return (
     <div
+      ref={cellRef}
       style={{
         flex: 1,
         display: "flex",
