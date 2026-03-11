@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
+import { ms } from "./timing";
 
 interface PositionOffsetDiagramProps {
   top: number;
@@ -191,7 +192,7 @@ function EditableValue({
         borderRadius: "2px",
         minWidth: "16px",
         textAlign: "center",
-        transition: "background 100ms",
+        transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

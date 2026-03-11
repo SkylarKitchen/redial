@@ -247,27 +247,52 @@ export function SelectRow({
   options,
   onChange,
   indicator,
+  searchable,
+  fontPreview,
 }: {
   label: string;
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
   indicator?: IndicatorType;
+  /** Show a search/filter input at the top of the dropdown */
+  searchable?: boolean;
+  /** Render each option label in its own font-face (for font-family dropdowns) */
+  fontPreview?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const current = options.find((o) => o.value === value);
   const id = useId();
 
-  const optionLabels = options.map(o => o.label);
+  // Filter options when searchable
+  const filtered = searchable && searchQuery
+    ? options.filter((o) => o.label.toLowerCase().includes(searchQuery.toLowerCase()))
+    : options;
+
+  const optionLabels = filtered.map(o => o.label);
   const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
     open,
     setOpen,
-    optionCount: options.length,
-    selectedIndex: options.findIndex((o) => o.value === value),
-    onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+    optionCount: filtered.length,
+    selectedIndex: filtered.findIndex((o) => o.value === value),
+    onSelect: (i) => { onChange(filtered[i].value); setOpen(false); setSearchQuery(""); },
     labels: optionLabels,
   });
+
+  // Clear search when dropdown closes
+  useEffect(() => {
+    if (!open) setSearchQuery("");
+  }, [open]);
+
+  // Auto-focus search input when dropdown opens
+  useEffect(() => {
+    if (open && searchable) {
+      requestAnimationFrame(() => searchInputRef.current?.focus());
+    }
+  }, [open, searchable]);
 
   useEffect(() => {
     if (!open) return;
@@ -320,7 +345,7 @@ export function SelectRow({
             borderRadius: "3px",
             color: "rgba(255,255,255,0.8)",
             fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
@@ -350,7 +375,7 @@ export function SelectRow({
               left: 0,
               right: 0,
               minWidth: "100%",
-              maxHeight: "180px",
+              maxHeight: searchable ? "240px" : "180px",
               overflowY: "auto",
               background: "#2a2a2a",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -360,41 +385,89 @@ export function SelectRow({
               padding: "2px 0",
             }}
           >
-            {options.map((opt, i) => {
-              const isActive = opt.value === value;
-              const isHighlighted = i === highlightedIndex;
-              return (
-                <div
-                  key={opt.value}
-                  id={`${id}-opt-${i}`}
-                  ref={i === highlightedIndex ? optionRefCallback : undefined}
-                  role="option"
-                  aria-selected={isActive}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
+            {/* Search input (when searchable) */}
+            {searchable && (
+              <div style={{ padding: "4px 6px 4px", position: "sticky", top: 0, background: "#2a2a2a", zIndex: 1 }}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  placeholder="Search..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setOpen(false);
+                    } else if (e.key === "Enter" && filtered.length > 0) {
+                      const idx = highlightedIndex >= 0 ? highlightedIndex : 0;
+                      onChange(filtered[idx].value);
+                      setOpen(false);
+                      setSearchQuery("");
+                    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                      // Delegate to list keyboard handler
+                      onListKeyDown(e as unknown as React.KeyboardEvent);
+                    }
                   }}
                   style={{
-                    padding: "4px 8px",
+                    width: "100%",
+                    height: "22px",
+                    background: "#1e1e1e",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "3px",
+                    padding: "0 6px",
                     fontSize: "11px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    transition: `background ${ms("micro")}`,
+                    fontFamily: "system-ui, -apple-system, sans-serif",
+                    color: "rgba(255,255,255,0.85)",
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
-                  }}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
+                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.5)"; }}
+                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
+                />
+              </div>
+            )}
+            {filtered.length === 0 ? (
+              <div style={{ padding: "6px 8px", fontSize: "11px", color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>
+                No matches
+              </div>
+            ) : (
+              filtered.map((opt, i) => {
+                const isActive = opt.value === value;
+                const isHighlighted = i === highlightedIndex;
+                return (
+                  <div
+                    key={opt.value}
+                    id={`${id}-opt-${i}`}
+                    ref={i === highlightedIndex ? optionRefCallback : undefined}
+                    role="option"
+                    aria-selected={isActive}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: "11px",
+                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+                      background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: `background ${ms("micro")}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>

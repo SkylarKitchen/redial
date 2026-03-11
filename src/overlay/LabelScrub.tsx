@@ -10,6 +10,7 @@
  */
 
 import { useRef, useCallback, useState } from "react";
+import { ms } from "./timing";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
@@ -158,7 +159,7 @@ export function LabelScrub({
         fontSize: "11px",
         fontFamily: "system-ui, sans-serif",
         lineHeight: "20px",
-        transition: scrubbing ? "none" : "color 100ms",
+        transition: scrubbing ? "none" : `color ${ms("normal")}`,
         touchAction: "none",
       }}
     >

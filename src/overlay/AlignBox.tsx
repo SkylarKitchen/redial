@@ -16,6 +16,7 @@
  */
 
 import { useState, useCallback } from "react";
+import { ms } from "./timing";
 
 export interface AlignBoxProps {
   justify: string;
@@ -146,7 +147,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
                   borderRight: col < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
                   borderBottom: row < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                  transition: "background 80ms, color 80ms, box-shadow 80ms",
+                  transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
                 }}
               >
                 <CellIcon col={col} row={row} />
@@ -175,7 +176,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   padding: "2px 6px",
                   cursor: "pointer",
                   lineHeight: "16px",
-                  transition: "background 80ms, color 80ms",
+                  transition: `background ${ms("fast")}, color ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => {
                   if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

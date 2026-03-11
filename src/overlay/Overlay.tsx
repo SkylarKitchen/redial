@@ -23,6 +23,7 @@ import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement }
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
+import { ms } from "./timing";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -781,7 +782,7 @@ export function Overlay() {
                 padding: "4px 0",
                 pointerEvents: diffMode ? "none" : "auto",
                 opacity: diffMode ? 0.6 : 1,
-                transition: "opacity 150ms",
+                transition: `opacity ${ms("expand")}`,
               }}
             >
               <PanelErrorBoundary onError={handleClose}>
@@ -863,7 +864,7 @@ export function Overlay() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          transition: "box-shadow 200ms ease, border-color 200ms ease",
+          transition: `box-shadow ${ms("layout")} ease, border-color ${ms("layout")} ease`,
           ...(selecting || selectedEl ? { borderColor: "rgba(99,102,241,0.4)" } : {}),
         }}
         title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
@@ -873,7 +874,7 @@ export function Overlay() {
           strokeWidth={1.5}
           color="rgba(255,255,255,0.8)"
           style={{
-            transition: "transform 200ms ease",
+            transition: `transform ${ms("layout")} ease`,
             transform: selecting || selectedEl ? "rotate(45deg)" : "rotate(0deg)",
           }}
         />

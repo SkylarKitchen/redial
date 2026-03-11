@@ -48,6 +48,7 @@ import {
 } from "./panelConstants";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
 import { ChevronRight, Link } from "lucide-react";
+import { ms } from "./timing";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -1022,7 +1023,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </>
         )}
         <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: "transform 150ms", transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
+          <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
           <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>More size options</span>
         </div>
         {showMoreSize && (
@@ -1083,7 +1084,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {showTypography && (
         <Section title="Typography">
           {/* Font family dropdown */}
-          <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} />
+          <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview />
 
           {/* Weight dropdown */}
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
@@ -1142,12 +1143,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px",
                 color: "rgba(255,255,255,0.45)", fontSize: "11px",
                 fontFamily: "system-ui, sans-serif", outline: "none",
-                transition: "background 80ms",
+                transition: `background ${ms("fast")}`,
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
             >
-              <ChevronRight size={10} strokeWidth={2} style={{ transition: "transform 150ms", transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
+              <ChevronRight size={10} strokeWidth={2} style={{ transition: `transform ${ms("expand")}`, transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
               More type options
             </button>
           </div>
@@ -1238,7 +1239,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                         border: "none", borderRight: opt === "clip" ? "1px solid rgba(255,255,255,0.15)" : "none",
                         fontSize: "11px", fontFamily: "system-ui, sans-serif",
                         fontWeight: textOverflow === opt ? 500 : 400,
-                        outline: "none", transition: "background 80ms, color 80ms",
+                        outline: "none", transition: `background ${ms("fast")}, color ${ms("fast")}`,
                         textTransform: "capitalize",
                       }}
                     >
@@ -1288,7 +1289,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                     width: "22px", height: "22px", cursor: "pointer",
                     background: "transparent", border: "1px solid rgba(255,255,255,0.15)",
                     borderRadius: "3px", color: "rgba(255,255,255,0.5)", fontSize: "14px",
-                    lineHeight: 1, outline: "none", transition: "background 80ms",
+                    lineHeight: 1, outline: "none", transition: `background ${ms("fast")}`,
                   }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}

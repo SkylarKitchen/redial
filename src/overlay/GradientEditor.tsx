@@ -6,6 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { ms } from "./timing";
 
 export interface GradientStop {
   color: string;
@@ -150,7 +151,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 fontFamily: "system-ui, sans-serif",
                 lineHeight: 1,
                 textTransform: "capitalize",
-                transition: "background 80ms, color 80ms",
+                transition: `background ${ms("fast")}, color ${ms("fast")}`,
               }}
             >
               {t}

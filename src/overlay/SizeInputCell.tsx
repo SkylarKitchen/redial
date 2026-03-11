@@ -15,6 +15,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption } from "./UnitSelector";
 import { selectAllOnDoubleClick } from "./controls";
+import { ms } from "./timing";
+import { parseValueWithUnit } from "./parseValueWithUnit";
 
 export interface SizeInputCellProps {
   label: string;
@@ -59,11 +61,17 @@ export function SizeInputCell({
 
   const commit = useCallback(() => {
     setEditing(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed !== value) {
+    const { value: parsed, unit: parsedUnit } = parseValueWithUnit(draft, units);
+    if (isNaN(parsed)) return;
+    if (parsedUnit && parsedUnit !== unit) {
+      // User typed a unit suffix (e.g. "68em") — switch unit and value
+      if (keyword !== null) onKeywordChange(null);
+      onUnitChange(parsedUnit);
+      onValueChange(parsed);
+    } else if (parsed !== value) {
       onValueChange(parsed);
     }
-  }, [draft, value, onValueChange]);
+  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -134,7 +142,7 @@ export function SizeInputCell({
         border: cellBorder,
         borderRadius: "4px",
         overflow: "hidden",
-        transition: "background 100ms, border-color 100ms",
+        transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
       }}
     >
       {/* Label */}
@@ -147,7 +155,7 @@ export function SizeInputCell({
           flexShrink: 0,
           whiteSpace: "nowrap",
           lineHeight: "28px",
-          transition: "color 100ms",
+          transition: `color ${ms("normal")}`,
         }}
       >
         {isKeyword ? (

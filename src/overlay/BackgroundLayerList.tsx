@@ -11,6 +11,7 @@ import type { GradientStop } from "./GradientEditor";
 import { X } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { ms } from "./timing";
 
 export interface BackgroundLayer {
   id: string;
@@ -220,7 +221,7 @@ export function BackgroundLayerList({
             fontSize: "11px",
             fontFamily: "system-ui, sans-serif",
             cursor: "pointer",
-            transition: "background 80ms",
+            transition: `background ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -259,7 +260,7 @@ export function BackgroundLayerList({
                   color: "rgba(255,255,255,0.7)",
                   cursor: "pointer",
                   textTransform: "capitalize",
-                  transition: "background 60ms",
+                  transition: `background ${ms("micro")}`,
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

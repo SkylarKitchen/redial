@@ -11,6 +11,7 @@ import { diffAll, resetAll, type DiffEntry } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
+import { timing } from "./timing";
 
 interface SessionDrawerProps {
   open: boolean;
@@ -103,7 +104,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: timing.layout / 1000 }}
           style={{ overflow: "hidden", borderTop: "1px solid rgba(255,255,255,0.1)" }}
         >
           <div style={{ padding: "8px 12px" }}>
@@ -221,7 +222,7 @@ function ElementGroup({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: timing.expand / 1000 }}
             style={{ overflow: "hidden" }}
           >
             {changes.map((c, i) => (
