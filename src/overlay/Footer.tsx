@@ -17,6 +17,9 @@ interface FooterProps {
   onToggleDiff?: () => void;
   scope?: Scope;
   activeClassName?: string | null;
+  clipboardMessage?: string | null;
+  hasClipboard?: boolean;
+  onPasteStyles?: () => void;
 }
 
 export function Footer({ element, onReset, onSaved, diffMode, onToggleDiff, scope = "element", activeClassName }: FooterProps) {
