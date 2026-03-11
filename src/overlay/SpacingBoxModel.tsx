@@ -185,11 +185,11 @@ export function SpacingBoxModel({
           padding: "2px 4px",
           borderRadius: "3px",
           minWidth: "18px",
-          textAlign: "center" as const,
+          textAlign: "center",
           outline: "none",
-          userSelect: "none" as const,
+          userSelect: "none",
           transition: "background 80ms, color 80ms",
-          position: "relative" as const,
+          position: "relative",
         }}
         // --- Hover: highlight + tooltip ---
         onMouseEnter={(e) => {

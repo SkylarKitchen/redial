@@ -22,6 +22,9 @@ const SIDE_ICONS: Record<string, string> = {
   left: "→",
 };
 
+// Estimated popover height for vertical clamping
+const POPOVER_HEIGHT = 110;
+
 export interface SpacingValuePopoverProps {
   value: number;
   onChange: (value: number) => void;
@@ -52,6 +55,10 @@ export function SpacingValuePopover({
   const [draft, setDraft] = useState(String(value));
   const [unitOpen, setUnitOpen] = useState(false);
 
+  // Stable ref for onClose to avoid re-registering global listeners on every render
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Slider range
   const sliderMin = isMargin ? -200 : 0;
   const sliderMax = 220;
@@ -72,23 +79,23 @@ export function SpacingValuePopover({
     });
   }, []);
 
-  // Close on Escape
+  // Close on Escape (uses ref, so no dependency churn)
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("keydown", handler, true);
     return () => document.removeEventListener("keydown", handler, true);
-  }, [onClose]);
+  }, []);
 
-  // Close on click outside
+  // Close on click outside (uses ref, so no dependency churn)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        onClose();
+        onCloseRef.current();
       }
     };
     // Use timeout so the opening click doesn't immediately close
@@ -99,7 +106,7 @@ export function SpacingValuePopover({
       clearTimeout(id);
       document.removeEventListener("mousedown", handler, true);
     };
-  }, [onClose]);
+  }, []);
 
   const commitInput = useCallback(() => {
     const parsed = parseFloat(draft);
@@ -129,8 +136,7 @@ export function SpacingValuePopover({
     [commitInput, value, onChange, isMargin],
   );
 
-  // --- Positioning ---
-  // Place below the anchor, centered horizontally
+  // --- Positioning: below anchor, centered, clamped to viewport ---
   const popoverWidth = 220;
   const left = Math.max(
     8,
@@ -139,7 +145,12 @@ export function SpacingValuePopover({
       window.innerWidth - popoverWidth - 8,
     ),
   );
-  const top = anchorRect.bottom + 6;
+  // Vertical: prefer below, flip above if not enough space
+  const spaceBelow = window.innerHeight - anchorRect.bottom - 8;
+  const top =
+    spaceBelow >= POPOVER_HEIGHT
+      ? anchorRect.bottom + 6
+      : anchorRect.top - POPOVER_HEIGHT - 6;
 
   // Slider percentage for track fill
   const sliderPct = ((value - sliderMin) / (sliderMax - sliderMin)) * 100;
@@ -161,6 +172,30 @@ export function SpacingValuePopover({
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
+      {/* Scoped slider thumb styles (pseudo-elements can't be inline-styled) */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .spacing-popover-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 12px; height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid #fff;
+          cursor: pointer;
+          margin-top: -4.5px;
+        }
+        .spacing-popover-slider::-moz-range-thumb {
+          width: 12px; height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid #fff;
+          cursor: pointer;
+        }
+      `,
+        }}
+      />
+
       {/* Top row: icon, input, slider, unit */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
         {/* Direction indicator */}
@@ -186,7 +221,10 @@ export function SpacingValuePopover({
           ref={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onBlur={commitInput}
+          onBlur={(e) => {
+            commitInput();
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+          }}
           onKeyDown={handleInputKeyDown}
           style={{
             width: "36px",
@@ -205,15 +243,21 @@ export function SpacingValuePopover({
           onFocus={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.6)";
           }}
-          onBlurCapture={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
-          }}
         />
 
         {/* Slider */}
-        <div style={{ flex: 1, position: "relative", height: "24px", display: "flex", alignItems: "center" }}>
+        <div
+          style={{
+            flex: 1,
+            position: "relative",
+            height: "24px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
           <input
             type="range"
+            className="spacing-popover-slider"
             min={sliderMin}
             max={sliderMax}
             step={1}
@@ -235,6 +279,9 @@ export function SpacingValuePopover({
         {/* Unit selector */}
         <div style={{ position: "relative", flexShrink: 0 }}>
           <button
+            type="button"
+            aria-expanded={unitOpen}
+            aria-haspopup="listbox"
             onClick={() => setUnitOpen(!unitOpen)}
             style={{
               height: "24px",
@@ -255,6 +302,7 @@ export function SpacingValuePopover({
           </button>
           {unitOpen && (
             <div
+              role="listbox"
               style={{
                 position: "absolute",
                 top: "calc(100% + 2px)",
@@ -269,13 +317,18 @@ export function SpacingValuePopover({
               }}
             >
               {units.map((u) => (
-                <div
+                <button
                   key={u}
+                  type="button"
+                  role="option"
+                  aria-selected={u === unit}
                   onClick={() => {
                     onUnitChange(u);
                     setUnitOpen(false);
                   }}
                   style={{
+                    display: "block",
+                    width: "100%",
                     padding: "3px 8px",
                     fontSize: "10px",
                     fontFamily: "ui-monospace, 'SF Mono', monospace",
@@ -283,16 +336,21 @@ export function SpacingValuePopover({
                     background: u === unit ? "#6366f1" : "transparent",
                     cursor: "pointer",
                     textTransform: "uppercase",
+                    textAlign: "left",
+                    border: "none",
+                    outline: "none",
                   }}
                   onMouseEnter={(e) => {
-                    if (u !== unit) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                    if (u !== unit)
+                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                   }}
                   onMouseLeave={(e) => {
-                    if (u !== unit) (e.currentTarget as HTMLElement).style.background = "transparent";
+                    if (u !== unit)
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
                   }}
                 >
                   {u}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -303,14 +361,17 @@ export function SpacingValuePopover({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "4px" }}>
         {PRESETS.map((preset) => (
           <button
+            type="button"
             key={preset}
             onClick={() => onChange(preset)}
             style={{
               height: "28px",
-              background: value === preset ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
-              border: value === preset
-                ? "1px solid rgba(99,102,241,0.4)"
-                : "1px solid rgba(255,255,255,0.1)",
+              background:
+                value === preset ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+              border:
+                value === preset
+                  ? "1px solid rgba(99,102,241,0.4)"
+                  : "1px solid rgba(255,255,255,0.1)",
               borderRadius: "4px",
               color: value === preset ? "#fff" : "rgba(255,255,255,0.6)",
               fontSize: "11px",
