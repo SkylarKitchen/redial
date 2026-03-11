@@ -1531,6 +1531,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     }
     return [];
   });
+  const [bgClip, setBgClip] = useState(() => (cs as any).backgroundClip || "border-box");
 
   // ── Border state ──
   const [borderSide, setBorderSide] = useState<"all" | "top" | "right" | "bottom" | "left">("all");
@@ -2198,6 +2199,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, conversionCtx); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }} onChange={handleTextIndentChange} />
               <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
               <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
+              <SelectRow label="Hyphens" value={hyphens} options={[
+                { value: "none", label: "None" },
+                { value: "manual", label: "Manual" },
+                { value: "auto", label: "Auto" },
+              ]} onChange={handleHyphensChange} indicator={ind("hyphens")} />
+              <SelectRow label="Dir" value={direction} options={[
+                { value: "ltr", label: "LTR" },
+                { value: "rtl", label: "RTL" },
+              ]} onChange={handleDirectionChange} indicator={ind("direction")} />
+              <SliderRow label="Col Gap" value={typoColumnGap} min={0} max={100} step={1} unit="px" onChange={handleTypoColumnGapChange} indicator={ind("column-gap")} />
+              <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Text Shadow
+              </div>
+              <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />
             </>
           )}
         </Section>

@@ -5,10 +5,21 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+
+export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
+export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
+export type SpacingUnit = 'px' | '%' | 'em' | 'rem' | 'vw' | 'vh';
+
+export interface EditableValueProps {
+  value: number;
+  onChange: (value: number) => void;
+  onAltClick?: () => void;
+  'data-spacing-index'?: number;
+}
 
 const FOCUS_RING = "0 0 0 2px rgba(99,102,241,0.3)";
 const onFocusRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_RING; };

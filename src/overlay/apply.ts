@@ -40,6 +40,24 @@ const MAX_UNDO = 200;
 let batchDepth = 0;
 let batchEntries: SingleUndoEntry[] = [];
 
+export function beginBatch(): void {
+  batchDepth++;
+}
+
+export function endBatch(): void {
+  batchDepth--;
+  if (batchDepth <= 0) {
+    batchDepth = 0; // safety reset
+    if (batchEntries.length > 0) {
+      undoStack.push({ type: 'batch', entries: [...batchEntries] });
+      if (undoStack.length > MAX_UNDO) {
+        undoStack.splice(0, undoStack.length - MAX_UNDO);
+      }
+      batchEntries = [];
+    }
+  }
+}
+
 // --- Public API ---
 
 export function applyInlineStyle(
@@ -54,20 +72,36 @@ export function applyInlineStyle(
     // First time touching this prop — capture the original computed value
     const initial = getComputedStyle(el).getPropertyValue(prop).trim();
     elOverrides.set(prop, { initial, current: value });
-    undoStack.push({ el, prop, prev: initial });
+
+    if (batchDepth > 0) {
+      // In batch mode: collect undo entries, only first touch per (el, prop)
+      if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
+        batchEntries.push({ el, prop, prev: initial });
+      }
+    } else {
+      undoStack.push({ el, prop, prev: initial });
+    }
   } else {
     const existing = elOverrides.get(prop)!;
-    // Coalesce: if the last undo entry is for the same (el, prop), don't push
-    // another entry — keeps the original `prev` so undo reverts the entire drag
-    const lastUndo = undoStack[undoStack.length - 1];
-    if (!(lastUndo && lastUndo.el === el && lastUndo.prop === prop)) {
-      undoStack.push({ el, prop, prev: existing.current });
+
+    if (batchDepth > 0) {
+      // In batch mode: only record first touch per (el, prop)
+      if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
+        batchEntries.push({ el, prop, prev: existing.current });
+      }
+    } else {
+      // Coalesce: if the last undo entry is for the same (el, prop), don't push
+      // another entry — keeps the original `prev` so undo reverts the entire drag
+      const lastUndo = undoStack[undoStack.length - 1];
+      if (!(lastUndo && !('type' in lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
+        undoStack.push({ el, prop, prev: existing.current });
+      }
     }
     existing.current = value;
   }
 
-  // Prevent unbounded undo stack growth in long sessions
-  if (undoStack.length > MAX_UNDO) {
+  // Prevent unbounded undo stack growth in long sessions (only outside batch)
+  if (batchDepth <= 0 && undoStack.length > MAX_UNDO) {
     undoStack.splice(0, undoStack.length - MAX_UNDO);
   }
 
