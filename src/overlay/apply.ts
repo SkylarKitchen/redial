@@ -29,6 +29,10 @@ type SingleUndoEntry = { el: Element; prop: string; prev: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
 type UndoEntry = SingleUndoEntry | BatchUndoEntry;
 
+function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
+  return 'type' in entry && entry.type === 'batch';
+}
+
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
@@ -93,7 +97,7 @@ export function applyInlineStyle(
       // Coalesce: if the last undo entry is for the same (el, prop), don't push
       // another entry — keeps the original `prev` so undo reverts the entire drag
       const lastUndo = undoStack[undoStack.length - 1];
-      if (!(lastUndo && !('type' in lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
+      if (!(lastUndo && !isBatch(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
         undoStack.push({ el, prop, prev: existing.current });
       }
     }
@@ -113,7 +117,7 @@ export function undo(): { el: Element; prop: string } | null {
   const last = undoStack.pop();
   if (!last) return null;
 
-  if ('type' in last && last.type === 'batch') {
+  if (isBatch(last)) {
     // Restore all entries in the batch (reverse order)
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
@@ -171,10 +175,10 @@ export function reset(el: Element): void {
   // Remove all undo entries for this element (handle both single and batch)
   for (let i = undoStack.length - 1; i >= 0; i--) {
     const entry = undoStack[i];
-    if ('type' in entry && entry.type === 'batch') {
+    if (isBatch(entry)) {
       entry.entries = entry.entries.filter((e) => e.el !== el);
       if (entry.entries.length === 0) undoStack.splice(i, 1);
-    } else if (!('type' in entry) && entry.el === el) {
+    } else if (!isBatch(entry) && entry.el === el) {
       undoStack.splice(i, 1);
     }
   }
@@ -395,10 +399,10 @@ export function resetProp(el: Element, prop: string): void {
   // Remove undo entries for this prop (handle both single and batch)
   for (let i = undoStack.length - 1; i >= 0; i--) {
     const entry = undoStack[i];
-    if ('type' in entry && entry.type === 'batch') {
+    if (isBatch(entry)) {
       entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
       if (entry.entries.length === 0) undoStack.splice(i, 1);
-    } else if (!('type' in entry) && entry.el === el && entry.prop === prop) {
+    } else if (!isBatch(entry) && entry.el === el && entry.prop === prop) {
       undoStack.splice(i, 1);
     }
   }

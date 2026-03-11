@@ -10,7 +10,7 @@
  * The overlay is a fixed-position container at max z-index.
  */
 
-import { useState, useCallback, useEffect, useRef, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
+import { useState, useCallback, useEffect, useRef, Component, type ReactNode, type ErrorInfo } from "react";
 import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
