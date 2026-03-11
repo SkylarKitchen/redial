@@ -695,6 +695,11 @@ export function Overlay() {
         .__tuner-root *:hover {
           scrollbar-color: rgba(255,255,255,0.15) transparent;
         }
+        @keyframes tuner-enter {
+          from { opacity: 0; transform: translateY(8px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .__tuner-enter { animation: tuner-enter 150ms ease-out both; }
       `}} />
 
       {/* Selector overlay (full viewport, invisible until hover) */}
