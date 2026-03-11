@@ -8,6 +8,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { ChevronDown } from "lucide-react";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -188,7 +189,7 @@ export function PositionSelector({
             <span style={{ color: "rgba(255,255,255,0.5)", display: "flex" }}>{current.icon}</span>
             {current.label}
           </span>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }}>▾</span>
+          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {/* Dropdown */}

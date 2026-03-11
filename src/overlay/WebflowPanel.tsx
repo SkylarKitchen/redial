@@ -34,6 +34,7 @@ import {
   ArrowRight, ArrowDown, WrapText,
   Link, Unlink,
   ChevronDown, ChevronRight,
+  Italic,
 } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -1740,13 +1741,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 border: "1px solid rgba(255,255,255,0.15)",
                 borderRadius: "4px",
                 fontSize: "12px",
-                fontStyle: "italic",
-                fontFamily: "Georgia, serif",
                 lineHeight: 1,
                 transition: "background 80ms, color 80ms",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              I
+              <Italic size={14} strokeWidth={1.5} />
             </button>
           </div>
 

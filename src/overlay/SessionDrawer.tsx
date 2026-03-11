@@ -8,6 +8,7 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "./apply";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { getSelector, getDisplayClass } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 
@@ -212,8 +213,8 @@ function ElementGroup({
           color: "rgba(255, 255, 255, 0.95)",
         }}
       >
-        <span style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "9px" }}>
-          {expanded ? "▼" : "▶"}
+        <span style={{ color: "rgba(255, 255, 255, 0.3)", display: "flex", alignItems: "center" }}>
+          {expanded ? <ChevronDown size={10} strokeWidth={2} /> : <ChevronRight size={10} strokeWidth={2} />}
         </span>
         <span style={{ color: "#fff" }}>{"<"}{tag}{">"}</span>
         {cls && <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>.{cls}</span>}
