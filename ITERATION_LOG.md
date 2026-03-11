@@ -322,4 +322,12 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 32 — Effects section sub-headers + reorganization (2026-03-11)
+- Added sub-section headers for Filter, Backdrop Filter, Cursor, and Interaction
+- Moved Perspective and Backface Visibility from bottom of section into the Transform sub-section (per spec §10 lines 601-602)
+- Effects section now matches spec §10 layout: Opacity → Blend → Box Shadow → Transform (with perspective/backface) → Transition → Filter → Backdrop Filter → Cursor → Interaction
+- Typecheck: PASS
+
+---
+
 ## Done

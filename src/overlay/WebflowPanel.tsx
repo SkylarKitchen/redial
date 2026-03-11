@@ -1427,14 +1427,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             onOriginChange={handleTransformOriginChange}
           />
         </div>
-
-        <div style={{ padding: "4px 12px" }}>
-          <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
-        </div>
-
-        <div style={{ padding: "4px 12px" }}>
-          <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
-        </div>
+        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} />
+        <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Transition
@@ -1443,12 +1437,31 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} />
         </div>
 
+        <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Filter
+        </div>
+        <div style={{ padding: "4px 12px" }}>
+          <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
+        </div>
+
+        <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Backdrop Filter
+        </div>
+        <div style={{ padding: "4px 12px" }}>
+          <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
+        </div>
+
+        <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Cursor
+        </div>
         <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} />
+
+        <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          Interaction
+        </div>
         <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} />
         <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
         <SelectRow label="User Sel" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} />
-        <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} />
-        <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} />
       </Section>
     </div>
   );
