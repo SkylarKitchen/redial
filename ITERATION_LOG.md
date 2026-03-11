@@ -297,4 +297,18 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 30 — Panel Polish Tier 2-3 Swarm (2026-03-11)
+Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
+- **Phase 1 — Timing tokens**: Created `timing.ts` with 7 canonical tokens, replaced magic numbers in 26+ files
+- **Phase 2 — Slider thumb styling**: Custom 12px indigo thumb with hover/active states in global `<style>` block
+- **Phase 3 — Toast animation**: AnimatePresence enter/exit in Footer.tsx with monotonic key counter
+- **Phase 4 — ARIA roles**: combobox/listbox on SelectRow, UnitSelector, MiniDropdown; radiogroup on IconButtonGroup, DisplayTabs; shared `useDropdownKeyboard` hook with type-ahead
+- **Phase 5 — DnD settle**: Spring easing on shadow/transform reorder with rAF-separated settle state
+- **Phase 6 — Color picker swatches**: Save/remove swatches (max 16), localStorage persistence
+- **Review fixes**: Restored slider thumb CSS, MiniDropdown keyboard nav, AnimatePresence counter, DisplayTabs radiogroup, conditional column-gap
+- 42 files changed, 663 insertions, 1615 deletions
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
 ## Done
