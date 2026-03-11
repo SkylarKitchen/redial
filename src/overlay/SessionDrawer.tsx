@@ -9,7 +9,7 @@ import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getSelector, getDisplayClass, formatCSSDiff } from "./util";
+import { getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 
 interface SessionDrawerProps {

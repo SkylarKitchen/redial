@@ -18,7 +18,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
-import { buildBreadcrumb, getStableSelector, formatCSSDiff } from "./util";
+import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
