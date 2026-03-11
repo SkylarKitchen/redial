@@ -1586,7 +1586,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             </div>
             <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} indicator={getIndicatorType(element, "flex-grow")} />
             <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} indicator={getIndicatorType(element, "flex-shrink")} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit="px" onChange={handleFlexBasisChange} indicator={getIndicatorType(element, "flex-basis")} />
+            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={setFlexBasisUnit} onChange={handleFlexBasisChange} indicator={getIndicatorType(element, "flex-basis")} />
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={getIndicatorType(element, "align-self")} />
             <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} indicator={getIndicatorType(element, "order")} />
           </>
@@ -1599,6 +1599,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           margin={spacing.margin}
           padding={spacing.padding}
           onChange={onSpacingChange}
+          marginUnit={marginUnit}
+          paddingUnit={paddingUnit}
+          marginUnits={SPACING_UNITS}
+          paddingUnits={SPACING_UNITS}
+          onMarginUnitChange={setMarginUnit}
+          onPaddingUnitChange={setPaddingUnit}
         />
       </Section>
 
@@ -1683,6 +1689,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 else if (prop === "right") handleRightChange(v);
                 else if (prop === "bottom") handleBottomChange(v);
                 else if (prop === "left") handleLeftChange(v);
+              }}
+              units={{ top: topUnit, right: rightUnit, bottom: bottomUnit, left: leftUnit }}
+              availableUnits={POSITION_UNITS}
+              onUnitChange={(prop, unit) => {
+                if (prop === "top") setTopUnit(unit);
+                else if (prop === "right") setRightUnit(unit);
+                else if (prop === "bottom") setBottomUnit(unit);
+                else if (prop === "left") setLeftUnit(unit);
               }}
             />
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} indicator={getIndicatorType(element, "z-index")} />
