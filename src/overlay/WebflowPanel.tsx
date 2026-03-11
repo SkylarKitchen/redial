@@ -22,6 +22,7 @@ import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
+import { buildConversionContext, convertUnit } from "./unitConversion";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -1058,6 +1059,7 @@ const ALIGN_SELF_OPTIONS = [
 export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
+  const [conversionCtx] = useState(() => buildConversionContext(element));
 
   // ── Layout state ──
   const [display, setDisplay] = useState(() => cs.display);
