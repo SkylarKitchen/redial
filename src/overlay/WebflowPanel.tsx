@@ -734,18 +734,130 @@ function TextRow({ label, value, placeholder, onChange }: {
   );
 }
 
-// ─── Display Options ─────────────────────────────────────────────────
+// ─── Display Tabs ───────────────────────────────────────────────────
 
-const DISPLAY_OPTIONS = [
-  { value: "block", label: "Block" },
-  { value: "flex", label: "Flex" },
+const DISPLAY_TABS = ["block", "flex", "grid", "none"] as const;
+const DISPLAY_MORE = [
   { value: "inline-flex", label: "Inline Flex" },
-  { value: "grid", label: "Grid" },
   { value: "inline-grid", label: "Inline Grid" },
   { value: "inline-block", label: "Inline Block" },
   { value: "inline", label: "Inline" },
-  { value: "none", label: "None" },
 ];
+
+function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [moreOpen]);
+
+  const isTabValue = (DISPLAY_TABS as readonly string[]).includes(value);
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Display</span>
+      <div ref={containerRef} style={{ display: "flex", flex: 1, position: "relative" }}>
+        <div style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
+          {DISPLAY_TABS.map((tab) => {
+            const active = value === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => onChange(tab)}
+                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+                onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                style={{
+                  flex: 1,
+                  height: "24px",
+                  fontSize: "10px",
+                  fontFamily: "ui-monospace, 'SF Mono', monospace",
+                  cursor: "pointer",
+                  border: "none",
+                  borderRight: tab !== "none" ? "1px solid rgba(255,255,255,0.08)" : "none",
+                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
+                  fontWeight: active ? 500 : 400,
+                  outline: "none",
+                  transition: "background 80ms, color 80ms",
+                  textTransform: "capitalize",
+                }}
+                onMouseEnter={(e) => { if (value !== tab) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+                onMouseLeave={(e) => { if (value !== tab) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => setMoreOpen((o) => !o)}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+          onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+          style={{
+            width: "20px",
+            height: "24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: !isTabValue ? "rgba(99,102,241,0.2)" : "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: "10px",
+            outline: "none",
+            flexShrink: 0,
+            marginLeft: "2px",
+          }}
+        >
+          ▾
+        </button>
+        {moreOpen && (
+          <div style={{
+            position: "absolute",
+            top: "calc(100% + 2px)",
+            right: 0,
+            minWidth: "120px",
+            background: "#2a2a2a",
+            border: "1px solid rgba(255,255,255,0.15)",
+            borderRadius: "4px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+            zIndex: 200,
+            padding: "2px 0",
+          }}>
+            {DISPLAY_MORE.map((opt) => {
+              const active = opt.value === value;
+              return (
+                <div
+                  key={opt.value}
+                  onClick={() => { onChange(opt.value); setMoreOpen(false); }}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "11px",
+                    fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    color: active ? "#fff" : "rgba(255,255,255,0.6)",
+                    background: active ? "#6366f1" : "transparent",
+                    cursor: "pointer",
+                    transition: "background 60ms",
+                  }}
+                  onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  {opt.label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 const FONT_WEIGHT_OPTIONS = [
   { value: "100", label: "100 - Thin" },
@@ -1404,7 +1516,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {/* 1. Layout */}
       <Section title="Layout">
-        <SelectRow label="Display" value={display} options={DISPLAY_OPTIONS} onChange={handleDisplayChange} indicator={getIndicatorType(element, "display")} />
+        <DisplayTabs value={display} onChange={handleDisplayChange} />
 
         {isFlex && (
           <>

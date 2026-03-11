@@ -171,8 +171,9 @@ function ActionButton({
       disabled={disabled}
       title={title}
       style={{
-        padding: "4px 10px",
-        fontSize: "12px",
+        padding: primary ? "5px 16px" : "4px 10px",
+        fontSize: primary ? "13px" : "12px",
+        fontWeight: primary ? 600 : 400,
         fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
         border: active
           ? "1px solid rgba(250, 204, 21, 0.4)"
@@ -185,14 +186,15 @@ function ActionButton({
         background: active
           ? "rgba(250, 204, 21, 0.12)"
           : primary
-            ? "rgba(255, 255, 255, 0.15)"
+            ? "#2680EB"
             : "rgba(255,255,255,0.08)",
         color: active
           ? "rgba(250, 204, 21, 0.9)"
           : primary
             ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
-        transition: "opacity 100ms",
+        transition: "opacity 100ms, background 100ms",
+        boxShadow: primary && !disabled ? "0 1px 3px rgba(38, 128, 235, 0.4)" : "none",
       }}
     >
       {children}
