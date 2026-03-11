@@ -8,6 +8,7 @@ import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff } from "./util";
+import { ms } from "./timing";
 
 interface FooterProps {
   element: Element;
@@ -196,7 +197,7 @@ function ActionButton({
           : primary
             ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
-        transition: "opacity 100ms, background 100ms",
+        transition: `opacity ${ms("normal")}, background ${ms("normal")}`,
         boxShadow: primary && !disabled ? "0 1px 3px rgba(38, 128, 235, 0.4)" : "none",
       }}
     >

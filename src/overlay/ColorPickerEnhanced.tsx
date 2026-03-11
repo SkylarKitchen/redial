@@ -12,6 +12,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
+import { ms } from "./timing";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -505,7 +506,7 @@ export function ColorPickerEnhanced({
               minWidth: 22,
               textTransform: "uppercase",
               letterSpacing: "0.02em",
-              transition: "color 100ms",
+              transition: `color ${ms("normal")}`,
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
@@ -625,7 +626,7 @@ export function ColorPickerEnhanced({
               alignItems: "center",
               justifyContent: "center",
               padding: 0,
-              transition: "border-color 80ms, color 80ms",
+              transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
@@ -662,7 +663,7 @@ export function ColorPickerEnhanced({
                   cursor: "pointer",
                   padding: 0,
                   flexShrink: 0,
-                  transition: "border-color 80ms, transform 80ms",
+                  transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => {
                   if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
