@@ -28,8 +28,16 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - Grid section now shows Columns and Rows text inputs above AlignBox
 - Typecheck: PASS
 
+### Iteration 4 — Position float/clear + Header StateSelector (2026-03-11)
+- Added `float_` and `clear_` state + handlers to Position section with FLOAT_OPTIONS, CLEAR_OPTIONS
+- Float/Clear dropdowns always visible in Position section (not gated by static)
+- Wired StateSelector into Header.tsx (optional `state`/`onStateChange` props)
+- Added `activeState` state in Overlay.tsx, passed to Header
+- StateSelector shows green text when non-base state is active
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase B-11:** Position float/clear + Header StateSelector
+**Phase B-9:** Typography advanced section + Phase B-12: auto/none toggles on Size

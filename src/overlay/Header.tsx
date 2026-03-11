@@ -165,6 +165,9 @@ export function Header({
             })}
           </div>
         )}
+        {state !== undefined && onStateChange && (
+          <StateSelector value={state} onChange={onStateChange} />
+        )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         {totalChanges > 0 && (

@@ -731,6 +731,19 @@ const FONT_WEIGHT_OPTIONS = [
   { value: "900", label: "900 - Black" },
 ];
 
+const FLOAT_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "left", label: "Left" },
+  { value: "right", label: "Right" },
+];
+
+const CLEAR_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "left", label: "Left" },
+  { value: "right", label: "Right" },
+  { value: "both", label: "Both" },
+];
+
 // Unit option lists for SliderRow unit selectors
 const SIZE_UNITS_W = ["px", "%", "vw", "em", "rem", "ch"];
 const SIZE_UNITS_H = ["px", "%", "vh", "em", "rem"];
@@ -881,6 +894,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [bottom, setBottom] = useState(() => parseNum(cs.bottom));
   const [left, setLeft] = useState(() => parseNum(cs.left));
   const [zIndex, setZIndex] = useState(() => parseInt(cs.zIndex) || 0);
+  const [float_, setFloat] = useState(() => cs.cssFloat || "none");
+  const [clear_, setClear] = useState(() => cs.clear || "none");
 
   // Position units
   const [topUnit, setTopUnit] = useState("px");
@@ -1072,6 +1087,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleBottomChange = useCallback((v: number) => { setBottom(v); apply("bottom", `${v}${bottomUnit}`); }, [apply, bottomUnit]);
   const handleLeftChange = useCallback((v: number) => { setLeft(v); apply("left", `${v}${leftUnit}`); }, [apply, leftUnit]);
   const handleZIndexChange = useCallback((v: number) => { setZIndex(v); apply("z-index", String(v)); }, [apply]);
+  const handleFloatChange = useCallback((v: string) => { setFloat(v); apply("float", v); }, [apply]);
+  const handleClearChange = useCallback((v: string) => { setClear(v); apply("clear", v); }, [apply]);
 
   // Typography
   const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
@@ -1293,6 +1310,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} />
           </>
         )}
+        <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} />
+        <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} />
       </Section>
 
       {/* 5. Typography */}

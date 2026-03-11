@@ -82,6 +82,9 @@ export function Overlay() {
   const [activeClassName, setActiveClassName] = useState<string | null>(null);
   const cssClasses = selectedEl ? getCSSModuleClasses(selectedEl) : [];
 
+  // State selector
+  const [activeState, setActiveState] = useState("none");
+
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle
@@ -475,6 +478,8 @@ export function Overlay() {
             onScopeChange={handleScopeChange}
             cssClasses={cssClasses}
             activeClassName={activeClassName}
+            state={activeState}
+            onStateChange={setActiveState}
           />
           <ViewportBar
             active={viewportWidth}
