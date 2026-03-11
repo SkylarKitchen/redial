@@ -330,4 +330,17 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 33 — Wire background-blend-mode CSS application (2026-03-11)
+- The per-layer `blendMode` field already existed in `BackgroundLayer` data model and the UI dropdown in `BackgroundLayerList.tsx`
+- However, it was never applied as actual `background-blend-mode` CSS — the value was silently discarded during CSS generation
+- Added `blendModes[]` collector in `handleBgLayersChange` (parallel to existing `attachments[]` pattern)
+- Collects blend mode from each gradient/image layer during the CSS generation loop
+- Applies `background-blend-mode` as comma-separated list when any layer uses non-"normal" blend
+- Clears property when all layers are "normal" or no layers exist
+- Added `background-blend-mode` to Backgrounds section indicator property list
+- Fills spec §8 line 485: `background-blend-mode` select with full blend mode list
+- Typecheck: PASS
+
+---
+
 ## Done

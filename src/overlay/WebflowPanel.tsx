@@ -629,6 +629,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       // Build background parts from all layers
       const bgParts: string[] = [];
       const attachments: string[] = [];
+      const blendModes: string[] = [];
       let bgColor = "transparent";
       for (const layer of layers) {
         if (layer.type === "color") {
@@ -645,12 +646,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           } else if (g.type === "conic") {
             bgParts.push(`conic-gradient(from ${g.angle}deg, ${stops})`);
           }
+          blendModes.push(layer.blendMode || "normal");
         } else if (layer.type === "image" && layer.image) {
           const img = layer.image;
           bgParts.push(
             `url(${img.url}) ${img.position} / ${img.size} ${img.repeat}`
           );
           attachments.push(img.attachment || "scroll");
+          blendModes.push(layer.blendMode || "normal");
         }
       }
       // CSS background: gradients/images first, then color as the last layer
@@ -660,10 +663,16 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         if (attachments.some(a => a !== "scroll")) {
           apply("background-attachment", attachments.join(", "));
         }
+        if (blendModes.some(m => m !== "normal")) {
+          apply("background-blend-mode", blendModes.join(", "));
+        } else {
+          apply("background-blend-mode", "");
+        }
       } else {
         apply("background", "none");
         apply("background-color", bgColor);
         apply("background-attachment", "");
+        apply("background-blend-mode", "");
       }
     },
     [apply]
@@ -1372,7 +1381,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       )}
 
       {/* 6. Backgrounds */}
-      <Section title="Backgrounds" indicator={sectionInd(["background-color", "background-image", "background-clip"])}>
+      <Section title="Backgrounds" indicator={sectionInd(["background-color", "background-image", "background-clip", "background-blend-mode"])}>
         {bgLayers.length > 0 ? (
           <div style={{ padding: "0 12px" }}>
             <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
