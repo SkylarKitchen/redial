@@ -290,33 +290,9 @@ const TEXT_DECORATION_OPTIONS = [
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
-  {
-    value: "uppercase",
-    title: "Uppercase",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">AA</text>
-      </svg>
-    ),
-  },
-  {
-    value: "capitalize",
-    title: "Capitalize",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">Aa</text>
-      </svg>
-    ),
-  },
-  {
-    value: "lowercase",
-    title: "Lowercase",
-    icon: (
-      <svg width="12" height="12" viewBox="0 0 12 12">
-        <text x="6" y="9" textAnchor="middle" fill="currentColor" fontSize="8" fontWeight="bold">aa</text>
-      </svg>
-    ),
-  },
+  { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
+  { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
+  { value: "lowercase", title: "Lowercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>aa</span> },
 ];
 
 
@@ -362,7 +338,7 @@ function MiniDropdown({ value, options, onChange }: {
         }}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.label ?? value}</span>
-        <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.3)", marginLeft: "4px" }}>▾</span>
+        <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.3)", marginLeft: "4px", flexShrink: 0 }} />
       </button>
       {open && (
         <div style={{
@@ -470,7 +446,7 @@ function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange }: {
             border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)",
             fontSize: "10px", outline: "none", flexShrink: 0, marginLeft: "2px",
           }}
-        >▾</button>
+        ><ChevronDown size={10} strokeWidth={2} /></button>
         {moreOpen && (
           <div style={{
             position: "absolute", top: "calc(100% + 2px)", right: 0, minWidth: "120px",
@@ -547,23 +523,7 @@ function GapRow({ value, unit, onChange, onUnitChange }: {
           fontSize: "11px", flexShrink: 0,
         }}
       >
-        <svg width="12" height="12" viewBox="0 0 12 12">
-          {gapLinked ? (
-            <>
-              <rect x="3" y="1" width="6" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-              <line x1="5" y1="5" x2="5" y2="8" stroke="currentColor" strokeWidth="1.2" />
-              <line x1="7" y1="5" x2="7" y2="8" stroke="currentColor" strokeWidth="1.2" />
-              <rect x="2" y="7" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            </>
-          ) : (
-            <>
-              <rect x="3" y="0" width="6" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-              <line x1="5" y1="4" x2="5" y2="6" stroke="currentColor" strokeWidth="1.2" />
-              <line x1="7" y1="4" x2="7" y2="6" stroke="currentColor" strokeWidth="1.2" />
-              <rect x="2" y="8" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2" />
-            </>
-          )}
-        </svg>
+        {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
       </button>
     </div>
   );
@@ -640,7 +600,7 @@ function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string)
             marginLeft: "2px",
           }}
         >
-          ▾
+          <ChevronDown size={10} strokeWidth={2} />
         </button>
         {moreOpen && (
           <div style={{
@@ -743,10 +703,10 @@ const OVERFLOW_OPTIONS = [
 ];
 
 const OVERFLOW_ICON_OPTIONS = [
-  { value: "visible", icon: <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 3C4 3 1.5 7 1.5 7s2.5 4 5.5 4 5.5-4 5.5-4S10 3 7 3z" fill="none" stroke="currentColor" strokeWidth="1.2"/><circle cx="7" cy="7" r="1.8" fill="none" stroke="currentColor" strokeWidth="1.2"/></svg>, title: "Visible" },
-  { value: "hidden", icon: <svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 2l10 10M7 3C4 3 1.5 7 1.5 7s1 1.6 2.5 2.8M7 11c3 0 5.5-4 5.5-4s-1-1.6-2.5-2.8" fill="none" stroke="currentColor" strokeWidth="1.2"/></svg>, title: "Hidden" },
-  { value: "clip", icon: <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="8" height="8" rx="1" fill="none" stroke="currentColor" strokeWidth="1.2"/><path d="M6 1v3M8 10v3M1 8h3M10 6h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>, title: "Clip" },
-  { value: "scroll", icon: <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="1" width="8" height="12" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.2"/><path d="M7 4v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>, title: "Scroll" },
+  { value: "visible", icon: <Eye size={14} strokeWidth={1.5} />, title: "Visible" },
+  { value: "hidden", icon: <EyeOff size={14} strokeWidth={1.5} />, title: "Hidden" },
+  { value: "clip", icon: <Scissors size={14} strokeWidth={1.5} />, title: "Clip" },
+  { value: "scroll", icon: <ScrollText size={14} strokeWidth={1.5} />, title: "Scroll" },
   { value: "auto", icon: <span style={{ fontSize: "9px", fontFamily: "system-ui, sans-serif", fontWeight: 500 }}>Auto</span>, title: "Auto" },
 ];
 
