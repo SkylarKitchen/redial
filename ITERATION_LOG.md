@@ -264,4 +264,16 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 27 — Typography advanced: column-gap (2026-03-11)
+- Added `column-gap` TypoValueCell to typography advanced section, paired with existing `column-count`
+- Reuses existing `columnGap` state and `handleColumnGapChange` handler from layout section
+- Split the old 3-cell row (letter-spacing + text-indent + columns) into two rows for better spacing:
+  - Row 1: Letter spacing + Text indent
+  - Row 2: Columns + Column gap
+- "Normal" keyword shown when gap is 0, 1px step
+- Fills spec §7 line 411 gap — column-gap is now accessible for multi-column text (`display: block` + `column-count`)
+- Typecheck: PASS
+
+---
+
 ## Done

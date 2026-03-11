@@ -1159,7 +1159,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
           {showTypoAdvanced && (
             <>
-              {/* Letter spacing + Text indent + Columns — compact row with labels below */}
+              {/* Letter spacing + Text indent — compact row */}
               <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
                 <div style={{ flex: 1 }}>
                   <TypoValueCell
@@ -1184,6 +1184,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                   />
                   <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Text indent</div>
                 </div>
+              </div>
+
+              {/* Columns + Column gap — compact row */}
+              <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
                 <div style={{ flex: 1 }}>
                   <TypoValueCell
                     value={columnCount}
@@ -1193,6 +1197,16 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                     keyword={columnCount <= 1 ? "Auto" : null}
                   />
                   <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={columnGap}
+                    onChange={handleColumnGapChange}
+                    unit="px"
+                    step={1}
+                    keyword={columnGap === 0 ? "Normal" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Column gap</div>
                 </div>
               </div>
 
