@@ -469,42 +469,6 @@ export function Overlay() {
     };
   }, [selectedEl, selecting]);
 
-  // --- Viewport constraint style injection (Phase 3) ---
-  useEffect(() => {
-    const STYLE_ID = "__tuner-viewport-constraint";
-
-    if (viewportWidth === null) {
-      document.getElementById(STYLE_ID)?.remove();
-      return;
-    }
-
-    let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-    if (!style) {
-      style = document.createElement("style");
-      style.id = STYLE_ID;
-      document.head.appendChild(style);
-    }
-
-    style.textContent = `body > *:not(.__tuner-root):not(.__tuner-selector-outline):not(.__tuner-selected-outline) { max-width: ${viewportWidth}px !important; margin-left: auto !important; margin-right: auto !important; }`;
-
-    return () => {
-      document.getElementById(STYLE_ID)?.remove();
-    };
-  }, [viewportWidth]);
-
-  // --- Viewport change: re-infer after width change ---
-  const handleViewportChange = useCallback((width: number | null) => {
-    setViewportWidth(width);
-    if (selectedEl && selectedEl.isConnected) {
-      requestAnimationFrame(() => {
-        if (selectedEl.isConnected) {
-          setInferResult(infer(selectedEl));
-          setPanelKey((k) => k + 1);
-        }
-      });
-    }
-  }, [selectedEl]);
-
   // --- Breadcrumb computation (Phase 2) ---
   const breadcrumb = selectedEl ? buildBreadcrumb(selectedEl) : [];
 

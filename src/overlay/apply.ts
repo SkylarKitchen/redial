@@ -36,6 +36,42 @@ function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
+
+// --- Style Clipboard ---
+
+let styleClipboard: { prop: string; value: string }[] = [];
+
+/**
+ * Copy the current overrides from an element to the style clipboard.
+ * Returns the number of styles copied.
+ */
+export function copyStyles(el: Element): number {
+  const entries = diff(el);
+  styleClipboard = entries.map((e) => ({ prop: e.prop, value: e.to }));
+  return styleClipboard.length;
+}
+
+/**
+ * Paste clipboard styles onto an element.
+ * Wraps in beginBatch/endBatch so the entire paste is one undo entry.
+ * Returns the number of styles pasted.
+ */
+export function pasteStyles(el: Element): number {
+  if (styleClipboard.length === 0) return 0;
+  beginBatch();
+  for (const { prop, value } of styleClipboard) {
+    applyInlineStyle(el, prop, value);
+  }
+  endBatch();
+  return styleClipboard.length;
+}
+
+/**
+ * Check if the style clipboard has any entries.
+ */
+export function hasClipboardStyles(): boolean {
+  return styleClipboard.length > 0;
+}
 const undoStack: UndoEntry[] = [];
 const redoStack: UndoEntry[] = [];
 const MAX_UNDO = 200;
