@@ -34,7 +34,7 @@ import {
   ArrowRight, ArrowDown, WrapText,
   Link, Unlink,
   ChevronDown, ChevronRight,
-  Italic,
+  Italic, X, MoreHorizontal, PilcrowLeft, PilcrowRight,
 } from "lucide-react";
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -92,6 +92,33 @@ function getIndicatorType(
 function parseNum(val: string): number {
   const n = parseFloat(val);
   return isNaN(n) ? 0 : n;
+}
+
+/**
+ * Check whether a CSS property is explicitly set on an element
+ * (via inline style or a stylesheet rule) rather than using the browser default.
+ * Returns the authored value if found, or null if the property is at its initial value.
+ */
+function getAuthoredValue(el: Element, prop: string): string | null {
+  // 1. Check inline style (highest priority)
+  const inline = (el as HTMLElement).style.getPropertyValue(prop);
+  if (inline) return inline;
+
+  // 2. Walk matched stylesheet rules (last match wins due to cascade)
+  let found: string | null = null;
+  try {
+    for (const sheet of document.styleSheets) {
+      try {
+        for (const rule of sheet.cssRules) {
+          if (rule instanceof CSSStyleRule && el.matches(rule.selectorText)) {
+            const val = rule.style.getPropertyValue(prop);
+            if (val) found = val;
+          }
+        }
+      } catch { /* cross-origin sheet */ }
+    }
+  } catch { /* no access */ }
+  return found;
 }
 
 function parseBoxShadow(raw: string): ShadowValue[] {
@@ -285,15 +312,27 @@ const TEXT_ALIGN_OPTIONS = [
 ];
 
 const TEXT_DECORATION_OPTIONS = [
-  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
+  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "line-through", title: "Strikethrough", icon: <Strikethrough size={12} strokeWidth={1.5} /> },
+  { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
   { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
 ];
 
-const TEXT_TRANSFORM_OPTIONS = [
+const CAPITALIZE_OPTIONS = [
+  { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
   { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
   { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
   { value: "lowercase", title: "Lowercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>aa</span> },
+];
+
+const ITALIC_OPTIONS = [
+  { value: "normal", title: "Normal", icon: <span style={{ fontSize: "12px", fontFamily: "Georgia, serif", lineHeight: 1 }}>I</span> },
+  { value: "italic", title: "Italic", icon: <Italic size={12} strokeWidth={1.5} /> },
+];
+
+const DIRECTION_OPTIONS = [
+  { value: "ltr", title: "Left to Right", icon: <PilcrowLeft size={12} strokeWidth={1.5} /> },
+  { value: "rtl", title: "Right to Left", icon: <PilcrowRight size={12} strokeWidth={1.5} /> },
 ];
 
 
@@ -878,10 +917,22 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   // ── Size state ──
   const [width, setWidth] = useState(() => parseNum(cs.width));
   const [height, setHeight] = useState(() => parseNum(cs.height));
-  const [minWidth, setMinWidth] = useState(() => parseNum(cs.minWidth));
-  const [maxWidth, setMaxWidth] = useState(() => parseNum(cs.maxWidth === "none" ? "0" : cs.maxWidth));
-  const [minHeight, setMinHeight] = useState(() => parseNum(cs.minHeight));
-  const [maxHeight, setMaxHeight] = useState(() => parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight));
+  const [minWidth, setMinWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "min-width");
+    return authored ? parseNum(authored) : 0;
+  });
+  const [maxWidth, setMaxWidth] = useState(() => {
+    const authored = getAuthoredValue(element, "max-width");
+    return (!authored || authored === "none") ? 0 : parseNum(authored);
+  });
+  const [minHeight, setMinHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "min-height");
+    return authored ? parseNum(authored) : 0;
+  });
+  const [maxHeight, setMaxHeight] = useState(() => {
+    const authored = getAuthoredValue(element, "max-height");
+    return (!authored || authored === "none") ? 0 : parseNum(authored);
+  });
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
   const [overflowLocked, setOverflowLocked] = useState(true);
   const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
@@ -901,10 +952,23 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [maxHeightUnit, setMaxHeightUnit] = useState("px");
 
   // Size keyword toggles
-  const [widthAuto, setWidthAuto] = useState(() => cs.width === "auto");
-  const [heightAuto, setHeightAuto] = useState(() => cs.height === "auto");
-  const [maxWidthNone, setMaxWidthNone] = useState(() => cs.maxWidth === "none");
-  const [maxHeightNone, setMaxHeightNone] = useState(() => cs.maxHeight === "none");
+  // getComputedStyle always resolves to pixels — detect "auto"/"none" from authored CSS
+  const [widthAuto, setWidthAuto] = useState(() => {
+    const authored = getAuthoredValue(element, "width");
+    return !authored || authored === "auto";
+  });
+  const [heightAuto, setHeightAuto] = useState(() => {
+    const authored = getAuthoredValue(element, "height");
+    return !authored || authored === "auto";
+  });
+  const [maxWidthNone, setMaxWidthNone] = useState(() => {
+    const authored = getAuthoredValue(element, "max-width");
+    return !authored || authored === "none";
+  });
+  const [maxHeightNone, setMaxHeightNone] = useState(() => {
+    const authored = getAuthoredValue(element, "max-height");
+    return !authored || authored === "none";
+  });
 
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
