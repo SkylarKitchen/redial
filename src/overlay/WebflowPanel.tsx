@@ -117,7 +117,11 @@ function isTextBearing(el: Element): boolean {
   return false;
 }
 
-/** Mini dropdown for X/Y alignment values */
+// ─── Main Component ──────────────────────────────────────────────────
+// (Sub-components: MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell → layoutControls.tsx)
+// (Constants: all option arrays → panelConstants.tsx)
+
+REMOVE_MARKER_START
 function MiniDropdown({ value, options, onChange }: {
   value: string;
   options: Array<{ value: string; label: string }>;
