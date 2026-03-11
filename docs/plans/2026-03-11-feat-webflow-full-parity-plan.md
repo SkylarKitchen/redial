@@ -2,9 +2,26 @@
 title: "Webflow Full 1:1 Parity"
 type: feat
 date: 2026-03-11
+deepened: 2026-03-11
 ---
 
 # Webflow Full 1:1 Parity
+
+## Enhancement Summary
+
+**Deepened on:** 2026-03-11
+**Agents used:** kieran-typescript-reviewer, performance-oracle, code-simplicity-reviewer, architecture-strategist, pattern-recognition-specialist, julik-frontend-races-reviewer, best-practices-researcher, framework-docs-researcher, spec-flow-analyzer
+
+### Key Improvements from Research
+1. **`<style>` tag injection for focus rings** — Use a single injected `<style>` tag with `:focus-visible` instead of per-component onFocus/onBlur state tracking (fewer re-renders, proper keyboard-only detection)
+2. **Batch getComputedStyle reads** — StyleIndicator detection should read from the already-cached `cs` snapshot rather than calling `getComputedStyle()` per-property per-render
+3. **convertUnit as a standalone pure function** — Place in a new `src/overlay/unitConversion.ts` file for testability; each conversion is independently unit-testable
+4. **text-shadow parsing reuse** — `parseBoxShadow`/`shadowToCSS` work directly since text-shadow is a strict subset (no spread, no inset)
+
+### Risks Identified
+- Parallel streams all modify `WebflowPanel.tsx` — merge carefully by section offset
+- Color picker popover needs click-outside dismissal and z-index above the panel
+- Bezier canvas uses `requestAnimationFrame` — potential race with React state updates
 
 ## Overview
 
@@ -53,6 +70,11 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
   ```
 - Modify each `onUnitChange` handler (width, height, fontSize, etc.) to also convert the value
 - Round to 2 decimal places for readability
+- For unsupported conversions (e.g., `% → em`), pivot through `px` as intermediate: `% → px → em`
+- Handle edge cases: division by zero when `parentDimension === 0` or `computedFontSize === 0` — return `0` with a console warning
+- Handle `auto`/`none` keyword values: skip conversion entirely, preserve keyword
+
+**Research Insight — Testability**: Place `convertUnit()` in a new `src/overlay/unitConversion.ts` file. This pure function has zero DOM dependencies (context is passed in), making it trivially unit-testable with Vitest. Each conversion pair gets its own test case.
 
 #### Task 19 Enhancement: Full StyleIndicator Detection
 **Files**: `src/overlay/StyleIndicator.tsx`, `src/overlay/WebflowPanel.tsx`
@@ -66,6 +88,10 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 - Compare `getComputedStyle(el)[prop]` vs `getComputedStyle(el.parentElement)[prop]` for inheritable properties → "inherited" if different
 - Otherwise → "none"
 
+**Research Insight — Performance**: Do NOT call `getComputedStyle()` again inside `getIndicatorType()`. The component already has a `cs` variable from mount. Pass it in: `getIndicatorType(el, prop, cs)`. For the parent comparison, cache `parentCs` once alongside `cs` rather than per-property.
+
+**Research Insight — Inheritable properties**: Only compare parent for truly inheritable CSS properties (color, font-size, line-height, etc.). Non-inheritable properties (width, margin, padding) should skip the parent check — they're always "none" unless inline-overridden.
+
 #### Task 22: Tab/Shift+Tab Navigation
 **Files**: `src/overlay/WebflowPanel.tsx` (SliderRow, SelectRow, ColorRow, TextRow internal functions)
 **What**: Add `tabIndex={0}` to all interactive control inputs and a focus ring style.
@@ -73,7 +99,9 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 - Add `tabIndex={0}` to: SliderRow's `<input type="range">`, SelectRow's `<button>`, ColorRow's swatch `<input>`, TextRow's `<input>`
 - On focus-visible, apply `outline: "1px solid rgba(99,102,241,0.5)"`, `outlineOffset: "1px"`
 - Use a simple `onFocus`/`onBlur` pair to track focus state for inline styling (can't use `:focus-visible` pseudo in inline styles)
-- Alternative: inject a single `<style>` tag with `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }` and add `className="tuner-focusable"` to controls
+- **Preferred approach** (from research): Inject a single `<style>` tag with `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }` and add `className="tuner-focusable"` to controls. This avoids per-component focus state tracking and uses the browser's native `:focus-visible` heuristic (keyboard-only, not mouse clicks).
+
+**Research Insight — Implementation**: Add a `useEffect` in `WebflowPanel` that injects the `<style>` tag once on mount and removes it on unmount. This is cleaner than per-input onFocus/onBlur handlers and produces zero extra re-renders.
 
 ### Phase 2: Missing Per-Section Controls (12 tasks)
 
@@ -174,6 +202,12 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 
 **MVP subset**: HSB picker + opacity slider + hex input. Skip swatches for now.
 
+**Research Insights:**
+- Use `<canvas>` for the 2D saturation/brightness gradient — CSS gradients can't produce the correct HSB mapping. Draw with `ctx.createLinearGradient()` for white→transparent left-to-right, black→transparent bottom-to-top overlay.
+- Popover positioning: Use `position: fixed` relative to the swatch button's `getBoundingClientRect()`. Flip above if below would overflow viewport.
+- Click-outside dismissal: Single `mousedown` listener on `document`, check `event.target` containment via `ref.contains()`.
+- Color format conversion: HSB↔RGB↔Hex are pure math — implement as standalone functions in the same file for co-location.
+
 #### 3B: Bezier Curve Editor
 **File**: New component `src/overlay/BezierEditor.tsx`, modify `TransitionEditor.tsx`
 **What**: Visual cubic-bezier curve editor for `transition-timing-function`.
@@ -183,6 +217,12 @@ git checkout -- src/overlay/WebflowPanel.tsx src/overlay/SpacingBoxModel.tsx
 - Real-time preview animation
 
 **Scope decision**: This is another significant component. Implement after all other tasks.
+
+**Research Insights:**
+- Draw bezier curve on `<canvas>` using `ctx.bezierCurveTo()`. Canvas size: 200×200px fits the panel width.
+- Control points are draggable via `mousedown`/`mousemove`/`mouseup` on the canvas. Convert pixel coords to 0–1 normalized values.
+- Race condition warning (from frontend reviewer): Use `requestAnimationFrame` for canvas redraws but keep the source of truth in React state. Don't read back from canvas — always render from state.
+- Preview animation: Apply a CSS transition to a small dot/square element using the current `cubic-bezier()` value. Restart by toggling a key.
 
 ## Parallel Execution Strategy
 
