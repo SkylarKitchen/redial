@@ -905,6 +905,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [flexShrink, setFlexShrink] = useState(() => parseNum(cs.flexShrink));
   const [flexBasis, setFlexBasis] = useState(() => parseNum(cs.flexBasis));
   const [alignSelf, setAlignSelf] = useState(() => cs.alignSelf);
+  const [flexOrder, setFlexOrder] = useState(() => parseNum(cs.order));
 
   // ── Size state ──
   const [width, setWidth] = useState(() => parseNum(cs.width));
