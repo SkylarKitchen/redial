@@ -29,7 +29,7 @@ import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
 import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  Underline, Strikethrough, Overline,
+  Underline, Strikethrough, Baseline,
   Eye, EyeOff, Scissors, ScrollText,
   ArrowRight, ArrowDown, WrapText,
   Link, Unlink,
@@ -287,7 +287,7 @@ const TEXT_ALIGN_OPTIONS = [
 const TEXT_DECORATION_OPTIONS = [
   { value: "underline", title: "Underline", icon: <Underline size={12} strokeWidth={1.5} /> },
   { value: "line-through", title: "Strikethrough", icon: <Strikethrough size={12} strokeWidth={1.5} /> },
-  { value: "overline", title: "Overline", icon: <Overline size={12} strokeWidth={1.5} /> },
+  { value: "overline", title: "Overline", icon: <Baseline size={12} strokeWidth={1.5} style={{ transform: "scaleY(-1)" }} /> },
 ];
 
 const TEXT_TRANSFORM_OPTIONS = [
