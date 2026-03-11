@@ -152,14 +152,13 @@ function ShadowRow({
   index,
   onUpdate,
   onDelete,
-  onColorClick,
 }: {
   shadow: ShadowValue;
   index: number;
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
-  onColorClick: (index: number) => void;
 }) {
+  const colorInputRef = useRef<HTMLInputElement>(null);
   const updateField = useCallback(
     (field: keyof ShadowValue) => (val: number | boolean) => {
       onUpdate(index, { ...shadow, [field]: val });
@@ -185,20 +184,35 @@ function ShadowRow({
       {/* Row 2: color, inset, delete */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         {/* Color swatch */}
-        <button
-          onClick={() => onColorClick(index)}
-          title={`Shadow color: ${shadow.color}`}
-          style={{
-            width: "16px",
-            height: "16px",
-            borderRadius: "2px",
-            border: "1px solid rgba(255,255,255,0.2)",
-            background: shadow.color,
-            cursor: "pointer",
-            padding: 0,
-            flexShrink: 0,
-          }}
-        />
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => colorInputRef.current?.click()}
+            title={`Shadow color: ${shadow.color}`}
+            style={{
+              width: "16px",
+              height: "16px",
+              borderRadius: "2px",
+              border: "1px solid rgba(255,255,255,0.2)",
+              background: shadow.color,
+              cursor: "pointer",
+              padding: 0,
+              flexShrink: 0,
+            }}
+          />
+          <input
+            ref={colorInputRef}
+            type="color"
+            value={shadow.color.startsWith("#") ? shadow.color : "#000000"}
+            onChange={(e) => onUpdate(index, { ...shadow, color: e.target.value })}
+            style={{
+              position: "absolute",
+              width: 0,
+              height: 0,
+              opacity: 0,
+              overflow: "hidden",
+            }}
+          />
+        </div>
 
         {/* Inset toggle */}
         <button
@@ -272,14 +286,6 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
     [shadows, onChange]
   );
 
-  const handleColorClick = useCallback(
-    (_index: number) => {
-      // Parent handles color picker — dispatch custom event with shadow index
-      // The parent should listen for this and open its color picker
-    },
-    []
-  );
-
   return (
     <div style={{ padding: "4px 12px" }}>
       {/* Add button */}
@@ -316,7 +322,6 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           index={i}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
-          onColorClick={handleColorClick}
         />
       ))}
 

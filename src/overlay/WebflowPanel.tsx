@@ -72,10 +72,18 @@ function parseBoxShadow(raw: string): ShadowValue[] {
   for (const part of parts) {
     const inset = part.includes("inset");
     const cleaned = part.replace("inset", "").trim();
-    // Extract color (rgb/rgba/hex/named) and numeric values
-    const colorMatch = cleaned.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b[a-z]+\b)$/i);
-    const color = colorMatch ? colorMatch[1] : "rgba(0,0,0,0.1)";
-    const numStr = cleaned.replace(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
+    // Extract color (rgb/rgba/hex/named) — browsers may place color first or last
+    const colorStartMatch = cleaned.match(/^(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})\s+/i);
+    const colorEndMatch = cleaned.match(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8}|\b(?!(?:\d|inset\b))[a-z]{3,}\b)$/i);
+    const color = (colorStartMatch?.[1] ?? colorEndMatch?.[1]) || "rgba(0,0,0,0.1)";
+    // Strip the matched color from the string before parsing numbers
+    let numStr = cleaned;
+    if (colorStartMatch) {
+      numStr = numStr.slice(colorStartMatch[0].length);
+    } else if (colorEndMatch) {
+      numStr = numStr.slice(0, colorEndMatch.index).trim();
+    }
+    numStr = numStr.replace(/(rgba?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
     const nums = numStr.split(/\s+/).map(parseFloat).filter((n) => !isNaN(n));
     shadows.push({
       x: nums[0] ?? 0,
@@ -188,7 +196,7 @@ function transformToCSS(transforms: TransformValue[]): string {
 
 function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
   const props = cs.transitionProperty;
-  if (!props || props === "none" || props === "all") return [];
+  if (!props || props === "none") return [];
   const properties = props.split(",").map((s) => s.trim());
   const durations = cs.transitionDuration.split(",").map((s) => parseFloat(s.trim()) * 1000);
   const easings = cs.transitionTimingFunction.split(",").map((s) => s.trim());
@@ -691,6 +699,12 @@ const FONT_WEIGHT_OPTIONS = [
   { value: "900", label: "900 - Black" },
 ];
 
+// Unit option lists for SliderRow unit selectors
+const SIZE_UNITS_W = ["px", "%", "vw", "em", "rem", "ch"];
+const SIZE_UNITS_H = ["px", "%", "vh", "em", "rem"];
+const POSITION_UNITS = ["px", "%", "vw", "vh"];
+const TYPO_SIZE_UNITS = ["px", "em", "rem"];
+
 const OVERFLOW_OPTIONS = [
   { value: "visible", label: "Visible" },
   { value: "hidden", label: "Hidden" },
@@ -793,6 +807,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [flexWrap, setFlexWrap] = useState(() => cs.flexWrap);
   const [gap, setGap] = useState(() => parseNum(cs.gap));
 
+  // Grid track definitions
+  const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
+  const [gridRows, setGridRows] = useState(() => cs.gridTemplateRows === "none" ? "" : cs.gridTemplateRows);
+
   // Flex child controls
   const [flexGrow, setFlexGrow] = useState(() => parseNum(cs.flexGrow));
   const [flexShrink, setFlexShrink] = useState(() => parseNum(cs.flexShrink));
@@ -824,6 +842,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [left, setLeft] = useState(() => parseNum(cs.left));
   const [zIndex, setZIndex] = useState(() => parseInt(cs.zIndex) || 0);
 
+  // Position units
+  const [topUnit, setTopUnit] = useState("px");
+  const [rightUnit, setRightUnit] = useState("px");
+  const [bottomUnit, setBottomUnit] = useState("px");
+  const [leftUnit, setLeftUnit] = useState("px");
+
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
   const [fontWeight, setFontWeight] = useState(() => cs.fontWeight);
@@ -833,6 +857,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     return fs > 0 ? Math.round((lh / fs) * 100) / 100 : 1.4;
   });
   const [letterSpacing, setLetterSpacing] = useState(() => parseNum(cs.letterSpacing));
+  const [fontSizeUnit, setFontSizeUnit] = useState("px");
+  const [letterSpacingUnit, setLetterSpacingUnit] = useState("px");
   const [color, setColor] = useState(() => rgbToHex(cs.color));
   const [textAlign, setTextAlign] = useState(() => cs.textAlign);
   const [textDecoration, setTextDecoration] = useState(() => {
@@ -992,17 +1018,17 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
   // Position
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);
-  const handleTopChange = useCallback((v: number) => { setTop(v); apply("top", `${v}px`); }, [apply]);
-  const handleRightChange = useCallback((v: number) => { setRight(v); apply("right", `${v}px`); }, [apply]);
-  const handleBottomChange = useCallback((v: number) => { setBottom(v); apply("bottom", `${v}px`); }, [apply]);
-  const handleLeftChange = useCallback((v: number) => { setLeft(v); apply("left", `${v}px`); }, [apply]);
+  const handleTopChange = useCallback((v: number) => { setTop(v); apply("top", `${v}${topUnit}`); }, [apply, topUnit]);
+  const handleRightChange = useCallback((v: number) => { setRight(v); apply("right", `${v}${rightUnit}`); }, [apply, rightUnit]);
+  const handleBottomChange = useCallback((v: number) => { setBottom(v); apply("bottom", `${v}${bottomUnit}`); }, [apply, bottomUnit]);
+  const handleLeftChange = useCallback((v: number) => { setLeft(v); apply("left", `${v}${leftUnit}`); }, [apply, leftUnit]);
   const handleZIndexChange = useCallback((v: number) => { setZIndex(v); apply("z-index", String(v)); }, [apply]);
 
   // Typography
-  const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}px`); }, [apply]);
+  const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
   const handleFontWeightChange = useCallback((v: string) => { setFontWeight(v); apply("font-weight", v); }, [apply]);
   const handleLineHeightChange = useCallback((v: number) => { setLineHeight(v); apply("line-height", String(v)); }, [apply]);
-  const handleLetterSpacingChange = useCallback((v: number) => { setLetterSpacing(v); apply("letter-spacing", `${v}px`); }, [apply]);
+  const handleLetterSpacingChange = useCallback((v: number) => { setLetterSpacing(v); apply("letter-spacing", `${v}${letterSpacingUnit}`); }, [apply, letterSpacingUnit]);
   const handleColorChange = useCallback((v: string) => { setColor(v); apply("color", v); }, [apply]);
   const handleTextAlignChange = useCallback((v: string) => { setTextAlign(v); apply("text-align", v); }, [apply]);
   const handleTextDecorationChange = useCallback((v: string) => { setTextDecoration(v); apply("text-decoration-line", v); }, [apply]);
@@ -1018,19 +1044,59 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleBgLayersChange = useCallback(
     (layers: BackgroundLayer[]) => {
       setBgLayers(layers);
-      // Apply the first color layer as background-color
-      const colorLayer = layers.find((l) => l.type === "color");
-      if (colorLayer?.color) {
-        apply("background-color", colorLayer.color);
+      // Build background parts from all layers
+      const bgParts: string[] = [];
+      let bgColor = "transparent";
+      for (const layer of layers) {
+        if (layer.type === "color") {
+          bgColor = layer.color || "transparent";
+        } else if (layer.type === "gradient" && layer.gradient) {
+          const g = layer.gradient;
+          const stops = g.stops
+            .map((s) => `${s.color} ${s.position}%`)
+            .join(", ");
+          if (g.type === "linear") {
+            bgParts.push(`linear-gradient(${g.angle}deg, ${stops})`);
+          } else if (g.type === "radial") {
+            bgParts.push(`radial-gradient(${stops})`);
+          } else if (g.type === "conic") {
+            bgParts.push(`conic-gradient(from ${g.angle}deg, ${stops})`);
+          }
+        } else if (layer.type === "image" && layer.image) {
+          const img = layer.image;
+          bgParts.push(
+            `url(${img.url}) ${img.position} / ${img.size} ${img.repeat}`
+          );
+        }
+      }
+      // CSS background: gradients/images first, then color as the last layer
+      if (bgParts.length > 0) {
+        apply("background", bgParts.join(", "));
+        apply("background-color", bgColor);
+      } else {
+        apply("background", "none");
+        apply("background-color", bgColor);
       }
     },
     [apply]
   );
 
   // Borders
-  const handleBorderStyleChange = useCallback((v: string) => { setBorderStyle(v); apply("border-style", v); }, [apply]);
-  const handleBorderWidthChange = useCallback((v: number) => { setBorderWidth(v); apply("border-width", `${v}px`); }, [apply]);
-  const handleBorderColorChange = useCallback((v: string) => { setBorderColor(v); apply("border-color", v); }, [apply]);
+  const handleBorderStyleChange = useCallback((v: string) => {
+    setBorderStyle(v);
+    const prop = borderSide === "all" ? "border-style" : `border-${borderSide}-style`;
+    apply(prop, v);
+  }, [apply, borderSide]);
+  const handleBorderWidthChange = useCallback((v: number) => {
+    setBorderWidth(v);
+    const prop = borderSide === "all" ? "border-width" : `border-${borderSide}-width`;
+    apply(prop, `${v}px`);
+  }, [apply, borderSide]);
+  const handleBorderColorChange = useCallback((v: string) => {
+    setBorderColor(v);
+    const prop = borderSide === "all" ? "border-color" : `border-${borderSide}-color`;
+    apply(prop, v);
+  }, [apply, borderSide]);
   const handleCornerChange = useCallback(
     (corner: string, value: number) => {
       apply(corner, `${value}px`);
@@ -1169,10 +1235,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} />
         {position !== "static" && (
           <>
-            <SliderRow label="Top" value={top} min={-200} max={200} step={1} unit="px" onChange={handleTopChange} />
-            <SliderRow label="Right" value={right} min={-200} max={200} step={1} unit="px" onChange={handleRightChange} />
-            <SliderRow label="Bottom" value={bottom} min={-200} max={200} step={1} unit="px" onChange={handleBottomChange} />
-            <SliderRow label="Left" value={left} min={-200} max={200} step={1} unit="px" onChange={handleLeftChange} />
+            <SliderRow label="Top" value={top} min={-200} max={200} step={1} unit={topUnit} units={POSITION_UNITS} onUnitChange={setTopUnit} onChange={handleTopChange} />
+            <SliderRow label="Right" value={right} min={-200} max={200} step={1} unit={rightUnit} units={POSITION_UNITS} onUnitChange={setRightUnit} onChange={handleRightChange} />
+            <SliderRow label="Bottom" value={bottom} min={-200} max={200} step={1} unit={bottomUnit} units={POSITION_UNITS} onUnitChange={setBottomUnit} onChange={handleBottomChange} />
+            <SliderRow label="Left" value={left} min={-200} max={200} step={1} unit={leftUnit} units={POSITION_UNITS} onUnitChange={setLeftUnit} onChange={handleLeftChange} />
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} />
           </>
         )}
@@ -1181,10 +1247,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit="px" onChange={handleFontSizeChange} />
+          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} />
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} />
           <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} />
-          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit="px" onChange={handleLetterSpacingChange} />
+          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setLetterSpacingUnit} onChange={handleLetterSpacingChange} />
           <ColorRow label="Color" value={color} onChange={handleColorChange} />
 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>

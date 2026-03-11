@@ -71,10 +71,10 @@ export function IconButtonGroup({ options, value, onChange, multi = false }: Ico
               transition: "background 80ms, color 80ms",
             }}
             onMouseEnter={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+              if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
             }}
             onMouseLeave={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.background = "transparent";
+              if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
             }}
           >
             {opt.icon}

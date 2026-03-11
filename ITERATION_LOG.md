@@ -12,8 +12,16 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - When `units` is provided, renders `<UnitSelector>` instead of a static unit label
 - Typecheck: PASS
 
+### Iteration 2 — UnitSelector wired into Size + Position sections (2026-03-11)
+- Added per-property unit state: `widthUnit`, `heightUnit`, `minWidthUnit`, `maxWidthUnit`, `minHeightUnit`, `maxHeightUnit`, `topUnit`, `rightUnit`, `bottomUnit`, `leftUnit`
+- All Size sliders now show UnitSelector dropdown (px, %, vw/vh, em, rem, ch)
+- All Position offset sliders now show UnitSelector dropdown (px, %, vw, vh)
+- Handlers compose value + unit dynamically (`${v}${unit}`)
+- Added `SIZE_UNITS_W`, `SIZE_UNITS_H`, `POSITION_UNITS`, `TYPO_SIZE_UNITS` constants
+- Typecheck: PASS
+
 ---
 
 ## Next Up
 
-**Phase A-3:** Wire unit state into Size section (width, height, min/max with UnitSelector)
+**Phase B-6:** Grid track editors (grid-template-columns, grid-template-rows text inputs)
