@@ -1721,7 +1721,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
             unit={lineHeightUnit}
             units={LINE_HEIGHT_UNITS}
-            onUnitChange={setLineHeightUnit}
+            onUnitChange={(u) => { if (lineHeightUnit !== "—" && u !== "—") { const c = convertUnit(lineHeight, lineHeightUnit, u, conversionCtx); setLineHeight(c); } setLineHeightUnit(u); }}
             onChange={handleLineHeightChange}
             indicator={getIndicatorType(element, "line-height")}
           />
