@@ -11,6 +11,7 @@ import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
+import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
@@ -256,6 +257,14 @@ export function SelectRow({
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
 
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: options.length,
+    selectedIndex: options.findIndex((o) => o.value === value),
+    onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+  });
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -287,7 +296,11 @@ export function SelectRow({
         <button
           className="tuner-focusable"
           tabIndex={0}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
           onClick={() => setOpen((o) => !o)}
+          onKeyDown={onTriggerKeyDown}
           onFocus={onFocusRing}
           onBlur={onBlurRing}
           style={{
@@ -322,6 +335,8 @@ export function SelectRow({
 
         {open && (
           <div
+            role="listbox"
+            onKeyDown={onListKeyDown}
             style={{
               position: "absolute",
               top: "calc(100% + 2px)",
@@ -338,11 +353,14 @@ export function SelectRow({
               padding: "2px 0",
             }}
           >
-            {options.map((opt) => {
+            {options.map((opt, i) => {
               const isActive = opt.value === value;
+              const isHighlighted = i === highlightedIndex;
               return (
                 <div
                   key={opt.value}
+                  role="option"
+                  aria-selected={isActive}
                   onClick={() => {
                     onChange(opt.value);
                     setOpen(false);
@@ -352,7 +370,7 @@ export function SelectRow({
                     fontSize: "11px",
                     fontFamily: "ui-monospace, 'SF Mono', monospace",
                     color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : "transparent",
+                    background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
                     cursor: "pointer",
                     lineHeight: "16px",
                     transition: "background 60ms",
@@ -361,7 +379,7 @@ export function SelectRow({
                     if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
                   }}
                 >
                   {opt.label}

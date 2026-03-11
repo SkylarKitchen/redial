@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useState, useRef, useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
@@ -136,9 +137,22 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </ActionButton>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        {(clipboardMessage || message) && (
-          <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}>{clipboardMessage || message}</span>
-        )}
+        <div role="status" aria-live="polite">
+          <AnimatePresence>
+            {(clipboardMessage || message) && (
+              <motion.span
+                key={clipboardMessage || message}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
+              >
+                {clipboardMessage || message}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
         <ActionButton
           onClick={handleReset}
           disabled={count === 0}

@@ -5,7 +5,8 @@
  * Closes on outside click.
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useDropdownKeyboard } from "./useDropdownKeyboard";
 
 export interface SpecialOption {
   value: string;
@@ -27,6 +28,33 @@ const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
 export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Build a flat list of all items for keyboard navigation
+  const allItems = useMemo(() => {
+    const items: Array<{ value: string; isSpecial: boolean }> = options.map((u) => ({ value: u, isSpecial: false }));
+    if (specialOptions) {
+      for (const opt of specialOptions) {
+        items.push({ value: opt.value, isSpecial: true });
+      }
+    }
+    return items;
+  }, [options, specialOptions]);
+
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: allItems.length,
+    selectedIndex: allItems.findIndex((item) => item.value === value),
+    onSelect: (i) => {
+      const item = allItems[i];
+      if (item.isSpecial) {
+        onSpecialSelect?.(item.value);
+      } else {
+        onChange(item.value);
+      }
+      setOpen(false);
+    },
+  });
 
   // Close on outside click
   useEffect(() => {
@@ -50,11 +78,18 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     [onChange]
   );
 
+  // Track the running flat index for highlight across regular + special options
+  let flatIndex = 0;
+
   return (
     <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
       {/* Pill */}
       <button
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={onTriggerKeyDown}
         style={{
           display: "flex",
           alignItems: "center",
@@ -85,6 +120,8 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       {/* Dropdown */}
       {open && (
         <div
+          role="listbox"
+          onKeyDown={onListKeyDown}
           style={{
             position: "absolute",
             top: "calc(100% + 2px)",
@@ -101,16 +138,20 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         >
           {options.map((unit) => {
             const isActive = unit === value;
+            const idx = flatIndex++;
+            const isHighlighted = idx === highlightedIndex;
             return (
               <div
                 key={unit}
+                role="option"
+                aria-selected={isActive}
                 onClick={() => handleSelect(unit)}
                 style={{
                   padding: "3px 8px",
                   fontSize: "10px",
                   fontFamily: "ui-monospace, 'SF Mono', monospace",
                   color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                  background: isActive ? "#6366f1" : "transparent",
+                  background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
                   cursor: "pointer",
                   lineHeight: "16px",
                   transition: "background 60ms",
@@ -119,7 +160,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                   if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                  if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
                 }}
               >
                 {unit}
@@ -129,28 +170,34 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           {specialOptions && specialOptions.length > 0 && (
             <>
               <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "2px 0" }} />
-              {specialOptions.map((opt) => (
-                <div
-                  key={opt.value}
-                  onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
-                  style={{
-                    padding: "3px 8px",
-                    fontSize: "10px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: "rgba(255,255,255,0.6)",
-                    background: "transparent",
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    transition: "background 60ms",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.03em",
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                >
-                  {opt.label}
-                </div>
-              ))}
+              {specialOptions.map((opt) => {
+                const idx = flatIndex++;
+                const isHighlighted = idx === highlightedIndex;
+                return (
+                  <div
+                    key={opt.value}
+                    role="option"
+                    aria-selected={false}
+                    onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
+                    style={{
+                      padding: "3px 8px",
+                      fontSize: "10px",
+                      fontFamily: "ui-monospace, 'SF Mono', monospace",
+                      color: "rgba(255,255,255,0.6)",
+                      background: isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: "background 60ms",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isHighlighted ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                  >
+                    {opt.label}
+                  </div>
+                );
+              })}
             </>
           )}
         </div>

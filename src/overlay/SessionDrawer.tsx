@@ -155,9 +155,22 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                 </SmallButton>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                {message && (
-                  <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "10px" }}>{message}</span>
-                )}
+                <div role="status" aria-live="polite">
+                  <AnimatePresence>
+                    {message && (
+                      <motion.span
+                        key={message}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "10px" }}
+                      >
+                        {message}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
                 <SmallButton onClick={handleResetAll} disabled={allDiffs.length === 0}>
                   Reset All
                 </SmallButton>

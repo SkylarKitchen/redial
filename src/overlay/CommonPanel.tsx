@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from "react";
 import { ColorRow, SliderRow, ValueInput } from "./controls";
 import { applyInlineStyle } from "./apply";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
+import { isAutoSize } from "./getAuthoredValue";
 import type { SpacingValues } from "./infer";
 
 // ─── Props ───────────────────────────────────────────────────────────
