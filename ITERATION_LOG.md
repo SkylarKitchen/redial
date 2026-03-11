@@ -253,4 +253,15 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 
 ---
 
+### Iteration 26 — Typography advanced: word-spacing + hyphens (2026-03-11)
+- Added `HYPHENS_OPTIONS` constant (`panelConstants.tsx`): none, manual, auto
+- Added `wordSpacing` state (parsed from `cs.wordSpacing`) and `hyphens` state (from `cs.hyphens`)
+- Added `handleWordSpacingChange` → `apply("word-spacing", ...)` and `handleHyphensChange` → `apply("hyphens", ...)`
+- Rendered `word-spacing` as a `TypoValueCell` with 0.5px step, "Normal" keyword at 0
+- Rendered `hyphens` as a `MiniDropdown` with none/manual/auto options
+- Both placed in the advanced typography sub-section between the letter-spacing/text-indent/columns row and the Italicize/Capitalize/Direction row
+- Typecheck: PASS
+
+---
+
 ## Done

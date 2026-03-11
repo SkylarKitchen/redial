@@ -93,6 +93,12 @@ export const LINE_BREAK_OPTIONS = [
   { value: "anywhere", label: "Anywhere" },
 ];
 
+export const HYPHENS_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "manual", label: "Manual" },
+  { value: "auto", label: "Auto" },
+];
+
 // ─── Position Options ────────────────────────────────────────────────
 
 export const FLOAT_OPTIONS = [

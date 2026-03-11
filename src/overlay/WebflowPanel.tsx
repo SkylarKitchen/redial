@@ -35,7 +35,7 @@ import {
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,
-  FONT_WEIGHT_OPTIONS, WHITE_SPACE_OPTIONS, WORD_BREAK_OPTIONS, LINE_BREAK_OPTIONS,
+  FONT_WEIGHT_OPTIONS, WHITE_SPACE_OPTIONS, WORD_BREAK_OPTIONS, LINE_BREAK_OPTIONS, HYPHENS_OPTIONS,
   FLOAT_OPTIONS, CLEAR_OPTIONS,
   SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS,
   LAYOUT_UNITS, BORDER_UNITS, SPACING_UNITS, LINE_HEIGHT_UNITS,
@@ -310,6 +310,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [textStrokeWidth, setTextStrokeWidth] = useState(() => parseNum(cs.getPropertyValue("-webkit-text-stroke-width") || "0"));
   const [textStrokeColor, setTextStrokeColor] = useState(() => rgbToHex(cs.getPropertyValue("-webkit-text-stroke-color") || cs.color));
   const [lineBreak, setLineBreak] = useState(() => cs.getPropertyValue("line-break") || "auto");
+  const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
+  const [hyphens, setHyphens] = useState(() => cs.getPropertyValue("hyphens") || "manual");
 
   // ── Background state ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -581,6 +583,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleTextStrokeWidthChange = useCallback((v: number) => { setTextStrokeWidth(v); apply("-webkit-text-stroke-width", `${v}px`); }, [apply]);
   const handleTextStrokeColorChange = useCallback((v: string) => { setTextStrokeColor(v); apply("-webkit-text-stroke-color", v); }, [apply]);
   const handleLineBreakChange = useCallback((v: string) => { setLineBreak(v); apply("line-break", v); }, [apply]);
+  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}px`); }, [apply]);
+  const handleHyphensChange = useCallback((v: string) => { setHyphens(v); apply("hyphens", v); }, [apply]);
   // IconButtonGroup-compatible handlers (map "none" → valid defaults)
   const handleFontStyleIconChange = useCallback((v: string) => {
     const val = v === "none" ? "normal" : v;
@@ -1189,6 +1193,24 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                     keyword={columnCount <= 1 ? "Auto" : null}
                   />
                   <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
+                </div>
+              </div>
+
+              {/* Word spacing + Hyphens — compact row */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
+                <div style={{ flex: 1 }}>
+                  <TypoValueCell
+                    value={wordSpacing}
+                    onChange={handleWordSpacingChange}
+                    unit="px"
+                    step={0.5}
+                    keyword={wordSpacing === 0 ? "Normal" : null}
+                  />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Word spacing</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <MiniDropdown value={hyphens} options={HYPHENS_OPTIONS} onChange={handleHyphensChange} />
+                  <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Hyphens</div>
                 </div>
               </div>
 
