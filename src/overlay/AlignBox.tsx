@@ -22,6 +22,8 @@ export interface AlignBoxProps {
   align: string;
   onChange: (justify: string, align: string) => void;
   mode?: "flex" | "grid";
+  /** When true, hides spacing buttons and shows only the 3x3 grid */
+  compact?: boolean;
 }
 
 const JUSTIFY_COLS_FLEX = ["flex-start", "center", "flex-end"] as const;
