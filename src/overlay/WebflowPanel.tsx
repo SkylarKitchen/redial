@@ -1404,7 +1404,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       {/* 1. Layout */}
       <Section title="Layout">
-        <SelectRow label="Display" value={display} options={DISPLAY_OPTIONS} onChange={handleDisplayChange} />
+        <SelectRow label="Display" value={display} options={DISPLAY_OPTIONS} onChange={handleDisplayChange} indicator={getIndicatorType(element, "display")} />
 
         {isFlex && (
           <>
@@ -1422,8 +1422,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="flex"
               />
             </div>
-            <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} />
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} />
+            <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} indicator={getIndicatorType(element, "flex-wrap")} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit="px" onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
           </>
         )}
 
@@ -1448,11 +1448,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <div style={{ padding: "6px 12px 2px", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
               Flex Child
             </div>
-            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} />
-            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit="px" onChange={handleFlexBasisChange} />
-            <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} />
-            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} />
+            <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} indicator={getIndicatorType(element, "flex-grow")} />
+            <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} indicator={getIndicatorType(element, "flex-shrink")} />
+            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit="px" onChange={handleFlexBasisChange} indicator={getIndicatorType(element, "flex-basis")} />
+            <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={getIndicatorType(element, "align-self")} />
+            <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} indicator={getIndicatorType(element, "order")} />
           </>
         )}
       </Section>
@@ -1534,7 +1534,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 4. Position */}
       <Section title="Position" collapsed={position === "static"}>
-        <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} />
+        <SelectRow label="Position" value={position} options={POSITION_OPTIONS} onChange={handlePositionChange} indicator={getIndicatorType(element, "position")} />
         {position !== "static" && (
           <>
             <PositionOffsetDiagram
@@ -1549,22 +1549,22 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 else if (prop === "left") handleLeftChange(v);
               }}
             />
-            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} />
+            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} indicator={getIndicatorType(element, "z-index")} />
           </>
         )}
-        <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} />
-        <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} />
+        <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={getIndicatorType(element, "float")} />
+        <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={getIndicatorType(element, "clear")} />
       </Section>
 
       {/* 5. Typography */}
       {showTypography && (
         <Section title="Typography">
-          <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} />
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} />
-          <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} />
-          <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} />
+          <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} indicator={getIndicatorType(element, "font-family")} />
+          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} indicator={getIndicatorType(element, "font-size")} />
+          <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={getIndicatorType(element, "font-weight")} />
+          <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} indicator={getIndicatorType(element, "line-height")} />
           <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setLetterSpacingUnit} onChange={handleLetterSpacingChange} />
-          <ColorRow label="Color" value={color} onChange={handleColorChange} />
+          <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={getIndicatorType(element, "color")} />
 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>
@@ -1651,16 +1651,16 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
           </div>
         ) : (
-          <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} />
+          <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={getIndicatorType(element, "background-color")} />
         )}
       </Section>
 
       {/* 7. Borders */}
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
-        <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit="px" onChange={handleBorderWidthChange} />
-        <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} />
+        <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={getIndicatorType(element, "border-style")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit="px" onChange={handleBorderWidthChange} indicator={getIndicatorType(element, "border-width")} />
+        <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={getIndicatorType(element, "border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
         </div>
@@ -1677,8 +1677,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
       {/* 8. Effects */}
       <Section title="Effects">
-        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} />
-        <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} />
+        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} indicator={getIndicatorType(element, "opacity")} />
+        <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={getIndicatorType(element, "mix-blend-mode")} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Box Shadow
