@@ -167,7 +167,7 @@ export function SpacingValuePopover({
         border: "1px solid rgba(255,255,255,0.15)",
         borderRadius: "6px",
         boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-        zIndex: 999999,
+        zIndex: 2147483647,
         padding: "8px",
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}

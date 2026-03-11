@@ -480,7 +480,7 @@ export function SpacingBoxModel({
               borderRadius: "4px",
               whiteSpace: "nowrap",
               pointerEvents: "none",
-              zIndex: 999998,
+              zIndex: 2147483647,
               boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
               border: "1px solid rgba(255,255,255,0.1)",
             }}
