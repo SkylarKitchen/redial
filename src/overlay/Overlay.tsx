@@ -317,9 +317,9 @@ export function Overlay() {
   }, []);
 
   // --- Spacing box model change handler ---
-  const handleSpacingChange = useCallback((prop: string, value: number) => {
+  const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
-    applyInlineStyle(selectedEl, prop, `${value}px`);
+    applyInlineStyle(selectedEl, prop, `${value}${unit}`);
     handleDirtyChange();
   }, [selectedEl, handleDirtyChange]);
 
@@ -475,6 +475,19 @@ export function Overlay() {
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `nextjs-portal { z-index: 2147483640 !important; }`;
+    document.head.appendChild(style);
+
+    return () => { document.getElementById(STYLE_ID)?.remove(); };
+  }, []);
+
+  // --- Focus ring styles (global, scoped to tuner root) ---
+  useEffect(() => {
+    const STYLE_ID = "__tuner-focus-ring";
+    if (document.getElementById(STYLE_ID)) return;
+
+    const style = document.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };

@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { UnitSelector } from "./UnitSelector";
 
 interface PositionOffsetDiagramProps {
   top: number;
@@ -11,9 +12,26 @@ interface PositionOffsetDiagramProps {
   bottom: number;
   left: number;
   onChange: (prop: string, value: number) => void;
+  units: { top: string; right: string; bottom: string; left: string };
+  availableUnits: string[];
+  onUnitChange: (prop: string, unit: string) => void;
 }
 
-export function PositionOffsetDiagram({ top, right, bottom, left, onChange }: PositionOffsetDiagramProps) {
+export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange }: PositionOffsetDiagramProps) {
+  // Set all 4 offsets to the same unit at once
+  const handleUnitChangeAll = useCallback(
+    (unit: string) => {
+      onUnitChange("top", unit);
+      onUnitChange("right", unit);
+      onUnitChange("bottom", unit);
+      onUnitChange("left", unit);
+    },
+    [onUnitChange]
+  );
+
+  // Show the first unit as the "current" for the shared selector (they may diverge if set individually)
+  const sharedUnit = units.top;
+
   return (
     <div style={{ padding: "8px 12px 4px" }}>
       <div
@@ -25,31 +43,34 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange }: Po
           padding: "0",
         }}
       >
-        {/* OFFSET label */}
+        {/* OFFSET label + unit selector */}
         <div
           style={{
             position: "absolute",
             top: "2px",
             left: "6px",
-            fontSize: "8px",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            color: "rgba(255,255,255,0.3)",
-            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: "3px",
+            pointerEvents: "auto",
+            zIndex: 1,
           }}
         >
-          Offset
+          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(255,255,255,0.3)" }}>
+            Offset
+          </span>
+          <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} />
         </div>
 
         {/* Top */}
         <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-          <EditableValue value={top} onChange={(v) => onChange("top", v)} />
+          <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} />
         </div>
 
         {/* Left / element / Right */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={left} onChange={(v) => onChange("left", v)} />
+            <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} />
           </div>
           {/* Element placeholder */}
           <div
@@ -70,13 +91,13 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange }: Po
             </span>
           </div>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={right} onChange={(v) => onChange("right", v)} />
+            <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} />
           </div>
         </div>
 
         {/* Bottom */}
         <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
-          <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} />
+          <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} />
         </div>
       </div>
     </div>
@@ -88,9 +109,11 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange }: Po
 function EditableValue({
   value,
   onChange,
+  suffix,
 }: {
   value: number;
   onChange: (value: number) => void;
+  suffix?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -183,6 +206,11 @@ function EditableValue({
       }}
     >
       {value}
+      {suffix && (
+        <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.25)", marginLeft: "1px" }}>
+          {suffix}
+        </span>
+      )}
     </span>
   );
 }

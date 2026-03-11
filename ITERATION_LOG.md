@@ -80,6 +80,17 @@ Tracks progress through the Webflow UI spec implementation. Each entry records w
 - AlignBox cells: `tabIndex={0}`, `role="button"`, Enter/Space to click, focus ring
 - Typecheck: PASS
 
+### Iteration 10 — Review fixes: CSS focus ring + DisplayTabs polish (2026-03-11)
+- Replaced all DOM mutation focus ring handlers (`onFocusRing`/`onBlurRing`) with single CSS `<style>` tag using `:focus-visible`
+- Injected in Overlay.tsx: `.__tuner-root *:focus-visible { box-shadow: 0 0 0 2px rgba(99,102,241,0.3); }`
+- Removed ~30 lines of scattered `onFocus`/`onBlur` handlers across controls.tsx, AlignBox.tsx, IconButtonGroup.tsx, WebflowPanel.tsx
+- Removed unused `inputRef` in EditableValue (dead code from SpacingBoxModel extraction)
+- Simplified DisplayTabs capitalize: CSS `textTransform: "capitalize"` handles it, removed redundant JS
+- Added Escape key handler to DisplayTabs dropdown (close on Escape)
+- Changed DisplayTabs dropdown items from `<div>` to `<button>` (accessibility)
+- SpacingBoxModel + CornerRadiusEditor: unit support wired in by background agents
+- Typecheck: PASS
+
 ---
 
 ## Done

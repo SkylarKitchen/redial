@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { UnitSelector } from "./UnitSelector";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -16,6 +17,9 @@ export interface CornerRadiusEditorProps {
   linked: boolean;
   onChange: (corner: string, value: number) => void;
   onLinkedChange: (linked: boolean) => void;
+  unit: string;
+  units: string[];
+  onUnitChange: (unit: string) => void;
 }
 
 const CORNER_PROPS = [
@@ -169,6 +173,9 @@ export function CornerRadiusEditor({
   linked,
   onChange,
   onLinkedChange,
+  unit,
+  units,
+  onUnitChange,
 }: CornerRadiusEditorProps) {
   const values = { topLeft, topRight, bottomRight, bottomLeft };
 
@@ -195,7 +202,7 @@ export function CornerRadiusEditor({
   const previewBL = Math.min(bottomLeft, maxPreviewR);
 
   if (linked) {
-    // Single input mode — show one input and the preview
+    // Single input mode — show one input, unit selector, and the preview
     return (
       <div style={{ padding: "8px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -204,6 +211,7 @@ export function CornerRadiusEditor({
             onChange={handleChange("border-top-left-radius", "topLeft")}
             label="All corners"
           />
+          <UnitSelector value={unit} options={units} onChange={onUnitChange} />
           <div
             style={{
               width: "24px",
@@ -258,7 +266,7 @@ export function CornerRadiusEditor({
           />
         </div>
 
-        {/* Preview rectangle with link button in center */}
+        {/* Preview rectangle with link button + unit selector in center */}
         <div style={{ position: "relative", margin: "0 32px" }}>
           <div
             style={{
@@ -270,34 +278,43 @@ export function CornerRadiusEditor({
               transition: "border-radius 100ms",
             }}
           />
-          {/* Link/unlink button centered */}
-          <button
-            onClick={() => onLinkedChange(true)}
-            title="Link corners"
+          {/* Link/unlink button + unit selector centered */}
+          <div
             style={{
               position: "absolute",
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "3px",
-              cursor: "pointer",
-              padding: "3px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              transition: "background 100ms",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+              gap: "4px",
             }}
           >
-            <LinkIcon linked={false} />
-          </button>
+            <button
+              onClick={() => onLinkedChange(true)}
+              title="Link corners"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "3px",
+                cursor: "pointer",
+                padding: "3px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 100ms",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+              }}
+            >
+              <LinkIcon linked={false} />
+            </button>
+            <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+          </div>
         </div>
 
         {/* Bottom row: BL and BR */}

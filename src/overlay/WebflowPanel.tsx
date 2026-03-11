@@ -30,7 +30,7 @@ import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 export interface WebflowPanelProps {
   element: Element;
   spacing: SpacingValues;
-  onSpacingChange: (prop: string, value: number) => void;
+  onSpacingChange: (prop: string, value: number, unit: string) => void;
   onDirtyChange?: () => void;
 }
 
@@ -1559,7 +1559,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               />
             </div>
             <SelectRow label="Wrap" value={flexWrap} options={FLEX_WRAP_OPTIONS} onChange={handleFlexWrapChange} indicator={getIndicatorType(element, "flex-wrap")} />
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={setGapUnit} onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} indicator={getIndicatorType(element, "gap")} />
           </>
         )}
 
@@ -1575,7 +1575,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 mode="grid"
               />
             </div>
-            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={setGapUnit} onChange={handleGapChange} />
+            <SliderRow label="Gap" value={gap} min={0} max={200} step={1} unit={gapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, conversionCtx); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }} onChange={handleGapChange} />
           </>
         )}
 
@@ -1586,7 +1586,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
             </div>
             <SliderRow label="Grow" value={flexGrow} min={0} max={10} step={1} unit="" onChange={handleFlexGrowChange} indicator={getIndicatorType(element, "flex-grow")} />
             <SliderRow label="Shrink" value={flexShrink} min={0} max={10} step={1} unit="" onChange={handleFlexShrinkChange} indicator={getIndicatorType(element, "flex-shrink")} />
-            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={setFlexBasisUnit} onChange={handleFlexBasisChange} indicator={getIndicatorType(element, "flex-basis")} />
+            <SliderRow label="Basis" value={flexBasis} min={0} max={500} step={1} unit={flexBasisUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(flexBasis, flexBasisUnit, u, conversionCtx); setFlexBasis(c); setFlexBasisUnit(u); apply("flex-basis", `${c}${u}`); }} onChange={handleFlexBasisChange} indicator={getIndicatorType(element, "flex-basis")} />
             <SelectRow label="Align Self" value={alignSelf} options={ALIGN_SELF_OPTIONS} onChange={handleAlignSelfChange} indicator={getIndicatorType(element, "align-self")} />
             <SliderRow label="Order" value={flexOrder} min={-10} max={100} step={1} unit="" onChange={handleFlexOrderChange} indicator={getIndicatorType(element, "order")} />
           </>
@@ -1618,7 +1618,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={setWidthUnit} onChange={handleWidthChange} />
+              <SliderRow label="Width" value={width} min={0} max={1920} step={1} unit={widthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, conversionCtx, "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }} onChange={handleWidthChange} />
             </div>
             <button onClick={handleWidthAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
           </div>
@@ -1631,12 +1631,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={setHeightUnit} onChange={handleHeightChange} />
+              <SliderRow label="Height" value={height} min={0} max={1200} step={1} unit={heightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, conversionCtx, "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }} onChange={handleHeightChange} />
             </div>
             <button onClick={handleHeightAutoToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>auto</button>
           </div>
         )}
-        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMinWidthUnit} onChange={handleMinWidthChange} />
+        <SliderRow label="Min W" value={minWidth} min={0} max={1920} step={1} unit={minWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, conversionCtx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }} onChange={handleMinWidthChange} />
         {maxWidthNone ? (
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max W</span>
@@ -1645,12 +1645,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={setMaxWidthUnit} onChange={handleMaxWidthChange} />
+              <SliderRow label="Max W" value={maxWidth} min={0} max={1920} step={1} unit={maxWidthUnit} units={SIZE_UNITS_W} onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, conversionCtx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxWidthChange} />
             </div>
             <button onClick={handleMaxWidthNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
           </div>
         )}
-        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMinHeightUnit} onChange={handleMinHeightChange} />
+        <SliderRow label="Min H" value={minHeight} min={0} max={1200} step={1} unit={minHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, conversionCtx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }} onChange={handleMinHeightChange} />
         {maxHeightNone ? (
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Max H</span>
@@ -1659,7 +1659,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         ) : (
           <div style={{ display: "flex", alignItems: "center" }}>
             <div style={{ flex: 1 }}>
-              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={setMaxHeightUnit} onChange={handleMaxHeightChange} />
+              <SliderRow label="Max H" value={maxHeight} min={0} max={1200} step={1} unit={maxHeightUnit} units={SIZE_UNITS_H} onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, conversionCtx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }} onChange={handleMaxHeightChange} />
             </div>
             <button onClick={handleMaxHeightNoneToggle} style={{ padding: "2px 8px", fontSize: "10px", borderRadius: "3px", border: "none", cursor: "pointer", fontFamily: "ui-monospace, 'SF Mono', monospace", background: "transparent", color: "rgba(255,255,255,0.3)", marginRight: "8px" }}>none</button>
           </div>
@@ -1692,11 +1692,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
               }}
               units={{ top: topUnit, right: rightUnit, bottom: bottomUnit, left: leftUnit }}
               availableUnits={POSITION_UNITS}
-              onUnitChange={(prop, unit) => {
-                if (prop === "top") setTopUnit(unit);
-                else if (prop === "right") setRightUnit(unit);
-                else if (prop === "bottom") setBottomUnit(unit);
-                else if (prop === "left") setLeftUnit(unit);
+              onUnitChange={(prop: string, unit: string) => {
+                const axis = (prop === "top" || prop === "bottom") ? "height" as const : "width" as const;
+                if (prop === "top") { const c = convertUnit(top, topUnit, unit, conversionCtx, axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
+                else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, conversionCtx, axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
+                else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, conversionCtx, axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
+                else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, conversionCtx, axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
               }}
             />
             <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} indicator={getIndicatorType(element, "z-index")} />
@@ -1710,10 +1711,21 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       {showTypography && (
         <Section title="Typography">
           <SelectRow label="Font" value={fontFamily} options={FONT_OPTIONS} onChange={handleFontFamilyChange} indicator={getIndicatorType(element, "font-family")} />
-          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={setFontSizeUnit} onChange={handleFontSizeChange} indicator={getIndicatorType(element, "font-size")} />
+          <SliderRow label="Size" value={fontSize} min={8} max={200} step={1} unit={fontSizeUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, conversionCtx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }} onChange={handleFontSizeChange} indicator={getIndicatorType(element, "font-size")} />
           <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={getIndicatorType(element, "font-weight")} />
-          <SliderRow label="Line H" value={lineHeight} min={0.8} max={3} step={0.05} unit="" onChange={handleLineHeightChange} indicator={getIndicatorType(element, "line-height")} />
-          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setLetterSpacingUnit} onChange={handleLetterSpacingChange} />
+          <SliderRow
+            label="Line H"
+            value={lineHeight}
+            min={lineHeightUnit === "%" ? 80 : lineHeightUnit === "px" ? 8 : 0.8}
+            max={lineHeightUnit === "%" ? 300 : lineHeightUnit === "px" ? 200 : 3}
+            step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
+            unit={lineHeightUnit}
+            units={LINE_HEIGHT_UNITS}
+            onUnitChange={setLineHeightUnit}
+            onChange={handleLineHeightChange}
+            indicator={getIndicatorType(element, "line-height")}
+          />
+          <SliderRow label="Spacing" value={letterSpacing} min={-5} max={20} step={0.25} unit={letterSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, conversionCtx); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }} onChange={handleLetterSpacingChange} />
           <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={getIndicatorType(element, "color")} />
 
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1784,9 +1796,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           </div>
           {showTypoAdvanced && (
             <>
-              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit="px" onChange={handleWordSpacingChange} />
+              <SliderRow label="Word Sp" value={wordSpacing} min={0} max={20} step={0.5} unit={wordSpacingUnit} units={TYPO_SIZE_UNITS} onUnitChange={setWordSpacingUnit} onChange={handleWordSpacingChange} />
               <SelectRow label="White Sp" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
-              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit="px" onChange={handleTextIndentChange} />
+              <SliderRow label="Indent" value={textIndent} min={0} max={100} step={1} unit={textIndentUnit} units={LAYOUT_UNITS} onUnitChange={setTextIndentUnit} onChange={handleTextIndentChange} />
               <SelectRow label="Word Brk" value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
               <SliderRow label="Columns" value={columnCount} min={1} max={6} step={1} unit="" onChange={handleColumnCountChange} />
             </>
@@ -1809,7 +1821,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
       <Section title="Borders">
         <SideSelector value={borderSide} onChange={setBorderSide} />
         <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={getIndicatorType(element, "border-style")} />
-        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit="px" onChange={handleBorderWidthChange} indicator={getIndicatorType(element, "border-width")} />
+        <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={setBorderWidthUnit} onChange={handleBorderWidthChange} indicator={getIndicatorType(element, "border-width")} />
         <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={getIndicatorType(element, "border-color")} />
         <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
           Radius
@@ -1822,6 +1834,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           linked={radiusLinked}
           onChange={handleCornerChange}
           onLinkedChange={setRadiusLinked}
+          unit={radiusUnit}
+          units={BORDER_UNITS}
+          onUnitChange={(u: string) => { setRadiusUnit(u); }}
         />
       </Section>
 
