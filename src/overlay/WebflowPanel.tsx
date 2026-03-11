@@ -1207,6 +1207,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
     apply("font-style", next);
   }, [fontStyle, apply]);
 
+  const handleWordSpacingChange = useCallback((v: number) => { setWordSpacing(v); apply("word-spacing", `${v}px`); }, [apply]);
+  const handleWhiteSpaceChange = useCallback((v: string) => { setWhiteSpace(v); apply("white-space", v); }, [apply]);
+  const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}px`); }, [apply]);
+  const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
+  const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
+
   // Backgrounds
   const handleBgColorChange = useCallback((v: string) => { setBgColor(v); apply("background-color", v); }, [apply]);
   const handleBgLayersChange = useCallback(
