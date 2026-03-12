@@ -1430,7 +1430,9 @@ export function Overlay() {
                   onClick={() => setActiveTab(tab)}
                   style={{
                     background: "none",
-                    border: "none",
+                    borderWidth: 0,
+                    borderStyle: "none",
+                    borderColor: "transparent",
                     borderBottom: isActive ? "2px solid #c45d35" : "2px solid transparent",
                     padding: "7px 10px 5px",
                     fontSize: 11,
@@ -1594,7 +1596,9 @@ export function Overlay() {
           height: 48,
           borderRadius: "50%",
           background: "#1e1e1e",
-          border: "1px solid rgba(255,255,255,0.12)",
+          borderWidth: "1px",
+          borderStyle: "solid",
+          borderColor: "rgba(255,255,255,0.12)",
           boxShadow: selecting || selectedEl
             ? "0 0 0 1px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.5)"
             : "0 4px 20px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)",

@@ -301,7 +301,6 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
               {variableOptions.map((v) => {
                 const idx = flatIndex++;
                 const isHighlighted = idx === highlightedIndex;
-                const isActive = value === "VAR" && false; // Variables are not "selected" like units
                 return (
                   <div
                     key={v.name}
