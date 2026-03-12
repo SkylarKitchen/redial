@@ -416,9 +416,9 @@ function SliderTrack({ pct, hover }: { pct: number; hover?: boolean }) {
 function AlignLines() {
   return (
     <>
-      <div style={{ width: 8, height: 2, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
-      <div style={{ width: 5, height: 2, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
-      <div style={{ width: 7, height: 2, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
+      <div style={{ width: 8, height: 1, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
+      <div style={{ width: 5, height: 1, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
+      <div style={{ width: 7, height: 1, borderRadius: 0.5, background: "currentColor", opacity: 0.9 }} />
     </>
   );
 }
