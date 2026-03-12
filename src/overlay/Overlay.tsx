@@ -623,6 +623,18 @@ export function Overlay() {
     setAnchor("right");
   }, []);
 
+  // --- Programmatic selection via custom event ---
+  // Allows external code (e.g. demo pages) to select an element:
+  //   document.dispatchEvent(new CustomEvent('tuner:select', { detail: el }))
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const el = (e as CustomEvent<Element>).detail;
+      if (el instanceof Element) handleSelect(el);
+    };
+    document.addEventListener("tuner:select", handler);
+    return () => document.removeEventListener("tuner:select", handler);
+  }, [handleSelect]);
+
   const handleCancel = useCallback(() => {
     setSelecting(false);
   }, []);
