@@ -8,6 +8,7 @@ const withTuner = require("./with-tuner.cjs");
 const nextConfig: NextConfig = {
   /* config options here */
   turbopack: {
+    root: path.resolve(__dirname, ".."),
     resolveAlias: {
       // Redial source uses @/* → src/*; map it for Turbopack
       "@": path.resolve(__dirname, "../src"),
