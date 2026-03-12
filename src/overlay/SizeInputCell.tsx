@@ -101,7 +101,7 @@ export function SizeInputCell({
         onValueChange(next);
       }
     },
-    [commit, value, onValueChange, step]
+    [commit, value, onValueChange, step, min, max]
   );
 
   // Build special options for the unit dropdown

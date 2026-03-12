@@ -3,7 +3,7 @@
  * Single-layer version of SpacingBoxModel for position offsets.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
 import { ms } from "./timing";
 
@@ -118,7 +118,6 @@ function EditableValue({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -154,7 +153,6 @@ function EditableValue({
   if (editing) {
     return (
       <input
-        ref={inputRef}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}

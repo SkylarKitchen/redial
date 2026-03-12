@@ -127,13 +127,6 @@ export const LINE_HEIGHT_UNITS = ["\u2014", "px", "em", "%"];
 
 // ─── Overflow / Size Options ─────────────────────────────────────────
 
-export const OVERFLOW_OPTIONS = [
-  { value: "visible", label: "Visible" },
-  { value: "hidden", label: "Hidden" },
-  { value: "scroll", label: "Scroll" },
-  { value: "auto", label: "Auto" },
-];
-
 export const OVERFLOW_ICON_OPTIONS = [
   { value: "visible", icon: <Eye size={14} strokeWidth={1.5} />, title: "Visible" },
   { value: "hidden", icon: <EyeOff size={14} strokeWidth={1.5} />, title: "Hidden" },

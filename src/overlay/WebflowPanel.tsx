@@ -641,10 +641,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
       const bgParts: string[] = [];
       const attachments: string[] = [];
       const blendModes: string[] = [];
-      let bgColor = "transparent";
+      let effectiveBgColor = "transparent";
       for (const layer of layers) {
         if (layer.type === "color") {
-          bgColor = layer.color || "transparent";
+          effectiveBgColor = layer.color || "transparent";
         } else if (layer.type === "gradient" && layer.gradient) {
           const g = layer.gradient;
           const stops = g.stops
@@ -670,7 +670,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
       // CSS background: gradients/images first, then color as the last layer
       if (bgParts.length > 0) {
         apply("background", bgParts.join(", "));
-        apply("background-color", bgColor);
+        apply("background-color", effectiveBgColor);
         if (attachments.some(a => a !== "scroll")) {
           apply("background-attachment", attachments.join(", "));
         }
@@ -681,7 +681,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
         }
       } else {
         apply("background", "none");
-        apply("background-color", bgColor);
+        apply("background-color", effectiveBgColor);
         apply("background-attachment", "");
         apply("background-blend-mode", "");
       }
@@ -834,6 +834,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
               unit={gapUnit}
               onChange={handleGapChange}
               onUnitChange={(u) => { const c = convertUnit(gap, gapUnit, u, getConversionCtx()); setGap(c); setGapUnit(u); apply("gap", `${c}${u}`); }}
+              linked={gapLocked}
+              onLinkedChange={(v) => { setGapLocked(v); if (v) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}px`); apply("column-gap", `${gap}px`); } }}
             />
           </>
         )}

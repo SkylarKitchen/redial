@@ -10,7 +10,7 @@
  * The overlay is a fixed-position container at max z-index.
  */
 
-import { useState, useCallback, useEffect, useRef, Component, type ReactNode, type ErrorInfo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
 import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -92,7 +92,7 @@ export function Overlay() {
   // Scope toggle
   const [scope, setScope] = useState<Scope>("element");
   const [activeClassName, setActiveClassName] = useState<string | null>(null);
-  const cssClasses = selectedEl ? getCSSModuleClasses(selectedEl) : [];
+  const cssClasses = useMemo(() => selectedEl ? getCSSModuleClasses(selectedEl) : [], [selectedEl]);
 
   // State selector
   const [activeState, setActiveState] = useState("none");

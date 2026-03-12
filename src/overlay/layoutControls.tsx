@@ -211,11 +211,12 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
 // ─── GapRow ─────────────────────────────────────────────────────────
 
 /** Gap row: color swatch + slider + value input + unit + lock icon */
-export function GapRow({ value, unit, onChange, onUnitChange }: {
+export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedChange }: {
   value: number; unit: string;
   onChange: (v: number) => void; onUnitChange: (u: string) => void;
+  linked: boolean; onLinkedChange: (v: boolean) => void;
 }) {
-  const [gapLinked, setGapLinked] = useState(true);
+  const gapLinked = linked;
   const pct = (value / 200) * 100;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
@@ -246,7 +247,7 @@ export function GapRow({ value, unit, onChange, onUnitChange }: {
       }}>{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
-        onClick={() => setGapLinked(!gapLinked)}
+        onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
         style={{
           width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center",
