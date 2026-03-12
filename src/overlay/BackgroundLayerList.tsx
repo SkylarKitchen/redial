@@ -62,7 +62,7 @@ const BLEND_MODES = [
 
 const SIZE_KEYWORDS = ["auto", "cover", "contain"];
 const SIZE_OPTIONS = [...SIZE_KEYWORDS, "custom"];
-const POSITION_OPTIONS = [
+const POSITION_KEYWORDS = [
   "center",
   "top",
   "bottom",
@@ -73,6 +73,7 @@ const POSITION_OPTIONS = [
   "bottom left",
   "bottom right",
 ];
+const POSITION_OPTIONS = [...POSITION_KEYWORDS, "custom"];
 const REPEAT_OPTIONS = ["no-repeat", "repeat", "repeat-x", "repeat-y"];
 const ATTACHMENT_OPTIONS = ["scroll", "fixed", "local"];
 
@@ -517,10 +518,37 @@ export function BackgroundLayerList({
                           Position
                         </span>
                         <Select
-                          value={layer.image.position}
+                          value={POSITION_KEYWORDS.includes(layer.image.position) ? layer.image.position : "custom"}
                           options={POSITION_OPTIONS}
-                          onChange={(v) => updateImage(layer.id, { position: v })}
+                          onChange={(v) => updateImage(layer.id, { position: v === "custom" ? "50% 50%" : v })}
                         />
+                        {!POSITION_KEYWORDS.includes(layer.image.position) && (() => {
+                          const parts = layer.image.position.split(/\s+/);
+                          const x = parts[0] || "50%";
+                          const y = parts[1] || "50%";
+                          const inputStyle: React.CSSProperties = {
+                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
+                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
+                            fontFamily: "ui-monospace, 'SF Mono', monospace",
+                          };
+                          return (
+                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                              <input
+                                value={x}
+                                placeholder="X"
+                                onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
+                                style={inputStyle}
+                              />
+                              <input
+                                value={y}
+                                placeholder="Y"
+                                onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
+                                style={inputStyle}
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                         <span
