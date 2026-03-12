@@ -4,6 +4,7 @@
 
 import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown } from "lucide-react";
 import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
@@ -211,7 +212,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               borderColor: copyOpen ? border.hover : border.default,
             }}
           >
-            Clipboard <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
+            Clipboard <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0 opacity-60" />
           </Button>
           {copyOpen && (
             <div className="absolute bottom-[calc(100%+4px)] left-0 border rounded-md py-1 min-w-[160px] z-[100]" style={{ background: color.popover, borderColor: surface.active, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>

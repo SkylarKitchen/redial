@@ -380,3 +380,101 @@ describe("style clipboard", () => {
     expect(dest.style.getPropertyValue("width")).toBe("");
   });
 });
+
+// ─── undo after save (clearRedundantOverrides) ────────────────────────
+
+describe("undo after save / HMR reconciliation", () => {
+  it("undo works after clearRedundantOverrides clears a saved override", () => {
+    const el = makeEl();
+
+    // User changes color via panel
+    applyInlineStyle(el, "color", "red");
+    expect(overrideCount(el)).toBe(1);
+
+    // Simulate save + HMR: after commit.ts writes to CSS file and HMR fires,
+    // the computed style now returns the saved value "red".
+    // clearRedundantOverrides sees inline "red" == computed "red" → clears it.
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => ({
+      getPropertyValue: () => "red",
+    } as any));
+
+    const cleared = clearRedundantOverrides();
+    spy.mockRestore();
+
+    expect(cleared).toBe(1);
+    expect(overrideCount(el)).toBe(0); // override gone — HMR reconciled
+
+    // User presses Cmd+Z — should still undo (re-apply the pre-change value)
+    const result = undo();
+    expect(result).not.toBeNull();
+    expect(result!.el).toBe(el);
+    expect(result!.prop).toBe("color");
+  });
+
+  it("undo re-applies the original value as an inline override after save", () => {
+    const el = makeEl();
+
+    // Element starts with computed color "" (happy-dom default).
+    // User changes to "red", saves, HMR clears it.
+    applyInlineStyle(el, "color", "red");
+
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => ({
+      getPropertyValue: () => "red",
+    } as any));
+    clearRedundantOverrides();
+    spy.mockRestore();
+
+    // Undo should set the inline style to the PREVIOUS value (initial = "")
+    undo();
+    // The override should be tracked again with the initial value re-applied
+    expect(el.style.getPropertyValue("color")).toBe("");
+  });
+
+  it("undo works for batch entries after HMR clears overrides", () => {
+    const el = makeEl();
+
+    // User pastes multiple styles (batch operation)
+    beginBatch();
+    applyInlineStyle(el, "color", "red");
+    applyInlineStyle(el, "width", "100px");
+    endBatch();
+
+    expect(overrideCount(el)).toBe(2);
+
+    // Simulate save + HMR clearing both overrides
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => ({
+      getPropertyValue: (prop: string) => {
+        if (prop === "color") return "red";
+        if (prop === "width") return "100px";
+        return "";
+      },
+    } as any));
+    clearRedundantOverrides();
+    spy.mockRestore();
+
+    expect(overrideCount(el)).toBe(0);
+
+    // Single undo should revert the entire batch
+    const result = undo();
+    expect(result).not.toBeNull();
+  });
+
+  it("redo works after undo-after-save", () => {
+    const el = makeEl();
+
+    applyInlineStyle(el, "color", "red");
+
+    // Save + HMR clears override
+    const spy = vi.spyOn(window, "getComputedStyle").mockImplementation(() => ({
+      getPropertyValue: () => "red",
+    } as any));
+    clearRedundantOverrides();
+    spy.mockRestore();
+
+    // Undo then redo
+    undo();
+    const result = redo();
+    expect(result).not.toBeNull();
+    expect(el.style.getPropertyValue("color")).toBe("red");
+  });
+});
