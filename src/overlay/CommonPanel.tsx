@@ -7,15 +7,20 @@
  */
 
 import { useState, useCallback, useMemo } from "react";
-import { ColorRow, SliderRow, ValueInput } from "./controls";
+import { ColorRow, SliderRow } from "./controls";
+import { SizeInputCell } from "./SizeInputCell";
 import { SpacingBoxModel } from "./SpacingBoxModel";
-import { applyInlineStyle, beginBatch, endBatch } from "./apply";
+import { applyInlineStyle, beginBatch, endBatch, isDirty } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
+import { detectUnit } from "./panelUtils";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
+import { SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS, BORDER_UNITS } from "./panelConstants";
+import { convertUnit, buildConversionContext } from "./unitConversion";
+import { useConversionHint } from "./useConversionHint";
 import type { SpacingValues } from "./infer";
 
 // ─── Props ───────────────────────────────────────────────────────────

@@ -192,7 +192,7 @@ export function SizeInputCell({
     <div className="flex flex-1 flex-col gap-0.5">
     <div
       ref={cellRef}
-      className="flex items-center h-[28px] rounded overflow-hidden border"
+      className="flex items-center h-[28px] rounded border"
       style={{
         background: surface.subtle,
         borderColor: blackAlpha(0.07),

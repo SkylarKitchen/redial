@@ -478,7 +478,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           {/* Grow / Shrink — compact inline inputs, flex children only */}
           {parentIsFlex && (
             <div className="flex gap-1.5 py-0.5 px-3">
-              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
+              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
                 <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
                   <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
@@ -486,7 +486,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 </LabelScrub>
                 <ValueInput value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
               </div>
-              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
+              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
                 <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
                   <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
@@ -500,7 +500,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           {/* Basis — compact input with unit selector, flex children only */}
           {parentIsFlex && (
             <div className="py-0.5 px-3">
-              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
+              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
                 <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
                   <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis

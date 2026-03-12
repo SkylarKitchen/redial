@@ -425,7 +425,7 @@ export function TypoValueCell({
   return (
     <div
       ref={cellRef}
-      className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden min-w-0"
+      className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded min-w-0"
       style={flashStyle}
     >
       {isKeyword ? (
