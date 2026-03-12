@@ -10,16 +10,21 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { applyCustomProperty, isCustomPropertyDirty } from "./apply";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
-import { Section } from "./controls";
+import { Section, ColorRow, SliderRow } from "./controls";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
 type VarSource = "element" | "inherited" | "root";
+type VarType = "color" | "length" | "number" | "string";
 interface CSSVariable {
   name: string;
   value: string;
   source: VarSource;
-  isColor: boolean;
+  type: VarType;
+  /** For length values, the numeric part */
+  numericValue?: number;
+  /** For length values, the unit (px, em, rem, %, etc.) */
+  unit?: string;
 }
 
 // ─── Color Detection ─────────────────────────────────────────────────

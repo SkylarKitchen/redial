@@ -438,4 +438,16 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Task 2 — Fix columnGap unit coherence between Layout and Typography (2026-03-11)
+- Added `columnGapUnit` state initialized via `detectUnit(element, "column-gap")` (was hardcoded "px" everywhere)
+- Updated `handleColumnGapChange` to use `columnGapUnit` instead of hardcoded "px", added `columnGapUnit` to dependency array
+- Updated `handleGapLockToggle` to use `gapUnit` instead of hardcoded "px" for row-gap/column-gap, and syncs `columnGapUnit` from `gapUnit` when locking
+- Updated `handleGapChange` to sync `columnGapUnit` from `gapUnit` when `gapLocked` is true
+- Layout section Col Gap SliderRow: wired `unit={columnGapUnit}`, `units={LAYOUT_UNITS}`, `onUnitChange` with `convertUnit` (matches Gap slider pattern)
+- Typography section column-gap TypoValueCell: wired `unit={columnGapUnit}`, `units={LAYOUT_UNITS}`, `onUnitChange` with `convertUnit` (matches text-indent pattern)
+- Both sections now share the same `columnGapUnit` state — changing unit in one is reflected in the other
+- Typecheck: PASS
+
+---
+
 ## Done

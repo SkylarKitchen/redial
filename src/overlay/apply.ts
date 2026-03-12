@@ -325,6 +325,7 @@ export function resetAll(): void {
   undoStack.length = 0;
   redoStack.length = 0;
   clearPersistedSession();
+  notifyListeners();
 }
 
 /**
@@ -534,6 +535,7 @@ export function resetProp(el: Element, prop: string): void {
     }
   }
   schedulePersist();
+  notifyListeners();
 }
 
 // --- Transition application ---
@@ -612,6 +614,7 @@ export function applyCustomProperty(
   }
 
   schedulePersist();
+  notifyListeners();
 }
 
 /**
