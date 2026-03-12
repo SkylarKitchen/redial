@@ -1397,7 +1397,7 @@ export function Overlay() {
       {selectedEl && inferResult && (
         <div
           className={cn(
-            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#FAF9F5] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
+            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-white rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
             diffMode ? "border border-yellow-400/30" : "border",
             selecting ? "pointer-events-none" : "pointer-events-auto",
           )}
