@@ -8,6 +8,7 @@
 import { motion } from "motion/react";
 import { timing } from "./timing";
 import { Button } from "@/components/ui/button";
+import { text, border, surface, color } from "./theme";
 
 export interface HistoryEntry {
   timestamp: number;
@@ -40,17 +41,19 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: timing.expand / 1000 }}
-      className="overflow-hidden border-t border-[var(--border)]"
+      className="overflow-hidden border-t"
+      style={{ borderColor: border.default }}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
+      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: border.default }}>
+        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: text.label }}>
           History ({entries.length})
         </span>
         <Button
           variant="ghost"
           size="sm"
           onClick={onClose}
-          className="h-6 px-2 text-[11px] text-[var(--muted-foreground)]"
+          className="h-6 px-2 text-[11px]"
+          style={{ color: text.label }}
         >
           Close
         </Button>
@@ -58,7 +61,7 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
 
       <div className="max-h-[200px] overflow-y-auto overflow-x-hidden">
         {reversed.length === 0 ? (
-          <div className="p-3 text-[10px] text-[var(--muted-foreground)] italic text-center">
+          <div className="p-3 text-[10px] italic text-center" style={{ color: text.label }}>
             No changes yet
           </div>
         ) : (
@@ -67,30 +70,32 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
             return (
               <div
                 key={`${entry.timestamp}-${entry.property}-${ri}`}
-                className="px-3 py-1.5 border-b border-[var(--border)] hover:bg-[var(--accent)]"
+                className="px-3 py-1.5 border-b hover:bg-[rgba(0,0,0,0.05)]"
+                style={{ borderColor: border.default }}
               >
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-[var(--muted-foreground)] font-mono">
+                  <span className="text-[10px] font-mono" style={{ color: text.label }}>
                     {formatTime(entry.timestamp)}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onUndoToIndex(originalIndex)}
-                    className="h-5 px-1.5 text-[9px] text-[var(--muted-foreground)]"
+                    className="h-6 px-1.5 text-[11px]"
+                    style={{ color: text.label }}
                   >
                     Undo to here
                   </Button>
                 </div>
-                <div className="text-[11px] font-medium text-[var(--foreground)] font-mono mt-0.5">
+                <div className="text-[11px] font-medium font-mono mt-0.5" style={{ color: color.foreground }}>
                   {entry.property}
                 </div>
-                <div className="text-[10px] text-[var(--muted-foreground)] mt-px">
+                <div className="text-[10px] mt-px" style={{ color: text.label }}>
                   <span className="text-red-400/70">{entry.from || "(none)"}</span>
                   <span className="mx-1">&rarr;</span>
                   <span className="text-green-400/70">{entry.to}</span>
                 </div>
-                <div className="text-[9px] text-[var(--muted-foreground)] opacity-50 mt-px overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="text-[9px] opacity-50 mt-px overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: text.label }}>
                   {entry.selector}
                 </div>
               </div>

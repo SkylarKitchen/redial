@@ -13,6 +13,7 @@ import { getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { timing } from "./timing";
 import { Button } from "@/components/ui/button";
+import { text, border, surface, color, destructiveAlpha } from "./theme";
 
 interface SessionDrawerProps {
   open: boolean;
@@ -106,10 +107,11 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: timing.layout / 1000 }}
-          className="overflow-hidden border-t border-[var(--border)]"
+          className="overflow-hidden border-t"
+          style={{ borderColor: border.default }}
         >
           <div className="px-3 py-2">
-            <div className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1.5">
+            <div className="text-[11px] uppercase tracking-wider mb-1.5" style={{ color: text.label }}>
               Session — {allDiffs.length} element{allDiffs.length === 1 ? "" : "s"}
             </div>
 
@@ -124,20 +126,21 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
             ))}
 
             {allDiffs.length === 0 && (
-              <div className="text-[11px] text-[var(--muted-foreground)] py-1">
+              <div className="text-[11px] py-1" style={{ color: text.label }}>
                 No changes yet
               </div>
             )}
 
             {/* Action bar */}
-            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[var(--border)]">
+            <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: border.default }}>
               <div className="flex gap-1.5">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleCopyAll}
                   disabled={allDiffs.length === 0}
-                  className="h-6 px-2 text-[10px]"
+                  className="h-7 px-2 text-[12px]"
+                  style={{ color: text.label }}
                 >
                   Copy All
                 </Button>
@@ -146,7 +149,8 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                   size="sm"
                   onClick={handleSaveAll}
                   disabled={allDiffs.length === 0 || saving}
-                  className="h-6 px-2 text-[10px]"
+                  className="h-7 px-2 text-[12px]"
+                  style={{ color: text.label }}
                 >
                   {saving ? "..." : "Save All"}
                 </Button>
@@ -161,7 +165,8 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        className="text-[10px] text-[var(--muted-foreground)]"
+                        className="text-[10px]"
+                        style={{ color: text.label }}
                       >
                         {message}
                       </motion.span>
@@ -173,7 +178,8 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                   size="sm"
                   onClick={handleResetAll}
                   disabled={allDiffs.length === 0}
-                  className="h-6 px-2 text-[10px]"
+                  className="h-7 px-2 text-[12px]"
+                  style={{ color: destructiveAlpha(0.8) }}
                 >
                   Reset All
                 </Button>
@@ -206,14 +212,15 @@ function ElementGroup({
     <div className="mb-1">
       <button
         onClick={onToggle}
-        className="flex items-center gap-1.5 w-full bg-transparent border-none py-0.5 cursor-pointer text-left text-[12px] font-mono text-[var(--foreground)]"
+        className="flex items-center gap-1.5 w-full bg-transparent border-none py-0.5 cursor-pointer text-left text-[12px] font-mono"
+        style={{ color: color.foreground }}
       >
-        <span className="text-[var(--muted-foreground)] flex items-center">
+        <span className="flex items-center" style={{ color: text.label }}>
           {expanded ? <ChevronDown size={10} strokeWidth={2} /> : <ChevronRight size={10} strokeWidth={2} />}
         </span>
-        <span className="text-[var(--foreground)]">{"<"}{tag}{">"}</span>
-        {cls && <span className="text-[var(--muted-foreground)]">.{cls}</span>}
-        <span className="text-[var(--muted-foreground)] ml-auto text-[10px]">
+        <span style={{ color: color.foreground }}>{"<"}{tag}{">"}</span>
+        {cls && <span style={{ color: text.label }}>.{cls}</span>}
+        <span className="ml-auto text-[10px]" style={{ color: text.label }}>
           {changes.length} change{changes.length === 1 ? "" : "s"}
         </span>
       </button>
@@ -232,10 +239,10 @@ function ElementGroup({
                 key={i}
                 className="flex items-baseline gap-1.5 py-0.5 pl-[18px] text-[11px] font-mono"
               >
-                <span className="text-[var(--muted-foreground)] min-w-[100px]">{c.prop}</span>
-                <span className="text-[var(--muted-foreground)]">{c.from}</span>
-                <span className="text-[var(--muted-foreground)] opacity-50">&rarr;</span>
-                <span className="text-[var(--foreground)]">{c.to}</span>
+                <span className="min-w-[100px]" style={{ color: text.label }}>{c.prop}</span>
+                <span style={{ color: text.label }}>{c.from}</span>
+                <span className="opacity-50" style={{ color: text.label }}>&rarr;</span>
+                <span style={{ color: color.foreground }}>{c.to}</span>
               </div>
             ))}
           </motion.div>

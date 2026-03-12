@@ -202,7 +202,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={() => setCopyOpen((o) => !o)}
             title="Copy, paste, import styles"
             className={cn(
-              "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.08)] hover:text-[rgba(0,0,0,0.7)]",
+              "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]",
             )}
             style={{
               color: text.label,
@@ -246,8 +246,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleReset}
             disabled={count === 0}
             title="Reset (R)"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] text-red-500/80 hover:bg-[rgba(0,0,0,0.08)] hover:text-red-500/80"
-            style={{ background: surface.hover }}
+            className="h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.05)]"
+            style={{ color: destructiveAlpha(0.8), borderColor: destructiveAlpha(0.15), background: surface.hover }}
           >
             Reset
           </Button>
@@ -256,7 +256,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleSave}
             disabled={count === 0 || saving}
             title="Save to source"
-            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#D97757] text-white shadow-[0_1px_3px_rgba(217,119,87,0.4)] hover:bg-[#D97757]/90 disabled:shadow-none"
+            className="h-7 text-[12px] font-semibold px-3 rounded-md border-none hover:opacity-90 disabled:shadow-none"
+            style={{ background: color.primary, color: color.primaryForeground, boxShadow: '0 1px 3px ' + primaryAlpha(0.4) }}
           >
             {saving ? "..." : "Save"}
           </Button>

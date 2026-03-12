@@ -103,7 +103,7 @@ export function Header({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-[18px] w-[18px] p-0 rounded-[3px] transition-colors duration-100 hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]"
+            className="h-5 w-5 p-0 rounded-[3px] transition-colors duration-100 hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]"
             style={{ color: text.disabled }}
             title="Close (Esc)"
           >

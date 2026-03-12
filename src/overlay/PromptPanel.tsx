@@ -15,7 +15,7 @@ import { timing } from "./timing";
 import { cn } from "@/lib/utils";
 import { Copy, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { text, border, blackAlpha } from "./theme";
+import { text, border, color, blackAlpha, primaryAlpha } from "./theme";
 
 interface PromptPanelProps {
   element: Element;
@@ -80,7 +80,7 @@ export function PromptPanel({ element }: PromptPanelProps) {
     <div className="flex flex-col gap-2 px-3 py-3">
       {/* Context preview */}
       <div className="flex items-center gap-1.5 text-[10px]" style={{ color: text.disabled }}>
-        <Sparkles size={11} strokeWidth={2} className="text-[#D97757]/60 shrink-0" />
+        <Sparkles size={11} strokeWidth={2} className="shrink-0" style={{ color: primaryAlpha(0.6) }} />
         <span className="font-mono">
           {"<"}{tag}{">"}
           {displayClass && <span style={{ color: text.label }}>.{displayClass}</span>}
@@ -119,7 +119,8 @@ export function PromptPanel({ element }: PromptPanelProps) {
           size="sm"
           onClick={handleCopy}
           disabled={!feedback.trim()}
-          className="h-7 text-[12px] font-semibold px-3 rounded-md border-none bg-[#D97757] text-white shadow-[0_1px_3px_rgba(217,119,87,0.4)] hover:bg-[#D97757]/90 disabled:shadow-none gap-1.5"
+          className="h-7 text-[12px] font-semibold px-3 rounded-md border-none hover:opacity-90 disabled:shadow-none gap-1.5"
+          style={{ background: color.primary, color: color.primaryForeground, boxShadow: '0 1px 3px ' + primaryAlpha(0.4) }}
         >
           <Copy size={11} strokeWidth={2.5} />
           Copy Context
