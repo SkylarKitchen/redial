@@ -9,7 +9,7 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 ## Tier 1 — Quick Wins (< 10 min each)
 
 ### Visual Micro-interactions
-- [ ] **Value change flash**: When a slider/input value changes, briefly flash the value text with a subtle `primaryAlpha(0.15)` background (200ms). Helps users confirm their change registered. Target: `ValueInput`, `SizeInputCell`, `TypoValueCell`.
+- [x] **Value change flash**: When a slider/input value changes, briefly flash the value text with a subtle `primaryAlpha(0.15)` background (200ms). Helps users confirm their change registered. Target: `ValueInput`, `SizeInputCell`, `TypoValueCell`.
 - [ ] **Copy button checkmark**: After a successful copy (CSS/TW/Vars), briefly replace the button text with a ✓ checkmark for 1.5s before reverting. Target: `Footer.tsx` copy dropdown items.
 - [ ] **Save button success state**: After save completes, briefly turn Save button green (#22c55e) with checkmark for 1.5s, then animate back to `color.primary`. Target: `Footer.tsx` ActionButton.
 - [ ] **Reset shake on no-op**: If user clicks Reset when there are no overrides, apply a brief horizontal shake animation (3 cycles, 2px amplitude, 300ms). Target: `Footer.tsx` Reset button.
@@ -66,4 +66,5 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 
 ## Completed
 
-(Items will be moved here with completion date as the agent works through them)
+### 2026-03-12 — Value change flash
+Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`. Brief `primaryAlpha(0.12)` background flash on value change (200ms fade).

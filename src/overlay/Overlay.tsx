@@ -1284,24 +1284,26 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#D97757] rounded-sm transition-all duration-100 ease-out"
+            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#D97757] rounded-sm transition-all duration-100 ease-out"
+            style={{ display: 'none' }}
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#D97757]/50 rounded-sm bg-[#D97757]/[0.04]"
+            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#D97757]/50 rounded-sm bg-[#D97757]/[0.04]"
+            style={{ display: 'none' }}
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            className="fixed hidden pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
-            style={{ background: bgAlpha(0.9), color: blackAlpha(0.7) }}
+            className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
+            style={{ display: 'none', background: bgAlpha(0.9), color: blackAlpha(0.7) }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            className="fixed hidden pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
-            style={{ background: bgAlpha(0.9), color: blackAlpha(0.7) }}
+            className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
+            style={{ display: 'none', background: bgAlpha(0.9), color: blackAlpha(0.7) }}
           />
         </>
       )}

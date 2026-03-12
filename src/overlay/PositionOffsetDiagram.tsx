@@ -90,7 +90,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
               justifyContent: "center",
             }}
           >
-            <span style={{ fontSize: "8px", color: "rgba(0,0,0,0.15)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "8px", color: "#9A9994", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               element
             </span>
           </div>
@@ -204,7 +204,7 @@ function EditableValue({
     >
       {value}
       {suffix && (
-        <span style={{ fontSize: "8px", color: "rgba(0,0,0,0.2)", marginLeft: "1px" }}>
+        <span style={{ fontSize: "8px", color: "#9A9994", marginLeft: "1px" }}>
           {suffix}
         </span>
       )}

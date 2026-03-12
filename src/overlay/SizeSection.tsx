@@ -377,7 +377,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         </>
       )}
       <div onClick={() => setShowMoreSize(!showMoreSize)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t" style={{ borderColor: border.subtle }}>
-        <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(0,0,0,0.3)", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
+        <ChevronRight size={9} strokeWidth={2} style={{ color: "#7A7974", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
         <span className="text-[10px] uppercase tracking-[0.04em]" style={{ color: text.hint }}>More size options</span>
       </div>
       {showMoreSize && (

@@ -94,7 +94,7 @@ function NumericInput({
           fontSize: "8px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "rgba(0,0,0,0.3)",
+          color: "#7A7974",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -133,7 +133,7 @@ function NumericInput({
             width: "36px",
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
+            color: value !== 0 ? "#504F4A" : "#9A9994",
             cursor: "text",
             padding: "2px",
             borderRadius: "2px",
@@ -245,7 +245,7 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: shadow.inset ? "#D97757" : "rgba(0,0,0,0.3)",
+            color: shadow.inset ? "#D97757" : "#7A7974",
             background: shadow.inset ? "rgba(217,119,87,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
               ? "1px solid rgba(217,119,87,0.3)"
@@ -269,7 +269,7 @@ function ShadowRow({
             border: "none",
             cursor: "pointer",
             padding: "2px",
-            color: shadow.visible !== false ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
+            color: shadow.visible !== false ? "#504F4A" : "#9A9994",
             pointerEvents: isDragging ? "none" : "auto",
           }}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}
@@ -283,7 +283,7 @@ function ShadowRow({
           title="Remove shadow"
           style={{
             fontSize: "12px",
-            color: "rgba(0,0,0,0.3)",
+            color: "#7A7974",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -292,10 +292,10 @@ function ShadowRow({
             transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
+            (e.currentTarget as HTMLElement).style.color = "#504F4A";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.3)";
+            (e.currentTarget as HTMLElement).style.color = "#7A7974";
           }}
         >
           <X size={12} strokeWidth={2} />
@@ -394,7 +394,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           style={{
             padding: "8px 0",
             fontSize: "10px",
-            color: "rgba(0,0,0,0.2)",
+            color: "#9A9994",
             textAlign: "center",
             fontFamily: "system-ui, sans-serif",
           }}

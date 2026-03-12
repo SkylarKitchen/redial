@@ -212,7 +212,7 @@ export function SpacingValuePopover({
             background: "rgba(0,0,0,0.05)",
             borderRadius: "3px",
             fontSize: "12px",
-            color: "rgba(0,0,0,0.6)",
+            color: "#504F4A",
             flexShrink: 0,
           }}
         >

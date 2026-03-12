@@ -20,6 +20,9 @@ import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { MiniDropdown, TypoValueCell } from "./layoutControls";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight } from "lucide-react";
+import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
+import { TextStyleRow } from "./TextStyleRow";
+import { beginBatch, endBatch } from "./apply";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,
@@ -125,6 +128,36 @@ export const TypographySection = memo(function TypographySection({
   const { conversionHint: textIndentHint, fireConversionHint: fireTextIndentHint } = useConversionHint();
   const { conversionHint: typoColGapHint, fireConversionHint: fireTypoColGapHint } = useConversionHint();
 
+  // ── Text style scanning ──
+  const textStyles = useMemo(() => scanTextStyles(), []);
+  const matchedTextStyle = useMemo(
+    () => matchTextStyle(element, cs, textStyles),
+    [element, cs, textStyles],
+  );
+
+  const handleTextStyleApply = useCallback((style: TextStyle) => {
+    beginBatch();
+    apply("font-family", style.fontFamily);
+    apply("font-weight", style.fontWeight);
+    apply("font-size", style.fontSize);
+    apply("line-height", style.lineHeight);
+    apply("letter-spacing", style.letterSpacing);
+    apply("color", style.color);
+    apply("text-transform", style.textTransform);
+    endBatch();
+
+    // Sync local state to match the applied style
+    setFontFamily(style.fontFamily.replace(/['"]/g, ""));
+    setFontWeight(style.fontWeight);
+    setFontSize(parseNum(style.fontSize));
+    const lhPx = parseNum(style.lineHeight);
+    const fsPx = parseNum(style.fontSize);
+    setLineHeight(fsPx > 0 ? Math.round((lhPx / fsPx) * 100) / 100 : 1.4);
+    setLetterSpacing(parseNum(style.letterSpacing));
+    setColor(rgbToHex(style.color));
+    setTextTransform(style.textTransform);
+  }, [apply]);
+
   // ── Handlers ──
   const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
   const handleFontWeightChange = useCallback((v: string) => { setFontWeight(v); apply("font-weight", v); }, [apply]);
@@ -179,6 +212,9 @@ export const TypographySection = memo(function TypographySection({
       focusOpen={focusOpen}
       onToggle={onToggle}
     >
+      {/* Text style picker */}
+      <TextStyleRow styles={textStyles} matchedStyle={matchedTextStyle} onApply={handleTextStyleApply} />
+
       {/* Font family dropdown */}
       <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} />
 

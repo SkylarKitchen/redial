@@ -300,7 +300,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(0,0,0,0.35)",
+              color: "#7A7974",
             }}
           >
             %
@@ -320,7 +320,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
               background: "transparent",
               border: "none",
               borderRadius: "3px",
-              color: stops.length <= 2 ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.35)",
+              color: stops.length <= 2 ? "#C5C4C0" : "#7A7974",
               fontSize: "14px",
               cursor: stops.length <= 2 ? "default" : "pointer",
               fontFamily: "system-ui, sans-serif",
@@ -336,7 +336,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(0,0,0,0.3)",
+          color: "#7A7974",
           wordBreak: "break-all",
           lineHeight: "14px",
         }}
