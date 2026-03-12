@@ -67,7 +67,7 @@ function computeMetrics(el: Element): GridMetrics | null {
   const contentLeft = rect.left + borderLeft + paddingLeft;
   const contentWidth =
     rect.width -
-    parsePx(style.borderLeftWidth) -
+    borderLeft -
     parsePx(style.borderRightWidth) -
     paddingLeft -
     paddingRight;
@@ -84,8 +84,6 @@ function computeMetrics(el: Element): GridMetrics | null {
   const rowGap = parsePx(style.rowGap);
 
   return {
-    top: rect.top,
-    left: rect.left,
     contentTop,
     contentLeft,
     contentWidth,
@@ -134,9 +132,16 @@ export function GridOverlay({
   const [metrics, setMetrics] = useState<GridMetrics | null>(null);
   const rafRef = useRef(0);
   const observerRef = useRef<ResizeObserver | null>(null);
+  const prevMetricsRef = useRef<string>("");
 
   const measure = useCallback(() => {
-    setMetrics(computeMetrics(element));
+    const m = computeMetrics(element);
+    // Only update state when metrics actually change to avoid 60fps React reconciliation
+    const key = m ? `${m.contentTop},${m.contentLeft},${m.contentWidth},${m.contentHeight},${m.cols.join(",")},${m.rows.join(",")},${m.colGap},${m.rowGap}` : "";
+    if (key !== prevMetricsRef.current) {
+      prevMetricsRef.current = key;
+      setMetrics(m);
+    }
   }, [element]);
 
   useEffect(() => {
