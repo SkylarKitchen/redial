@@ -16,11 +16,13 @@ import { BG_CLIP_OPTIONS } from "./panelConstants";
 export interface BackgroundsSectionProps {
   ctx: SectionCtx;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
 
-export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceOpen }: BackgroundsSectionProps) {
+export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceOpen, focusOpen, onToggle }: BackgroundsSectionProps) {
   const { cs, apply, ind, sectionInd, element, ctxMenu } = ctx;
 
   // ── State ──
@@ -113,6 +115,8 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
       title="Backgrounds"
       indicator={sectionInd(["background-color", "background-image", "background-clip", "background-blend-mode"])}
       forceOpen={forceOpen}
+      focusOpen={focusOpen}
+      onToggle={onToggle}
     >
       {bgLayers.length > 0 ? (
         <div style={{ padding: "0 12px" }}>

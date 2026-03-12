@@ -36,6 +36,8 @@ export interface LayoutSectionProps {
   showGridOverlay?: boolean;
   onToggleGridOverlay?: () => void;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 // ─── Component ───────────────────────────────────────────────────────
@@ -56,6 +58,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     showGridOverlay,
     onToggleGridOverlay,
     forceOpen,
+    focusOpen,
+    onToggle,
   } = props;
 
   const { apply, ind, sectionInd, cs, element, getConversionCtx, ctxMenu } = ctx;
@@ -243,6 +247,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
         "justify-items", "align-content", "flex-wrap", "gap", "row-gap", "column-gap",
       ])}
       forceOpen={forceOpen}
+      focusOpen={focusOpen}
+      onToggle={onToggle}
     >
       <DisplayTabs value={display} onChange={handleDisplayChange} />
 

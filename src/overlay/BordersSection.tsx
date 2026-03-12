@@ -13,11 +13,15 @@ import { BORDER_STYLE_OPTIONS, BORDER_UNITS } from "./panelConstants";
 interface BordersSectionProps {
   ctx: SectionCtx;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 export const BordersSection = memo(function BordersSection({
   ctx,
   forceOpen,
+  focusOpen,
+  onToggle,
 }: BordersSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
@@ -102,7 +106,7 @@ export const BordersSection = memo(function BordersSection({
   );
 
   return (
-    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen}>
+    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       <SideSelector value={borderSide} onChange={setBorderSide} />
       <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind(borderSide === "all" ? "border-style" : `border-${borderSide}-style`)} onContextMenu={ctxMenu(borderSide === "all" ? "border-style" : `border-${borderSide}-style`, borderStyle)} computedProp={borderSide === "all" ? "border-style" : `border-${borderSide}-style`} computedElement={element} />
       <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); const prop = borderSide === "all" ? "border-width" : `border-${borderSide}-width`; apply(prop, `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss(borderSide === "all" ? "border-width" : `border-${borderSide}-width`, setBorderWidth)} indicator={ind(borderSide === "all" ? "border-width" : `border-${borderSide}-width`)} conversionHint={bwHint} onContextMenu={ctxMenu(borderSide === "all" ? "border-width" : `border-${borderSide}-width`, `${borderWidth}${borderWidthUnit}`)} computedProp={borderSide === "all" ? "border-width" : `border-${borderSide}-width`} computedElement={element} />

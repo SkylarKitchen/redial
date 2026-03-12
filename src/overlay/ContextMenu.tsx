@@ -34,8 +34,6 @@ const MENU_ITEMS: MenuItem[] = [
   { id: "separator-1", separator: true },
   { id: "select-parent", label: "Select Parent" },
   { id: "reset-styles", label: "Reset Styles", shortcut: "R" },
-  { id: "separator-2", separator: true },
-  { id: "open-editor", label: "Open in Editor", disabled: true },
 ];
 
 const MENU_PAD = 8;

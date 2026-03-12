@@ -160,6 +160,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           showGridOverlay={showGridOverlay}
           onToggleGridOverlay={onToggleGridOverlay}
           forceOpen={forceOpen}
+          {...focusProps("Layout")}
         />
       )}
 
@@ -172,6 +173,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           showBoxModel={showBoxModel}
           onToggleBoxModel={onToggleBoxModel}
           forceOpen={forceOpen}
+          {...focusProps("Spacing")}
         />
       )}
 
@@ -182,12 +184,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           display={display}
           isMedia={isMedia}
           forceOpen={forceOpen}
+          {...focusProps("Size")}
         />
       )}
 
       {/* 4. Position */}
       {showSection("Position") && (
-        <PositionSection ctx={ctx} forceOpen={forceOpen} />
+        <PositionSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Position")} />
       )}
 
       {/* 5. Typography */}
@@ -199,17 +202,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           onColumnGapChange={setColumnGap}
           onColumnGapUnitChange={setColumnGapUnit}
           forceOpen={forceOpen}
+          {...focusProps("Typography")}
         />
       )}
 
       {/* 6. Backgrounds */}
       {showSection("Backgrounds") && (
-        <BackgroundsSection ctx={ctx} forceOpen={forceOpen} />
+        <BackgroundsSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Backgrounds")} />
       )}
 
       {/* 7. Borders */}
       {showSection("Borders") && (
-        <BordersSection ctx={ctx} forceOpen={forceOpen} />
+        <BordersSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Borders")} />
       )}
 
       {/* 8. Effects */}

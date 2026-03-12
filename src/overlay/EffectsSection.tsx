@@ -38,11 +38,13 @@ import {
 interface EffectsSectionProps {
   ctx: SectionCtx;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 // ─── Component ───────────────────────────────────────────────────────
 
-export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen }: EffectsSectionProps) {
+export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, focusOpen, onToggle }: EffectsSectionProps) {
   const { element, apply, ind, sectionInd, cs, ctxMenu } = ctx;
 
   // ── State ──────────────────────────────────────────────────────────
@@ -131,7 +133,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen }: E
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
-    <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])} forceOpen={forceOpen}>
+    <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
       <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 

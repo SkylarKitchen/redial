@@ -13,11 +13,15 @@ import { POSITION_UNITS, FLOAT_OPTIONS, CLEAR_OPTIONS } from "./panelConstants";
 interface PositionSectionProps {
   ctx: SectionCtx;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 export const PositionSection = memo(function PositionSection({
   ctx,
   forceOpen,
+  focusOpen,
+  onToggle,
 }: PositionSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
@@ -66,7 +70,7 @@ export const PositionSection = memo(function PositionSection({
   const handleClearChange = useCallback((v: string) => { setClear(v); apply("clear", v); }, [apply]);
 
   return (
-    <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])} forceOpen={forceOpen}>
+    <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
       {position !== "static" && (
         <>

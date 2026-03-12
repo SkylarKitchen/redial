@@ -1004,9 +1004,6 @@ export function Overlay() {
           setPanelKey((k) => k + 1);
         }
         break;
-      case "open-editor":
-        // TODO: wire to source map resolution
-        break;
     }
   }, [selectedEl, handlePasteStyles, handleCopyShortcut, handleSelect]);
 

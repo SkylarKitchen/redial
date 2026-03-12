@@ -30,11 +30,13 @@ export interface SizeSectionProps {
   display: string;
   isMedia: boolean;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
 
-export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen }: SizeSectionProps) {
+export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen, focusOpen, onToggle }: SizeSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   // ─── resetCss helper ────────────────────────────────────────────────
@@ -168,7 +170,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── JSX ────────────────────────────────────────────────────────────
 
   return (
-    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen}>
+    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
       <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
         <SizeInputCell

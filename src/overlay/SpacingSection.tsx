@@ -14,6 +14,8 @@ interface SpacingSectionProps {
   showBoxModel?: boolean;
   onToggleBoxModel?: () => void;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 export const SpacingSection = memo(function SpacingSection({
@@ -23,6 +25,8 @@ export const SpacingSection = memo(function SpacingSection({
   showBoxModel,
   onToggleBoxModel,
   forceOpen,
+  focusOpen,
+  onToggle,
 }: SpacingSectionProps) {
   const { element, sectionInd } = ctx;
 
@@ -60,6 +64,8 @@ export const SpacingSection = memo(function SpacingSection({
         "padding-top", "padding-right", "padding-bottom", "padding-left",
       ])}
       forceOpen={forceOpen}
+      focusOpen={focusOpen}
+      onToggle={onToggle}
       headerAction={boxModelToggle}
     >
       <SpacingBoxModel

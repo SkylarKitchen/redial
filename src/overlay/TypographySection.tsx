@@ -39,6 +39,8 @@ export interface TypographySectionProps {
   onColumnGapChange: (v: number) => void;
   onColumnGapUnitChange: (u: string) => void;
   forceOpen?: boolean;
+  focusOpen?: boolean;
+  onToggle?: (title: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -50,6 +52,8 @@ export const TypographySection = memo(function TypographySection({
   onColumnGapChange,
   onColumnGapUnitChange,
   forceOpen,
+  focusOpen,
+  onToggle,
 }: TypographySectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
@@ -177,6 +181,8 @@ export const TypographySection = memo(function TypographySection({
         "letter-spacing", "color", "text-align", "text-decoration", "text-transform",
       ])}
       forceOpen={forceOpen}
+      focusOpen={focusOpen}
+      onToggle={onToggle}
     >
       {/* Font family dropdown */}
       <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} />
