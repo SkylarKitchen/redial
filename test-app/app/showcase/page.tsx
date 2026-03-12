@@ -184,6 +184,12 @@ const tokenRows: { code: string; value: string; figma: string }[] = [
   { code: "spacingZone.paddingHover", value: spacingZone.paddingHover, figma: "colors/spacing/padding-hover" },
   { code: "font.sans", value: font.sans, figma: "typography/family/system" },
   { code: "font.mono", value: font.mono, figma: "typography/family/mono" },
+  { code: "labelIndicator.direct.bg", value: labelIndicator.direct.bg, figma: "colors/label/direct-bg" },
+  { code: "labelIndicator.direct.text", value: labelIndicator.direct.text, figma: "colors/label/direct-text" },
+  { code: "labelIndicator.inherited.bg", value: labelIndicator.inherited.bg, figma: "colors/label/inherited-bg" },
+  { code: "labelIndicator.inherited.text", value: labelIndicator.inherited.text, figma: "colors/label/inherited-text" },
+  { code: "labelIndicator.variable.bg", value: labelIndicator.variable.bg, figma: "colors/label/variable-bg" },
+  { code: "labelIndicator.variable.text", value: labelIndicator.variable.text, figma: "colors/label/variable-text" },
   { code: "shadow.panel", value: shadow.panel, figma: "effects/shadow/panel" },
   { code: "shadow.dropdown", value: shadow.dropdown, figma: "effects/shadow/dropdown" },
   { code: "shadow.picker", value: shadow.picker, figma: "effects/shadow/picker" },
@@ -1508,7 +1514,7 @@ export default function ShowcasePage() {
           <div className="card" style={{ width: 380 }} data-component="FooterButtons">
             <div className="card-label">Footer Buttons — Hover &amp; click</div>
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-              <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
               <div className="variant-col"><div className="variant-label">Primary (Save)</div><HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton></div>
               <div className="variant-col"><div className="variant-label">Destructive</div><HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>Reset</HoverButton></div>
               <div className="variant-col"><div className="variant-label">Disabled</div><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>

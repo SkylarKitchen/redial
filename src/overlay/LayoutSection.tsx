@@ -239,6 +239,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       focusOpen={focusOpen}
       onToggle={onToggle}
     >
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} indicator={ind("display")} />
 
       {isFlex && (
@@ -532,6 +533,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
         </>
       )}
+      </div>
     </Section>
   );
 });
