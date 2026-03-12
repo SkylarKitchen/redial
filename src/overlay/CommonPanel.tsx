@@ -372,6 +372,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               max={900}
               step={100}
               unit=""
+              computedProp="font-weight"
+              computedElement={element}
               onChange={(v) => {
                 setFontWeight(v);
                 apply("font-weight", String(v));
