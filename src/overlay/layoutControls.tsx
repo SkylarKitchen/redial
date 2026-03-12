@@ -16,6 +16,8 @@ import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
 import {
   ArrowReverseIcon, UnlockIcon, LockIcon,
+  DisplayInlineBlockIcon, DisplayFlexIcon, DisplayGridIcon,
+  DisplayInlineIcon, DisplayHideIcon, ChevronSmallDownIcon,
 } from "./webflowIcons";
 
 import { useClickOutside } from "./useClickOutside";
@@ -214,33 +216,132 @@ export function MiniDropdown({ value, options, onChange }: {
   );
 }
 
-// ─── DisplayTabs (Icon-based, Webflow style) ───────────────────────
+// ─── DisplayTabs (Text segments + overflow dropdown, Webflow style) ─
 
-const DISPLAY_SEGMENT_OPTIONS = [
+/** Primary display modes shown as text segments */
+const DISPLAY_PRIMARY = [
   { value: "block", label: "Block" },
   { value: "flex", label: "Flex" },
   { value: "grid", label: "Grid" },
-  { value: "inline-block", label: "Inline Block" },
-  { value: "inline", label: "Inline" },
   { value: "none", label: "None" },
 ];
 
-/** Display row: 6 icon segments for display modes (matches Webflow) */
+/** Overflow display modes shown in the chevron dropdown */
+const DISPLAY_OVERFLOW = [
+  { value: "inline-block", label: "Inline-block", icon: <DisplayInlineBlockIcon size={16} /> },
+  { value: "inline-flex", label: "Inline-flex", icon: <DisplayFlexIcon size={16} /> },
+  { value: "inline-grid", label: "Inline-grid", icon: <DisplayGridIcon size={16} /> },
+  { value: "inline", label: "Inline", icon: <DisplayInlineIcon size={16} /> },
+  { value: "none", label: "None", icon: <DisplayHideIcon size={16} /> },
+];
+
+const PRIMARY_VALUES = new Set(DISPLAY_PRIMARY.map((o) => o.value));
+
+/** Display row: 4 text segments + chevron overflow dropdown (matches Webflow) */
 export function DisplayTabs({ value, onChange, onReset, indicator }: {
   value: string;
   onChange: (v: string) => void;
   onReset?: () => void;
   indicator?: IndicatorType;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, open, closeDropdown);
+
+  // If current value is an overflow item, don't highlight any primary segment
+  const segmentValue = PRIMARY_VALUES.has(value) ? value : "";
+  const isOverflowActive = !PRIMARY_VALUES.has(value);
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
       <RowLabel label="Display" indicator={indicator} isSet={value !== "block"} onReset={onReset} />
       <SegmentedControl
-        options={DISPLAY_SEGMENT_OPTIONS}
-        value={value}
+        options={DISPLAY_PRIMARY}
+        value={segmentValue}
         onChange={onChange}
         aria-label="Display mode"
       />
+      {/* Chevron overflow trigger */}
+      <div ref={ref} style={{ position: "relative" }}>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          title="More display options"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          style={{
+            width: 20,
+            height: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 3,
+            border: "none",
+            outline: "none",
+            cursor: "pointer",
+            padding: 0,
+            background: isOverflowActive ? "#e7e6e1" : "transparent",
+            color: isOverflowActive ? "#131313" : "#888",
+            transition: "background 75ms ease",
+          }}
+        >
+          <ChevronSmallDownIcon size={16} />
+        </button>
+        {open && (
+          <div
+            role="listbox"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              right: 0,
+              minWidth: 180,
+              background: "#363636",
+              borderRadius: 8,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2)",
+              padding: "6px 0",
+              zIndex: 200,
+            }}
+          >
+            {DISPLAY_OVERFLOW.map((opt) => {
+              const isActive = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => { onChange(opt.value); setOpen(false); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "7px 12px",
+                    background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                    border: "none",
+                    outline: "none",
+                    cursor: "pointer",
+                    color: "#e8e8e8",
+                    fontSize: 13,
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    letterSpacing: -0.1,
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", opacity: 0.7 }}>
+                    {opt.icon}
+                  </span>
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  {isActive && (
+                    <span style={{ opacity: 0.5, fontSize: 14 }}>✓</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
