@@ -354,4 +354,17 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 35 — Z-index "auto" keyword toggle (spec §6 line 339) (2026-03-11)
+- Spec §6 lists z-index values as `auto`, `-1` → `9999`, but the panel only had a numeric SliderRow
+- `parseInt("auto") || 0` was silently losing the auto keyword during initialization
+- Added `zIndexAuto` boolean state, initialized from `cs.zIndex === "auto"`
+- Added `handleZIndexAutoToggle` that switches between `z-index: auto` and numeric value
+- Replaced bare SliderRow with a row containing: label (with StyleIndicator), "auto" pill toggle, and conditionally visible SliderRow
+- Auto pill styled with indigo highlight when active (matching existing keyword pill pattern)
+- Reset handler now restores to auto state
+- Numeric changes automatically clear auto mode
+- Typecheck: PASS
+
+---
+
 ## Done

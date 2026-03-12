@@ -260,6 +260,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const [bottom, setBottom] = useState(() => parseNum(cs.bottom));
   const [left, setLeft] = useState(() => parseNum(cs.left));
   const [zIndex, setZIndex] = useState(() => parseInt(cs.zIndex) || 0);
+  const [zIndexAuto, setZIndexAuto] = useState(() => cs.zIndex === "auto" || !cs.zIndex);
   const [float_, setFloat] = useState(() => cs.cssFloat || "none");
   const [clear_, setClear] = useState(() => cs.clear || "none");
 
@@ -574,7 +575,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
   const handleRightChange = useCallback((v: number) => { setRight(v); apply("right", `${v}${rightUnit}`); }, [apply, rightUnit]);
   const handleBottomChange = useCallback((v: number) => { setBottom(v); apply("bottom", `${v}${bottomUnit}`); }, [apply, bottomUnit]);
   const handleLeftChange = useCallback((v: number) => { setLeft(v); apply("left", `${v}${leftUnit}`); }, [apply, leftUnit]);
-  const handleZIndexChange = useCallback((v: number) => { setZIndex(v); apply("z-index", String(v)); }, [apply]);
+  const handleZIndexChange = useCallback((v: number) => { setZIndexAuto(false); setZIndex(v); apply("z-index", String(v)); }, [apply]);
+  const handleZIndexAutoToggle = useCallback(() => {
+    const next = !zIndexAuto;
+    setZIndexAuto(next);
+    apply("z-index", next ? "auto" : String(zIndex));
+  }, [zIndexAuto, zIndex, apply]);
   const handleFloatChange = useCallback((v: string) => { setFloat(v); apply("float", v); }, [apply]);
   const handleClearChange = useCallback((v: string) => { setClear(v); apply("clear", v); }, [apply]);
 
@@ -1116,7 +1122,27 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
                 else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, getConversionCtx(),axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
               }}
             />
-            <SliderRow label="Z-Index" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => resetCss("z-index", setZIndex)} indicator={ind("z-index")} />
+            <div style={{ padding: "2px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
+                Z-Index
+              </span>
+              <button
+                onClick={handleZIndexAutoToggle}
+                style={{
+                  padding: "2px 8px", fontSize: "10px", fontFamily: "ui-monospace, 'SF Mono', monospace",
+                  background: zIndexAuto ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+                  color: zIndexAuto ? "#818cf8" : "rgba(255,255,255,0.4)",
+                  border: `1px solid ${zIndexAuto ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: "3px", cursor: "pointer",
+                }}
+              >
+                auto
+              </button>
+              {!zIndexAuto && (
+                <SliderRow label="" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => { resetCss("z-index", setZIndex); setZIndexAuto(true); }} indicator={"none" as const} />
+              )}
+            </div>
           </>
         )}
         <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} />
