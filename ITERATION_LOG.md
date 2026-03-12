@@ -391,4 +391,34 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 38 — CSS Variables / Custom Properties panel (2026-03-11)
+- Created `CSSVariablesSection.tsx` — new "CSS Variables" section in the panel
+- Discovery: walks `document.styleSheets` for `:root`/`html` rules and rules matching the element, checks inline styles, walks ancestor inline styles
+- Each variable classified by source: "Element" (set on element), "Inherited" (from ancestor), "Root" (from :root)
+- Type detection: regex-based classification of values as color (hex/rgb/hsl/named), length (number+unit), number, or string
+- Color-type variables show an inline color swatch (16×16 rounded square)
+- Editing: text input commits on blur/Enter via `applyCustomProperty()` from apply.ts (existing undo system)
+- Groups displayed with sub-headers showing count: "Element (3)", "Inherited (5)", "Root (12)"
+- StyleIndicator dots show dirty state (element dot) vs source (direct/inherited/none)
+- Empty state: "No custom properties" italic hint when no variables found
+- Integrated into WebflowPanel.tsx after Effects section
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Iteration 39 — Visual Grid Overlay (2026-03-11)
+- Created `GridOverlay.tsx` — renders semi-transparent grid visualization over CSS Grid containers
+- Only activates when selected element has `display: grid` or `display: inline-grid`
+- Parses `getComputedStyle().gridTemplateColumns/Rows` for resolved pixel track sizes
+- Calculates grid line positions accounting for `column-gap`, `row-gap`, padding, and border
+- Visual elements: dashed grid lines (indigo), gap bands (subtle fill), column/row number labels, container outline
+- Positioning: `getBoundingClientRect()` + `requestAnimationFrame` loop + `ResizeObserver` for real-time sync
+- Added toggle button ("Show/Hide") with Grid3x3 icon in the Layout section's grid controls
+- Grid overlay state managed in Overlay.tsx, resets on new element selection
+- `refreshKey` prop triggers recalculation when grid properties change in the panel
+- All overlay elements have `pointer-events: none` for click-through
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
 ## Done

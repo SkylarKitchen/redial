@@ -10,7 +10,19 @@
  */
 
 import { readFile, writeFile, readdir, stat } from "fs/promises";
-import { resolve, join, basename } from "path";
+import { resolve, join, basename, normalize } from "path";
+
+/**
+ * Ensure a resolved path is contained within the project root.
+ * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
+ */
+function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
+  const normalizedRoot = normalize(projectRoot);
+  const normalizedPath = normalize(resolvedPath);
+  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
+    throw new Error("Path traversal detected: resolved path escapes project root");
+  }
+}
 
 export type CommitChange = {
   prop: string;
@@ -52,6 +64,10 @@ async function findFileRecursive(
     for (const entry of entries) {
       if (EXCLUDE_DIRS.has(entry.name)) continue;
       const full = join(dir, entry.name);
+      // Ensure symlinks or unusual names don't escape the starting directory
+      const normalizedFull = normalize(full);
+      const normalizedDir = normalize(dir);
+      if (!normalizedFull.startsWith(normalizedDir + "/")) continue;
       if (entry.isDirectory()) {
         results.push(...await findFileRecursive(full, target, componentHint));
       } else if (entry.name === target) {
@@ -75,8 +91,15 @@ export async function resolveSourceFile(
   sourceFile: string,
   componentName?: string
 ): Promise<string | null> {
+  // Reject path traversal attempts early
+  const segments = sourceFile.split(/[/\\]/);
+  if (segments.includes("..")) {
+    throw new Error("Path traversal detected: sourceFile contains '..' segment");
+  }
+
   // Try direct resolution first
   const direct = resolve(projectRoot, sourceFile);
+  assertWithinRoot(direct, projectRoot);
   try {
     await stat(direct);
     return direct;
