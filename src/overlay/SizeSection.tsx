@@ -410,7 +410,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
             <select
               value={childrenMode}
               onChange={(e) => handleChildrenModeChange(e.target.value)}
-              className="w-full h-full appearance-none cursor-pointer outline-none bg-transparent"
+              className="w-full h-full appearance-none cursor-pointer outline-none bg-transparent border-none focus:outline-none focus:ring-0 focus:border-none"
               style={{
                 fontSize: 11.5,
                 letterSpacing: "-0.115px",
@@ -419,6 +419,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
                 paddingLeft: 8,
                 paddingRight: 24,
                 border: "none",
+                outline: "none",
+                boxShadow: "none",
               }}
             >
               {CHILDREN_MODE_OPTIONS.map((o) => (

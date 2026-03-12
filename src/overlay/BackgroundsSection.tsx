@@ -2,6 +2,8 @@
  * BackgroundsSection.tsx — Backgrounds panel section extracted from WebflowPanel.
  *
  * Manages background color, gradient/image layers, and background-clip.
+ * Layout matches Figma: sub-section header "Image & gradient" with "+" button,
+ * always-visible Color row, and Clipping dropdown.
  */
 
 import { useState, useCallback, memo } from "react";
@@ -12,6 +14,42 @@ import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { resetProp, resetAndReadStr } from "./apply";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS } from "./panelConstants";
+import { Plus } from "lucide-react";
+import { color, text, font } from "./theme";
+import { ms } from "./timing";
+
+// ─── Sub-section header (matches EffectsSection pattern) ──────────────
+
+function SubSectionHeader({ label, onAdd }: {
+  label: string;
+  onAdd?: () => void;
+}) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "8px 12px 4px",
+      background: color.background,
+    }}>
+      <span style={{ fontSize: "11px", fontFamily: font.sans, color: text.secondary, fontWeight: 500 }}>
+        {label}
+      </span>
+      {onAdd && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAdd(); }}
+          style={{
+            background: "none", border: "none", cursor: "pointer", padding: "2px",
+            color: text.disabled, display: "flex", alignItems: "center",
+            borderRadius: "3px", transition: `color ${ms("fast")} ease`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = text.label; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = text.disabled; }}
+        >
+          <Plus size={14} strokeWidth={1.5} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 // ─── Props ────────────────────────────────────────────────────────────
 
@@ -32,13 +70,14 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
   // ── State ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
   const [bgLayers, setBgLayers] = useState<BackgroundLayer[]>(() => {
-    const bg = rgbToHex(cs.backgroundColor);
-    if (bg !== "transparent") {
-      return [{ id: "initial_color", type: "color", color: bg, opacity: 1, blendMode: "normal", visible: true }];
-    }
+    // Only seed gradient/image layers (color is handled separately)
     return [];
   });
-  const [bgClip, setBgClip] = useState(() => cs.getPropertyValue("background-clip") || "border-box");
+  const [bgClip, setBgClip] = useState(() => {
+    const val = cs.getPropertyValue("background-clip") || "border-box";
+    // Map default border-box to "none" for display
+    return val === "border-box" ? "none" : val;
+  });
 
   // ── Handlers ──
   const handleBgColorChange = useCallback(
@@ -53,12 +92,9 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
       const bgParts: string[] = [];
       const attachments: string[] = [];
       const blendModes: string[] = [];
-      let effectiveBgColor = "transparent";
       for (const layer of layers) {
         if (layer.visible === false) continue;
-        if (layer.type === "color") {
-          effectiveBgColor = layer.color || "transparent";
-        } else if (layer.type === "gradient" && layer.gradient) {
+        if (layer.type === "gradient" && layer.gradient) {
           const g = layer.gradient;
           bgParts.push(buildGradientCSS(g.type as "linear" | "radial" | "conic", g.angle, g.stops));
           blendModes.push(layer.blendMode || "normal");
@@ -71,10 +107,9 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
           blendModes.push(layer.blendMode || "normal");
         }
       }
-      // CSS background: gradients/images first, then color as the last layer
+      // CSS background: gradients/images first, color handled by separate row
       if (bgParts.length > 0) {
         apply("background", bgParts.join(", "));
-        apply("background-color", effectiveBgColor);
         if (attachments.some((a) => a !== "scroll")) {
           apply("background-attachment", attachments.join(", "));
         }
@@ -85,7 +120,6 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
         }
       } else {
         apply("background", "none");
-        apply("background-color", effectiveBgColor);
         apply("background-attachment", "");
         apply("background-blend-mode", "");
       }
@@ -96,13 +130,39 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
   const handleBgClipChange = useCallback(
     (v: string) => {
       setBgClip(v);
-      apply("background-clip", v);
+      const cssValue = v === "none" ? "border-box" : v;
+      apply("background-clip", cssValue);
       if (v === "text") {
         apply("-webkit-background-clip", "text");
       }
     },
     [apply],
   );
+
+  const handleAddLayer = useCallback(() => {
+    const newLayer: BackgroundLayer = {
+      id: `gradient_${Date.now()}`,
+      type: "gradient",
+      gradient: {
+        type: "linear",
+        angle: 180,
+        stops: [
+          { color: "#ffffff", position: 0 },
+          { color: "#000000", position: 100 },
+        ],
+      },
+      opacity: 1,
+      blendMode: "normal",
+      visible: true,
+    };
+    handleBgLayersChange([...bgLayers, newLayer]);
+  }, [bgLayers, handleBgLayersChange]);
+
+  // Clipping options: "None" maps to default border-box
+  const clippingOptions = [
+    { value: "none", label: "None" },
+    ...BG_CLIP_OPTIONS,
+  ];
 
   // ── JSX ──
   return (
@@ -113,14 +173,41 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
       focusOpen={focusOpen}
       onToggle={onToggle}
     >
-      {bgLayers.length > 0 ? (
+      {/* 1. Image & gradient sub-section */}
+      <SubSectionHeader label="Image & gradient" onAdd={handleAddLayer} />
+      {bgLayers.length > 0 && (
         <div className="px-3">
           <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
         </div>
-      ) : (
-        <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} onContextMenu={ctxMenu("background-color", bgColor)} computedProp="background-color" computedElement={element} onReset={() => { resetProp(element, "background-color"); setBgColor(rgbToHex(getComputedStyle(element).backgroundColor)); }} />
       )}
-      <SelectRow label="Clip" value={bgClip} options={BG_CLIP_OPTIONS} onChange={handleBgClipChange} indicator={ind("background-clip")} onContextMenu={ctxMenu("background-clip", bgClip)} computedProp="background-clip" computedElement={element} onReset={() => resetCssStr("background-clip", setBgClip)} />
+
+      {/* 2. Color (always visible) */}
+      <ColorRow
+        label="Color"
+        value={bgColor}
+        onChange={handleBgColorChange}
+        indicator={ind("background-color")}
+        onContextMenu={ctxMenu("background-color", bgColor)}
+        computedProp="background-color"
+        computedElement={element}
+        onReset={() => {
+          resetProp(element, "background-color");
+          setBgColor(rgbToHex(getComputedStyle(element).backgroundColor));
+        }}
+      />
+
+      {/* 3. Clipping */}
+      <SelectRow
+        label="Clipping"
+        value={bgClip}
+        options={clippingOptions}
+        onChange={handleBgClipChange}
+        indicator={ind("background-clip")}
+        onContextMenu={ctxMenu("background-clip", bgClip)}
+        computedProp="background-clip"
+        computedElement={element}
+        onReset={() => resetCssStr("background-clip", (v) => setBgClip(v === "border-box" ? "none" : v))}
+      />
     </Section>
   );
 });
