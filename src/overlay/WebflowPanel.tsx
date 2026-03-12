@@ -47,7 +47,8 @@ import {
   BG_CLIP_OPTIONS, USER_SELECT_OPTIONS, BACKFACE_OPTIONS, BOX_SIZING_OPTIONS,
 } from "./panelConstants";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell } from "./layoutControls";
-import { ChevronRight, Link } from "lucide-react";
+import { CSSVariablesSection } from "./CSSVariablesSection";
+import { ChevronRight, Link, Grid3x3 } from "lucide-react";
 import { ms } from "./timing";
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -57,6 +58,10 @@ export interface WebflowPanelProps {
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
   onDirtyChange?: () => void;
+  /** Whether the grid overlay is visible (managed by Overlay.tsx) */
+  showGridOverlay?: boolean;
+  /** Toggle the grid overlay on/off */
+  onToggleGridOverlay?: () => void;
 }
 
 // ─── Local Helpers ──────────────────────────────────────────────────
@@ -128,7 +133,7 @@ function isTextBearing(el: Element): boolean {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange, showGridOverlay, onToggleGridOverlay }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -835,6 +840,33 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
 
         {isGrid && (
           <>
+            {/* Grid overlay toggle */}
+            {onToggleGridOverlay && (
+              <div style={{ padding: "2px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Overlay</span>
+                <button
+                  onClick={onToggleGridOverlay}
+                  title={showGridOverlay ? "Hide grid overlay" : "Show grid overlay"}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 8px",
+                    fontSize: "10px",
+                    fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    background: showGridOverlay ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+                    border: showGridOverlay ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "3px",
+                    color: showGridOverlay ? "rgba(99,102,241,0.9)" : "rgba(255,255,255,0.5)",
+                    cursor: "pointer",
+                    outline: "none",
+                  }}
+                >
+                  <Grid3x3 size={12} strokeWidth={1.5} />
+                  {showGridOverlay ? "Hide" : "Show"}
+                </button>
+              </div>
+            )}
             <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} />
             <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} />
             <div style={{ padding: "6px 12px" }}>
@@ -1498,6 +1530,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
         <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} />
         <SelectRow label="User Sel" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} />
       </Section>
+
+      {/* 9. CSS Variables */}
+      <CSSVariablesSection element={element} onDirtyChange={onDirtyChange} />
     </div>
   );
 }

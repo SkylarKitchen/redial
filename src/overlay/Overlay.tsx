@@ -16,6 +16,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
+import { GridOverlay } from "./GridOverlay";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
 import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
@@ -95,6 +96,12 @@ export function Overlay() {
 
   // State selector
   const [activeState, setActiveState] = useState("none");
+
+  // Grid overlay toggle
+  const [showGridOverlay, setShowGridOverlay] = useState(false);
+  const isGridContainer = selectedEl
+    ? (() => { const d = getComputedStyle(selectedEl).display; return d === "grid" || d === "inline-grid"; })()
+    : false;
 
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
@@ -846,6 +853,8 @@ export function Overlay() {
                   spacing={inferResult.spacing}
                   onSpacingChange={handleSpacingChange}
                   onDirtyChange={handleDirtyChange}
+                  showGridOverlay={showGridOverlay}
+                  onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
                 />
               </PanelErrorBoundary>
             </div>
