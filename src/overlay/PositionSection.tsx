@@ -18,7 +18,7 @@ export const PositionSection = memo(function PositionSection({
   ctx,
   forceOpen,
 }: PositionSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
@@ -106,13 +106,13 @@ export const PositionSection = memo(function PositionSection({
               auto
             </button>
             {!zIndexAuto && (
-              <SliderRow label="" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => { resetCss("z-index", setZIndex); setZIndexAuto(true); }} indicator={"none" as const} />
+              <SliderRow label="" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => { resetCss("z-index", setZIndex); setZIndexAuto(true); }} indicator={"none" as const} onContextMenu={ctxMenu("z-index", String(zIndex))} computedProp="z-index" computedElement={element} />
             )}
           </div>
         </>
       )}
-      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} />
-      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} />
+      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} onContextMenu={ctxMenu("float", float_)} />
+      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} onContextMenu={ctxMenu("clear", clear_)} />
     </Section>
   );
 });

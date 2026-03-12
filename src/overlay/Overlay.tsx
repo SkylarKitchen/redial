@@ -29,6 +29,12 @@ import { ms } from "./timing";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { KeyboardHelpModal } from "./KeyboardHelpModal";
+import { CommandPalette } from "./CommandPalette";
+import { ContextMenu } from "./ContextMenu";
+import { ShortcutsHelp } from "./ShortcutsHelp";
+import { ViewportBar } from "./ViewportBar";
+import { parseCSSText } from "./cssImport";
+import { formatTailwindDiff } from "./tailwind";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -116,8 +122,16 @@ export function Overlay() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Keyboard help modal
-  const [showHelp, setShowHelp] = useState(false);
+  // Modal state (discriminated union — only one modal open at a time)
+  type ActiveModal =
+    | { type: "none" }
+    | { type: "commandPalette" }
+    | { type: "shortcutsHelp" }
+    | { type: "contextMenu"; x: number; y: number };
+  const [activeModal, setActiveModal] = useState<ActiveModal>({ type: "none" });
+
+  // Viewport width constraint
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
 
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
@@ -271,6 +285,14 @@ export function Overlay() {
           }
           return;
         }
+      }
+
+      // Cmd+K for command palette
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveModal(prev => prev.type === "commandPalette" ? { type: "none" } : { type: "commandPalette" });
+        return;
       }
 
       // Cmd+F / Ctrl+F to toggle property search (when panel is open)

@@ -7,7 +7,7 @@
 import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector } from "./UnitSelector";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 import { useClickOutside } from "./useClickOutside";

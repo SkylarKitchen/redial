@@ -202,6 +202,8 @@ export function SliderRow({
   computedProp,
   computedElement,
   conversionHint,
+  snapPoints,
+  snapThreshold,
 }: {
   label: string;
   value: number;
@@ -223,7 +225,25 @@ export function SliderRow({
   computedElement?: Element;
   /** Conversion tooltip hint shown after unit change */
   conversionHint?: ConversionHint | null;
+  /** Magnetic snap values (e.g. [0, 8, 16, 24, 32, 50, 100]) */
+  snapPoints?: number[];
+  /** Pixel distance for snap activation (default 3) */
+  snapThreshold?: number;
 }) {
+  const snapValue = useCallback((raw: number): number => {
+    if (!snapPoints || snapPoints.length === 0) return raw;
+    const threshold = snapThreshold ?? 3;
+    const range = max - min;
+    const valueThreshold = (threshold / 100) * range;
+
+    for (const snap of snapPoints) {
+      if (snap >= min && snap <= max && Math.abs(raw - snap) <= valueThreshold) {
+        return snap;
+      }
+    }
+    return raw;
+  }, [snapPoints, snapThreshold, min, max]);
+
   const pct = ((value - min) / (max - min)) * 100;
   const labelContent = (
     <span
@@ -258,7 +278,7 @@ export function SliderRow({
         max={max}
         step={step}
         value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
+        onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
         onFocus={onFocusRing}
         onBlur={onBlurRing}
         style={{

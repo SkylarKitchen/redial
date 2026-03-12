@@ -21,9 +21,10 @@ interface FooterProps {
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
+  onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
