@@ -28,6 +28,7 @@ import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch } from "./apply";
 import { ms } from "./timing";
+import { setScrubGroup } from "./scrubState";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -242,6 +243,7 @@ export function SpacingBoxModel({
               if (Math.abs(dx) < 3) return;
               isDragging = true;
               scrubActiveRef.current = true;
+              setScrubGroup(isMargin ? "margin" : "padding");
               document.body.style.userSelect = "none";
               document.body.style.cursor = "ew-resize";
               setTooltip(null);
@@ -293,6 +295,7 @@ export function SpacingBoxModel({
               document.body.style.userSelect = prevSelect;
               document.body.style.cursor = prevCursor;
               scrubActiveRef.current = false;
+              setScrubGroup(null);
               shiftHeldRef.current = false;
               altHeldRef.current = false;
               endBatch();
