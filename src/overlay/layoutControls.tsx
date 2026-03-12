@@ -58,7 +58,7 @@ export function MiniDropdown({ value, options, onChange }: {
         className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono text-[rgba(0,0,0,0.7)] cursor-pointer outline-none"
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
-        <ChevronDown size={10} strokeWidth={2} className="text-[rgba(0,0,0,0.25)] ml-1 shrink-0" />
+        <ChevronDown size={12} strokeWidth={2} className="text-[rgba(0,0,0,0.25)] ml-1 shrink-0" />
       </button>
       {open && (
         <div
@@ -161,7 +161,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
             "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
             direction.includes("reverse") ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
           )}
-        ><ChevronDown size={10} strokeWidth={2} /></button>
+        ><ChevronDown size={12} strokeWidth={2} /></button>
         {moreOpen && (
           <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DIRECTION_MORE_OPTIONS.map((opt) => {
@@ -301,7 +301,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
             !isTabValue ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
           )}
         >
-          <ChevronDown size={10} strokeWidth={2} />
+          <ChevronDown size={12} strokeWidth={2} />
         </button>
         {moreOpen && (
           <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">

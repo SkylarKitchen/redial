@@ -549,7 +549,7 @@ function SelectRowCustom({
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
             {current?.label ?? value}
           </span>
-          <ChevronDown size={10} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
+          <ChevronDown size={12} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
         </button>
 
         {open && (

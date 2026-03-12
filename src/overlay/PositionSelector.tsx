@@ -156,7 +156,7 @@ export function PositionSelector({
             <span style={{ color: text.label, display: "flex" }}>{current.icon}</span>
             {current.label}
           </span>
-          <ChevronDown size={10} strokeWidth={2} style={{ color: blackAlpha(0.3), flexShrink: 0, marginLeft: "4px" }} />
+          <ChevronDown size={12} strokeWidth={2} style={{ color: blackAlpha(0.3), flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {/* Dropdown */}
