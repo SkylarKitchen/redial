@@ -243,6 +243,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(widthVar)}
           onCssVarChange={handleWidthVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("width", setWidth); setWidthAuto(isAutoSize(element, "width")); setWidthVar(null); }}
         />
         <SizeInputCell
           label="Height"
@@ -263,6 +264,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(heightVar)}
           onCssVarChange={handleHeightVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("height", setHeight); setHeightAuto(isAutoSize(element, "height")); setHeightVar(null); }}
         />
       </div>
       {/* Row 2: Min W + Min H */}
@@ -285,6 +287,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(minWidthVar)}
           onCssVarChange={handleMinWidthVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("min-width", setMinWidth); setMinWidthVar(null); }}
         />
         <SizeInputCell
           label="Min H"
@@ -304,6 +307,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(minHeightVar)}
           onCssVarChange={handleMinHeightVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("min-height", setMinHeight); setMinHeightVar(null); }}
         />
       </div>
       {/* Row 3: Max W + Max H */}
@@ -327,6 +331,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(maxWidthVar)}
           onCssVarChange={handleMaxWidthVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("max-width", setMaxWidth); setMaxWidthNone(true); setMaxWidthVar(null); }}
         />
         <SizeInputCell
           label="Max H"
@@ -347,6 +352,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           cssVarResolved={resolveVar(maxHeightVar)}
           onCssVarChange={handleMaxHeightVarChange}
           variableOptions={varOptions}
+          onReset={() => { resetCss("max-height", setMaxHeight); setMaxHeightNone(true); setMaxHeightVar(null); }}
         />
       </div>
       {/* Overflow: icon button row */}
