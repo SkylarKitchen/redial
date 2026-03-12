@@ -256,7 +256,7 @@ export const TypographySection = memo(function TypographySection({
                 keyword={letterSpacing === 0 ? "Normal" : null}
                 conversionHint={letterSpacingHint}
               />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Letter spacing</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Letter spacing</div>
             </div>
             <div className="flex-1">
               <TypoValueCell
@@ -268,7 +268,7 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 conversionHint={textIndentHint}
               />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Text indent</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Text indent</div>
             </div>
           </div>
 
@@ -282,7 +282,7 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 keyword={columnCount <= 1 ? "Auto" : null}
               />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Columns</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Columns</div>
             </div>
             {columnCount > 1 && (
               <div className="flex-1">
@@ -296,7 +296,7 @@ export const TypographySection = memo(function TypographySection({
                   keyword={columnGap === 0 ? "Normal" : null}
                   conversionHint={typoColGapHint}
                 />
-                <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Column gap</div>
+                <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Column gap</div>
               </div>
             )}
           </div>
@@ -311,11 +311,11 @@ export const TypographySection = memo(function TypographySection({
                 step={0.5}
                 keyword={wordSpacing === 0 ? "Normal" : null}
               />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Word spacing</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Word spacing</div>
             </div>
             <div className="flex-1">
               <MiniDropdown value={hyphens} options={HYPHENS_OPTIONS} onChange={handleHyphensChange} />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Hyphens</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Hyphens</div>
             </div>
           </div>
 
@@ -323,15 +323,15 @@ export const TypographySection = memo(function TypographySection({
           <div className="flex gap-1.5 px-3 py-1.5 items-start">
             <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
-              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Italicize</span>
+              <span className="text-[9px] text-[rgba(0,0,0,0.3)]">Italicize</span>
             </div>
             <div className="flex flex-col items-center gap-[3px] flex-1">
               <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Capitalize</span>
+              <span className="text-[9px] text-[rgba(0,0,0,0.3)]">Capitalize</span>
             </div>
             <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
-              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Direction</span>
+              <span className="text-[9px] text-[rgba(0,0,0,0.3)]">Direction</span>
             </div>
           </div>
 
@@ -340,11 +340,11 @@ export const TypographySection = memo(function TypographySection({
             <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Breaking</span>
             <div className="flex-1">
               <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Word</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Word</div>
             </div>
             <div className="flex-1">
               <MiniDropdown value={lineBreak} options={LINE_BREAK_OPTIONS} onChange={handleLineBreakChange} />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Line</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Line</div>
             </div>
           </div>
 
@@ -354,7 +354,7 @@ export const TypographySection = memo(function TypographySection({
           {/* Truncate — Clip / Ellipsis segmented toggle */}
           <div className="flex items-center gap-1.5 px-3 py-1">
             <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Truncate</span>
-            <div className="flex flex-1 rounded overflow-hidden border border-[rgba(255,255,255,0.15)]">
+            <div className="flex flex-1 rounded overflow-hidden border border-[rgba(0,0,0,0.08)]">
               {(["clip", "ellipsis"] as const).map((opt) => (
                 <button
                   key={opt}
@@ -362,10 +362,10 @@ export const TypographySection = memo(function TypographySection({
                   className={cn(
                     "flex-1 h-7 cursor-pointer border-none text-[11px] font-[system-ui,sans-serif] outline-none transition-colors capitalize",
                     textOverflow === opt
-                      ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
-                      : "bg-transparent text-[rgba(255,255,255,0.4)] font-normal",
+                      ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.87)] font-medium"
+                      : "bg-transparent text-[rgba(0,0,0,0.4)] font-normal",
                   )}
-                  style={opt === "clip" ? { borderRight: "1px solid rgba(255,255,255,0.15)" } : undefined}
+                  style={opt === "clip" ? { borderRight: "1px solid rgba(0,0,0,0.08)" } : undefined}
                 >
                   {opt === "clip" ? "Clip" : "Ellipsis"}
                 </button>
@@ -383,11 +383,11 @@ export const TypographySection = memo(function TypographySection({
                 unit="px"
                 step={1}
               />
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Width</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Width</div>
             </div>
             <div className="flex-1">
               <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden px-1.5 gap-1.5 relative">
-                <label className="w-4 h-4 rounded-sm border border-[rgba(255,255,255,0.2)] shrink-0 cursor-pointer block" style={{ background: textStrokeColor }}>
+                <label className="w-4 h-4 rounded-sm border border-[rgba(0,0,0,0.12)] shrink-0 cursor-pointer block" style={{ background: textStrokeColor }}>
                   <input
                     type="color"
                     value={textStrokeColor}
@@ -395,20 +395,20 @@ export const TypographySection = memo(function TypographySection({
                     className="absolute w-0 h-0 opacity-0 overflow-hidden"
                   />
                 </label>
-                <span className="text-[11px] font-mono text-[rgba(255,255,255,0.6)] overflow-hidden text-ellipsis whitespace-nowrap">
+                <span className="text-[11px] font-mono text-[rgba(0,0,0,0.6)] overflow-hidden text-ellipsis whitespace-nowrap">
                   {textStrokeColor}
                 </span>
               </div>
-              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Color</div>
+              <div className="text-[9px] text-[rgba(0,0,0,0.3)] text-center mt-[3px]">Color</div>
             </div>
           </div>
 
           {/* Text shadows */}
           <div className="flex items-center justify-between px-3 pt-2 pb-0.5">
-            <span className="text-[11px] font-medium text-[rgba(255,255,255,0.85)]">Text shadows</span>
+            <span className="text-[11px] font-medium text-[rgba(0,0,0,0.85)]">Text shadows</span>
             <button
               onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])}
-              className="flex items-center justify-center w-[22px] h-[22px] cursor-pointer bg-transparent border border-[rgba(255,255,255,0.15)] rounded-[3px] text-[var(--muted-foreground)] text-sm leading-none outline-none transition-colors hover:bg-[var(--muted)]"
+              className="flex items-center justify-center w-[22px] h-[22px] cursor-pointer bg-transparent border border-[rgba(0,0,0,0.08)] rounded-[3px] text-[var(--muted-foreground)] text-sm leading-none outline-none transition-colors hover:bg-[var(--muted)]"
             >
               +
             </button>
