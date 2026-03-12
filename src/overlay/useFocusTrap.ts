@@ -7,8 +7,24 @@
 
 import { useEffect, type RefObject } from "react";
 
-const FOCUSABLE_SELECTOR =
+/** Exported for testing */
+export const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/** Pure logic: get the next focused element when Tab is pressed at a boundary */
+export function getNextFocusTarget(
+  focusable: HTMLElement[],
+  activeElement: Element | null,
+  shiftKey: boolean,
+): HTMLElement | null {
+  if (focusable.length === 0) return null;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (shiftKey && activeElement === first) return last;
+  if (!shiftKey && activeElement === last) return first;
+  return null; // no wrapping needed
+}
 
 export function useFocusTrap(
   ref: RefObject<HTMLElement | null>,
@@ -23,21 +39,10 @@ export function useFocusTrap(
       const focusable = Array.from(
         container.querySelectorAll(FOCUSABLE_SELECTOR),
       ) as HTMLElement[];
-      if (focusable.length === 0) return;
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+      const target = getNextFocusTarget(focusable, document.activeElement, e.shiftKey);
+      if (target) {
+        e.preventDefault();
+        target.focus();
       }
     };
 

@@ -68,8 +68,25 @@ function removeSwatch(index: number) {
   persist();
 }
 
+// ─── Reset (for tests) ───────────────────────────────────────
+function resetStore() {
+  swatches = [];
+  cachedSnapshot = [];
+  listeners.forEach((fn) => fn());
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+}
+
 // ─── Hook ────────────────────────────────────────────────────
 export function useSwatches() {
   const list = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   return { swatches: list, addSwatch, removeSwatch };
 }
+
+// Exported for testing
+export {
+  addSwatch as _addSwatch,
+  removeSwatch as _removeSwatch,
+  getSnapshot as _getSnapshot,
+  subscribe as _subscribe,
+  resetStore as _resetStore,
+};

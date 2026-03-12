@@ -26,6 +26,25 @@ export interface UseDropdownKeyboardResult {
   optionRefCallback: (el: HTMLElement | null) => void;
 }
 
+/** Pure computation: next highlighted index for arrow/Home/End keys. Exported for testing. */
+export function computeNextIndex(
+  key: "ArrowDown" | "ArrowUp" | "Home" | "End",
+  current: number,
+  optionCount: number,
+): number {
+  switch (key) {
+    case "ArrowDown": return current < optionCount - 1 ? current + 1 : 0;
+    case "ArrowUp": return current > 0 ? current - 1 : optionCount - 1;
+    case "Home": return 0;
+    case "End": return optionCount - 1;
+  }
+}
+
+/** Pure computation: type-ahead match. Exported for testing. */
+export function typeAheadMatch(buffer: string, labels: string[]): number {
+  return labels.findIndex(l => l.toLowerCase().startsWith(buffer.toLowerCase()));
+}
+
 export function useDropdownKeyboard({
   open,
   setOpen,
@@ -81,24 +100,11 @@ export function useDropdownKeyboard({
 
       switch (e.key) {
         case "ArrowDown":
-          e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev < optionCount - 1 ? prev + 1 : 0
-          );
-          break;
         case "ArrowUp":
-          e.preventDefault();
-          setHighlightedIndex((prev) =>
-            prev > 0 ? prev - 1 : optionCount - 1
-          );
-          break;
         case "Home":
-          e.preventDefault();
-          setHighlightedIndex(0);
-          break;
         case "End":
           e.preventDefault();
-          setHighlightedIndex(optionCount - 1);
+          setHighlightedIndex((prev) => computeNextIndex(e.key as "ArrowDown" | "ArrowUp" | "Home" | "End", prev, optionCount));
           break;
         case "Enter":
           e.preventDefault();
@@ -115,7 +121,7 @@ export function useDropdownKeyboard({
             typeBuffer.current += e.key.toLowerCase();
             clearTimeout(typeTimer.current);
             typeTimer.current = setTimeout(() => { typeBuffer.current = ""; }, 500);
-            const match = labels.findIndex(l => l.toLowerCase().startsWith(typeBuffer.current));
+            const match = typeAheadMatch(typeBuffer.current, labels);
             if (match >= 0) setHighlightedIndex(match);
           }
       }

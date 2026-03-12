@@ -54,12 +54,7 @@ export function useWheelAdjust(
       }, 500);
 
       const { value: cur, onChange: emit, step: baseStep, min, max } = latest.current;
-      const step = e.shiftKey ? 10 : e.altKey ? 0.1 : baseStep;
-      // Scroll up (negative deltaY) → increase, scroll down → decrease
-      const delta = e.deltaY < 0 ? step : -step;
-      let next = Math.round((cur + delta) * 100) / 100;
-      if (max !== undefined) next = Math.min(next, max);
-      if (min !== undefined) next = Math.max(next, min);
+      const next = computeWheelValue(cur, e.deltaY, e.shiftKey, e.altKey, baseStep, min, max);
       emit(next);
     };
 
@@ -77,4 +72,22 @@ export function useWheelAdjust(
       }
     };
   }, [elRef, disabled]);
+}
+
+/** Pure computation extracted for testing. */
+export function computeWheelValue(
+  current: number,
+  deltaY: number,
+  shiftKey: boolean,
+  altKey: boolean,
+  baseStep: number,
+  min?: number,
+  max?: number,
+): number {
+  const step = shiftKey ? 10 : altKey ? 0.1 : baseStep;
+  const delta = deltaY < 0 ? step : -step;
+  let next = Math.round((current + delta) * 100) / 100;
+  if (max !== undefined) next = Math.min(next, max);
+  if (min !== undefined) next = Math.max(next, min);
+  return next;
 }
