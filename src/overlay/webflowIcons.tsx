@@ -263,3 +263,156 @@ export function ChevronSmallDownIcon({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+// ─── Position Pin Preset Icons ──────────────────────────────────
+
+/** Position: top-left — small rect pinned to top-left */
+export function PositionTopLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="3" width="5" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: top-right — small rect pinned to top-right */
+export function PositionTopRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="8" y="3" width="5" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: bottom-left — small rect pinned to bottom-left */
+export function PositionBottomLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="9" width="5" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: bottom-right — small rect pinned to bottom-right */
+export function PositionBottomRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="8" y="9" width="5" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: left — tall rect pinned to left edge */
+export function PositionLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="3" width="4" height="10" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: right — tall rect pinned to right edge */
+export function PositionRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="9" y="3" width="4" height="10" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: bottom — wide rect pinned to bottom edge */
+export function PositionBottomIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="9" width="10" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: top — wide rect pinned to top edge */
+export function PositionTopIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="3" width="10" height="4" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Position: all edges — rect filling entire container */
+export function PositionAllIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="2" width="12" height="12" rx="1" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <rect x="3" y="3" width="10" height="10" rx="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+// ─── Float Icons ────────────────────────────────────────────────
+
+/** Float left — content floating to left with text wrapping right */
+export function FloatLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="2" y="3" width="5" height="5" rx="0.5" fill="currentColor" />
+      <path opacity="0.4" d="M9 4H14M9 6H14M9 8H14M2 10H14M2 12H14" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Float right — content floating to right with text wrapping left */
+export function FloatRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <rect x="9" y="3" width="5" height="5" rx="0.5" fill="currentColor" />
+      <path opacity="0.4" d="M2 4H7M2 6H7M2 8H7M2 10H14M2 12H14" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+// ─── Clear Icons ────────────────────────────────────────────────
+
+/** Clear left — clear left float */
+export function ClearLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M3 4H7V8H3V4Z" fill="currentColor" fillOpacity="0.3" />
+      <path d="M3 9H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 11H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 13H13" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Clear right — clear right float */
+export function ClearRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M9 4H13V8H9V4Z" fill="currentColor" fillOpacity="0.3" />
+      <path d="M3 9H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 11H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 13H13" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Clear both — clear both floats */
+export function ClearBothIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M3 4H7V8H3V4Z" fill="currentColor" fillOpacity="0.3" />
+      <path d="M9 4H13V8H9V4Z" fill="currentColor" fillOpacity="0.3" />
+      <path d="M3 9H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 11H13" stroke="currentColor" strokeWidth="1" />
+      <path d="M3 13H13" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}

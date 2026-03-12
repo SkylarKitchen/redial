@@ -133,7 +133,7 @@ export function Section({
         if (onToggle) onToggle(title);
         else setOwnOpen(isOpen);
       }}
-      className="border-b border-[var(--border)]"
+      className={cn("border-b border-[var(--border)]", open && "border-transparent")}
     >
       <CollapsibleTrigger asChild>
         <div
@@ -150,7 +150,7 @@ export function Section({
           className={cn(
             "flex justify-between items-center cursor-pointer rounded-sm outline-none px-3 pt-2.5 pb-1.5",
             "focus:ring-2 focus:ring-[var(--ring)]",
-            open && "sticky top-0 z-[2] bg-[var(--background)]"
+            open && "sticky top-0 z-[2] bg-white"
           )}
         >
           <span className="text-[13px] font-medium text-[var(--foreground)] flex items-center gap-1.5">
