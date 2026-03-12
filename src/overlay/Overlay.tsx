@@ -650,6 +650,7 @@ export function Overlay() {
 
   // --- Breadcrumb click handler (Phase 2) ---
   const handleBreadcrumbClick = useCallback((el: Element) => {
+    setHoveredAncestor(null);
     setSelectedEl(el);
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
@@ -720,6 +721,32 @@ export function Overlay() {
       if (tagEl) tagEl.style.display = "none";
     };
   }, [selectedEl, selecting]);
+
+  // --- Breadcrumb ancestor hover outline ---
+  useEffect(() => {
+    if (!hoveredAncestor || !ancestorOutlineRef.current) return;
+    const outline = ancestorOutlineRef.current;
+    let rafId: number;
+    let cancelled = false;
+
+    const sync = () => {
+      if (cancelled) return;
+      const r = hoveredAncestor.getBoundingClientRect();
+      outline.style.display = "block";
+      outline.style.top = `${r.top}px`;
+      outline.style.left = `${r.left}px`;
+      outline.style.width = `${r.width}px`;
+      outline.style.height = `${r.height}px`;
+      rafId = requestAnimationFrame(sync);
+    };
+    rafId = requestAnimationFrame(sync);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      outline.style.display = "none";
+    };
+  }, [hoveredAncestor]);
 
   // --- Breadcrumb computation (Phase 2) ---
   const breadcrumb = selectedEl ? buildBreadcrumb(selectedEl) : [];
@@ -1097,6 +1124,19 @@ export function Overlay() {
               transition: `all ${ms("fast")} ease-out`,
             }}
           />
+          {/* Breadcrumb ancestor hover outline */}
+          <div
+            ref={ancestorOutlineRef}
+            style={{
+              position: "fixed",
+              display: "none",
+              pointerEvents: "none",
+              zIndex: 2147483645,
+              border: "1.5px dashed rgba(99,102,241,0.5)",
+              borderRadius: "2px",
+              background: "rgba(99,102,241,0.04)",
+            }}
+          />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
@@ -1185,6 +1225,7 @@ export function Overlay() {
             onShowSession={handleToggleSession}
             breadcrumb={breadcrumb}
             onBreadcrumbClick={handleBreadcrumbClick}
+            onBreadcrumbHover={setHoveredAncestor}
             scope={scope}
             onScopeChange={handleScopeChange}
             cssClasses={cssClasses}

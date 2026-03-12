@@ -6,7 +6,7 @@
  * a small tooltip above the label.
  */
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 
 export interface ComputedTooltipProps {
   property: string;
@@ -44,6 +44,13 @@ export function ComputedTooltip({ property, element, displayValue, children }: C
       timerRef.current = null;
     }
     setVisible(false);
+  }, []);
+
+  // Cleanup pending timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, []);
 
   return (
