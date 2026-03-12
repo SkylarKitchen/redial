@@ -37,6 +37,7 @@ export interface TypographySectionProps {
   columnGapUnit: string;
   onColumnGapChange: (v: number) => void;
   onColumnGapUnitChange: (u: string) => void;
+  forceOpen?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ export const TypographySection = memo(function TypographySection({
   columnGapUnit,
   onColumnGapChange,
   onColumnGapUnitChange,
+  forceOpen,
 }: TypographySectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
 
