@@ -8,7 +8,7 @@ import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { ValueInput, selectAllOnDoubleClick } from "./controls";
+import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
@@ -384,6 +384,7 @@ export function TypoValueCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const cellRef = useRef<HTMLDivElement>(null);
+  const flashStyle = useValueFlash(value);
   useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null });
 
   useEffect(() => {

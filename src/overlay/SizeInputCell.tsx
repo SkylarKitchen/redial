@@ -223,7 +223,7 @@ export function SizeInputCell({
       </div>
 
       {/* Value area */}
-      <div className="flex flex-1 items-center justify-end pr-0.5 min-w-0">
+      <div className="flex flex-1 items-center justify-end pr-0.5 min-w-0 rounded-sm" style={flashStyle}>
         {isKeyword ? (
           <span
             tabIndex={0}
