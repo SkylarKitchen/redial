@@ -142,10 +142,10 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: "28px",
                 padding: "0 10px",
                 cursor: "pointer",
-                background: isActive ? "#6366f1" : "transparent",
-                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
-                border: "1px solid rgba(255,255,255,0.15)",
-                borderLeft: isFirst ? "1px solid rgba(255,255,255,0.15)" : "none",
+                background: isActive ? "#c17a50" : "transparent",
+                color: isActive ? "#fff" : "rgba(0,0,0,0.45)",
+                border: "1px solid rgba(0,0,0,0.12)",
+                borderLeft: isFirst ? "1px solid rgba(0,0,0,0.12)" : "none",
                 borderRadius: isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : "0",
                 fontSize: "11px",
                 fontFamily: "system-ui, sans-serif",
@@ -167,7 +167,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               fontSize: "11px",
               fontFamily: "system-ui, sans-serif",
-              color: "rgba(255,255,255,0.5)",
+              color: "rgba(0,0,0,0.45)",
               minWidth: "36px",
             }}
           >
@@ -179,13 +179,13 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             max={360}
             value={angle}
             onChange={(e) => emit({ angle: Number(e.target.value) })}
-            style={{ flex: 1, accentColor: "#6366f1" }}
+            style={{ flex: 1, accentColor: "#c17a50" }}
           />
           <span
             style={{
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.7)",
+              color: "rgba(0,0,0,0.6)",
               minWidth: "32px",
               textAlign: "right",
             }}
@@ -205,7 +205,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             height: "24px",
             borderRadius: "4px",
             background: buildGradientCSS(type, angle, stops),
-            border: "1px solid rgba(255,255,255,0.15)",
+            border: "1px solid rgba(0,0,0,0.12)",
             cursor: "crosshair",
           }}
         />
@@ -227,7 +227,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: 0,
                 borderLeft: "4px solid transparent",
                 borderRight: "4px solid transparent",
-                borderBottom: `8px solid ${isSelected ? "#6366f1" : "rgba(255,255,255,0.7)"}`,
+                borderBottom: `8px solid ${isSelected ? "#c17a50" : "rgba(0,0,0,0.6)"}`,
                 cursor: "pointer",
               }}
             />
@@ -246,7 +246,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: "24px",
                 borderRadius: "4px",
                 background: selected.color,
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid rgba(0,0,0,0.12)",
               }}
             />
             <input
@@ -285,10 +285,10 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               width: "48px",
               height: "24px",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(0,0,0,0.04)",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: "3px",
-              color: "rgba(255,255,255,0.9)",
+              color: "rgba(0,0,0,0.87)",
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               padding: "0 4px",
@@ -299,7 +299,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.4)",
+              color: "rgba(0,0,0,0.35)",
             }}
           >
             %
@@ -319,7 +319,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
               background: "transparent",
               border: "none",
               borderRadius: "3px",
-              color: stops.length <= 2 ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.4)",
+              color: stops.length <= 2 ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.35)",
               fontSize: "14px",
               cursor: stops.length <= 2 ? "default" : "pointer",
               fontFamily: "system-ui, sans-serif",
@@ -335,7 +335,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(255,255,255,0.35)",
+          color: "rgba(0,0,0,0.3)",
           wordBreak: "break-all",
           lineHeight: "14px",
         }}

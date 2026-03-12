@@ -62,7 +62,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     if (!document.getElementById(id)) {
       const style = document.createElement('style');
       style.id = id;
-      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(99,102,241,0.5); outline-offset: 1px; }`;
+      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(193,122,80,0.5); outline-offset: 1px; }`;
       document.head.appendChild(style);
     }
     return () => { document.getElementById(id)?.remove(); };
@@ -138,7 +138,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
   return (
     <div className="font-sans">
       {noResults && (
-        <div className="text-center text-[rgba(255,255,255,0.3)] px-5 py-10 text-xs">
+        <div className="text-center text-[rgba(0,0,0,0.25)] px-5 py-10 text-xs">
           No matching properties
         </div>
       )}

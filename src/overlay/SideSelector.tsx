@@ -18,8 +18,8 @@ export interface SideSelectorProps {
 const SIDES: Side[] = ["all", "top", "right", "bottom", "left"];
 
 function SideIcon({ side, active }: { side: Side; active: boolean }) {
-  const thin = active ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.2)";
-  const thick = "#6366f1";
+  const thin = active ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.15)";
+  const thick = "#c17a50";
   const strokeWidth = 1;
   const thickWidth = 2;
 
@@ -58,7 +58,7 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
       style={{
         display: "flex",
         height: "24px",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        borderBottom: "1px solid rgba(0,0,0,0.05)",
       }}
     >
       {SIDES.map((side) => {
@@ -76,20 +76,20 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
               height: "24px",
               padding: 0,
               border: "none",
-              borderBottom: active ? "2px solid #6366f1" : "2px solid transparent",
-              background: active ? "rgba(99,102,241,0.15)" : "transparent",
+              borderBottom: active ? "2px solid #c17a50" : "2px solid transparent",
+              background: active ? "rgba(193,122,80,0.15)" : "transparent",
               cursor: "pointer",
               outline: "none",
               transition: `background ${ms("normal")}`,
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
               }
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = active
-                ? "rgba(99,102,241,0.15)"
+                ? "rgba(193,122,80,0.15)"
                 : "transparent";
             }}
           >

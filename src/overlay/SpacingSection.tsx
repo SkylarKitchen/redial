@@ -41,7 +41,7 @@ export const SpacingSection = memo(function SpacingSection({
       className={cn(
         "flex items-center gap-1 py-0.5 px-1.5 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
         showBoxModel
-          ? "bg-[rgba(99,102,241,0.2)] border border-[rgba(99,102,241,0.4)] text-[rgba(99,102,241,0.9)]"
+          ? "bg-[rgba(193,122,80,0.2)] border border-[rgba(193,122,80,0.4)] text-[rgba(193,122,80,0.9)]"
           : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
       )}
     >

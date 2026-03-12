@@ -193,8 +193,8 @@ export function SizeInputCell({
       className={cn(
         "flex items-center h-[28px] rounded overflow-hidden",
         isModified
-          ? "bg-indigo-500/10 border border-indigo-500/25"
-          : "bg-[rgba(255,255,255,0.06)] border border-white/10"
+          ? "bg-[#c17a50]/10 border border-[#c17a50]/25"
+          : "bg-[rgba(0,0,0,0.04)] border border-black/7"
       )}
       style={{ transition: `background ${ms("normal")}, border-color ${ms("normal")}` }}
     >
@@ -202,7 +202,7 @@ export function SizeInputCell({
       <div
         className={cn(
           "px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]",
-          isModified ? "text-[#6ea8fe]" : "text-white/50"
+          isModified ? "text-[#c17a50]" : "text-black/45"
         )}
         style={{ transition: `color ${ms("normal")}` }}
       >
@@ -228,7 +228,7 @@ export function SizeInputCell({
             tabIndex={0}
             onClick={() => { onKeywordChange(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
-            className="text-[10px] font-mono text-white/60 capitalize pr-1 cursor-text outline-none"
+            className="text-[10px] font-mono text-black/50 capitalize pr-1 cursor-text outline-none"
           >
             {keyword}
           </span>
@@ -240,11 +240,11 @@ export function SizeInputCell({
             title={`${cssVar}: ${cssVarResolved ?? ""}`}
             className="flex items-center gap-1 text-[10px] font-mono pr-1 cursor-text outline-none overflow-hidden min-w-0"
           >
-            <span className="text-[#a78bfa] overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="text-[#c17a50] overflow-hidden text-ellipsis whitespace-nowrap">
               {cssVar!.replace(/^--/, "")}
             </span>
             {cssVarResolved && (
-              <span className="text-white/30 shrink-0">
+              <span className="text-black/25 shrink-0">
                 {parseFloat(cssVarResolved) || cssVarResolved}
               </span>
             )}
@@ -259,7 +259,7 @@ export function SizeInputCell({
             onKeyDown={handleKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
-            className="w-9 bg-white/10 border border-indigo-500/50 rounded-sm text-white/90 text-[10px] font-mono text-right px-[3px] py-px outline-none"
+            className="w-9 bg-black/7 border border-[#c17a50]/50 rounded-sm text-black/75 text-[10px] font-mono text-right px-[3px] py-px outline-none"
           />
         ) : (
           <span
@@ -268,7 +268,7 @@ export function SizeInputCell({
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
             className={cn(
               "text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right",
-              value !== 0 ? "text-white/80" : "text-white/30"
+              value !== 0 ? "text-black/70" : "text-black/25"
             )}
           >
             {value}

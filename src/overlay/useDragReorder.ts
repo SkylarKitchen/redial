@@ -203,7 +203,7 @@ export function useDragReorder<T>(
           position: "relative",
           zIndex: 50,
           transform: `translateY(${offsetY}px)`,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
           opacity: 0.95,
         };
       }
@@ -241,7 +241,7 @@ export function useDragReorder<T>(
       right: 0,
       top: `${top}px`,
       height: "2px",
-      background: "#6366f1",
+      background: "#c17a50",
       borderRadius: "1px",
       zIndex: 51,
       pointerEvents: "none",

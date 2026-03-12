@@ -264,7 +264,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </div>
             <div className="flex-1 flex flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(255,255,255,0.35)] w-3 text-right">x</span>
+                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">x</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? alignItems : justifyContent}
                   options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
@@ -278,7 +278,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(255,255,255,0.35)] w-3 text-right">y</span>
+                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">y</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? justifyContent : alignItems}
                   options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
@@ -334,7 +334,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 className={cn(
                   "flex items-center gap-1 py-[3px] px-2 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
                   showGridOverlay
-                    ? "bg-[rgba(99,102,241,0.2)] border border-[rgba(99,102,241,0.4)] text-[rgba(99,102,241,0.9)]"
+                    ? "bg-[rgba(193,122,80,0.2)] border border-[rgba(193,122,80,0.4)] text-[rgba(193,122,80,0.9)]"
                     : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
                 )}
               >
@@ -385,7 +385,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <button
                 onClick={handleGapLockToggle}
                 title="Unlock row/column gap"
-                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.4)] text-[10px] mr-2 rounded-[3px] shrink-0"
+                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(0,0,0,0.35)] text-[10px] mr-2 rounded-[3px] shrink-0"
               >
                 <Link size={12} strokeWidth={1.5} />
               </button>
@@ -422,7 +422,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 <button
                   onClick={handleGapLockToggle}
                   title="Lock gap"
-                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.25)] text-[10px] mr-2 rounded-[3px] shrink-0"
+                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(0,0,0,0.2)] text-[10px] mr-2 rounded-[3px] shrink-0"
                 >
                   <Link size={12} strokeWidth={1.5} />
                 </button>
@@ -458,7 +458,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {parentIsFlexOrGrid && (
         <>
-          <div className="pt-1.5 pb-0.5 px-3 text-[10px] text-[rgba(255,255,255,0.35)] uppercase tracking-[0.04em]">
+          <div className="pt-1.5 pb-0.5 px-3 text-[10px] text-[rgba(0,0,0,0.3)] uppercase tracking-[0.04em]">
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 

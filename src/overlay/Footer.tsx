@@ -191,7 +191,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onReset, scope, activeClassName]);
 
   return (
-    <div className="__tuner-footer flex flex-col px-3 py-2 border-t border-white/10 gap-1.5">
+    <div className="__tuner-footer flex flex-col px-3 py-2 border-t border-black/10 gap-1.5">
       <div className="flex items-center justify-between gap-1.5">
         {/* Left: Copy dropdown + Import/Paste */}
         <div className="flex gap-1.5 items-center">
@@ -203,14 +203,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               disabled={count === 0}
               title="Copy styles"
               className={cn(
-                "h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70",
+                "h-7 text-[12px] font-normal px-2 rounded-md border border-black/10 bg-black/[0.05] text-black/70 hover:bg-black/[0.08] hover:text-black/70",
                 copyOpen && "border-yellow-400/40 bg-yellow-400/[0.12] text-yellow-400/90 hover:bg-yellow-400/[0.15] hover:text-yellow-400/90",
               )}
             >
               Copy <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
             </Button>
             {copyOpen && (
-              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#2a2a2a] border border-white/[0.12] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.4)] z-[100]">
+              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#eae5df] border border-black/[0.08] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
                 <DropdownItem onClick={handleCopyCleanCSS}>CSS</DropdownItem>
                 <DropdownItem onClick={handleCopyTailwind}>Tailwind</DropdownItem>
                 <DropdownItem onClick={handleCopyVars}>CSS Variables</DropdownItem>
@@ -224,7 +224,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={onPasteStyles ?? (() => {})}
             disabled={!hasClipboard}
             title="Paste styles (Cmd+Alt+V)"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-black/10 bg-black/[0.05] text-black/70 hover:bg-black/[0.08] hover:text-black/70"
           >
             Paste
           </Button>
@@ -234,7 +234,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={onCSSImport ?? (() => {})}
             disabled={!onCSSImport}
             title="Import CSS from clipboard"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-black/10 bg-black/[0.05] text-black/70 hover:bg-black/[0.08] hover:text-black/70"
           >
             Import
           </Button>
@@ -248,7 +248,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleReset}
             disabled={count === 0}
             title="Reset (R)"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] bg-white/[0.08] text-red-500/80 hover:bg-white/[0.12] hover:text-red-500/80"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] bg-black/[0.05] text-red-500/80 hover:bg-black/[0.08] hover:text-red-500/80"
           >
             Reset
           </Button>
@@ -257,7 +257,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleSave}
             disabled={count === 0 || saving}
             title="Save to source"
-            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-indigo-500 text-white shadow-[0_1px_3px_rgba(99,102,241,0.4)] hover:bg-indigo-500/90 disabled:shadow-none"
+            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#c17a50] text-white shadow-[0_1px_3px_rgba(193,122,80,0.4)] hover:bg-[#c17a50]/90 disabled:shadow-none"
           >
             {saving ? "..." : "Save"}
           </Button>
@@ -274,7 +274,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: timing.expand / 1000 }}
-              className="text-white/40 text-[11px]"
+              className="text-black/40 text-[11px]"
             >
               {clipboardMessage || message}
             </motion.span>
@@ -291,7 +291,7 @@ function DropdownItem({ children, onClick }: { children: React.ReactNode; onClic
   return (
     <button
       onClick={onClick}
-      className="block w-full px-3 py-1.5 text-[12px] font-sans border-none bg-transparent text-white/80 cursor-pointer text-left hover:bg-white/[0.08] transition-colors"
+      className="block w-full px-3 py-1.5 text-[12px] font-sans border-none bg-transparent text-black/80 cursor-pointer text-left hover:bg-black/[0.05] transition-colors"
     >
       {children}
     </button>

@@ -170,9 +170,9 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           display: "none",
           pointerEvents: "none",
           zIndex: 2147483646,
-          border: "1.5px solid #6366f1",
+          border: "1.5px solid #c17a50",
           borderRadius: "2px",
-          boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+          boxShadow: "0 0 0 1px rgba(193, 122, 80, 0.3)",
           transition: `all ${ms("instant")} ease-out`,
         }}
       />
@@ -183,7 +183,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           display: "none",
           pointerEvents: "none",
           zIndex: 2147483647,
-          background: "#6366f1",
+          background: "#c17a50",
           color: "#fff",
           fontSize: "10px",
           fontFamily: "system-ui, -apple-system, sans-serif",

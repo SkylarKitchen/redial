@@ -55,17 +55,17 @@ export function MiniDropdown({ value, options, onChange }: {
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono text-[rgba(255,255,255,0.8)] cursor-pointer outline-none"
+        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono text-[rgba(0,0,0,0.7)] cursor-pointer outline-none"
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
-        <ChevronDown size={10} strokeWidth={2} className="text-[rgba(255,255,255,0.3)] ml-1 shrink-0" />
+        <ChevronDown size={10} strokeWidth={2} className="text-[rgba(0,0,0,0.25)] ml-1 shrink-0" />
       </button>
       {open && (
         <div
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5"
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -83,8 +83,8 @@ export function MiniDropdown({ value, options, onChange }: {
                   active
                     ? "bg-[var(--primary)] text-white"
                     : isHighlighted
-                      ? "bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)]"
-                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                      ? "bg-[rgba(0,0,0,0.05)] text-[rgba(0,0,0,0.5)]"
+                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
                 )}
               >
                 {opt.label}
@@ -118,7 +118,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
       <span className={cn(
         "text-[11px] shrink-0",
         isSet
-          ? "bg-[rgba(99,102,241,0.25)] text-[rgba(130,140,255,0.9)] rounded-[3px] px-1.5 py-0.5"
+          ? "bg-[rgba(193,122,80,0.25)] text-[rgba(193,122,80,0.9)] rounded-[3px] px-1.5 py-0.5"
           : "text-[var(--muted-foreground)] w-16",
       )}>Direction</span>
       <div ref={containerRef} className="flex relative">
@@ -140,13 +140,13 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                 }}
                 className={cn(
                   "flex items-center justify-center h-7 min-w-[32px] px-2 cursor-pointer outline-none transition-colors",
-                  "border border-[rgba(255,255,255,0.15)]",
+                  "border border-[rgba(0,0,0,0.12)]",
                   !isFirst && "border-l-0",
                   isFirst && "rounded-l",
                   isLast && "rounded-r",
                   !isFirst && !isLast && "rounded-none",
                   isActive
-                    ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
+                    ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.87)] font-medium"
                     : "bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--accent)]",
                 )}
               >
@@ -158,12 +158,12 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
         <button
           onClick={() => setMoreOpen((o) => !o)}
           className={cn(
-            "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(255,255,255,0.35)] text-[10px] outline-none shrink-0 ml-0.5",
-            direction.includes("reverse") ? "bg-[rgba(99,102,241,0.2)]" : "bg-transparent",
+            "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
+            direction.includes("reverse") ? "bg-[rgba(193,122,80,0.2)]" : "bg-transparent",
           )}
         ><ChevronDown size={10} strokeWidth={2} /></button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const active = opt.value === direction;
               return (
@@ -174,7 +174,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                     "px-2 py-1 text-[11px] font-mono cursor-pointer",
                     active
                       ? "bg-[var(--primary)] text-white"
-                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
                   )}
                 >
                   {opt.label}
@@ -204,7 +204,7 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
         <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 cursor-ew-resize">Gap</span>
       </LabelScrub>
       {/* Color swatch indicator */}
-      <div className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.2)]" />
+      <div className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[rgba(0,0,0,0.12)] border border-[rgba(0,0,0,0.15)]" />
       {/* Slider */}
       <input
         type="range" min={0} max={200} step={1} value={value}
@@ -212,21 +212,21 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
         className="flex-1 h-[3px] outline-none cursor-pointer"
         style={{
           appearance: "none", WebkitAppearance: "none",
-          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
+          background: `linear-gradient(to right, #c17a50 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
           borderRadius: "2px",
         }}
       />
       {/* Value input */}
       <ValueInput value={value} onChange={onChange} />
       {/* Unit label */}
-      <span className="text-[9px] text-[rgba(255,255,255,0.4)] w-4 font-mono uppercase">{unit.toUpperCase()}</span>
+      <span className="text-[9px] text-[rgba(0,0,0,0.35)] w-4 font-mono uppercase">{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
         onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
         className={cn(
           "w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0",
-          gapLinked ? "text-[rgba(255,255,255,0.4)]" : "text-[rgba(255,255,255,0.2)]",
+          gapLinked ? "text-[rgba(0,0,0,0.35)]" : "text-[rgba(0,0,0,0.15)]",
         )}
       >
         {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
@@ -250,7 +250,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
       <span className={cn(
         "text-[11px] shrink-0",
         value !== "block"
-          ? "bg-[rgba(99,102,241,0.25)] text-[rgba(130,140,255,0.9)] rounded-[3px] px-1.5 py-0.5"
+          ? "bg-[rgba(193,122,80,0.25)] text-[rgba(193,122,80,0.9)] rounded-[3px] px-1.5 py-0.5"
           : "text-[var(--muted-foreground)] w-16",
       )}>Display</span>
       <div ref={containerRef} className="flex flex-1 relative">
@@ -277,14 +277,14 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                     if (nextTab != null) onChange(nextTab);
                   }
                 }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)"; }}
                 onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 className={cn(
                   "flex-1 h-6 text-[10px] font-mono cursor-pointer border-none outline-none transition-colors capitalize",
-                  tab !== "none" && "border-r border-r-[rgba(255,255,255,0.08)]",
+                  tab !== "none" && "border-r border-r-[rgba(0,0,0,0.05)]",
                   active
-                    ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
-                    : "bg-transparent text-[rgba(255,255,255,0.45)] font-normal hover:bg-[var(--accent)]",
+                    ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.87)] font-medium"
+                    : "bg-transparent text-[rgba(0,0,0,0.4)] font-normal hover:bg-[var(--accent)]",
                 )}
               >
                 {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -294,17 +294,17 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
         </div>
         <button
           onClick={() => setMoreOpen((o) => !o)}
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
           className={cn(
-            "w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[rgba(255,255,255,0.35)] text-[10px] outline-none shrink-0 ml-0.5",
-            !isTabValue ? "bg-[rgba(99,102,241,0.2)]" : "bg-transparent",
+            "w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
+            !isTabValue ? "bg-[rgba(193,122,80,0.2)]" : "bg-transparent",
           )}
         >
           <ChevronDown size={10} strokeWidth={2} />
         </button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DISPLAY_MORE.map((opt) => {
               const active = opt.value === value;
               return (
@@ -315,7 +315,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                     "px-2 py-1 text-[11px] font-mono cursor-pointer transition-colors",
                     active
                       ? "bg-[var(--primary)] text-white"
-                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
                   )}
                 >
                   {opt.label}
@@ -399,7 +399,7 @@ export function TypoValueCell({
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono text-[rgba(255,255,255,0.6)] px-1.5 cursor-text outline-none"
+          className="flex-1 text-[11px] font-mono text-[rgba(0,0,0,0.5)] px-1.5 cursor-text outline-none"
         >
           {keyword}
         </span>
@@ -411,14 +411,14 @@ export function TypoValueCell({
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="flex-1 w-0 bg-transparent border-none text-[rgba(255,255,255,0.9)] text-[11px] font-mono px-1.5 outline-none"
+          className="flex-1 w-0 bg-transparent border-none text-[rgba(0,0,0,0.87)] text-[11px] font-mono px-1.5 outline-none"
         />
       ) : (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono text-[rgba(255,255,255,0.8)] px-1.5 cursor-text outline-none"
+          className="flex-1 text-[11px] font-mono text-[rgba(0,0,0,0.7)] px-1.5 cursor-text outline-none"
         >
           {value}
         </span>
@@ -426,7 +426,7 @@ export function TypoValueCell({
       {units && onUnitChange ? (
         <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
-        <span className="text-[9px] text-[rgba(255,255,255,0.4)] uppercase pr-1.5 shrink-0 font-mono">
+        <span className="text-[9px] text-[rgba(0,0,0,0.35)] uppercase pr-1.5 shrink-0 font-mono">
           {unit}
         </span>
       )}

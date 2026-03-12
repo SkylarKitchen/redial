@@ -40,7 +40,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
       <div
         style={{
           position: "relative",
-          border: "1px solid rgba(255,255,255,0.12)",
+          border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: "4px",
           background: "rgba(139, 92, 246, 0.06)",
           padding: "0",
@@ -59,7 +59,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             zIndex: 1,
           }}
         >
-          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(255,255,255,0.3)" }}>
+          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(0,0,0,0.25)" }}>
             Offset
           </span>
           <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} conversionHint={conversionHint} />
@@ -80,16 +80,16 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             style={{
               flex: 1,
               height: "24px",
-              background: "rgba(255,255,255,0.06)",
+              background: "rgba(0,0,0,0.04)",
               borderRadius: "2px",
-              border: "1px dashed rgba(255,255,255,0.1)",
+              border: "1px dashed rgba(0,0,0,0.07)",
               margin: "0 4px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.2)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "8px", color: "rgba(0,0,0,0.15)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
               element
             </span>
           </div>
@@ -162,10 +162,10 @@ function EditableValue({
         autoFocus
         style={{
           width: "32px",
-          background: "rgba(255,255,255,0.1)",
-          border: "1px solid rgba(99, 102, 241, 0.5)",
+          background: "rgba(0,0,0,0.07)",
+          border: "1px solid rgba(193, 122, 80, 0.5)",
           borderRadius: "2px",
-          color: "rgba(255,255,255,0.9)",
+          color: "rgba(0,0,0,0.87)",
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
           textAlign: "center",
@@ -186,7 +186,7 @@ function EditableValue({
       style={{
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+        color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",
@@ -195,7 +195,7 @@ function EditableValue({
         transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -203,7 +203,7 @@ function EditableValue({
     >
       {value}
       {suffix && (
-        <span style={{ fontSize: "8px", color: "rgba(255,255,255,0.25)", marginLeft: "1px" }}>
+        <span style={{ fontSize: "8px", color: "rgba(0,0,0,0.2)", marginLeft: "1px" }}>
           {suffix}
         </span>
       )}

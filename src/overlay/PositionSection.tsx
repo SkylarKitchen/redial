@@ -91,7 +91,7 @@ export const PositionSection = memo(function PositionSection({
             conversionHint={posHint}
           />
           <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <span className="w-16 text-[11px] text-white/50 shrink-0 inline-flex items-center gap-[3px]">
+            <span className="w-16 text-[11px] text-black/45 shrink-0 inline-flex items-center gap-[3px]">
               {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
               Z-Index
             </span>
@@ -100,8 +100,8 @@ export const PositionSection = memo(function PositionSection({
               className={cn(
                 "px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border",
                 zIndexAuto
-                  ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30"
-                  : "bg-white/[0.06] text-white/40 border-white/10"
+                  ? "bg-[#c17a50]/20 text-[#c17a50] border-[#c17a50]/30"
+                  : "bg-black/[0.04] text-black/35 border-black/07"
               )}
             >
               auto

@@ -132,7 +132,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
         display: "grid",
         gridTemplateColumns: "repeat(3, 18px)",
         gridTemplateRows: "repeat(3, 18px)",
-        border: "1px solid rgba(255,255,255,0.15)",
+        border: "1px solid rgba(0,0,0,0.12)",
         borderRadius: "3px",
         overflow: "hidden",
       }}
@@ -156,7 +156,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
               }}
               onFocus={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow =
-                  "0 0 0 2px rgba(99,102,241,0.3)";
+                  "0 0 0 2px rgba(193,122,80,0.3)";
               }}
               onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "none";
@@ -173,12 +173,12 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
                 cursor: "pointer",
                 outline: "none",
                 background: isActive
-                  ? "#6366f1"
+                  ? "#c17a50"
                   : isHov
-                    ? "rgba(99,102,241,0.2)"
+                    ? "rgba(193,122,80,0.2)"
                     : "transparent",
-                borderRight: ci < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                borderBottom: ri < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
+                borderRight: ci < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                borderBottom: ri < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",
                 transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
               }}
             >
@@ -187,7 +187,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
                   width: "4px",
                   height: "4px",
                   borderRadius: "50%",
-                  background: isActive ? "#fff" : "rgba(255,255,255,0.3)",
+                  background: isActive ? "#fff" : "rgba(0,0,0,0.25)",
                 }}
               />
             </div>

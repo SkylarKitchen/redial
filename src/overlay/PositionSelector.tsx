@@ -105,7 +105,7 @@ export function PositionSelector({
         style={{
           width: "64px",
           fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
+          color: "rgba(0,0,0,0.45)",
           flexShrink: 0,
           display: "inline-flex",
           alignItems: "center",
@@ -122,7 +122,7 @@ export function PositionSelector({
           tabIndex={0}
           onClick={() => setOpen((o) => !o)}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)";
+            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)";
           }}
           onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = "none";
@@ -133,10 +133,10 @@ export function PositionSelector({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            background: open ? "rgba(0,0,0,0.07)" : "rgba(0,0,0,0.04)",
+            border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: "3px",
-            color: "rgba(255,255,255,0.8)",
+            color: "rgba(0,0,0,0.7)",
             fontSize: "11px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
             padding: "0 6px",
@@ -145,17 +145,17 @@ export function PositionSelector({
             transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
+            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.07)";
           }}
           onMouseLeave={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
           }}
         >
           <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span style={{ color: "rgba(255,255,255,0.5)", display: "flex" }}>{current.icon}</span>
+            <span style={{ color: "rgba(0,0,0,0.45)", display: "flex" }}>{current.icon}</span>
             {current.label}
           </span>
-          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }} />
+          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(0,0,0,0.3)", flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {/* Dropdown */}
@@ -167,10 +167,10 @@ export function PositionSelector({
               left: 0,
               right: 0,
               minWidth: "200px",
-              background: "#2a2a2a",
-              border: "1px solid rgba(255,255,255,0.15)",
+              background: "#eae5df",
+              border: "1px solid rgba(0,0,0,0.12)",
               borderRadius: "4px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
               zIndex: 200,
               overflow: "hidden",
             }}
@@ -186,7 +186,7 @@ export function PositionSelector({
                     onMouseEnter={(e) => {
                       setHoveredValue(opt.value);
                       if (!isActive)
-                        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+                        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
                     }}
                     onMouseLeave={(e) => {
                       setHoveredValue(null);
@@ -199,7 +199,7 @@ export function PositionSelector({
                       gap: "8px",
                       padding: "6px 10px",
                       cursor: "pointer",
-                      background: isActive ? "rgba(99,102,241,0.15)" : "transparent",
+                      background: isActive ? "rgba(193,122,80,0.15)" : "transparent",
                       transition: `background ${ms("micro")}`,
                     }}
                   >
@@ -208,7 +208,7 @@ export function PositionSelector({
                       style={{
                         width: "14px",
                         fontSize: "11px",
-                        color: isActive ? "#6366f1" : "transparent",
+                        color: isActive ? "#c17a50" : "transparent",
                         flexShrink: 0,
                         textAlign: "center",
                       }}
@@ -224,7 +224,7 @@ export function PositionSelector({
                         justifyContent: "center",
                         width: "20px",
                         height: "20px",
-                        color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
+                        color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.4)",
                         flexShrink: 0,
                       }}
                     >
@@ -235,7 +235,7 @@ export function PositionSelector({
                     <span
                       style={{
                         fontSize: "12px",
-                        color: isActive ? "#fff" : "rgba(255,255,255,0.75)",
+                        color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.6)",
                         fontWeight: isActive ? 500 : 400,
                       }}
                     >
@@ -249,7 +249,7 @@ export function PositionSelector({
             {/* Description area */}
             <div
               style={{
-                borderTop: "1px solid rgba(255,255,255,0.08)",
+                borderTop: "1px solid rgba(0,0,0,0.05)",
                 padding: "10px 12px",
               }}
             >
@@ -258,10 +258,10 @@ export function PositionSelector({
                   margin: 0,
                   fontSize: "11px",
                   lineHeight: 1.45,
-                  color: "rgba(255,255,255,0.55)",
+                  color: "rgba(0,0,0,0.5)",
                 }}
               >
-                <strong style={{ color: "rgba(255,255,255,0.8)" }}>{descriptionItem.label}</strong>{" "}
+                <strong style={{ color: "rgba(0,0,0,0.7)" }}>{descriptionItem.label}</strong>{" "}
                 {descriptionItem.description.replace(`${descriptionItem.label} `, "")}
               </p>
             </div>

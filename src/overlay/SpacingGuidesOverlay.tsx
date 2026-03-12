@@ -232,7 +232,7 @@ export function SpacingGuidesOverlay({
             ...BOX_LINE,
             top: contentBox.top, left: contentBox.left,
             width: contentBox.width, height: contentBox.height,
-            border: "1px dashed rgba(255,255,255,0.3)",
+            border: "1px dashed rgba(0,0,0,0.25)",
           }} />
         </>
       )}

@@ -92,10 +92,10 @@ function RadiusInput({
         title={label}
         style={{
           width: "28px",
-          background: "rgba(255,255,255,0.1)",
-          border: "1px solid rgba(99,102,241,0.5)",
+          background: "rgba(0,0,0,0.07)",
+          border: "1px solid rgba(193,122,80,0.5)",
           borderRadius: "2px",
-          color: "rgba(255,255,255,0.9)",
+          color: "rgba(0,0,0,0.87)",
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
           textAlign: "center",
@@ -119,19 +119,19 @@ function RadiusInput({
         width: "28px",
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+        color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
         cursor: "text",
         padding: "2px",
         borderRadius: "2px",
         textAlign: "center",
-        background: "rgba(255,255,255,0.04)",
+        background: "rgba(0,0,0,0.03)",
         transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
       }}
     >
       {value}
@@ -141,8 +141,8 @@ function RadiusInput({
 
 function LinkIcon({ linked }: { linked: boolean }) {
   return linked
-    ? <Link size={12} strokeWidth={1.5} color="#6366f1" style={{ display: "block" }} />
-    : <Unlink size={12} strokeWidth={1.5} color="rgba(255,255,255,0.35)" style={{ display: "block" }} />;
+    ? <Link size={12} strokeWidth={1.5} color="#c17a50" style={{ display: "block" }} />
+    : <Unlink size={12} strokeWidth={1.5} color="rgba(0,0,0,0.3)" style={{ display: "block" }} />;
 }
 
 export function CornerRadiusEditor({
@@ -196,7 +196,7 @@ export function CornerRadiusEditor({
             style={{
               width: "24px",
               height: "24px",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid rgba(0,0,0,0.15)",
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
               transition: `border-radius ${ms("normal")}`,
             }}
@@ -215,7 +215,7 @@ export function CornerRadiusEditor({
               justifyContent: "center",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -252,9 +252,9 @@ export function CornerRadiusEditor({
             style={{
               width: "100%",
               height: "32px",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid rgba(0,0,0,0.15)",
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
-              background: "rgba(255,255,255,0.03)",
+              background: "rgba(0,0,0,0.03)",
               transition: `border-radius ${ms("normal")}`,
             }}
           />
@@ -274,8 +274,8 @@ export function CornerRadiusEditor({
               onClick={() => onLinkedChange(true)}
               title="Link corners"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(0,0,0,0.04)",
+                border: "1px solid rgba(0,0,0,0.07)",
                 borderRadius: "3px",
                 cursor: "pointer",
                 padding: "3px",
@@ -285,10 +285,10 @@ export function CornerRadiusEditor({
                 transition: `background ${ms("normal")}`,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.08)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
               }}
             >
               <LinkIcon linked={false} />
