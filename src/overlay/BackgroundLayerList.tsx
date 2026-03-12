@@ -268,7 +268,7 @@ export function BackgroundLayerList({
                 value={layer.opacity}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
-                className="w-12 accent-[#D97757]"
+                className="w-12 accent-[#c17a50]"
               />
 
               {/* Eye visibility toggle */}

@@ -156,7 +156,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
               }}
               onFocus={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow =
-                  "0 0 0 2px rgba(217,119,87,0.3)";
+                  "0 0 0 2px rgba(193,122,80,0.3)";
               }}
               onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "none";
@@ -175,7 +175,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
                 background: isActive
                   ? "#D97757"
                   : isHov
-                    ? "rgba(217,119,87,0.2)"
+                    ? "rgba(193,122,80,0.2)"
                     : "transparent",
                 borderRight: ci < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",
                 borderBottom: ri < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",

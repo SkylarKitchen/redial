@@ -2,8 +2,8 @@
  * theme.ts — Canonical color tokens for all panel components
  *
  * Every color in the overlay must reference these tokens.
- * Mirrors the CSS custom properties in globals.css so inline styles
- * stay in sync with Tailwind utility classes.
+ * Values sourced from design-tokens.css (Anthropic Design System).
+ * Inline styles reference these; Tailwind classes use the same values.
  *
  * Pattern follows timing.ts — single source of truth, import everywhere.
  */
@@ -65,16 +65,16 @@ export const text = {
 } as const;
 
 export const border = {
-  /** Default — 8% */
+  /** --border-tertiary (10%) */
   default: color.border,
-  /** Subtle — 6% (section dividers) */
+  /** Subtle — 6% (section dividers, lighter than any token) */
   subtle: "rgba(0,0,0,0.06)",
-  /** Input border — 7% */
-  input: "rgba(0,0,0,0.07)",
-  /** Hover — 12% */
-  hover: "rgba(0,0,0,0.12)",
-  /** Strong — 15% */
-  strong: "rgba(0,0,0,0.15)",
+  /** Input border — --border-tertiary */
+  input: "rgba(0,0,0,0.10)",
+  /** Hover — --border-secondary (18%) */
+  hover: "rgba(0,0,0,0.18)",
+  /** Strong — --border-primary (30%) */
+  strong: "rgba(0,0,0,0.30)",
 } as const;
 
 export const surface = {
@@ -107,6 +107,9 @@ export const focusBorder = (focused: boolean) =>
 
 /** Focus ring box-shadow. */
 export const focusRing = `0 0 0 2px ${color.ring}`;
+
+/** Background at a given alpha. rgb(250,249,245) = #FAF9F5 */
+export const bgAlpha = (a: number) => `rgba(250,249,245,${a})`;
 
 /** Light-theme checkerboard for opacity/transparency backgrounds. */
 export const checkerboard =

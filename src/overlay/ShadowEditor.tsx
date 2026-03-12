@@ -111,7 +111,7 @@ function NumericInput({
           style={{
             width: "36px",
             background: "rgba(0,0,0,0.07)",
-            border: "1px solid rgba(217,119,87,0.5)",
+            border: "1px solid rgba(193,122,80,0.5)",
             borderRadius: "2px",
             color: "rgba(0,0,0,0.8)",
             fontSize: "10px",
@@ -245,10 +245,10 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: shadow.inset ? "#D97757" : "rgba(0,0,0,0.3)",
-            background: shadow.inset ? "rgba(217,119,87,0.15)" : "rgba(0,0,0,0.03)",
+            color: shadow.inset ? "#c17a50" : "rgba(0,0,0,0.3)",
+            background: shadow.inset ? "rgba(193,122,80,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
-              ? "1px solid rgba(217,119,87,0.3)"
+              ? "1px solid rgba(193,122,80,0.3)"
               : "1px solid rgba(0,0,0,0.07)",
             borderRadius: "2px",
             padding: "1px 4px",
@@ -347,19 +347,19 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           padding: "4px 0",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
-          color: "#D97757",
-          background: "rgba(217,119,87,0.08)",
-          border: "1px dashed rgba(217,119,87,0.3)",
+          color: "#c17a50",
+          background: "rgba(193,122,80,0.08)",
+          border: "1px dashed rgba(193,122,80,0.3)",
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
           transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.15)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.15)";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.08)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.08)";
         }}
       >
         + Add shadow

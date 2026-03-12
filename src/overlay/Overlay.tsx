@@ -936,7 +936,7 @@ export function Overlay() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(217,119,87,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(193,122,80,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };
@@ -1199,15 +1199,15 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #D97757;
-          border: 2px solid #FAF9F5;
+          background: #c17a50;
+          border: 2px solid #f5f0ea;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           margin-top: -4.5px;
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(217,119,87,0.25);
+          box-shadow: 0 0 0 3px rgba(193,122,80,0.25);
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
           transform: scale(1.1);
@@ -1226,14 +1226,14 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #D97757;
-          border: 2px solid #FAF9F5;
+          background: #c17a50;
+          border: 2px solid #f5f0ea;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(217,119,87,0.25);
+          box-shadow: 0 0 0 3px rgba(193,122,80,0.25);
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:active {
           transform: scale(1.1);
@@ -1253,12 +1253,12 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#D97757] rounded-sm transition-all duration-100 ease-out"
+            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#c17a50] rounded-sm transition-all duration-100 ease-out"
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#D97757]/50 rounded-sm bg-[#D97757]/[0.04]"
+            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#c17a50]/50 rounded-sm bg-[#c17a50]/[0.04]"
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
@@ -1287,7 +1287,7 @@ export function Overlay() {
       {selectedEl && inferResult && (
         <div
           className={cn(
-            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#FAF9F5] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
+            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#f5f0ea] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
             diffMode ? "border border-yellow-400/30" : "border border-black/7",
             selecting ? "pointer-events-none" : "pointer-events-auto",
           )}
@@ -1337,7 +1337,7 @@ export function Overlay() {
             <div className="flex justify-center py-0.5 border-b border-black/[0.04]">
               <span
                 onClick={() => setFocusMode(false)}
-                className="text-[9px] font-semibold text-[#D97757] bg-[#D97757]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
+                className="text-[9px] font-semibold text-[#c17a50] bg-[#c17a50]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
               >
                 Focus Mode
               </span>
@@ -1354,7 +1354,7 @@ export function Overlay() {
                   className={cn(
                     "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
                     isActive
-                      ? "border-b-[#D97757] font-semibold text-black/[0.75]"
+                      ? "border-b-[#c17a50] font-semibold text-black/[0.75]"
                       : "border-b-transparent font-normal text-black/35",
                   )}
                 >
@@ -1469,8 +1469,8 @@ export function Overlay() {
       {/* Floating action button -- bottom-right activation trigger */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#FAF9F5] border border-black/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
-          (selecting || selectedEl) && "border-[#D97757]/40 shadow-[0_0_0_1px_rgba(217,119,87,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
+          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#f5f0ea] border border-black/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
+          (selecting || selectedEl) && "border-[#c17a50]/40 shadow-[0_0_0_1px_rgba(193,122,80,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
           !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.04)]",
         )}
         onClick={() => {
