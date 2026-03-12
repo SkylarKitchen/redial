@@ -58,11 +58,16 @@ export function useDropdownKeyboard({
     }
   }, [open, selectedIndex]);
 
+  const onListKeyDownRef = useRef<((e: React.KeyboardEvent) => void) | null>(null);
+
   const onTriggerKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
         e.preventDefault();
         setOpen(true);
+      } else if (open && onListKeyDownRef.current) {
+        // Delegate to list handler when open (arrow nav + type-ahead)
+        onListKeyDownRef.current(e);
       }
     },
     [open, setOpen]

@@ -17,6 +17,7 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
+import { BoxModelOverlay } from "./BoxModelOverlay";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
@@ -26,6 +27,7 @@ import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
 import { ms } from "./timing";
 import { isScrubActive } from "./scrubState";
+import { PropertySearch } from "./PropertySearch";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -100,6 +102,9 @@ export function Overlay() {
 
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
+
+  // Box model overlay toggle
+  const [showBoxModel, setShowBoxModel] = useState(false);
   const isGridContainer = useMemo(() => {
     if (!selectedEl) return false;
     const d = getComputedStyle(selectedEl).display;
@@ -126,7 +131,9 @@ export function Overlay() {
 
   // Panel position (draggable)
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
+  const [snapping, setSnapping] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
     setScope(newScope);
@@ -286,6 +293,13 @@ export function Overlay() {
         return;
       }
 
+      // M to toggle box model overlay
+      if (e.key === "m" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setShowBoxModel((v) => !v);
+        return;
+      }
+
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setSelecting((s) => !s);
@@ -377,10 +391,11 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope and grid overlay on new selection
+    // Reset scope and grid/box model overlays on new selection
     setScope("element");
     setActiveClassName(null);
     setShowGridOverlay(false);
+    setShowBoxModel(false);
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -791,6 +806,11 @@ export function Overlay() {
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
+      {/* Box model overlay (margin/padding/content colored rectangles) */}
+      {showBoxModel && selectedEl && !selecting && (
+        <BoxModelOverlay element={selectedEl} refreshKey={panelKey} />
+      )}
+
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
@@ -857,6 +877,8 @@ export function Overlay() {
                   onSpacingChange={handleSpacingChange}
                   showGridOverlay={showGridOverlay}
                   onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
+                  showBoxModel={showBoxModel}
+                  onToggleBoxModel={() => setShowBoxModel((v) => !v)}
                 />
               </PanelErrorBoundary>
             </div>

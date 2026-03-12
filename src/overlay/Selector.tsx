@@ -17,6 +17,7 @@ interface SelectorProps {
 export function Selector({ active, onSelect, onCancel }: SelectorProps) {
   const [hovered, setHovered] = useState<Element | null>(null);
   const outlineRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
 
   // Position the outline over the hovered element (updates on scroll/resize)
   useEffect(() => {
@@ -31,6 +32,22 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       outline.style.width = `${rect.width}px`;
       outline.style.height = `${rect.height}px`;
       outline.style.display = "block";
+
+      if (labelRef.current) {
+        const tag = hovered.tagName.toLowerCase();
+        const cls = hovered.classList[0] || "";
+        const dims = `${Math.round(rect.width)}\u00d7${Math.round(rect.height)}`;
+        const label = labelRef.current;
+        label.textContent = cls ? `${tag}.${cls}  ${dims}` : `${tag}  ${dims}`;
+        // Position above element, flip below when near top
+        if (rect.top < 28) {
+          label.style.top = `${rect.bottom + 4}px`;
+        } else {
+          label.style.top = `${rect.top - 22}px`;
+        }
+        label.style.left = `${rect.left}px`;
+        label.style.display = "block";
+      }
     };
 
     updatePosition();
@@ -41,6 +58,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       window.removeEventListener("scroll", updatePosition, true);
       window.removeEventListener("resize", updatePosition);
       outline.style.display = "none";
+      if (labelRef.current) labelRef.current.style.display = "none";
     };
   }, [active, hovered]);
 
@@ -103,19 +121,40 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     // No full-viewport overlay — document-level capture listeners handle events.
     // The overlay div was removed because elementFromPoint() was returning it
     // instead of the actual app elements underneath.
-    <div
-      ref={outlineRef}
-      className="__tuner-selector-outline"
-      style={{
-        position: "fixed",
-        display: "none",
-        pointerEvents: "none",
-        zIndex: 2147483646,
-        border: "1.5px solid #6366f1",
-        borderRadius: "2px",
-        boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
-        transition: `all ${ms("instant")} ease-out`,
-      }}
-    />
+    <>
+      <div
+        ref={outlineRef}
+        className="__tuner-selector-outline"
+        style={{
+          position: "fixed",
+          display: "none",
+          pointerEvents: "none",
+          zIndex: 2147483646,
+          border: "1.5px solid #6366f1",
+          borderRadius: "2px",
+          boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+          transition: `all ${ms("instant")} ease-out`,
+        }}
+      />
+      <div
+        ref={labelRef}
+        style={{
+          position: "fixed",
+          display: "none",
+          pointerEvents: "none",
+          zIndex: 2147483647,
+          background: "#6366f1",
+          color: "#fff",
+          fontSize: "10px",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          padding: "2px 6px",
+          borderRadius: "2px",
+          whiteSpace: "nowrap",
+          maxWidth: "200px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      />
+    </>
   );
 }

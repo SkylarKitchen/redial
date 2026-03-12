@@ -22,6 +22,7 @@ interface HeaderProps {
   onShowSession?: () => void;
   breadcrumb?: BreadcrumbSegment[];
   onBreadcrumbClick?: (el: Element) => void;
+  onBreadcrumbHover?: (el: Element | null) => void;
   scope?: Scope;
   onScopeChange?: (scope: Scope, className?: string) => void;
   cssClasses?: string[];
@@ -38,6 +39,7 @@ export function Header({
   onShowSession,
   breadcrumb,
   onBreadcrumbClick,
+  onBreadcrumbHover,
   scope = "element",
   onScopeChange,
   cssClasses = [],
@@ -125,11 +127,21 @@ export function Header({
                       e.stopPropagation();
                       if (!isLast) onBreadcrumbClick?.(seg.el);
                     }}
+                    onMouseEnter={() => {
+                      if (!isLast) onBreadcrumbHover?.(seg.el);
+                    }}
+                    onMouseLeave={() => {
+                      if (!isLast) onBreadcrumbHover?.(null);
+                    }}
                     style={{
                       color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
                       cursor: isLast ? "default" : "pointer",
                       whiteSpace: "nowrap",
+                      borderRadius: "2px",
+                      padding: isLast ? undefined : "0 2px",
+                      transition: "color 100ms, background 100ms",
                     }}
+                    data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
                   </span>

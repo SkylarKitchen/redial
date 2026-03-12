@@ -9,6 +9,7 @@ import React, { useState, useCallback, useRef, useEffect, useId, memo } from "re
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
@@ -44,15 +45,22 @@ export function Section({
   children,
   indicator,
   forceOpen,
+  hidden,
+  headerAction,
 }: {
   title: string;
   collapsed?: boolean;
   children: React.ReactNode;
   indicator?: IndicatorType;
   forceOpen?: boolean;
+  /** When true, hide the section entirely (used by search filter) */
+  hidden?: boolean;
+  headerAction?: React.ReactNode;
 }) {
   const [ownOpen, setOwnOpen] = useState(!collapsed);
   const open = forceOpen || ownOpen;
+
+  if (hidden) return null;
   return (
     <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div
@@ -76,15 +84,22 @@ export function Section({
           {title}
           {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
         </span>
-        <span style={{
-          color: "rgba(255,255,255,0.3)",
-          display: "flex",
-          alignItems: "center",
-          transition: `transform ${ms("expand")} ease`,
-          transform: open ? "rotate(90deg)" : "rotate(0deg)",
-        }}>
-          <ChevronRight size={12} strokeWidth={2} />
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {headerAction && (
+            <span onClick={(e) => e.stopPropagation()}>
+              {headerAction}
+            </span>
+          )}
+          <span style={{
+            color: "rgba(255,255,255,0.3)",
+            display: "flex",
+            alignItems: "center",
+            transition: `transform ${ms("expand")} ease`,
+            transform: open ? "rotate(90deg)" : "rotate(0deg)",
+          }}>
+            <ChevronRight size={12} strokeWidth={2} />
+          </span>
+        </div>
       </div>
       <div style={{
         display: "grid",
@@ -183,6 +198,9 @@ export function SliderRow({
   onChange,
   onReset,
   indicator,
+  onContextMenu,
+  computedProp,
+  computedElement,
 }: {
   label: string;
   value: number;
@@ -197,25 +215,37 @@ export function SliderRow({
   /** Called when the label is clicked (not dragged) to reset the property */
   onReset?: () => void;
   indicator?: IndicatorType;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "font-size") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
+  const labelContent = (
+    <span
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.5)",
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
       <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
-        <span
-          style={{
-            width: "64px",
-            fontSize: "11px",
-            color: "rgba(255,255,255,0.5)",
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          {indicator && <StyleIndicator type={indicator} />}
-          {label}
-        </span>
+        {computedProp && computedElement ? (
+          <ComputedTooltip property={computedProp} element={computedElement}>
+            {labelContent}
+          </ComputedTooltip>
+        ) : labelContent}
       </LabelScrub>
       <input
         type="range"

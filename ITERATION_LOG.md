@@ -489,4 +489,47 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Phase I — Webflow UX polish (items 45–50, swarm build) (2026-03-11)
+
+Six features built in parallel via isolated worktree agents, then merged:
+
+**45. Breadcrumb Hover Highlight**
+- Added `onBreadcrumbHover` prop to `Header.tsx` — fires on mouseenter/mouseleave of breadcrumb ancestor items
+- Added `hoveredAncestor` state + RAF-positioned dashed indigo outline in `Overlay.tsx`
+- Breadcrumb text brightens on hover via `[data-breadcrumb-ancestor]:hover` CSS rule
+- Highlight clears on element selection and breadcrumb click
+
+**46. Right-Click Property Context Menu**
+- Created `PropertyContextMenu.tsx` — portal-based floating menu with Reset to Default, Copy Value, Copy Declaration
+- Added `onContextMenu` prop to `SliderRow`, `SelectRow`, `ColorRow`, `TextRow` in `controls.tsx`
+- Wired `ctxMenu(property, value)` helper into 30+ control rows in `WebflowPanel.tsx`
+- Menu closes on click-outside and Escape, viewport-edge clamped
+
+**47. Computed Value Tooltip**
+- Created `ComputedTooltip.tsx` — hover tooltip showing resolved `getComputedStyle` value (300ms delay)
+- Added `computedProp`/`computedElement` optional props to `SliderRow`, `SelectRow`, `ColorRow`
+- Wraps label in tooltip when props provided; wired into 11 key properties (gap, font-family, font-weight, color, z-index, border-*, opacity, visibility)
+
+**48. Element Dimensions Badge**
+- Added indigo "W × H" badge (10px monospace, pill shape) near selected element outline
+- Extended existing RAF loop in `Overlay.tsx` to position badge below element
+- Badge flips above if no room below, clamps horizontally, hides during diff mode
+
+**49. Box Model Page Overlay**
+- Created `BoxModelOverlay.tsx` — renders 3 colored `position: fixed` layers over the selected element
+  - Margin: orange `rgba(255, 155, 0, 0.15)`
+  - Padding: green `rgba(99, 196, 99, 0.15)`
+  - Content: blue `rgba(99, 148, 237, 0.15)`
+- Toggle button (Eye/EyeOff icon) in Spacing section header via new `headerAction` prop on `Section`
+- RAF loop + ResizeObserver for live position tracking
+
+**50. Property Search (Cmd+F in panel)**
+- Created `PropertySearch.tsx` — search input + `SECTION_PROPERTIES` mapping + `sectionMatchesQuery` helper
+- Added `forceOpen` and `hidden` props to `Section` component
+- Cmd+F toggles search; typing filters sections (case-insensitive substring match)
+- Non-matching sections hidden, matching sections forced open
+- Clears on Escape, element selection, and panel close
+
+---
+
 ## Done

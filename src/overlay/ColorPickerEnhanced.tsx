@@ -84,6 +84,11 @@ export interface ColorPickerEnhancedProps {
   onClose: () => void;
 }
 
+// ─── EyeDropper API availability ─────────────────────────────────
+
+const hasEyeDropper =
+  typeof window !== "undefined" && "EyeDropper" in window;
+
 // ─── Constants ───────────────────────────────────────────────────
 
 const CANVAS_W = 216;
@@ -168,14 +173,41 @@ export function ColorPickerEnhanced({
     emitChange(hsb.h, hsb.s, hsb.b, alpha);
   }, [alpha, emitChange]);
 
+  // ─── Eyedropper (native color picker from page) ───────────────
+
+  const handleEyedropper = useCallback(async () => {
+    if (!hasEyeDropper) return;
+    try {
+      isEyedroppingRef.current = true;
+      // @ts-expect-error EyeDropper API not in all TS libs
+      const dropper = new EyeDropper();
+      const result = await dropper.open();
+      const hex: string = result.sRGBHex;
+      const rgb = hexToRgb(hex);
+      const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
+      setHue(hsb.h);
+      setSat(hsb.s);
+      setBri(hsb.b);
+      setHexInput(hex.toUpperCase());
+      emitChange(hsb.h, hsb.s, hsb.b, alpha);
+    } catch {
+      // User cancelled or API error — silent
+    } finally {
+      isEyedroppingRef.current = false;
+    }
+  }, [alpha, emitChange]);
+
   // ─── Drag state (suppresses click-outside during drag) ──────
   const isDraggingRef = useRef(false);
+
+  // ─── Eyedropper state (suppresses click-outside during pick) ──
+  const isEyedroppingRef = useRef(false);
 
   // ─── Click-outside dismissal ─────────────────────────────────
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (isDraggingRef.current) return;
+      if (isDraggingRef.current || isEyedroppingRef.current) return;
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -608,37 +640,74 @@ export function ColorPickerEnhanced({
           <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
             Swatches
           </span>
-          <button
-            type="button"
-            onClick={addSwatch}
-            title="Save current color"
-            style={{
-              background: "none",
-              border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 3,
-              color: "rgba(255,255,255,0.5)",
-              fontSize: 11,
-              lineHeight: 1,
-              width: 18,
-              height: 18,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 0,
-              transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
-            }}
-          >
-            +
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {hasEyeDropper && (
+              <button
+                type="button"
+                onClick={handleEyedropper}
+                title="Pick color from page"
+                style={{
+                  background: "none",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 3,
+                  color: "rgba(255,255,255,0.5)",
+                  width: 18,
+                  height: 18,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m2 22 1-1h3l9-9"/>
+                  <path d="M3 21v-3l9-9"/>
+                  <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/>
+                </svg>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={addSwatch}
+              title="Save current color"
+              style={{
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 3,
+                color: "rgba(255,255,255,0.5)",
+                fontSize: 11,
+                lineHeight: 1,
+                width: 18,
+                height: 18,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+              }}
+            >
+              +
+            </button>
+          </div>
         </div>
         {swatches.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>

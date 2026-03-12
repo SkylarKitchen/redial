@@ -6,13 +6,14 @@
  * receives a SectionCtx prop bundle for element/apply/indicator access.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { buildConversionContext } from "./unitConversion";
 import type { IndicatorType } from "./StyleIndicator";
 import { parseNum } from "./cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "./panelUtils";
+import { sectionMatchesQuery } from "./PropertySearch";
 
 import { LayoutSection } from "./LayoutSection";
 import { SpacingSection } from "./SpacingSection";
@@ -32,24 +33,14 @@ export interface WebflowPanelProps {
   onSpacingChange: (prop: string, value: number, unit: string) => void;
   showGridOverlay?: boolean;
   onToggleGridOverlay?: () => void;
+  showBoxModel?: boolean;
+  onToggleBoxModel?: () => void;
+  searchQuery?: string;
 }
-
-// ─── Search Aliases ──────────────────────────────────────────────────
-
-const SECTION_ALIASES: Record<string, readonly string[]> = {
-  Layout: ["display", "flex", "grid", "gap", "direction", "wrap", "align", "justify", "order"],
-  Spacing: ["margin", "padding", "space"],
-  Size: ["width", "height", "overflow", "aspect", "object-fit", "box-sizing"],
-  Position: ["top", "right", "bottom", "left", "z-index", "float", "clear", "sticky", "fixed"],
-  Typography: ["font", "text", "color", "line-height", "letter", "word", "column", "indent", "hyphens"],
-  Backgrounds: ["background", "gradient", "image", "bg", "clip"],
-  Borders: ["border", "radius", "corner", "outline"],
-  Effects: ["opacity", "shadow", "transform", "transition", "filter", "cursor", "blend", "pointer"],
-} as const;
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "" }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -110,78 +101,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     element, apply, ind, sectionInd, cs, parentCs, getConversionCtx,
   }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx]);
 
-  // ── Search state ──
-  const [searchQuery, setSearchQuery] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  const matchedSections = useMemo(() => {
-    if (!searchQuery.trim()) return null;
-    const q = searchQuery.toLowerCase();
-    const result: Record<string, boolean> = {};
-    for (const [name, aliases] of Object.entries(SECTION_ALIASES)) {
-      result[name] = name.toLowerCase().includes(q) || aliases.some(a => a.includes(q));
-    }
-    return result;
-  }, [searchQuery]);
-
-  const isSearching = matchedSections !== null;
-  const noResults = isSearching && Object.values(matchedSections!).every(v => !v);
-
-  // ── Search keyboard shortcuts ──
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "/" && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
-
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      if (searchQuery) {
-        setSearchQuery("");
-      }
-      (e.target as HTMLInputElement).blur();
-    }
-  }, [searchQuery]);
-
-  // Helper: should section be shown?
-  const showSection = (name: string) => !isSearching || matchedSections![name];
+  // ── Search helpers ──
+  const isSearching = searchQuery.length > 0;
+  const showSection = (name: string) => sectionMatchesQuery(name, searchQuery);
   const forceOpen = isSearching;
+  const noResults = isSearching && !["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].some(s => showSection(s));
 
   // ── Render ──
   return (
     <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      {/* Search input */}
-      <div style={{ padding: "6px 12px 2px" }}>
-        <input
-          ref={searchRef}
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
-          placeholder="Search properties... ( / )"
-          style={{
-            width: "100%",
-            height: "28px",
-            padding: "0 8px",
-            fontSize: "11px",
-            fontFamily: "system-ui, sans-serif",
-            color: "rgba(255,255,255,0.8)",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: "4px",
-            outline: "none",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,102,241,0.4)"; }}
-          onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
-        />
-      </div>
-
       {noResults && (
         <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "40px 20px", fontSize: "12px" }}>
           No matching properties

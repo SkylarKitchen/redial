@@ -20,6 +20,8 @@ export interface TransitionValue {
 export interface TransitionEditorProps {
   transitions: TransitionValue[];
   onChange: (transitions: TransitionValue[]) => void;
+  /** The DOM element to preview transitions on */
+  element?: Element;
 }
 
 const PROPERTY_OPTIONS = [
@@ -90,7 +92,7 @@ const DEFAULT_TRANSITION: TransitionValue = {
   delay: 0,
 };
 
-export function TransitionEditor({ transitions, onChange }: TransitionEditorProps) {
+export function TransitionEditor({ transitions, onChange, element }: TransitionEditorProps) {
   const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transitions, onChange);
 
   const handleAdd = useCallback(() => {
