@@ -6,13 +6,15 @@
  * Position (when non-static), and Typography (for text elements).
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { ColorRow, SliderRow, ValueInput } from "./controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
-import { applyInlineStyle } from "./apply";
+import { applyInlineStyle, beginBatch, endBatch } from "./apply";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
+import { TextStyleRow } from "./TextStyleRow";
 import type { SpacingValues } from "./infer";
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -136,6 +138,13 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
   const [fontColor, setFontColor] = useState(() => rgbToHex(cs.color));
   const [fontWeight, setFontWeight] = useState(() => parseNum(cs.fontWeight));
 
+  // --- Text style scanning ---
+  const textStyles = useMemo(() => scanTextStyles(), []);
+  const matchedTextStyle = useMemo(
+    () => matchTextStyle(element, cs, textStyles),
+    [element, cs, textStyles],
+  );
+
   // --- Spacing units ---
   const SPACING_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
   const [marginUnit, setMarginUnit] = useState("px");
@@ -149,6 +158,22 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
     },
     [element, onDirtyChange],
   );
+
+  const handleTextStyleApply = useCallback((style: TextStyle) => {
+    beginBatch();
+    apply("font-family", style.fontFamily);
+    apply("font-weight", style.fontWeight);
+    apply("font-size", style.fontSize);
+    apply("line-height", style.lineHeight);
+    apply("letter-spacing", style.letterSpacing);
+    apply("color", style.color);
+    apply("text-transform", style.textTransform);
+    endBatch();
+
+    setFontSize(parseNum(style.fontSize));
+    setFontColor(rgbToHex(style.color));
+    setFontWeight(parseNum(style.fontWeight));
+  }, [apply]);
 
   return (
     <div>
@@ -303,6 +328,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         <>
           <div className="border-b border-[var(--border)]" />
           <FlatGroup title="Typography">
+            <TextStyleRow styles={textStyles} matchedStyle={matchedTextStyle} onApply={handleTextStyleApply} />
             <SliderRow
               label="Size"
               value={fontSize}
