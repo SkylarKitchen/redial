@@ -53,7 +53,7 @@ export function TextToggle({ options, value, onChange }: {
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex rounded overflow-hidden border" style={{ borderColor: surface.track }}>
+    <div className="inline-flex rounded border" style={{ borderColor: surface.track }}>
       {options.map((opt, i) => {
         const isActive = opt.value === value;
         const isFirst = i === 0;

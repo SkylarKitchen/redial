@@ -7,6 +7,7 @@
 import { useState, useCallback, memo } from "react";
 import { Section, SliderRow, SelectRow, TextRow, ValueInput } from "./controls";
 import { AlignBox } from "./AlignBox";
+import { IconButtonGroup } from "./IconButtonGroup";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator } from "./StyleIndicator";
@@ -15,8 +16,8 @@ import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
-import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControls";
-import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
+import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow } from "./layoutControls";
+import { LAYOUT_UNITS, ALIGN_ICON_OPTIONS, JUSTIFY_ICON_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
 import { Link, Grid3x3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
@@ -131,16 +132,6 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     [apply],
   );
 
-  const handleAlignChange = useCallback(
-    (justify: string, align: string) => {
-      setJustifyContent(justify);
-      setAlignItems(align);
-      apply("justify-content", justify);
-      apply("align-items", align);
-    },
-    [apply],
-  );
-
   const handleGridAlignChange = useCallback(
     (justify: string, align: string) => {
       setJustifyItems(justify);
@@ -251,81 +242,76 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {isFlex && (
         <>
-          {/* Direction row: row/column/wrap icons + dropdown for reverse */}
+          {/* Direction: Horizontal/Vertical text toggle + reverse */}
           <DirectionRow
             direction={flexDirection}
-            wrap={flexWrap}
             onDirectionChange={handleFlexDirectionChange}
-            onWrapChange={handleFlexWrapChange}
-            onReset={() => {
-              resetCssStr("flex-direction", setFlexDirection);
-              resetCssStr("flex-wrap", setFlexWrap);
-            }}
+            onReset={() => resetCssStr("flex-direction", setFlexDirection)}
           />
 
-          {/* Align row: 3x3 grid + X/Y dropdowns side-by-side */}
-          <div className="flex items-start gap-2 py-1 px-3">
-            <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-1.5">Align</span>
-            <div className="shrink-0">
-              <AlignBox justify={justifyContent} align={alignItems} onChange={handleAlignChange} mode="flex" compact />
-            </div>
-            <div className="flex-1 flex flex-col gap-1 pt-0.5">
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] w-3 text-right" style={{ color: text.disabled }}>x</span>
-                <MiniDropdown
-                  value={flexDirection.startsWith("column") ? alignItems : justifyContent}
-                  options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
-                  onChange={(v) => {
-                    if (flexDirection.startsWith("column")) {
-                      setAlignItems(v); apply("align-items", v);
-                    } else {
-                      setJustifyContent(v); apply("justify-content", v);
-                    }
-                  }}
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] w-3 text-right" style={{ color: text.disabled }}>y</span>
-                <MiniDropdown
-                  value={flexDirection.startsWith("column") ? justifyContent : alignItems}
-                  options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
-                  onChange={(v) => {
-                    if (flexDirection.startsWith("column")) {
-                      setJustifyContent(v); apply("justify-content", v);
-                    } else {
-                      setAlignItems(v); apply("align-items", v);
-                    }
-                  }}
-                />
-              </div>
-            </div>
+          {/* Align: 5 icon buttons for align-items */}
+          <div className="flex items-center gap-1.5 py-0.5 px-3">
+            <RowLabel label="Align" isSet={alignItems !== "stretch"} onReset={() => resetCssStr("align-items", setAlignItems)} />
+            <IconButtonGroup
+              options={ALIGN_ICON_OPTIONS}
+              value={alignItems}
+              onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
+              aria-label="Align items"
+            />
           </div>
 
-          {/* Gap row: swatch + slider + value + unit + lock */}
+          {/* Justify: 6 icon buttons for justify-content */}
+          <div className="flex items-center gap-1.5 py-0.5 px-3">
+            <RowLabel label="Justify" isSet={justifyContent !== "flex-start"} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
+            <IconButtonGroup
+              options={JUSTIFY_ICON_OPTIONS}
+              value={justifyContent}
+              onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+              aria-label="Justify content"
+            />
+          </div>
+
+          {/* Gap: dual number inputs with column/row labels */}
           <GapRow
-            value={gap}
-            unit={gapUnit}
-            onChange={handleGapChange}
-            onUnitChange={(u) => {
+            columnGap={columnGap}
+            rowGap={rowGap}
+            columnUnit={columnGapUnit}
+            rowUnit={rowGapUnit}
+            onColumnChange={handleColumnGapChange}
+            onRowChange={handleRowGapChange}
+            onColumnUnitChange={(u) => {
               const ctx = getConversionCtx();
-              const c = convertUnit(gap, gapUnit, u, ctx);
-              setGap(c);
-              setGapUnit(u);
-              apply("gap", `${c}${u}`);
+              const c = convertUnit(columnGap, columnGapUnit, u, ctx);
+              fireColGapHint(columnGap, columnGapUnit, c, u, ctx);
+              onColumnGapChange(c);
+              onColumnGapUnitChange(u);
+              apply("column-gap", `${c}${u}`);
+            }}
+            onRowUnitChange={(u) => {
+              const ctx = getConversionCtx();
+              const c = convertUnit(rowGap, rowGapUnit, u, ctx);
+              fireRowGapHint(rowGap, rowGapUnit, c, u, ctx);
+              setRowGap(c);
+              setRowGapUnit(u);
+              apply("row-gap", `${c}${u}`);
             }}
             linked={gapLocked}
             onLinkedChange={(v) => {
               setGapLocked(v);
               if (v) {
-                setRowGap(gap);
-                onColumnGapChange(gap);
-                setRowGapUnit(gapUnit);
-                onColumnGapUnitChange(gapUnit);
-                apply("row-gap", `${gap}${gapUnit}`);
-                apply("column-gap", `${gap}${gapUnit}`);
+                setRowGap(columnGap);
+                setRowGapUnit(columnGapUnit);
+                apply("row-gap", `${columnGap}${columnGapUnit}`);
               }
             }}
+            onReset={() => {
+              resetCss("column-gap", (v) => onColumnGapChange(v));
+              resetCss("row-gap", setRowGap);
+            }}
           />
+
+          {/* Children: Don't wrap / Wrap + reverse */}
+          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} />
         </>
       )}
 
