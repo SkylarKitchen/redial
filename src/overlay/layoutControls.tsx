@@ -10,6 +10,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
@@ -55,17 +56,19 @@ export function MiniDropdown({ value, options, onChange }: {
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono text-[rgba(0,0,0,0.7)] cursor-pointer outline-none"
+        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono cursor-pointer outline-none"
+        style={{ color: blackAlpha(0.7) }}
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
-        <ChevronDown size={12} strokeWidth={2} className="text-[rgba(0,0,0,0.25)] ml-1 shrink-0" />
+        <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0" style={{ color: text.hint }} />
       </button>
       {open && (
         <div
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+          style={{ borderColor: surface.track }}
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -82,10 +85,12 @@ export function MiniDropdown({ value, options, onChange }: {
                   "px-2 py-[3px] text-[10px] font-mono cursor-pointer",
                   active
                     ? "bg-[var(--primary)] text-white"
-                    : isHighlighted
-                      ? "bg-[rgba(0,0,0,0.05)] text-[rgba(0,0,0,0.5)]"
-                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
+                    : "hover:bg-[rgba(0,0,0,0.05)]",
                 )}
+                style={!active ? {
+                  color: blackAlpha(0.5),
+                  ...(isHighlighted ? { background: surface.hover } : {}),
+                } : undefined}
               >
                 {opt.label}
               </div>
@@ -115,12 +120,15 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
 
   return (
     <div className="flex items-center gap-1.5 py-1 px-3">
-      <span className={cn(
-        "text-[11px] shrink-0",
-        isSet
-          ? "bg-[rgba(217,119,87,0.25)] text-[rgba(217,119,87,0.9)] rounded-[3px] px-1.5 py-0.5"
-          : "text-[var(--muted-foreground)] w-16",
-      )}>Direction</span>
+      <span
+        className={cn(
+          "text-[11px] shrink-0",
+          isSet
+            ? "rounded-[3px] px-1.5 py-0.5"
+            : "text-[var(--muted-foreground)] w-16",
+        )}
+        style={isSet ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+      >Direction</span>
       <div ref={containerRef} className="flex relative">
         <div className="inline-flex">
           {DIRECTION_ICONS_SHORT.map((opt, i) => {

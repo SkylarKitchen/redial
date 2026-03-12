@@ -12,19 +12,19 @@
 .__tuner-root {
   /* Core */
   --background: #f5f0ea;
-  --foreground: rgba(0, 0, 0, 0.87);
+  --foreground: rgba(0, 0, 0, 0.92);
 
   /* Muted */
   --muted: rgba(0, 0, 0, 0.05);
-  --muted-foreground: rgba(0, 0, 0, 0.6);
+  --muted-foreground: rgba(0, 0, 0, 0.7);
 
   /* Card */
   --card: #f5f0ea;
-  --card-foreground: rgba(0, 0, 0, 0.87);
+  --card-foreground: rgba(0, 0, 0, 0.92);
 
   /* Popover */
   --popover: #eae5df;
-  --popover-foreground: rgba(0, 0, 0, 0.87);
+  --popover-foreground: rgba(0, 0, 0, 0.92);
 
   /* Primary */
   --primary: #c17a50;
@@ -52,7 +52,7 @@
 
   /* Sidebar (for Sheet) */
   --sidebar-background: #f5f0ea;
-  --sidebar-foreground: rgba(0, 0, 0, 0.87);
+  --sidebar-foreground: rgba(0, 0, 0, 0.92);
   --sidebar-primary: #c17a50;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(0, 0, 0, 0.04);
@@ -104,7 +104,7 @@
 .__tuner-root .dialkit-folder-header {
   font-size: 13px !important;
   font-weight: 500 !important;
-  color: rgba(0, 0, 0, 0.75) !important;
+  color: rgba(0, 0, 0, 0.85) !important;
   padding: 10px 12px 6px !important;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   letter-spacing: 0;
@@ -121,7 +121,7 @@
 
 .__tuner-root .dialkit-label {
   font-size: 11px !important;
-  color: rgba(0, 0, 0, 0.6) !important;
+  color: rgba(0, 0, 0, 0.7) !important;
   text-transform: capitalize;
 }
 

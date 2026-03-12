@@ -17,6 +17,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
 import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
 import { ms } from "./timing";
+import { color, text, border, surface, blackAlpha, primaryAlpha } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";
 import { evaluateMathExpr } from "./inputMath";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -190,21 +191,20 @@ export function SizeInputCell({
     <div className="flex flex-1 flex-col gap-0.5">
     <div
       ref={cellRef}
-      className={cn(
-        "flex items-center h-[28px] rounded overflow-hidden",
-        isModified
-          ? "bg-[#D97757]/10 border border-[#D97757]/25"
-          : "bg-[rgba(0,0,0,0.04)] border border-black/7"
-      )}
-      style={{ transition: `background ${ms("normal")}, border-color ${ms("normal")}` }}
+      className="flex items-center h-[28px] rounded overflow-hidden border"
+      style={{
+        background: isModified ? primaryAlpha(0.1) : surface.subtle,
+        borderColor: isModified ? primaryAlpha(0.25) : blackAlpha(0.07),
+        transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
+      }}
     >
       {/* Label */}
       <div
-        className={cn(
-          "px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]",
-          isModified ? "text-[#D97757]" : "text-black/45"
-        )}
-        style={{ transition: `color ${ms("normal")}` }}
+        className="px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]"
+        style={{
+          color: isModified ? color.primary : text.disabled,
+          transition: `color ${ms("normal")}`,
+        }}
       >
         {isKeyword || isVariable ? (
           <span className="cursor-default">{label}</span>
@@ -228,7 +228,8 @@ export function SizeInputCell({
             tabIndex={0}
             onClick={() => { onKeywordChange(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
-            className="text-[10px] font-mono text-black/50 capitalize pr-1 cursor-text outline-none"
+            className="text-[10px] font-mono capitalize pr-1 cursor-text outline-none"
+            style={{ color: blackAlpha(0.5) }}
           >
             {keyword}
           </span>
@@ -240,11 +241,11 @@ export function SizeInputCell({
             title={`${cssVar}: ${cssVarResolved ?? ""}`}
             className="flex items-center gap-1 text-[10px] font-mono pr-1 cursor-text outline-none overflow-hidden min-w-0"
           >
-            <span className="text-[#D97757] overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: color.primary }}>
               {cssVar!.replace(/^--/, "")}
             </span>
             {cssVarResolved && (
-              <span className="text-black/25 shrink-0">
+              <span className="shrink-0" style={{ color: text.hint }}>
                 {parseFloat(cssVarResolved) || cssVarResolved}
               </span>
             )}
@@ -259,17 +260,16 @@ export function SizeInputCell({
             onKeyDown={handleKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
-            className="w-9 bg-black/7 border border-[#D97757]/50 rounded-sm text-black/75 text-[10px] font-mono text-right px-[3px] py-px outline-none"
+            className="w-9 border rounded-sm text-[10px] font-mono text-right px-[3px] py-px outline-none"
+            style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5), color: blackAlpha(0.75) }}
           />
         ) : (
           <span
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-            className={cn(
-              "text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right",
-              value !== 0 ? "text-black/70" : "text-black/25"
-            )}
+            className="text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right"
+            style={{ color: value !== 0 ? blackAlpha(0.7) : text.hint }}
           >
             {value}
           </span>

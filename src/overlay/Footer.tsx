@@ -14,6 +14,7 @@ import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
@@ -191,7 +192,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onReset, scope, activeClassName]);
 
   return (
-    <div className="__tuner-footer flex flex-col px-3 py-2 border-t border-black/10 gap-1.5">
+    <div className="__tuner-footer flex flex-col px-3 py-2 border-t gap-1.5" style={{ borderColor: border.default }}>
       <div className="flex items-center justify-between gap-1.5">
         {/* Left: Clipboard dropdown */}
         <div ref={copyRef} className="relative">
@@ -201,20 +202,24 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={() => setCopyOpen((o) => !o)}
             title="Copy, paste, import styles"
             className={cn(
-              "h-7 text-[12px] font-normal px-2 rounded-md border border-black/10 bg-black/[0.05] text-black/70 hover:bg-black/[0.08] hover:text-black/70",
-              copyOpen && "border-black/20 bg-black/[0.08]",
+              "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.08)] hover:text-[rgba(0,0,0,0.7)]",
             )}
+            style={{
+              color: blackAlpha(0.7),
+              background: copyOpen ? surface.active : surface.hover,
+              borderColor: copyOpen ? border.hover : border.default,
+            }}
           >
             Clipboard <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
           </Button>
           {copyOpen && (
-            <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#F5F4ED] border border-black/[0.08] rounded-md py-1 min-w-[160px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
+            <div className="absolute bottom-[calc(100%+4px)] left-0 border rounded-md py-1 min-w-[160px] z-[100]" style={{ background: color.popover, borderColor: surface.active, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
               <DropdownLabel>Copy as</DropdownLabel>
               <DropdownItem onClick={handleCopyCleanCSS} disabled={count === 0}>CSS</DropdownItem>
               <DropdownItem onClick={handleCopyTailwind} disabled={count === 0}>Tailwind</DropdownItem>
               <DropdownItem onClick={handleCopyVars} disabled={count === 0}>CSS Variables</DropdownItem>
               <DropdownItem onClick={handleCopy} disabled={count === 0}>SCSS (commented)</DropdownItem>
-              <div className="my-1 h-px bg-black/[0.06]" />
+              <div className="my-1 h-px" style={{ background: border.subtle }} />
               <DropdownItem
                 onClick={() => { onPasteStyles?.(); setCopyOpen(false); }}
                 disabled={!hasClipboard}
@@ -241,7 +246,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleReset}
             disabled={count === 0}
             title="Reset (R)"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] bg-black/[0.05] text-red-500/80 hover:bg-black/[0.08] hover:text-red-500/80"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] text-red-500/80 hover:bg-[rgba(0,0,0,0.08)] hover:text-red-500/80"
+            style={{ background: surface.hover }}
           >
             Reset
           </Button>
@@ -267,7 +273,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: timing.expand / 1000 }}
-              className="text-black/40 text-[11px]"
+              className="text-[11px]"
+              style={{ color: text.disabled }}
             >
               {clipboardMessage || message}
             </motion.span>
@@ -282,7 +289,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
 function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3 pt-1 pb-0.5 text-[9px] font-semibold text-black/30 uppercase tracking-wider select-none">
+    <div className="px-3 pt-1 pb-0.5 text-[9px] font-semibold uppercase tracking-wider select-none" style={{ color: text.hint }}>
       {children}
     </div>
   );
@@ -301,13 +308,14 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
       className={cn(
         "flex w-full items-center justify-between px-3 py-1.5 text-[12px] font-sans border-none bg-transparent text-left transition-colors",
         disabled
-          ? "text-black/25 cursor-default"
-          : "text-black/80 cursor-pointer hover:bg-black/[0.05]",
+          ? "cursor-default"
+          : "cursor-pointer hover:bg-[rgba(0,0,0,0.05)]",
       )}
+      style={{ color: disabled ? text.hint : blackAlpha(0.8) }}
     >
       <span>{children}</span>
       {shortcut && (
-        <span className="text-[10px] text-black/25 font-mono ml-3">{shortcut}</span>
+        <span className="text-[10px] font-mono ml-3" style={{ color: text.hint }}>{shortcut}</span>
       )}
     </button>
   );

@@ -15,6 +15,7 @@ import { X, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -77,12 +78,13 @@ export function Header({
 
   return (
     <div
-      className="__tuner-header flex flex-col border-b border-black/[0.05] cursor-grab select-none"
+      className="__tuner-header flex flex-col border-b cursor-grab select-none"
+      style={{ borderColor: border.subtle }}
       onMouseDown={onDragStart}
     >
       {/* -- Drag handle indicator -- */}
       <div className="flex justify-center pt-[5px]">
-        <div className="w-7 h-[3px] rounded-full bg-black/[0.08]" />
+        <div className="w-7 h-[3px] rounded-full" style={{ background: surface.active }} />
       </div>
 
       {/* -- Main row: tag + class | badges + close -- */}
@@ -92,7 +94,7 @@ export function Header({
             {"<"}{tag}{">"}
           </span>
           {className && (
-            <span className="text-black/50 text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: blackAlpha(0.5) }}>
               .{className}
             </span>
           )}
@@ -100,7 +102,8 @@ export function Header({
         <div className="flex items-center gap-[5px] shrink-0">
           <Badge
             variant="outline"
-            className="text-[9px] font-mono text-black/[0.3] bg-black/[0.04] border-black/[0.04] px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px] hover:bg-black/[0.04] hover:text-black/[0.3]"
+            className="text-[9px] font-mono px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px]"
+            style={{ color: text.hint, background: surface.subtle, borderColor: border.subtle }}
             title={`${vw}px viewport \u00b7 ${tier} breakpoint`}
           >
             {tier}
@@ -118,7 +121,8 @@ export function Header({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-[18px] w-[18px] p-0 text-black/30 hover:text-black/70 hover:bg-black/[0.05] rounded-[3px] transition-colors duration-100"
+            className="h-[18px] w-[18px] p-0 rounded-[3px] transition-colors duration-100 hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]"
+            style={{ color: text.hint }}
             title="Close (Esc)"
           >
             <X size={12} strokeWidth={2} />
@@ -129,7 +133,7 @@ export function Header({
       {/* -- Source file -- */}
       {sourceFile && (
         <div className="px-3 pt-0.5">
-          <span className="text-black/30 text-[10px] font-mono">
+          <span className="text-[10px] font-mono" style={{ color: text.hint }}>
             {sourceFile}
           </span>
         </div>
@@ -144,7 +148,7 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div className="flex items-center gap-0.5 text-[11px] font-mono text-black/[0.3] px-3 pt-[3px] overflow-hidden">
+          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-hidden" style={{ color: text.hint }}>
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
@@ -155,7 +159,8 @@ export function Header({
                       <ChevronRight size={10} strokeWidth={2} className="opacity-40" />
                       <span
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
-                        className="cursor-pointer px-0.5 rounded-sm text-black/40 hover:text-black/70 hover:bg-black/[0.05] transition-colors duration-100"
+                        className="cursor-pointer px-0.5 rounded-sm transition-colors duration-100 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]"
+                        style={{ color: text.disabled }}
                         title="Show full breadcrumb"
                       >
                         ...
@@ -171,8 +176,9 @@ export function Header({
                       "whitespace-nowrap rounded-sm transition-colors duration-100",
                       isLast
                         ? "text-black cursor-default"
-                        : "text-black/[0.3] hover:text-black/70 hover:bg-black/[0.05] cursor-pointer px-0.5",
+                        : "cursor-pointer px-0.5 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]",
                     )}
+                    style={isLast ? undefined : { color: text.hint }}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
@@ -210,7 +216,7 @@ export function Header({
           {state !== undefined && onStateChange && (
             <>
               {cssClasses.length > 0 && onScopeChange && (
-                <div className="w-px h-3.5 bg-black/[0.05] mx-[3px] shrink-0" />
+                <div className="w-px h-3.5 mx-[3px] shrink-0" style={{ background: surface.hover }} />
               )}
               <StateSelector value={state} onChange={onStateChange} />
             </>
@@ -240,11 +246,12 @@ function ScopePill({
       variant="outline"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={cn(
-        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-black/[0.04] hover:text-black/60",
+        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-[rgba(0,0,0,0.04)] hover:text-[rgba(0,0,0,0.6)]",
         active
-          ? "bg-black/[0.08] text-black hover:bg-black/[0.08] hover:text-black"
-          : "bg-transparent text-black/[0.4]",
+          ? "text-black hover:bg-[rgba(0,0,0,0.08)] hover:text-black"
+          : "bg-transparent",
       )}
+      style={active ? { background: surface.active } : { color: text.disabled }}
     >
       {label}
     </Badge>

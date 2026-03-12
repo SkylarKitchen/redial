@@ -38,6 +38,7 @@ import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { text, border, surface, blackAlpha, bgAlpha } from "./theme";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -57,14 +58,15 @@ class PanelErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="p-3 text-black/45 text-[11px]">
+        <div className="p-3 text-[11px]" style={{ color: text.disabled }}>
           <div className="mb-1.5">Panel crashed — try selecting a different element.</div>
           <button
             onClick={() => {
               this.setState({ error: null });
               this.props.onError?.();
             }}
-            className="px-2.5 py-1 text-[11px] border border-black/7 rounded bg-black/[0.05] text-black/[0.5] cursor-pointer"
+            className="px-2.5 py-1 text-[11px] rounded cursor-pointer"
+            style={{ border: `1px solid ${blackAlpha(0.07)}`, background: surface.hover, color: blackAlpha(0.5) }}
           >
             Retry
           </button>
@@ -1025,6 +1027,7 @@ export function Overlay() {
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;
       if (target.closest("[data-tuner-portal]")) return;
+      if (target.closest("[data-radix-portal]")) return;
       // Don't intercept clicks on third-party tool overlays (e.g. Agentation)
       if (target.closest("[data-agentation-root]")) return;
       if (target.closest("[data-feedback-toolbar]")) return;
@@ -1032,7 +1035,7 @@ export function Overlay() {
       if (target.closest("[data-annotation-popup]")) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]")) return;
+      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]") || el.closest("[data-radix-portal]")) return;
       if (el.closest("[data-agentation-root]") || el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]") || el.closest("[data-annotation-popup]")) return;
 
       e.preventDefault();
@@ -1052,6 +1055,7 @@ export function Overlay() {
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest("[data-tuner-portal]")) return;
+      if (target.closest("[data-radix-portal]")) return;
       if (target.closest("[data-agentation-root]")) return;
       if (target.closest("[data-feedback-toolbar]")) return;
 
@@ -1290,12 +1294,14 @@ export function Overlay() {
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(250,249,245,0.9)] backdrop-blur-[8px] text-black/70 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
+            className="fixed hidden pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
+            style={{ background: bgAlpha(0.9), color: blackAlpha(0.7) }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(250,249,245,0.9)] backdrop-blur-[8px] text-black/70 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
+            className="fixed hidden pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
+            style={{ background: bgAlpha(0.9), color: blackAlpha(0.7) }}
           />
         </>
       )}
@@ -1315,13 +1321,14 @@ export function Overlay() {
         <div
           className={cn(
             "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#FAF9F5] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
-            diffMode ? "border border-yellow-400/30" : "border border-black/7",
+            diffMode ? "border border-yellow-400/30" : "border",
             selecting ? "pointer-events-none" : "pointer-events-auto",
           )}
           style={{
             top: pos.y,
             left: pos.x,
             ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
+            ...(!diffMode ? { borderColor: blackAlpha(0.07) } : {}),
           }}
         >
           {/* Reduced motion: disable transitions/animations when user prefers */}
@@ -1361,7 +1368,7 @@ export function Overlay() {
             onStateChange={setActiveState}
           />
           {focusMode && (
-            <div className="flex justify-center py-0.5 border-b border-black/[0.04]">
+            <div className="flex justify-center py-0.5 border-b" style={{ borderColor: border.subtle }}>
               <span
                 onClick={() => setFocusMode(false)}
                 className="text-[9px] font-semibold text-[#D97757] bg-[#D97757]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
@@ -1371,7 +1378,7 @@ export function Overlay() {
             </div>
           )}
           {/* -- Common / Custom tab bar -- */}
-          <div className="flex border-b border-black/[0.04] px-3 shrink-0">
+          <div className="flex border-b px-3 shrink-0" style={{ borderColor: border.subtle }}>
             {(["common", "custom", "prompt"] as const).map((tab) => {
               const isActive = activeTab === tab;
               const label = tab === "common" ? "Common" : tab === "custom" ? "Custom" : "Prompt";
@@ -1382,9 +1389,10 @@ export function Overlay() {
                   className={cn(
                     "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
                     isActive
-                      ? "border-b-[#D97757] font-semibold text-black/[0.75]"
-                      : "border-b-transparent font-normal text-black/35",
+                      ? "border-b-[#D97757] font-semibold"
+                      : "border-b-transparent font-normal",
                   )}
+                  style={{ color: isActive ? blackAlpha(0.75) : text.hint }}
                 >
                   {label}
                 </button>

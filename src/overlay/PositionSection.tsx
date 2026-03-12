@@ -10,6 +10,7 @@ import { resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, FLOAT_OPTIONS, CLEAR_OPTIONS } from "./panelConstants";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
 interface PositionSectionProps {
   ctx: SectionCtx;
@@ -91,18 +92,18 @@ export const PositionSection = memo(function PositionSection({
             conversionHint={posHint}
           />
           <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <span className="w-16 text-[11px] text-black/45 shrink-0 inline-flex items-center gap-[3px]">
+            <span className="w-16 text-[11px] shrink-0 inline-flex items-center gap-[3px]" style={{ color: text.disabled }}>
               {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
               Z-Index
             </span>
             <button
               onClick={handleZIndexAutoToggle}
-              className={cn(
-                "px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border",
+              className="px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border"
+              style={
                 zIndexAuto
-                  ? "bg-[#D97757]/20 text-[#D97757] border-[#D97757]/30"
-                  : "bg-black/[0.04] text-black/35 border-black/07"
-              )}
+                  ? { background: primaryAlpha(0.2), color: color.primary, borderColor: primaryAlpha(0.3) }
+                  : { background: surface.subtle, color: text.hint, borderColor: blackAlpha(0.07) }
+              }
             >
               auto
             </button>

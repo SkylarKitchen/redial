@@ -50,7 +50,7 @@ function parseNum(v: string): number {
 function FlatGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="py-2">
-      <div className="text-[10px] font-semibold text-[rgba(0,0,0,0.4)] tracking-wider uppercase mb-2 px-3">
+      <div className="text-[10px] font-semibold text-[var(--muted-foreground)] tracking-wider uppercase mb-2 px-3">
         {title}
       </div>
       {children}
@@ -75,13 +75,13 @@ function ValueCell({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <span className="text-[10px] text-[rgba(0,0,0,0.35)] w-3.5 text-center shrink-0">
+      <span className="text-[10px] text-[var(--muted-foreground)] w-3.5 text-center shrink-0">
         {label}
       </span>
       {keyword ? (
         <div
           onClick={onClearKeyword}
-          className="flex-1 h-[22px] flex items-center justify-center text-[11px] font-mono text-[rgba(0,0,0,0.3)] bg-[rgba(0,0,0,0.03)] rounded-[3px] cursor-pointer select-none"
+          className="flex-1 h-[22px] flex items-center justify-center text-[11px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] rounded-[3px] cursor-pointer select-none"
         >
           {keyword}
         </div>
@@ -176,7 +176,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         />
       </FlatGroup>
 
-      <div className="border-b border-[rgba(0,0,0,0.04)]" />
+      <div className="border-b border-[var(--border)]" />
 
       {/* ── Spacing (Webflow box-model diagram) ─── */}
       <FlatGroup title="Spacing">
@@ -195,7 +195,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         </div>
       </FlatGroup>
 
-      <div className="border-b border-[rgba(0,0,0,0.04)]" />
+      <div className="border-b border-[var(--border)]" />
 
       {/* ── Size ─────────────────────────────────── */}
       <FlatGroup title="Size">
@@ -232,7 +232,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
       {/* ── Position (conditional) ────────────────── */}
       {showPosition && (
         <>
-          <div className="border-b border-[rgba(0,0,0,0.04)]" />
+          <div className="border-b border-[var(--border)]" />
           <FlatGroup title="Position">
             <div className="grid grid-cols-2 gap-1.5 px-3">
               <ValueCell
@@ -275,7 +275,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
       {/* ── Typography (conditional) ──────────────── */}
       {showTypo && (
         <>
-          <div className="border-b border-[rgba(0,0,0,0.04)]" />
+          <div className="border-b border-[var(--border)]" />
           <FlatGroup title="Typography">
             <SliderRow
               label="Size"

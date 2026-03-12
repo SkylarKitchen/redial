@@ -15,6 +15,7 @@ import { timing } from "./timing";
 import { cn } from "@/lib/utils";
 import { Copy, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { text, border, blackAlpha } from "./theme";
 
 interface PromptPanelProps {
   element: Element;
@@ -78,15 +79,15 @@ export function PromptPanel({ element }: PromptPanelProps) {
   return (
     <div className="flex flex-col gap-2 px-3 py-3">
       {/* Context preview */}
-      <div className="flex items-center gap-1.5 text-[10px] text-black/40">
+      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: text.disabled }}>
         <Sparkles size={11} strokeWidth={2} className="text-[#D97757]/60 shrink-0" />
         <span className="font-mono">
           {"<"}{tag}{">"}
-          {displayClass && <span className="text-black/25">.{displayClass}</span>}
+          {displayClass && <span style={{ color: text.hint }}>.{displayClass}</span>}
         </span>
         {reactSource && (
           <>
-            <span className="text-black/15">|</span>
+            <span style={{ color: text.hint }}>|</span>
             <span className="font-mono truncate">{reactSource.displayPath}</span>
           </>
         )}
@@ -101,16 +102,17 @@ export function PromptPanel({ element }: PromptPanelProps) {
         placeholder="Describe what you want to change..."
         rows={3}
         className={cn(
-          "w-full resize-none rounded-md border border-black/10 bg-black/[0.03] px-2.5 py-2",
-          "text-[12px] font-sans text-black/80 placeholder:text-black/25",
+          "w-full resize-none rounded-md border px-2.5 py-2",
+          "text-[12px] font-sans placeholder:text-[rgba(0,0,0,0.25)]",
           "outline-none focus:border-[#D97757]/30 focus:bg-white/50",
           "transition-colors duration-100",
         )}
+        style={{ borderColor: border.default, background: blackAlpha(0.03), color: blackAlpha(0.8) }}
       />
 
       {/* Copy button + shortcut hint */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-black/20 font-mono">
+        <span className="text-[10px] font-mono" style={{ color: text.hint }}>
           {"\u2318"}+Enter to copy
         </span>
         <Button
@@ -133,7 +135,8 @@ export function PromptPanel({ element }: PromptPanelProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: timing.expand / 1000 }}
-            className="text-black/40 text-[11px] text-center"
+            className="text-[11px] text-center"
+            style={{ color: text.disabled }}
             role="status"
             aria-live="polite"
           >

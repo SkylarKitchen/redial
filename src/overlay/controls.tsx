@@ -23,7 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { text } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Presets ───────────────────────────────────────────────────
@@ -132,7 +132,7 @@ export function Section({
             open && "sticky top-0 z-[2] bg-[var(--background)]"
           )}
         >
-          <span className="text-[13px] font-medium text-[var(--foreground)]/85 flex items-center gap-1.5">
+          <span className="text-[13px] font-medium text-[var(--foreground)] flex items-center gap-1.5">
             {title}
             {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
           </span>
@@ -532,7 +532,6 @@ function SelectRowCustom({
             "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
             "hover:bg-[rgba(0,0,0,0.07)]",
             "focus:ring-2 focus:ring-[var(--ring)]",
-            open && "bg-[rgba(0,0,0,0.07)]"
           )}
           tabIndex={0}
           aria-expanded={open}
@@ -545,6 +544,7 @@ function SelectRowCustom({
           }}
           style={{
             fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : undefined,
+            ...(open ? { background: blackAlpha(0.07) } : {}),
           }}
         >
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
@@ -667,7 +667,7 @@ export function ColorRow({
         className={cn(
           "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
           "focus:ring-2 focus:ring-[var(--ring)]",
-          varName ? "border-2 border-[rgba(217,119,87,0.6)]" : "border border-[var(--border)]"
+          varName ? "border-2" : "border border-[var(--border)]"
         )}
         tabIndex={0}
         role="button"
@@ -683,14 +683,16 @@ export function ColorRow({
             displayColor === "transparent"
               ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
               : displayColor,
+          ...(varName ? { borderColor: primaryAlpha(0.6) } : {}),
         }}
       />
       <span
         title={varName ? value : undefined}
         className={cn(
           "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0",
-          varName ? "text-[rgba(217,119,87,0.8)]" : "text-[var(--muted-foreground)]"
+          !varName && "text-[var(--muted-foreground)]"
         )}
+        style={varName ? { color: primaryAlpha(0.8) } : undefined}
       >
         {displayLabel}
       </span>
@@ -805,7 +807,8 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 bg-[rgba(0,0,0,0.07)] border border-[rgba(217,119,87,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          className="w-7 border rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5) }}
           onClick={(e) => e.stopPropagation()}
         />
       );

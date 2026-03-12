@@ -19,6 +19,7 @@ import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControl
 import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
 import { Link, Grid3x3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -264,7 +265,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </div>
             <div className="flex-1 flex flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">x</span>
+                <span className="text-[10px] w-3 text-right" style={{ color: text.hint }}>x</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? alignItems : justifyContent}
                   options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
@@ -278,7 +279,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">y</span>
+                <span className="text-[10px] w-3 text-right" style={{ color: text.hint }}>y</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? justifyContent : alignItems}
                   options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
@@ -334,9 +335,10 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 className={cn(
                   "flex items-center gap-1 py-[3px] px-2 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
                   showGridOverlay
-                    ? "bg-[rgba(217,119,87,0.2)] border border-[rgba(217,119,87,0.4)] text-[rgba(217,119,87,0.9)]"
+                    ? "border"
                     : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
                 )}
+                style={showGridOverlay ? { background: primaryAlpha(0.2), borderColor: primaryAlpha(0.4), color: primaryAlpha(0.9) } : undefined}
               >
                 <Grid3x3 size={12} strokeWidth={1.5} />
                 {showGridOverlay ? "Hide" : "Show"}
@@ -385,7 +387,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <button
                 onClick={handleGapLockToggle}
                 title="Unlock row/column gap"
-                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(0,0,0,0.35)] text-[10px] mr-2 rounded-[3px] shrink-0"
+                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
+                style={{ color: text.hint }}
               >
                 <Link size={12} strokeWidth={1.5} />
               </button>
@@ -422,7 +425,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 <button
                   onClick={handleGapLockToggle}
                   title="Lock gap"
-                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(0,0,0,0.2)] text-[10px] mr-2 rounded-[3px] shrink-0"
+                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
+                  style={{ color: text.hint }}
                 >
                   <Link size={12} strokeWidth={1.5} />
                 </button>
@@ -458,7 +462,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {parentIsFlexOrGrid && (
         <>
-          <div className="pt-1.5 pb-0.5 px-3 text-[10px] text-[rgba(0,0,0,0.3)] uppercase tracking-[0.04em]">
+          <div className="pt-1.5 pb-0.5 px-3 text-[10px] uppercase tracking-[0.04em]" style={{ color: text.hint }}>
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 

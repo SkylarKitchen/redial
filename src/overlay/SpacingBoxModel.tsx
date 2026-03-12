@@ -193,7 +193,7 @@ export function SpacingBoxModel({
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.25)",
+          color: nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.4)",
           cursor: "ew-resize",
           padding: "2px 4px",
           borderRadius: "3px",
@@ -215,7 +215,7 @@ export function SpacingBoxModel({
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "transparent";
-          el.style.color = nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.25)";
+          el.style.color = nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.4)";
           clearZone(group);
           setTooltip(null);
         }}
@@ -385,7 +385,7 @@ export function SpacingBoxModel({
               fontSize: "8px",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              color: "rgba(0,0,0,0.25)",
+              color: "rgba(0,0,0,0.4)",
             }}
           >
             Margin
@@ -434,7 +434,7 @@ export function SpacingBoxModel({
                   fontSize: "8px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
-                  color: "rgba(0,0,0,0.25)",
+                  color: "rgba(0,0,0,0.4)",
                 }}
               >
                 Padding
