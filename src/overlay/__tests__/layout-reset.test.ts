@@ -67,11 +67,11 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
   // ── Flex Child: Grow / Shrink ValueInputs must have onAltClick ──
 
   it("Flex Grow ValueInput has onAltClick", () => {
-    // Find the Grow section: the div containing "Grow" label and its ValueInput
+    // Match the ValueInput line that uses handleFlexGrowChange
     const growMatch = layoutSrc.match(
-      />\s*Grow\s*<\/span>[\s\S]*?<ValueInput[^>]*?\/>/
+      /<ValueInput.*handleFlexGrowChange.*\/>/
     );
-    expect(growMatch, "Could not find Grow ValueInput block").toBeTruthy();
+    expect(growMatch, "Could not find Grow ValueInput").toBeTruthy();
     expect(
       growMatch![0],
       "Grow ValueInput must have onAltClick prop for Option+Click reset"
@@ -80,9 +80,9 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
 
   it("Flex Shrink ValueInput has onAltClick", () => {
     const shrinkMatch = layoutSrc.match(
-      />\s*Shrink\s*<\/span>[\s\S]*?<ValueInput[^>]*?\/>/
+      /<ValueInput.*handleFlexShrinkChange.*\/>/
     );
-    expect(shrinkMatch, "Could not find Shrink ValueInput block").toBeTruthy();
+    expect(shrinkMatch, "Could not find Shrink ValueInput").toBeTruthy();
     expect(
       shrinkMatch![0],
       "Shrink ValueInput must have onAltClick prop for Option+Click reset"
@@ -117,9 +117,9 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
 
   it("Flex Basis ValueInput has onAltClick", () => {
     const basisMatch = layoutSrc.match(
-      />\s*Basis\s*<\/span>[\s\S]*?<ValueInput[^>]*?\/>/
+      /<ValueInput.*handleFlexBasisChange.*\/>/
     );
-    expect(basisMatch, "Could not find Basis ValueInput block").toBeTruthy();
+    expect(basisMatch, "Could not find Basis ValueInput").toBeTruthy();
     expect(
       basisMatch![0],
       "Basis ValueInput must have onAltClick prop for Option+Click reset"
@@ -154,9 +154,9 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
 
   it("Order ValueInput has onAltClick", () => {
     const orderMatch = layoutSrc.match(
-      /Order[\s\S]*?<ValueInput[^>]*?\/>/
+      /<ValueInput.*handleFlexOrderChange.*\/>/
     );
-    expect(orderMatch, "Could not find Order ValueInput block").toBeTruthy();
+    expect(orderMatch, "Could not find Order ValueInput").toBeTruthy();
     expect(
       orderMatch![0],
       "Order ValueInput must have onAltClick prop for Option+Click reset"
@@ -166,7 +166,7 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
   // ── DisplayTabs must accept and use onReset ──
 
   it("DisplayTabs is passed an onReset callback", () => {
-    const displayTabsUsage = layoutSrc.match(/<DisplayTabs[^>]*\/>/);
+    const displayTabsUsage = layoutSrc.match(/<DisplayTabs.*\/>/);
     expect(displayTabsUsage, "Could not find DisplayTabs usage").toBeTruthy();
     expect(
       displayTabsUsage![0],

@@ -105,11 +105,12 @@ export function MiniDropdown({ value, options, onChange }: {
 // ─── DirectionRow ───────────────────────────────────────────────────
 
 /** Direction row: row/column/wrap icons + dropdown chevron for reverse options */
-export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange }: {
+export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange, onReset }: {
   direction: string;
   wrap: string;
   onDirectionChange: (v: string) => void;
   onWrapChange: (v: string) => void;
+  onReset?: () => void;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -128,6 +129,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
             : "text-[var(--muted-foreground)] w-16",
         )}
         style={isSet ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       >Direction</span>
       <div ref={containerRef} className="flex relative">
         <div className="inline-flex">
@@ -252,7 +254,7 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
 
 // ─── DisplayTabs ────────────────────────────────────────────────────
 
-export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function DisplayTabs({ value, onChange, onReset }: { value: string; onChange: (v: string) => void; onReset?: () => void }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const closeMore = useCallback(() => setMoreOpen(false), []);
@@ -270,6 +272,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
             : "text-[var(--muted-foreground)] w-16",
         )}
         style={value !== "block" ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       >Display</span>
       <div ref={containerRef} className="flex flex-1 relative">
         <div role="radiogroup" aria-label="Display mode" className="flex flex-1 rounded-[3px] overflow-hidden border border-[var(--border)]">
