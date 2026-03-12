@@ -58,7 +58,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     forceOpen,
   } = props;
 
-  const { apply, ind, sectionInd, cs, element, getConversionCtx } = ctx;
+  const { apply, ind, sectionInd, cs, element, getConversionCtx, ctxMenu } = ctx;
   const parentIsFlexOrGrid = parentIsFlex || parentIsGrid;
 
   // ── Local state ──
@@ -346,8 +346,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               </button>
             </div>
           )}
-          <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} />
-          <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} />
+          <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} onContextMenu={ctxMenu("grid-template-columns", gridCols)} />
+          <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} onContextMenu={ctxMenu("grid-template-rows", gridRows)} />
           <div style={{ padding: "6px 12px" }}>
             <AlignBox
               justify={justifyItems}
@@ -379,6 +379,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onReset={() => resetCss("gap", setGap)}
                   indicator={ind("gap")}
                   conversionHint={gapHint}
+                  onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
+                  computedProp="gap"
+                  computedElement={element}
                 />
               </div>
               <button
@@ -408,6 +411,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     onChange={handleRowGapChange}
                     onReset={() => resetCss("row-gap", setRowGap)}
                     indicator={ind("row-gap")}
+                    onContextMenu={ctxMenu("row-gap", `${rowGap}px`)}
                   />
                 </div>
                 <button
@@ -443,6 +447,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 onReset={() => resetCss("column-gap", (v) => onColumnGapChange(v))}
                 indicator={ind("column-gap")}
                 conversionHint={colGapHint}
+                onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
               />
             </>
           )}

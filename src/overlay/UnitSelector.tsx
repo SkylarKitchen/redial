@@ -54,8 +54,8 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
   // ─── Conversion tooltip state ──────────────────────────────────────
   const [tooltipText, setTooltipText] = useState<string | null>(null);
   const [tooltipPhase, setTooltipPhase] = useState<"in" | "out" | null>(null);
-  const tooltipTimer = useRef<ReturnType<typeof setTimeout>>();
-  const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tooltipTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const prevHintRef = useRef<ConversionHint | null | undefined>(undefined);
 
   useEffect(() => {

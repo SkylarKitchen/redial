@@ -10,6 +10,7 @@ import { Section, SliderRow, SelectRow, TextRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "./unitConversion";
+import { useConversionHint } from "./useConversionHint";
 import { isDirty, resetProp } from "./apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
@@ -91,6 +92,14 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const [minHeightUnit, setMinHeightUnit] = useState(() => detectUnit(element, "min-height"));
   const [maxHeightUnit, setMaxHeightUnit] = useState(() => detectUnit(element, "max-height"));
 
+  // Conversion hints
+  const { conversionHint: wHint, fireConversionHint: fireWHint } = useConversionHint();
+  const { conversionHint: hHint, fireConversionHint: fireHHint } = useConversionHint();
+  const { conversionHint: minWHint, fireConversionHint: fireMinWHint } = useConversionHint();
+  const { conversionHint: minHHint, fireConversionHint: fireMinHHint } = useConversionHint();
+  const { conversionHint: maxWHint, fireConversionHint: fireMaxWHint } = useConversionHint();
+  const { conversionHint: maxHHint, fireConversionHint: fireMaxHHint } = useConversionHint();
+
   // Size keyword toggles
   const [widthAuto, setWidthAuto] = useState(() => {
     const authored = getAuthoredValue(element, "width");
@@ -169,12 +178,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={widthAuto ? "auto" : null}
           onValueChange={handleWidthChange}
-          onUnitChange={(u) => { const c = convertUnit(width, widthUnit, u, getConversionCtx(), "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(width, widthUnit, u, ctx, "width"); fireWHint(width, widthUnit, c, u, ctx, "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
           onKeywordChange={(k) => { setWidthAuto(k === "auto"); apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`); }}
           isModified={isDirty(element, "width")}
           supportsAuto
           min={0}
           max={1920}
+          conversionHint={wHint}
         />
         <SizeInputCell
           label="Height"
@@ -183,12 +193,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={heightAuto ? "auto" : null}
           onValueChange={handleHeightChange}
-          onUnitChange={(u) => { const c = convertUnit(height, heightUnit, u, getConversionCtx(), "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(height, heightUnit, u, ctx, "height"); fireHHint(height, heightUnit, c, u, ctx, "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
           onKeywordChange={(k) => { setHeightAuto(k === "auto"); apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`); }}
           isModified={isDirty(element, "height")}
           supportsAuto
           min={0}
           max={1200}
+          conversionHint={hHint}
         />
       </div>
       {/* Row 2: Min W + Min H */}
@@ -200,11 +211,12 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={null}
           onValueChange={handleMinWidthChange}
-          onUnitChange={(u) => { const c = convertUnit(minWidth, minWidthUnit, u, getConversionCtx(), "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(minWidth, minWidthUnit, u, ctx, "width"); fireMinWHint(minWidth, minWidthUnit, c, u, ctx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
           onKeywordChange={() => {}}
           isModified={isDirty(element, "min-width")}
           min={0}
           max={1920}
+          conversionHint={minWHint}
         />
         <SizeInputCell
           label="Min H"
@@ -213,11 +225,12 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={null}
           onValueChange={handleMinHeightChange}
-          onUnitChange={(u) => { const c = convertUnit(minHeight, minHeightUnit, u, getConversionCtx(), "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(minHeight, minHeightUnit, u, ctx, "height"); fireMinHHint(minHeight, minHeightUnit, c, u, ctx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
           onKeywordChange={() => {}}
           isModified={isDirty(element, "min-height")}
           min={0}
           max={1200}
+          conversionHint={minHHint}
         />
       </div>
       {/* Row 3: Max W + Max H */}
@@ -229,12 +242,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={maxWidthNone ? "none" : null}
           onValueChange={handleMaxWidthChange}
-          onUnitChange={(u) => { const c = convertUnit(maxWidth, maxWidthUnit, u, getConversionCtx(), "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(maxWidth, maxWidthUnit, u, ctx, "width"); fireMaxWHint(maxWidth, maxWidthUnit, c, u, ctx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
           onKeywordChange={(k) => { setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${maxWidthUnit}`); }}
           isModified={isDirty(element, "max-width")}
           supportsNone
           min={0}
           max={1920}
+          conversionHint={maxWHint}
         />
         <SizeInputCell
           label="Max H"

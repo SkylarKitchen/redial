@@ -53,6 +53,7 @@ export function SizeInputCell({
   step = 1,
   min,
   max,
+  conversionHint,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -259,6 +260,7 @@ export function SizeInputCell({
           onChange={handleUnitSelect}
           specialOptions={specialOptions}
           onSpecialSelect={handleSpecialSelect}
+          conversionHint={conversionHint}
         />
       </div>
     </div>

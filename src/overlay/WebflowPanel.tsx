@@ -112,8 +112,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
 
   // ── SectionCtx bundle ──
   const ctx: SectionCtx = useMemo(() => ({
-    element, apply, ind, sectionInd, cs, parentCs, getConversionCtx,
-  }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx]);
+    element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu,
+  }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu]);
 
   // ── Search helpers ──
   const isSearching = searchQuery.length > 0;
@@ -204,8 +204,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
         <EffectsSection ctx={ctx} forceOpen={forceOpen} />
       )}
 
-      {/* 9. CSS Variables */}
-      <CSSVariablesSection element={element} />
+      {/* 9. CSS Variables — hide during search to avoid leaking below "No results" */}
+      {!isSearching && <CSSVariablesSection element={element} />}
+
+      {/* Right-click property context menu */}
+      {ctxMenuState && (
+        <PropertyContextMenu
+          x={ctxMenuState.x}
+          y={ctxMenuState.y}
+          property={ctxMenuState.property}
+          value={ctxMenuState.value}
+          element={element}
+          onClose={closeCtxMenu}
+        />
+      )}
     </div>
   );
 }
