@@ -341,6 +341,13 @@ export function Overlay() {
         return;
       }
 
+      // Alt+Shift+S to toggle focus mode
+      if (e.key === "S" && e.altKey && e.shiftKey && selectedEl) {
+        e.preventDefault();
+        setFocusMode(prev => !prev);
+        return;
+      }
+
       // S to cycle scope
       if (e.key === "s" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
@@ -1241,6 +1248,24 @@ export function Overlay() {
             state={activeState}
             onStateChange={setActiveState}
           />
+          {focusMode && (
+            <div style={{
+              display: "flex", justifyContent: "center", padding: "2px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <span
+                onClick={() => setFocusMode(false)}
+                style={{
+                  fontSize: "9px", fontWeight: 600, color: "#6366f1",
+                  background: "rgba(99,102,241,0.15)", padding: "1px 8px",
+                  borderRadius: "9px", cursor: "pointer", userSelect: "none",
+                  letterSpacing: "0.04em", textTransform: "uppercase",
+                }}
+              >
+                Focus Mode
+              </span>
+            </div>
+          )}
           <ViewportBar active={viewportWidth} onChange={setViewportWidth} />
           <div
             ref={panelScrollRef}
@@ -1278,6 +1303,7 @@ export function Overlay() {
                   showBoxModel={showBoxModel}
                   onToggleBoxModel={() => setShowBoxModel((v) => !v)}
                   searchQuery={searchQuery}
+                  focusMode={focusMode}
                 />
               </PanelErrorBoundary>
             </div>
