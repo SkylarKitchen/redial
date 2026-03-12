@@ -1278,8 +1278,8 @@ export function Overlay() {
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
-      {/* Spacing guides overlay (Webflow-style green guide lines with dimension badges) */}
-      {showBoxModel && selectedEl && !selecting && (
+      {/* Spacing guides overlay — self-hides when no scrub is active */}
+      {selectedEl && !selecting && (
         <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
