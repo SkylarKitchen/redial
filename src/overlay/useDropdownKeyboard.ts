@@ -49,12 +49,14 @@ export function useDropdownKeyboard({
     return () => clearTimeout(typeTimer.current);
   }, []);
 
-  // Reset highlight when dropdown opens/closes
+  // Reset highlight and type-ahead buffer when dropdown opens/closes
   useEffect(() => {
     if (open) {
       setHighlightedIndex(selectedIndex);
     } else {
       setHighlightedIndex(-1);
+      typeBuffer.current = "";
+      if (typeTimer.current !== undefined) clearTimeout(typeTimer.current);
     }
   }, [open, selectedIndex]);
 

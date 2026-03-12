@@ -613,14 +613,24 @@ export function Overlay() {
     if (!selectedEl || selecting || !selectedOutlineRef.current) return;
 
     const outline = selectedOutlineRef.current;
+    const badge = dimensionsBadgeRef.current;
+    const tagEl = tagLabelRef.current;
     let rafId: number;
     let cancelled = false;
+
+    // Build tag label text: "div.hero" or just "div"
+    const elTag = selectedEl.tagName.toLowerCase();
+    const firstClass = selectedEl.classList.length > 0 ? selectedEl.classList[0] : null;
+    const tagText = firstClass ? `${elTag}.${firstClass}` : elTag;
+    if (tagEl) tagEl.textContent = tagText;
 
     const updatePosition = () => {
       if (cancelled) return;
       // If the element was removed from the DOM (HMR, navigation), stop tracking
       if (!selectedEl.isConnected) {
         outline.style.display = "none";
+        if (badge) badge.style.display = "none";
+        if (tagEl) tagEl.style.display = "none";
         return;
       }
       const rect = selectedEl.getBoundingClientRect();
@@ -629,6 +639,26 @@ export function Overlay() {
       outline.style.width = `${rect.width}px`;
       outline.style.height = `${rect.height}px`;
       outline.style.display = "block";
+
+      // Dimensions badge: below bottom-right corner
+      if (badge) {
+        const w = Math.round(rect.width);
+        const h = Math.round(rect.height);
+        badge.textContent = `${w} × ${h}`;
+        badge.style.top = `${rect.bottom + 4}px`;
+        badge.style.left = `${rect.right}px`;
+        badge.style.transform = "translateX(-100%)";
+        badge.style.display = "block";
+      }
+
+      // Tag label: above top-left corner
+      if (tagEl) {
+        tagEl.style.top = `${rect.top - 4}px`;
+        tagEl.style.left = `${rect.left}px`;
+        tagEl.style.transform = "translateY(-100%)";
+        tagEl.style.display = "block";
+      }
+
       rafId = requestAnimationFrame(updatePosition);
     };
 
@@ -638,6 +668,8 @@ export function Overlay() {
       cancelled = true;
       cancelAnimationFrame(rafId);
       outline.style.display = "none";
+      if (badge) badge.style.display = "none";
+      if (tagEl) tagEl.style.display = "none";
     };
   }, [selectedEl, selecting]);
 
@@ -871,19 +903,62 @@ export function Overlay() {
 
       {/* Persistent selected-element outline (Phase 2) */}
       {selectedEl && !selecting && (
-        <div
-          ref={selectedOutlineRef}
-          className="__tuner-selected-outline"
-          style={{
-            position: "fixed",
-            display: "none",
-            pointerEvents: "none",
-            zIndex: 2147483646,
-            border: "1.5px solid #6366f1",
-            borderRadius: "2px",
-            transition: `all ${ms("fast")} ease-out`,
-          }}
-        />
+        <>
+          <div
+            ref={selectedOutlineRef}
+            className="__tuner-selected-outline"
+            style={{
+              position: "fixed",
+              display: "none",
+              pointerEvents: "none",
+              zIndex: 2147483646,
+              border: "1.5px solid #6366f1",
+              borderRadius: "2px",
+              transition: `all ${ms("fast")} ease-out`,
+            }}
+          />
+          {/* Dimensions badge: W x H below bottom-right */}
+          <div
+            ref={dimensionsBadgeRef}
+            style={{
+              position: "fixed",
+              display: "none",
+              pointerEvents: "none",
+              zIndex: 2147483646,
+              background: "rgba(30,30,30,0.9)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              color: "rgba(255,255,255,0.8)",
+              fontSize: "10px",
+              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              padding: "2px 6px",
+              borderRadius: "3px",
+              whiteSpace: "nowrap",
+            }}
+          />
+          {/* Tag label: tag.class above top-left */}
+          <div
+            ref={tagLabelRef}
+            style={{
+              position: "fixed",
+              display: "none",
+              pointerEvents: "none",
+              zIndex: 2147483646,
+              background: "rgba(30,30,30,0.9)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              color: "rgba(255,255,255,0.8)",
+              fontSize: "10px",
+              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              padding: "2px 6px",
+              borderRadius: "3px",
+              whiteSpace: "nowrap",
+              maxWidth: "200px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          />
+        </>
       )}
 
       {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}

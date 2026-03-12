@@ -206,8 +206,8 @@ function TransitionCard({
     const delayMs = transition.delay;
     const easing = transition.easing;
 
-    // Build a CSS easing string
-    const cssEasing = easing.startsWith("cubic-bezier(") ? easing : easing;
+    // The easing value is already valid CSS (named or cubic-bezier(...))
+    const cssEasing = easing;
 
     // Determine a "from" value for the property to create a visible animation
     const fromValues: Record<string, string> = {
@@ -318,6 +318,47 @@ function TransitionCard({
           onPointerDown={dragHandleProps.onPointerDown}
           style={{ position: "absolute", top: "4px", left: "4px" }}
         />
+      )}
+
+      {/* Play preview button */}
+      {element && (
+        <button
+          onClick={handlePlay}
+          disabled={playing}
+          title={playing ? "Playing..." : "Preview transition"}
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "22px",
+            width: "14px",
+            height: "14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            color: playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)",
+            cursor: playing ? "default" : "pointer",
+            padding: 0,
+            borderRadius: "2px",
+            lineHeight: 1,
+            opacity: playing ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!playing) {
+              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+              (e.currentTarget as HTMLElement).style.color = "rgba(99,102,241,0.8)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)";
+          }}
+        >
+          <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 0.5v8l6.5-4L1 0.5z" />
+          </svg>
+        </button>
       )}
 
       {/* Remove button */}

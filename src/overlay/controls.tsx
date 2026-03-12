@@ -7,7 +7,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector } from "./UnitSelector";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
@@ -201,6 +201,7 @@ export function SliderRow({
   onContextMenu,
   computedProp,
   computedElement,
+  conversionHint,
 }: {
   label: string;
   value: number;
@@ -220,6 +221,8 @@ export function SliderRow({
   computedProp?: string;
   /** Target element for computed tooltip */
   computedElement?: Element;
+  /** Conversion tooltip hint shown after unit change */
+  conversionHint?: ConversionHint | null;
 }) {
   const pct = ((value - min) / (max - min)) * 100;
   const labelContent = (
@@ -271,7 +274,7 @@ export function SliderRow({
       />
       <ValueInput value={value} onChange={onChange} />
       {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : unit ? (
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
       ) : null}

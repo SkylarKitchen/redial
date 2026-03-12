@@ -2,7 +2,8 @@ import React, { useState, useCallback, memo } from "react";
 import { Section, SliderRow, SelectRow, ColorRow } from "./controls";
 import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
-import { convertUnit } from "./unitConversion";
+import { convertUnit, conversionBasis } from "./unitConversion";
+import { useConversionHint } from "./useConversionHint";
 import { resetProp } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
@@ -38,6 +39,8 @@ export const BordersSection = memo(function BordersSection({
     const bl = parseNum(cs.borderBottomLeftRadius);
     return tl === tr && tr === br && br === bl;
   });
+
+  const { conversionHint: bwHint, fireConversionHint: fireBwHint } = useConversionHint();
 
   /** Reset a CSS property to its computed value and update React state via setter */
   const resetCss = useCallback(
