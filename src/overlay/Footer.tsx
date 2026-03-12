@@ -68,6 +68,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [copyOpen, setCopyOpen] = useState(false);
+  const copyRef = useRef<HTMLDivElement>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const messageCounterRef = useRef(0);
@@ -77,6 +79,18 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     return () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); };
   }, []);
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!copyOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (copyRef.current && !copyRef.current.contains(e.target as Node)) {
+        setCopyOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick, true);
+    return () => document.removeEventListener("mousedown", handleClick, true);
+  }, [copyOpen]);
+
   const showMessage = useCallback((text: string, duration: number) => {
     if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
     messageCounterRef.current += 1;
@@ -84,38 +98,36 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     messageTimerRef.current = setTimeout(() => setMessage(null), duration);
   }, []);
 
+  const copyAndClose = useCallback((text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => showMessage(`Copied ${label}!`, 1200))
+      .catch(() => showMessage("Copy failed", 1500));
+    setCopyOpen(false);
+  }, [showMessage]);
+
   const handleCopy = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSDiff(element, changes))
-      .then(() => showMessage("Copied!", 1200))
-      .catch(() => showMessage("Copy failed", 1500));
-  }, [element, showMessage]);
+    copyAndClose(formatCSSDiff(element, changes), "SCSS");
+  }, [element, copyAndClose]);
 
   const handleCopyCleanCSS = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCleanCSS(element, changes))
-      .then(() => showMessage("Copied CSS!", 1200))
-      .catch(() => showMessage("Copy failed", 1500));
-  }, [element, showMessage]);
+    copyAndClose(formatCleanCSS(element, changes), "CSS");
+  }, [element, copyAndClose]);
 
   const handleCopyTailwind = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    const tw = formatTailwindDiff(changes);
-    navigator.clipboard.writeText(tw)
-      .then(() => showMessage("Copied Tailwind!", 1200))
-      .catch(() => showMessage("Copy failed", 1500));
-  }, [element, showMessage]);
+    copyAndClose(formatTailwindDiff(changes), "Tailwind");
+  }, [element, copyAndClose]);
 
   const handleCopyVars = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSVars(changes))
-      .then(() => showMessage("Copied vars!", 1200))
-      .catch(() => showMessage("Copy failed", 1500));
-  }, [element, showMessage]);
+    copyAndClose(formatCSSVars(changes), "vars");
+  }, [element, copyAndClose]);
 
   const handleSave = useCallback(async () => {
     if (savingRef.current) return;
@@ -181,91 +193,99 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       className="__tuner-footer"
       style={{
         display: "flex",
-        flexWrap: "wrap",
-        alignItems: "center",
-        justifyContent: "space-between",
+        flexDirection: "column",
         padding: "8px 12px",
         borderTop: "1px solid rgba(255,255,255,0.1)",
         gap: "6px",
       }}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-        <ActionButton
-          onClick={handleCopy}
-          disabled={count === 0}
-          title="Copy SCSS (with comments)"
-        >
-          Copy
-        </ActionButton>
-        <ActionButton
-          onClick={handleCopyCleanCSS}
-          disabled={count === 0}
-          title="Copy clean CSS"
-        >
-          CSS
-        </ActionButton>
-        <ActionButton
-          onClick={handleCopyTailwind}
-          disabled={count === 0}
-          title="Copy Tailwind classes"
-        >
-          TW
-        </ActionButton>
-        <ActionButton
-          onClick={handleCopyVars}
-          disabled={count === 0}
-          title="Copy as CSS custom properties"
-        >
-          Vars
-        </ActionButton>
-        <ActionButton
-          onClick={onPasteStyles ?? (() => {})}
-          disabled={!hasClipboard}
-          title="Paste styles (Cmd+Alt+V)"
-        >
-          Paste
-        </ActionButton>
-        <ActionButton
-          onClick={onCSSImport ?? (() => {})}
-          disabled={!onCSSImport}
-          title="Import CSS from clipboard"
-        >
-          Import
-        </ActionButton>
-        <ActionButton
-          onClick={handleSave}
-          disabled={count === 0 || saving}
-          title="Save to source"
-          primary
-        >
-          {saving ? "..." : "Save"}
-        </ActionButton>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <div role="status" aria-live="polite" style={{ minHeight: "16px" }}>
-          <AnimatePresence mode="wait">
-            {(clipboardMessage || message) && (
-              <motion.span
-                key={`${clipboardMessage || message}-${messageCounterRef.current}`}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: timing.expand / 1000 }}
-                style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+        {/* Left: Copy dropdown + Import/Paste */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <div ref={copyRef} style={{ position: "relative" }}>
+            <ActionButton
+              onClick={() => setCopyOpen((o) => !o)}
+              disabled={count === 0}
+              title="Copy styles"
+              active={copyOpen}
+            >
+              Copy <span style={{ fontSize: "9px", marginLeft: "2px", opacity: 0.6 }}>&#9662;</span>
+            </ActionButton>
+            {copyOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "calc(100% + 4px)",
+                  left: 0,
+                  background: "#2a2a2a",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "6px",
+                  padding: "4px 0",
+                  minWidth: "140px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                  zIndex: 100,
+                }}
               >
-                {clipboardMessage || message}
-              </motion.span>
+                <DropdownItem onClick={handleCopyCleanCSS}>CSS</DropdownItem>
+                <DropdownItem onClick={handleCopyTailwind}>Tailwind</DropdownItem>
+                <DropdownItem onClick={handleCopyVars}>CSS Variables</DropdownItem>
+                <DropdownItem onClick={handleCopy}>SCSS (commented)</DropdownItem>
+              </div>
             )}
+          </div>
+          <ActionButton
+            onClick={onPasteStyles ?? (() => {})}
+            disabled={!hasClipboard}
+            title="Paste styles (Cmd+Alt+V)"
+          >
+            Paste
+          </ActionButton>
+          <ActionButton
+            onClick={onCSSImport ?? (() => {})}
+            disabled={!onCSSImport}
+            title="Import CSS from clipboard"
+          >
+            Import
+          </ActionButton>
+        </div>
+
+        {/* Right: Reset + Save */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <ActionButton
+            onClick={handleReset}
+            disabled={count === 0}
+            title="Reset (R)"
+          >
+            Reset
+          </ActionButton>
+          <ActionButton
+            onClick={handleSave}
+            disabled={count === 0 || saving}
+            title="Save to source"
+            primary
+          >
+            {saving ? "..." : "Save"}
+          </ActionButton>
+        </div>
+      </div>
+
+      {/* Status message row */}
+      {(clipboardMessage || message) && (
+        <div role="status" aria-live="polite">
+          <AnimatePresence mode="wait">
+            <motion.span
+              key={`${clipboardMessage || message}-${messageCounterRef.current}`}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: timing.expand / 1000 }}
+              style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
+            >
+              {clipboardMessage || message}
+            </motion.span>
           </AnimatePresence>
         </div>
-        <ActionButton
-          onClick={handleReset}
-          disabled={count === 0}
-          title="Reset (R)"
-        >
-          Reset
-        </ActionButton>
-      </div>
+      )}
     </div>
   );
 }
@@ -324,3 +344,27 @@ function ActionButton({
   );
 }
 
+function DropdownItem({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "block",
+        width: "100%",
+        padding: "6px 12px",
+        fontSize: "12px",
+        fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
+        border: "none",
+        background: hovered ? "rgba(255,255,255,0.08)" : "transparent",
+        color: "rgba(255,255,255,0.8)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
