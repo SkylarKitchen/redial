@@ -11,7 +11,7 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] Fix commit.test.ts: "handles CSS var() in source when from value is computed"
 
 ### Tier 2 — Test Coverage: Pure Utility Modules
-- [ ] timing.ts — timing tokens, reducedMotion, ms()
+- [x] timing.ts — timing tokens, reducedMotion, ms()
 - [ ] scrubState.ts — scrub active flag get/set
 - [ ] scope.ts — scope resolution logic
 - [ ] colorVariables.ts — color variable utilities
@@ -44,3 +44,6 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 
 ### Tier 1 — Fix Failing Tests (2026-03-11)
 - **commit.test.ts hex color + CSS var() fixes**: Added broad CSS value replacement in `commit.ts` for fuzzy-match strategy. When `getComputedStyle()` returns `rgb()` but source has hex or `var()`, the property line is found via fuzzy search and the entire value is replaced. SCSS variable failure behavior preserved by scoping to fuzzy strategy only. +2 tests fixed, 502 total passing.
+
+### Tier 2 — timing.ts (2026-03-11)
+- **timing.ts test coverage**: 13 tests covering timing token values and ordering, reducedMotion get/set/toggle, ms() CSS string output for all tokens, and reduced-motion zero-duration behavior. +13 tests, 515 total.
