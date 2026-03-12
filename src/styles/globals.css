@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
+@source "../**/*.tsx";
+@source "../../src/components/**/*.tsx";
+@source "../../src/lib/**/*.ts";
 
 /*
  * Redial light theme — scoped to .__tuner-root
@@ -75,10 +78,8 @@
   margin: 0;
 }
 
-.__tuner-header *,
-.__tuner-footer * {
-  padding: 0;
-}
+/* Note: removed aggressive padding reset on header/footer descendants.
+   Tailwind utilities (with important: true) handle all spacing. */
 
 /* Scrollbar styling */
 .__tuner-root::-webkit-scrollbar {
