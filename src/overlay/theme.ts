@@ -119,7 +119,7 @@ export const checkerboard =
 // ─── Layout Dimensions ──────────────────────────────────────────
 
 export const layout = {
-  panelWidth: 300,
+  panelWidth: 340,
   panelRadius: 10,
   sectionPadding: "10px 12px 6px",
   sectionBodyPadding: 8,
