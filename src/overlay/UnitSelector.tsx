@@ -176,9 +176,9 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
         className={cn(
-          "h-[20px] px-1.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded cursor-pointer text-[var(--muted-foreground)] hover:border-[rgba(255,255,255,0.2)] transition-colors",
+          "h-[20px] px-1.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded cursor-pointer text-[var(--muted-foreground)] hover:border-[rgba(0,0,0,0.15)] transition-colors",
           "flex items-center justify-center max-w-[36px] leading-none",
-          open && "bg-[rgba(99,102,241,0.25)] border-[rgba(99,102,241,0.4)] text-[#a5b4fc]"
+          open && "bg-[rgba(193,122,80,0.15)] border-[rgba(193,122,80,0.4)] text-[#c17a50]"
         )}
       >
         {value}
@@ -248,7 +248,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           {hasVariables && (
             <>
               <div className="h-px bg-[var(--border)] my-1" />
-              <div className="px-2 py-0.5 text-[9px] text-[rgba(255,255,255,0.3)] uppercase tracking-wider">
+              <div className="px-2 py-0.5 text-[9px] text-[rgba(0,0,0,0.3)] uppercase tracking-wider">
                 Variables
               </div>
               {variableOptions!.map((v) => {
@@ -264,14 +264,14 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
                     className={cn(
                       "flex items-center justify-between gap-1.5 px-2 py-1 text-[10px] font-mono cursor-pointer hover:bg-[var(--accent)]",
-                      "leading-4 transition-colors text-[rgba(255,255,255,0.7)]",
+                      "leading-4 transition-colors text-[rgba(0,0,0,0.7)]",
                       isHighlighted && "bg-[var(--accent)]"
                     )}
                   >
                     <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                       {v.name.replace(/^--/, "")}
                     </span>
-                    <span className="text-[rgba(255,255,255,0.3)] shrink-0 text-[9px]">
+                    <span className="text-[rgba(0,0,0,0.3)] shrink-0 text-[9px]">
                       {v.resolvedValue}
                     </span>
                   </div>
@@ -288,7 +288,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           className={cn(
             "absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2",
             "bg-[var(--popover)] border border-[var(--border)] rounded",
-            "px-2 py-0.5 text-[10px] font-mono text-[rgba(255,255,255,0.85)]",
+            "px-2 py-0.5 text-[10px] font-mono text-[rgba(0,0,0,0.85)]",
             "whitespace-nowrap shadow-md z-[200] pointer-events-none",
             "transition-all duration-300",
             tooltipPhase === "in" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"

@@ -166,10 +166,10 @@ export function SpacingValuePopover({
         left: `${left}px`,
         top: `${top}px`,
         width: `${popoverWidth}px`,
-        background: "#2a2a2a",
-        border: "1px solid rgba(255,255,255,0.15)",
+        background: "#f5f0ea",
+        border: "1px solid rgba(0,0,0,0.08)",
         borderRadius: "6px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
         zIndex: 2147483647,
         padding: "8px",
         fontFamily: "system-ui, -apple-system, sans-serif",
@@ -183,7 +183,7 @@ export function SpacingValuePopover({
           -webkit-appearance: none;
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: #6366f1;
+          background: #c17a50;
           border: 2px solid #fff;
           cursor: pointer;
           margin-top: -4.5px;
@@ -191,7 +191,7 @@ export function SpacingValuePopover({
         .spacing-popover-slider::-moz-range-thumb {
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: #6366f1;
+          background: #c17a50;
           border: 2px solid #fff;
           cursor: pointer;
         }
@@ -209,10 +209,10 @@ export function SpacingValuePopover({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(255,255,255,0.08)",
+            background: "rgba(0,0,0,0.04)",
             borderRadius: "3px",
             fontSize: "12px",
-            color: "rgba(255,255,255,0.5)",
+            color: "rgba(0,0,0,0.45)",
             flexShrink: 0,
           }}
         >
@@ -226,17 +226,17 @@ export function SpacingValuePopover({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => {
             commitInput();
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
           }}
           onKeyDown={handleInputKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           style={{
             width: "36px",
             height: "24px",
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.15)",
+            background: "rgba(0,0,0,0.04)",
+            border: "1px solid rgba(0,0,0,0.08)",
             borderRadius: "3px",
-            color: "rgba(255,255,255,0.9)",
+            color: "rgba(0,0,0,0.87)",
             fontSize: "11px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
             textAlign: "center",
@@ -245,7 +245,7 @@ export function SpacingValuePopover({
             flexShrink: 0,
           }}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.6)";
+            (e.currentTarget as HTMLElement).style.borderColor = "rgba(193,122,80,0.6)";
           }}
         />
 
@@ -272,7 +272,7 @@ export function SpacingValuePopover({
               height: "3px",
               appearance: "none",
               WebkitAppearance: "none",
-              background: `linear-gradient(to right, #6366f1 ${sliderPct}%, rgba(255,255,255,0.15) ${sliderPct}%)`,
+              background: `linear-gradient(to right, #c17a50 ${sliderPct}%, rgba(0,0,0,0.08) ${sliderPct}%)`,
               borderRadius: "2px",
               outline: "none",
               cursor: "pointer",
@@ -290,10 +290,10 @@ export function SpacingValuePopover({
             style={{
               height: "24px",
               padding: "0 6px",
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(99,102,241,0.4)",
+              background: "rgba(0,0,0,0.04)",
+              border: "1px solid rgba(193,122,80,0.4)",
               borderRadius: "3px",
-              color: "rgba(255,255,255,0.8)",
+              color: "rgba(0,0,0,0.8)",
               fontSize: "10px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               cursor: "pointer",
@@ -312,10 +312,10 @@ export function SpacingValuePopover({
                 top: "calc(100% + 2px)",
                 right: 0,
                 minWidth: "48px",
-                background: "#333",
-                border: "1px solid rgba(255,255,255,0.15)",
+                background: "#f5f0ea",
+                border: "1px solid rgba(0,0,0,0.08)",
                 borderRadius: "4px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
                 zIndex: 10,
                 padding: "2px 0",
               }}
@@ -336,8 +336,8 @@ export function SpacingValuePopover({
                     padding: "3px 8px",
                     fontSize: "10px",
                     fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: u === unit ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: u === unit ? "#6366f1" : "transparent",
+                    color: u === unit ? "#fff" : "rgba(0,0,0,0.6)",
+                    background: u === unit ? "#c17a50" : "transparent",
                     cursor: "pointer",
                     textTransform: "uppercase",
                     textAlign: "left",
@@ -346,7 +346,7 @@ export function SpacingValuePopover({
                   }}
                   onMouseEnter={(e) => {
                     if (u !== unit)
-                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                      (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
                   }}
                   onMouseLeave={(e) => {
                     if (u !== unit)
@@ -371,13 +371,13 @@ export function SpacingValuePopover({
             style={{
               height: "28px",
               background:
-                value === preset ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+                value === preset ? "rgba(193,122,80,0.15)" : "rgba(0,0,0,0.04)",
               border:
                 value === preset
-                  ? "1px solid rgba(99,102,241,0.4)"
-                  : "1px solid rgba(255,255,255,0.1)",
+                  ? "1px solid rgba(193,122,80,0.4)"
+                  : "1px solid rgba(0,0,0,0.08)",
               borderRadius: "4px",
-              color: value === preset ? "#fff" : "rgba(255,255,255,0.6)",
+              color: value === preset ? "#c17a50" : "rgba(0,0,0,0.6)",
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               cursor: "pointer",
@@ -386,14 +386,14 @@ export function SpacingValuePopover({
             }}
             onMouseEnter={(e) => {
               if (value !== preset) {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.2)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.12)";
               }
             }}
             onMouseLeave={(e) => {
               if (value !== preset) {
-                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
+                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
               }
             }}
           >

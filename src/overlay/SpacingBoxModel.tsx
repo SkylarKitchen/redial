@@ -192,7 +192,7 @@ export function SpacingBoxModel({
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: nonDefault ? "rgba(119,166,253,0.95)" : "rgba(255,255,255,0.3)",
+          color: nonDefault ? "rgba(193,122,80,0.95)" : "rgba(0,0,0,0.3)",
           cursor: "ew-resize",
           padding: "2px 4px",
           borderRadius: "3px",
@@ -206,15 +206,15 @@ export function SpacingBoxModel({
         // --- Hover: highlight + tooltip ---
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.background = "rgba(255,255,255,0.12)";
-          el.style.color = nonDefault ? "rgba(139,186,255,1)" : "rgba(255,255,255,0.95)";
+          el.style.background = "rgba(0,0,0,0.08)";
+          el.style.color = nonDefault ? "rgba(193,122,80,1)" : "rgba(0,0,0,0.87)";
           highlightZone(group);
           setTooltip({ prop, rect: el.getBoundingClientRect() });
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "transparent";
-          el.style.color = nonDefault ? "rgba(119,166,253,0.95)" : "rgba(255,255,255,0.3)";
+          el.style.color = nonDefault ? "rgba(193,122,80,0.95)" : "rgba(0,0,0,0.3)";
           clearZone(group);
           setTooltip(null);
         }}
@@ -339,7 +339,7 @@ export function SpacingBoxModel({
           }
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)";
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLElement).style.boxShadow = "none";
@@ -357,7 +357,7 @@ export function SpacingBoxModel({
         ref={marginZoneRef}
         style={{
           position: "relative",
-          border: "1px solid rgba(255,255,255,0.12)",
+          border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: "4px",
           background: MARGIN_BASE,
           padding: "0",
@@ -381,7 +381,7 @@ export function SpacingBoxModel({
               fontSize: "8px",
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              color: "rgba(255,255,255,0.3)",
+              color: "rgba(0,0,0,0.3)",
             }}
           >
             Margin
@@ -405,7 +405,7 @@ export function SpacingBoxModel({
             ref={paddingZoneRef}
             style={{
               flex: 1,
-              border: "1px solid rgba(255,255,255,0.12)",
+              border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: "3px",
               background: PADDING_BASE,
               margin: "2px 0",
@@ -430,7 +430,7 @@ export function SpacingBoxModel({
                   fontSize: "8px",
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
-                  color: "rgba(255,255,255,0.3)",
+                  color: "rgba(0,0,0,0.3)",
                 }}
               >
                 Padding
@@ -457,7 +457,7 @@ export function SpacingBoxModel({
                 style={{
                   flex: 1,
                   height: "20px",
-                  background: "rgba(255, 255, 255, 0.08)",
+                  background: "rgba(0, 0, 0, 0.04)",
                   borderRadius: "2px",
                   margin: "0 4px",
                 }}
@@ -495,8 +495,8 @@ export function SpacingBoxModel({
               left: `${tooltip.rect.left + tooltip.rect.width / 2}px`,
               top: `${tooltip.rect.top - 30}px`,
               transform: "translateX(-50%)",
-              background: "rgba(40, 40, 40, 0.95)",
-              color: "rgba(255,255,255,0.9)",
+              background: "rgba(255, 255, 255, 0.95)",
+              color: "rgba(0,0,0,0.87)",
               fontSize: "11px",
               fontFamily: "system-ui, -apple-system, sans-serif",
               padding: "4px 10px",
@@ -504,8 +504,8 @@ export function SpacingBoxModel({
               whiteSpace: "nowrap",
               pointerEvents: "none",
               zIndex: 2147483647,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+              border: "1px solid rgba(0,0,0,0.08)",
             }}
           >
             {propLabel(tooltip.prop)}
