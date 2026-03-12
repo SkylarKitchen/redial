@@ -93,6 +93,11 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const [gapUnit, setGapUnit] = useState(() => detectUnit(element, "gap"));
   const [flexBasisUnit, setFlexBasisUnit] = useState(() => detectUnit(element, "flex-basis"));
 
+  // Conversion hints
+  const { conversionHint: gapHint, fireConversionHint: fireGapHint } = useConversionHint();
+  const { conversionHint: colGapHint, fireConversionHint: fireColGapHint } = useConversionHint();
+  const { conversionHint: basisHint, fireConversionHint: fireBasisHint } = useConversionHint();
+
   // ── Helpers ──
 
   const resetCss = useCallback(

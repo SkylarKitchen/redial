@@ -400,7 +400,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+  }, [selectedEl, selecting, diffMode, showSearch, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
