@@ -98,7 +98,7 @@ const hasEyeDropper =
 // ─── Constants ───────────────────────────────────────────────────
 
 const CANVAS_W = 216;
-const CANVAS_H = 150;
+const CANVAS_H = 110;
 const SLIDER_H = 12;
 const HANDLE_SIZE = 14;
 const SWATCHES_KEY = "__tuner-color-swatches";
