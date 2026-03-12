@@ -567,33 +567,6 @@ export function resetAndReadNum(element: Element, prop: string): number {
 
 // --- Transition application ---
 
-/**
- * Convert a spring/easing config to a CSS transition and apply it.
- * Spring params are approximated as cubic-bezier for CSS.
- */
-export function applyTransition(
-  el: Element,
-  config: { type: string; visualDuration?: number; bounce?: number; duration?: number; ease?: number[] }
-): void {
-  if (config.type === "spring") {
-    const duration = config.visualDuration ?? 0.3;
-    const bounce = config.bounce ?? 0;
-    const easing =
-      bounce <= 0
-        ? "ease"
-        : `cubic-bezier(0.2, ${(1 + bounce).toFixed(2)}, ${(0.8 - bounce * 0.4).toFixed(2)}, 1)`;
-    applyInlineStyle(el, "transition", `all ${duration}s ${easing}`);
-  } else if (config.type === "easing") {
-    const duration = config.duration ?? 0.3;
-    const [x1, y1, x2, y2] = config.ease ?? [0.4, 0, 0.2, 1];
-    applyInlineStyle(
-      el,
-      "transition",
-      `all ${duration}s cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`
-    );
-  }
-}
-
 // --- CSS Custom Property Overrides ---
 
 /**
