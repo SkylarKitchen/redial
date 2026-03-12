@@ -231,7 +231,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onDoubleClick={selectAllOnDoubleClick}
       className={cn(
         "h-[26px] w-10 bg-[var(--input)] border border-[var(--border)] rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
-        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(193,122,80,0.5)]"
+        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
       )}
     />
   );
@@ -666,7 +666,7 @@ export function ColorRow({
         className={cn(
           "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
           "focus:ring-2 focus:ring-[var(--ring)]",
-          varName ? "border-2 border-[rgba(193,122,80,0.6)]" : "border border-[var(--border)]"
+          varName ? "border-2 border-[rgba(217,119,87,0.6)]" : "border border-[var(--border)]"
         )}
         tabIndex={0}
         role="button"
@@ -688,7 +688,7 @@ export function ColorRow({
         title={varName ? value : undefined}
         className={cn(
           "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0",
-          varName ? "text-[rgba(193,122,80,0.8)]" : "text-[var(--muted-foreground)]"
+          varName ? "text-[rgba(217,119,87,0.8)]" : "text-[var(--muted-foreground)]"
         )}
       >
         {displayLabel}
@@ -731,7 +731,7 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
         className={cn(
           "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
           "text-[var(--foreground)] text-[10px] font-mono px-1.5 outline-none",
-          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(193,122,80,0.5)]"
+          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
         )}
         tabIndex={0}
         value={value}
@@ -804,7 +804,7 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 bg-[rgba(0,0,0,0.07)] border border-[rgba(193,122,80,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          className="w-7 bg-[rgba(0,0,0,0.07)] border border-[rgba(217,119,87,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
           onClick={(e) => e.stopPropagation()}
         />
       );

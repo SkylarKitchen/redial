@@ -2,8 +2,8 @@
  * theme.ts — Canonical color tokens for all panel components
  *
  * Every color in the overlay must reference these tokens.
- * Mirrors the CSS custom properties in globals.css so inline styles
- * stay in sync with Tailwind utility classes.
+ * Values sourced from design-tokens.css (Anthropic Design System).
+ * Inline styles reference these; Tailwind classes use the same values.
  *
  * Pattern follows timing.ts — single source of truth, import everywhere.
  */
@@ -11,29 +11,31 @@
 // ─── Core Palette ────────────────────────────────────────────────
 
 export const color = {
-  /** Page background — #f5f0ea */
-  background: "#f5f0ea",
-  /** Text — rgba(0,0,0,0.87) */
-  foreground: "rgba(0,0,0,0.87)",
+  /** Panel background — --bg-primary */
+  background: "#FAF9F5",
+  /** Text — --fg-primary */
+  foreground: "#141413",
 
-  /** Terracotta accent */
-  primary: "#c17a50",
+  /** Clay accent — --accent-clay */
+  primary: "#D97757",
+  /** Clay hover — --accent-clay-interactive */
+  primaryHover: "#C6613F",
   primaryForeground: "#ffffff",
 
-  /** Popover/dropdown surface — #eae5df */
-  popover: "#eae5df",
+  /** Popover/dropdown surface — --bg-secondary */
+  popover: "#F5F4ED",
 
-  /** Muted surface — rgba(0,0,0,0.05) */
+  /** Muted surface */
   muted: "rgba(0,0,0,0.05)",
-  /** Labels, secondary text — rgba(0,0,0,0.45) */
-  mutedForeground: "rgba(0,0,0,0.45)",
+  /** Labels, secondary text — --fg-tertiary */
+  mutedForeground: "#5E5D59",
 
-  /** Input background — rgba(0,0,0,0.04) */
+  /** Input background */
   input: "rgba(0,0,0,0.04)",
-  /** Default border — rgba(0,0,0,0.08) */
-  border: "rgba(0,0,0,0.08)",
-  /** Focus ring — rgba(193,122,80,0.3) */
-  ring: "rgba(193,122,80,0.3)",
+  /** Default border — --border-tertiary */
+  border: "rgba(0,0,0,0.10)",
+  /** Focus ring — accent-clay at 30% */
+  ring: "rgba(217,119,87,0.3)",
 
   /** Destructive red */
   destructive: "#ef4444",
@@ -41,8 +43,8 @@ export const color = {
 
 // ─── Opacity Variants ────────────────────────────────────────────
 
-/** Primary color at a given alpha. e.g. primaryAlpha(0.3) → "rgba(193,122,80,0.3)" */
-export const primaryAlpha = (a: number) => `rgba(193,122,80,${a})`;
+/** Accent clay at a given alpha. rgb(217,119,87) = #D97757 */
+export const primaryAlpha = (a: number) => `rgba(217,119,87,${a})`;
 
 /** Black at a given alpha. e.g. blackAlpha(0.12) → "rgba(0,0,0,0.12)" */
 export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;
@@ -50,11 +52,11 @@ export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;
 // ─── Semantic Aliases ────────────────────────────────────────────
 
 export const text = {
-  /** Primary text — 87% opacity */
+  /** --fg-primary */
   primary: color.foreground,
-  /** Secondary text — 70% */
-  secondary: "rgba(0,0,0,0.7)",
-  /** Label/hint text — 45% (same as mutedForeground) */
+  /** --fg-secondary */
+  secondary: "#30302E",
+  /** --fg-tertiary (same as mutedForeground) */
   label: color.mutedForeground,
   /** Disabled/placeholder — 35% */
   disabled: "rgba(0,0,0,0.35)",
@@ -63,16 +65,16 @@ export const text = {
 } as const;
 
 export const border = {
-  /** Default — 8% */
+  /** --border-tertiary (10%) */
   default: color.border,
-  /** Subtle — 6% (section dividers) */
+  /** Subtle — 6% (section dividers, lighter than any token) */
   subtle: "rgba(0,0,0,0.06)",
-  /** Input border — 7% */
-  input: "rgba(0,0,0,0.07)",
-  /** Hover — 12% */
-  hover: "rgba(0,0,0,0.12)",
-  /** Strong — 15% */
-  strong: "rgba(0,0,0,0.15)",
+  /** Input border — --border-tertiary */
+  input: "rgba(0,0,0,0.10)",
+  /** Hover — --border-secondary (18%) */
+  hover: "rgba(0,0,0,0.18)",
+  /** Strong — --border-primary (30%) */
+  strong: "rgba(0,0,0,0.30)",
 } as const;
 
 export const surface = {
@@ -105,6 +107,9 @@ export const focusBorder = (focused: boolean) =>
 
 /** Focus ring box-shadow. */
 export const focusRing = `0 0 0 2px ${color.ring}`;
+
+/** Background at a given alpha. rgb(250,249,245) = #FAF9F5 */
+export const bgAlpha = (a: number) => `rgba(250,249,245,${a})`;
 
 /** Light-theme checkerboard for opacity/transparency backgrounds. */
 export const checkerboard =

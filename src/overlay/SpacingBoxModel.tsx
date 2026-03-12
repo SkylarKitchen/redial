@@ -192,7 +192,7 @@ export function SpacingBoxModel({
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: nonDefault ? "rgba(193,122,80,0.95)" : "rgba(0,0,0,0.25)",
+          color: nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.25)",
           cursor: "ew-resize",
           padding: "2px 4px",
           borderRadius: "3px",
@@ -207,14 +207,14 @@ export function SpacingBoxModel({
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "rgba(0,0,0,0.08)";
-          el.style.color = nonDefault ? "rgba(193,122,80,1)" : "rgba(0,0,0,0.87)";
+          el.style.color = nonDefault ? "rgba(217,119,87,1)" : "rgba(0,0,0,0.87)";
           highlightZone(group);
           setTooltip({ prop, rect: el.getBoundingClientRect() });
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "transparent";
-          el.style.color = nonDefault ? "rgba(193,122,80,0.95)" : "rgba(0,0,0,0.25)";
+          el.style.color = nonDefault ? "rgba(217,119,87,0.95)" : "rgba(0,0,0,0.25)";
           clearZone(group);
           setTooltip(null);
         }}
@@ -339,7 +339,7 @@ export function SpacingBoxModel({
           }
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)";
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLElement).style.boxShadow = "none";

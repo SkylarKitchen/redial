@@ -1,14 +1,14 @@
 import { defineConfig } from "tsup";
 
-export default defineConfig({
+export default defineConfig((options) => ({
   entry: ["src/index.tsx"],
   format: ["esm"],
   dts: true,
   splitting: false,
   sourcemap: true,
-  clean: true,
+  clean: !options.watch,
   external: ["react", "react-dom", "next"],
-  esbuildOptions(options) {
-    options.jsx = "automatic";
+  esbuildOptions(esbuildOpts) {
+    esbuildOpts.jsx = "automatic";
   },
-});
+}));
