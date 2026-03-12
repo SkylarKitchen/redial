@@ -39,11 +39,12 @@ const SPACING_EXCEPTIONS: Record<string, string> = { "1px": "px" };
 
 function spacingValue(px: string): string {
   if (SPACING_EXCEPTIONS[px]) return SPACING_EXCEPTIONS[px];
+  // Only apply the /4 scale to px values; everything else goes to bracket syntax
+  if (!px.endsWith("px")) return `[${escapeArbitrary(px)}]`;
   const num = parseFloat(px);
   if (isNaN(num)) return `[${escapeArbitrary(px)}]`;
   if (num === 0) return "0";
   const tw = num / 4;
-  // Clean decimals: 0.5, 1.5, etc. are valid Tailwind values
   if (Number.isFinite(tw)) return String(tw);
   return `[${px}]`;
 }
@@ -109,7 +110,7 @@ const CONVERTERS: Record<string, Converter> = {
     if (v === "underline") return "underline";
     if (v === "overline") return "overline";
     if (v === "line-through") return "line-through";
-    return `decoration-[${v}]`;
+    return `decoration-[${escapeArbitrary(v)}]`;
   },
   "text-transform": (v) => {
     if (v === "none") return "normal-case";

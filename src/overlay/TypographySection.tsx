@@ -168,6 +168,7 @@ export const TypographySection = memo(function TypographySection({
         "font-family", "font-weight", "font-size", "line-height",
         "letter-spacing", "color", "text-align", "text-decoration", "text-transform",
       ])}
+      forceOpen={forceOpen}
     >
       {/* Font family dropdown */}
       <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview />
