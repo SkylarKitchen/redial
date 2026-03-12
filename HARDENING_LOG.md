@@ -35,8 +35,8 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] Server module review: commit.ts edge cases and error handling
 
 ### Tier 5 — Performance Review
-- [ ] Bundle audit: identify heavy imports or unnecessary dependencies
-- [ ] Re-render audit: find React state updates that trigger excessive re-renders
+- [x] Bundle audit: identify heavy imports or unnecessary dependencies
+- [x] Re-render audit: find React state updates that trigger excessive re-renders
 
 ---
 
@@ -76,3 +76,12 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - **Dead code scan**: Audited all exports in src/. Found 1 genuinely dead function (`applyTransition` in apply.ts) — removed. Other "dead" exports are test-only helpers or internally-used functions. Noted `getAuthoredValue` duplication between `getAuthoredValue.ts` and `panelUtils.ts`.
 - **Type safety audit**: All `any` usages in production code are justified (webpack HMR access, React fiber internals). No gratuitous `any` to fix.
 - **Server review**: commit.ts edge cases addressed in Tier 1 (hex/var() broad replacement).
+
+### Tier 5 — Performance Review (2026-03-11)
+- **Bundle audit**: lucide-react tree-shakes properly (individual imports). motion only used in Footer.tsx. No barrel imports. Overlay.tsx imports 28 exports from apply.ts (medium concern — could lazy-import handlers).
+- **Re-render audit findings** (none critical for a dev tool):
+  - MEDIUM: PositionSection.tsx:80 — inline `units` object prop recreated each render (could memoize)
+  - MEDIUM: 5 section components create inline property arrays for `sectionInd()` each render (could extract to constants)
+  - MEDIUM: Leaf components (SpacingBoxModel, SizeInputCell, PositionOffsetDiagram) lack `memo()` wrappers
+  - LOW: Header.tsx, Footer.tsx, controls.tsx — direct DOM style mutations in hover handlers (works, bypasses reconciliation)
+  - POSITIVE: WebflowPanel.tsx `ctx` properly memoized with useMemo, PropertySearch has good useCallback patterns
