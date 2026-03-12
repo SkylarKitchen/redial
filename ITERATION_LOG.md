@@ -571,4 +571,24 @@ Additional UX enhancements integrated from parallel agent work:
 
 ---
 
+### Phase J — Webflow UX interaction polish (10-agent swarm) (2026-03-11)
+
+Built 10 UX features in parallel via isolated worktree agents, then merged:
+
+**1. Wire BoxModelOverlay** — 'M' shortcut toggle, Box icon in Spacing section header
+**2. Wire PropertySearch (Cmd+F)** — search bar filters sections, '/' hotkey, Escape closes
+**3. Keyboard Help Modal (?)** — centered modal with 6 shortcut categories, capture-phase Escape
+**4. Panel Snap-to-Edge** — 20px threshold, 16px margin, 150ms transition on release
+**5. Transform Origin 2D Picker** — 3x3 grid replacing dropdown, keyword+percentage parsing
+**6. Transition Play Preview** — ▶ button per transition, property-aware from/to animation
+**7. Type-Ahead in Dropdowns** — trigger-to-list delegation fix, 500ms prefix buffer
+**8. Unit Conversion Tooltips** — "16px → 1em (base: 16px)" tooltip, 2s auto-dismiss, 5 sections wired
+**9. Breadcrumb Collapse** — 4+ items collapse to "first > ... > last 2", expandable
+**10. Dimensions Badge** — "W × H" pill + tag label on page, RAF-synced
+**Bonus** — Eye/EyeOff visibility toggles on bg layers + transitions, alt+click label resets
+
+- Typecheck: PASS, Tests: 315/315 PASS
+
+---
+
 ## Done

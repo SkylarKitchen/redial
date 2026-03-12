@@ -61,6 +61,9 @@ function isNonDefault(key: FilterKey, value: number | undefined): boolean {
   return value !== FILTER_META[key].defaultValue;
 }
 
+/** Wrapper for useDragReorder — wraps filter keys in objects */
+interface FilterItem { key: FilterKey }
+
 export function FilterSliders({ values, onChange, type = "filter" }: FilterSlidersProps) {
   // Track which filters are explicitly shown (added by user)
   const [addedFilters, setAddedFilters] = useState<Set<FilterKey>>(() => {
@@ -71,6 +74,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     return set;
   });
   const [hiddenFilters, setHiddenFilters] = useState<Set<FilterKey>>(new Set());
+  const [filterOrder, setFilterOrder] = useState<FilterKey[]>([...ALL_FILTER_KEYS]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -86,13 +90,30 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     return () => document.removeEventListener("mousedown", handler);
   }, [dropdownOpen]);
 
-  const visibleFilters = ALL_FILTER_KEYS.filter(
+  const visibleFilters = filterOrder.filter(
     (key) => addedFilters.has(key) || isNonDefault(key, values[key])
   );
 
-  const availableFilters = ALL_FILTER_KEYS.filter(
+  const availableFilters = filterOrder.filter(
     (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
   );
+
+  // Wrap visible filters as items for useDragReorder
+  const filterItems: FilterItem[] = visibleFilters.map((key) => ({ key }));
+
+  const handleReorder = useCallback(
+    (items: FilterItem[]) => {
+      // Rebuild the full order: keep non-visible keys in place, update visible order
+      const reorderedKeys = items.map((i) => i.key);
+      const hiddenKeys = filterOrder.filter(
+        (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
+      );
+      setFilterOrder([...reorderedKeys, ...hiddenKeys]);
+    },
+    [filterOrder, addedFilters, values]
+  );
+
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(filterItems, handleReorder);
 
   const handleAdd = useCallback((key: FilterKey) => {
     setAddedFilters((prev) => new Set(prev).add(key));
