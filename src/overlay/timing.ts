@@ -17,5 +17,17 @@ export const timing = {
 
 export type TimingKey = keyof typeof timing;
 
-/** Convert timing token to CSS duration string: ms("fast") → "80ms" */
-export const ms = (key: TimingKey) => `${timing[key]}ms`;
+// ─── Reduced Motion Support ──────────────────────────────────────────
+/** Mutable flag set by Overlay.tsx based on prefers-reduced-motion media query */
+let _reducedMotion = false;
+
+export function setReducedMotion(v: boolean): void {
+  _reducedMotion = v;
+}
+
+export function getReducedMotion(): boolean {
+  return _reducedMotion;
+}
+
+/** Convert timing token to CSS duration string: ms("fast") → "80ms" (or "0ms" when reduced motion is active) */
+export const ms = (key: TimingKey) => _reducedMotion ? "0ms" : `${timing[key]}ms`;

@@ -97,26 +97,33 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
       contentDiv.style.height = `${rect.height - bt - bb - pt - pb}px`;
 
       container!.style.display = "block";
+    }
+
+    // Event-driven updates instead of perpetual RAF loop
+    function scheduleUpdate() {
+      cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(update);
     }
 
-    rafId = requestAnimationFrame(update);
+    // Initial paint
+    scheduleUpdate();
 
-    // ResizeObserver for layout changes
+    // Re-sync on scroll, window resize, and element layout changes
+    window.addEventListener("scroll", scheduleUpdate, true);
+    window.addEventListener("resize", scheduleUpdate);
     let ro: ResizeObserver | undefined;
     try {
-      ro = new ResizeObserver(() => {
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(update);
-      });
+      ro = new ResizeObserver(scheduleUpdate);
       ro.observe(element);
     } catch {
-      // ResizeObserver not available — RAF loop alone is sufficient
+      // ResizeObserver not available
     }
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", scheduleUpdate, true);
+      window.removeEventListener("resize", scheduleUpdate);
       ro?.disconnect();
       // Clean up child nodes
       while (container.firstChild) container.removeChild(container.firstChild);

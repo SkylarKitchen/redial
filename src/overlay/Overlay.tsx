@@ -26,7 +26,7 @@ import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement }
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
-import { ms } from "./timing";
+import { ms, setReducedMotion } from "./timing";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { CommandPalette } from "./CommandPalette";
@@ -148,7 +148,28 @@ export function Overlay() {
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle
 
+  // ─── Accessibility: prefers-reduced-motion (Item 59) ───────────────
+  const [reducedMotion, setReducedMotionState] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => {
+      const v = mq.matches;
+      setReducedMotionState(v);
+      setReducedMotion(v);
+    };
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
+  // ─── Accessibility: screen reader announcements (Item 60) ──────────
+  const [announcement, setAnnouncement] = useState("");
+  const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const announce = useCallback((message: string) => {
+    if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+    setAnnouncement(message);
+    announcementTimerRef.current = setTimeout(() => setAnnouncement(""), 1000);
+  }, []);
 
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
@@ -196,6 +217,7 @@ export function Overlay() {
       if (res.ok && currentEl) {
         setInferResult(infer(currentEl));
         setPanelKey((k) => k + 1);
+        announce("Saved");
       } else if (!res.ok) {
         console.warn("[Tuner] Save failed:", res.status, res.statusText);
       }
@@ -204,7 +226,7 @@ export function Overlay() {
     } finally {
       savingRef.current = false;
     }
-  }, []);
+  }, [announce]);
 
   const handleCopyShortcut = useCallback(() => {
     if (!selectedEl) return;
@@ -234,6 +256,7 @@ export function Overlay() {
         if (result) {
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
+          announce("Redo");
         }
         return;
       }
@@ -248,6 +271,7 @@ export function Overlay() {
           // Re-infer to update panel values
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
+          announce("Undo");
         }
         return;
       }
