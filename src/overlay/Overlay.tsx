@@ -1269,6 +1269,36 @@ export function Overlay() {
             ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
           }}
         >
+          {/* Reduced motion: disable transitions/animations when user prefers */}
+          {reducedMotion && (
+            <style dangerouslySetInnerHTML={{ __html: `
+              .__tuner-root *, .__tuner-root *::before, .__tuner-root *::after {
+                transition-duration: 0s !important;
+                animation-duration: 0s !important;
+              }
+            `}} />
+          )}
+
+          {/* Screen reader live region for announcements */}
+          <div
+            role="status"
+            aria-live="assertive"
+            aria-atomic="true"
+            style={{
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              padding: 0,
+              margin: "-1px",
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {announcement}
+          </div>
+
           <Header
             element={selectedEl}
             onClose={handleClose}

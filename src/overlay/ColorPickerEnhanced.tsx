@@ -102,6 +102,8 @@ const SLIDER_H = 12;
 const HANDLE_SIZE = 14;
 const SWATCHES_KEY = "__tuner-color-swatches";
 const MAX_SWATCHES = 16;
+const RECENT_KEY = "__tuner-recent-colors";
+const MAX_RECENT = 8;
 
 // ─── Checkerboard pattern for opacity backgrounds ────────────────
 
@@ -170,6 +172,28 @@ export function ColorPickerEnhanced({
     const next = swatches.filter((_, i) => i !== idx);
     saveSwatches(next);
   }, [swatches, saveSwatches]);
+
+  // ─── Recent Colors (auto-tracked, persisted via localStorage) ──
+  const [recentColors, setRecentColors] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  const addRecentColor = useCallback((hex: string) => {
+    const upper = hex.toUpperCase();
+    setRecentColors((prev) => {
+      const filtered = prev.filter((c) => c !== upper);
+      const next = [upper, ...filtered].slice(0, MAX_RECENT);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Debounced recent color tracking — fires 500ms after last emitChange
+  const recentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRecentRef = useRef<string | null>(null);
 
   // ─── CSS color variables discovery ─────────────────────────────
   const colorVars = useMemo<ColorVariable[]>(() => {

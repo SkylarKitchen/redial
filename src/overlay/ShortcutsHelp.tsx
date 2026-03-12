@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ms } from "./timing";
+import { useFocusTrap } from "./useFocusTrap";
 
 interface ShortcutsHelpProps {
   onClose: () => void;
