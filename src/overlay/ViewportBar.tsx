@@ -27,13 +27,13 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
         alignItems: "center",
         gap: "4px",
         padding: "4px 12px",
-        borderBottom: "1px solid rgba(255,255,255,0.1)",
+        borderBottom: "1px solid rgba(0,0,0,0.08)",
       }}
     >
       <span
         style={{
           fontSize: "10px",
-          color: "rgba(255,255,255,0.4)",
+          color: "rgba(0,0,0,0.4)",
           fontFamily: "system-ui, sans-serif",
           textTransform: "uppercase",
           letterSpacing: "0.5px",
@@ -55,8 +55,8 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
               border: "none",
               borderRadius: "6px",
               cursor: "pointer",
-              background: isActive ? "rgba(255, 255, 255, 0.15)" : "rgba(255,255,255,0.08)",
-              color: isActive ? "#fff" : "rgba(255, 255, 255, 0.6)",
+              background: isActive ? "rgba(0,0,0,0.1)" : "rgba(0,0,0,0.05)",
+              color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.5)",
               transition: `background ${ms("normal")}, color ${ms("normal")}`,
             }}
           >

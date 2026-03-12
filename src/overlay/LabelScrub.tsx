@@ -175,7 +175,7 @@ export function LabelScrub({
       style={{
         cursor: "ew-resize",
         userSelect: "none",
-        color: scrubbing ? "#6366f1" : "rgba(255,255,255,0.5)",
+        color: scrubbing ? "#c17a50" : "rgba(0,0,0,0.45)",
         fontSize: "11px",
         fontFamily: "system-ui, sans-serif",
         lineHeight: "20px",
