@@ -148,15 +148,19 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                 }}
                 className={cn(
                   "flex items-center justify-center h-7 min-w-[32px] px-2 cursor-pointer outline-none transition-colors",
-                  "border border-[rgba(0,0,0,0.12)]",
+                  "border",
                   !isFirst && "border-l-0",
                   isFirst && "rounded-l",
                   isLast && "rounded-r",
                   !isFirst && !isLast && "rounded-none",
                   isActive
-                    ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.87)] font-medium"
+                    ? "font-medium"
                     : "bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--accent)]",
                 )}
+                style={{
+                  borderColor: surface.track,
+                  ...(isActive ? { background: surface.active, color: blackAlpha(0.87) } : {}),
+                }}
               >
                 {opt.icon}
               </button>
@@ -165,13 +169,17 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
         </div>
         <button
           onClick={() => setMoreOpen((o) => !o)}
-          className={cn(
-            "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
-            direction.includes("reverse") ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
-          )}
+          className="w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
+          style={{
+            color: text.hint,
+            background: direction.includes("reverse") ? primaryAlpha(0.2) : "transparent",
+          }}
         ><ChevronDown size={12} strokeWidth={2} /></button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div
+            className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+            style={{ borderColor: surface.track }}
+          >
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const active = opt.value === direction;
               return (
@@ -182,8 +190,9 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                     "px-2 py-1 text-[11px] font-mono cursor-pointer",
                     active
                       ? "bg-[var(--primary)] text-white"
-                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
+                      : "hover:bg-[rgba(0,0,0,0.05)]",
                   )}
+                  style={!active ? { color: blackAlpha(0.5) } : undefined}
                 >
                   {opt.label}
                 </div>
@@ -212,7 +221,7 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
         <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 cursor-ew-resize">Gap</span>
       </LabelScrub>
       {/* Color swatch indicator */}
-      <div className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[rgba(0,0,0,0.12)] border border-[rgba(0,0,0,0.15)]" />
+      <div className="w-2.5 h-2.5 rounded-sm shrink-0 border" style={{ background: surface.track, borderColor: blackAlpha(0.15) }} />
       {/* Slider */}
       <input
         type="range" min={0} max={200} step={4} value={value}
@@ -227,15 +236,13 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
       {/* Value input */}
       <ValueInput value={value} onChange={onChange} />
       {/* Unit label */}
-      <span className="text-[9px] text-[rgba(0,0,0,0.35)] w-4 font-mono uppercase">{unit.toUpperCase()}</span>
+      <span className="text-[9px] w-4 font-mono uppercase" style={{ color: text.hint }}>{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
         onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
-        className={cn(
-          "w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0",
-          gapLinked ? "text-[rgba(0,0,0,0.35)]" : "text-[rgba(0,0,0,0.15)]",
-        )}
+        className="w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0"
+        style={{ color: gapLinked ? text.hint : blackAlpha(0.15) }}
       >
         {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
       </button>
