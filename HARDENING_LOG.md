@@ -14,8 +14,8 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] timing.ts — timing tokens, reducedMotion, ms()
 - [x] scrubState.ts — scrub active flag get/set
 - [x] scope.ts — scope resolution logic
-- [ ] colorVariables.ts — color variable utilities
-- [ ] discoverVariables.ts — CSS variable discovery
+- [x] colorVariables.ts — color variable utilities
+- [x] discoverVariables.ts — CSS variable discovery
 - [ ] sourcemap.ts — source map parsing
 - [ ] panelConstants.tsx — constant arrays, option definitions
 
@@ -53,3 +53,7 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 
 ### Tier 2 — scope.ts (2026-03-11)
 - **scope.ts test coverage**: 36 tests across getCSSModuleClasses (webpack/Turbopack detection), getReadableName (segment extraction), applyClassStyle/removeClassStyle/resetClassStyles/destroyClassStyles (style tag management), and getCustomProperties (var() resolution). +36 tests, 556 total.
+
+### Tier 2 — colorVariables.ts + discoverVariables.ts (2026-03-11)
+- **colorVariables.ts**: 20 tests — parseVarRef (var() extraction, whitespace, fallbacks, edge cases), resolveVarColor (DOM resolution), discoverColorVariables (smoke tests).
+- **discoverVariables.ts**: 56 tests — parseLength (all CSS units, decimals, negatives), LENGTH_RE (regex validation), detectVarType (color/length/number/string classification), walkRules (CSSRuleList traversal), discoverVariables (inline/inherited/root sources), discoverLengthVariables (filtering). +76 tests, 632 total.
