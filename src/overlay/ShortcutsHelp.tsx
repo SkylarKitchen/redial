@@ -41,6 +41,8 @@ const SHORTCUTS = [
       { keys: "⌘K", desc: "Command palette" },
       { keys: "?", desc: "This help" },
       { keys: "/", desc: "Search properties" },
+      { keys: "H", desc: "Toggle history drawer" },
+      { keys: "M", desc: "Toggle box model overlay" },
     ],
   },
 ];

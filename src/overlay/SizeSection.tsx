@@ -299,13 +299,17 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={null}
           onValueChange={handleMinHeightChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(minHeight, minHeightUnit, u, ctx, "height"); fireMinHHint(minHeight, minHeightUnit, c, u, ctx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
+          onUnitChange={(u) => { if (minHeightVar) setMinHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(minHeight, minHeightUnit, u, ctx, "height"); fireMinHHint(minHeight, minHeightUnit, c, u, ctx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
           onKeywordChange={() => {}}
           isModified={isDirty(element, "min-height")}
           min={0}
           max={1200}
           conversionHint={minHHint}
           property="min-height"
+          cssVar={minHeightVar}
+          cssVarResolved={resolveVar(minHeightVar)}
+          onCssVarChange={handleMinHeightVarChange}
+          variableOptions={varOptions}
         />
       </div>
       {/* Row 3: Max W + Max H */}
@@ -317,14 +321,18 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={maxWidthNone ? "none" : null}
           onValueChange={handleMaxWidthChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(maxWidth, maxWidthUnit, u, ctx, "width"); fireMaxWHint(maxWidth, maxWidthUnit, c, u, ctx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
-          onKeywordChange={(k) => { setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${maxWidthUnit}`); }}
+          onUnitChange={(u) => { if (maxWidthVar) setMaxWidthVar(null); const ctx = getConversionCtx(); const c = convertUnit(maxWidth, maxWidthUnit, u, ctx, "width"); fireMaxWHint(maxWidth, maxWidthUnit, c, u, ctx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
+          onKeywordChange={(k) => { if (maxWidthVar) setMaxWidthVar(null); setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${maxWidthUnit}`); }}
           isModified={isDirty(element, "max-width")}
           supportsNone
           min={0}
           max={1920}
           conversionHint={maxWHint}
           property="max-width"
+          cssVar={maxWidthVar}
+          cssVarResolved={resolveVar(maxWidthVar)}
+          onCssVarChange={handleMaxWidthVarChange}
+          variableOptions={varOptions}
         />
         <SizeInputCell
           label="Max H"
@@ -333,14 +341,18 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={maxHeightNone ? "none" : null}
           onValueChange={handleMaxHeightChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(maxHeight, maxHeightUnit, u, ctx, "height"); fireMaxHHint(maxHeight, maxHeightUnit, c, u, ctx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
-          onKeywordChange={(k) => { setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
+          onUnitChange={(u) => { if (maxHeightVar) setMaxHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(maxHeight, maxHeightUnit, u, ctx, "height"); fireMaxHHint(maxHeight, maxHeightUnit, c, u, ctx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
+          onKeywordChange={(k) => { if (maxHeightVar) setMaxHeightVar(null); setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
           isModified={isDirty(element, "max-height")}
           supportsNone
           min={0}
           max={1200}
           conversionHint={maxHHint}
           property="max-height"
+          cssVar={maxHeightVar}
+          cssVarResolved={resolveVar(maxHeightVar)}
+          onCssVarChange={handleMaxHeightVarChange}
+          variableOptions={varOptions}
         />
       </div>
       {/* Overflow: icon button row */}

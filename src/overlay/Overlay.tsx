@@ -32,7 +32,6 @@ import { PropertySearch } from "./PropertySearch";
 import { CommandPalette } from "./CommandPalette";
 import { ContextMenu } from "./ContextMenu";
 import { ShortcutsHelp } from "./ShortcutsHelp";
-import { ViewportBar } from "./ViewportBar";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
@@ -136,9 +135,6 @@ export function Overlay() {
     | { type: "contextMenu"; x: number; y: number };
   const [activeModal, setActiveModal] = useState<ActiveModal>({ type: "none" });
 
-  // Viewport width constraint
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
 
@@ -148,6 +144,54 @@ export function Overlay() {
   // History drawer
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+
+  // Subscribe to property changes for history tracking (debounced to avoid flooding during drags)
+  const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingHistoryRef = useRef<HistoryEntry | null>(null);
+  useEffect(() => {
+    const unsub = subscribeChanges((info) => {
+      const entry: HistoryEntry = {
+        timestamp: Date.now(),
+        property: info.prop,
+        from: info.from,
+        to: info.to,
+        selector: getSelector(info.el),
+      };
+      // Debounce: coalesce rapid changes to the same prop on the same element
+      if (
+        pendingHistoryRef.current &&
+        pendingHistoryRef.current.property === entry.property &&
+        pendingHistoryRef.current.selector === entry.selector
+      ) {
+        // Update the pending entry's "to" value
+        pendingHistoryRef.current.to = entry.to;
+        pendingHistoryRef.current.timestamp = entry.timestamp;
+        return;
+      }
+      // Flush previous pending entry
+      if (pendingHistoryRef.current) {
+        const pending = pendingHistoryRef.current;
+        setHistoryEntries((prev) => [...prev, pending]);
+      }
+      pendingHistoryRef.current = entry;
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+      historyTimerRef.current = setTimeout(() => {
+        if (pendingHistoryRef.current) {
+          const pending = pendingHistoryRef.current;
+          setHistoryEntries((prev) => [...prev, pending]);
+          pendingHistoryRef.current = null;
+        }
+      }, 300);
+    });
+    return () => {
+      unsub();
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+      // Flush on unmount
+      if (pendingHistoryRef.current) {
+        pendingHistoryRef.current = null;
+      }
+    };
+  }, []);
 
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
@@ -441,6 +485,13 @@ export function Overlay() {
         return;
       }
 
+      // H to toggle history drawer
+      if (e.key === "h" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setShowHistory((v) => !v);
+        return;
+      }
+
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setSelecting((s) => !s);
@@ -549,6 +600,7 @@ export function Overlay() {
     setActiveTab("common");
     setShowGridOverlay(false);
     setShowBoxModel(false);
+    setShowHistory(false);
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
@@ -573,7 +625,6 @@ export function Overlay() {
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
-    setViewportWidth(null);
     announce("Element deselected");
   }, [announce]);
 
@@ -599,6 +650,23 @@ export function Overlay() {
   const handleToggleSession = useCallback(() => {
     setSessionOpen((s) => !s);
   }, []);
+
+  // --- History: undo to a specific index ---
+  const handleUndoToIndex = useCallback((targetIndex: number) => {
+    // Undo repeatedly until we've removed all entries after targetIndex
+    const count = historyEntries.length - 1 - targetIndex;
+    for (let i = 0; i < count; i++) {
+      const result = undo();
+      if (!result) break;
+    }
+    // Truncate history to targetIndex + 1
+    setHistoryEntries((prev) => prev.slice(0, targetIndex + 1));
+    // Re-infer if we have a selected element
+    if (selectedEl) {
+      setInferResult(infer(selectedEl));
+      setPanelKey((k) => k + 1);
+    }
+  }, [historyEntries.length, selectedEl]);
 
   // --- Spacing box model change handler ---
   // Updates both the DOM (via applyInlineStyle) and the inferResult.spacing
@@ -968,24 +1036,6 @@ export function Overlay() {
     return () => document.removeEventListener("contextmenu", handleContextMenu, true);
   }, [selectedEl, selecting]);
 
-  // --- Viewport width constraint (responsive preview) ---
-  useEffect(() => {
-    const STYLE_ID = "__tuner-viewport-constraint";
-    if (viewportWidth === null) {
-      document.getElementById(STYLE_ID)?.remove();
-      return;
-    }
-
-    let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-    if (!style) {
-      style = document.createElement("style");
-      style.id = STYLE_ID;
-      document.head.appendChild(style);
-    }
-    style.textContent = `html { max-width: ${viewportWidth}px !important; margin: 0 auto !important; box-shadow: 1px 0 0 rgba(255,255,255,0.1), -1px 0 0 rgba(255,255,255,0.1); }`;
-
-    return () => { document.getElementById(STYLE_ID)?.remove(); };
-  }, [viewportWidth]);
 
   // --- CSS Import handler (paste CSS text from clipboard) ---
   const handleCSSImport = useCallback(async () => {
@@ -1362,7 +1412,6 @@ export function Overlay() {
               </span>
             </div>
           )}
-          <ViewportBar active={viewportWidth} onChange={setViewportWidth} />
           {/* ── Common / Custom tab bar ──────────────── */}
           <div
             style={{
@@ -1450,6 +1499,13 @@ export function Overlay() {
               open={sessionOpen}
               onResetAll={handleResetAll}
             />
+            {showHistory && (
+              <HistoryDrawer
+                entries={historyEntries}
+                onUndoToIndex={handleUndoToIndex}
+                onClose={() => setShowHistory(false)}
+              />
+            )}
           </div>
           <Footer
             element={selectedEl}
