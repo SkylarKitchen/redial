@@ -305,7 +305,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
               }}
             >
-              ×
+              {"\u00D7"}
             </button>
           </div>
         );
