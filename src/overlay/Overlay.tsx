@@ -1435,7 +1435,7 @@ export function Overlay() {
                     borderWidth: 0,
                     borderStyle: "none",
                     borderColor: "transparent",
-                    borderBottom: isActive ? "2px solid #c45d35" : "2px solid transparent",
+                    borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
                     padding: "7px 10px 5px",
                     fontSize: 11,
                     fontWeight: isActive ? 600 : 400,

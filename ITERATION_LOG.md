@@ -691,4 +691,14 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 
 ---
 
+### Iteration 53 — Accent color consolidation (2026-03-12)
+- **Save button**: changed background from `#2680EB` (blue) to `#6366f1` (indigo) in `Footer.tsx` ActionButton
+- **Save button shadow**: changed from `rgba(38, 128, 235, 0.4)` to `rgba(99, 102, 241, 0.4)` to match new background
+- **Tab underline**: changed active tab border from `#c45d35` (rust/orange) to `#6366f1` (indigo) in `Overlay.tsx`
+- **ScopePill font**: fixed font stack from bare `"monospace"` to `"ui-monospace, 'SF Mono', monospace"` in `Header.tsx` to match all other monospace usage
+- All accent colors now consistently use the indigo `#6366f1` family (sliders, focus rings, outlines, buttons, tabs)
+- Typecheck: PASS
+
+---
+
 ## Done

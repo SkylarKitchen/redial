@@ -310,7 +310,7 @@ function ScopePill({
       style={{
         padding: "2px 8px",
         fontSize: "10px",
-        fontFamily: "monospace",
+        fontFamily: "ui-monospace, 'SF Mono', monospace",
         border: active
           ? "1px solid rgba(255, 255, 255, 0.3)"
           : "1px solid rgba(255,255,255,0.15)",

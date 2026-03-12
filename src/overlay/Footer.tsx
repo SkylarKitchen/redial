@@ -328,7 +328,7 @@ function ActionButton({
         background: active
           ? "rgba(250, 204, 21, 0.12)"
           : primary
-            ? "#2680EB"
+            ? "#6366f1"
             : "rgba(255,255,255,0.08)",
         color: active
           ? "rgba(250, 204, 21, 0.9)"
@@ -336,7 +336,7 @@ function ActionButton({
             ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
         transition: `opacity ${ms("normal")}, background ${ms("normal")}`,
-        boxShadow: primary && !disabled ? "0 1px 3px rgba(38, 128, 235, 0.4)" : "none",
+        boxShadow: primary && !disabled ? "0 1px 3px rgba(99, 102, 241, 0.4)" : "none",
       }}
     >
       {children}
