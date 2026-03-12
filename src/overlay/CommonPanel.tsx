@@ -191,6 +191,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               <ColorRow
                 label="Bg"
                 value={bgColor}
+                computedProp="background-color"
+                computedElement={element}
                 onChange={(v) => {
                   setBgColor(v);
                   apply("background-color", v);
@@ -206,6 +208,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               max={100}
               step={1}
               unit="%"
+              computedProp="opacity"
+              computedElement={element}
               onChange={(v) => {
                 setOpacity(v);
                 apply("opacity", String(v / 100));
@@ -220,6 +224,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               max={100}
               step={4}
               unit="px"
+              computedProp="border-radius"
+              computedElement={element}
               onChange={(v) => {
                 setBorderRadius(v);
                 apply("border-radius", `${v}px`);
@@ -342,6 +348,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               max={120}
               step={1}
               unit="px"
+              computedProp="font-size"
+              computedElement={element}
               onChange={(v) => {
                 setFontSize(v);
                 apply("font-size", `${v}px`);
@@ -350,6 +358,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
             <ColorRow
               label="Color"
               value={fontColor}
+              computedProp="color"
+              computedElement={element}
               onChange={(v) => {
                 setFontColor(v);
                 apply("color", v);

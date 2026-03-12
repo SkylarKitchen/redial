@@ -1,9 +1,12 @@
 /**
  * SpacingGuidesOverlay.tsx — Webflow-style spacing visualization
  *
- * Shows green guide lines with arrows and dimension badges while the user
+ * Shows filled rectangular zones with horizontal hatching lines while the user
  * is actively scrubbing a spacing value.  Only the property group being
  * edited is visualised (margin OR padding, never both at once).
+ *
+ * Each side of the active group gets a filled zone with a striped pattern
+ * and a centered dimension badge showing the current pixel value.
  *
  * Visibility is driven by getScrubGroup() — the component self-hides
  * when no scrub is active, so it can be rendered unconditionally.
@@ -17,9 +20,9 @@ import { getScrubGroup } from "./scrubState";
 // ---------------------------------------------------------------------------
 
 const GUIDE_COLOR = "#4CAF50";
+const HATCH_FG = "rgba(76,175,80,0.18)";
+const HATCH_SPACING = 4; // px between hatching lines
 const Z_INDEX = 2147483645;
-const ARROW = 4;
-const MIN_ARROW_GAP = 10;
 const LABEL_FONT = "ui-monospace, 'SF Mono', monospace";
 
 // ---------------------------------------------------------------------------
@@ -35,11 +38,13 @@ interface Snapshot {
   bt: number; br: number; bb: number; bl: number;
 }
 
-interface Guide {
+interface ZoneRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   value: number;
-  vertical: boolean;
-  ax: number; ay: number;
-  bx: number; by: number;
+  side: "top" | "right" | "bottom" | "left";
 }
 
 // ---------------------------------------------------------------------------
@@ -72,36 +77,74 @@ function snapshotKey(s: Snapshot): string {
   return `${s.group},${s.top},${s.left},${s.width},${s.height},${s.mt},${s.mr},${s.mb},${s.ml},${s.pt},${s.pr},${s.pb},${s.pl}`;
 }
 
-function buildGuides(s: Snapshot): Guide[] {
-  const guides: Guide[] = [];
-  const cx = s.left + s.width / 2;
-  const cy = s.top + s.height / 2;
+// ---------------------------------------------------------------------------
+// Zone computation
+// ---------------------------------------------------------------------------
 
-  if (s.group === "margin") {
-    if (s.mt > 0) guides.push({ value: s.mt, vertical: true,
-      ax: cx, ay: s.top - s.mt, bx: cx, by: s.top });
-    if (s.mr > 0) guides.push({ value: s.mr, vertical: false,
-      ax: s.right, ay: cy, bx: s.right + s.mr, by: cy });
-    if (s.mb > 0) guides.push({ value: s.mb, vertical: true,
-      ax: cx, ay: s.bottom, bx: cx, by: s.bottom + s.mb });
-    if (s.ml > 0) guides.push({ value: s.ml, vertical: false,
-      ax: s.left - s.ml, ay: cy, bx: s.left, by: cy });
+function buildZones(snap: Snapshot): ZoneRect[] {
+  const zones: ZoneRect[] = [];
+
+  if (snap.group === "margin") {
+    // Top margin — full outer width
+    if (snap.mt > 0) zones.push({
+      x: snap.left - snap.ml, y: snap.top - snap.mt,
+      w: snap.width + snap.ml + snap.mr, h: snap.mt,
+      value: snap.mt, side: "top",
+    });
+    // Bottom margin — full outer width
+    if (snap.mb > 0) zones.push({
+      x: snap.left - snap.ml, y: snap.bottom,
+      w: snap.width + snap.ml + snap.mr, h: snap.mb,
+      value: snap.mb, side: "bottom",
+    });
+    // Left margin — excludes top/bottom corners
+    if (snap.ml > 0) zones.push({
+      x: snap.left - snap.ml, y: snap.top,
+      w: snap.ml, h: snap.height,
+      value: snap.ml, side: "left",
+    });
+    // Right margin — excludes top/bottom corners
+    if (snap.mr > 0) zones.push({
+      x: snap.right, y: snap.top,
+      w: snap.mr, h: snap.height,
+      value: snap.mr, side: "right",
+    });
   } else {
-    const pT = s.top + s.bt;
-    const pR = s.right - s.br;
-    const pB = s.bottom - s.bb;
-    const pL = s.left + s.bl;
-    if (s.pt > 0) guides.push({ value: s.pt, vertical: true,
-      ax: cx, ay: pT, bx: cx, by: pT + s.pt });
-    if (s.pr > 0) guides.push({ value: s.pr, vertical: false,
-      ax: pR - s.pr, ay: cy, bx: pR, by: cy });
-    if (s.pb > 0) guides.push({ value: s.pb, vertical: true,
-      ax: cx, ay: pB - s.pb, bx: cx, by: pB });
-    if (s.pl > 0) guides.push({ value: s.pl, vertical: false,
-      ax: pL, ay: cy, bx: pL + s.pl, by: cy });
+    // Padding zones — inside the border box
+    const iT = snap.top + snap.bt;
+    const iR = snap.right - snap.br;
+    const iB = snap.bottom - snap.bb;
+    const iL = snap.left + snap.bl;
+    const innerW = iR - iL;
+    const innerH = iB - iT;
+
+    // Top padding — full inner width
+    if (snap.pt > 0) zones.push({
+      x: iL, y: iT,
+      w: innerW, h: snap.pt,
+      value: snap.pt, side: "top",
+    });
+    // Bottom padding — full inner width
+    if (snap.pb > 0) zones.push({
+      x: iL, y: iB - snap.pb,
+      w: innerW, h: snap.pb,
+      value: snap.pb, side: "bottom",
+    });
+    // Left padding — excludes top/bottom corners
+    if (snap.pl > 0) zones.push({
+      x: iL, y: iT + snap.pt,
+      w: snap.pl, h: Math.max(0, innerH - snap.pt - snap.pb),
+      value: snap.pl, side: "left",
+    });
+    // Right padding — excludes top/bottom corners
+    if (snap.pr > 0) zones.push({
+      x: iR - snap.pr, y: iT + snap.pt,
+      w: snap.pr, h: Math.max(0, innerH - snap.pt - snap.pb),
+      value: snap.pr, side: "right",
+    });
   }
 
-  return guides;
+  return zones;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +161,8 @@ const BOX_LINE: React.CSSProperties = {
   ...BASE,
   boxSizing: "border-box",
 };
+
+const HATCH_BG = `repeating-linear-gradient(0deg, ${HATCH_FG} 0px, ${HATCH_FG} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
 
 const BADGE_STYLE: React.CSSProperties = {
   ...BASE,
@@ -181,8 +226,8 @@ export function SpacingGuidesOverlay({
   // Nothing to show when no scrub is active
   if (!snap) return null;
 
-  const guides = buildGuides(snap);
-  if (guides.length === 0) return null;
+  const zones = buildZones(snap);
+  if (zones.length === 0) return null;
 
   // Boundary boxes for visual context
   const marginBox = {
@@ -237,94 +282,57 @@ export function SpacingGuidesOverlay({
         </>
       )}
 
-      {guides.map((g, i) => (
-        <GuideLine key={i} guide={g} />
+      {/* Filled hatched zones + dimension badges */}
+      {zones.map((z, i) => (
+        <SpacingZone key={`${z.side}-${i}`} zone={z} />
       ))}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Per-side guide (arrows + measurement line + badge)
+// Per-side hatched zone with centered badge
 // ---------------------------------------------------------------------------
 
-function GuideLine({ guide: g }: { guide: Guide }) {
-  const gap = g.vertical ? Math.abs(g.by - g.ay) : Math.abs(g.bx - g.ax);
-  const showArrows = gap >= MIN_ARROW_GAP;
-  const midX = (g.ax + g.bx) / 2;
-  const midY = (g.ay + g.by) / 2;
-  const label = Math.round(g.value);
+function SpacingZone({ zone: z }: { zone: ZoneRect }) {
+  const label = Math.round(z.value);
+
+  // Badge position: centered in the zone
+  const badgeX = z.x + z.w / 2;
+  const badgeY = z.y + z.h / 2;
+
+  // Only show badge if zone is large enough to be readable
+  const showBadge = z.w >= 20 && z.h >= 14;
 
   return (
     <>
-      {/* Measurement line */}
-      {g.vertical ? (
-        <div style={{
-          ...BASE, left: g.ax, top: g.ay + (showArrows ? ARROW : 0),
-          width: 0,
-          height: Math.max(0, gap - (showArrows ? ARROW * 2 : 0)),
-          borderLeft: `1px solid ${GUIDE_COLOR}`, opacity: 0.7,
-        }} />
-      ) : (
-        <div style={{
-          ...BASE, left: g.ax + (showArrows ? ARROW : 0), top: g.ay,
-          width: Math.max(0, gap - (showArrows ? ARROW * 2 : 0)),
-          height: 0,
-          borderTop: `1px solid ${GUIDE_COLOR}`, opacity: 0.7,
-        }} />
-      )}
-
-      {/* Arrow at A (pointing toward B) */}
-      {showArrows && (
-        g.vertical ? (
-          <div style={{
-            ...BASE, left: g.ax - ARROW, top: g.ay,
-            width: 0, height: 0,
-            borderLeft: `${ARROW}px solid transparent`,
-            borderRight: `${ARROW}px solid transparent`,
-            borderTop: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
-          }} />
-        ) : (
-          <div style={{
-            ...BASE, left: g.ax, top: g.ay - ARROW,
-            width: 0, height: 0,
-            borderTop: `${ARROW}px solid transparent`,
-            borderBottom: `${ARROW}px solid transparent`,
-            borderLeft: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
-          }} />
-        )
-      )}
-
-      {/* Arrow at B (pointing toward A) */}
-      {showArrows && (
-        g.vertical ? (
-          <div style={{
-            ...BASE, left: g.bx - ARROW, top: g.by - ARROW,
-            width: 0, height: 0,
-            borderLeft: `${ARROW}px solid transparent`,
-            borderRight: `${ARROW}px solid transparent`,
-            borderBottom: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
-          }} />
-        ) : (
-          <div style={{
-            ...BASE, left: g.bx - ARROW, top: g.by - ARROW,
-            width: 0, height: 0,
-            borderTop: `${ARROW}px solid transparent`,
-            borderBottom: `${ARROW}px solid transparent`,
-            borderRight: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
-          }} />
-        )
-      )}
+      {/* Hatched fill */}
+      <div style={{
+        ...BASE,
+        left: z.x,
+        top: z.y,
+        width: z.w,
+        height: z.h,
+        background: HATCH_BG,
+        borderTop: z.side === "top" ? `1px solid ${GUIDE_COLOR}` : undefined,
+        borderBottom: z.side === "bottom" ? `1px solid ${GUIDE_COLOR}` : undefined,
+        borderLeft: z.side === "left" ? `1px solid ${GUIDE_COLOR}` : undefined,
+        borderRight: z.side === "right" ? `1px solid ${GUIDE_COLOR}` : undefined,
+        opacity: 0.9,
+        boxSizing: "border-box",
+      }} />
 
       {/* Dimension badge */}
-      <div style={{
-        ...BADGE_STYLE,
-        left: g.vertical ? midX + 8 : midX,
-        top: g.vertical ? midY : midY - 20,
-        transform: g.vertical ? "translateY(-50%)" : "translateX(-50%)",
-      }}>
-        {label}
-      </div>
+      {showBadge && (
+        <div style={{
+          ...BADGE_STYLE,
+          left: badgeX,
+          top: badgeY,
+          transform: "translate(-50%, -50%)",
+        }}>
+          {label}
+        </div>
+      )}
     </>
   );
 }
