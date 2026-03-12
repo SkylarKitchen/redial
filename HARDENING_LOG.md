@@ -29,10 +29,10 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] useClickOutside.ts — outside click detection
 
 ### Tier 4 — Code Quality Review
-- [ ] Dead code scan: unused exports across all .ts/.tsx files
-- [ ] Type safety: replace `any` types with proper types in overlay modules
+- [x] Dead code scan: unused exports across all .ts/.tsx files
+- [x] Type safety: replace `any` types with proper types in overlay modules
 - [ ] Consistency: naming patterns, import ordering
-- [ ] Server module review: commit.ts edge cases and error handling
+- [x] Server module review: commit.ts edge cases and error handling
 
 ### Tier 5 — Performance Review
 - [ ] Bundle audit: identify heavy imports or unnecessary dependencies
@@ -71,3 +71,8 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - Pure logic extracted as exported helpers from each hook for direct testability. +93 tests, 817 total.
 - **useDragReorder**: 23 tests — computeOverIndex closest-center algorithm (13), computeItemShift displacement ranges (10).
 - **useConversionHint**: 12 tests — buildConversionHint for all unit types, axes, edge values. +35 tests, 852 total.
+
+### Tier 4 — Code Quality (2026-03-11)
+- **Dead code scan**: Audited all exports in src/. Found 1 genuinely dead function (`applyTransition` in apply.ts) — removed. Other "dead" exports are test-only helpers or internally-used functions. Noted `getAuthoredValue` duplication between `getAuthoredValue.ts` and `panelUtils.ts`.
+- **Type safety audit**: All `any` usages in production code are justified (webpack HMR access, React fiber internals). No gratuitous `any` to fix.
+- **Server review**: commit.ts edge cases addressed in Tier 1 (hex/var() broad replacement).
