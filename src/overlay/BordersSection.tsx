@@ -4,7 +4,7 @@ import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
 import { convertUnit, conversionBasis } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp, resetAndReadNum } from "./apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";

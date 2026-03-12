@@ -9,7 +9,7 @@ import { Section, SelectRow, ColorRow } from "./controls";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { resetProp } from "./apply";
+import { resetProp, resetAndReadStr } from "./apply";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS } from "./panelConstants";
 

@@ -13,7 +13,7 @@ import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
-import { resetProp, resetAndReadNum } from "./apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControls";
 import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";

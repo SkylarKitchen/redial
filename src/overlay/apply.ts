@@ -565,6 +565,16 @@ export function resetAndReadNum(element: Element, prop: string): number {
   return parseFloat(getComputedStyle(element).getPropertyValue(prop).trim()) || 0;
 }
 
+/**
+ * Reset a CSS property and read back its computed value as a string.
+ * String counterpart to resetAndReadNum — avoids duplicating the
+ * resetProp + getComputedStyle + trim pattern in every section component.
+ */
+export function resetAndReadStr(element: Element, prop: string): string {
+  resetProp(element, prop);
+  return getComputedStyle(element).getPropertyValue(prop).trim();
+}
+
 // --- Transition application ---
 
 // --- CSS Custom Property Overrides ---

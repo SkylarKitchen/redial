@@ -22,7 +22,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
-import { beginBatch, endBatch, resetProp } from "./apply";
+import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,

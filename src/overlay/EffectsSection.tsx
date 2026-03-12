@@ -11,7 +11,7 @@ import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
-import { resetProp, resetAndReadNum } from "./apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import {
   parseNum,
   parseBoxShadow,

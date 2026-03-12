@@ -173,15 +173,24 @@ export const OBJECT_POSITION_OPTIONS = [
 // ─── Border Options ──────────────────────────────────────────────────
 
 export const BORDER_STYLE_OPTIONS = [
-  { value: "solid", label: "Solid" },
-  { value: "dashed", label: "Dashed" },
-  { value: "dotted", label: "Dotted" },
-  { value: "double", label: "Double" },
-  { value: "groove", label: "Groove" },
-  { value: "ridge", label: "Ridge" },
-  { value: "inset", label: "Inset" },
-  { value: "outset", label: "Outset" },
   { value: "none", label: "None" },
+  { value: "solid", label: "Solid" },
+  { value: "dotted", label: "Dotted" },
+  { value: "dashed", label: "Dashed" },
+];
+
+/** Border style icons for IconButtonGroup (matches Webflow's 4-option toggle). */
+const borderLineIcon = (dasharray?: string) => (
+  <svg width="14" height="14" viewBox="0 0 14 14" style={{ display: "block" }}>
+    <line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray={dasharray} />
+  </svg>
+);
+
+export const BORDER_STYLE_ICON_OPTIONS = [
+  { value: "none", title: "None", icon: <X size={12} strokeWidth={2} /> },
+  { value: "solid", title: "Solid", icon: borderLineIcon() },
+  { value: "dotted", title: "Dotted", icon: borderLineIcon("1 2") },
+  { value: "dashed", title: "Dashed", icon: borderLineIcon("4 2") },
 ];
 
 // ─── Effects Options ─────────────────────────────────────────────────
