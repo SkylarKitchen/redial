@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   color,
   text,
@@ -222,6 +223,8 @@ const iconBtnBase: React.CSSProperties = {
   minWidth: layout.iconBtnSize,
   padding: "0 6px",
   border: `1px solid ${surface.track}`,
+  cursor: "pointer",
+  userSelect: "none",
 };
 
 const iconBtnInactive: React.CSSProperties = {
@@ -246,6 +249,8 @@ const displayTabBase: React.CSSProperties = {
   fontSize: 10,
   fontFamily: font.mono,
   border: `1px solid ${surface.track}`,
+  cursor: "pointer",
+  userSelect: "none",
 };
 
 const displayTabInactive: React.CSSProperties = {
@@ -264,6 +269,8 @@ const sectionHeaderStyle: React.CSSProperties = {
   padding: layout.sectionPadding,
   display: "flex",
   justifyContent: "space-between",
+  cursor: "pointer",
+  userSelect: "none",
 };
 
 const sectionTitleStyle: React.CSSProperties = {
@@ -276,10 +283,7 @@ const chevronWrapStyle: React.CSSProperties = {
   color: blackAlpha(0.55),
   display: "flex",
   alignItems: "center",
-};
-
-const collapsedSectionStyle: React.CSSProperties = {
-  borderBottom: `1px solid ${surface.subtle}`,
+  transition: `transform ${timing.expand}ms ease`,
 };
 
 const rowStyle: React.CSSProperties = {
@@ -366,6 +370,8 @@ const footerBtnStandard: React.CSSProperties = {
   borderRadius: 6,
   background: surface.hover,
   color: blackAlpha(0.8),
+  cursor: "pointer",
+  userSelect: "none",
 };
 
 const footerBtnPrimary: React.CSSProperties = {
@@ -378,9 +384,11 @@ const footerBtnPrimary: React.CSSProperties = {
   background: color.primary,
   color: color.primaryForeground,
   boxShadow: `0 1px 3px ${primaryAlpha(0.4)}`,
+  cursor: "pointer",
+  userSelect: "none",
 };
 
-// ─── Sub-components for DRY rendering ───────────────────────────────────────
+// ─── Interactive Sub-components ─────────────────────────────────────────────
 
 function SliderThumb({ pct }: { pct: number }) {
   return (
@@ -394,23 +402,8 @@ function SliderThumb({ pct }: { pct: number }) {
       borderRadius: "50%",
       background: color.primary,
       border: `2px solid ${color.background}`,
+      pointerEvents: "none",
     }} />
-  );
-}
-
-// Intentional approximation: actual UI uses shadcn <Slider> with Radix primitives.
-// This static version uses a simple gradient + absolute-positioned thumb for Figma export.
-function SliderTrack({ pct, hover }: { pct: number; hover?: boolean }) {
-  return (
-    <div style={{
-      flex: 1,
-      height: layout.sliderHeight,
-      background: hover ? sliderTrackHover(pct) : sliderTrack(pct),
-      borderRadius: 2,
-      position: "relative",
-    }}>
-      <SliderThumb pct={pct} />
-    </div>
   );
 }
 
@@ -424,95 +417,31 @@ function AlignLines() {
   );
 }
 
-function AlignCell({ justify, align, active }: { justify: string; align: string; active?: boolean }) {
+function AlignCell({ justify, align, active, onClick }: { justify: string; align: string; active?: boolean; onClick?: () => void }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{
-      width: layout.alignCell,
-      height: layout.alignCell,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: active ? color.primary : "transparent",
-      color: active ? color.primaryForeground : blackAlpha(0.7),
-    }}>
-      <div style={{
-        width: 16,
-        height: 16,
+    <div
+      style={{
+        width: layout.alignCell,
+        height: layout.alignCell,
         display: "flex",
-        flexDirection: "column",
-        justifyContent: justify as any,
-        alignItems: align as any,
-        gap: 1.5,
+        alignItems: "center",
+        justifyContent: "center",
+        background: active ? color.primary : hovered ? surface.hover : "transparent",
+        color: active ? color.primaryForeground : blackAlpha(0.7),
+        cursor: "pointer",
+        transition: `background ${timing.fast}ms ease`,
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={{
+        width: 16, height: 16, display: "flex", flexDirection: "column",
+        justifyContent: justify as any, alignItems: align as any, gap: 1.5,
       }}>
         <AlignLines />
       </div>
-    </div>
-  );
-}
-
-function CollapsedSection({ title, hasIndicator }: { title: string; hasIndicator?: boolean }) {
-  return (
-    <div style={collapsedSectionStyle}>
-      <div style={sectionHeaderStyle}>
-        <span style={{ ...sectionTitleStyle, display: "flex", alignItems: "center", gap: 6 }}>
-          {title}
-          {hasIndicator && (
-            <span style={{
-              display: "inline-block",
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: indicatorColor.direct,
-              boxShadow: `0 0 3px ${indicatorColor.direct}`,
-            }} />
-          )}
-        </span>
-        <span style={chevronWrapStyle}><ChevronSvg /></span>
-      </div>
-    </div>
-  );
-}
-
-function ExpandedSectionHeader({ title, hasIndicator }: { title: string; hasIndicator?: boolean }) {
-  return (
-    <div style={sectionHeaderStyle}>
-      <span style={{ ...sectionTitleStyle, display: "flex", alignItems: "center", gap: 6 }}>
-        {title}
-        {hasIndicator && (
-          <span style={{
-            display: "inline-block",
-            width: 4,
-            height: 4,
-            borderRadius: "50%",
-            background: indicatorColor.direct,
-            boxShadow: `0 0 3px ${indicatorColor.direct}`,
-          }} />
-        )}
-      </span>
-      <span style={{ ...chevronWrapStyle, transform: "rotate(90deg)" }}><ChevronSvg /></span>
-    </div>
-  );
-}
-
-function TabBar({ active = "common" }: { active?: "common" | "custom" | "prompt" }) {
-  return (
-    <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, padding: "0 12px" }}>
-      {(["common", "custom", "prompt"] as const).map((tab) => {
-        const isActive = active === tab;
-        const label = tab === "common" ? "Common" : tab === "custom" ? "Custom" : "Prompt";
-        return (
-          <div key={tab} style={{
-            background: "transparent",
-            borderBottom: isActive ? `2px solid ${color.primary}` : "2px solid transparent",
-            padding: "7px 10px 5px",
-            fontSize: 11,
-            fontFamily: font.sans,
-            fontWeight: isActive ? 600 : 400,
-            color: isActive ? color.foreground : text.label,
-            cursor: "pointer",
-          }}>{label}</div>
-        );
-      })}
     </div>
   );
 }
@@ -558,16 +487,10 @@ function PanelHeader({ tag, className, badges, showSource }: {
 function BreakpointBadge({ label }: { label: string }) {
   return (
     <span style={{
-      fontSize: 9,
-      fontFamily: font.mono,
-      color: blackAlpha(0.6),
-      background: color.input,
-      border: `1px solid ${color.input}`,
-      padding: "2px 6px",
-      borderRadius: 3,
-      letterSpacing: 0.5,
-      textTransform: "uppercase",
-      lineHeight: "14px",
+      fontSize: 9, fontFamily: font.mono, color: blackAlpha(0.6),
+      background: color.input, border: `1px solid ${color.input}`,
+      padding: "2px 6px", borderRadius: 3, letterSpacing: 0.5,
+      textTransform: "uppercase", lineHeight: "14px",
     }}>{label}</span>
   );
 }
@@ -575,35 +498,679 @@ function BreakpointBadge({ label }: { label: string }) {
 function ChangesBadgeCount({ count }: { count: number }) {
   return (
     <div style={{
-      background: primaryAlpha(0.15),
-      border: `1px solid ${primaryAlpha(0.2)}`,
-      borderRadius: 3,
-      color: primaryAlpha(0.95),
-      fontSize: 9,
-      fontWeight: 600,
-      fontFamily: font.mono,
-      padding: "2px 6px",
-      lineHeight: "14px",
-      minWidth: 18,
-      textAlign: "center",
+      background: primaryAlpha(0.15), border: `1px solid ${primaryAlpha(0.2)}`,
+      borderRadius: 3, color: primaryAlpha(0.95), fontSize: 9, fontWeight: 600,
+      fontFamily: font.mono, padding: "2px 6px", lineHeight: "14px",
+      minWidth: 18, textAlign: "center",
     }}>{count}</div>
   );
 }
 
-function ScopePill({ label, active }: { label: string; active?: boolean }) {
+// ─── Interactive Slider ─────────────────────────────────────────────────────
+
+function InteractiveSlider({
+  label, initialPct = 40, maxVal = 100, unit = "px", modified,
+}: {
+  label: string; initialPct?: number; maxVal?: number; unit?: string; modified?: boolean;
+}) {
+  const [pct, setPct] = useState(initialPct);
+  const [hovered, setHovered] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const updateFromMouse = useCallback((clientX: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    setPct(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)));
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    updateFromMouse(e.clientX);
+    const onMove = (ev: MouseEvent) => updateFromMouse(ev.clientX);
+    const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, [updateFromMouse]);
+
+  const displayValue = Math.round((pct / 100) * maxVal);
+
   return (
-    <div style={{
-      padding: "2px 8px",
-      fontSize: 10,
-      fontFamily: font.mono,
-      border: "none",
-      borderRadius: 4,
-      background: active ? surface.active : "transparent",
-      color: active ? blackAlpha(0.87) : blackAlpha(0.7),
-      lineHeight: "16px",
-    }}>{label}</div>
+    <div style={rowStyle} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      {label && (
+        <span style={modified ? {
+          ...labelStyle, color: indicatorColor.direct, display: "inline-flex", alignItems: "center", gap: 4,
+        } : labelStyle}>
+          {modified && <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor.direct, boxShadow: `0 0 3px ${indicatorColor.direct}` }} />}
+          {label}
+        </span>
+      )}
+      <div
+        ref={trackRef}
+        onMouseDown={handleMouseDown}
+        style={{
+          flex: 1, height: layout.sliderHeight,
+          background: hovered ? sliderTrackHover(pct) : sliderTrack(pct),
+          borderRadius: 2, position: "relative", cursor: "pointer",
+          transition: `background ${timing.fast}ms ease`,
+        }}
+      >
+        <SliderThumb pct={pct} />
+      </div>
+      <div style={valueInputStyle}>{displayValue}</div>
+      <span style={unitLabelStyle}>{unit}</span>
+    </div>
   );
 }
+
+// ─── Dropdown Item (with hover) ─────────────────────────────────────────────
+
+function DropdownItem({ label, active, onClick }: { label: string; active?: boolean; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: "3px 8px", fontSize: 10, fontFamily: font.mono, lineHeight: "16px",
+        color: active ? color.primaryForeground : blackAlpha(0.7),
+        background: active ? color.primary : hovered ? surface.hover : "transparent",
+        cursor: "pointer", transition: `background ${timing.micro}ms ease`,
+      }}
+    >{label}</div>
+  );
+}
+
+// ─── Interactive Unit Selector ──────────────────────────────────────────────
+
+function InteractiveUnitSelector({ initialUnit = "px" }: { initialUnit?: string }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(initialUnit);
+  const [hovered, setHovered] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          height: 20, padding: "0 4px",
+          background: open ? primaryAlpha(0.25) : hovered ? surface.hover : "transparent",
+          border: open ? `1px solid ${primaryAlpha(0.4)}` : hovered ? `1px solid ${surface.track}` : "1px solid transparent",
+          borderRadius: 3, color: open ? color.primaryHover : blackAlpha(0.8),
+          fontSize: 10, fontFamily: font.mono, cursor: "pointer",
+          transition: `all ${timing.fast}ms ease`,
+        }}
+      >{selected}</div>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 2px)", left: 0, minWidth: 42,
+          background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4,
+          boxShadow: shadow.dropdown, zIndex: 100, padding: "2px 0",
+        }}>
+          {["px", "%", "em", "rem", "vw", "vh"].map((u) => (
+            <DropdownItem key={u} label={u} active={u === selected} onClick={() => { setSelected(u); setOpen(false); }} />
+          ))}
+          <div style={{ height: 1, background: blackAlpha(0.07), margin: "2px 0" }} />
+          {["auto", "none"].map((kw) => (
+            <DropdownItem key={kw} label={kw} active={kw === selected} onClick={() => { setSelected(kw); setOpen(false); }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Interactive Select Row ─────────────────────────────────────────────────
+
+function InteractiveSelect({ label, options, initialIndex = 1 }: { label: string; options: string[]; initialIndex?: number }) {
+  const [open, setOpen] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(initialIndex);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div style={rowStyle} ref={ref}>
+      <span style={labelStyle}>{label}</span>
+      <div style={{ flex: 1, position: "relative" }}>
+        <div
+          onClick={() => setOpen(!open)}
+          style={{
+            width: "100%", height: 24, display: "flex", alignItems: "center", justifyContent: "space-between",
+            background: open ? blackAlpha(0.07) : color.input,
+            border: `1px solid ${open ? primaryAlpha(0.4) : surface.active}`, borderRadius: 3,
+            color: blackAlpha(0.7), fontSize: 11, fontFamily: font.mono, padding: "0 6px",
+            cursor: "pointer", transition: `border-color ${timing.fast}ms ease`,
+          }}
+        >
+          <span>{options[selectedIdx]}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={border.strong} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        {open && (
+          <div style={{
+            position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0,
+            minWidth: "100%", maxHeight: 180, overflowY: "auto",
+            background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4,
+            boxShadow: shadow.dropdown, zIndex: 200, padding: "2px 0",
+          }}>
+            {options.map((opt, i) => (
+              <DropdownItem key={opt} label={opt} active={i === selectedIdx} onClick={() => { setSelectedIdx(i); setOpen(false); }} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Interactive Toggle Section ─────────────────────────────────────────────
+
+function ToggleSection({ title, hasIndicator, defaultOpen = false, children }: {
+  title: string; hasIndicator?: boolean; defaultOpen?: boolean; children?: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div style={{ borderBottom: `1px solid ${surface.subtle}` }}>
+      <div
+        style={{
+          ...sectionHeaderStyle,
+          background: hovered ? surface.hover : "transparent",
+          transition: `background ${timing.fast}ms ease`,
+        }}
+        onClick={() => setOpen(!open)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <span style={{ ...sectionTitleStyle, display: "flex", alignItems: "center", gap: 6 }}>
+          {title}
+          {hasIndicator && (
+            <span style={{
+              display: "inline-block", width: 4, height: 4, borderRadius: "50%",
+              background: indicatorColor.direct, boxShadow: `0 0 3px ${indicatorColor.direct}`,
+            }} />
+          )}
+        </span>
+        <span style={{ ...chevronWrapStyle, transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>
+          <ChevronSvg />
+        </span>
+      </div>
+      {open && children && (
+        <div style={{ paddingBottom: layout.sectionBodyPadding, overflow: "hidden" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Interactive Display Tabs ───────────────────────────────────────────────
+
+function InteractiveDisplayTabs({ options, initialActive = 0 }: { options: string[]; initialActive?: number }) {
+  const [active, setActive] = useState(initialActive);
+  return (
+    <div style={{ display: "inline-flex" }}>
+      {options.map((opt, i) => (
+        <div
+          key={opt}
+          onClick={() => setActive(i)}
+          style={{
+            ...(i === active ? displayTabActive : displayTabInactive),
+            borderLeft: i === 0 ? undefined : "none",
+            borderRadius: i === 0 ? "4px 0 0 4px" : i === options.length - 1 ? "0 4px 4px 0" : 0,
+            transition: `all ${timing.fast}ms ease`,
+          }}
+        >{opt}</div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Interactive Icon Button Group ──────────────────────────────────────────
+
+function InteractiveIconGroup({ icons, initialActive = 1, multiSelect = false }: {
+  icons: React.ReactNode[]; initialActive?: number | number[]; multiSelect?: boolean;
+}) {
+  const [active, setActive] = useState<Set<number>>(
+    new Set(Array.isArray(initialActive) ? initialActive : [initialActive])
+  );
+
+  const toggle = (i: number) => {
+    if (multiSelect) {
+      setActive((prev) => { const next = new Set(prev); if (next.has(i)) next.delete(i); else next.add(i); return next; });
+    } else {
+      setActive(new Set([i]));
+    }
+  };
+
+  return (
+    <div style={{ display: "inline-flex" }}>
+      {icons.map((icon, i) => (
+        <div
+          key={i}
+          onClick={() => toggle(i)}
+          style={{
+            ...(active.has(i) ? iconBtnActive : iconBtnInactive),
+            borderLeft: i === 0 ? undefined : "none",
+            borderRadius: i === 0 ? "4px 0 0 4px" : i === icons.length - 1 ? "0 4px 4px 0" : 0,
+            transition: `all ${timing.fast}ms ease`,
+          }}
+        >{icon}</div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Interactive Scope Pills ────────────────────────────────────────────────
+
+function InteractiveScopePills({ labels, initialActive = 0 }: { labels: string[]; initialActive?: number }) {
+  const [active, setActive] = useState(initialActive);
+  return (
+    <div style={{ display: "flex", gap: 3 }}>
+      {labels.map((label, i) => (
+        <div
+          key={label}
+          onClick={() => setActive(i)}
+          style={{
+            padding: "2px 8px", fontSize: 10, fontFamily: font.mono,
+            border: "none", borderRadius: 4,
+            background: i === active ? surface.active : "transparent",
+            color: i === active ? blackAlpha(0.87) : blackAlpha(0.7),
+            lineHeight: "16px", cursor: "pointer", userSelect: "none",
+            transition: `all ${timing.fast}ms ease`,
+          }}
+        >{label}</div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Interactive Align Box ──────────────────────────────────────────────────
+
+function InteractiveAlignBox() {
+  const [activeV, setActiveV] = useState("center");
+  const [activeH, setActiveH] = useState("center");
+  const [spacingMode, setSpacingMode] = useState<string | null>(null);
+  const aligns = ["flex-start", "center", "flex-end"] as const;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <div style={{
+        display: "grid", gridTemplateColumns: `repeat(3, ${layout.alignCell}px)`,
+        gridTemplateRows: `repeat(3, ${layout.alignCell}px)`,
+        border: `1px solid ${surface.track}`, borderRadius: 4, overflow: "hidden",
+      }}>
+        {aligns.map((vAlign) =>
+          aligns.map((hAlign) => (
+            <div key={`${vAlign}-${hAlign}`} style={{
+              borderRight: hAlign === "flex-end" ? undefined : `1px solid ${blackAlpha(0.07)}`,
+              borderBottom: vAlign === "flex-end" ? undefined : `1px solid ${blackAlpha(0.07)}`,
+            }}>
+              <AlignCell justify={vAlign} align={hAlign}
+                active={vAlign === activeV && hAlign === activeH}
+                onClick={() => { setActiveV(vAlign); setActiveH(hAlign); }}
+              />
+            </div>
+          ))
+        )}
+      </div>
+      <div style={{ display: "flex", gap: 4 }}>
+        {["Between", "Around", "Evenly"].map((label) => {
+          const isActive = spacingMode === label;
+          return (
+            <div key={label}
+              onClick={() => setSpacingMode(isActive ? null : label)}
+              style={{
+                background: isActive ? color.primary : "transparent",
+                color: isActive ? color.primaryForeground : blackAlpha(0.7),
+                border: `1px solid ${isActive ? color.primary : surface.active}`,
+                borderRadius: 3, fontSize: 9, fontFamily: font.sans,
+                padding: "2px 6px", lineHeight: "16px",
+                cursor: "pointer", userSelect: "none", transition: `all ${timing.fast}ms ease`,
+              }}
+            >{label}</div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Hover Button ───────────────────────────────────────────────────────────
+
+function HoverButton({ children, style: baseStyle, hoverStyle, onClick, disabled }: {
+  children: React.ReactNode; style: React.CSSProperties; hoverStyle?: React.CSSProperties;
+  onClick?: () => void; disabled?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onClick={disabled ? undefined : onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...baseStyle,
+        ...(hovered && !disabled ? (hoverStyle ?? { filter: "brightness(0.92)" }) : {}),
+        opacity: disabled ? 0.35 : 1,
+        cursor: disabled ? "default" : "pointer",
+        transition: `all ${timing.fast}ms ease`,
+      }}
+    >{children}</div>
+  );
+}
+
+// ─── Interactive Preset Chips ───────────────────────────────────────────────
+
+function InteractivePresetChips({ values }: { values: string[] }) {
+  const [active, setActive] = useState<string | null>(null);
+  return (
+    <div style={{ display: "flex", gap: 3, flexWrap: "wrap", padding: "0 12px" }}>
+      {values.map((v) => {
+        const isActive = v === active;
+        return (
+          <span key={v}
+            onClick={() => setActive(isActive ? null : v)}
+            style={{
+              fontSize: 9, fontFamily: font.mono,
+              color: isActive ? color.primaryForeground : blackAlpha(0.7),
+              background: isActive ? color.primary : color.input,
+              padding: "1px 5px", borderRadius: 3,
+              cursor: "pointer", userSelect: "none", transition: `all ${timing.fast}ms ease`,
+            }}
+          >{v}</span>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Interactive Spacing Box Model ──────────────────────────────────────────
+
+function SpacingValue({ value, zone, hoverZone, setHoverZone, onChange }: {
+  value: number; zone: string; hoverZone: string | null;
+  setHoverZone: (z: string | null) => void; onChange: (v: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [tempVal, setTempVal] = useState(String(value));
+  const isMargin = zone.startsWith("m");
+  const isHovered = hoverZone === zone;
+
+  if (editing) {
+    return (
+      <input autoFocus value={tempVal}
+        onChange={(e) => setTempVal(e.target.value)}
+        onBlur={() => { onChange(parseInt(tempVal) || 0); setEditing(false); }}
+        onKeyDown={(e) => { if (e.key === "Enter") { onChange(parseInt(tempVal) || 0); setEditing(false); } }}
+        style={{
+          width: 28, fontSize: 10, fontFamily: font.mono, textAlign: "center",
+          background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`,
+          borderRadius: 2, color: blackAlpha(0.8), padding: "1px 2px", outline: "none",
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      onClick={() => { setTempVal(String(value)); setEditing(true); }}
+      onMouseEnter={() => setHoverZone(zone)}
+      onMouseLeave={() => setHoverZone(null)}
+      style={{
+        fontSize: 10, fontFamily: font.mono,
+        color: isHovered ? color.primary : (isMargin ? blackAlpha(0.55) : blackAlpha(0.8)),
+        padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center",
+        cursor: "text", transition: `color ${timing.fast}ms ease`,
+      }}
+    >{value}</span>
+  );
+}
+
+function InteractiveSpacingBox() {
+  const [margin, setMargin] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
+  const [padding, setPadding] = useState({ top: 16, right: 24, bottom: 16, left: 24 });
+  const [hoverZone, setHoverZone] = useState<string | null>(null);
+
+  return (
+    <div style={{ padding: 0 }}>
+      <div style={{
+        position: "relative", border: `1px solid ${surface.active}`, borderRadius: 4,
+        background: hoverZone?.startsWith("m") ? spacingZone.marginHover : spacingZone.marginBase,
+        transition: `background ${timing.fast}ms ease`,
+      }}>
+        <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
+          <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Margin</span>
+          <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
+          <SpacingValue value={margin.top} zone="m-top" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setMargin((p) => ({ ...p, top: v }))} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+            <SpacingValue value={margin.left} zone="m-left" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setMargin((p) => ({ ...p, left: v }))} />
+          </div>
+          <div style={{
+            flex: 1, border: `1px solid ${surface.active}`, borderRadius: 3,
+            background: hoverZone?.startsWith("p") ? spacingZone.paddingHover : spacingZone.paddingBase,
+            margin: "2px 0", position: "relative", transition: `background ${timing.fast}ms ease`,
+          }}>
+            <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
+              <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Padding</span>
+              <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
+              <SpacingValue value={padding.top} zone="p-top" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setPadding((p) => ({ ...p, top: v }))} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
+                <SpacingValue value={padding.left} zone="p-left" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setPadding((p) => ({ ...p, left: v }))} />
+              </div>
+              <div style={{ flex: 1, height: 14, background: surface.hover, borderRadius: 2, margin: "0 4px" }} />
+              <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
+                <SpacingValue value={padding.right} zone="p-right" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setPadding((p) => ({ ...p, right: v }))} />
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
+              <SpacingValue value={padding.bottom} zone="p-bottom" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setPadding((p) => ({ ...p, bottom: v }))} />
+            </div>
+          </div>
+          <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+            <SpacingValue value={margin.right} zone="m-right" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setMargin((p) => ({ ...p, right: v }))} />
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
+          <SpacingValue value={margin.bottom} zone="m-bottom" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setMargin((p) => ({ ...p, bottom: v }))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Interactive Color Picker ───────────────────────────────────────────────
+
+function InteractiveColorPicker() {
+  const [hue, setHue] = useState(260);
+  const [sat, setSat] = useState(75);
+  const [brightness, setBrightness] = useState(75);
+  const [opacity, setOpacity] = useState(100);
+  const [mode, setMode] = useState<"HEX" | "RGB" | "HSL">("HEX");
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const hueRef = useRef<HTMLDivElement>(null);
+  const opacityRef = useRef<HTMLDivElement>(null);
+
+  const hslColor = `hsl(${hue}, 100%, 50%)`;
+  const pickedColor = `hsl(${hue}, ${sat}%, ${brightness}%)`;
+
+  const useDrag = (ref: React.RefObject<HTMLDivElement | null>, onUpdate: (x: number, y?: number) => void) =>
+    useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      const update = (clientX: number, clientY: number) => {
+        const rect = ref.current!.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+        onUpdate(x, y);
+      };
+      update(e.clientX, e.clientY);
+      const onMove = (ev: MouseEvent) => update(ev.clientX, ev.clientY);
+      const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    }, [ref, onUpdate]);
+
+  const handleCanvasDown = useDrag(canvasRef, useCallback((x: number, y?: number) => {
+    setSat(Math.round(x * 100));
+    setBrightness(Math.round((1 - (y ?? 0)) * 100));
+  }, []));
+
+  const handleHueDown = useDrag(hueRef, useCallback((x: number) => {
+    setHue(Math.round(x * 360));
+  }, []));
+
+  const handleOpacityDown = useDrag(opacityRef, useCallback((x: number) => {
+    setOpacity(Math.round(x * 100));
+  }, []));
+
+  const modes = ["HEX", "RGB", "HSL"] as const;
+
+  return (
+    <div style={{
+      width: 240, background: color.popover, borderRadius: 8, padding: 12,
+      boxShadow: shadow.picker, display: "flex", flexDirection: "column", gap: 10,
+    }}>
+      {/* 2D canvas */}
+      <div ref={canvasRef} onMouseDown={handleCanvasDown} style={{
+        position: "relative", width: layout.pickerCanvasWidth, height: layout.pickerCanvasHeight,
+        borderRadius: 4, overflow: "hidden", cursor: "crosshair",
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: hslColor }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0))" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1))" }} />
+        <div style={{
+          position: "absolute", left: `${sat}%`, top: `${100 - brightness}%`,
+          width: 14, height: 14, borderRadius: "50%",
+          border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
+          transform: "translate(-50%, -50%)", background: pickedColor, pointerEvents: "none",
+        }} />
+      </div>
+
+      {/* Hue slider */}
+      <div ref={hueRef} onMouseDown={handleHueDown} style={{
+        position: "relative", width: layout.pickerCanvasWidth, height: 12, borderRadius: 6,
+        background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)", cursor: "pointer",
+      }}>
+        <div style={{
+          position: "absolute", left: `${(hue / 360) * 100}%`, top: "50%",
+          width: 14, height: 14, borderRadius: "50%",
+          border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
+          transform: "translate(-50%, -50%)", background: hslColor, pointerEvents: "none",
+        }} />
+      </div>
+
+      {/* Opacity slider */}
+      <div ref={opacityRef} onMouseDown={handleOpacityDown} style={{
+        position: "relative", width: layout.pickerCanvasWidth, height: 12, borderRadius: 6,
+        background: "repeating-conic-gradient(#444 0% 25%, #666 0% 50%) 50%/8px 8px",
+        cursor: "pointer", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", inset: 0, borderRadius: 6, background: `linear-gradient(to right, transparent, ${pickedColor})` }} />
+        <div style={{
+          position: "absolute", left: `${opacity}%`, top: "50%",
+          width: 14, height: 14, borderRadius: "50%",
+          border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
+          transform: "translate(-50%, -50%)", background: pickedColor, pointerEvents: "none",
+        }} />
+      </div>
+
+      {/* Mode inputs */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span onClick={() => setMode(modes[(modes.indexOf(mode) + 1) % modes.length])} style={{
+          fontSize: 10, color: blackAlpha(0.7), fontFamily: font.mono, cursor: "pointer",
+          minWidth: 22, textTransform: "uppercase", letterSpacing: "0.02em", userSelect: "none",
+        }}>{mode}</span>
+        <div style={{
+          flex: 1, background: color.background, border: `1px solid ${blackAlpha(0.07)}`, borderRadius: 4,
+          padding: "3px 6px", fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.7),
+        }}>
+          {mode === "HSL" ? `hsl(${hue},${sat}%,${brightness}%)` : mode === "RGB" ? `${hue},${sat},${brightness}` : pickedColor}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+          <span style={{ fontSize: 9, color: blackAlpha(0.6), fontFamily: font.mono }}>A</span>
+          <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.8), minWidth: 26, textAlign: "right" }}>{opacity}%</span>
+        </div>
+      </div>
+
+      {/* Swatches */}
+      <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 9, color: blackAlpha(0.6), textTransform: "uppercase", letterSpacing: "0.04em" }}>Swatches</span>
+          <div style={{
+            background: "none", border: `1px solid ${surface.active}`, borderRadius: 3,
+            color: blackAlpha(0.7), width: 18, height: 18,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, lineHeight: 1, cursor: "pointer",
+          }}>+</div>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          {[color.destructive, "#22c55e", color.primary, indicatorColor.inherited, "#06b6d4"].map((c, i) => (
+            <div key={i} style={{
+              width: layout.swatchSizeSaved, height: layout.swatchSizeSaved, borderRadius: 3,
+              border: `1px solid ${surface.track}`, background: c, cursor: "pointer",
+            }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Interactive Copy Dropdown ──────────────────────────────────────────────
+
+function InteractiveCopyDropdown({ formats }: { formats: string[] }) {
+  return (
+    <div style={{
+      background: color.popover, border: `1px solid ${surface.active}`, borderRadius: 6,
+      padding: "4px 0", minWidth: 140, boxShadow: shadow.dropdown,
+    }}>
+      {formats.map((opt) => (
+        <DropdownItem key={opt} label={opt} onClick={() => {}} />
+      ))}
+    </div>
+  );
+}
+
+// ─── Icon SVGs for button groups ────────────────────────────────────────────
+
+const AlignLeftIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>;
+const AlignCenterIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>;
+const AlignRightIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>;
+const AlignJustifyIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="3" y1="18" x2="21" y2="18"/></svg>;
+const StrikeIcon = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+const BoldIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>;
+const UnderlineIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>;
+const RowIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
+const ColIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>;
+const WrapIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><path d="M3 12h15a3 3 0 1 1 0 6h-4"/><polyline points="16 16 14 18 16 20"/><line x1="3" y1="18" x2="10" y2="18"/></svg>;
 
 // ─── Main Page Component ────────────────────────────────────────────────────
 
@@ -642,11 +1209,9 @@ export default function ShowcasePage() {
 
           <div className="card-label" style={{ marginTop: 12 }}>Indicator Colors</div>
           <div className="swatch-grid">
-            <div className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor.direct }} /><div className="swatch-name">direct</div><div className="swatch-value">{indicatorColor.direct}</div></div>
-            <div className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor.inherited }} /><div className="swatch-name">inherited</div><div className="swatch-value">{indicatorColor.inherited}</div></div>
-            <div className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor.state }} /><div className="swatch-name">state</div><div className="swatch-value">{indicatorColor.state}</div></div>
-            <div className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor.element }} /><div className="swatch-name">element</div><div className="swatch-value">{indicatorColor.element}</div></div>
-            <div className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor.variable }} /><div className="swatch-name">variable</div><div className="swatch-value">{indicatorColor.variable}</div></div>
+            {(["direct", "inherited", "state", "element", "variable"] as const).map((type) => (
+              <div key={type} className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor[type] }} /><div className="swatch-name">{type}</div><div className="swatch-value">{indicatorColor[type]}</div></div>
+            ))}
           </div>
 
           <div className="card-label" style={{ marginTop: 12 }}>Spacing Zone Colors</div>
@@ -707,45 +1272,24 @@ export default function ShowcasePage() {
           <div className="card" data-component="BorderTokens">
             <div className="card-label">Borders &amp; Shadows</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div>
-                <div className="variant-label">Panel Shadow</div>
-                <div style={{ width: 200, height: 40, background: color.background, borderRadius: layout.panelRadius, border: `1px solid ${border.default}`, boxShadow: shadow.panel }} />
-              </div>
-              <div>
-                <div className="variant-label">Dropdown Shadow</div>
-                <div style={{ width: 200, height: 40, background: color.popover, borderRadius: 4, border: `1px solid ${surface.track}`, boxShadow: shadow.dropdown }} />
-              </div>
-              <div>
-                <div className="variant-label">Picker Shadow</div>
-                <div style={{ width: 200, height: 40, background: color.popover, borderRadius: 8, boxShadow: shadow.picker }} />
-              </div>
-              <div>
-                <div className="variant-label">Focus Ring</div>
-                <div style={{ width: 200, height: 28, background: color.input, border: `1px solid ${border.default}`, borderRadius: 3, boxShadow: focusRing }} />
-              </div>
-              <div>
-                <div className="variant-label">Separator</div>
-                <div style={{ width: 200, height: 1, background: border.subtle }} />
-              </div>
+              <div><div className="variant-label">Panel Shadow</div><div style={{ width: 200, height: 40, background: color.background, borderRadius: layout.panelRadius, border: `1px solid ${border.default}`, boxShadow: shadow.panel }} /></div>
+              <div><div className="variant-label">Dropdown Shadow</div><div style={{ width: 200, height: 40, background: color.popover, borderRadius: 4, border: `1px solid ${surface.track}`, boxShadow: shadow.dropdown }} /></div>
+              <div><div className="variant-label">Picker Shadow</div><div style={{ width: 200, height: 40, background: color.popover, borderRadius: 8, boxShadow: shadow.picker }} /></div>
+              <div><div className="variant-label">Focus Ring</div><div style={{ width: 200, height: 28, background: color.input, border: `1px solid ${border.default}`, borderRadius: 3, boxShadow: focusRing }} /></div>
+              <div><div className="variant-label">Separator</div><div style={{ width: 200, height: 1, background: border.subtle }} /></div>
             </div>
           </div>
 
-          {/* Timing Tokens */}
           <div className="card" data-component="TimingTokens">
             <div className="card-label">Timing Tokens (from timing.ts)</div>
             <table className="token-table">
               <tbody>
                 <tr><th>Key</th><th>Duration</th><th>Usage</th></tr>
                 {Object.entries(timing).map(([key, val]) => (
-                  <tr key={key}>
-                    <td>{key}</td>
-                    <td>{val}ms</td>
-                    <td>{timingDescs[key]}</td>
-                  </tr>
+                  <tr key={key}><td>{key}</td><td>{val}ms</td><td>{timingDescs[key]}</td></tr>
                 ))}
               </tbody>
             </table>
-            {/* Visual bars */}
             <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
               {Object.entries(timing).map(([key, val]) => (
                 <div key={key} style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -759,858 +1303,251 @@ export default function ShowcasePage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* SECTION B -- Atomic Components                                    */}
+      {/* SECTION B -- Atomic Components (Interactive)                      */}
       {/* ══════════════════════════════════════════════════════════════════ */}
 
       <div style={{ marginBottom: 64 }}>
         <h1 className="section-title">B — Atomic Components</h1>
-
         <div className="showcase-grid">
 
-          {/* ─── SliderRow ─────────────────────────────────────────────── */}
+          {/* SliderRow */}
           <div className="card" style={{ width: 340 }} data-component="SliderRow">
-            <div className="card-label">SliderRow</div>
-
-            <div className="variant-col" data-variant="default">
-              <div className="variant-label">Default</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Size</span>
-                <SliderTrack pct={40} />
-                <div style={valueInputStyle}>16</div>
-                <span style={unitLabelStyle}>px</span>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="hover">
-              <div className="variant-label">Hover (bright track)</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Size</span>
-                <SliderTrack pct={40} hover />
-                <div style={valueInputStyle}>16</div>
-                <span style={unitLabelStyle}>px</span>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="modified">
-              <div className="variant-label">Modified (blue label + indicator)</div>
-              <div style={rowStyle}>
-                <span style={{ ...labelStyle, color: indicatorColor.direct, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                  <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor.direct, boxShadow: `0 0 3px ${indicatorColor.direct}` }} />
-                  Size
-                </span>
-                <SliderTrack pct={65} />
-                <div style={valueInputStyle}>24</div>
-                <span style={unitLabelStyle}>px</span>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="with-unit-selector">
-              <div className="variant-label">With UnitSelector</div>
+            <div className="card-label">SliderRow — Drag to adjust</div>
+            <div className="variant-col"><div className="variant-label">Default (drag me)</div><InteractiveSlider label="Size" initialPct={40} maxVal={48} /></div>
+            <div className="variant-col"><div className="variant-label">Modified (blue label)</div><InteractiveSlider label="Size" initialPct={65} maxVal={48} modified /></div>
+            <div className="variant-col">
+              <div className="variant-label">With UnitSelector (click unit)</div>
               <div style={rowStyle}>
                 <span style={labelStyle}>Width</span>
-                <SliderTrack pct={50} />
-                <div style={valueInputStyle}>200</div>
-                {/* UnitSelector pill */}
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: 20,
-                  padding: "0 4px",
-                  border: "1px solid transparent",
-                  borderRadius: 3,
-                  color: blackAlpha(0.8),
-                  fontSize: 10,
-                  fontFamily: font.mono,
-                  cursor: "pointer",
-                }}>px</div>
+                <div style={{ flex: 1 }}><InteractiveSlider label="" initialPct={50} maxVal={400} /></div>
+                <InteractiveUnitSelector />
               </div>
             </div>
           </div>
 
-          {/* ─── SizeInputCell ────────────────────────────────────────── */}
+          {/* SizeInputCell */}
           <div className="card" style={{ width: 260 }} data-component="SizeInputCell">
             <div className="card-label">SizeInputCell</div>
-
-            <div className="variant-col" data-variant="numeric">
-              <div className="variant-label">Numeric</div>
-              <div style={sizeInputCellBase}>
-                <div style={sizeInputLabel}>Width</div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                  <span style={sizeInputValue}>200</span>
-                </div>
-                <div style={{ flexShrink: 0, paddingRight: 3 }}>
-                  <span style={sizeInputUnit}>px</span>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">Numeric</div>
+              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>200</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>px</span></div></div>
             </div>
-
-            <div className="variant-col" data-variant="keyword">
-              <div className="variant-label">Keyword (&quot;auto&quot;)</div>
-              <div style={sizeInputCellBase}>
-                <div style={sizeInputLabel}>Width</div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                  <span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span>
-                </div>
-                <div style={{ flexShrink: 0, paddingRight: 3 }}>
-                  <span style={sizeInputUnit}>&ndash;</span>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">Keyword (&quot;auto&quot;)</div>
+              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>&ndash;</span></div></div>
             </div>
-
-            <div className="variant-col" data-variant="variable">
-              <div className="variant-label">CSS Variable</div>
-              <div style={sizeInputCellBase}>
-                <div style={sizeInputLabel}>Width</div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2, gap: 4, overflow: "hidden", minWidth: 0 }}>
-                  <span style={{ color: indicatorColor.variable, fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span>
-                  <span style={{ color: blackAlpha(0.55), fontSize: 10, fontFamily: font.mono, flexShrink: 0 }}>768</span>
-                </div>
-                <div style={{ flexShrink: 0, paddingRight: 3 }}>
-                  <span style={sizeInputUnit}>VAR</span>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">CSS Variable</div>
+              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2, gap: 4, overflow: "hidden", minWidth: 0 }}><span style={{ color: indicatorColor.variable, fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span><span style={{ color: blackAlpha(0.55), fontSize: 10, fontFamily: font.mono, flexShrink: 0 }}>768</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>VAR</span></div></div>
             </div>
-
-            <div className="variant-col" data-variant="modified">
-              <div className="variant-label">Modified (blue highlight)</div>
-              <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}>
-                <div style={{ ...sizeInputLabel, color: color.primary }}>Width</div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                  <span style={sizeInputValue}>320</span>
-                </div>
-                <div style={{ flexShrink: 0, paddingRight: 3 }}>
-                  <span style={sizeInputUnit}>px</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="editing">
-              <div className="variant-label">Editing (focus)</div>
-              <div style={sizeInputCellBase}>
-                <div style={sizeInputLabel}>Width</div>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                  <div style={{
-                    width: 36,
-                    background: blackAlpha(0.07),
-                    border: `1px solid ${primaryAlpha(0.5)}`,
-                    borderRadius: 2,
-                    color: blackAlpha(0.8),
-                    fontSize: 10,
-                    fontFamily: font.mono,
-                    textAlign: "right",
-                    padding: "1px 3px",
-                  }}>200</div>
-                </div>
-                <div style={{ flexShrink: 0, paddingRight: 3 }}>
-                  <span style={sizeInputUnit}>px</span>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">Modified (blue highlight)</div>
+              <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}><div style={{ ...sizeInputLabel, color: color.primary }}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>320</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>px</span></div></div>
             </div>
           </div>
 
-          {/* ─── IconButtonGroup ──────────────────────────────────────── */}
+          {/* IconButtonGroup */}
           <div className="card" style={{ width: 340 }} data-component="IconButtonGroup">
-            <div className="card-label">IconButtonGroup</div>
-
-            <div className="variant-col" data-variant="single-select">
-              <div className="variant-label">Single Select (text-align, &quot;center&quot; active)</div>
-              <div style={{ display: "inline-flex" }}>
-                <div style={{ ...iconBtnInactive, borderRadius: "4px 0 0 4px" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
-                </div>
-                <div style={{ ...iconBtnActive, borderLeft: "none", borderRadius: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
-                </div>
-                <div style={{ ...iconBtnInactive, borderLeft: "none", borderRadius: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="7" y2="18"/></svg>
-                </div>
-                <div style={{ ...iconBtnInactive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                </div>
-              </div>
+            <div className="card-label">IconButtonGroup — Click to select</div>
+            <div className="variant-col"><div className="variant-label">Single Select (text-align)</div>
+              <InteractiveIconGroup icons={[<AlignLeftIcon key="l" />, <AlignCenterIcon key="c" />, <AlignRightIcon key="r" />, <AlignJustifyIcon key="j" />]} initialActive={1} />
             </div>
-
-            <div className="variant-col" data-variant="multi-select">
-              <div className="variant-label">Multi Select (text-decoration, &quot;underline&quot; active)</div>
-              <div style={{ display: "inline-flex" }}>
-                <div style={{ ...iconBtnInactive, borderRadius: "4px 0 0 4px" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </div>
-                <div style={{ ...iconBtnInactive, borderLeft: "none", borderRadius: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
-                </div>
-                <div style={{ ...iconBtnActive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">Multi Select (text-decoration)</div>
+              <InteractiveIconGroup icons={[<StrikeIcon key="s" />, <BoldIcon key="b" />, <UnderlineIcon key="u" />]} initialActive={[2]} multiSelect />
             </div>
-
-            <div className="variant-col" data-variant="direction-icons">
-              <div className="variant-label">Direction Icons (row active)</div>
-              <div style={{ display: "inline-flex" }}>
-                <div style={{ ...iconBtnActive, borderRadius: "4px 0 0 4px" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </div>
-                <div style={{ ...iconBtnInactive, borderLeft: "none", borderRadius: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-                </div>
-                <div style={{ ...iconBtnInactive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><path d="M3 12h15a3 3 0 1 1 0 6h-4"/><polyline points="16 16 14 18 16 20"/><line x1="3" y1="18" x2="10" y2="18"/></svg>
-                </div>
-              </div>
+            <div className="variant-col"><div className="variant-label">Direction Icons</div>
+              <InteractiveIconGroup icons={[<RowIcon key="row" />, <ColIcon key="col" />, <WrapIcon key="wrap" />]} initialActive={0} />
             </div>
           </div>
 
-          {/* ─── AlignBox ────────────────────────────────────────────── */}
+          {/* AlignBox */}
           <div className="card" style={{ width: 260 }} data-component="AlignBox">
-            <div className="card-label">AlignBox</div>
-
-            <div className="variant-row">
-              <div className="variant-col" data-variant="center-center">
-                <div className="variant-label">Center/Center active</div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-                  <div style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(3, ${layout.alignCell}px)`,
-                    gridTemplateRows: `repeat(3, ${layout.alignCell}px)`,
-                    border: `1px solid ${surface.track}`,
-                    borderRadius: 4,
-                    overflow: "hidden",
-                  }}>
-                    {/* 3x3 grid of alignment cells */}
-                    {(["flex-start", "center", "flex-end"] as const).map((vAlign) =>
-                      (["flex-start", "center", "flex-end"] as const).map((hAlign) => {
-                        const isActive = vAlign === "center" && hAlign === "center";
-                        const isLastCol = hAlign === "flex-end";
-                        const isLastRow = vAlign === "flex-end";
-                        return (
-                          <div
-                            key={`${vAlign}-${hAlign}`}
-                            style={{
-                              borderRight: isLastCol ? undefined : `1px solid ${blackAlpha(0.07)}`,
-                              borderBottom: isLastRow ? undefined : `1px solid ${blackAlpha(0.07)}`,
-                            }}
-                          >
-                            <AlignCell justify={vAlign} align={hAlign} active={isActive} />
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                  {/* Spacing buttons */}
-                  <div style={{ display: "flex", gap: 4 }}>
-                    {["Between", "Around", "Evenly"].map((label) => (
-                      <div key={label} style={{
-                        background: "transparent",
-                        color: blackAlpha(0.7),
-                        border: `1px solid ${surface.active}`,
-                        borderRadius: 3,
-                        fontSize: 9,
-                        fontFamily: font.sans,
-                        padding: "2px 6px",
-                        lineHeight: "16px",
-                      }}>{label}</div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="card-label">AlignBox — Click cells &amp; spacing</div>
+            <InteractiveAlignBox />
           </div>
 
-          {/* ─── UnitSelector ────────────────────────────────────────── */}
+          {/* UnitSelector */}
           <div className="card" style={{ width: 260 }} data-component="UnitSelector">
-            <div className="card-label">UnitSelector</div>
-
+            <div className="card-label">UnitSelector — Click to open</div>
             <div className="variant-row">
-              <div className="variant-col" data-variant="closed">
-                <div className="variant-label">Closed Pill</div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  height: 20, padding: "0 4px", border: "1px solid transparent", borderRadius: 3,
-                  color: blackAlpha(0.8), fontSize: 10, fontFamily: font.mono, cursor: "pointer",
-                }}>px</div>
-              </div>
-              <div className="variant-col" data-variant="hover">
-                <div className="variant-label">Hover</div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  height: 20, padding: "0 4px", background: surface.hover, border: `1px solid ${surface.track}`,
-                  borderRadius: 3, color: blackAlpha(0.8), fontSize: 10, fontFamily: font.mono, cursor: "pointer",
-                }}>px</div>
-              </div>
-              <div className="variant-col" data-variant="open">
-                <div className="variant-label">Open</div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  height: 20, padding: "0 4px", background: primaryAlpha(0.25), border: `1px solid ${primaryAlpha(0.4)}`,
-                  borderRadius: 3, color: color.primaryHover, fontSize: 10, fontFamily: font.mono, cursor: "pointer",
-                }}>px</div>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="dropdown">
-              <div className="variant-label">Open Dropdown</div>
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  height: 20, padding: "0 4px", background: primaryAlpha(0.25), border: `1px solid ${primaryAlpha(0.4)}`,
-                  borderRadius: 3, color: color.primaryHover, fontSize: 10, fontFamily: font.mono,
-                }}>px</div>
-                <div style={{
-                  position: "absolute", top: "calc(100% + 2px)", left: 0, minWidth: 42,
-                  background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4,
-                  boxShadow: shadow.dropdown, zIndex: 100, padding: "2px 0",
-                }}>
-                  {["px", "%", "em", "rem", "vw", "vh"].map((unit, i) => (
-                    <div key={unit} style={{
-                      padding: "3px 8px", fontSize: 10, fontFamily: font.mono, lineHeight: "16px",
-                      color: i === 0 ? color.primaryForeground : blackAlpha(0.7),
-                      background: i === 0 ? color.primary : "transparent",
-                    }}>{unit}</div>
-                  ))}
-                  <div style={{ height: 1, background: blackAlpha(0.07), margin: "2px 0" }} />
-                  {["Auto", "None"].map((kw) => (
-                    <div key={kw} style={{
-                      padding: "3px 8px", fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7),
-                      lineHeight: "16px", textTransform: "uppercase", letterSpacing: "0.03em",
-                    }}>{kw}</div>
-                  ))}
-                </div>
-              </div>
+              <div className="variant-col"><div className="variant-label">Click the pill</div><InteractiveUnitSelector initialUnit="px" /></div>
+              <div className="variant-col"><div className="variant-label">Another instance</div><InteractiveUnitSelector initialUnit="rem" /></div>
             </div>
           </div>
 
-          {/* ─── SpacingBoxModel ──────────────────────────────────────── */}
+          {/* SpacingBoxModel */}
           <div className="card" style={{ width: 310 }} data-component="SpacingBoxModel">
-            <div className="card-label">SpacingBoxModel</div>
-
-            <div className="variant-col" data-variant="default">
-              <div className="variant-label">Default</div>
-              <div style={{ padding: 0 }}>
-                <div style={{ position: "relative", border: `1px solid ${surface.active}`, borderRadius: 4, background: spacingZone.marginBase }}>
-                  <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
-                    <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Margin</span>
-                    <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
-                    <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.55), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>0</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-                      <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.55), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>0</span>
-                    </div>
-                    <div style={{ flex: 1, border: `1px solid ${surface.active}`, borderRadius: 3, background: spacingZone.paddingBase, margin: "2px 0", position: "relative" }}>
-                      <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
-                        <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Padding</span>
-                        <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
-                        <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>16</span>
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                          <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>24</span>
-                        </div>
-                        <div style={{ flex: 1, height: 14, background: surface.hover, borderRadius: 2, margin: "0 4px" }} />
-                        <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
-                          <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>24</span>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
-                        <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>16</span>
-                      </div>
-                    </div>
-                    <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-                      <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.55), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>0</span>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
-                    <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.55), padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center" }}>0</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="card-label">SpacingBoxModel — Click values to edit</div>
+            <InteractiveSpacingBox />
           </div>
 
-          {/* ─── DisplayTabs ─────────────────────────────────────────── */}
+          {/* DisplayTabs */}
           <div className="card" style={{ width: 340 }} data-component="DisplayTabs">
-            <div className="card-label">DisplayTabs</div>
-            <div className="variant-row">
-              <div className="variant-col" data-variant="block-active">
-                <div className="variant-label">&quot;block&quot; active</div>
-                <div style={{ display: "inline-flex" }}>
-                  <div style={{ ...displayTabActive, borderRadius: "4px 0 0 4px" }}>block</div>
-                  <div style={{ ...displayTabInactive, borderLeft: "none" }}>flex</div>
-                  <div style={{ ...displayTabInactive, borderLeft: "none" }}>grid</div>
-                  <div style={{ ...displayTabInactive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>none</div>
-                </div>
-              </div>
-            </div>
-            <div className="variant-col" data-variant="flex-active">
-              <div className="variant-label">&quot;flex&quot; active</div>
-              <div style={{ display: "inline-flex" }}>
-                <div style={{ ...displayTabInactive, borderRadius: "4px 0 0 4px" }}>block</div>
-                <div style={{ ...displayTabActive, borderLeft: "none" }}>flex</div>
-                <div style={{ ...displayTabInactive, borderLeft: "none" }}>grid</div>
-                <div style={{ ...displayTabInactive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>none</div>
-              </div>
-            </div>
+            <div className="card-label">DisplayTabs — Click to switch</div>
+            <div className="variant-col"><div className="variant-label">Layout display</div><InteractiveDisplayTabs options={["block", "flex", "grid", "none"]} initialActive={0} /></div>
+            <div className="variant-col"><div className="variant-label">Position</div><InteractiveDisplayTabs options={["static", "relative", "absolute", "fixed", "sticky"]} initialActive={0} /></div>
           </div>
 
-          {/* ─── SelectRow ───────────────────────────────────────────── */}
+          {/* SelectRow */}
           <div className="card" style={{ width: 320 }} data-component="SelectRow">
-            <div className="card-label">SelectRow</div>
-
-            <div className="variant-col" data-variant="closed">
-              <div className="variant-label">Closed</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Weight</span>
-                <div style={{ flex: 1, position: "relative" }}>
-                  <div style={{
-                    width: "100%", height: 24, display: "flex", alignItems: "center", justifyContent: "space-between",
-                    background: color.input, border: `1px solid ${surface.active}`, borderRadius: 3,
-                    color: blackAlpha(0.7), fontSize: 11, fontFamily: font.mono, padding: "0 6px",
-                  }}>
-                    <span>400 - Regular</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={border.strong} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="open">
-              <div className="variant-label">Open with options</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Weight</span>
-                <div style={{ flex: 1, position: "relative" }}>
-                  <div style={{
-                    width: "100%", height: 24, display: "flex", alignItems: "center", justifyContent: "space-between",
-                    background: blackAlpha(0.07), border: `1px solid ${surface.active}`, borderRadius: 3,
-                    color: blackAlpha(0.7), fontSize: 11, fontFamily: font.mono, padding: "0 6px",
-                  }}>
-                    <span>400 - Regular</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={border.strong} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </div>
-                  <div style={{
-                    position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0,
-                    minWidth: "100%", maxHeight: 180, overflowY: "auto",
-                    background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4,
-                    boxShadow: shadow.dropdown, zIndex: 200, padding: "2px 0",
-                  }}>
-                    {["300 - Light", "400 - Regular", "500 - Medium", "600 - Semi Bold", "700 - Bold"].map((opt, i) => (
-                      <div key={opt} style={{
-                        padding: "4px 8px", fontSize: 11, fontFamily: font.mono, lineHeight: "16px",
-                        color: i === 1 ? color.primaryForeground : blackAlpha(0.7),
-                        background: i === 1 ? color.primary : "transparent",
-                      }}>{opt}</div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="card-label">SelectRow — Click to open dropdown</div>
+            <InteractiveSelect label="Weight" options={["300 - Light", "400 - Regular", "500 - Medium", "600 - Semi Bold", "700 - Bold"]} initialIndex={1} />
+            <InteractiveSelect label="Family" options={["Inter", "SF Pro", "Roboto", "Helvetica", "Georgia", "Menlo"]} initialIndex={0} />
           </div>
 
-          {/* ─── ColorRow ────────────────────────────────────────────── */}
+          {/* ColorRow */}
           <div className="card" style={{ width: 320 }} data-component="ColorRow">
             <div className="card-label">ColorRow</div>
-
-            <div className="variant-col" data-variant="default">
-              <div className="variant-label">Default (hex)</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Color</span>
-                <div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span>
-              </div>
+            <div className="variant-col"><div className="variant-label">Default (hex)</div>
+              <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
             </div>
-
-            <div className="variant-col" data-variant="variable">
-              <div className="variant-label">CSS Variable</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>Color</span>
-                <div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `2px solid ${primaryAlpha(0.6)}`, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, fontFamily: font.mono, color: primaryAlpha(0.8) }}>brand-primary</span>
-              </div>
+            <div className="variant-col"><div className="variant-label">CSS Variable</div>
+              <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `2px solid ${primaryAlpha(0.6)}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: primaryAlpha(0.8) }}>brand-primary</span></div>
             </div>
-
-            <div className="variant-col" data-variant="transparent">
-              <div className="variant-label">Transparent</div>
-              <div style={rowStyle}>
-                <span style={labelStyle}>BG</span>
-                <div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px", border: `1px solid ${surface.track}`, flexShrink: 0 }} />
-                <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>transparent</span>
-              </div>
+            <div className="variant-col"><div className="variant-label">Transparent</div>
+              <div style={rowStyle}><span style={labelStyle}>BG</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px", border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>transparent</span></div>
             </div>
           </div>
 
-          {/* ─── StyleIndicator ──────────────────────────────────────── */}
+          {/* StyleIndicator */}
           <div className="card" style={{ width: 320 }} data-component="StyleIndicator">
             <div className="card-label">StyleIndicator — All 5 Types</div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               {(["direct", "inherited", "state", "element", "variable"] as const).map((type) => (
                 <div key={type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{
-                    display: "inline-block", width: 4, height: 4, borderRadius: "50%",
-                    background: indicatorColor[type], boxShadow: `0 0 3px ${indicatorColor[type]}`,
-                  }} />
+                  <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor[type], boxShadow: `0 0 3px ${indicatorColor[type]}` }} />
                   <span style={{ fontSize: 10, color: blackAlpha(0.7) }} className="mono">{type}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* ─── Scope Pills ─────────────────────────────────────────── */}
+          {/* Scope Pills */}
           <div className="card" style={{ width: 280 }} data-component="ScopePills">
-            <div className="card-label">Scope Pills</div>
-            <div className="variant-col" data-variant="element-active">
-              <div className="variant-label">&quot;element&quot; active</div>
-              <div style={{ display: "flex", gap: 3 }}>
-                <ScopePill label="element" active />
-                <ScopePill label=".btnPrimary" />
-                <ScopePill label=".flex" />
-              </div>
-            </div>
-            <div className="variant-col" data-variant="class-active">
-              <div className="variant-label">&quot;.btnPrimary&quot; active</div>
-              <div style={{ display: "flex", gap: 3 }}>
-                <ScopePill label="element" />
-                <ScopePill label=".btnPrimary" active />
-                <ScopePill label=".flex" />
-              </div>
-            </div>
+            <div className="card-label">Scope Pills — Click to switch</div>
+            <InteractiveScopePills labels={["element", ".btnPrimary", ".flex"]} initialActive={0} />
           </div>
 
-          {/* ─── Footer Buttons ──────────────────────────────────────── */}
+          {/* Footer Buttons */}
           <div className="card" style={{ width: 380 }} data-component="FooterButtons">
-            <div className="card-label">Footer Buttons</div>
+            <div className="card-label">Footer Buttons — Hover &amp; click</div>
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-              <div className="variant-col" data-variant="standard">
-                <div className="variant-label">Standard</div>
-                <div style={footerBtnStandard}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
-              </div>
-              <div className="variant-col" data-variant="primary">
-                <div className="variant-label">Primary (Save)</div>
-                <div style={footerBtnPrimary}>Save</div>
-              </div>
-              <div className="variant-col" data-variant="destructive">
-                <div className="variant-label">Destructive (Reset)</div>
-                <div style={{
-                  padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
-                  border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
-                  background: surface.hover, color: "rgba(239,68,68,0.8)",
-                }}>Reset</div>
-              </div>
-              <div className="variant-col" data-variant="active">
-                <div className="variant-label">Active (Copy open)</div>
-                <div style={{
-                  padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
-                  border: "1px solid rgba(250,204,21,0.4)", borderRadius: 6,
-                  background: "rgba(250,204,21,0.12)", color: "rgba(250,204,21,0.9)",
-                }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
-              </div>
-              <div className="variant-col" data-variant="disabled">
-                <div className="variant-label">Disabled</div>
-                <div style={{ ...footerBtnPrimary, opacity: 0.35 }}>Save</div>
-              </div>
+              <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Primary (Save)</div><HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Destructive</div><HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>Reset</HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Disabled</div><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
             </div>
           </div>
 
-          {/* ─── Section Header ──────────────────────────────────────── */}
+          {/* Section Header */}
           <div className="card" style={{ width: 300 }} data-component="SectionHeader">
-            <div className="card-label">Section Header</div>
-
-            <div className="variant-col" data-variant="expanded">
-              <div className="variant-label">Expanded</div>
-              <div style={{ borderBottom: `1px solid ${color.input}`, background: color.background, borderRadius: 4 }}>
-                <ExpandedSectionHeader title="Layout" hasIndicator />
-              </div>
-            </div>
-
-            <div className="variant-col" data-variant="collapsed">
-              <div className="variant-label">Collapsed</div>
-              <div style={{ borderBottom: `1px solid ${color.input}`, background: color.background, borderRadius: 4 }}>
-                <div style={sectionHeaderStyle}>
-                  <span style={sectionTitleStyle}>Typography</span>
-                  <span style={chevronWrapStyle}><ChevronSvg /></span>
-                </div>
-              </div>
-            </div>
+            <div className="card-label">Section Header — Click to toggle</div>
+            <ToggleSection title="Layout" hasIndicator defaultOpen><div style={{ padding: "4px 12px", fontSize: 11, color: blackAlpha(0.6) }}>Section content shown when expanded...</div></ToggleSection>
+            <ToggleSection title="Typography"><div style={{ padding: "4px 12px", fontSize: 11, color: blackAlpha(0.6) }}>Typography section content...</div></ToggleSection>
+            <ToggleSection title="Backgrounds"><div style={{ padding: "4px 12px", fontSize: 11, color: blackAlpha(0.6) }}>Backgrounds section content...</div></ToggleSection>
           </div>
 
-          {/* ─── PresetChips ─────────────────────────────────────────── */}
+          {/* PresetChips */}
           <div className="card" style={{ width: 280 }} data-component="PresetChips">
-            <div className="card-label">PresetChips</div>
-            <div className="variant-col" data-variant="width-presets">
-              <div className="variant-label">Width presets</div>
-              <div style={{ display: "flex", gap: 3, flexWrap: "wrap", padding: "0 12px" }}>
-                {["auto", "100%", "fit-content"].map((v) => (
-                  <span key={v} style={{ fontSize: 9, fontFamily: font.mono, color: blackAlpha(0.7), background: color.input, padding: "1px 5px", borderRadius: 3 }}>{v}</span>
-                ))}
-              </div>
-            </div>
-            <div className="variant-col" data-variant="border-radius-presets">
-              <div className="variant-label">Border-radius presets</div>
-              <div style={{ display: "flex", gap: 3, flexWrap: "wrap", padding: "0 12px" }}>
-                {["0", "4", "8", "9999"].map((v) => (
-                  <span key={v} style={{ fontSize: 9, fontFamily: font.mono, color: blackAlpha(0.7), background: color.input, padding: "1px 5px", borderRadius: 3 }}>{v}</span>
-                ))}
-              </div>
-            </div>
+            <div className="card-label">PresetChips — Click to select</div>
+            <div className="variant-col"><div className="variant-label">Width presets</div><InteractivePresetChips values={["auto", "100%", "fit-content"]} /></div>
+            <div className="variant-col"><div className="variant-label">Border-radius presets</div><InteractivePresetChips values={["0", "4", "8", "9999"]} /></div>
           </div>
 
-          {/* ─── DragHandle ──────────────────────────────────────────── */}
+          {/* DragHandle */}
           <div className="card" style={{ width: 200 }} data-component="DragHandle">
             <div className="card-label">DragHandle</div>
-            <div style={{ display: "flex", justifyContent: "center", padding: "5px 0 0", background: color.background, borderRadius: 4 }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "5px 0 0", background: color.background, borderRadius: 4, cursor: "grab" }}>
               <div style={{ width: 28, height: 3, borderRadius: 1.5, background: surface.active }} />
             </div>
           </div>
 
-          {/* ─── Changes Badge ───────────────────────────────────────── */}
+          {/* Changes Badge */}
           <div className="card" style={{ width: 200 }} data-component="ChangesBadge">
             <div className="card-label">Changes Badge</div>
             <div className="variant-row">
-              <div className="variant-col" data-variant="with-count">
-                <div className="variant-label">With count</div>
-                <ChangesBadgeCount count={5} />
-              </div>
-              <div className="variant-col" data-variant="breakpoint">
-                <div className="variant-label">Breakpoint badge</div>
-                <BreakpointBadge label="lg" />
-              </div>
+              <div className="variant-col"><div className="variant-label">With count</div><ChangesBadgeCount count={5} /></div>
+              <div className="variant-col"><div className="variant-label">Breakpoint badge</div><BreakpointBadge label="lg" /></div>
             </div>
           </div>
 
-        </div>{/* end showcase-grid */}
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* SECTION C -- Full Panel Compositions                             */}
+      {/* SECTION C -- Full Panel Compositions (Interactive)                */}
       {/* ══════════════════════════════════════════════════════════════════ */}
 
       <div style={{ marginBottom: 64 }}>
         <h1 className="section-title">C — Full Panel Compositions</h1>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
 
-          {/* Panel 0: Common Tab (default view) */}
-          <div data-component="FullPanel" data-variant="common">
-            <div className="variant-label" style={{ marginBottom: 8 }}>Common Tab (Default)</div>
+          {/* Panel 1: Interactive */}
+          <div data-component="FullPanel" data-variant="interactive">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Interactive Panel — try everything</div>
             <div style={panelShell}>
-              <PanelHeader
-                tag="<button>"
-                className=".btnPrimary"
-                showSource
-                badges={<ChangesBadgeCount count={2} />}
-              />
-              {/* Scope pills */}
-              <div style={{ display: "flex", gap: 3, padding: "6px 12px 8px" }}>
-                <ScopePill label="element" active />
-                <ScopePill label=".btnPrimary" />
-              </div>
-              <TabBar active="common" />
-              {/* Focus Mode pill */}
-              <div style={{ display: "flex", justifyContent: "center", padding: "2px 0", borderBottom: `1px solid ${border.subtle}` }}>
-                <span style={{
-                  fontSize: 9, fontWeight: 600, color: color.primary,
-                  background: primaryAlpha(0.15), padding: "1px 8px",
-                  borderRadius: 999, letterSpacing: "0.04em", textTransform: "uppercase" as const,
-                }}>Focus Mode</span>
+              <PanelHeader tag="<button>" className=".btnPrimary" showSource badges={<><BreakpointBadge label="lg" /><ChangesBadgeCount count={3} /></>} />
+              <div style={{ padding: "6px 12px 8px" }}>
+                <InteractiveScopePills labels={["element", ".btnPrimary"]} initialActive={0} />
               </div>
 
-              {/* FlatGroup: STYLE */}
-              <div style={{ padding: "8px 0" }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Style</div>
-                {/* Bg color row */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Bg</span>
-                  <div style={{ width: 20, height: 20, borderRadius: 4, background: "#e2e8f0", border: `1px solid ${border.default}`, flexShrink: 0 }} />
-                  <span style={{ fontSize: 10, fontFamily: font.mono, color: text.label }}>#e2e8f0</span>
-                </div>
-                {/* Radius slider */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Radius</span>
-                  <SliderTrack pct={16} />
-                  <div style={valueInputStyle}>8</div>
-                  <span style={unitLabelStyle}>px</span>
-                </div>
-              </div>
+              <ToggleSection title="Layout" defaultOpen>
+                <div style={{ padding: layout.rowPadding }}><InteractiveDisplayTabs options={["block", "flex", "grid", "none"]} initialActive={1} /></div>
+                <InteractiveSlider label="Gap" initialPct={25} maxVal={48} />
+              </ToggleSection>
 
-              <div style={{ height: 1, background: border.subtle }} />
+              <ToggleSection title="Spacing" defaultOpen>
+                <div style={{ padding: "0 12px 8px" }}><InteractiveSpacingBox /></div>
+              </ToggleSection>
 
-              {/* FlatGroup: SPACING */}
-              <div style={{ padding: "8px 0" }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Spacing</div>
-                <div style={{ padding: "0 12px" }}>
-                  <div style={{ fontSize: 10, color: text.hint, textAlign: "center", padding: 12 }}>[Box Model]</div>
-                </div>
-              </div>
-
-              <div style={{ height: 1, background: border.subtle }} />
-
-              {/* FlatGroup: SIZE */}
-              <div style={{ padding: "8px 0" }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Size</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "0 12px" }}>
-                  {/* W cell */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 10, color: text.label, width: 14, textAlign: "center", flexShrink: 0 }}>W</span>
-                    <div style={{ flex: 1, height: 22, display: "flex", alignItems: "center", justifyContent: "center", background: color.input, borderRadius: 3, fontSize: 11, fontFamily: font.mono, color: color.foreground }}>200</div>
+              <ToggleSection title="Size" hasIndicator defaultOpen>
+                <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
+                  <div style={{ flex: 1, ...sizeInputCellBase, background: primaryAlpha(0.10), border: `1px solid ${primaryAlpha(0.25)}` }}>
+                    <div style={{ ...sizeInputLabel, color: color.primary }}>W</div>
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>200</span></div>
+                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>px</span></div>
                   </div>
-                  {/* H cell */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ fontSize: 10, color: text.label, width: 14, textAlign: "center", flexShrink: 0 }}>H</span>
-                    <div style={{ flex: 1, height: 22, display: "flex", alignItems: "center", justifyContent: "center", background: color.input, borderRadius: 3, fontSize: 11, fontFamily: font.mono, color: text.label }}>auto</div>
+                  <div style={{ flex: 1, ...sizeInputCellBase }}>
+                    <div style={sizeInputLabel}>H</div>
+                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div>
+                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>&ndash;</span></div>
                   </div>
                 </div>
-              </div>
+                <div style={{ padding: layout.rowPadding }}><InteractivePresetChips values={["auto", "100%", "fit-content", "min-content"]} /></div>
+              </ToggleSection>
 
-              <div style={{ height: 1, background: border.subtle }} />
+              <ToggleSection title="Position">
+                <div style={{ padding: layout.rowPadding }}><InteractiveDisplayTabs options={["static", "relative", "absolute", "fixed", "sticky"]} initialActive={0} /></div>
+              </ToggleSection>
 
-              {/* FlatGroup: TYPOGRAPHY */}
-              <div style={{ padding: "8px 0" }}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Typography</div>
-                {/* Style select */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Style</span>
-                  <div style={{ flex: 1, height: 24, display: "flex", alignItems: "center", justifyContent: "space-between", background: color.input, border: `1px solid ${border.default}`, borderRadius: 3, color: color.foreground, fontSize: 11, fontFamily: font.mono, padding: "0 6px" }}>
-                    <span>Body</span>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={border.strong} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                  </div>
-                </div>
-                {/* Size slider */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Size</span>
-                  <SliderTrack pct={13} />
-                  <div style={valueInputStyle}>16</div>
-                  <span style={unitLabelStyle}>px</span>
-                </div>
-                {/* Color row */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Color</span>
-                  <div style={{ width: 20, height: 20, borderRadius: 4, background: color.foreground, border: `1px solid ${border.default}`, flexShrink: 0 }} />
-                  <span style={{ fontSize: 10, fontFamily: font.mono, color: text.label }}>{color.foreground}</span>
-                </div>
-                {/* Weight slider */}
-                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
-                  <span style={labelStyle}>Weight</span>
-                  <SliderTrack pct={38} />
-                  <div style={valueInputStyle}>400</div>
-                  <span style={unitLabelStyle}></span>
-                </div>
-              </div>
+              <ToggleSection title="Typography">
+                <InteractiveSelect label="Family" options={["Inter", "SF Pro", "Roboto", "Menlo"]} initialIndex={0} />
+                <InteractiveSelect label="Weight" options={["300 - Light", "400 - Regular", "500 - Medium", "600 - Semi Bold", "700 - Bold"]} initialIndex={1} />
+                <InteractiveSlider label="Size" initialPct={33} maxVal={48} />
+                <InteractiveSlider label="Height" initialPct={50} maxVal={3} unit="em" />
+                <div style={{ padding: layout.rowPadding }}><InteractiveIconGroup icons={[<AlignLeftIcon key="l" />, <AlignCenterIcon key="c" />, <AlignRightIcon key="r" />, <AlignJustifyIcon key="j" />]} initialActive={0} /></div>
+              </ToggleSection>
+
+              <ToggleSection title="Backgrounds">
+                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
+              </ToggleSection>
+
+              <ToggleSection title="Borders">
+                <InteractiveSlider label="Width" initialPct={10} maxVal={10} />
+                <InteractiveSlider label="Radius" initialPct={20} maxVal={50} />
+              </ToggleSection>
+
+              <ToggleSection title="Effects">
+                <InteractiveSlider label="Opacity" initialPct={100} maxVal={100} unit="%" />
+              </ToggleSection>
 
               {/* Footer */}
-              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6 }}>
+              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <div style={footerBtnStandard}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <div style={{
-                      padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
-                      border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
-                      background: surface.hover, color: "rgba(239,68,68,0.8)",
-                    }}>Reset</div>
-                    <div style={footerBtnPrimary}>Save</div>
+                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
+                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Paste</HoverButton>
+                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Import</HoverButton>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Panel 1: Expanded */}
-          <div data-component="FullPanel" data-variant="expanded">
-            <div className="variant-label" style={{ marginBottom: 8 }}>Custom — All Expanded</div>
-            <div style={panelShell}>
-              {/* Header */}
-              <PanelHeader
-                tag="<button>"
-                className=".btnPrimary"
-                showSource
-                badges={<>
-                  <BreakpointBadge label="lg" />
-                  <ChangesBadgeCount count={3} />
-                </>}
-              />
-              {/* Scope pills */}
-              <div style={{ display: "flex", gap: 3, padding: "6px 12px 8px" }}>
-                <ScopePill label="element" active />
-                <ScopePill label=".btnPrimary" />
-              </div>
-              <TabBar active="custom" />
-
-              {/* Layout Section (expanded) */}
-              <div style={{ borderBottom: `1px solid ${surface.subtle}` }}>
-                <ExpandedSectionHeader title="Layout" />
-                <div style={{ paddingBottom: layout.sectionBodyPadding }}>
-                  {/* Display tabs */}
-                  <div style={{ padding: layout.rowPadding }}>
-                    <div style={{ display: "inline-flex" }}>
-                      <div style={{ ...displayTabInactive, borderRadius: "4px 0 0 4px" }}>block</div>
-                      <div style={{ ...displayTabActive, borderLeft: "none" }}>flex</div>
-                      <div style={{ ...displayTabInactive, borderLeft: "none" }}>grid</div>
-                      <div style={{ ...displayTabInactive, borderLeft: "none", borderRadius: "0 4px 4px 0" }}>none</div>
-                    </div>
-                  </div>
-                  {/* Gap slider */}
-                  <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: "6px 12px 2px" }}>
-                    <span style={labelStyle}>Gap</span>
-                    <SliderTrack pct={25} />
-                    <div style={valueInputStyle}>12</div>
-                    <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Spacing Section (expanded) */}
-              <div style={{ borderBottom: `1px solid ${surface.subtle}` }}>
-                <ExpandedSectionHeader title="Spacing" />
-                <div style={{ padding: "0 12px 8px" }}>
-                  <div style={{ fontSize: 10, color: blackAlpha(0.6), textAlign: "center", padding: 12 }}>[Box Model]</div>
-                </div>
-              </div>
-
-              {/* Size Section (expanded) */}
-              <div style={{ borderBottom: `1px solid ${surface.subtle}` }}>
-                <ExpandedSectionHeader title="Size" hasIndicator />
-                <div style={{ paddingBottom: layout.sectionBodyPadding }}>
-                  <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
-                    {/* Width cell (modified) */}
-                    <div style={{ flex: 1, ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}>
-                      <div style={{ ...sizeInputLabel, color: color.primary }}>W</div>
-                      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                        <span style={sizeInputValue}>200</span>
-                      </div>
-                      <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>px</span></div>
-                    </div>
-                    {/* Height cell (auto) */}
-                    <div style={{ flex: 1, ...sizeInputCellBase }}>
-                      <div style={sizeInputLabel}>H</div>
-                      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
-                        <span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span>
-                      </div>
-                      <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>&ndash;</span></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Collapsed sections */}
-              <CollapsedSection title="Position" />
-              <CollapsedSection title="Typography" />
-              <CollapsedSection title="Backgrounds" />
-              <CollapsedSection title="Borders" />
-              <CollapsedSection title="Effects" />
-
-              {/* Footer */}
-              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <div style={footerBtnStandard}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <div style={{
-                      padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
-                      border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
-                      background: surface.hover, color: "rgba(239,68,68,0.8)",
-                    }}>Reset</div>
-                    <div style={footerBtnPrimary}>Save</div>
+                    <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
+                    <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
                   </div>
                 </div>
               </div>
@@ -1619,25 +1556,18 @@ export default function ShowcasePage() {
 
           {/* Panel 2: All Collapsed */}
           <div data-component="FullPanel" data-variant="all-collapsed">
-            <div className="variant-label" style={{ marginBottom: 8 }}>Custom — All Collapsed</div>
+            <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Collapsed — Click to expand</div>
             <div style={panelShell}>
               <PanelHeader tag="<div>" className=".container" />
               <div style={{ height: 8 }} />
-              <TabBar active="custom" />
               {["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].map((s) => (
-                <CollapsedSection key={s} title={s} />
+                <ToggleSection key={s} title={s}>
+                  <div style={{ padding: "8px 12px", fontSize: 11, color: blackAlpha(0.5) }}>{s} controls would appear here...</div>
+                </ToggleSection>
               ))}
-              {/* Footer (disabled) */}
-              <div style={{ display: "flex", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6, justifyContent: "space-between" }}>
-                <div style={{ ...footerBtnStandard, opacity: 0.35 }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <div style={{
-                    padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
-                    border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
-                    background: surface.hover, color: "rgba(239,68,68,0.8)", opacity: 0.35,
-                  }}>Reset</div>
-                  <div style={{ ...footerBtnPrimary, opacity: 0.35 }}>Save</div>
-                </div>
+              <div style={{ display: "flex", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6, justifyContent: "space-between" }}>
+                <div style={{ display: "flex", gap: 6 }}><HoverButton style={footerBtnStandard} disabled>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
+                <div style={{ display: "flex", gap: 6 }}><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
               </div>
             </div>
           </div>
@@ -1648,17 +1578,7 @@ export default function ShowcasePage() {
             <div style={panelShell}>
               <PanelHeader tag="<div>" />
               <div style={{ height: 8 }} />
-              <TabBar active="custom" />
-              {/* Search input */}
-              <div style={{ padding: "6px 12px", borderBottom: `1px solid ${border.subtle}` }}>
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  height: 28, background: color.input, border: `1px solid ${border.default}`,
-                  borderRadius: 4, padding: "0 8px", fontSize: 11, fontFamily: font.mono,
-                  color: text.hint,
-                }}>Search properties...</div>
-              </div>
-              <div style={{ textAlign: "center", color: text.hint, padding: "40px 20px", fontSize: 12 }}>No matching properties</div>
+              <div style={{ textAlign: "center", color: blackAlpha(0.55), padding: "40px 20px", fontSize: 12 }}>No matching properties</div>
             </div>
           </div>
 
@@ -1666,103 +1586,20 @@ export default function ShowcasePage() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* SECTION D -- Overlay Components                                   */}
+      {/* SECTION D -- Overlay Components (Interactive)                     */}
       {/* ══════════════════════════════════════════════════════════════════ */}
 
       <div style={{ marginBottom: 64 }}>
-        <h1 className="section-title">D — Overlay Components (larger scale)</h1>
+        <h1 className="section-title">D — Overlay Components</h1>
         <div className="showcase-grid">
-
-          {/* ColorPickerEnhanced */}
           <div className="card" style={{ width: 280 }} data-component="ColorPickerEnhanced">
-            <div className="card-label">ColorPickerEnhanced</div>
-            <div style={{
-              width: 240, background: color.popover, borderRadius: 8, padding: 12,
-              boxShadow: shadow.picker, display: "flex", flexDirection: "column", gap: 10,
-            }}>
-              {/* 2D SB canvas */}
-              <div style={{ position: "relative", width: layout.pickerCanvasWidth, height: layout.pickerCanvasHeight, borderRadius: 4, overflow: "hidden", cursor: "crosshair" }}>
-                <div style={{ position: "absolute", inset: 0, background: "hsl(260, 100%, 50%)" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0))" }} />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1))" }} />
-                {/* Handle */}
-                <div style={{
-                  position: "absolute", left: "75%", top: "25%", width: 14, height: 14, borderRadius: "50%",
-                  border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
-                  transform: "translate(-50%, -50%)", background: color.primary,
-                }} />
-              </div>
-              {/* Hue slider */}
-              <div style={{ position: "relative", width: layout.pickerCanvasWidth, height: 12, borderRadius: 6, background: "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)", cursor: "pointer" }}>
-                <div style={{
-                  position: "absolute", left: "72%", top: "50%", width: 14, height: 14, borderRadius: "50%",
-                  border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
-                  transform: "translate(-50%, -50%)", background: "hsl(260, 100%, 50%)",
-                }} />
-              </div>
-              {/* Opacity slider */}
-              <div style={{ position: "relative", width: layout.pickerCanvasWidth, height: 12, borderRadius: 6, background: "repeating-conic-gradient(#444 0% 25%, #666 0% 50%) 50%/8px 8px", cursor: "pointer", overflow: "hidden" }}>
-                <div style={{ position: "absolute", inset: 0, borderRadius: 6, background: `linear-gradient(to right, transparent, ${color.primary})` }} />
-                <div style={{
-                  position: "absolute", left: "100%", top: "50%", width: 14, height: 14, borderRadius: "50%",
-                  border: `2px solid ${color.primaryForeground}`, boxShadow: `0 0 2px ${blackAlpha(0.6)}`,
-                  transform: "translate(-50%, -50%)", background: color.primary,
-                }} />
-              </div>
-              {/* Mode inputs */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10, color: blackAlpha(0.7), fontFamily: font.mono, cursor: "pointer", minWidth: 22, textTransform: "uppercase", letterSpacing: "0.02em" }}>HEX</span>
-                <div style={{
-                  flex: 1, background: color.background, border: `1px solid ${blackAlpha(0.07)}`, borderRadius: 4,
-                  padding: "3px 6px", fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.7),
-                }}>{color.primary}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-                  <span style={{ fontSize: 9, color: blackAlpha(0.6), fontFamily: font.mono }}>A</span>
-                  <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.8), minWidth: 26, textAlign: "right" }}>100%</span>
-                </div>
-              </div>
-              {/* Swatches */}
-              <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                  <span style={{ fontSize: 9, color: blackAlpha(0.6), textTransform: "uppercase", letterSpacing: "0.04em" }}>Swatches</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <div style={{
-                      background: "none", border: `1px solid ${surface.active}`, borderRadius: 3,
-                      color: blackAlpha(0.7), width: 18, height: 18,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 11, lineHeight: 1,
-                    }}>+</div>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {[color.destructive, "#22c55e", color.primary, indicatorColor.inherited, "#06b6d4"].map((c, i) => (
-                    <div key={i} style={{
-                      width: layout.swatchSizeSaved, height: layout.swatchSizeSaved, borderRadius: 3,
-                      border: i === 2 ? `2px solid ${blackAlpha(0.6)}` : `1px solid ${surface.track}`,
-                      background: c,
-                    }} />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <div className="card-label">ColorPickerEnhanced — Drag handles</div>
+            <InteractiveColorPicker />
           </div>
-
-          {/* Copy Dropdown Menu */}
           <div className="card" style={{ width: 200 }} data-component="CopyDropdownMenu">
-            <div className="card-label">Copy Dropdown</div>
-            <div style={{
-              background: color.popover, border: `1px solid ${surface.active}`, borderRadius: 6,
-              padding: "4px 0", minWidth: 140, boxShadow: shadow.dropdown,
-            }}>
-              {["CSS", "Tailwind", "CSS Variables", "SCSS (commented)"].map((opt, i) => (
-                <div key={opt} style={{
-                  display: "block", width: "100%", padding: "6px 12px", fontSize: 12, fontFamily: font.sans,
-                  background: i === 1 ? surface.hover : "transparent", color: blackAlpha(0.7), textAlign: "left",
-                }}>{opt}</div>
-              ))}
-            </div>
+            <div className="card-label">Copy Dropdown — Hover items</div>
+            <InteractiveCopyDropdown formats={["CSS", "Tailwind", "CSS Variables", "SCSS (commented)"]} />
           </div>
-
         </div>
       </div>
 
@@ -1777,11 +1614,7 @@ export default function ShowcasePage() {
           <tbody>
             <tr><th>Code Token</th><th>Value</th><th>Figma Variable Name</th></tr>
             {tokenRows.map((row) => (
-              <tr key={row.code}>
-                <td>{row.code}</td>
-                <td>{row.value}</td>
-                <td>{row.figma}</td>
-              </tr>
+              <tr key={row.code}><td>{row.code}</td><td>{row.value}</td><td>{row.figma}</td></tr>
             ))}
           </tbody>
         </table>
