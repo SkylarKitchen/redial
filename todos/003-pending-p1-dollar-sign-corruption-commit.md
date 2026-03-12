@@ -15,4 +15,4 @@ In `src/server/commit.ts`, CSS values containing `$` (e.g., CSS custom propertie
 - Fix: Escape `$` in replacement string with `change.to.replace(/\$/g, '$$$$')`
 
 ## Resolution
-Deferred — server-side file, lower blast radius for current dev-only usage. Will fix in next pass.
+Fixed — escaped `$` in replacement string at commit.ts:391 with `change.to.replace(/\$/g, "$$$$")`.
