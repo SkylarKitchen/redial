@@ -335,8 +335,14 @@ export function Overlay() {
         setSelecting((s) => !s);
       }
 
-      // Escape closes panel
+      // Escape: close search first, then close panel
       if (e.key === "Escape" && selectedEl && !selecting) {
+        if (showSearch) {
+          e.preventDefault();
+          setSearchQuery("");
+          setShowSearch(false);
+          return;
+        }
         setSelectedEl(null);
         setInferResult(null);
       }

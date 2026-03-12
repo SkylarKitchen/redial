@@ -270,6 +270,13 @@ function TransitionCard({
     }, durationMs + delayMs + 50);
   }, [element, playing, transition]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    };
+  }, []);
+
   const handleBezierChange = useCallback(
     (pts: [number, number, number, number]) => {
       onUpdate({ easing: `cubic-bezier(${pts[0]}, ${pts[1]}, ${pts[2]}, ${pts[3]})` });

@@ -3,6 +3,7 @@
  *
  * Shows the current unit in a pill; click to open a dropdown.
  * Closes on outside click. Keyboard navigation via useDropdownKeyboard.
+ * Optional conversion tooltip shows "16px -> 1em (base: 16px)" after unit changes.
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
@@ -14,6 +15,16 @@ export interface SpecialOption {
   label: string;
 }
 
+/** Describes a unit conversion that just occurred, used to show a tooltip. */
+export interface ConversionHint {
+  oldValue: number;
+  oldUnit: string;
+  newValue: number;
+  newUnit: string;
+  /** Human-readable context, e.g. "base: 16px" or "parent: 400px" */
+  basis?: string;
+}
+
 export interface UnitSelectorProps {
   value: string;
   options?: string[];
@@ -22,6 +33,8 @@ export interface UnitSelectorProps {
   specialOptions?: SpecialOption[];
   /** Called when a special option is selected */
   onSpecialSelect?: (value: string) => void;
+  /** When set, shows a transient tooltip describing the conversion. Auto-dismissed after 2s. */
+  conversionHint?: ConversionHint | null;
 }
 
 const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
