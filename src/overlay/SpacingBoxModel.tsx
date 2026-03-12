@@ -30,6 +30,7 @@ import { beginBatch, endBatch } from "./apply";
 import { ms } from "./timing";
 import { setScrubGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
+import { spacingZone, surface, font, blackAlpha, color } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -43,11 +44,11 @@ interface SpacingBoxModelProps {
   onPaddingUnitChange: (unit: string) => void;
 }
 
-// Zone base/highlight colors (slightly stronger highlight for hover feedback)
-const MARGIN_BASE = "rgba(255, 152, 87, 0.08)";
-const MARGIN_HIGHLIGHT = "rgba(255, 152, 87, 0.22)";
-const PADDING_BASE = "rgba(87, 168, 255, 0.08)";
-const PADDING_HIGHLIGHT = "rgba(87, 168, 255, 0.22)";
+// Zone base/highlight colors — neutral grays from theme tokens
+const MARGIN_BASE = spacingZone.marginBase;
+const MARGIN_HIGHLIGHT = spacingZone.marginHover;
+const PADDING_BASE = spacingZone.paddingBase;
+const PADDING_HIGHLIGHT = spacingZone.paddingHover;
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
 
@@ -191,31 +192,29 @@ export function SpacingBoxModel({
         role="button"
         aria-label={propLabel(prop)}
         style={{
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: nonDefault ? "rgba(217,119,87,0.95)" : "#504F4A",
+          fontSize: 10,
+          fontFamily: font.mono,
+          color: isMargin ? blackAlpha(0.55) : blackAlpha(0.8),
           cursor: "ew-resize",
           padding: "2px 4px",
-          borderRadius: "3px",
-          minWidth: "18px",
+          borderRadius: 3,
+          minWidth: 18,
           textAlign: "center",
           outline: "none",
           userSelect: "none",
-          transition: `background ${ms("fast")}, color ${ms("fast")}`,
+          transition: `color ${ms("fast")}`,
           position: "relative",
         }}
         // --- Hover: highlight + tooltip ---
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.background = "rgba(0,0,0,0.08)";
-          el.style.color = nonDefault ? "rgba(217,119,87,1)" : "#1C1B18";
+          el.style.color = color.primary;
           highlightZone(group);
           setTooltip({ prop, rect: el.getBoundingClientRect() });
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.background = "transparent";
-          el.style.color = nonDefault ? "rgba(217,119,87,0.95)" : "#504F4A";
+          el.style.color = isMargin ? blackAlpha(0.55) : blackAlpha(0.8);
           clearZone(group);
           setTooltip(null);
         }}
@@ -361,10 +360,10 @@ export function SpacingBoxModel({
         ref={marginZoneRef}
         style={{
           position: "relative",
-          border: "1px solid rgba(0,0,0,0.08)",
-          borderRadius: "4px",
+          border: `1px solid ${surface.active}`,
+          borderRadius: 4,
           background: MARGIN_BASE,
-          padding: "0",
+          transition: `background ${ms("fast")}`,
         }}
       >
         {/* MARGIN label + unit selector */}
@@ -382,10 +381,10 @@ export function SpacingBoxModel({
         >
           <span
             style={{
-              fontSize: "8px",
+              fontSize: 8,
               textTransform: "uppercase",
               letterSpacing: "0.05em",
-              color: "#504F4A",
+              color: blackAlpha(0.55),
             }}
           >
             Margin
@@ -394,7 +393,7 @@ export function SpacingBoxModel({
         </div>
 
         {/* Margin top */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
           {renderValue("margin-top", margin.top, "margin", 0)}
         </div>
 
@@ -409,11 +408,12 @@ export function SpacingBoxModel({
             ref={paddingZoneRef}
             style={{
               flex: 1,
-              border: "1px solid rgba(0,0,0,0.08)",
-              borderRadius: "3px",
+              border: `1px solid ${surface.active}`,
+              borderRadius: 3,
               background: PADDING_BASE,
               margin: "2px 0",
               position: "relative",
+              transition: `background ${ms("fast")}`,
             }}
           >
             {/* PADDING label + unit selector */}
@@ -431,10 +431,10 @@ export function SpacingBoxModel({
             >
               <span
                 style={{
-                  fontSize: "8px",
+                  fontSize: 8,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
-                  color: "#504F4A",
+                  color: blackAlpha(0.55),
                 }}
               >
                 Padding
@@ -447,7 +447,7 @@ export function SpacingBoxModel({
             </div>
 
             {/* Padding top */}
-            <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
               {renderValue("padding-top", padding.top, "padding", 4)}
             </div>
 
@@ -460,8 +460,8 @@ export function SpacingBoxModel({
               <div
                 style={{
                   flex: 1,
-                  height: "20px",
-                  background: "rgba(0, 0, 0, 0.05)",
+                  height: 14,
+                  background: surface.hover,
                   borderRadius: "2px",
                   margin: "0 4px",
                 }}
@@ -472,7 +472,7 @@ export function SpacingBoxModel({
             </div>
 
             {/* Padding bottom */}
-            <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
               {renderValue("padding-bottom", padding.bottom, "padding", 6)}
             </div>
           </div>
@@ -483,7 +483,7 @@ export function SpacingBoxModel({
         </div>
 
         {/* Margin bottom */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 6px" }}>
           {renderValue("margin-bottom", margin.bottom, "margin", 2)}
         </div>
       </div>
