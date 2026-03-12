@@ -9,6 +9,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface FilterValues {
   blur: number;
