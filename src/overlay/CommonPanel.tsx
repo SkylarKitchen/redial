@@ -275,7 +275,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               min={0}
               max={1920}
               conversionHint={wHint}
-              property="width"
             />
             <SizeInputCell
               label="H"
@@ -300,7 +299,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               min={0}
               max={1200}
               conversionHint={hHint}
-              property="height"
             />
           </div>
         </FlatGroup>

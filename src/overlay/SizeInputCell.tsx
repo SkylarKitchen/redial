@@ -39,8 +39,6 @@ export interface SizeInputCellProps {
   max?: number;
   /** Conversion tooltip hint passed through to UnitSelector */
   conversionHint?: ConversionHint | null;
-  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
-  property?: string;
   /** Currently selected CSS variable name, or null */
   cssVar?: string | null;
   /** Resolved display value of the variable (e.g. "16") */
@@ -69,7 +67,6 @@ export function SizeInputCell({
   min,
   max,
   conversionHint,
-  property,
   cssVar,
   cssVarResolved,
   onCssVarChange,
@@ -161,32 +158,6 @@ export function SizeInputCell({
   );
 
   const isKeyword = keyword !== null;
-
-  const handlePresetSelect = useCallback((v: string) => {
-    // Keywords: "auto", "none"
-    if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
-      onKeywordChange?.(v as "auto" | "none");
-      return;
-    }
-    // Values with unit suffix like "100%" — parse value and switch unit
-    const numMatch = v.match(/^(-?[\d.]+)(%|px|em|rem|vw|vh)$/);
-    if (numMatch) {
-      const num = parseFloat(numMatch[1]);
-      const u = numMatch[2];
-      if (keyword !== null) onKeywordChange?.(null);
-      if (u !== unit && units.includes(u)) onUnitChange(u);
-      onValueChange(num);
-      return;
-    }
-    // Pure numeric string
-    const parsed = parseFloat(v);
-    if (!isNaN(parsed)) {
-      if (keyword !== null) onKeywordChange?.(null);
-      onValueChange(parsed);
-    }
-  }, [keyword, onKeywordChange, onValueChange, onUnitChange, unit, units, supportsAuto, supportsNone]);
-
-  const hasPresets = property && VALUE_PRESETS[property];
 
   return (
     <div className="flex flex-1 flex-col gap-0.5">
@@ -291,7 +262,6 @@ export function SizeInputCell({
         />
       </div>
     </div>
-    {hasPresets && <PresetChips property={property!} onSelect={handlePresetSelect} />}
     </div>
   );
 }
