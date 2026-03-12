@@ -43,6 +43,10 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => {
+    resetProp(element, prop);
+    setter(getComputedStyle(element).getPropertyValue(prop).trim());
+  };
 
   // ─── CSS variable discovery (length-type only) ─────────────────────
 
@@ -392,8 +396,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           </div>
           {isMedia && (
             <>
-              <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} onContextMenu={ctxMenu("object-fit", objectFit)} computedProp="object-fit" computedElement={element} />
-              <SelectRow label="Obj Position" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} computedProp="object-position" computedElement={element} />
+              <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} onContextMenu={ctxMenu("object-fit", objectFit)} computedProp="object-fit" computedElement={element} onReset={() => resetCssStr("object-fit", setObjectFit)} />
+              <SelectRow label="Obj Position" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} computedProp="object-position" computedElement={element} onReset={() => resetCssStr("object-position", setObjectPosition)} />
             </>
           )}
         </>

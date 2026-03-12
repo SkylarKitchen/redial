@@ -68,6 +68,10 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => {
+    resetProp(element, prop);
+    setter(getComputedStyle(element).getPropertyValue(prop).trim());
+  };
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleOpacityChange = useCallback((v: number) => { setOpacity(v); apply("opacity", String(v)); }, [apply]);
@@ -129,7 +133,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   return (
     <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
-      <SelectRow label="Mix Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
+      <SelectRow label="Mix Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} onReset={() => resetCssStr("mix-blend-mode", setMixBlendMode)} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
       <div className={SUB_HEADER_CLASS}>
         Box Shadow
@@ -148,7 +152,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
         />
       </div>
       <SliderRow label="Perspective" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
-      <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />
+      <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} onReset={() => resetCssStr("backface-visibility", setBackfaceVisibility)} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />
 
       <div className={SUB_HEADER_CLASS}>
         Transition
@@ -174,14 +178,14 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <div className={SUB_HEADER_CLASS}>
         Cursor
       </div>
-      <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} onContextMenu={ctxMenu("cursor", cursor)} computedProp="cursor" computedElement={element} />
+      <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} onReset={() => resetCssStr("cursor", setCursor)} indicator={ind("cursor")} onContextMenu={ctxMenu("cursor", cursor)} computedProp="cursor" computedElement={element} />
 
       <div className={SUB_HEADER_CLASS}>
         Interaction
       </div>
-      <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} onContextMenu={ctxMenu("pointer-events", pointerEvents)} computedProp="pointer-events" computedElement={element} />
-      <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} indicator={ind("visibility")} onContextMenu={ctxMenu("visibility", visibility)} computedProp="visibility" computedElement={element} />
-      <SelectRow label="Selection" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} indicator={ind("user-select")} onContextMenu={ctxMenu("user-select", userSelect)} computedProp="user-select" computedElement={element} />
+      <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} onReset={() => resetCssStr("pointer-events", setPointerEvents)} indicator={ind("pointer-events")} onContextMenu={ctxMenu("pointer-events", pointerEvents)} computedProp="pointer-events" computedElement={element} />
+      <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} onReset={() => resetCssStr("visibility", setVisibility)} indicator={ind("visibility")} onContextMenu={ctxMenu("visibility", visibility)} computedProp="visibility" computedElement={element} />
+      <SelectRow label="Selection" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} onReset={() => resetCssStr("user-select", setUserSelect)} indicator={ind("user-select")} onContextMenu={ctxMenu("user-select", userSelect)} computedProp="user-select" computedElement={element} />
     </Section>
   );
 });

@@ -22,7 +22,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
-import { beginBatch, endBatch } from "./apply";
+import { beginBatch, endBatch, resetProp } from "./apply";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,
@@ -201,6 +201,11 @@ export const TypographySection = memo(function TypographySection({
     apply("direction", val);
   }, [apply]);
 
+  const resetCssStr = (prop: string, setter: (v: string) => void) => {
+    resetProp(element, prop);
+    setter(getComputedStyle(element).getPropertyValue(prop).trim());
+  };
+
   return (
     <Section
       title="Typography"
@@ -216,10 +221,10 @@ export const TypographySection = memo(function TypographySection({
       <TextStyleRow styles={textStyles} matchedStyle={matchedTextStyle} onApply={handleTextStyleApply} />
 
       {/* Font family dropdown */}
-      <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} />
+      <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} onReset={() => resetCssStr("font-family", (v) => setFontFamily(v.replace(/['"]/g, "")))} />
 
       {/* Weight dropdown */}
-      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} />
+      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
 
       {/* Size + Height side-by-side compact cells */}
       <div className="flex items-center gap-1 px-3 py-0.5">
@@ -252,7 +257,7 @@ export const TypographySection = memo(function TypographySection({
       </div>
 
       {/* Color */}
-      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} />
+      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} onReset={() => { resetProp(element, "color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
 
       {/* Align */}
       <div className="flex items-center gap-1.5 px-3 py-1">
@@ -385,7 +390,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Wrap */}
-          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} computedProp="white-space" computedElement={element} />
+          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} computedProp="white-space" computedElement={element} onReset={() => resetCssStr("white-space", setWhiteSpace)} />
 
           {/* Truncate — Clip / Ellipsis segmented toggle */}
           <div className="flex items-center gap-1.5 px-3 py-1">

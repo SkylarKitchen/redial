@@ -69,49 +69,18 @@ function FlatGroup({ title, children }: { title: string; children: React.ReactNo
   );
 }
 
-// ─── Value Cell (compact labeled input) ──────────────────────────────
-
-function ValueCell({
-  label,
-  value,
-  onChange,
-  keyword,
-  onClearKeyword,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  keyword?: string;
-  onClearKeyword?: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <span className="text-[10px] text-[var(--muted-foreground)] w-3.5 text-center shrink-0">
-        {label}
-      </span>
-      {keyword ? (
-        <div
-          onClick={onClearKeyword}
-          className="flex-1 h-[22px] flex items-center justify-center text-[11px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] rounded-[3px] cursor-pointer select-none"
-        >
-          {keyword}
-        </div>
-      ) : (
-        <ValueInput value={value} onChange={onChange} />
-      )}
-    </div>
-  );
-}
-
 // ─── Main Component ──────────────────────────────────────────────────
 
 export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, scope = "element", activeClassName }: CommonPanelProps) {
   const cs = getComputedStyle(element);
+  const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
 
   // --- Style group state ---
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
   const [opacity, setOpacity] = useState(() => Math.round(parseNum(cs.opacity) * 100));
   const [borderRadius, setBorderRadius] = useState(() => parseNum(cs.borderRadius));
+  const [radiusUnit, setRadiusUnit] = useState(() => detectUnit(element, "border-radius"));
+  const { conversionHint: radiusHint, fireConversionHint: fireRadiusHint } = useConversionHint();
 
   // --- Contextual visibility: only show rows with non-default values ---
   const showBg = bgColor !== "transparent";
@@ -126,10 +95,14 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
     spacing.padding.bottom !== 0 || spacing.padding.left !== 0;
 
   // --- Size group state ---
-  const [width, setWidth] = useState(() => parseNum(cs.width));
-  const [height, setHeight] = useState(() => parseNum(cs.height));
+  const [width, setWidth] = useState(() => isAutoSize(element, "width") ? 0 : parseNum(cs.width));
+  const [height, setHeight] = useState(() => isAutoSize(element, "height") ? 0 : parseNum(cs.height));
   const [widthAuto, setWidthAuto] = useState(() => isAutoSize(element, "width"));
   const [heightAuto, setHeightAuto] = useState(() => isAutoSize(element, "height"));
+  const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));
+  const [heightUnit, setHeightUnit] = useState(() => detectUnit(element, "height"));
+  const { conversionHint: wHint, fireConversionHint: fireWHint } = useConversionHint();
+  const { conversionHint: hHint, fireConversionHint: fireHHint } = useConversionHint();
   const showSize = !widthAuto || !heightAuto;
 
   // --- Position group state ---
@@ -139,12 +112,22 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   const [left, setLeft] = useState(() => parseNum(cs.left));
   const [right, setRight] = useState(() => parseNum(cs.right));
   const [bottom, setBottom] = useState(() => parseNum(cs.bottom));
+  const [topUnit, setTopUnit] = useState(() => detectUnit(element, "top"));
+  const [leftUnit, setLeftUnit] = useState(() => detectUnit(element, "left"));
+  const [rightUnit, setRightUnit] = useState(() => detectUnit(element, "right"));
+  const [bottomUnit, setBottomUnit] = useState(() => detectUnit(element, "bottom"));
+  const { conversionHint: topHint, fireConversionHint: fireTopHint } = useConversionHint();
+  const { conversionHint: leftHint, fireConversionHint: fireLeftHint } = useConversionHint();
+  const { conversionHint: rightHint, fireConversionHint: fireRightHint } = useConversionHint();
+  const { conversionHint: bottomHint, fireConversionHint: fireBottomHint } = useConversionHint();
 
   // --- Typography group state ---
   const showTypo = isTextBearing(element);
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
   const [fontColor, setFontColor] = useState(() => rgbToHex(cs.color));
   const [fontWeight, setFontWeight] = useState(() => parseNum(cs.fontWeight));
+  const [fontSizeUnit, setFontSizeUnit] = useState(() => detectUnit(element, "font-size"));
+  const { conversionHint: fontSizeHint, fireConversionHint: fireFontSizeHint } = useConversionHint();
 
   // --- Text style scanning ---
   const textStyles = useMemo(() => scanTextStyles(), []);
@@ -154,7 +137,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   );
 
   // --- Spacing units ---
-  const SPACING_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
+  const SP_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
   const [marginUnit, setMarginUnit] = useState("px");
   const [paddingUnit, setPaddingUnit] = useState("px");
 
@@ -169,6 +152,16 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
     },
     [element, onDirtyChange, scope, activeClassName],
   );
+
+  // --- Size handlers ---
+  const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
+  const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}${heightUnit}`); }, [apply, heightUnit]);
+
+  // --- Position handlers ---
+  const handleTopChange = useCallback((v: number) => { setTop(v); apply("top", `${v}${topUnit}`); }, [apply, topUnit]);
+  const handleRightChange = useCallback((v: number) => { setRight(v); apply("right", `${v}${rightUnit}`); }, [apply, rightUnit]);
+  const handleBottomChange = useCallback((v: number) => { setBottom(v); apply("bottom", `${v}${bottomUnit}`); }, [apply, bottomUnit]);
+  const handleLeftChange = useCallback((v: number) => { setLeft(v); apply("left", `${v}${leftUnit}`); }, [apply, leftUnit]);
 
   const handleTextStyleApply = useCallback((style: TextStyle) => {
     beginBatch();
@@ -228,12 +221,22 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               min={0}
               max={100}
               step={4}
-              unit="px"
+              unit={radiusUnit}
+              units={BORDER_UNITS}
+              onUnitChange={(u) => {
+                const ctx = getConversionCtx();
+                const c = convertUnit(borderRadius, radiusUnit, u, ctx, "width");
+                fireRadiusHint(borderRadius, radiusUnit, c, u, ctx, "width");
+                setBorderRadius(c);
+                setRadiusUnit(u);
+                apply("border-radius", `${c}${u}`);
+              }}
+              conversionHint={radiusHint}
               computedProp="border-radius"
               computedElement={element}
               onChange={(v) => {
                 setBorderRadius(v);
-                apply("border-radius", `${v}px`);
+                apply("border-radius", `${v}${radiusUnit}`);
               }}
             />
           )}
@@ -252,8 +255,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
             onChange={onSpacingChange}
             marginUnit={marginUnit}
             paddingUnit={paddingUnit}
-            marginUnits={SPACING_UNITS}
-            paddingUnits={SPACING_UNITS}
+            marginUnits={SP_UNITS}
+            paddingUnits={SP_UNITS}
             onMarginUnitChange={setMarginUnit}
             onPaddingUnitChange={setPaddingUnit}
           />
@@ -266,32 +269,56 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
       {/* ── Size (only if explicit dimensions are set) ──────── */}
       {showSize && (
         <FlatGroup title="Size">
-          <div className="grid grid-cols-2 gap-1.5 px-3">
-            <ValueCell
+          <div className="flex gap-1 px-3">
+            <SizeInputCell
               label="W"
               value={width}
-              keyword={widthAuto ? "auto" : undefined}
-              onClearKeyword={() => {
-                setWidthAuto(false);
+              unit={widthUnit}
+              units={SIZE_UNITS_W}
+              keyword={widthAuto ? "auto" : null}
+              onValueChange={handleWidthChange}
+              onUnitChange={(u) => {
+                const ctx = getConversionCtx();
+                const c = convertUnit(width, widthUnit, u, ctx, "width");
+                fireWHint(width, widthUnit, c, u, ctx, "width");
+                setWidth(c); setWidthUnit(u);
+                apply("width", `${c}${u}`);
               }}
-              onChange={(v) => {
-                setWidth(v);
-                setWidthAuto(false);
-                apply("width", `${v}px`);
+              onKeywordChange={(k) => {
+                setWidthAuto(k === "auto");
+                apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`);
               }}
+              isModified={isDirty(element, "width")}
+              supportsAuto
+              min={0}
+              max={1920}
+              conversionHint={wHint}
+              property="width"
             />
-            <ValueCell
+            <SizeInputCell
               label="H"
               value={height}
-              keyword={heightAuto ? "auto" : undefined}
-              onClearKeyword={() => {
-                setHeightAuto(false);
+              unit={heightUnit}
+              units={SIZE_UNITS_H}
+              keyword={heightAuto ? "auto" : null}
+              onValueChange={handleHeightChange}
+              onUnitChange={(u) => {
+                const ctx = getConversionCtx();
+                const c = convertUnit(height, heightUnit, u, ctx, "height");
+                fireHHint(height, heightUnit, c, u, ctx, "height");
+                setHeight(c); setHeightUnit(u);
+                apply("height", `${c}${u}`);
               }}
-              onChange={(v) => {
-                setHeight(v);
-                setHeightAuto(false);
-                apply("height", `${v}px`);
+              onKeywordChange={(k) => {
+                setHeightAuto(k === "auto");
+                apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`);
               }}
+              isModified={isDirty(element, "height")}
+              supportsAuto
+              min={0}
+              max={1200}
+              conversionHint={hHint}
+              property="height"
             />
           </div>
         </FlatGroup>
@@ -302,38 +329,88 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
         <>
           <div className="border-b border-[var(--border)]" />
           <FlatGroup title="Position">
-            <div className="grid grid-cols-2 gap-1.5 px-3">
-              <ValueCell
-                label="T"
+            <div className="flex gap-1 px-3 py-0.5">
+              <SizeInputCell
+                label="Top"
                 value={top}
-                onChange={(v) => {
-                  setTop(v);
-                  apply("top", `${v}px`);
+                unit={topUnit}
+                units={POSITION_UNITS}
+                keyword={null}
+                onValueChange={handleTopChange}
+                onUnitChange={(u) => {
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(top, topUnit, u, ctx, "height");
+                  fireTopHint(top, topUnit, c, u, ctx, "height");
+                  setTop(c); setTopUnit(u);
+                  apply("top", `${c}${u}`);
                 }}
+                onKeywordChange={() => {}}
+                isModified={isDirty(element, "top")}
+                min={-9999}
+                max={9999}
+                conversionHint={topHint}
               />
-              <ValueCell
-                label="R"
+              <SizeInputCell
+                label="Right"
                 value={right}
-                onChange={(v) => {
-                  setRight(v);
-                  apply("right", `${v}px`);
+                unit={rightUnit}
+                units={POSITION_UNITS}
+                keyword={null}
+                onValueChange={handleRightChange}
+                onUnitChange={(u) => {
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(right, rightUnit, u, ctx, "width");
+                  fireRightHint(right, rightUnit, c, u, ctx, "width");
+                  setRight(c); setRightUnit(u);
+                  apply("right", `${c}${u}`);
                 }}
+                onKeywordChange={() => {}}
+                isModified={isDirty(element, "right")}
+                min={-9999}
+                max={9999}
+                conversionHint={rightHint}
               />
-              <ValueCell
-                label="B"
+            </div>
+            <div className="flex gap-1 px-3 py-0.5">
+              <SizeInputCell
+                label="Bottom"
                 value={bottom}
-                onChange={(v) => {
-                  setBottom(v);
-                  apply("bottom", `${v}px`);
+                unit={bottomUnit}
+                units={POSITION_UNITS}
+                keyword={null}
+                onValueChange={handleBottomChange}
+                onUnitChange={(u) => {
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(bottom, bottomUnit, u, ctx, "height");
+                  fireBottomHint(bottom, bottomUnit, c, u, ctx, "height");
+                  setBottom(c); setBottomUnit(u);
+                  apply("bottom", `${c}${u}`);
                 }}
+                onKeywordChange={() => {}}
+                isModified={isDirty(element, "bottom")}
+                min={-9999}
+                max={9999}
+                conversionHint={bottomHint}
               />
-              <ValueCell
-                label="L"
+              <SizeInputCell
+                label="Left"
                 value={left}
-                onChange={(v) => {
-                  setLeft(v);
-                  apply("left", `${v}px`);
+                unit={leftUnit}
+                units={POSITION_UNITS}
+                keyword={null}
+                onValueChange={handleLeftChange}
+                onUnitChange={(u) => {
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(left, leftUnit, u, ctx, "width");
+                  fireLeftHint(left, leftUnit, c, u, ctx, "width");
+                  setLeft(c); setLeftUnit(u);
+                  apply("left", `${c}${u}`);
                 }}
+                onKeywordChange={() => {}}
+                isModified={isDirty(element, "left")}
+                min={-9999}
+                max={9999}
+                conversionHint={leftHint}
               />
             </div>
           </FlatGroup>
@@ -352,12 +429,22 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
               min={0}
               max={120}
               step={1}
-              unit="px"
+              unit={fontSizeUnit}
+              units={TYPO_SIZE_UNITS}
+              onUnitChange={(u) => {
+                const ctx = getConversionCtx();
+                const c = convertUnit(fontSize, fontSizeUnit, u, ctx, "width");
+                fireFontSizeHint(fontSize, fontSizeUnit, c, u, ctx, "width");
+                setFontSize(c);
+                setFontSizeUnit(u);
+                apply("font-size", `${c}${u}`);
+              }}
+              conversionHint={fontSizeHint}
               computedProp="font-size"
               computedElement={element}
               onChange={(v) => {
                 setFontSize(v);
-                apply("font-size", `${v}px`);
+                apply("font-size", `${v}${fontSizeUnit}`);
               }}
             />
             <ColorRow

@@ -47,6 +47,10 @@ export const PositionSection = memo(function PositionSection({
   const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => {
+    resetProp(element, prop);
+    setter(getComputedStyle(element).getPropertyValue(prop).trim());
+  };
 
   // ── Handlers ──
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);
@@ -113,8 +117,8 @@ export const PositionSection = memo(function PositionSection({
           </div>
         </>
       )}
-      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} onContextMenu={ctxMenu("float", float_)} computedProp="float" computedElement={element} />
-      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} onContextMenu={ctxMenu("clear", clear_)} computedProp="clear" computedElement={element} />
+      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} onReset={() => resetCssStr("float", setFloat)} indicator={ind("float")} onContextMenu={ctxMenu("float", float_)} computedProp="float" computedElement={element} />
+      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} onReset={() => resetCssStr("clear", setClear)} indicator={ind("clear")} onContextMenu={ctxMenu("clear", clear_)} computedProp="clear" computedElement={element} />
     </Section>
   );
 });
