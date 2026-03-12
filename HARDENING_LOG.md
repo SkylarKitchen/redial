@@ -13,7 +13,7 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 ### Tier 2 — Test Coverage: Pure Utility Modules
 - [x] timing.ts — timing tokens, reducedMotion, ms()
 - [x] scrubState.ts — scrub active flag get/set
-- [ ] scope.ts — scope resolution logic
+- [x] scope.ts — scope resolution logic
 - [ ] colorVariables.ts — color variable utilities
 - [ ] discoverVariables.ts — CSS variable discovery
 - [ ] sourcemap.ts — source map parsing
@@ -50,3 +50,6 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 
 ### Tier 2 — scrubState.ts (2026-03-11)
 - **scrubState.ts test coverage**: 5 tests for get/set/toggle/idempotent behavior. +5 tests, 520 total.
+
+### Tier 2 — scope.ts (2026-03-11)
+- **scope.ts test coverage**: 36 tests across getCSSModuleClasses (webpack/Turbopack detection), getReadableName (segment extraction), applyClassStyle/removeClassStyle/resetClassStyles/destroyClassStyles (style tag management), and getCustomProperties (var() resolution). +36 tests, 556 total.
