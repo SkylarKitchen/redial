@@ -237,7 +237,9 @@ export function Overlay() {
   const savingRef = useRef(false);
 
   // Panel position (draggable)
+  // anchor tracks which horizontal edge the panel is snapped to so resize keeps it pinned
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
+  const [anchor, setAnchor] = useState<"left" | "right" | null>("right");
   const [snapping, setSnapping] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -607,8 +609,9 @@ export function Overlay() {
     const tag = el.tagName.toLowerCase();
     const cls = el.classList.length > 0 ? el.classList[0] : "";
     announce(`Selected ${tag}${cls ? `.${cls}` : ""}`);
-    // Reset position so panel doesn't appear off-screen
+    // Reset position to top-right default
     setPos({ x: window.innerWidth - 340, y: 16 });
+    setAnchor("right");
   }, []);
 
   const handleCancel = useCallback(() => {
@@ -727,20 +730,23 @@ export function Overlay() {
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
 
-        // Snap to nearest edge if within threshold
+        // Snap to nearest edge if within threshold, and track which edge we're anchored to
         setPos((current) => {
           const vw = window.innerWidth;
           const vh = window.innerHeight;
           let x = current.x;
           let y = current.y;
           let didSnap = false;
+          let newAnchor: "left" | "right" | null = null;
 
           // Horizontal snap
           if (x <= SNAP_THRESHOLD) {
             x = SNAP_MARGIN;
+            newAnchor = "left";
             didSnap = true;
           } else if (x >= vw - PANEL_WIDTH - SNAP_THRESHOLD) {
             x = vw - PANEL_WIDTH - SNAP_MARGIN;
+            newAnchor = "right";
             didSnap = true;
           }
 
@@ -752,6 +758,8 @@ export function Overlay() {
             y = vh - PANEL_HEIGHT_ESTIMATE - SNAP_MARGIN;
             didSnap = true;
           }
+
+          setAnchor(newAnchor);
 
           if (didSnap) {
             setSnapping(true);
@@ -904,17 +912,26 @@ export function Overlay() {
     restoreSession();
   }, []);
 
-  // --- Clamp panel position on window resize ---
+  // --- Re-anchor panel position on window resize ---
   useEffect(() => {
     const handleResize = () => {
-      setPos((p) => ({
-        x: Math.max(0, Math.min(window.innerWidth - 300, p.x)),
-        y: Math.max(0, Math.min(window.innerHeight - 100, p.y)),
-      }));
+      setPos((p) => {
+        const MARGIN = 16;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        // If anchored to an edge, recompute from that edge; otherwise just clamp
+        const x = anchor === "right"
+          ? vw - 300 - MARGIN
+          : anchor === "left"
+            ? MARGIN
+            : Math.max(0, Math.min(vw - 300, p.x));
+        const y = Math.max(0, Math.min(vh - 100, p.y));
+        return { x, y };
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [anchor]);
 
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
   useEffect(() => {
