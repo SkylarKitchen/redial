@@ -62,6 +62,13 @@ const POSITION_OPTIONS = [...POSITION_KEYWORDS, "custom"];
 const REPEAT_OPTIONS = ["no-repeat", "repeat", "repeat-x", "repeat-y"];
 const ATTACHMENT_OPTIONS = ["scroll", "fixed", "local"];
 
+const CUSTOM_INPUT_STYLE = {
+  flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
+  color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
+  fontFamily: "ui-monospace, 'SF Mono', monospace",
+};
+
 let _idCounter = 0;
 function uid() {
   return `bg_${Date.now()}_${++_idCounter}`;
@@ -493,25 +500,19 @@ export function BackgroundLayerList({
                           const parts = layer.image.size.split(/\s+/);
                           const w = parts[0] || "100%";
                           const h = parts[1] || "auto";
-                          const inputStyle: React.CSSProperties = {
-                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
-                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
-                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
-                            fontFamily: "ui-monospace, 'SF Mono', monospace",
-                          };
                           return (
                             <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
                               <input
                                 value={w}
                                 placeholder="W"
                                 onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
-                                style={inputStyle}
+                                style={CUSTOM_INPUT_STYLE}
                               />
                               <input
                                 value={h}
                                 placeholder="H"
                                 onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
-                                style={inputStyle}
+                                style={CUSTOM_INPUT_STYLE}
                               />
                             </div>
                           );
@@ -536,25 +537,19 @@ export function BackgroundLayerList({
                           const parts = layer.image.position.split(/\s+/);
                           const x = parts[0] || "50%";
                           const y = parts[1] || "50%";
-                          const inputStyle: React.CSSProperties = {
-                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
-                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
-                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
-                            fontFamily: "ui-monospace, 'SF Mono', monospace",
-                          };
                           return (
                             <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
                               <input
                                 value={x}
                                 placeholder="X"
                                 onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
-                                style={inputStyle}
+                                style={CUSTOM_INPUT_STYLE}
                               />
                               <input
                                 value={y}
                                 placeholder="Y"
                                 onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
-                                style={inputStyle}
+                                style={CUSTOM_INPUT_STYLE}
                               />
                             </div>
                           );

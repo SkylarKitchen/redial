@@ -13,6 +13,7 @@ import { getIndicatorColor, getIndicatorTitle } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
+import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
@@ -679,6 +680,13 @@ export function ColorRow({
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
 
+  // Resolve var() references for display
+  const varName = parseVarRef(value);
+  const resolvedColor = varName ? resolveVarColor(value) : null;
+  const displayColor = resolvedColor ?? value;
+  const displayLabel = varName ? varName.replace(/^--/, "") : value;
+  const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
+
   const colorLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
@@ -734,22 +742,30 @@ export function ColorRow({
           height: "24px",
           borderRadius: "4px",
           background:
-            value === "transparent"
+            displayColor === "transparent"
               ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
-              : value,
-          border: "1px solid rgba(255,255,255,0.15)",
+              : displayColor,
+          border: varName
+            ? "2px solid rgba(99,102,241,0.6)"
+            : "1px solid rgba(255,255,255,0.15)",
           cursor: "pointer",
           flexShrink: 0,
         }}
       />
       <span
+        title={varName ? value : undefined}
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(255,255,255,0.5)",
+          color: varName ? "rgba(99,102,241,0.8)" : "rgba(255,255,255,0.5)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          flex: 1,
+          minWidth: 0,
         }}
       >
-        {value}
+        {displayLabel}
       </span>
       {pickerOpen && swatchRef.current && (
         <div
@@ -762,11 +778,15 @@ export function ColorRow({
           }}
         >
           <ColorPickerEnhanced
-            color={value === "transparent" ? "#000000" : value}
+            color={pickerColor}
             onChange={(hex, opacity) => {
               onChange(opacity < 1 ? hexToRgba(hex, opacity) : hex);
             }}
             onClose={() => setPickerOpen(false)}
+            onSelectVariable={(varExpr) => {
+              onChange(varExpr);
+            }}
+            activeVariable={varName}
           />
         </div>
       )}

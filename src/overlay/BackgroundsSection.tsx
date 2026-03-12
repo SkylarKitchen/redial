@@ -7,6 +7,7 @@
 import { useState, useCallback, memo } from "react";
 import { Section, SelectRow, ColorRow } from "./controls";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
+import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS } from "./panelConstants";
@@ -56,16 +57,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
           effectiveBgColor = layer.color || "transparent";
         } else if (layer.type === "gradient" && layer.gradient) {
           const g = layer.gradient;
-          const stops = g.stops
-            .map((s) => `${s.color} ${s.position}%`)
-            .join(", ");
-          if (g.type === "linear") {
-            bgParts.push(`linear-gradient(${g.angle}deg, ${stops})`);
-          } else if (g.type === "radial") {
-            bgParts.push(`radial-gradient(${stops})`);
-          } else if (g.type === "conic") {
-            bgParts.push(`conic-gradient(from ${g.angle}deg, ${stops})`);
-          }
+          bgParts.push(buildGradientCSS(g.type as "linear" | "radial" | "conic", g.angle, g.stops));
           blendModes.push(layer.blendMode || "normal");
         } else if (layer.type === "image" && layer.image) {
           const img = layer.image;

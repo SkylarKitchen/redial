@@ -20,7 +20,7 @@ import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { BoxModelOverlay } from "./BoxModelOverlay";
 import { infer, type InferResult } from "./infer";
-import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot } from "./apply";
+import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
@@ -102,7 +102,7 @@ export function Overlay() {
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
-  const _overrideCount = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
+  const totalChanges = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
 
   // Scope toggle
   const [scope, setScope] = useState<Scope>("element");
@@ -1241,7 +1241,7 @@ export function Overlay() {
             element={selectedEl}
             onClose={handleClose}
             onDragStart={handleDragStart}
-            totalChanges={totalOverrideCount()}
+            totalChanges={totalChanges}
             onShowSession={handleToggleSession}
             breadcrumb={breadcrumb}
             onBreadcrumbClick={handleBreadcrumbClick}

@@ -602,12 +602,15 @@ export function applyCustomProperty(
   name: string,
   value: string
 ): void {
+  // Read initial value ONCE before any DOM mutation
+  let initial: string | undefined;
   if (!customPropertyOverrides.has(name)) {
-    const initial = getComputedStyle(scope).getPropertyValue(name).trim();
+    initial = getComputedStyle(scope).getPropertyValue(name).trim();
     customPropertyOverrides.set(name, { scope, initial, current: value });
     undoStack.push({ el: scope, prop: name, prev: initial });
   } else {
     const existing = customPropertyOverrides.get(name)!;
+    initial = existing.initial;
     undoStack.push({ el: scope, prop: name, prev: existing.current });
     existing.current = value;
   }
@@ -618,8 +621,7 @@ export function applyCustomProperty(
   if (!overrides.has(scope)) overrides.set(scope, new Map());
   const scopeOverrides = overrides.get(scope)!;
   if (!scopeOverrides.has(name)) {
-    const initial = getComputedStyle(scope).getPropertyValue(name).trim() || value;
-    scopeOverrides.set(name, { initial, current: value });
+    scopeOverrides.set(name, { initial: initial || value, current: value });
   } else {
     scopeOverrides.get(name)!.current = value;
   }

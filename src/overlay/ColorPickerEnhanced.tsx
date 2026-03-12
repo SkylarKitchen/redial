@@ -10,9 +10,10 @@
  * - Popover with click-outside dismissal
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
+import { discoverColorVariables, type ColorVariable } from "./colorVariables";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -82,6 +83,10 @@ export interface ColorPickerEnhancedProps {
   opacity?: number; // 0-1, default 1
   onChange: (hex: string, opacity: number) => void;
   onClose: () => void;
+  /** Called when a CSS variable swatch is selected, e.g. "var(--brand-primary)" */
+  onSelectVariable?: (varExpression: string) => void;
+  /** Currently active variable name (e.g. "--brand-primary") for highlight */
+  activeVariable?: string | null;
 }
 
 // ─── EyeDropper API availability ─────────────────────────────────
@@ -110,6 +115,8 @@ export function ColorPickerEnhanced({
   opacity = 1,
   onChange,
   onClose,
+  onSelectVariable,
+  activeVariable,
 }: ColorPickerEnhancedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -163,6 +170,12 @@ export function ColorPickerEnhanced({
     const next = swatches.filter((_, i) => i !== idx);
     saveSwatches(next);
   }, [swatches, saveSwatches]);
+
+  // ─── CSS color variables discovery ─────────────────────────────
+  const colorVars = useMemo<ColorVariable[]>(() => {
+    if (!onSelectVariable) return [];
+    return discoverColorVariables();
+  }, [onSelectVariable]);
 
   const applySwatch = useCallback((hex: string) => {
     const rgb = hexToRgb(hex);
@@ -646,6 +659,50 @@ export function ColorPickerEnhanced({
           </div>
         </div>
       </div>
+
+      {/* ── CSS Variables ─────────────────────────────────── */}
+      {colorVars.length > 0 && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
+          <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
+            Variables
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {colorVars.map((cv) => {
+              const isActive = activeVariable === cv.name;
+              return (
+                <button
+                  type="button"
+                  key={cv.name}
+                  onClick={() => onSelectVariable?.(`var(${cv.name})`)}
+                  title={`${cv.name}\n${cv.resolvedValue}`}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 3,
+                    border: isActive
+                      ? "2px solid rgba(99,102,241,0.8)"
+                      : "1px solid rgba(255,255,255,0.15)",
+                    background: cv.resolvedValue,
+                    cursor: "pointer",
+                    padding: 0,
+                    flexShrink: 0,
+                    transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.5)";
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Swatches ──────────────────────────────────────── */}
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
