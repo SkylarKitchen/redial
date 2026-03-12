@@ -231,12 +231,12 @@ function TransitionCard({
     const fromValues: Record<string, string> = {
       opacity: "0",
       transform: "translateY(20px)",
-      "background-color": "rgba(217,119,87,0.3)",
-      background: "rgba(217,119,87,0.3)",
-      color: "rgba(217,119,87,0.8)",
-      "border-color": "rgba(217,119,87,0.5)",
+      "background-color": primaryAlpha(0.3),
+      background: primaryAlpha(0.3),
+      color: primaryAlpha(0.8),
+      "border-color": primaryAlpha(0.5),
       "border-radius": "0px",
-      "box-shadow": "0 0 0 4px rgba(217,119,87,0.3)",
+      "box-shadow": `0 0 0 4px ${primaryAlpha(0.3)}`,
       width: "50%",
       height: "50%",
       "font-size": "50%",
@@ -721,7 +721,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     for (const [px, py] of [[x1, y1], [x2, y2]] as const) {
       ctx.beginPath();
       ctx.arc(toX(px), toY(py), 2, 0, Math.PI * 2);
-      ctx.fillStyle = "#D97757";
+      ctx.fillStyle = color.primary;
       ctx.fill();
     }
   }, [points]);
@@ -737,7 +737,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
         width: "40px",
         height: "40px",
         borderRadius: "3px",
-        border: "1px solid rgba(0,0,0,0.07)",
+        border: `1px solid ${border.input}`,
         flexShrink: 0,
       }}
     />

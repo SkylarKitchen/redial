@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ms } from "./timing";
+import { color, text, surface, font, blackAlpha } from "./theme";
 
 export interface GradientStop {
   color: string;
@@ -142,13 +143,13 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: "28px",
                 padding: "0 10px",
                 cursor: "pointer",
-                background: isActive ? "#D97757" : "transparent",
-                color: isActive ? "#fff" : "rgba(0,0,0,0.45)",
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderLeft: isFirst ? "1px solid rgba(0,0,0,0.12)" : "none",
+                background: isActive ? color.primary : "transparent",
+                color: isActive ? color.primaryForeground : text.label,
+                border: `1px solid ${surface.track}`,
+                borderLeft: isFirst ? `1px solid ${surface.track}` : "none",
                 borderRadius: isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : "0",
                 fontSize: "11px",
-                fontFamily: "system-ui, sans-serif",
+                fontFamily: font.sans,
                 lineHeight: 1,
                 textTransform: "capitalize",
                 transition: `background ${ms("fast")}, color ${ms("fast")}`,
@@ -166,8 +167,8 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
           <span
             style={{
               fontSize: "11px",
-              fontFamily: "system-ui, sans-serif",
-              color: "rgba(0,0,0,0.45)",
+              fontFamily: font.sans,
+              color: text.label,
               minWidth: "36px",
             }}
           >
@@ -179,13 +180,13 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             max={360}
             value={angle}
             onChange={(e) => emit({ angle: Number(e.target.value) })}
-            style={{ flex: 1, accentColor: "#D97757" }}
+            style={{ flex: 1, accentColor: color.primary }}
           />
           <span
             style={{
               fontSize: "11px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(0,0,0,0.6)",
+              fontFamily: font.mono,
+              color: blackAlpha(0.6),
               minWidth: "32px",
               textAlign: "right",
             }}

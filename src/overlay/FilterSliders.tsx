@@ -161,8 +161,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
       <div
         style={{
           fontSize: "10px",
-          fontFamily: "system-ui, sans-serif",
-          color: "rgba(0,0,0,0.35)",
+          fontFamily: font.sans,
+          color: text.disabled,
           textTransform: "uppercase",
           letterSpacing: "0.04em",
           padding: "0 0 4px",
@@ -206,8 +206,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               style={{
                 width: "64px",
                 fontSize: "10px",
-                fontFamily: "system-ui, sans-serif",
-                color: "rgba(0,0,0,0.5)",
+                fontFamily: font.sans,
+                color: blackAlpha(0.5),
                 flexShrink: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -231,7 +231,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                   height: "3px",
                   appearance: "none",
                   WebkitAppearance: "none",
-                  background: `linear-gradient(to right, #D97757 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
+                  background: filledTrackBg(pct),
                   borderRadius: "2px",
                   outline: "none",
                   cursor: "pointer",
@@ -253,8 +253,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               style={{
                 width: "18px",
                 fontSize: "9px",
-                fontFamily: "ui-monospace, 'SF Mono', monospace",
-                color: "rgba(0,0,0,0.25)",
+                fontFamily: font.mono,
+                color: text.hint,
                 flexShrink: 0,
               }}
             >
@@ -269,7 +269,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 border: "none",
                 cursor: "pointer",
                 padding: "2px",
-                color: !isHidden ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.15)",
+                color: !isHidden ? text.label : blackAlpha(0.15),
                 flexShrink: 0,
               }}
               title={!isHidden ? "Hide filter" : "Show filter"}
@@ -288,22 +288,22 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 justifyContent: "center",
                 background: "transparent",
                 border: "none",
-                color: "rgba(0,0,0,0.25)",
+                color: text.hint,
                 cursor: "pointer",
                 fontSize: "11px",
-                fontFamily: "system-ui, sans-serif",
+                fontFamily: font.sans,
                 padding: 0,
                 borderRadius: "2px",
                 flexShrink: 0,
                 lineHeight: 1,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
-                (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
+                (e.currentTarget as HTMLElement).style.background = surface.hover;
+                (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "transparent";
-                (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.25)";
+                (e.currentTarget as HTMLElement).style.color = text.hint;
               }}
             >
               {"\u00D7"}
@@ -326,18 +326,18 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
           disabled={availableFilters.length === 0}
           style={{
             background: "transparent",
-            border: "1px solid rgba(0,0,0,0.08)",
+            border: `1px solid ${surface.active}`,
             borderRadius: "3px",
-            color: availableFilters.length === 0 ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.45)",
+            color: availableFilters.length === 0 ? blackAlpha(0.15) : text.label,
             fontSize: "10px",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: font.sans,
             padding: "3px 8px",
             cursor: availableFilters.length === 0 ? "default" : "pointer",
             marginTop: "4px",
           }}
           onMouseEnter={(e) => {
             if (availableFilters.length > 0)
-              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+              (e.currentTarget as HTMLElement).style.background = color.input;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -353,8 +353,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               top: "100%",
               left: 0,
               marginTop: "2px",
-              background: "#F5F4ED",
-              border: "1px solid rgba(0,0,0,0.12)",
+              background: color.popover,
+              border: `1px solid ${surface.track}`,
               borderRadius: "4px",
               padding: "2px 0",
               zIndex: 100,
@@ -369,12 +369,12 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 style={{
                   padding: "4px 10px",
                   fontSize: "10px",
-                  fontFamily: "system-ui, sans-serif",
-                  color: "rgba(0,0,0,0.6)",
+                  fontFamily: font.sans,
+                  color: blackAlpha(0.6),
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.2)";
+                  (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.2);
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -448,12 +448,12 @@ function NumberInput({
       onKeyDown={handleKeyDown}
       style={{
         width: "36px",
-        background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        background: color.input,
+        border: focusBorder(focused),
         borderRadius: "2px",
-        color: "rgba(0,0,0,0.7)",
+        color: text.secondary,
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         textAlign: "center",
         padding: "2px 2px",
         outline: "none",

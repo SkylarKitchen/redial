@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha, focusBorder } from "./theme";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
@@ -115,16 +116,16 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
           onClick={() => setDropdownOpen((o) => !o)}
           style={{
             background: "transparent",
-            border: "1px solid rgba(0,0,0,0.08)",
+            border: `1px solid ${surface.active}`,
             borderRadius: "3px",
-            color: "rgba(0,0,0,0.45)",
+            color: text.label,
             fontSize: "10px",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: font.sans,
             padding: "3px 8px",
             cursor: "pointer",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+            (e.currentTarget as HTMLElement).style.background = color.input;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -140,8 +141,8 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
               top: "100%",
               left: 0,
               marginTop: "2px",
-              background: "#F5F4ED",
-              border: "1px solid rgba(0,0,0,0.12)",
+              background: color.popover,
+              border: `1px solid ${surface.track}`,
               borderRadius: "4px",
               padding: "2px 0",
               zIndex: 100,
@@ -156,12 +157,12 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
                 style={{
                   padding: "4px 10px",
                   fontSize: "10px",
-                  fontFamily: "system-ui, sans-serif",
-                  color: "rgba(0,0,0,0.6)",
+                  fontFamily: font.sans,
+                  color: blackAlpha(0.6),
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.2)";
+                  (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.2);
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -179,8 +180,8 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
         <span
           style={{
             fontSize: "10px",
-            fontFamily: "system-ui, sans-serif",
-            color: "rgba(0,0,0,0.35)",
+            fontFamily: font.sans,
+            color: text.disabled,
           }}
         >
           Origin
@@ -210,8 +211,8 @@ function TransformCard({
         display: "flex",
         alignItems: "center",
         gap: "6px",
-        background: "rgba(0,0,0,0.03)",
-        border: "1px solid rgba(0,0,0,0.05)",
+        background: blackAlpha(0.03),
+        border: `1px solid ${surface.hover}`,
         borderRadius: "3px",
         padding: "4px 6px",
         height: "28px",
@@ -222,8 +223,8 @@ function TransformCard({
         style={{
           width: "38px",
           fontSize: "10px",
-          fontFamily: "system-ui, sans-serif",
-          color: "rgba(0,0,0,0.5)",
+          fontFamily: font.sans,
+          color: blackAlpha(0.5),
           flexShrink: 0,
         }}
       >
@@ -297,22 +298,22 @@ function TransformCard({
           justifyContent: "center",
           background: "transparent",
           border: "none",
-          color: "rgba(0,0,0,0.25)",
+          color: text.hint,
           cursor: "pointer",
           fontSize: "11px",
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: font.sans,
           padding: 0,
           borderRadius: "2px",
           flexShrink: 0,
           lineHeight: 1,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
-          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
+          (e.currentTarget as HTMLElement).style.background = surface.hover;
+          (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.25)";
+          (e.currentTarget as HTMLElement).style.color = text.hint;
         }}
       >
         <X size={11} strokeWidth={2} />
@@ -326,8 +327,8 @@ function AxisLabel({ label }: { label: string }) {
     <span
       style={{
         fontSize: "9px",
-        fontFamily: "system-ui, sans-serif",
-        color: "rgba(0,0,0,0.3)",
+        fontFamily: font.sans,
+        color: blackAlpha(0.3),
         flexShrink: 0,
       }}
     >
@@ -342,8 +343,8 @@ function UnitLabel({ unit }: { unit: string }) {
     <span
       style={{
         fontSize: "9px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: "rgba(0,0,0,0.25)",
+        fontFamily: font.mono,
+        color: text.hint,
         flexShrink: 0,
         width: "14px",
       }}
@@ -411,12 +412,12 @@ function AxisInput({
       onKeyDown={handleKeyDown}
       style={{
         width: "42px",
-        background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        background: color.input,
+        border: focusBorder(focused),
         borderRadius: "2px",
-        color: "rgba(0,0,0,0.7)",
+        color: text.secondary,
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         textAlign: "center",
         padding: "2px 2px",
         outline: "none",
