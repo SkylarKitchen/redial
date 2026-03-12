@@ -2,7 +2,7 @@
  * Tooltip.tsx — Lightweight fixed-position tooltip for computed value display
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 interface TooltipProps {
   text: string;
@@ -47,6 +47,13 @@ export function useTooltip(text: string | undefined) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Clear any pending timer on unmount to prevent setState on unmounted component
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   const onMouseEnter = useCallback((e: React.MouseEvent) => {
     if (!text) return;

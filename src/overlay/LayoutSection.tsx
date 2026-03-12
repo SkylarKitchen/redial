@@ -91,10 +91,12 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   // Layout units
   const [gapUnit, setGapUnit] = useState(() => detectUnit(element, "gap"));
+  const [rowGapUnit, setRowGapUnit] = useState(() => detectUnit(element, "row-gap"));
   const [flexBasisUnit, setFlexBasisUnit] = useState(() => detectUnit(element, "flex-basis"));
 
   // Conversion hints
   const { conversionHint: gapHint, fireConversionHint: fireGapHint } = useConversionHint();
+  const { conversionHint: rowGapHint, fireConversionHint: fireRowGapHint } = useConversionHint();
   const { conversionHint: colGapHint, fireConversionHint: fireColGapHint } = useConversionHint();
   const { conversionHint: basisHint, fireConversionHint: fireBasisHint } = useConversionHint();
 
@@ -170,8 +172,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   );
 
   const handleRowGapChange = useCallback(
-    (v: number) => { setRowGap(v); apply("row-gap", `${v}px`); },
-    [apply],
+    (v: number) => { setRowGap(v); apply("row-gap", `${v}${rowGapUnit}`); },
+    [apply, rowGapUnit],
   );
 
   const handleColumnGapChange = useCallback(
@@ -187,9 +189,10 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       if (!prev) {
         setRowGap(gap);
         onColumnGapChange(gap);
+        setRowGapUnit(gapUnit);
+        onColumnGapUnitChange(gapUnit);
         apply("row-gap", `${gap}${gapUnit}`);
         apply("column-gap", `${gap}${gapUnit}`);
-        onColumnGapUnitChange(gapUnit);
       }
       return !prev;
     });
@@ -309,8 +312,10 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               if (v) {
                 setRowGap(gap);
                 onColumnGapChange(gap);
-                apply("row-gap", `${gap}px`);
-                apply("column-gap", `${gap}px`);
+                setRowGapUnit(gapUnit);
+                onColumnGapUnitChange(gapUnit);
+                apply("row-gap", `${gap}${gapUnit}`);
+                apply("column-gap", `${gap}${gapUnit}`);
               }
             }}
           />
@@ -408,11 +413,21 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     min={0}
                     max={200}
                     step={1}
-                    unit="px"
+                    unit={rowGapUnit}
+                    units={LAYOUT_UNITS}
+                    onUnitChange={(u) => {
+                      const ctx = getConversionCtx();
+                      const c = convertUnit(rowGap, rowGapUnit, u, ctx);
+                      fireRowGapHint(rowGap, rowGapUnit, c, u, ctx);
+                      setRowGap(c);
+                      setRowGapUnit(u);
+                      apply("row-gap", `${c}${u}`);
+                    }}
                     onChange={handleRowGapChange}
                     onReset={() => resetCss("row-gap", setRowGap)}
                     indicator={ind("row-gap")}
-                    onContextMenu={ctxMenu("row-gap", `${rowGap}px`)}
+                    conversionHint={rowGapHint}
+                    onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
                     computedProp="row-gap"
                     computedElement={element}
                   />

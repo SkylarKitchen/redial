@@ -44,7 +44,7 @@ const SHORTCUTS = [
   },
 ];
 
-export const ShortcutsHelp: React.FC<ShortcutsHelpProps> = ({ onClose }) => {
+export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -146,4 +146,4 @@ export const ShortcutsHelp: React.FC<ShortcutsHelpProps> = ({ onClose }) => {
       </div>
     </div>
   );
-};
+}

@@ -388,9 +388,11 @@ export async function handleCommit(
         );
 
         if (pattern.test(lines[found.lineIdx])) {
+          // Escape $ in replacement to prevent regex backreference interpretation
+          const safeValue = change.to.replace(/\$/g, "$$$$");
           lines[found.lineIdx] = lines[found.lineIdx].replace(
             pattern,
-            `$1${change.to}`
+            `$1${safeValue}`
           );
           modified = true;
         } else if (found.strategy === "fuzzy") {

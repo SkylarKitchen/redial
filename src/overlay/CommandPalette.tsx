@@ -51,7 +51,7 @@ const CATEGORY_BG: Record<SearchResult["category"], string> = {
 
 const MAX_RESULTS = 30;
 const MAX_ELEMENT_RESULTS = 10;
-const ELEMENT_DEBOUNCE_MS = 100;
+const ELEMENT_DEBOUNCE_MS = 300;
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -98,10 +98,17 @@ function searchActions(query: string): string[] {
   return ACTIONS.filter((a) => fuzzyMatch(query, a));
 }
 
+let _cachedAllElements: NodeListOf<Element> | null = null;
+
 function searchElements(query: string): Element[] {
   if (!query) return [];
+  // Cache the querySelectorAll snapshot for the lifetime of the palette.
+  // Cleared when the component unmounts (see clearElementCache).
+  if (!_cachedAllElements) {
+    _cachedAllElements = document.querySelectorAll("*");
+  }
+  const all = _cachedAllElements;
   const results: Element[] = [];
-  const all = document.querySelectorAll("*");
   for (let i = 0; i < all.length && results.length < MAX_ELEMENT_RESULTS; i++) {
     const el = all[i];
     if (!isNavigableElement(el)) continue;
@@ -119,6 +126,10 @@ function searchElements(query: string): Element[] {
   return results;
 }
 
+function clearElementCache() {
+  _cachedAllElements = null;
+}
+
 // ─── Component ───────────────────────────────────────────────────────
 
 export function CommandPalette({
@@ -134,9 +145,10 @@ export function CommandPalette({
   const listRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-focus
+  // Auto-focus + clear element cache on unmount
   useEffect(() => {
     inputRef.current?.focus();
+    return () => clearElementCache();
   }, []);
 
   // Debounced element search

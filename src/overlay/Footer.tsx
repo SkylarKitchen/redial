@@ -12,6 +12,11 @@ import { formatCSSDiff } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { ms, timing } from "./timing";
 
+interface SaveResult {
+  written?: string[];
+  failed?: string[];
+}
+
 interface FooterProps {
   element: Element;
   onReset: () => void;
@@ -26,6 +31,7 @@ interface FooterProps {
 
 export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -61,8 +67,11 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+
     const changes = diff(element);
-    if (changes.length === 0) return;
+    if (changes.length === 0) { savingRef.current = false; return; }
 
     setSaving(true);
     setMessage(null);
@@ -90,7 +99,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       if (!res.ok) {
         showMessage("Save failed", 2000);
       } else {
-        const result = await res.json();
+        const result: SaveResult = await res.json();
         const written = result.written?.length ?? 0;
         const failed = result.failed?.length ?? 0;
         if (failed > 0) {
@@ -102,9 +111,10 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       }
     } catch {
       showMessage("Save failed — no route?", 2000);
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
     }
-
-    setSaving(false);
   }, [element, onSaved, showMessage]);
 
   const handleReset = useCallback(() => {

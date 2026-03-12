@@ -175,13 +175,17 @@ export function ColorPickerEnhanced({
 
   // ─── Eyedropper (native color picker from page) ───────────────
 
+  const eyedropperAbortRef = useRef<AbortController | null>(null);
+
   const handleEyedropper = useCallback(async () => {
     if (!hasEyeDropper) return;
     try {
       isEyedroppingRef.current = true;
+      const controller = new AbortController();
+      eyedropperAbortRef.current = controller;
       // @ts-expect-error EyeDropper API not in all TS libs
       const dropper = new EyeDropper();
-      const result = await dropper.open();
+      const result = await dropper.open({ signal: controller.signal });
       const hex: string = result.sRGBHex;
       const rgb = hexToRgb(hex);
       const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
@@ -190,12 +194,21 @@ export function ColorPickerEnhanced({
       setBri(hsb.b);
       setHexInput(hex.toUpperCase());
       emitChange(hsb.h, hsb.s, hsb.b, alpha);
-    } catch {
-      // User cancelled or API error — silent
+    } catch (err) {
+      // Ignore AbortError (unmount) and user cancellation
+      if (err instanceof DOMException && err.name === "AbortError") return;
     } finally {
+      eyedropperAbortRef.current = null;
       isEyedroppingRef.current = false;
     }
   }, [alpha, emitChange]);
+
+  // Abort eyedropper on unmount
+  useEffect(() => {
+    return () => {
+      eyedropperAbortRef.current?.abort();
+    };
+  }, []);
 
   // ─── Drag state (suppresses click-outside during drag) ──────
   const isDraggingRef = useRef(false);

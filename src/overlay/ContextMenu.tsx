@@ -23,6 +23,7 @@ interface MenuItem {
   label?: string;
   shortcut?: string;
   separator?: boolean;
+  disabled?: boolean;
 }
 
 const MENU_ITEMS: MenuItem[] = [
@@ -34,7 +35,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: "select-parent", label: "Select Parent" },
   { id: "reset-styles", label: "Reset Styles", shortcut: "R" },
   { id: "separator-2", separator: true },
-  { id: "open-editor", label: "Open in Editor" },
+  { id: "open-editor", label: "Open in Editor", disabled: true },
 ];
 
 const MENU_PAD = 8;
@@ -136,19 +137,21 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
           );
         }
 
-        const label = item.id === "select-parent" ? parentLabel : item.label!;
+        const label = item.id === "select-parent" ? parentLabel : item.label ?? "";
+        const disabled = item.disabled ?? false;
 
         return (
           <div
             key={item.id}
             role="menuitem"
+            aria-disabled={disabled || undefined}
             tabIndex={-1}
-            onClick={() => handleItemClick(item.id)}
+            onClick={disabled ? undefined : () => handleItemClick(item.id)}
             style={{
               padding: "6px 12px",
               fontSize: "12px",
-              color: "rgba(255,255,255,0.8)",
-              cursor: "pointer",
+              color: disabled ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.8)",
+              cursor: disabled ? "default" : "pointer",
               userSelect: "none",
               display: "flex",
               alignItems: "center",
@@ -156,11 +159,11 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
               gap: 16,
               transition: `background ${ms("micro")}`,
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={disabled ? undefined : (e) => {
               (e.currentTarget as HTMLElement).style.background =
                 "rgba(255,255,255,0.08)";
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={disabled ? undefined : (e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
             }}
           >

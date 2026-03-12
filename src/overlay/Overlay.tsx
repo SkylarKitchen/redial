@@ -82,6 +82,8 @@ class PanelErrorBoundary extends Component<
 export function Overlay() {
   const [selecting, setSelecting] = useState(false);
   const [selectedEl, setSelectedEl] = useState<Element | null>(null);
+  const selectedElRef = useRef(selectedEl);
+  useEffect(() => { selectedElRef.current = selectedEl; }, [selectedEl]);
   const [inferResult, setInferResult] = useState<InferResult | null>(null);
   const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
   const panelScrollRef = useRef<HTMLDivElement>(null);
@@ -171,8 +173,9 @@ export function Overlay() {
 
   // --- Keyboard shortcut helpers ---
   const handleSaveShortcut = useCallback(async () => {
-    if (!selectedEl || savingRef.current) return;
-    const changes = diff(selectedEl);
+    const el = selectedElRef.current;
+    if (!el || savingRef.current) return;
+    const changes = diff(el);
     if (changes.length === 0) return;
     savingRef.current = true;
     try {
@@ -181,10 +184,12 @@ export function Overlay() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes }),
       });
-      if (res.ok) {
-        setInferResult(infer(selectedEl));
+      // Re-read ref after await — selectedEl may have changed during the fetch
+      const currentEl = selectedElRef.current;
+      if (res.ok && currentEl) {
+        setInferResult(infer(currentEl));
         setPanelKey((k) => k + 1);
-      } else {
+      } else if (!res.ok) {
         console.warn("[Tuner] Save failed:", res.status, res.statusText);
       }
     } catch (err) {
@@ -192,7 +197,7 @@ export function Overlay() {
     } finally {
       savingRef.current = false;
     }
-  }, [selectedEl]);
+  }, []);
 
   const handleCopyShortcut = useCallback(() => {
     if (!selectedEl) return;
@@ -908,24 +913,27 @@ export function Overlay() {
 
   // --- CSS Import handler (paste CSS text from clipboard) ---
   const handleCSSImport = useCallback(async () => {
-    if (!selectedEl || diffMode) return;
+    if (!selectedElRef.current || diffMode) return;
     try {
       const text = await navigator.clipboard.readText();
+      // Re-read ref after await — selectedEl may have changed during clipboard read
+      const el = selectedElRef.current;
+      if (!el) return;
       const declarations = parseCSSText(text);
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
-        applyInlineStyle(selectedEl, prop, value);
+        applyInlineStyle(el, prop, value);
       }
 
       // Re-infer to update panel
-      setInferResult(infer(selectedEl));
+      setInferResult(infer(el));
       setPanelKey((k) => k + 1);
       setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
     } catch {
       setClipboardMessage("Clipboard access denied");
     }
-  }, [selectedEl, diffMode]);
+  }, [diffMode]);
 
   // --- Command Palette action handler ---
   const handleCommandAction = useCallback((action: string) => {

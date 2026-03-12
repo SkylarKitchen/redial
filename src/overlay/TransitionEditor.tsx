@@ -201,6 +201,8 @@ function TransitionCard({
 }) {
   const [playing, setPlaying] = useState(false);
   const playTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  /** Saved inline styles so we can restore if unmounted mid-animation */
+  const savedStylesRef = useRef<{ prop: string; transition: string; value: string } | null>(null);
 
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);

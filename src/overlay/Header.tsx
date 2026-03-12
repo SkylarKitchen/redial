@@ -11,7 +11,6 @@ import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
-import { ms } from "./timing";
 import { X, ChevronRight } from "lucide-react";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
@@ -119,56 +118,91 @@ export function Header({
             {sourceFile}
           </span>
         )}
-        {breadcrumb && breadcrumb.length > 1 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "2px",
-              fontSize: "11px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255, 255, 255, 0.4)",
-              marginTop: "2px",
-              overflow: "hidden",
-            }}
-          >
-            {breadcrumb.length > 4 && (
-              <span style={{ opacity: 0.5 }}>...</span>
-            )}
-            {breadcrumb.map((seg, i) => {
-              const isLast = i === breadcrumb.length - 1;
-              const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
-              return (
-                <span key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isLast) onBreadcrumbClick?.(seg.el);
-                    }}
-                    onMouseEnter={() => {
-                      if (!isLast) onBreadcrumbHover?.(seg.el);
-                    }}
-                    onMouseLeave={() => {
-                      if (!isLast) onBreadcrumbHover?.(null);
-                    }}
-                    style={{
-                      color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
-                      cursor: isLast ? "default" : "pointer",
-                      whiteSpace: "nowrap",
-                      borderRadius: "2px",
-                      padding: isLast ? undefined : "0 2px",
-                      transition: "color 100ms, background 100ms",
-                    }}
-                    data-breadcrumb-ancestor={!isLast ? "" : undefined}
-                  >
-                    {label}
+        {breadcrumb && breadcrumb.length > 1 && (() => {
+          // If 4+ items and not expanded: show first > "..." > last 2
+          const shouldCollapse = breadcrumb.length >= 4 && !breadcrumbExpanded;
+          const visibleSegments = shouldCollapse
+            ? [breadcrumb[0], ...breadcrumb.slice(-2)]
+            : breadcrumb;
+          const ellipsisAfterFirst = shouldCollapse;
+
+          return (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "2px",
+                fontSize: "11px",
+                fontFamily: "ui-monospace, 'SF Mono', monospace",
+                color: "rgba(255, 255, 255, 0.4)",
+                marginTop: "2px",
+                overflow: "hidden",
+              }}
+            >
+              {visibleSegments.map((seg, i) => {
+                const isLast = i === visibleSegments.length - 1;
+                const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
+                return (
+                  <span key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                    {i === 1 && ellipsisAfterFirst && (
+                      <>
+                        <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBreadcrumbExpanded(true);
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            padding: "0 2px",
+                            borderRadius: "2px",
+                            color: "rgba(255, 255, 255, 0.4)",
+                            transition: "color 100ms, background 100ms",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
+                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                          }}
+                          title="Show full breadcrumb"
+                        >
+                          ...
+                        </span>
+                      </>
+                    )}
+                    {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isLast) onBreadcrumbClick?.(seg.el);
+                      }}
+                      onMouseEnter={() => {
+                        if (!isLast) onBreadcrumbHover?.(seg.el);
+                      }}
+                      onMouseLeave={() => {
+                        if (!isLast) onBreadcrumbHover?.(null);
+                      }}
+                      style={{
+                        color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
+                        cursor: isLast ? "default" : "pointer",
+                        whiteSpace: "nowrap",
+                        borderRadius: "2px",
+                        padding: isLast ? undefined : "0 2px",
+                        transition: "color 100ms, background 100ms",
+                      }}
+                      data-breadcrumb-ancestor={!isLast ? "" : undefined}
+                    >
+                      {label}
+                    </span>
                   </span>
-                </span>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
         {cssClasses.length > 0 && onScopeChange && (
           <div
             style={{
