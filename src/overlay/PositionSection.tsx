@@ -4,6 +4,7 @@ import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
 import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
+import { useConversionHint } from "./useConversionHint";
 import { resetProp } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
@@ -36,6 +37,8 @@ export const PositionSection = memo(function PositionSection({
   const [rightUnit, setRightUnit] = useState(() => detectUnit(element, "right"));
   const [bottomUnit, setBottomUnit] = useState(() => detectUnit(element, "bottom"));
   const [leftUnit, setLeftUnit] = useState(() => detectUnit(element, "left"));
+
+  const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
   // ── resetCss ──
   const resetCss = useCallback(
@@ -81,12 +84,14 @@ export const PositionSection = memo(function PositionSection({
             units={{ top: topUnit, right: rightUnit, bottom: bottomUnit, left: leftUnit }}
             availableUnits={POSITION_UNITS}
             onUnitChange={(prop: string, unit: string) => {
+              const ctx = getConversionCtx();
               const axis = (prop === "top" || prop === "bottom") ? "height" as const : "width" as const;
-              if (prop === "top") { const c = convertUnit(top, topUnit, unit, getConversionCtx(), axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
-              else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, getConversionCtx(), axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
-              else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, getConversionCtx(), axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
-              else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, getConversionCtx(), axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
+              if (prop === "top") { const c = convertUnit(top, topUnit, unit, ctx, axis); firePosHint(top, topUnit, c, unit, ctx, axis); setTop(c); setTopUnit(unit); apply("top", `${c}${unit}`); }
+              else if (prop === "right") { const c = convertUnit(right, rightUnit, unit, ctx, axis); firePosHint(right, rightUnit, c, unit, ctx, axis); setRight(c); setRightUnit(unit); apply("right", `${c}${unit}`); }
+              else if (prop === "bottom") { const c = convertUnit(bottom, bottomUnit, unit, ctx, axis); firePosHint(bottom, bottomUnit, c, unit, ctx, axis); setBottom(c); setBottomUnit(unit); apply("bottom", `${c}${unit}`); }
+              else if (prop === "left") { const c = convertUnit(left, leftUnit, unit, ctx, axis); firePosHint(left, leftUnit, c, unit, ctx, axis); setLeft(c); setLeftUnit(unit); apply("left", `${c}${unit}`); }
             }}
+            conversionHint={posHint}
           />
           <div style={{ padding: "2px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
@@ -111,8 +116,8 @@ export const PositionSection = memo(function PositionSection({
           </div>
         </>
       )}
-      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} onContextMenu={ctxMenu("float", float_)} />
-      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} onContextMenu={ctxMenu("clear", clear_)} />
+      <SelectRow label="Float" value={float_} options={FLOAT_OPTIONS} onChange={handleFloatChange} indicator={ind("float")} onContextMenu={ctxMenu("float", float_)} computedProp="float" computedElement={element} />
+      <SelectRow label="Clear" value={clear_} options={CLEAR_OPTIONS} onChange={handleClearChange} indicator={ind("clear")} onContextMenu={ctxMenu("clear", clear_)} computedProp="clear" computedElement={element} />
     </Section>
   );
 });

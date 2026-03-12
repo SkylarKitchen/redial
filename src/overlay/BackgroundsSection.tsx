@@ -21,7 +21,7 @@ export interface BackgroundsSectionProps {
 // ─── Component ────────────────────────────────────────────────────────
 
 export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceOpen }: BackgroundsSectionProps) {
-  const { cs, apply, ind, sectionInd } = ctx;
+  const { cs, apply, ind, sectionInd, element, ctxMenu } = ctx;
 
   // ── State ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -118,9 +118,9 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
           <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
         </div>
       ) : (
-        <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} />
+        <ColorRow label="Color" value={bgColor} onChange={handleBgColorChange} indicator={ind("background-color")} onContextMenu={ctxMenu("background-color", bgColor)} computedProp="background-color" computedElement={element} />
       )}
-      <SelectRow label="Clip" value={bgClip} options={BG_CLIP_OPTIONS} onChange={handleBgClipChange} indicator={ind("background-clip")} />
+      <SelectRow label="Clip" value={bgClip} options={BG_CLIP_OPTIONS} onChange={handleBgClipChange} indicator={ind("background-clip")} onContextMenu={ctxMenu("background-clip", bgClip)} computedProp="background-clip" computedElement={element} />
     </Section>
   );
 });

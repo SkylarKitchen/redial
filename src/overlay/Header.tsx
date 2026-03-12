@@ -50,11 +50,21 @@ export function Header({
   onStateChange,
 }: HeaderProps) {
   const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
+  const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 0);
+
+  // Track viewport width
+  useEffect(() => {
+    const handler = () => setVw(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
 
   // Reset expanded state when the selected element changes
   useEffect(() => {
     setBreadcrumbExpanded(false);
   }, [element]);
+
+  const tier = vw >= 1280 ? "xl" : vw >= 1024 ? "lg" : vw >= 768 ? "md" : vw >= 640 ? "sm" : "xs";
 
   const tag = element.tagName.toLowerCase();
   const className = getDisplayClass(element);
@@ -192,6 +202,19 @@ export function Header({
         )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span
+          style={{
+            fontSize: "10px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.4)",
+            background: "rgba(255,255,255,0.06)",
+            padding: "1px 6px",
+            borderRadius: "4px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {vw}px &middot; {tier}
+        </span>
         {totalChanges > 0 && (
           <button
             onClick={onShowSession}

@@ -51,7 +51,7 @@ export const TypographySection = memo(function TypographySection({
   onColumnGapUnitChange,
   forceOpen,
 }: TypographySectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
@@ -114,6 +114,13 @@ export const TypographySection = memo(function TypographySection({
   const [wordSpacing, setWordSpacing] = useState(() => parseNum(cs.wordSpacing));
   const [hyphens, setHyphens] = useState(() => cs.getPropertyValue("hyphens") || "manual");
 
+  // Conversion hints
+  const { conversionHint: fontSizeHint, fireConversionHint: fireFontSizeHint } = useConversionHint();
+  const { conversionHint: lineHeightHint, fireConversionHint: fireLineHeightHint } = useConversionHint();
+  const { conversionHint: letterSpacingHint, fireConversionHint: fireLetterSpacingHint } = useConversionHint();
+  const { conversionHint: textIndentHint, fireConversionHint: fireTextIndentHint } = useConversionHint();
+  const { conversionHint: typoColGapHint, fireConversionHint: fireTypoColGapHint } = useConversionHint();
+
   // ── Handlers ──
   const handleFontSizeChange = useCallback((v: number) => { setFontSize(v); apply("font-size", `${v}${fontSizeUnit}`); }, [apply, fontSizeUnit]);
   const handleFontWeightChange = useCallback((v: string) => { setFontWeight(v); apply("font-weight", v); }, [apply]);
@@ -172,10 +179,10 @@ export const TypographySection = memo(function TypographySection({
       forceOpen={forceOpen}
     >
       {/* Font family dropdown */}
-      <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview />
+      <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} />
 
       {/* Weight dropdown */}
-      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} />
+      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} />
 
       {/* Size + Height side-by-side compact cells */}
       <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 12px" }}>
@@ -188,8 +195,9 @@ export const TypographySection = memo(function TypographySection({
           onChange={handleFontSizeChange}
           unit={fontSizeUnit}
           units={TYPO_SIZE_UNITS}
-          onUnitChange={(u) => { const c = convertUnit(fontSize, fontSizeUnit, u, getConversionCtx()); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(fontSize, fontSizeUnit, u, ctx); fireFontSizeHint(fontSize, fontSizeUnit, c, u, ctx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
           step={1}
+          conversionHint={fontSizeHint}
         />
         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
           {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
@@ -200,13 +208,14 @@ export const TypographySection = memo(function TypographySection({
           onChange={handleLineHeightChange}
           unit={lineHeightUnit === "\u2014" ? "\u2013" : lineHeightUnit}
           units={LINE_HEIGHT_UNITS}
-          onUnitChange={(u) => { if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const c = convertUnit(lineHeight, lineHeightUnit, u, getConversionCtx()); setLineHeight(c); } setLineHeightUnit(u); }}
+          onUnitChange={(u) => { if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const ctx = getConversionCtx(); const c = convertUnit(lineHeight, lineHeightUnit, u, ctx); fireLineHeightHint(lineHeight, lineHeightUnit, c, u, ctx); setLineHeight(c); } setLineHeightUnit(u); }}
           step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
+          conversionHint={lineHeightHint}
         />
       </div>
 
       {/* Color */}
-      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} />
+      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} />
 
       {/* Align */}
       <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -251,9 +260,10 @@ export const TypographySection = memo(function TypographySection({
                 onChange={handleLetterSpacingChange}
                 unit={letterSpacingUnit}
                 units={TYPO_SIZE_UNITS}
-                onUnitChange={(u) => { const c = convertUnit(letterSpacing, letterSpacingUnit, u, getConversionCtx()); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
+                onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(letterSpacing, letterSpacingUnit, u, ctx); fireLetterSpacingHint(letterSpacing, letterSpacingUnit, c, u, ctx); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
                 step={0.25}
                 keyword={letterSpacing === 0 ? "Normal" : null}
+                conversionHint={letterSpacingHint}
               />
               <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Letter spacing</div>
             </div>
@@ -263,8 +273,9 @@ export const TypographySection = memo(function TypographySection({
                 onChange={handleTextIndentChange}
                 unit={textIndentUnit}
                 units={LAYOUT_UNITS}
-                onUnitChange={(u) => { const c = convertUnit(textIndent, textIndentUnit, u, getConversionCtx()); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }}
+                onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(textIndent, textIndentUnit, u, ctx); fireTextIndentHint(textIndent, textIndentUnit, c, u, ctx); setTextIndent(c); setTextIndentUnit(u); apply("text-indent", `${c}${u}`); }}
                 step={1}
+                conversionHint={textIndentHint}
               />
               <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Text indent</div>
             </div>
@@ -289,9 +300,10 @@ export const TypographySection = memo(function TypographySection({
                   onChange={(v) => { onColumnGapChange(v); apply("column-gap", `${v}${columnGapUnit}`); }}
                   unit={columnGapUnit}
                   units={LAYOUT_UNITS}
-                  onUnitChange={(u) => { const c = convertUnit(columnGap, columnGapUnit, u, getConversionCtx()); onColumnGapChange(c); onColumnGapUnitChange(u); apply("column-gap", `${c}${u}`); }}
+                  onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(columnGap, columnGapUnit, u, ctx); fireTypoColGapHint(columnGap, columnGapUnit, c, u, ctx); onColumnGapChange(c); onColumnGapUnitChange(u); apply("column-gap", `${c}${u}`); }}
                   step={1}
                   keyword={columnGap === 0 ? "Normal" : null}
+                  conversionHint={typoColGapHint}
                 />
                 <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Column gap</div>
               </div>
@@ -346,7 +358,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Wrap */}
-          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} />
+          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} />
 
           {/* Truncate — Clip / Ellipsis segmented toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>

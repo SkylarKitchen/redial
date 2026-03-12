@@ -28,7 +28,6 @@ import { Plus } from "lucide-react";
 import { ms } from "./timing";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
-import { KeyboardHelpModal } from "./KeyboardHelpModal";
 import { CommandPalette } from "./CommandPalette";
 import { ContextMenu } from "./ContextMenu";
 import { ShortcutsHelp } from "./ShortcutsHelp";
@@ -465,13 +464,14 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope, overlays, and search on new selection
+    // Reset scope, overlays, search, and modals on new selection
     setScope("element");
     setActiveClassName(null);
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setShowSearch(false);
     setSearchQuery("");
+    setActiveModal({ type: "none" });
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -488,6 +488,8 @@ export function Overlay() {
     setActiveClassName(null);
     setShowSearch(false);
     setSearchQuery("");
+    setActiveModal({ type: "none" });
+    setViewportWidth(null);
   }, []);
 
 
@@ -821,6 +823,7 @@ export function Overlay() {
     if (!selectedEl || selecting) return;
 
     const handlePageClick = (e: MouseEvent) => {
+      if (e.button !== 0) return; // Only handle left clicks
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;
@@ -852,6 +855,121 @@ export function Overlay() {
     document.addEventListener("contextmenu", handleContextMenu, true);
     return () => document.removeEventListener("contextmenu", handleContextMenu, true);
   }, [selectedEl, selecting]);
+
+  // --- Viewport width constraint (responsive preview) ---
+  useEffect(() => {
+    const STYLE_ID = "__tuner-viewport-constraint";
+    if (viewportWidth === null) {
+      document.getElementById(STYLE_ID)?.remove();
+      return;
+    }
+
+    let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement("style");
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    style.textContent = `html { max-width: ${viewportWidth}px !important; margin: 0 auto !important; box-shadow: 1px 0 0 rgba(255,255,255,0.1), -1px 0 0 rgba(255,255,255,0.1); }`;
+
+    return () => { document.getElementById(STYLE_ID)?.remove(); };
+  }, [viewportWidth]);
+
+  // --- CSS Import handler (paste CSS text from clipboard) ---
+  const handleCSSImport = useCallback(async () => {
+    if (!selectedEl || diffMode) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      const declarations = parseCSSText(text);
+      if (declarations.length === 0) return;
+
+      for (const { prop, value } of declarations) {
+        applyInlineStyle(selectedEl, prop, value);
+      }
+
+      // Re-infer to update panel
+      setInferResult(infer(selectedEl));
+      setPanelKey((k) => k + 1);
+      setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
+    } catch {
+      setClipboardMessage("Clipboard access denied");
+    }
+  }, [selectedEl, diffMode]);
+
+  // --- Command Palette action handler ---
+  const handleCommandAction = useCallback((action: string) => {
+    if (!selectedEl) return;
+    switch (action) {
+      case "Save":
+        handleSaveShortcut();
+        break;
+      case "Reset":
+        if (overrideCount(selectedEl) > 0) {
+          reset(selectedEl);
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+        }
+        break;
+      case "Copy CSS":
+        handleCopyShortcut();
+        break;
+      case "Copy Tailwind": {
+        const changes = diff(selectedEl);
+        if (changes.length > 0) {
+          navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
+        }
+        break;
+      }
+      case "Paste Styles":
+        handlePasteStyles();
+        break;
+      case "Toggle Diff":
+        handleToggleDiff();
+        break;
+    }
+  }, [selectedEl, handleSaveShortcut, handleCopyShortcut, handlePasteStyles, handleToggleDiff]);
+
+  // --- Context Menu action handler ---
+  const handleContextAction = useCallback((action: string) => {
+    if (!selectedEl) return;
+    switch (action) {
+      case "copy-styles": {
+        const count = copyStyles(selectedEl);
+        if (count > 0) setClipboardMessage(`${count} style${count === 1 ? "" : "s"} copied`);
+        break;
+      }
+      case "paste-styles":
+        handlePasteStyles();
+        break;
+      case "copy-css":
+        handleCopyShortcut();
+        break;
+      case "copy-tailwind": {
+        const changes = diff(selectedEl);
+        if (changes.length > 0) {
+          navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
+        }
+        break;
+      }
+      case "select-parent": {
+        const parent = selectedEl.parentElement;
+        if (parent && isNavigableElement(parent)) {
+          handleSelect(parent);
+        }
+        break;
+      }
+      case "reset-styles":
+        if (overrideCount(selectedEl) > 0) {
+          reset(selectedEl);
+          setInferResult(infer(selectedEl));
+          setPanelKey((k) => k + 1);
+        }
+        break;
+      case "open-editor":
+        // TODO: wire to source map resolution
+        break;
+    }
+  }, [selectedEl, handlePasteStyles, handleCopyShortcut, handleSelect]);
 
   return (
     <>
@@ -1070,6 +1188,7 @@ export function Overlay() {
             state={activeState}
             onStateChange={setActiveState}
           />
+          <ViewportBar active={viewportWidth} onChange={setViewportWidth} />
           <div
             ref={panelScrollRef}
             className="__tuner-root"
@@ -1117,6 +1236,7 @@ export function Overlay() {
           <Footer
             element={selectedEl}
             onReset={handleReset}
+            onCSSImport={handleCSSImport}
             scope={scope}
             activeClassName={activeClassName}
             clipboardMessage={clipboardMessage}
@@ -1124,6 +1244,36 @@ export function Overlay() {
             onPasteStyles={handlePasteStyles}
           />
         </div>
+      )}
+
+      {/* Command Palette modal */}
+      {activeModal.type === "commandPalette" && selectedEl && (
+        <CommandPalette
+          onSelectElement={(el) => { handleSelect(el); setActiveModal({ type: "none" }); }}
+          onScrollToSection={(section) => {
+            setShowSearch(true);
+            setSearchQuery(section);
+            setActiveModal({ type: "none" });
+          }}
+          onAction={(action) => { handleCommandAction(action); setActiveModal({ type: "none" }); }}
+          onClose={() => setActiveModal({ type: "none" })}
+        />
+      )}
+
+      {/* Context Menu */}
+      {activeModal.type === "contextMenu" && selectedEl && (
+        <ContextMenu
+          x={activeModal.x}
+          y={activeModal.y}
+          element={selectedEl}
+          onAction={handleContextAction}
+          onClose={() => setActiveModal({ type: "none" })}
+        />
+      )}
+
+      {/* Shortcuts Help modal */}
+      {activeModal.type === "shortcutsHelp" && (
+        <ShortcutsHelp onClose={() => setActiveModal({ type: "none" })} />
       )}
 
       {/* Selection mode indicator */}
@@ -1193,8 +1343,6 @@ export function Overlay() {
           }}
         />
       </div>
-      {/* Keyboard shortcut help modal */}
-      {showHelp && <KeyboardHelpModal onClose={() => setShowHelp(false)} />}
     </>
   );
 }

@@ -19,7 +19,7 @@ export const BordersSection = memo(function BordersSection({
   ctx,
   forceOpen,
 }: BordersSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   // ── Border state ──
   const [borderSide, setBorderSide] = useState<"all" | "top" | "right" | "bottom" | "left">("all");
@@ -85,9 +85,9 @@ export const BordersSection = memo(function BordersSection({
   return (
     <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen}>
       <SideSelector value={borderSide} onChange={setBorderSide} />
-      <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
-      <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} conversionHint={bwHint} />
-      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} />
+      <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} onContextMenu={ctxMenu("border-style", borderStyle)} computedProp="border-style" computedElement={element} />
+      <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} conversionHint={bwHint} onContextMenu={ctxMenu("border-width", `${borderWidth}${borderWidthUnit}`)} computedProp="border-width" computedElement={element} />
+      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} onContextMenu={ctxMenu("border-color", borderColor)} computedProp="border-color" computedElement={element} />
       <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
         Radius
       </div>

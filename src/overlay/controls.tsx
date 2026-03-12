@@ -17,6 +17,50 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
 import { useWheelAdjust } from "./useWheelAdjust";
 
+// ─── Value Presets ───────────────────────────────────────────────────
+
+export const VALUE_PRESETS: Record<string, string[]> = {
+  "width": ["auto", "100%", "fit-content"],
+  "height": ["auto", "100%", "fit-content"],
+  "max-width": ["none", "100%"],
+  "max-height": ["none", "100%"],
+  "min-width": ["0", "auto"],
+  "min-height": ["0", "auto"],
+  "border-radius": ["0", "4", "8", "9999"],
+  "gap": ["0", "4", "8", "12", "16"],
+  "font-weight": ["400", "500", "600", "700"],
+  "opacity": ["0", "0.5", "1"],
+};
+
+function PresetChips({ property, onSelect }: { property: string; onSelect: (v: string) => void }) {
+  const presets = VALUE_PRESETS[property];
+  if (!presets) return null;
+  return (
+    <div style={{ display: "flex", gap: 3, marginTop: 2, flexWrap: "wrap", padding: "0 12px" }}>
+      {presets.map(v => (
+        <span
+          key={v}
+          onClick={() => onSelect(v)}
+          style={{
+            fontSize: "9px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.45)",
+            background: "rgba(255,255,255,0.06)",
+            padding: "1px 5px",
+            borderRadius: "3px",
+            cursor: "pointer",
+            userSelect: "none" as const,
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.12)"; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+        >
+          {v}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
 export type SpacingUnit = 'px' | '%' | 'em' | 'rem' | 'vw' | 'vh';
@@ -204,6 +248,8 @@ export function SliderRow({
   conversionHint,
   snapPoints,
   snapThreshold,
+  property,
+  onPreset,
 }: {
   label: string;
   value: number;
@@ -229,6 +275,10 @@ export function SliderRow({
   snapPoints?: number[];
   /** Pixel distance for snap activation (default 3) */
   snapThreshold?: number;
+  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
+  property?: string;
+  /** Called when a preset chip is clicked (for string values like "auto"/"none") */
+  onPreset?: (value: string) => void;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
@@ -261,44 +311,56 @@ export function SliderRow({
       {label}
     </span>
   );
+  const handlePresetSelect = useCallback((v: string) => {
+    if (onPreset) {
+      onPreset(v);
+    } else {
+      const parsed = parseFloat(v);
+      if (!isNaN(parsed)) onChange(parsed);
+    }
+  }, [onPreset, onChange]);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
-        {computedProp && computedElement ? (
-          <ComputedTooltip property={computedProp} element={computedElement}>
-            {labelContent}
-          </ComputedTooltip>
-        ) : labelContent}
-      </LabelScrub>
-      <input
-        type="range"
-        className="tuner-focusable"
-        tabIndex={0}
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
-        onFocus={onFocusRing}
-        onBlur={onBlurRing}
-        style={{
-          flex: 1,
-          height: "3px",
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          borderRadius: "2px",
-          outline: "none",
-          cursor: "pointer",
-        }}
-      />
-      <ValueInput value={value} onChange={onChange} />
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
-      ) : unit ? (
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
-      ) : null}
-    </div>
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
+          {computedProp && computedElement ? (
+            <ComputedTooltip property={computedProp} element={computedElement}>
+              {labelContent}
+            </ComputedTooltip>
+          ) : labelContent}
+        </LabelScrub>
+        <input
+          type="range"
+          className="tuner-focusable"
+          tabIndex={0}
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
+          onFocus={onFocusRing}
+          onBlur={onBlurRing}
+          style={{
+            flex: 1,
+            height: "3px",
+            appearance: "none",
+            WebkitAppearance: "none",
+            background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
+            borderRadius: "2px",
+            outline: "none",
+            cursor: "pointer",
+          }}
+        />
+        <ValueInput value={value} onChange={onChange} />
+        {units && onUnitChange ? (
+          <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
+        ) : unit ? (
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
+        ) : null}
+      </div>
+      {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
+    </>
   );
 }
 

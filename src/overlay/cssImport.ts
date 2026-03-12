@@ -13,8 +13,14 @@ export function parseCSSText(text: string): CSSDeclaration[] {
   // Strip CSS comments
   const noComments = text.replace(/\/\*[\s\S]*?\*\//g, "");
 
-  // Strip selectors and braces (handle both ".class { ... }" and bare declarations)
-  const cleaned = noComments.replace(/[^{]*\{/g, "").replace(/\}/g, "");
+  // Extract content from inside { } blocks, or use full text for bare declarations
+  const blocks: string[] = [];
+  const braceRegex = /\{([^}]*)\}/g;
+  let match;
+  while ((match = braceRegex.exec(noComments)) !== null) {
+    blocks.push(match[1]);
+  }
+  const cleaned = blocks.length > 0 ? blocks.join(";") : noComments;
 
   // Split by semicolons
   const declarations = cleaned
