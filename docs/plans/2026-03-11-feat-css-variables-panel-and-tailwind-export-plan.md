@@ -159,13 +159,13 @@ function getRegisteredType(name: string): VarType | null {
 
 ### Acceptance Criteria
 
-- [ ] Color variables show ColorRow with full ColorPickerEnhanced (HSB canvas, hue/opacity, swatches)
-- [ ] Numeric variables show SliderRow with appropriate range/step and unit
-- [ ] String variables retain TextRow fallback
-- [ ] Variables inside `@media`/`@supports`/`@layer` blocks are discovered
-- [ ] Existing undo/redo, reset, and dirty detection continue to work
-- [ ] No new stylesheet walks added (render-only change)
-- [ ] Typecheck passes
+- [x] Color variables show ColorRow with full ColorPickerEnhanced (HSB canvas, hue/opacity, swatches)
+- [x] Numeric variables show SliderRow with appropriate range/step and unit
+- [x] String variables retain TextRow fallback
+- [x] Variables inside `@media`/`@supports`/`@layer` blocks are discovered
+- [x] Existing undo/redo, reset, and dirty detection continue to work
+- [x] No new stylesheet walks added (render-only change)
+- [x] Typecheck passes
 
 ---
 
@@ -372,16 +372,16 @@ function spacedSigned(prefix: string, v: string): string {
 
 ### Acceptance Criteria
 
-- [ ] "TW" button in Footer copies Tailwind classes to clipboard
-- [ ] Standard spacing values map via formula (`16px` → `4`, `24px` → `6`)
-- [ ] Non-standard values use arbitrary syntax (`w-[120px]`)
-- [ ] Colors use arbitrary hex (`bg-[#1e1e1e]`)
-- [ ] Negative margins use negative prefix (`-mt-2`)
-- [ ] `auto`/`none` keywords map correctly
-- [ ] Display/position values map to bare class names (`flex`, `absolute`)
-- [ ] Toast shows "Copied Tailwind!" on success
-- [ ] Unit tests for `formatTailwindDiff` covering: spacing, colors, keywords, negatives, arbitrary values
-- [ ] Typecheck passes
+- [x] "TW" button in Footer copies Tailwind classes to clipboard
+- [x] Standard spacing values map via formula (`16px` → `4`, `24px` → `6`)
+- [x] Non-standard values use arbitrary syntax (`w-[120px]`)
+- [x] Colors use arbitrary hex (`bg-[#1e1e1e]`)
+- [x] Negative margins use negative prefix (`-mt-2`)
+- [x] `auto`/`none` keywords map correctly
+- [x] Display/position values map to bare class names (`flex`, `absolute`)
+- [x] Toast shows "Copied Tailwind!" on success
+- [x] Unit tests for `formatTailwindDiff` covering: spacing, colors, keywords, negatives, arbitrary values
+- [x] Typecheck passes
 
 ---
 

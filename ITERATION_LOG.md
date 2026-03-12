@@ -450,4 +450,43 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Task 4 — Replace onDirtyChange cascade with useSyncExternalStore (2026-03-11)
+- **Problem**: Every slider drag triggered `apply() → onDirtyChange() → setDirtyTick(t+1)` in Overlay → full Overlay re-render → full WebflowPanel re-render → ALL sections re-render at 60fps
+- **Solution**: Added subscription API to `apply.ts` (`subscribeOverrides`, `getOverrideSnapshot`, `notifyListeners`) and replaced the `dirtyTick` state + `onDirtyChange` callback cascade with `useSyncExternalStore` in Overlay.tsx
+- `notifyListeners()` called from: `applyInlineStyle`, `undo` (single + batch), `redo` (single + batch), `reset`, `resetAll`, `resetProp`, `applyCustomProperty`, `clearRedundantOverrides` (when cleared > 0), `restoreSession` (when restored > 0)
+- Removed `onDirtyChange` prop from `WebflowPanelProps` interface and all usage in WebflowPanel.tsx (simplified `apply` and `resetCss` helpers)
+- Removed `onDirtyChange` prop from `CSSVariablesSection` (VariableRow commit no longer needs manual notification)
+- Removed `handleDirtyChange` callback and `dirtyTick` state from Overlay.tsx
+- React now subscribes to override changes via `useSyncExternalStore` — only the Overlay component re-renders when overrides change, not the entire panel tree
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Iteration 37 — CSS Variables Section: rich type-aware controls (2026-03-11)
+- Enhanced `CSSVariablesSection.tsx` to use proper control components per variable type:
+  - Color variables → `ColorRow` with full color picker
+  - Length variables → `SliderRow` with unit-aware bounds
+  - Number variables → `SliderRow` (unitless, 0–100 range)
+  - String variables → plain text input (fallback)
+- Added recursive `walkRules()` helper to discover CSS vars inside `@media`/`@supports`/`@layer` blocks
+- Grouped variables by source: Element, Inherited, Root with `GroupHeader` sub-headers
+- `StyleIndicator` shows override state (element/direct/inherited/none)
+- Typecheck: PASS, Tests: 289/289 PASS
+
+---
+
+### Iteration 38 — Tailwind v4 export with TW button (2026-03-11)
+- Created `src/overlay/tailwind.ts` — pure-function CSS-to-Tailwind v4 class converter
+  - 2-tier architecture: property-specific `CONVERTERS` map → `PROP_PREFIX` arbitrary value fallback
+  - Covers display, position, sizing, padding, margin, gap, colors, typography, flexbox, effects
+  - Tailwind v4 spacing scale: `num/4` with `1px→"px"` exception
+  - Negative margin support via `spacedSigned()` helper
+  - `escapeArbitrary()` handles underscores and spaces in bracket syntax
+- Added `handleCopyTailwind` to Footer.tsx with "TW" button next to Copy
+  - Calls `diff(element)` → `formatTailwindDiff(changes)` → clipboard with "Copied Tailwind!" toast
+- Created 113 unit tests in `src/overlay/__tests__/tailwind.test.ts` covering all converters, spacing scale, negative values, escape logic, and full `formatTailwindDiff` integration
+- Typecheck: PASS, Tests: 289/289 PASS
+
+---
+
 ## Done

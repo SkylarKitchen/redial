@@ -9,6 +9,7 @@ import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff } from "./util";
+import { formatTailwindDiff } from "./tailwind";
 import { ms, timing } from "./timing";
 
 interface FooterProps {
@@ -46,6 +47,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     if (changes.length === 0) return;
     navigator.clipboard.writeText(formatCSSDiff(element, changes));
     showMessage("Copied!", 1200);
+  }, [element, showMessage]);
+
+  const handleCopyTailwind = useCallback(() => {
+    const changes = diff(element);
+    if (changes.length === 0) return;
+    const tw = formatTailwindDiff(changes);
+    navigator.clipboard.writeText(tw);
+    showMessage("Copied Tailwind!", 1200);
   }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
@@ -122,6 +131,13 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           title="Copy SCSS"
         >
           Copy
+        </ActionButton>
+        <ActionButton
+          onClick={handleCopyTailwind}
+          disabled={count === 0}
+          title="Copy Tailwind classes"
+        >
+          TW
         </ActionButton>
         <ActionButton
           onClick={onPasteStyles ?? (() => {})}
