@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
@@ -15,6 +16,7 @@ export interface TransitionValue {
   duration: number;
   easing: string;
   delay: number;
+  visible: boolean;
 }
 
 export interface TransitionEditorProps {
@@ -90,6 +92,7 @@ const DEFAULT_TRANSITION: TransitionValue = {
   duration: 300,
   easing: "ease",
   delay: 0,
+  visible: true,
 };
 
 export function TransitionEditor({ transitions, onChange, element }: TransitionEditorProps) {
@@ -117,6 +120,15 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
     [transitions, onChange]
   );
 
+  const handleToggleVisible = useCallback(
+    (index: number) => {
+      const next = [...transitions];
+      next[index] = { ...next[index], visible: next[index].visible === false ? true : false };
+      onChange(next);
+    },
+    [transitions, onChange]
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", position: "relative" }}>
       {/* Transition cards */}
@@ -128,6 +140,7 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
               transition={t}
               onUpdate={(updates) => handleUpdate(index, updates)}
               onRemove={() => handleRemove(index)}
+              onToggleVisible={() => handleToggleVisible(index)}
               dragHandleProps={dragProps}
               isDragging={isDragging}
               element={element}
