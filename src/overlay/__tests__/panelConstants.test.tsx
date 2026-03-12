@@ -133,7 +133,7 @@ describe("Dropdown arrays — shape & length", () => {
     { name: "HYPHENS_OPTIONS", arr: HYPHENS_OPTIONS, len: 3 },
     { name: "FLOAT_OPTIONS", arr: FLOAT_OPTIONS, len: 3 },
     { name: "CLEAR_OPTIONS", arr: CLEAR_OPTIONS, len: 4 },
-    { name: "BORDER_STYLE_OPTIONS", arr: BORDER_STYLE_OPTIONS, len: 9 },
+    { name: "BORDER_STYLE_OPTIONS", arr: BORDER_STYLE_OPTIONS, len: 4 },
     { name: "BLEND_MODE_OPTIONS", arr: BLEND_MODE_OPTIONS, len: 16 },
     { name: "CURSOR_OPTIONS", arr: CURSOR_OPTIONS, len: 14 },
     { name: "POINTER_EVENTS_OPTIONS", arr: POINTER_EVENTS_OPTIONS, len: 2 },

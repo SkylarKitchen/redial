@@ -44,10 +44,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => {
-    resetProp(element, prop);
-    setter(getComputedStyle(element).getPropertyValue(prop).trim());
-  };
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ─── CSS variable discovery (length-type only) ─────────────────────
 
@@ -282,10 +279,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           value={minWidth}
           unit={minWidthUnit}
           units={SIZE_UNITS_W}
-          keyword={null}
+
           onValueChange={handleMinWidthChange}
           onUnitChange={(u) => { if (minWidthVar) setMinWidthVar(null); const ctx = getConversionCtx(); const c = convertUnit(minWidth, minWidthUnit, u, ctx, "width"); fireMinWHint(minWidth, minWidthUnit, c, u, ctx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
-          onKeywordChange={() => {}}
           isModified={isDirty(element, "min-width")}
           min={0}
           max={1920}
@@ -302,10 +298,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           value={minHeight}
           unit={minHeightUnit}
           units={SIZE_UNITS_H}
-          keyword={null}
+
           onValueChange={handleMinHeightChange}
           onUnitChange={(u) => { if (minHeightVar) setMinHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(minHeight, minHeightUnit, u, ctx, "height"); fireMinHHint(minHeight, minHeightUnit, c, u, ctx, "height"); setMinHeight(c); setMinHeightUnit(u); apply("min-height", `${c}${u}`); }}
-          onKeywordChange={() => {}}
           isModified={isDirty(element, "min-height")}
           min={0}
           max={1200}

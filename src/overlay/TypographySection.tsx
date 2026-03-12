@@ -201,10 +201,7 @@ export const TypographySection = memo(function TypographySection({
     apply("direction", val);
   }, [apply]);
 
-  const resetCssStr = (prop: string, setter: (v: string) => void) => {
-    resetProp(element, prop);
-    setter(getComputedStyle(element).getPropertyValue(prop).trim());
-  };
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   return (
     <Section

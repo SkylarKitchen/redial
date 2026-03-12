@@ -27,10 +27,10 @@ export interface SizeInputCellProps {
   value: number;
   unit: string;
   units: string[];
-  keyword: "auto" | "none" | null;
+  keyword?: "auto" | "none" | null;
   onValueChange: (v: number) => void;
   onUnitChange: (u: string) => void;
-  onKeywordChange: (k: "auto" | "none" | null) => void;
+  onKeywordChange?: (k: "auto" | "none" | null) => void;
   isModified: boolean;
   supportsAuto?: boolean;
   supportsNone?: boolean;
@@ -58,10 +58,10 @@ export function SizeInputCell({
   value,
   unit,
   units,
-  keyword,
+  keyword = null,
   onValueChange,
   onUnitChange,
-  onKeywordChange,
+  onKeywordChange,  // optional — only needed when supportsAuto or supportsNone
   isModified,
   supportsAuto = false,
   supportsNone = false,

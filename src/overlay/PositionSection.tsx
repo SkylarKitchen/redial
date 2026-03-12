@@ -75,10 +75,7 @@ export const PositionSection = memo(function PositionSection({
   const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => {
-    resetProp(element, prop);
-    setter(getComputedStyle(element).getPropertyValue(prop).trim());
-  };
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── Handlers ──
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);

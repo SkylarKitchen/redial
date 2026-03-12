@@ -14,7 +14,8 @@ import { applyInlineStyle, beginBatch, endBatch, isDirty } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
-import { detectUnit } from "./panelUtils";
+import { detectUnit, isTextBearing } from "./panelUtils";
+import { parseNum } from "./cssParsers";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
@@ -34,27 +35,9 @@ export interface CommonPanelProps {
   activeClassName?: string | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────
 
-const TEXT_TAGS = new Set([
-  "h1", "h2", "h3", "h4", "h5", "h6", "p", "span", "a", "label",
-  "button", "li", "td", "th", "input", "textarea", "strong", "em",
-  "b", "i", "small", "blockquote",
-]);
-
-function isTextBearing(el: Element): boolean {
-  if (TEXT_TAGS.has(el.tagName.toLowerCase())) return true;
-  if (el.matches("[role=button], [role=heading], [contenteditable]")) return true;
-  for (const child of el.childNodes) {
-    if (child.nodeType === Node.TEXT_NODE && child.textContent?.trim()) return true;
-  }
-  return false;
-}
-
-function parseNum(v: string): number {
-  const n = parseFloat(v);
-  return isNaN(n) ? 0 : n;
-}
+const SP_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
 
 // ─── FlatGroup ───────────────────────────────────────────────────────
 
@@ -137,7 +120,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   );
 
   // --- Spacing units ---
-  const SP_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
   const [marginUnit, setMarginUnit] = useState("px");
   const [paddingUnit, setPaddingUnit] = useState("px");
 
@@ -335,7 +317,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                 value={top}
                 unit={topUnit}
                 units={POSITION_UNITS}
-                keyword={null}
+
                 onValueChange={handleTopChange}
                 onUnitChange={(u) => {
                   const ctx = getConversionCtx();
@@ -344,7 +326,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                   setTop(c); setTopUnit(u);
                   apply("top", `${c}${u}`);
                 }}
-                onKeywordChange={() => {}}
+
                 isModified={isDirty(element, "top")}
                 min={-9999}
                 max={9999}
@@ -355,7 +337,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                 value={right}
                 unit={rightUnit}
                 units={POSITION_UNITS}
-                keyword={null}
+
                 onValueChange={handleRightChange}
                 onUnitChange={(u) => {
                   const ctx = getConversionCtx();
@@ -364,7 +346,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                   setRight(c); setRightUnit(u);
                   apply("right", `${c}${u}`);
                 }}
-                onKeywordChange={() => {}}
+
                 isModified={isDirty(element, "right")}
                 min={-9999}
                 max={9999}
@@ -377,7 +359,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                 value={bottom}
                 unit={bottomUnit}
                 units={POSITION_UNITS}
-                keyword={null}
+
                 onValueChange={handleBottomChange}
                 onUnitChange={(u) => {
                   const ctx = getConversionCtx();
@@ -386,7 +368,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                   setBottom(c); setBottomUnit(u);
                   apply("bottom", `${c}${u}`);
                 }}
-                onKeywordChange={() => {}}
+
                 isModified={isDirty(element, "bottom")}
                 min={-9999}
                 max={9999}
@@ -397,7 +379,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                 value={left}
                 unit={leftUnit}
                 units={POSITION_UNITS}
-                keyword={null}
+
                 onValueChange={handleLeftChange}
                 onUnitChange={(u) => {
                   const ctx = getConversionCtx();
@@ -406,7 +388,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
                   setLeft(c); setLeftUnit(u);
                   apply("left", `${c}${u}`);
                 }}
-                onKeywordChange={() => {}}
+
                 isModified={isDirty(element, "left")}
                 min={-9999}
                 max={9999}

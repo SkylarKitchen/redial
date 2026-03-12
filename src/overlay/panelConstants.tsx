@@ -10,6 +10,10 @@ import {
   Eye, EyeOff, ScrollText,
   ArrowRight, ArrowDown, WrapText,
   Italic, X, PilcrowLeft, PilcrowRight,
+  Rows3, Columns2, Grid2x2, Square,
+  AlignStartVertical, AlignCenterVertical, AlignEndVertical, MoveVertical,
+  AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
+  AlignHorizontalSpaceBetween, AlignHorizontalSpaceAround, AlignHorizontalDistributeCenter,
 } from "lucide-react";
 
 // ─── Text Alignment Icons ────────────────────────────────────────────
@@ -53,6 +57,40 @@ export const DISPLAY_MORE = [
   { value: "inline-grid", label: "Inline Grid" },
   { value: "inline-block", label: "Inline Block" },
   { value: "inline", label: "Inline" },
+];
+
+// ─── Display Icon Options (Webflow-style 6 buttons) ────────────────
+
+const iconSw = 1.5;
+
+export const DISPLAY_ICON_OPTIONS = [
+  { value: "block",        icon: <Rows3 size={14} strokeWidth={iconSw} />,     title: "Block" },
+  { value: "flex",         icon: <Columns2 size={14} strokeWidth={iconSw} />,  title: "Flex" },
+  { value: "grid",         icon: <Grid2x2 size={14} strokeWidth={iconSw} />,   title: "Grid" },
+  { value: "inline-block", icon: <Square size={14} strokeWidth={iconSw} />,    title: "Inline Block" },
+  { value: "inline",       icon: <span className="text-[10px] font-semibold leading-none">AA</span>, title: "Inline" },
+  { value: "none",         icon: <EyeOff size={14} strokeWidth={iconSw} />,    title: "None" },
+];
+
+// ─── Align Icon Options (align-items, 5 buttons) ───────────────────
+
+export const ALIGN_ICON_OPTIONS = [
+  { value: "flex-start", icon: <AlignStartVertical size={14} strokeWidth={iconSw} />,  title: "Start" },
+  { value: "center",     icon: <AlignCenterVertical size={14} strokeWidth={iconSw} />, title: "Center" },
+  { value: "flex-end",   icon: <AlignEndVertical size={14} strokeWidth={iconSw} />,    title: "End" },
+  { value: "stretch",    icon: <MoveVertical size={14} strokeWidth={iconSw} />,        title: "Stretch" },
+  { value: "baseline",   icon: <Baseline size={14} strokeWidth={iconSw} />,            title: "Baseline" },
+];
+
+// ─── Justify Icon Options (justify-content, 6 buttons) ─────────────
+
+export const JUSTIFY_ICON_OPTIONS = [
+  { value: "flex-start",    icon: <AlignHorizontalJustifyStart size={14} strokeWidth={iconSw} />,   title: "Start" },
+  { value: "center",        icon: <AlignHorizontalJustifyCenter size={14} strokeWidth={iconSw} />,  title: "Center" },
+  { value: "flex-end",      icon: <AlignHorizontalJustifyEnd size={14} strokeWidth={iconSw} />,     title: "End" },
+  { value: "space-between", icon: <AlignHorizontalSpaceBetween size={14} strokeWidth={iconSw} />,   title: "Between" },
+  { value: "space-around",  icon: <AlignHorizontalSpaceAround size={14} strokeWidth={iconSw} />,    title: "Around" },
+  { value: "space-evenly",  icon: <AlignHorizontalDistributeCenter size={14} strokeWidth={iconSw} />, title: "Evenly" },
 ];
 
 // ─── Font Options ────────────────────────────────────────────────────

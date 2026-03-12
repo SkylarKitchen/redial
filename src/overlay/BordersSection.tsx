@@ -1,14 +1,95 @@
 import React, { useState, useCallback, memo, useEffect } from "react";
-import { Section, SliderRow, SelectRow, ColorRow } from "./controls";
+import { Section, ValueInput, ColorRow } from "./controls";
 import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
-import { convertUnit, conversionBasis } from "./unitConversion";
+import { IconButtonGroup } from "./IconButtonGroup";
+import { UnitSelector } from "./UnitSelector";
+import { Slider } from "@/components/ui/slider";
+import { LabelScrub } from "./LabelScrub";
+import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
+import { resetProp, resetAndReadNum, beginBatch, endBatch } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { BORDER_STYLE_OPTIONS, BORDER_UNITS } from "./panelConstants";
+import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "./panelConstants";
+import { ms } from "./timing";
+import { text, color, surface } from "./theme";
+
+// ─── Radius mode ──────────────────────────────────────────────────────
+
+type RadiusMode = "individual" | "linked" | "single";
+
+/** 3 mode toggle icons for the Radius row (individual / linked / single). */
+function RadiusModeIcons({ mode, onChange }: { mode: RadiusMode; onChange: (m: RadiusMode) => void }) {
+  const modes: Array<{ key: RadiusMode; title: string; icon: React.ReactNode }> = [
+    {
+      key: "individual",
+      title: "Individual corners",
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
+          <path d="M1 4V1h3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M8 1h3v3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M11 8v3H8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M4 11H1V8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      key: "linked",
+      title: "Linked corners",
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
+          <rect x="1" y="1" width="10" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 1.5" />
+        </svg>
+      ),
+    },
+    {
+      key: "single",
+      title: "Single value",
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
+          <rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="currentColor" />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", gap: 1 }}>
+      {modes.map((m) => (
+        <button
+          key={m.key}
+          title={m.title}
+          onClick={() => onChange(m.key)}
+          style={{
+            width: 18,
+            height: 18,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            borderRadius: 3,
+            cursor: "pointer",
+            background: mode === m.key ? surface.active : "transparent",
+            color: mode === m.key ? color.primary : text.disabled,
+            transition: `background ${ms("fast")}, color ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => {
+            if (mode !== m.key) (e.currentTarget as HTMLElement).style.background = surface.hover;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = mode === m.key ? surface.active : "transparent";
+          }}
+        >
+          {m.icon}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────
 
 interface BordersSectionProps {
   ctx: SectionCtx;
@@ -36,18 +117,19 @@ export const BordersSection = memo(function BordersSection({
   const [radiusBL, setRadiusBL] = useState(() => parseNum(cs.borderBottomLeftRadius));
   const [radiusUnit, setRadiusUnit] = useState(() => detectUnit(element, "border-top-left-radius"));
   const [borderWidthUnit, setBorderWidthUnit] = useState(() => detectUnit(element, "border-width"));
-  const [radiusLinked, setRadiusLinked] = useState(() => {
+
+  // Derive initial radius mode from computed values
+  const [radiusMode, setRadiusMode] = useState<RadiusMode>(() => {
     const tl = parseNum(cs.borderTopLeftRadius);
     const tr = parseNum(cs.borderTopRightRadius);
     const br = parseNum(cs.borderBottomRightRadius);
     const bl = parseNum(cs.borderBottomLeftRadius);
-    return tl === tr && tr === br && br === bl;
+    return tl === tr && tr === br && br === bl ? "single" : "individual";
   });
 
   const { conversionHint: bwHint, fireConversionHint: fireBwHint } = useConversionHint();
 
   // ── Sync controls when side tab changes ──
-  // Reads per-side computed values so the controls reflect the selected side.
   useEffect(() => {
     const fresh = getComputedStyle(element);
     if (borderSide === "all") {
@@ -55,18 +137,14 @@ export const BordersSection = memo(function BordersSection({
       setBorderWidth(parseNum(fresh.borderWidth));
       setBorderColor(rgbToHex(fresh.borderColor));
     } else {
-      const side = borderSide; // top | right | bottom | left
-      const sideStyle = fresh.getPropertyValue(`border-${side}-style`).trim() || "none";
-      const sideWidth = parseNum(fresh.getPropertyValue(`border-${side}-width`));
-      const sideColor = rgbToHex(fresh.getPropertyValue(`border-${side}-color`));
-      setBorderStyle(sideStyle);
-      setBorderWidth(sideWidth);
-      setBorderColor(sideColor);
+      const side = borderSide;
+      setBorderStyle(fresh.getPropertyValue(`border-${side}-style`).trim() || "none");
+      setBorderWidth(parseNum(fresh.getPropertyValue(`border-${side}-width`)));
+      setBorderColor(rgbToHex(fresh.getPropertyValue(`border-${side}-color`)));
     }
   }, [borderSide, element]);
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── Helpers ──
   const borderProp = (suffix: string) =>
@@ -99,27 +177,109 @@ export const BordersSection = memo(function BordersSection({
     [apply, radiusUnit]
   );
 
+  /** In single/linked mode, update all 4 corners at once. */
+  const handleRadiusAllChange = useCallback(
+    (v: number) => {
+      setRadiusTL(v);
+      setRadiusTR(v);
+      setRadiusBR(v);
+      setRadiusBL(v);
+      for (const prop of [
+        "border-top-left-radius",
+        "border-top-right-radius",
+        "border-bottom-right-radius",
+        "border-bottom-left-radius",
+      ]) {
+        apply(prop, `${v}${radiusUnit}`);
+      }
+    },
+    [apply, radiusUnit]
+  );
+
   return (
     <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
-      <SideSelector value={borderSide} onChange={setBorderSide} />
-      <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} onReset={() => resetCssStr(borderProp("style"), setBorderStyle)} indicator={ind(borderProp("style"))} onContextMenu={ctxMenu(borderProp("style"), borderStyle)} computedProp={borderProp("style")} computedElement={element} />
-      <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); apply(borderProp("width"), `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss(borderProp("width"), setBorderWidth)} indicator={ind(borderProp("width"))} conversionHint={bwHint} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)} computedProp={borderProp("width")} computedElement={element} />
-      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { resetProp(element, borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} />
-      <div className="px-3 pt-1 text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">
-        Radius
+
+      {/* ── Radius row (compact) ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 12px" }}>
+        <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0 }}>Radius</span>
+        <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
+        {radiusMode !== "individual" && (
+          <>
+            <Slider
+              className="tuner-focusable flex-1"
+              aria-label={`Radius: ${radiusTL}${radiusUnit}`}
+              min={0}
+              max={200}
+              step={1}
+              value={[radiusTL]}
+              onValueChange={([v]) => handleRadiusAllChange(v)}
+              onPointerDown={() => beginBatch()}
+              onPointerUp={() => endBatch()}
+            />
+            <ValueInput value={radiusTL} onChange={handleRadiusAllChange} />
+            <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={(u: string) => setRadiusUnit(u)} />
+          </>
+        )}
       </div>
-      <CornerRadiusEditor
-        topLeft={radiusTL}
-        topRight={radiusTR}
-        bottomRight={radiusBR}
-        bottomLeft={radiusBL}
-        linked={radiusLinked}
-        onChange={handleCornerChange}
-        onLinkedChange={setRadiusLinked}
-        unit={radiusUnit}
-        units={BORDER_UNITS}
-        onUnitChange={(u: string) => { setRadiusUnit(u); }}
-      />
+
+      {/* ── Expanded corner editor (individual mode) ── */}
+      {radiusMode === "individual" && (
+        <CornerRadiusEditor
+          topLeft={radiusTL}
+          topRight={radiusTR}
+          bottomRight={radiusBR}
+          bottomLeft={radiusBL}
+          linked={false}
+          onChange={handleCornerChange}
+          onLinkedChange={() => {}}
+          unit={radiusUnit}
+          units={BORDER_UNITS}
+          onUnitChange={(u: string) => setRadiusUnit(u)}
+        />
+      )}
+
+      {/* ── "Borders" sub-label ── */}
+      <div style={{ padding: "6px 12px 2px", fontSize: 10, color: text.label, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
+        Borders
+      </div>
+
+      {/* ── Side selector (compact) ── */}
+      <SideSelector value={borderSide} onChange={setBorderSide} compact />
+
+      {/* ── Style (icon toggle) ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
+        <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0 }}>Style</span>
+        <IconButtonGroup
+          options={BORDER_STYLE_ICON_OPTIONS}
+          value={borderStyle}
+          onChange={handleBorderStyleChange}
+          aria-label="Border style"
+        />
+      </div>
+
+      {/* ── Width (value input, no slider) ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
+        <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
+          <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0, cursor: "ew-resize" }}>Width</span>
+        </LabelScrub>
+        <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} />
+        <UnitSelector
+          value={borderWidthUnit}
+          options={BORDER_UNITS}
+          onChange={(u) => {
+            const ctx = getConversionCtx();
+            const c = convertUnit(borderWidth, borderWidthUnit, u, ctx);
+            fireBwHint(borderWidth, borderWidthUnit, c, u, ctx);
+            setBorderWidth(c);
+            setBorderWidthUnit(u);
+            apply(borderProp("width"), `${c}${u}`);
+          }}
+          conversionHint={bwHint}
+        />
+      </div>
+
+      {/* ── Color ── */}
+      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { resetProp(element, borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} />
     </Section>
   );
 });
