@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
@@ -20,6 +20,7 @@ export interface ShadowValue {
   spread: number;
   color: string;
   inset: boolean;
+  visible: boolean;
 }
 
 export interface ShadowEditorProps {

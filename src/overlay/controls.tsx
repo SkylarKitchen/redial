@@ -32,7 +32,7 @@ export const VALUE_PRESETS: Record<string, string[]> = {
   "opacity": ["0", "0.5", "1"],
 };
 
-function PresetChips({ property, onSelect }: { property: string; onSelect: (v: string) => void }) {
+export function PresetChips({ property, onSelect }: { property: string; onSelect: (v: string) => void }) {
   const presets = VALUE_PRESETS[property];
   if (!presets) return null;
   return (
