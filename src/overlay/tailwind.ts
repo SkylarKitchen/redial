@@ -179,6 +179,7 @@ const CONVERTERS: Record<string, Converter> = {
   overflow: (v) => `overflow-${v}`,
   cursor: (v) => `cursor-${v}`,
   "mix-blend-mode": (v) => `mix-blend-${v}`,
+  visibility: (v) => (v === "hidden" ? "invisible" : v === "visible" ? "visible" : null),
 };
 
 // ─── Arbitrary Value Fallback Prefix Map ─────────────────────────────
@@ -190,7 +191,6 @@ const PROP_PREFIX: Record<string, string> = {
   transition: "transition",
   "box-shadow": "shadow",
   outline: "outline",
-  visibility: "invisible",
   "pointer-events": "pointer-events",
   "user-select": "select",
   "object-fit": "object",

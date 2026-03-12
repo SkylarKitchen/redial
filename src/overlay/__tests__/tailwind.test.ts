@@ -420,6 +420,14 @@ describe("effects", () => {
   it("mix-blend-mode → mix-blend-…", () => {
     expect(tw("mix-blend-mode", "multiply")).toBe("mix-blend-multiply");
   });
+
+  it("visibility: hidden → invisible", () => {
+    expect(tw("visibility", "hidden")).toBe("invisible");
+  });
+
+  it("visibility: visible → visible", () => {
+    expect(tw("visibility", "visible")).toBe("visible");
+  });
 });
 
 // ─── Arbitrary value fallback (PROP_PREFIX) ──────────────────────────
