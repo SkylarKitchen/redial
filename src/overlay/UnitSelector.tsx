@@ -39,10 +39,54 @@ export interface UnitSelectorProps {
 
 const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
 
-export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect }: UnitSelectorProps) {
+/** Format a conversion hint into tooltip text, e.g. "16px -> 1em (base: 16px)" */
+function formatHint(h: ConversionHint): string {
+  const from = `${h.oldValue}${h.oldUnit}`;
+  const to = `${h.newValue}${h.newUnit}`;
+  return h.basis ? `${from} \u2192 ${to} (${h.basis})` : `${from} \u2192 ${to}`;
+}
+
+export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const id = useId();
+
+  // ─── Conversion tooltip state ──────────────────────────────────────
+  const [tooltipText, setTooltipText] = useState<string | null>(null);
+  const [tooltipPhase, setTooltipPhase] = useState<"in" | "out" | null>(null);
+  const tooltipTimer = useRef<ReturnType<typeof setTimeout>>();
+  const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const prevHintRef = useRef<ConversionHint | null | undefined>(undefined);
+
+  useEffect(() => {
+    // Only trigger when conversionHint transitions to a new non-null value
+    if (conversionHint && conversionHint !== prevHintRef.current) {
+      // Clear any existing timers
+      if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+
+      setTooltipText(formatHint(conversionHint));
+      setTooltipPhase("in");
+
+      // Auto-dismiss: start fade-out after 1.7s, remove after 2s
+      tooltipTimer.current = setTimeout(() => {
+        setTooltipPhase("out");
+        fadeTimer.current = setTimeout(() => {
+          setTooltipText(null);
+          setTooltipPhase(null);
+        }, 300);
+      }, 1700);
+    }
+    prevHintRef.current = conversionHint;
+  }, [conversionHint]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    };
+  }, []);
 
   // Build a flat list of all items for keyboard navigation
   const allItems = useMemo(() => {

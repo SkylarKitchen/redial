@@ -132,7 +132,7 @@ export function CommandPalette({
   const [elementResults, setElementResults] = useState<Element[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-focus
   useEffect(() => {
