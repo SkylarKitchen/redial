@@ -61,7 +61,7 @@ const INDICATOR_COLORS: Record<IndicatorType, string> = {
   state: "#34d399",
   variable: "#a78bfa",
   direct: "#60a5fa",
-  none: "rgba(255,255,255,0.5)",
+  none: "rgba(0,0,0,0.45)",
 };
 
 const INDICATOR_TITLES: Record<IndicatorType, string | null> = {

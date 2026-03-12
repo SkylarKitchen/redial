@@ -49,7 +49,7 @@ export function PresetChips({ property, onSelect }: { property: string; onSelect
         <span
           key={v}
           onClick={() => onSelect(v)}
-          className="text-[9px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] px-1.5 py-px rounded cursor-pointer select-none hover:bg-[rgba(255,255,255,0.12)]"
+          className="text-[9px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] px-1.5 py-px rounded cursor-pointer select-none hover:bg-[rgba(0,0,0,0.08)]"
         >
           {v}
         </span>
@@ -231,7 +231,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onDoubleClick={selectAllOnDoubleClick}
       className={cn(
         "h-[26px] w-10 bg-[var(--input)] border border-[var(--border)] rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
-        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(99,102,241,0.5)]"
+        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(193,122,80,0.5)]"
       )}
     />
   );
@@ -303,7 +303,7 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
-  const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const labelColor = getIndicatorColor(indicator ?? "none");
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -389,7 +389,7 @@ export function SelectRow({
   /** Target element for computed tooltip */
   computedElement?: Element;
 }) {
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const selectLabelColor = getIndicatorColor(indicator ?? "none");
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -435,7 +435,7 @@ export function SelectRow({
             "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
             "text-[11px] font-mono text-[var(--foreground)] px-1.5",
             "focus:ring-2 focus:ring-[var(--ring)]",
-            "hover:bg-[rgba(255,255,255,0.1)]"
+            "hover:bg-[rgba(0,0,0,0.05)]"
           )}
         >
           <SelectValue />
@@ -502,7 +502,7 @@ function SelectRowCustom({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const selectLabelColor = getIndicatorColor(indicator ?? "none");
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -529,9 +529,9 @@ function SelectRowCustom({
             "tuner-focusable w-full h-6 flex items-center justify-between",
             "bg-[var(--input)] border border-[var(--border)] rounded-sm",
             "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
-            "hover:bg-[rgba(255,255,255,0.1)]",
+            "hover:bg-[rgba(0,0,0,0.05)]",
             "focus:ring-2 focus:ring-[var(--ring)]",
-            open && "bg-[rgba(255,255,255,0.1)]"
+            open && "bg-[rgba(0,0,0,0.05)]"
           )}
           tabIndex={0}
           aria-expanded={open}
@@ -586,7 +586,7 @@ function SelectRowCustom({
                   }}
                   className={cn(
                     "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4",
-                    opt.value === value && "bg-[var(--primary)] text-white"
+                    opt.value === value && "bg-[var(--primary)] text-[#f5f0ea]"
                   )}
                   style={{
                     fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
@@ -637,7 +637,7 @@ export function ColorRow({
   const displayLabel = varName ? varName.replace(/^--/, "") : value;
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
-  const colorLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const colorLabelColor = getIndicatorColor(indicator ?? "none");
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -666,7 +666,7 @@ export function ColorRow({
         className={cn(
           "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
           "focus:ring-2 focus:ring-[var(--ring)]",
-          varName ? "border-2 border-[rgba(99,102,241,0.6)]" : "border border-[var(--border)]"
+          varName ? "border-2 border-[rgba(193,122,80,0.6)]" : "border border-[var(--border)]"
         )}
         tabIndex={0}
         role="button"
@@ -680,7 +680,7 @@ export function ColorRow({
         style={{
           background:
             displayColor === "transparent"
-              ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
+              ? "repeating-conic-gradient(#ccc 0% 25%, #eee 0% 50%) 50%/8px 8px"
               : displayColor,
         }}
       />
@@ -688,7 +688,7 @@ export function ColorRow({
         title={varName ? value : undefined}
         className={cn(
           "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0",
-          varName ? "text-[rgba(99,102,241,0.8)]" : "text-[var(--muted-foreground)]"
+          varName ? "text-[rgba(193,122,80,0.8)]" : "text-[var(--muted-foreground)]"
         )}
       >
         {displayLabel}
@@ -731,7 +731,7 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
         className={cn(
           "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
           "text-[var(--foreground)] text-[10px] font-mono px-1.5 outline-none",
-          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(99,102,241,0.5)]"
+          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(193,122,80,0.5)]"
         )}
         tabIndex={0}
         value={value}
@@ -804,7 +804,7 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 bg-[rgba(255,255,255,0.1)] border border-[rgba(99,102,241,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          className="w-7 bg-[rgba(0,0,0,0.06)] border border-[rgba(193,122,80,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
           onClick={(e) => e.stopPropagation()}
         />
       );
@@ -825,7 +825,7 @@ export const EditableValue = memo(
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
         className={cn(
           "text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none",
-          "hover:bg-[rgba(255,255,255,0.08)]",
+          "hover:bg-[rgba(0,0,0,0.05)]",
           "focus:ring-2 focus:ring-[var(--ring)]",
           value !== 0 ? "text-[var(--foreground)]/70" : "text-[var(--foreground)]/30"
         )}
