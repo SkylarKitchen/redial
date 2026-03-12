@@ -10,7 +10,7 @@
  * The overlay is a fixed-position container at max z-index.
  */
 
-import { useState, useCallback, useEffect, useRef, useMemo, Component, type ReactNode, type ErrorInfo } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo, useSyncExternalStore, Component, type ReactNode, type ErrorInfo } from "react";
 import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -18,7 +18,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { infer, type InferResult } from "./infer";
-import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles } from "./apply";
+import { undo, redo, clearRedundantOverrides, resetAll, totalOverrideCount, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
@@ -88,7 +88,7 @@ export function Overlay() {
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
-  const [dirtyTick, setDirtyTick] = useState(0);
+  const _overrideCount = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
 
   // Scope toggle
   const [scope, setScope] = useState<Scope>("element");
@@ -397,10 +397,6 @@ export function Overlay() {
     setActiveClassName(null);
   }, []);
 
-  // --- Re-render after changes (for dirty indicators + session badge) ---
-  const handleDirtyChange = useCallback(() => {
-    setDirtyTick((t) => t + 1);
-  }, []);
 
   // --- Reset handler: re-infer to get fresh values ---
   const handleReset = useCallback(() => {
@@ -414,7 +410,6 @@ export function Overlay() {
   const handleResetAll = useCallback(() => {
     resetAll();
     destroyClassStyles();
-    setDirtyTick((t) => t + 1);
     if (selectedEl) {
       setInferResult(infer(selectedEl));
       setPanelKey((k) => k + 1);
@@ -446,8 +441,7 @@ export function Overlay() {
       }
       return prev;
     });
-    handleDirtyChange();
-  }, [selectedEl, handleDirtyChange]);
+  }, [selectedEl]);
 
   // --- Dragging ---
   const handleDragStart = useCallback(
@@ -552,10 +546,7 @@ export function Overlay() {
 
   // --- Restore persisted session on mount ---
   useEffect(() => {
-    const restored = restoreSession();
-    if (restored > 0) {
-      setDirtyTick((t) => t + 1);
-    }
+    restoreSession();
   }, []);
 
   // --- Clamp panel position on window resize ---
@@ -864,7 +855,6 @@ export function Overlay() {
                   element={selectedEl}
                   spacing={inferResult.spacing}
                   onSpacingChange={handleSpacingChange}
-                  onDirtyChange={handleDirtyChange}
                   showGridOverlay={showGridOverlay}
                   onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
                 />

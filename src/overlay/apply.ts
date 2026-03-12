@@ -441,6 +441,7 @@ export function clearRedundantOverrides(): number {
     if (props.size === 0) overrides.delete(el);
   }
 
+  if (cleared > 0) notifyListeners();
   return cleared;
 }
 
@@ -713,6 +714,7 @@ export function restoreSession(): number {
       }
     }
 
+    if (restored > 0) notifyListeners();
     return restored;
   } catch {
     return 0;

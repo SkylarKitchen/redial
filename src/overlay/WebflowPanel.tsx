@@ -57,7 +57,6 @@ export interface WebflowPanelProps {
   element: Element;
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
-  onDirtyChange?: () => void;
   /** Whether the grid overlay is visible (managed by Overlay.tsx) */
   showGridOverlay?: boolean;
   /** Toggle the grid overlay on/off */
@@ -133,7 +132,7 @@ function isTextBearing(el: Element): boolean {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange, showGridOverlay, onToggleGridOverlay }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -399,9 +398,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
   const apply = useCallback(
     (prop: string, value: string) => {
       applyInlineStyle(element, prop, value);
-      onDirtyChange?.();
     },
-    [element, onDirtyChange]
+    [element]
   );
 
   /** Reset a CSS property to its computed value and update React state via setter */
@@ -410,9 +408,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
       resetProp(element, prop);
       const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
       setter(parseFloat(fresh) || 0);
-      onDirtyChange?.();
     },
-    [element, onDirtyChange]
+    [element]
   );
 
   // ─── Section Handlers ──────────────────────────────────────────────
@@ -1480,7 +1477,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
 
       {/* 8. Effects */}
       <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])}>
-        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); onDirtyChange?.(); }} indicator={ind("opacity")} />
+        <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} />
         <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} />
 
         <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -1537,7 +1534,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
       </Section>
 
       {/* 9. CSS Variables */}
-      <CSSVariablesSection element={element} onDirtyChange={onDirtyChange} />
+      <CSSVariablesSection element={element} />
     </div>
   );
 }

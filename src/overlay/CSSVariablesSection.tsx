@@ -41,6 +41,40 @@ function isColorValue(value: string): boolean {
   return false;
 }
 
+// ─── Length / Number Detection ───────────────────────────────────────
+
+const LENGTH_RE = /^(-?[\d.]+)(px|em|rem|%|vw|vh|vmin|vmax|ch|ex|lh|cap|ic|svw|svh|lvw|lvh|dvw|dvh|cm|mm|in|pt|pc|Q)$/;
+const NUMBER_RE = /^-?[\d.]+$/;
+
+function parseLength(value: string): { num: number; unit: string } | null {
+  const m = value.trim().match(LENGTH_RE);
+  if (!m) return null;
+  const num = parseFloat(m[1]);
+  return isNaN(num) ? null : { num, unit: m[2] };
+}
+
+function detectVarType(value: string): { type: VarType; numericValue?: number; unit?: string } {
+  if (isColorValue(value)) return { type: "color" };
+  const len = parseLength(value);
+  if (len) return { type: "length", numericValue: len.num, unit: len.unit };
+  if (NUMBER_RE.test(value.trim())) return { type: "number", numericValue: parseFloat(value) };
+  return { type: "string" };
+}
+
+// ─── Recursive Rule Walker ──────────────────────────────────────────
+
+function walkRules(rules: CSSRuleList, callback: (rule: CSSStyleRule) => void) {
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
+    if (rule instanceof CSSStyleRule) {
+      callback(rule);
+    } else if ('cssRules' in rule) {
+      // Handles CSSMediaRule, CSSSupportsRule, CSSLayerBlockRule
+      walkRules((rule as CSSGroupingRule).cssRules, callback);
+    }
+  }
+}
+
 // ─── Variable Discovery ──────────────────────────────────────────────
 
 function discoverVariables(element: Element): CSSVariable[] {
@@ -51,29 +85,29 @@ function discoverVariables(element: Element): CSSVariable[] {
   // 1. Walk stylesheets once — collect :root vars and element-matching vars
   for (const sheet of Array.from(document.styleSheets)) {
     try {
-      for (const rule of Array.from(sheet.cssRules)) {
-        if (!(rule instanceof CSSStyleRule)) continue;
+      walkRules(sheet.cssRules, (rule) => {
         const isRoot = rule.selectorText === ":root" || rule.selectorText === "html";
         let matchesEl = false;
         if (!isRoot) {
           try { matchesEl = element.matches(rule.selectorText); } catch { /* invalid selector */ }
         }
-        if (!isRoot && !matchesEl) continue;
+        if (!isRoot && !matchesEl) return;
 
         for (let i = 0; i < rule.style.length; i++) {
           const prop = rule.style[i];
           if (!prop.startsWith("--")) continue;
           const value = (isRoot ? rootStyles : elStyles).getPropertyValue(prop).trim();
           if (value) {
+            const detected = detectVarType(value);
             found.set(prop, {
               name: prop,
               value,
               source: matchesEl ? "element" : "root",
-              isColor: isColorValue(value),
+              ...detected,
             });
           }
         }
-      }
+      });
     } catch {
       // Cross-origin stylesheets throw SecurityError — skip silently
     }
@@ -87,7 +121,7 @@ function discoverVariables(element: Element): CSSVariable[] {
       if (prop.startsWith("--")) {
         const value = htmlEl.style.getPropertyValue(prop).trim();
         if (value) {
-          found.set(prop, { name: prop, value, source: "element", isColor: isColorValue(value) });
+          found.set(prop, { name: prop, value, source: "element", ...detectVarType(value) });
         }
       }
     }
@@ -102,7 +136,7 @@ function discoverVariables(element: Element): CSSVariable[] {
         if (prop.startsWith("--") && !found.has(prop)) {
           const value = elStyles.getPropertyValue(prop).trim();
           if (value) {
-            found.set(prop, { name: prop, value, source: "inherited", isColor: isColorValue(value) });
+            found.set(prop, { name: prop, value, source: "inherited", ...detectVarType(value) });
           }
         }
       }
@@ -113,35 +147,49 @@ function discoverVariables(element: Element): CSSVariable[] {
   return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// ─── Inline Color Swatch ─────────────────────────────────────────────
-
-function ColorSwatch({ color }: { color: string }) {
-  return (
-    <div
-      style={{
-        width: "16px",
-        height: "16px",
-        borderRadius: "3px",
-        background: color || "transparent",
-        border: "1px solid rgba(255,255,255,0.15)",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
 // ─── Variable Row ────────────────────────────────────────────────────
 
 const MONO = "ui-monospace, 'SF Mono', monospace";
 
+/** Trim "--" prefix and truncate for display as a label. */
+function varLabel(name: string): string {
+  return name.replace(/^--/, "");
+}
+
+/** Sensible slider bounds based on CSS unit. */
+function boundsForUnit(unit: string): { min: number; max: number; step: number } {
+  switch (unit) {
+    case "%":
+    case "vw":
+    case "vh":
+    case "vmin":
+    case "vmax":
+    case "svw":
+    case "svh":
+    case "lvw":
+    case "lvh":
+    case "dvw":
+    case "dvh":
+      return { min: 0, max: 100, step: 1 };
+    case "em":
+    case "rem":
+    case "lh":
+    case "ch":
+    case "ex":
+    case "cap":
+    case "ic":
+      return { min: 0, max: 10, step: 0.1 };
+    default: // px, cm, mm, in, pt, pc, Q
+      return { min: 0, max: 500, step: 1 };
+  }
+}
+
 function VariableRow({
   variable,
   element,
-  onDirtyChange,
 }: {
   variable: CSSVariable;
   element: Element;
-  onDirtyChange?: () => void;
 }) {
   const [draft, setDraft] = useState(variable.value);
   const [focused, setFocused] = useState(false);
@@ -161,9 +209,8 @@ function VariableRow({
       const scope =
         variable.source === "element" ? element : document.documentElement;
       applyCustomProperty(scope, variable.name, trimmed);
-      onDirtyChange?.();
     },
-    [variable.name, variable.source, element, onDirtyChange]
+    [variable.name, variable.source, element]
   );
 
   const handleBlur = useCallback(() => {
@@ -194,6 +241,65 @@ function VariableRow({
         ? "inherited"
         : "none";
 
+  const label = varLabel(variable.name);
+
+  // ── Color type → ColorRow ──────────────────────────────────────────
+  if (variable.type === "color") {
+    return (
+      <ColorRow
+        label={label}
+        value={draft}
+        onChange={(color) => {
+          setDraft(color);
+          commit(color);
+        }}
+        indicator={indicator}
+      />
+    );
+  }
+
+  // ── Length type → SliderRow ────────────────────────────────────────
+  if (variable.type === "length" && variable.numericValue != null && variable.unit) {
+    const bounds = boundsForUnit(variable.unit);
+    return (
+      <SliderRow
+        label={label}
+        value={variable.numericValue}
+        min={bounds.min}
+        max={bounds.max}
+        step={bounds.step}
+        unit={variable.unit}
+        onChange={(num) => {
+          const newValue = `${num}${variable.unit}`;
+          setDraft(newValue);
+          commit(newValue);
+        }}
+        indicator={indicator}
+      />
+    );
+  }
+
+  // ── Number type → SliderRow (unitless) ─────────────────────────────
+  if (variable.type === "number" && variable.numericValue != null) {
+    return (
+      <SliderRow
+        label={label}
+        value={variable.numericValue}
+        min={0}
+        max={100}
+        step={1}
+        unit=""
+        onChange={(num) => {
+          const newValue = String(num);
+          setDraft(newValue);
+          commit(newValue);
+        }}
+        indicator={indicator}
+      />
+    );
+  }
+
+  // ── String / fallback → plain text input ──────────────────────────
   return (
     <div
       style={{
@@ -223,9 +329,6 @@ function VariableRow({
         <StyleIndicator type={indicator} />
         {variable.name}
       </span>
-
-      {/* Color swatch (for color-type variables) */}
-      {variable.isColor && <ColorSwatch color={draft} />}
 
       {/* Value input */}
       <input
@@ -282,10 +385,8 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 
 export function CSSVariablesSection({
   element,
-  onDirtyChange,
 }: {
   element: Element;
-  onDirtyChange?: () => void;
 }) {
   const variables = useMemo(() => discoverVariables(element), [element]);
 
@@ -330,7 +431,7 @@ export function CSSVariablesSection({
               key={v.name}
               variable={v}
               element={element}
-              onDirtyChange={onDirtyChange}
+
             />
           ))}
         </>
@@ -344,7 +445,7 @@ export function CSSVariablesSection({
               key={v.name}
               variable={v}
               element={element}
-              onDirtyChange={onDirtyChange}
+
             />
           ))}
         </>
@@ -358,7 +459,7 @@ export function CSSVariablesSection({
               key={v.name}
               variable={v}
               element={element}
-              onDirtyChange={onDirtyChange}
+
             />
           ))}
         </>
