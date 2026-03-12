@@ -113,6 +113,7 @@ export function PropertyContextMenu({
   return createPortal(
     <div
       ref={menuRef}
+      data-tuner-portal
       style={{
         position: "fixed",
         left: x,

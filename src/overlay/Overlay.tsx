@@ -1007,9 +1007,10 @@ export function Overlay() {
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;
+      if (target.closest("[data-tuner-portal]")) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root")) return;
+      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]")) return;
 
       e.preventDefault();
       e.stopPropagation();

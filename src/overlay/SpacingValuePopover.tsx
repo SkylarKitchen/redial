@@ -160,6 +160,7 @@ export function SpacingValuePopover({
   return createPortal(
     <div
       ref={popoverRef}
+      data-tuner-portal
       style={{
         position: "fixed",
         left: `${left}px`,

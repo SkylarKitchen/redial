@@ -107,6 +107,7 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
     <div
       ref={menuRef}
       role="menu"
+      data-tuner-portal
       style={{
         position: "fixed",
         left: pos.x,
