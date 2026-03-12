@@ -1037,6 +1037,7 @@ export function Overlay() {
       if (target.closest(".__tuner-selected-outline")) return;
       if (target.closest("[data-tuner-portal]")) return;
       if (target.closest("[data-radix-portal]")) return;
+      if (target.closest("[data-textstyle-portal]")) return;
       // Don't intercept clicks on third-party tool overlays (e.g. Agentation)
       if (target.closest("[data-agentation-root]")) return;
       if (target.closest("[data-feedback-toolbar]")) return;
@@ -1044,7 +1045,7 @@ export function Overlay() {
       if (target.closest("[data-annotation-popup]")) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]") || el.closest("[data-radix-portal]")) return;
+      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]") || el.closest("[data-radix-portal]") || el.closest("[data-textstyle-portal]")) return;
       if (el.closest("[data-agentation-root]") || el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]") || el.closest("[data-annotation-popup]")) return;
 
       e.preventDefault();

@@ -94,7 +94,7 @@ describe("isAutoSize", () => {
     expect(isAutoSize(el, "width")).toBe(false);
   });
 
-  it("returns false when width is set via stylesheet", () => {
+  it("returns false when width is set via stylesheet to a percentage", () => {
     const el = makeEl();
     el.classList.add("sized");
 
@@ -103,5 +103,41 @@ describe("isAutoSize", () => {
     document.head.appendChild(style);
 
     expect(isAutoSize(el, "width")).toBe(false);
+  });
+
+  it("returns true when width is set to 'initial' (CSS-wide keyword)", () => {
+    const el = makeEl();
+    el.style.width = "initial";
+    expect(isAutoSize(el, "width")).toBe(true);
+  });
+
+  it("returns true when width is set to 'unset'", () => {
+    const el = makeEl();
+    el.style.width = "unset";
+    expect(isAutoSize(el, "width")).toBe(true);
+  });
+
+  it("returns true when width is set to 'inherit'", () => {
+    const el = makeEl();
+    el.style.width = "inherit";
+    expect(isAutoSize(el, "width")).toBe(true);
+  });
+
+  it("returns true when width is set to 'fit-content'", () => {
+    const el = makeEl();
+    el.style.width = "fit-content";
+    expect(isAutoSize(el, "width")).toBe(true);
+  });
+
+  it("returns true when width is set to 'max-content'", () => {
+    const el = makeEl();
+    el.style.width = "max-content";
+    expect(isAutoSize(el, "width")).toBe(true);
+  });
+
+  it("returns true when width is set to 'min-content'", () => {
+    const el = makeEl();
+    el.style.width = "min-content";
+    expect(isAutoSize(el, "width")).toBe(true);
   });
 });
