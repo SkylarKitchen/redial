@@ -98,12 +98,13 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     };
 
     const handleClick = (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-
       const el = document.elementFromPoint(e.clientX, e.clientY);
       if (!el || el.closest(".__tuner-root")) return;
 
+      // Only suppress propagation for actual page element clicks —
+      // tuner UI clicks (FAB, panel) must bubble through to React handlers
+      e.preventDefault();
+      e.stopPropagation();
       onSelect(el);
     };
 

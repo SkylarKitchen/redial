@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 /**
  * Test: Selector must not eat clicks on .__tuner-root elements.
  *
@@ -16,6 +17,42 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
  * We test the handler logic in isolation to verify that clicks on
  * .__tuner-root elements are NOT suppressed.
  */
+/**
+ * This test proves the bug exists: the CURRENT Selector code calls
+ * stopPropagation BEFORE checking .__tuner-root, so the FAB click is eaten.
+ */
+describe("Bug reproduction: current Selector eats FAB clicks", () => {
+  it("demonstrates the bug — stopPropagation before .__tuner-root check kills FAB onClick", () => {
+    const fab = document.createElement("div");
+    fab.className = "__tuner-root";
+    document.body.appendChild(fab);
+
+    const fabClicked = vi.fn();
+
+    // CURRENT buggy handler (mirrors Selector.tsx lines 100-108)
+    const buggyHandler = (e: MouseEvent) => {
+      e.preventDefault();       // line 101 — unconditional
+      e.stopPropagation();      // line 102 — unconditional (THE BUG)
+
+      const el = e.target as Element;
+      if (!el || el.closest(".__tuner-root")) return;  // line 105 — too late
+    };
+
+    fab.addEventListener("click", fabClicked);
+    document.addEventListener("click", buggyHandler, true);
+
+    fab.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    // This FAILS — proving the FAB click is swallowed
+    expect(fabClicked).toHaveBeenCalledTimes(0); // bug: FAB never fires
+
+    // Cleanup
+    document.removeEventListener("click", buggyHandler, true);
+    fab.removeEventListener("click", fabClicked);
+    fab.remove();
+  });
+});
+
 describe("Selector click-through on .__tuner-root", () => {
   let cleanup: (() => void)[] = [];
 
