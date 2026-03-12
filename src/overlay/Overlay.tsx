@@ -18,7 +18,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { CommonPanel } from "./CommonPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
-import { BoxModelOverlay } from "./BoxModelOverlay";
+import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./apply";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
@@ -1327,9 +1327,9 @@ export function Overlay() {
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
-      {/* Box model overlay (margin/padding/content colored rectangles) */}
+      {/* Spacing guides overlay (Webflow-style green guide lines with dimension badges) */}
       {showBoxModel && selectedEl && !selecting && (
-        <BoxModelOverlay element={selectedEl} refreshKey={panelKey} />
+        <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
       {/* Panel (only when an element is selected) */}
