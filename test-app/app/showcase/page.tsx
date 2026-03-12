@@ -10,6 +10,7 @@ import {
   layout,
   shadow,
   indicatorColor,
+  labelIndicator,
   spacingZone,
   primaryAlpha,
   blackAlpha,
@@ -906,6 +907,85 @@ function InteractivePresetChips({ values }: { values: string[] }) {
   );
 }
 
+// ─── Interactive Tab Bar (Common / Custom / Prompt) ─────────────────────────
+
+function InteractiveTabBar({ tabs, initialActive = 0 }: { tabs: string[]; initialActive?: number }) {
+  const [active, setActive] = useState(initialActive);
+  return (
+    <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, padding: "0 12px" }}>
+      {tabs.map((tab, i) => {
+        const isActive = i === active;
+        return (
+          <button
+            key={tab}
+            onClick={() => setActive(i)}
+            style={{
+              background: "transparent",
+              border: "none",
+              borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
+              padding: "7px 10px 5px",
+              fontSize: 11,
+              fontFamily: font.sans,
+              fontWeight: isActive ? 600 : 400,
+              color: isActive ? color.foreground : text.label,
+              cursor: "pointer",
+              transition: `all ${timing.fast}ms ease`,
+            }}
+          >{tab}</button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Interactive State Selector ─────────────────────────────────────────────
+
+function InteractiveStateSelector({ initialState = "default" }: { initialState?: string }) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(initialState);
+  const ref = useRef<HTMLDivElement>(null);
+  const states = ["default", ":hover", ":active", ":focus", ":visited", ":focus-visible"];
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 3,
+          padding: "2px 8px", fontSize: 10, fontFamily: font.sans,
+          border: `1px solid ${open ? primaryAlpha(0.4) : border.default}`,
+          borderRadius: 4, background: open ? primaryAlpha(0.06) : "transparent",
+          color: selected !== "default" ? color.primary : text.label,
+          cursor: "pointer", transition: `all ${timing.fast}ms ease`,
+        }}
+      >
+        State
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 2px)", left: 0, minWidth: 120,
+          background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4,
+          boxShadow: shadow.dropdown, zIndex: 200, padding: "2px 0",
+        }}>
+          {states.map((s) => (
+            <DropdownItem key={s} label={s} active={s === selected} onClick={() => { setSelected(s); setOpen(false); }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Interactive Spacing Box Model ──────────────────────────────────────────
 
 function SpacingValue({ value, zone, hoverZone, setHoverZone, onChange }: {
@@ -1467,6 +1547,59 @@ export default function ShowcasePage() {
             </div>
           </div>
 
+          {/* Tab Bar */}
+          <div className="card" style={{ width: 340 }} data-component="TabBar">
+            <div className="card-label">TabBar — Click to switch</div>
+            <div className="variant-col">
+              <div className="variant-label">Panel tabs</div>
+              <div style={{ background: color.background, borderRadius: 6, overflow: "hidden", border: `1px solid ${blackAlpha(0.07)}` }}>
+                <InteractiveTabBar tabs={["Common", "Custom", "Prompt"]} initialActive={1} />
+              </div>
+            </div>
+            <div className="variant-col">
+              <div className="variant-label">Custom tab set</div>
+              <div style={{ background: color.background, borderRadius: 6, overflow: "hidden", border: `1px solid ${blackAlpha(0.07)}` }}>
+                <InteractiveTabBar tabs={["Styles", "Computed", "Variables"]} initialActive={0} />
+              </div>
+            </div>
+          </div>
+
+          {/* Label Indicator Styles */}
+          <div className="card" style={{ width: 340 }} data-component="LabelIndicator">
+            <div className="card-label">Label Indicator — Webflow-style</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {(["direct", "inherited", "state", "variable", "none"] as const).map((type) => (
+                <div key={type} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{
+                    fontSize: 11, fontFamily: font.sans,
+                    background: labelIndicator[type].bg,
+                    color: labelIndicator[type].text,
+                    padding: "1px 6px", borderRadius: 3,
+                    minWidth: layout.labelWidth,
+                  }}>
+                    {type === "direct" ? "Width" : type === "inherited" ? "Color" : type === "state" ? "Opacity" : type === "variable" ? "Gap" : "Height"}
+                  </span>
+                  <span style={{ fontSize: 9, fontFamily: font.mono, color: blackAlpha(0.55), textTransform: "uppercase" }}>{type}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* State Selector */}
+          <div className="card" style={{ width: 260 }} data-component="StateSelector">
+            <div className="card-label">StateSelector — Click to open</div>
+            <div className="variant-row">
+              <div className="variant-col">
+                <div className="variant-label">Default state</div>
+                <InteractiveStateSelector />
+              </div>
+              <div className="variant-col">
+                <div className="variant-label">Hover state</div>
+                <InteractiveStateSelector initialState=":hover" />
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1482,10 +1615,23 @@ export default function ShowcasePage() {
           <div data-component="FullPanel" data-variant="interactive">
             <div className="variant-label" style={{ marginBottom: 8 }}>Interactive Panel — try everything</div>
             <div style={panelShell}>
-              <PanelHeader tag="<button>" className=".btnPrimary" showSource badges={<><BreakpointBadge label="lg" /><ChangesBadgeCount count={3} /></>} />
-              <div style={{ padding: "6px 12px 8px" }}>
+              <PanelHeader tag="<button>" className=".btnPrimary" showSource badges={<><ChangesBadgeCount count={9} /></>} />
+
+              {/* Scope + State toolbar */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 12px 0" }}>
                 <InteractiveScopePills labels={["element", ".btnPrimary"]} initialActive={0} />
+                <InteractiveStateSelector />
               </div>
+
+              {/* Breadcrumb path */}
+              <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "4px 12px 6px" }}>
+                <span className="mono" style={{ fontSize: 10, color: blackAlpha(0.45) }}>div.page</span>
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={blackAlpha(0.35)} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span className="mono" style={{ fontSize: 10, color: blackAlpha(0.55) }}>main.main</span>
+              </div>
+
+              {/* Tab bar */}
+              <InteractiveTabBar tabs={["Common", "Custom", "Prompt"]} initialActive={1} />
 
               <ToggleSection title="Layout" defaultOpen>
                 <div style={{ padding: layout.rowPadding }}><InteractiveDisplayTabs options={["block", "flex", "grid", "none"]} initialActive={1} /></div>
@@ -1537,18 +1683,12 @@ export default function ShowcasePage() {
                 <InteractiveSlider label="Opacity" initialPct={100} maxVal={100} unit="%" />
               </ToggleSection>
 
-              {/* Footer */}
-              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
-                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Paste</HoverButton>
-                    <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Import</HoverButton>
-                  </div>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
-                    <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
-                  </div>
+              {/* Footer — matches real panel: Clipboard ▾ | Reset | Save */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
+                <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
+                  <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
                 </div>
               </div>
             </div>
@@ -1559,14 +1699,14 @@ export default function ShowcasePage() {
             <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Collapsed — Click to expand</div>
             <div style={panelShell}>
               <PanelHeader tag="<div>" className=".container" />
-              <div style={{ height: 8 }} />
+              <InteractiveTabBar tabs={["Common", "Custom", "Prompt"]} initialActive={0} />
               {["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].map((s) => (
                 <ToggleSection key={s} title={s}>
                   <div style={{ padding: "8px 12px", fontSize: 11, color: blackAlpha(0.5) }}>{s} controls would appear here...</div>
                 </ToggleSection>
               ))}
-              <div style={{ display: "flex", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6, justifyContent: "space-between" }}>
-                <div style={{ display: "flex", gap: 6 }}><HoverButton style={footerBtnStandard} disabled>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
+                <HoverButton style={footerBtnStandard} disabled>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
                 <div style={{ display: "flex", gap: 6 }}><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
               </div>
             </div>
