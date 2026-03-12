@@ -23,7 +23,7 @@ export function DragHandle({ isDragging, onPointerDown, style }: DragHandleProps
       )}
       style={style}
     >
-      <GripVertical size={12} color="rgba(255,255,255,0.5)" />
+      <GripVertical size={12} color="rgba(0,0,0,0.45)" />
     </span>
   );
 }

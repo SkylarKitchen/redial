@@ -77,22 +77,22 @@ export function Header({
 
   return (
     <div
-      className="__tuner-header flex flex-col border-b border-white/[0.08] cursor-grab select-none"
+      className="__tuner-header flex flex-col border-b border-black/[0.08] cursor-grab select-none"
       onMouseDown={onDragStart}
     >
       {/* -- Drag handle indicator -- */}
       <div className="flex justify-center pt-[5px]">
-        <div className="w-7 h-[3px] rounded-full bg-white/[0.12]" />
+        <div className="w-7 h-[3px] rounded-full bg-black/[0.08]" />
       </div>
 
       {/* -- Main row: tag + class | badges + close -- */}
       <div className="flex items-center justify-between px-3 pt-1.5">
         <div className="flex items-baseline gap-1.5 min-w-0">
-          <span className="text-white text-[13px] font-mono font-medium shrink-0">
+          <span className="text-black text-[13px] font-mono font-medium shrink-0">
             {"<"}{tag}{">"}
           </span>
           {className && (
-            <span className="text-white/50 text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
+            <span className="text-black/50 text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
               .{className}
             </span>
           )}
@@ -100,14 +100,14 @@ export function Header({
         <div className="flex items-center gap-[5px] shrink-0">
           <Badge
             variant="outline"
-            className="text-[9px] font-mono text-white/[0.35] bg-white/[0.06] border-white/[0.06] px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px] hover:bg-white/[0.06] hover:text-white/[0.35]"
+            className="text-[9px] font-mono text-black/[0.35] bg-black/[0.04] border-black/[0.04] px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px] hover:bg-black/[0.04] hover:text-black/[0.35]"
             title={`${vw}px viewport \u00b7 ${tier} breakpoint`}
           >
             {tier}
           </Badge>
           {totalChanges > 0 && (
             <Badge
-              className="bg-indigo-500/[0.15] border-indigo-500/[0.2] text-indigo-400/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-indigo-500/[0.2]"
+              className="bg-[#c17a50]/[0.15] border-[#c17a50]/[0.2] text-[#c17a50]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#c17a50]/[0.2]"
               onClick={onShowSession}
               title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
             >
@@ -118,7 +118,7 @@ export function Header({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-[18px] w-[18px] p-0 text-white/30 hover:text-white/70 hover:bg-white/[0.08] rounded-[3px] transition-colors duration-100"
+            className="h-[18px] w-[18px] p-0 text-black/30 hover:text-black/70 hover:bg-black/[0.05] rounded-[3px] transition-colors duration-100"
             title="Close (Esc)"
           >
             <X size={12} strokeWidth={2} />
@@ -129,7 +129,7 @@ export function Header({
       {/* -- Source file -- */}
       {sourceFile && (
         <div className="px-3 pt-0.5">
-          <span className="text-white/30 text-[10px] font-mono">
+          <span className="text-black/30 text-[10px] font-mono">
             {sourceFile}
           </span>
         </div>
@@ -144,7 +144,7 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div className="flex items-center gap-0.5 text-[11px] font-mono text-white/[0.35] px-3 pt-[3px] overflow-hidden">
+          <div className="flex items-center gap-0.5 text-[11px] font-mono text-black/[0.35] px-3 pt-[3px] overflow-hidden">
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
@@ -155,7 +155,7 @@ export function Header({
                       <ChevronRight size={10} strokeWidth={2} className="opacity-40" />
                       <span
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
-                        className="cursor-pointer px-0.5 rounded-sm text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors duration-100"
+                        className="cursor-pointer px-0.5 rounded-sm text-black/40 hover:text-black/70 hover:bg-black/[0.05] transition-colors duration-100"
                         title="Show full breadcrumb"
                       >
                         ...
@@ -170,8 +170,8 @@ export function Header({
                     className={cn(
                       "whitespace-nowrap rounded-sm transition-colors duration-100",
                       isLast
-                        ? "text-white cursor-default"
-                        : "text-white/[0.35] hover:text-white/70 hover:bg-white/[0.08] cursor-pointer px-0.5",
+                        ? "text-black cursor-default"
+                        : "text-black/[0.35] hover:text-black/70 hover:bg-black/[0.05] cursor-pointer px-0.5",
                     )}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
@@ -210,7 +210,7 @@ export function Header({
           {state !== undefined && onStateChange && (
             <>
               {cssClasses.length > 0 && onScopeChange && (
-                <div className="w-px h-3.5 bg-white/[0.08] mx-[3px] shrink-0" />
+                <div className="w-px h-3.5 bg-black/[0.06] mx-[3px] shrink-0" />
               )}
               <StateSelector value={state} onChange={onStateChange} />
             </>
@@ -240,10 +240,10 @@ function ScopePill({
       variant="outline"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={cn(
-        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-white/[0.06] hover:text-white/60",
+        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-black/[0.04] hover:text-black/60",
         active
-          ? "bg-white/[0.12] text-white hover:bg-white/[0.12] hover:text-white"
-          : "bg-transparent text-white/[0.45]",
+          ? "bg-black/[0.08] text-black hover:bg-black/[0.08] hover:text-black"
+          : "bg-transparent text-black/[0.45]",
       )}
     >
       {label}
