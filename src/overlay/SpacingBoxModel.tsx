@@ -208,7 +208,7 @@ export function SpacingBoxModel({
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "rgba(0,0,0,0.08)";
-          el.style.color = nonDefault ? "rgba(217,119,87,1)" : "rgba(0,0,0,0.87)";
+          el.style.color = nonDefault ? "rgba(217,119,87,1)" : "#1C1B18";
           highlightZone(group);
           setTooltip({ prop, rect: el.getBoundingClientRect() });
         }}
