@@ -29,7 +29,7 @@ import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, SliderRow, SelectRow, ColorRow, TextRow, ValueInput } from "./controls";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import {
-  parseNum, extractUnit, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
+  parseNum, parseBoxShadow, parseFilter, parseTransform, parseTransitions,
   shadowToCSS, filterToCSS, transformToCSS, transitionsToCSS,
 } from "./cssParsers";
 import {
