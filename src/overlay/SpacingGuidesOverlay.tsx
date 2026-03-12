@@ -1,16 +1,16 @@
 /**
  * SpacingGuidesOverlay.tsx — Webflow-style spacing visualization
  *
- * Shows green guide lines with arrows and dimension badges for margin
- * and padding on the selected element. Renders:
- * - Boundary rectangles for margin-box and border-box
- * - Dashed content-box outline
- * - Per-side measurement arrows with dimension badges
+ * Shows green guide lines with arrows and dimension badges while the user
+ * is actively scrubbing a spacing value.  Only the property group being
+ * edited is visualised (margin OR padding, never both at once).
  *
- * Uses RAF loop + ResizeObserver for live position tracking.
+ * Visibility is driven by getScrubGroup() — the component self-hides
+ * when no scrub is active, so it can be rendered unconditionally.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { getScrubGroup } from "./scrubState";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -26,7 +26,8 @@ const LABEL_FONT = "ui-monospace, 'SF Mono', monospace";
 // Types
 // ---------------------------------------------------------------------------
 
-interface BoxMetrics {
+interface Snapshot {
+  group: "margin" | "padding";
   top: number; left: number; width: number; height: number;
   right: number; bottom: number;
   mt: number; mr: number; mb: number; ml: number;
@@ -37,9 +38,7 @@ interface BoxMetrics {
 interface Guide {
   value: number;
   vertical: boolean;
-  /** Boundary A — top/left end (smaller coordinate) */
   ax: number; ay: number;
-  /** Boundary B — bottom/right end (larger coordinate) */
   bx: number; by: number;
 }
 
@@ -51,11 +50,13 @@ function px(v: string): number {
   return parseFloat(v) || 0;
 }
 
-function computeMetrics(el: Element): BoxMetrics | null {
-  if (!el.isConnected) return null;
+function computeSnapshot(el: Element): Snapshot | null {
+  const group = getScrubGroup();
+  if (!group || !el.isConnected) return null;
   const cs = getComputedStyle(el);
   const r = el.getBoundingClientRect();
   return {
+    group,
     top: r.top, left: r.left, width: r.width, height: r.height,
     right: r.right, bottom: r.bottom,
     mt: px(cs.marginTop), mr: px(cs.marginRight),
@@ -67,39 +68,38 @@ function computeMetrics(el: Element): BoxMetrics | null {
   };
 }
 
-function metricsKey(m: BoxMetrics): string {
-  return `${m.top},${m.left},${m.width},${m.height},${m.mt},${m.mr},${m.mb},${m.ml},${m.pt},${m.pr},${m.pb},${m.pl},${m.bt},${m.br},${m.bb},${m.bl}`;
+function snapshotKey(s: Snapshot): string {
+  return `${s.group},${s.top},${s.left},${s.width},${s.height},${s.mt},${s.mr},${s.mb},${s.ml},${s.pt},${s.pr},${s.pb},${s.pl}`;
 }
 
-function buildGuides(m: BoxMetrics): Guide[] {
+function buildGuides(s: Snapshot): Guide[] {
   const guides: Guide[] = [];
-  const cx = m.left + m.width / 2;
-  const cy = m.top + m.height / 2;
+  const cx = s.left + s.width / 2;
+  const cy = s.top + s.height / 2;
 
-  // Margin guides (outward from border-box)
-  if (m.mt > 0) guides.push({ value: m.mt, vertical: true,
-    ax: cx, ay: m.top - m.mt, bx: cx, by: m.top });
-  if (m.mr > 0) guides.push({ value: m.mr, vertical: false,
-    ax: m.right, ay: cy, bx: m.right + m.mr, by: cy });
-  if (m.mb > 0) guides.push({ value: m.mb, vertical: true,
-    ax: cx, ay: m.bottom, bx: cx, by: m.bottom + m.mb });
-  if (m.ml > 0) guides.push({ value: m.ml, vertical: false,
-    ax: m.left - m.ml, ay: cy, bx: m.left, by: cy });
-
-  // Padding guides (inward from padding-box edge to content edge)
-  const pT = m.top + m.bt;
-  const pR = m.right - m.br;
-  const pB = m.bottom - m.bb;
-  const pL = m.left + m.bl;
-
-  if (m.pt > 0) guides.push({ value: m.pt, vertical: true,
-    ax: cx, ay: pT, bx: cx, by: pT + m.pt });
-  if (m.pr > 0) guides.push({ value: m.pr, vertical: false,
-    ax: pR - m.pr, ay: cy, bx: pR, by: cy });
-  if (m.pb > 0) guides.push({ value: m.pb, vertical: true,
-    ax: cx, ay: pB - m.pb, bx: cx, by: pB });
-  if (m.pl > 0) guides.push({ value: m.pl, vertical: false,
-    ax: pL, ay: cy, bx: pL + m.pl, by: cy });
+  if (s.group === "margin") {
+    if (s.mt > 0) guides.push({ value: s.mt, vertical: true,
+      ax: cx, ay: s.top - s.mt, bx: cx, by: s.top });
+    if (s.mr > 0) guides.push({ value: s.mr, vertical: false,
+      ax: s.right, ay: cy, bx: s.right + s.mr, by: cy });
+    if (s.mb > 0) guides.push({ value: s.mb, vertical: true,
+      ax: cx, ay: s.bottom, bx: cx, by: s.bottom + s.mb });
+    if (s.ml > 0) guides.push({ value: s.ml, vertical: false,
+      ax: s.left - s.ml, ay: cy, bx: s.left, by: cy });
+  } else {
+    const pT = s.top + s.bt;
+    const pR = s.right - s.br;
+    const pB = s.bottom - s.bb;
+    const pL = s.left + s.bl;
+    if (s.pt > 0) guides.push({ value: s.pt, vertical: true,
+      ax: cx, ay: pT, bx: cx, by: pT + s.pt });
+    if (s.pr > 0) guides.push({ value: s.pr, vertical: false,
+      ax: pR - s.pr, ay: cy, bx: pR, by: cy });
+    if (s.pb > 0) guides.push({ value: s.pb, vertical: true,
+      ax: cx, ay: pB - s.pb, bx: cx, by: pB });
+    if (s.pl > 0) guides.push({ value: s.pl, vertical: false,
+      ax: pL, ay: cy, bx: pL + s.pl, by: cy });
+  }
 
   return guides;
 }
@@ -114,7 +114,7 @@ const BASE: React.CSSProperties = {
   zIndex: Z_INDEX,
 };
 
-const BOUNDARY_LINE: React.CSSProperties = {
+const BOX_LINE: React.CSSProperties = {
   ...BASE,
   boxSizing: "border-box",
 };
@@ -144,16 +144,16 @@ export function SpacingGuidesOverlay({
   element: Element;
   refreshKey?: number;
 }) {
-  const [metrics, setMetrics] = useState<BoxMetrics | null>(null);
+  const [snap, setSnap] = useState<Snapshot | null>(null);
   const rafRef = useRef(0);
   const prevRef = useRef("");
 
   const measure = useCallback(() => {
-    const m = computeMetrics(element);
-    const key = m ? metricsKey(m) : "";
+    const s = computeSnapshot(element);
+    const key = s ? snapshotKey(s) : "";
     if (key !== prevRef.current) {
       prevRef.current = key;
-      setMetrics(m);
+      setSnap(s);
     }
   }, [element]);
 
@@ -178,72 +178,67 @@ export function SpacingGuidesOverlay({
     };
   }, [element, refreshKey, measure]);
 
-  if (!metrics) return null;
+  // Nothing to show when no scrub is active
+  if (!snap) return null;
 
-  const m = metrics;
-  const hasMargin = m.mt > 0 || m.mr > 0 || m.mb > 0 || m.ml > 0;
-  const hasPadding = m.pt > 0 || m.pr > 0 || m.pb > 0 || m.pl > 0;
+  const guides = buildGuides(snap);
+  if (guides.length === 0) return null;
 
-  if (!hasMargin && !hasPadding) return null;
-
-  // Derived boxes
+  // Boundary boxes for visual context
   const marginBox = {
-    top: m.top - m.mt,
-    left: m.left - m.ml,
-    width: m.width + m.ml + m.mr,
-    height: m.height + m.mt + m.mb,
+    top: snap.top - snap.mt,
+    left: snap.left - snap.ml,
+    width: snap.width + snap.ml + snap.mr,
+    height: snap.height + snap.mt + snap.mb,
   };
 
   const contentBox = {
-    top: m.top + m.bt + m.pt,
-    left: m.left + m.bl + m.pl,
-    width: Math.max(0, m.width - m.bl - m.br - m.pl - m.pr),
-    height: Math.max(0, m.height - m.bt - m.bb - m.pt - m.pb),
+    top: snap.top + snap.bt + snap.pt,
+    left: snap.left + snap.bl + snap.pl,
+    width: Math.max(0, snap.width - snap.bl - snap.br - snap.pl - snap.pr),
+    height: Math.max(0, snap.height - snap.bt - snap.bb - snap.pt - snap.pb),
   };
 
-  const guides = buildGuides(m);
-
   return (
-    <div style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh", overflow: "hidden" }}>
-      {/* Margin-box boundary rectangle */}
-      {hasMargin && (
-        <div style={{
-          ...BOUNDARY_LINE,
-          top: marginBox.top,
-          left: marginBox.left,
-          width: marginBox.width,
-          height: marginBox.height,
-          border: `1px solid ${GUIDE_COLOR}`,
-          opacity: 0.4,
-        }} />
+    <div style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
+      {snap.group === "margin" ? (
+        <>
+          {/* Margin-box boundary */}
+          <div style={{
+            ...BOX_LINE,
+            top: marginBox.top, left: marginBox.left,
+            width: marginBox.width, height: marginBox.height,
+            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+          }} />
+          {/* Border-box boundary */}
+          <div style={{
+            ...BOX_LINE,
+            top: snap.top, left: snap.left,
+            width: snap.width, height: snap.height,
+            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+          }} />
+        </>
+      ) : (
+        <>
+          {/* Border-box boundary */}
+          <div style={{
+            ...BOX_LINE,
+            top: snap.top, left: snap.left,
+            width: snap.width, height: snap.height,
+            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+          }} />
+          {/* Content-box dashed outline */}
+          <div style={{
+            ...BOX_LINE,
+            top: contentBox.top, left: contentBox.left,
+            width: contentBox.width, height: contentBox.height,
+            border: "1px dashed rgba(255,255,255,0.3)",
+          }} />
+        </>
       )}
 
-      {/* Border-box boundary rectangle */}
-      <div style={{
-        ...BOUNDARY_LINE,
-        top: m.top,
-        left: m.left,
-        width: m.width,
-        height: m.height,
-        border: `1px solid ${GUIDE_COLOR}`,
-        opacity: 0.4,
-      }} />
-
-      {/* Content-box dashed outline */}
-      {hasPadding && (
-        <div style={{
-          ...BOUNDARY_LINE,
-          top: contentBox.top,
-          left: contentBox.left,
-          width: contentBox.width,
-          height: contentBox.height,
-          border: "1px dashed rgba(255,255,255,0.3)",
-        }} />
-      )}
-
-      {/* Per-side measurement guides */}
       {guides.map((g, i) => (
-        <GuideLines key={i} guide={g} />
+        <GuideLine key={i} guide={g} />
       ))}
     </div>
   );
@@ -253,7 +248,7 @@ export function SpacingGuidesOverlay({
 // Per-side guide (arrows + measurement line + badge)
 // ---------------------------------------------------------------------------
 
-function GuideLines({ guide: g }: { guide: Guide }) {
+function GuideLine({ guide: g }: { guide: Guide }) {
   const gap = g.vertical ? Math.abs(g.by - g.ay) : Math.abs(g.bx - g.ax);
   const showArrows = gap >= MIN_ARROW_GAP;
   const midX = (g.ax + g.bx) / 2;
@@ -262,26 +257,24 @@ function GuideLines({ guide: g }: { guide: Guide }) {
 
   return (
     <>
-      {/* Measurement line connecting A → B (between arrow tips) */}
+      {/* Measurement line */}
       {g.vertical ? (
         <div style={{
           ...BASE, left: g.ax, top: g.ay + (showArrows ? ARROW : 0),
           width: 0,
           height: Math.max(0, gap - (showArrows ? ARROW * 2 : 0)),
-          borderLeft: `1px solid ${GUIDE_COLOR}`,
-          opacity: 0.7,
+          borderLeft: `1px solid ${GUIDE_COLOR}`, opacity: 0.7,
         }} />
       ) : (
         <div style={{
           ...BASE, left: g.ax + (showArrows ? ARROW : 0), top: g.ay,
           width: Math.max(0, gap - (showArrows ? ARROW * 2 : 0)),
           height: 0,
-          borderTop: `1px solid ${GUIDE_COLOR}`,
-          opacity: 0.7,
+          borderTop: `1px solid ${GUIDE_COLOR}`, opacity: 0.7,
         }} />
       )}
 
-      {/* Arrow at A (base at boundary, tip pointing into gap toward B) */}
+      {/* Arrow at A (pointing toward B) */}
       {showArrows && (
         g.vertical ? (
           <div style={{
@@ -289,8 +282,7 @@ function GuideLines({ guide: g }: { guide: Guide }) {
             width: 0, height: 0,
             borderLeft: `${ARROW}px solid transparent`,
             borderRight: `${ARROW}px solid transparent`,
-            borderTop: `${ARROW}px solid ${GUIDE_COLOR}`,
-            opacity: 0.7,
+            borderTop: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
           }} />
         ) : (
           <div style={{
@@ -298,13 +290,12 @@ function GuideLines({ guide: g }: { guide: Guide }) {
             width: 0, height: 0,
             borderTop: `${ARROW}px solid transparent`,
             borderBottom: `${ARROW}px solid transparent`,
-            borderLeft: `${ARROW}px solid ${GUIDE_COLOR}`,
-            opacity: 0.7,
+            borderLeft: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
           }} />
         )
       )}
 
-      {/* Arrow at B (base at boundary, tip pointing into gap toward A) */}
+      {/* Arrow at B (pointing toward A) */}
       {showArrows && (
         g.vertical ? (
           <div style={{
@@ -312,8 +303,7 @@ function GuideLines({ guide: g }: { guide: Guide }) {
             width: 0, height: 0,
             borderLeft: `${ARROW}px solid transparent`,
             borderRight: `${ARROW}px solid transparent`,
-            borderBottom: `${ARROW}px solid ${GUIDE_COLOR}`,
-            opacity: 0.7,
+            borderBottom: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
           }} />
         ) : (
           <div style={{
@@ -321,8 +311,7 @@ function GuideLines({ guide: g }: { guide: Guide }) {
             width: 0, height: 0,
             borderTop: `${ARROW}px solid transparent`,
             borderBottom: `${ARROW}px solid transparent`,
-            borderRight: `${ARROW}px solid ${GUIDE_COLOR}`,
-            opacity: 0.7,
+            borderRight: `${ARROW}px solid ${GUIDE_COLOR}`, opacity: 0.7,
           }} />
         )
       )}

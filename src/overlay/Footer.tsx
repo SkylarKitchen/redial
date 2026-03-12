@@ -194,14 +194,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       style={{
         display: "flex",
         flexDirection: "column",
-        padding: "8px 12px",
+        padding: "8px 8px",
         borderTop: "1px solid rgba(255,255,255,0.1)",
         gap: "6px",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
         {/* Left: Copy dropdown + Import/Paste */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <div ref={copyRef} style={{ position: "relative" }}>
             <ActionButton
               onClick={() => setCopyOpen((o) => !o)}
@@ -250,7 +250,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </div>
 
         {/* Right: Reset + Save */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
           <ActionButton
             onClick={handleReset}
             disabled={count === 0}
@@ -316,8 +316,8 @@ function ActionButton({
       disabled={disabled}
       title={title}
       style={{
-        padding: primary ? "5px 12px" : "4px 8px",
-        fontSize: primary ? "13px" : "12px",
+        padding: primary ? "5px 10px" : "4px 6px",
+        fontSize: primary ? "12px" : "11px",
         fontWeight: primary ? 600 : 400,
         fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
         border: active
