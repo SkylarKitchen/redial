@@ -28,7 +28,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
   const [bgLayers, setBgLayers] = useState<BackgroundLayer[]>(() => {
     const bg = rgbToHex(cs.backgroundColor);
     if (bg !== "transparent") {
-      return [{ id: "initial_color", type: "color", color: bg, opacity: 1, blendMode: "normal" }];
+      return [{ id: "initial_color", type: "color", color: bg, opacity: 1, blendMode: "normal", visible: true }];
     }
     return [];
   });
@@ -43,12 +43,13 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
   const handleBgLayersChange = useCallback(
     (layers: BackgroundLayer[]) => {
       setBgLayers(layers);
-      // Build background parts from all layers
+      // Build background parts from visible layers only
       const bgParts: string[] = [];
       const attachments: string[] = [];
       const blendModes: string[] = [];
       let effectiveBgColor = "transparent";
       for (const layer of layers) {
+        if (layer.visible === false) continue;
         if (layer.type === "color") {
           effectiveBgColor = layer.color || "transparent";
         } else if (layer.type === "gradient" && layer.gradient) {

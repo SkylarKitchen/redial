@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import { Section, SliderRow, SelectRow, ColorRow } from "./controls";
 import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";

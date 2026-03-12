@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export interface FilterValues {
   blur: number;
@@ -67,6 +68,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     }
     return set;
   });
+  const [hiddenFilters, setHiddenFilters] = useState<Set<FilterKey>>(new Set());
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 

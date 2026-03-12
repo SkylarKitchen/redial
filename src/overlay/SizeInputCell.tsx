@@ -144,20 +144,28 @@ export function SizeInputCell({
   const isKeyword = keyword !== null;
 
   const handlePresetSelect = useCallback((v: string) => {
-    // Handle keyword presets (auto, none, fit-content)
+    // Keywords: "auto", "none"
+    if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
+      onKeywordChange(v as "auto" | "none");
+      return;
+    }
+    // Values with unit suffix like "100%" — parse value and switch unit
+    const numMatch = v.match(/^(-?[\d.]+)(%|px|em|rem|vw|vh)$/);
+    if (numMatch) {
+      const num = parseFloat(numMatch[1]);
+      const u = numMatch[2];
+      if (keyword !== null) onKeywordChange(null);
+      if (u !== unit && units.includes(u)) onUnitChange(u);
+      onValueChange(num);
+      return;
+    }
+    // Pure numeric string
     const parsed = parseFloat(v);
-    if (isNaN(parsed)) {
-      // String value like "auto", "none", "fit-content"
-      if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
-        onKeywordChange(v as "auto" | "none");
-      }
-      // For values like "fit-content" or "100%" — apply directly via value change
-      // (parent handles CSS application)
-    } else {
+    if (!isNaN(parsed)) {
       if (keyword !== null) onKeywordChange(null);
       onValueChange(parsed);
     }
-  }, [keyword, onKeywordChange, onValueChange, supportsAuto, supportsNone]);
+  }, [keyword, onKeywordChange, onValueChange, onUnitChange, unit, units, supportsAuto, supportsNone]);
 
   const hasPresets = property && VALUE_PRESETS[property];
 
