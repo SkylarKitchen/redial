@@ -28,6 +28,7 @@ import { Plus } from "lucide-react";
 import { ms } from "./timing";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
+import { KeyboardHelpModal } from "./KeyboardHelpModal";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -114,6 +115,9 @@ export function Overlay() {
   // Property search
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Keyboard help modal
+  const [showHelp, setShowHelp] = useState(false);
 
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
@@ -297,6 +301,13 @@ export function Overlay() {
         return;
       }
 
+      // ? to toggle keyboard help modal
+      if (e.key === "?" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setShowHelp((v) => !v);
+        return;
+      }
+
       // S to cycle scope
       if (e.key === "s" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
@@ -400,7 +411,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+  }, [selectedEl, selecting, diffMode, showSearch, showHelp, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -427,11 +438,13 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope and grid/box model overlays on new selection
+    // Reset scope, overlays, and search on new selection
     setScope("element");
     setActiveClassName(null);
     setShowGridOverlay(false);
     setShowBoxModel(false);
+    setShowSearch(false);
+    setSearchQuery("");
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -446,6 +459,8 @@ export function Overlay() {
     setInferResult(null);
     setScope("element");
     setActiveClassName(null);
+    setShowSearch(false);
+    setSearchQuery("");
   }, []);
 
 
@@ -1135,6 +1150,8 @@ export function Overlay() {
           }}
         />
       </div>
+      {/* Keyboard shortcut help modal */}
+      {showHelp && <KeyboardHelpModal onClose={() => setShowHelp(false)} />}
     </>
   );
 }

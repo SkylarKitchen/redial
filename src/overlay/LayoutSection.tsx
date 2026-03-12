@@ -297,11 +297,12 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             unit={gapUnit}
             onChange={handleGapChange}
             onUnitChange={(u) => {
-              const c = convertUnit(gap, gapUnit, u, getConversionCtx());
+              const ctx = getConversionCtx();
+              const c = convertUnit(gap, gapUnit, u, ctx);
               setGap(c);
               setGapUnit(u);
               apply("gap", `${c}${u}`);
-            }}
+            }
             linked={gapLocked}
             onLinkedChange={(v) => {
               setGapLocked(v);
@@ -367,7 +368,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   unit={gapUnit}
                   units={LAYOUT_UNITS}
                   onUnitChange={(u) => {
-                    const c = convertUnit(gap, gapUnit, u, getConversionCtx());
+                    const ctx = getConversionCtx();
+                    const c = convertUnit(gap, gapUnit, u, ctx);
+                    fireGapHint(gap, gapUnit, c, u, ctx);
                     setGap(c);
                     setGapUnit(u);
                     apply("gap", `${c}${u}`);
@@ -375,6 +378,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onChange={handleGapChange}
                   onReset={() => resetCss("gap", setGap)}
                   indicator={ind("gap")}
+                  conversionHint={gapHint}
                 />
               </div>
               <button
@@ -428,7 +432,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 unit={columnGapUnit}
                 units={LAYOUT_UNITS}
                 onUnitChange={(u) => {
-                  const c = convertUnit(columnGap, columnGapUnit, u, getConversionCtx());
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(columnGap, columnGapUnit, u, ctx);
+                  fireColGapHint(columnGap, columnGapUnit, c, u, ctx);
                   onColumnGapChange(c);
                   onColumnGapUnitChange(u);
                   apply("column-gap", `${c}${u}`);
@@ -436,6 +442,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 onChange={handleColumnGapChange}
                 onReset={() => resetCss("column-gap", (v) => onColumnGapChange(v))}
                 indicator={ind("column-gap")}
+                conversionHint={colGapHint}
               />
             </>
           )}
@@ -517,11 +524,14 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     value={flexBasisUnit}
                     options={LAYOUT_UNITS}
                     onChange={(u) => {
-                      const c = convertUnit(flexBasis, flexBasisUnit, u, getConversionCtx());
+                      const ctx = getConversionCtx();
+                      const c = convertUnit(flexBasis, flexBasisUnit, u, ctx);
+                      fireBasisHint(flexBasis, flexBasisUnit, c, u, ctx);
                       setFlexBasis(c);
                       setFlexBasisUnit(u);
                       apply("flex-basis", `${c}${u}`);
                     }}
+                    conversionHint={basisHint}
                   />
                 </div>
               </div>
