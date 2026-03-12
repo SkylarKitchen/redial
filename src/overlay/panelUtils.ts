@@ -44,6 +44,7 @@ export function getIndicatorType(
   parentCs?: CSSStyleDeclaration | null,
 ): IndicatorType {
   if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "element";
+  if (isVariableLinked(el, prop)) return "variable";
   if (INHERITABLE_PROPERTIES.has(prop) && parentCs) {
     const computedValue = cs?.getPropertyValue(prop) ?? "";
     const parentValue = parentCs.getPropertyValue(prop);

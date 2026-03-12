@@ -145,7 +145,6 @@ export const TypographySection = memo(function TypographySection({
   const handleTextIndentChange = useCallback((v: number) => { setTextIndent(v); apply("text-indent", `${v}${textIndentUnit}`); }, [apply, textIndentUnit]);
   const handleWordBreakChange = useCallback((v: string) => { setWordBreak(v); apply("word-break", v); }, [apply]);
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
-  const handleDirectionChange = useCallback((v: string) => { setDirection(v); apply("direction", v); }, [apply]);
   const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
     setTextShadows(newShadows);
     apply("text-shadow", shadowToCSS(newShadows));
@@ -168,10 +167,6 @@ export const TypographySection = memo(function TypographySection({
     setDirection(val);
     apply("direction", val);
   }, [apply]);
-
-  // Suppress unused-variable warnings for handlers that are referenced
-  // only implicitly via the JSX below
-  void handleDirectionChange;
 
   return (
     <Section

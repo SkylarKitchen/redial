@@ -33,6 +33,11 @@ import {
   BACKFACE_OPTIONS,
 } from "./panelConstants";
 
+const SUB_HEADER_STYLE = {
+  padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)",
+  textTransform: "uppercase" as const, letterSpacing: "0.04em",
+};
+
 // ─── Props ───────────────────────────────────────────────────────────
 
 interface EffectsSectionProps {

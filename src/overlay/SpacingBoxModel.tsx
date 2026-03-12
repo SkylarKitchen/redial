@@ -49,6 +49,11 @@ const PADDING_HIGHLIGHT = "rgba(87, 168, 255, 0.22)";
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
 
+/** Map each side to its axis partner (static, never changes) */
+const AXIS_PARTNER: Record<string, string> = {
+  top: "bottom", bottom: "top", left: "right", right: "left",
+};
+
 /** "margin-top" → "Edit margin top" */
 function propLabel(prop: string): string {
   return `Edit ${prop.replace("-", " ")}`;
@@ -89,13 +94,7 @@ export function SpacingBoxModel({
   const shiftHeldRef = useRef(false);
   const altHeldRef = useRef(false);
 
-  /** Map each side to its axis partner */
-  const AXIS_PARTNER: Record<string, string> = {
-    top: "bottom",
-    bottom: "top",
-    left: "right",
-    right: "left",
-  };
+  // AXIS_PARTNER is hoisted outside the component as a static constant
 
   // --- Zone highlight helpers (direct DOM, zero re-renders) ---
   const highlightZone = useCallback((group: "margin" | "padding") => {
