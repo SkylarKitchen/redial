@@ -451,10 +451,16 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
           if (linked) onColumnChange(v);
         }} />
       </div>
-      {/* Sub-labels: Columns / Rows */}
-      <div style={{ display: "flex", gap: 8, padding: "0 8px", marginTop: 4 }}>
-        <RowLabel label="Columns" indicator={isSet ? "element" : "none"} />
-        <RowLabel label="Rows" indicator={isSet ? "element" : "none"} />
+      {/* Sub-labels: Columns / Rows — positioned under their respective inputs */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 4 }}>
+        <span style={{ width: 49, flexShrink: 0 }} />
+        <span style={{ width: 70, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+          <RowLabel label="Columns" indicator={isSet ? "element" : "none"} />
+        </span>
+        <span style={{ width: 24, flexShrink: 0 }} />
+        <span style={{ width: 70, display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+          <RowLabel label="Rows" indicator={isSet ? "element" : "none"} />
+        </span>
       </div>
     </div>
   );
