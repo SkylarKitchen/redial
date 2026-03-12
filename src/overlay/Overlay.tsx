@@ -39,6 +39,8 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
+import { useElementTracker } from "./useElementTracker";
+import { getConfig } from "./config";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { text, border, surface, blackAlpha, bgAlpha, primaryAlpha } from "./theme";
@@ -272,7 +274,7 @@ export function Overlay() {
     if (changes.length === 0) return;
     savingRef.current = true;
     try {
-      const res = await fetch("/api/tuner/commit", {
+      const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes }),
@@ -847,38 +849,30 @@ export function Overlay() {
   }, []);
 
   // --- Persistent outline for selected element (Phase 2) ---
+  // Event-driven tracking via ResizeObserver + scroll/resize listeners
+  // (replaces infinite RAF loop — only recalculates when something changes)
+
+  // Build tag label text when element changes
   useEffect(() => {
-    if (!selectedEl || selecting || !selectedOutlineRef.current) return;
-
-    const outline = selectedOutlineRef.current;
-    const badge = dimensionsBadgeRef.current;
-    const tagEl = tagLabelRef.current;
-    let rafId: number;
-    let cancelled = false;
-
-    // Build tag label text: "div.hero" or just "div"
+    if (!selectedEl || selecting || !tagLabelRef.current) return;
     const elTag = selectedEl.tagName.toLowerCase();
     const firstClass = selectedEl.classList.length > 0 ? selectedEl.classList[0] : null;
-    const tagText = firstClass ? `${elTag}.${firstClass}` : elTag;
-    if (tagEl) tagEl.textContent = tagText;
+    tagLabelRef.current.textContent = firstClass ? `${elTag}.${firstClass}` : elTag;
+  }, [selectedEl, selecting]);
 
-    const updatePosition = () => {
-      if (cancelled) return;
-      // If the element was removed from the DOM (HMR, navigation), stop tracking
-      if (!selectedEl.isConnected) {
-        outline.style.display = "none";
-        if (badge) badge.style.display = "none";
-        if (tagEl) tagEl.style.display = "none";
-        return;
-      }
-      const rect = selectedEl.getBoundingClientRect();
+  useElementTracker(
+    selectedEl,
+    !selecting && !!selectedOutlineRef.current,
+    useCallback((rect: DOMRect) => {
+      const outline = selectedOutlineRef.current;
+      if (!outline) return;
       outline.style.top = `${rect.top}px`;
       outline.style.left = `${rect.left}px`;
       outline.style.width = `${rect.width}px`;
       outline.style.height = `${rect.height}px`;
       outline.style.display = "block";
 
-      // Dimensions badge: below bottom-right corner
+      const badge = dimensionsBadgeRef.current;
       if (badge) {
         const w = Math.round(rect.width);
         const h = Math.round(rect.height);
@@ -889,53 +883,41 @@ export function Overlay() {
         badge.style.display = "block";
       }
 
-      // Tag label: above top-left corner
+      const tagEl = tagLabelRef.current;
       if (tagEl) {
         tagEl.style.top = `${rect.top - 4}px`;
         tagEl.style.left = `${rect.left}px`;
         tagEl.style.transform = "translateY(-100%)";
         tagEl.style.display = "block";
       }
-
-      rafId = requestAnimationFrame(updatePosition);
-    };
-
-    rafId = requestAnimationFrame(updatePosition);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      outline.style.display = "none";
-      if (badge) badge.style.display = "none";
-      if (tagEl) tagEl.style.display = "none";
-    };
-  }, [selectedEl, selecting]);
+    }, []),
+    useCallback(() => {
+      // Element disconnected (HMR, navigation)
+      const outline = selectedOutlineRef.current;
+      if (outline) outline.style.display = "none";
+      if (dimensionsBadgeRef.current) dimensionsBadgeRef.current.style.display = "none";
+      if (tagLabelRef.current) tagLabelRef.current.style.display = "none";
+    }, []),
+  );
 
   // --- Breadcrumb ancestor hover outline ---
-  useEffect(() => {
-    if (!hoveredAncestor || !ancestorOutlineRef.current) return;
-    const outline = ancestorOutlineRef.current;
-    let rafId: number;
-    let cancelled = false;
-
-    const sync = () => {
-      if (cancelled) return;
-      const r = hoveredAncestor.getBoundingClientRect();
+  // Event-driven tracking (replaces infinite RAF loop)
+  useElementTracker(
+    hoveredAncestor,
+    !!ancestorOutlineRef.current,
+    useCallback((rect: DOMRect) => {
+      const outline = ancestorOutlineRef.current;
+      if (!outline) return;
       outline.style.display = "block";
-      outline.style.top = `${r.top}px`;
-      outline.style.left = `${r.left}px`;
-      outline.style.width = `${r.width}px`;
-      outline.style.height = `${r.height}px`;
-      rafId = requestAnimationFrame(sync);
-    };
-    rafId = requestAnimationFrame(sync);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      outline.style.display = "none";
-    };
-  }, [hoveredAncestor]);
+      outline.style.top = `${rect.top}px`;
+      outline.style.left = `${rect.left}px`;
+      outline.style.width = `${rect.width}px`;
+      outline.style.height = `${rect.height}px`;
+    }, []),
+    useCallback(() => {
+      if (ancestorOutlineRef.current) ancestorOutlineRef.current.style.display = "none";
+    }, []),
+  );
 
   // --- Breadcrumb computation (Phase 2) ---
   const breadcrumb = useMemo(() => selectedEl ? buildBreadcrumb(selectedEl) : [], [selectedEl]);

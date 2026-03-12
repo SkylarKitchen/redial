@@ -71,7 +71,9 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   const showRadius = borderRadius > 0;
   const showStyle = showBg || showOpacity || showRadius;
 
+  const isDiv = element.tagName.toLowerCase() === "div";
   const hasSpacing =
+    isDiv ||
     spacing.margin.top !== 0 || spacing.margin.right !== 0 ||
     spacing.margin.bottom !== 0 || spacing.margin.left !== 0 ||
     spacing.padding.top !== 0 || spacing.padding.right !== 0 ||

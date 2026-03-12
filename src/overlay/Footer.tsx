@@ -15,6 +15,7 @@ import type { DiffEntry } from "./apply";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { color, text, border, surface, font, primaryAlpha, destructiveAlpha } from "./theme";
+import { getConfig } from "./config";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
@@ -156,7 +157,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     });
 
     try {
-      const res = await fetch("/api/tuner/commit", {
+      const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes: enriched }),

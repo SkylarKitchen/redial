@@ -14,6 +14,7 @@ import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { timing } from "./timing";
 import { Button } from "@/components/ui/button";
 import { text, border, surface, color, destructiveAlpha } from "./theme";
+import { getConfig } from "./config";
 
 interface SessionDrawerProps {
   open: boolean;
@@ -66,7 +67,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
     });
 
     try {
-      const res = await fetch("/api/tuner/commit", {
+      const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes: enriched }),

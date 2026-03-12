@@ -19,10 +19,21 @@
 
 "use client";
 
+import { useEffect } from "react";
 import "./styles/globals.css";
 import { Overlay } from "./overlay/Overlay";
+import { configure, type TunerConfig } from "./overlay/config";
 
-export function Tuner() {
+export interface TunerProps extends Partial<TunerConfig> {}
+
+export function Tuner({ commitEndpoint }: TunerProps = {}) {
+  // Apply config overrides on mount
+  useEffect(() => {
+    const overrides: Partial<TunerConfig> = {};
+    if (commitEndpoint) overrides.commitEndpoint = commitEndpoint;
+    if (Object.keys(overrides).length > 0) configure(overrides);
+  }, [commitEndpoint]);
+
   // Only render in dev mode
   if (typeof window === "undefined") return null;
   if (process.env.NODE_ENV !== "development") return null;
@@ -35,3 +46,5 @@ export type { InferResult } from "./overlay/infer";
 export { infer, PX_PROPS, TOGGLE_CSS, toCSSValue, flattenValues } from "./overlay/infer";
 export type { Scope } from "./overlay/scope";
 export type { SourceInfo } from "./overlay/sourcemap";
+export { configure } from "./overlay/config";
+export type { TunerConfig } from "./overlay/config";
