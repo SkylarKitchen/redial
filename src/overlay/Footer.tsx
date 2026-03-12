@@ -181,6 +181,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       className="__tuner-footer"
       style={{
         display: "flex",
+        flexWrap: "wrap",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "8px 12px",
@@ -188,7 +189,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         gap: "6px",
       }}
     >
-      <div style={{ display: "flex", gap: "6px" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
         <ActionButton
           onClick={handleCopy}
           disabled={count === 0}
@@ -292,7 +293,7 @@ function ActionButton({
       disabled={disabled}
       title={title}
       style={{
-        padding: primary ? "5px 16px" : "4px 10px",
+        padding: primary ? "5px 12px" : "4px 8px",
         fontSize: primary ? "13px" : "12px",
         fontWeight: primary ? 600 : 400,
         fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
