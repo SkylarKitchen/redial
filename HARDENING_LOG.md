@@ -24,8 +24,8 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] useDropdownKeyboard.ts — type-ahead, arrow key handling
 - [x] useFocusTrap.ts — focus cycling logic
 - [x] useSwatches.ts — localStorage persistence, add/remove
-- [ ] useConversionHint.ts — hint text generation
-- [ ] useDragReorder.ts — reorder index calculation
+- [x] useConversionHint.ts — hint text generation
+- [x] useDragReorder.ts — reorder index calculation
 - [x] useClickOutside.ts — outside click detection
 
 ### Tier 4 — Code Quality Review
@@ -69,3 +69,5 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - **useFocusTrap**: 15 tests — FOCUSABLE_SELECTOR matching (6 element types), getNextFocusTarget boundary cycling.
 - **useClickOutside**: 5 tests — contains logic for child/sibling/exact/nested/null.
 - Pure logic extracted as exported helpers from each hook for direct testability. +93 tests, 817 total.
+- **useDragReorder**: 23 tests — computeOverIndex closest-center algorithm (13), computeItemShift displacement ranges (10).
+- **useConversionHint**: 12 tests — buildConversionHint for all unit types, axes, edge values. +35 tests, 852 total.
