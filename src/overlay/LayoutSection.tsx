@@ -8,6 +8,7 @@ import { useState, useCallback, memo } from "react";
 import { Section, SliderRow, SelectRow, TextRow, ValueInput } from "./controls";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
+import { SegmentedControl } from "./SegmentedControl";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import { StyleIndicator } from "./StyleIndicator";
@@ -17,7 +18,7 @@ import { parseNum } from "./cssParsers";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow } from "./layoutControls";
-import { LAYOUT_UNITS, ALIGN_ICON_OPTIONS, JUSTIFY_ICON_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
+import { LAYOUT_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
 import { Link, Grid3x3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
@@ -238,40 +239,41 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       focusOpen={focusOpen}
       onToggle={onToggle}
     >
-      <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} />
+      <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} indicator={ind("display")} />
 
       {isFlex && (
         <>
-          {/* Direction: Horizontal/Vertical text toggle + reverse */}
+          {/* Direction: Horizontal/Vertical segmented control + reverse */}
           <DirectionRow
             direction={flexDirection}
             onDirectionChange={handleFlexDirectionChange}
             onReset={() => resetCssStr("flex-direction", setFlexDirection)}
+            indicator={ind("flex-direction")}
           />
 
-          {/* Align: 5 icon buttons for align-items */}
-          <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <RowLabel label="Align" isSet={alignItems !== "stretch"} onReset={() => resetCssStr("align-items", setAlignItems)} />
-            <IconButtonGroup
-              options={ALIGN_ICON_OPTIONS}
+          {/* Align: 5 icon segments for align-items */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+            <RowLabel label="Align" indicator={ind("align-items")} isSet={alignItems !== "stretch"} onReset={() => resetCssStr("align-items", setAlignItems)} />
+            <SegmentedControl
+              options={ALIGN_SEGMENT_OPTIONS}
               value={alignItems}
               onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
               aria-label="Align items"
             />
           </div>
 
-          {/* Justify: 6 icon buttons for justify-content */}
-          <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <RowLabel label="Justify" isSet={justifyContent !== "flex-start"} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
-            <IconButtonGroup
-              options={JUSTIFY_ICON_OPTIONS}
+          {/* Justify: 5 icon segments for justify-content */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+            <RowLabel label="Justify" indicator={ind("justify-content")} isSet={justifyContent !== "flex-start"} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
+            <SegmentedControl
+              options={JUSTIFY_SEGMENT_OPTIONS}
               value={justifyContent}
               onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
               aria-label="Justify content"
             />
           </div>
 
-          {/* Gap: dual number inputs with column/row labels */}
+          {/* Gap: dual Webflow-style inputs with column/row labels */}
           <GapRow
             columnGap={columnGap}
             rowGap={rowGap}
@@ -308,10 +310,11 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               resetCss("column-gap", (v) => onColumnGapChange(v));
               resetCss("row-gap", setRowGap);
             }}
+            indicator={ind("gap")}
           />
 
           {/* Children: Don't wrap / Wrap + reverse */}
-          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} />
+          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} indicator={ind("flex-wrap")} />
         </>
       )}
 

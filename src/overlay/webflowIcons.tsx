@@ -207,3 +207,59 @@ export function LockIcon({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+// ─── Overflow Icons (from Figma Webflow design) ─────────────────────
+
+/** Overflow visible — content extends beyond container bounds */
+export function OverflowVisibleIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M15 2H1V3H15V2Z" fill="currentColor" />
+      <path d="M15 9H1V10H15V9Z" fill="currentColor" />
+      <path opacity="0.4" d="M3 3H13V14H3V3Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Overflow hidden — content clipped at container edge */
+export function OverflowHiddenIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M15 2H1V3L15 3V2Z" fill="currentColor" />
+      <path d="M15 11H1V12H15V11Z" fill="currentColor" />
+      <path opacity="0.4" d="M3 3H13V11H3V3Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Overflow scroll — scrollbar indicator with down arrow */
+export function OverflowScrollIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path opacity="0.4" d="M3 3H8V11H3V3Z" fill="currentColor" />
+      <path d="M1 2H15V3L1 3V2Z" fill="currentColor" />
+      <path d="M1 11H8V12H1V11Z" fill="currentColor" />
+      <path d="M12 11.2929L10.3536 9.64645L9.64645 10.3536L12.5 13.2071L15.3536 10.3536L14.6464 9.64645L13 11.2929V5H12V11.2929Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** More horizontal dots — three dots for options menu */
+export function MoreDotsIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M3 8C3 7.44772 3.44772 7 4 7C4.55228 7 5 7.44772 5 8C5 8.55228 4.55228 9 4 9C3.44772 9 3 8.55228 3 8Z" fill="currentColor" />
+      <path d="M7 8C7 7.44772 7.44772 7 8 7C8.55228 7 9 7.44772 9 8C9 8.55228 8.55228 9 8 9C7.44772 9 7 8.55228 7 8Z" fill="currentColor" />
+      <path d="M11 8C11 7.44772 11.4477 7 12 7C12.5523 7 13 7.44772 13 8C13 8.55228 12.5523 9 12 9C11.4477 9 11 8.55228 11 8Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Chevron small down — for dropdown selects */
+export function ChevronSmallDownIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path fillRule="evenodd" clipRule="evenodd" d="M8.00002 9.29293L10.6465 6.64648L11.3536 7.35359L8.00002 10.7071L4.64647 7.35359L5.35358 6.64648L8.00002 9.29293Z" fill="currentColor" />
+    </svg>
+  );
+}

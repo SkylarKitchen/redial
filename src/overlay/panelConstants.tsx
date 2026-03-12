@@ -14,6 +14,10 @@ import {
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignHorizontalSpaceAround, AlignHorizontalDistributeCenter,
 } from "lucide-react";
+import {
+  AlignStartIcon, AlignCenterIcon, AlignEndIcon, AlignStretchIcon, AlignBaselineIcon,
+  JustifyStartIcon, JustifyCenterIcon, JustifyEndIcon, JustifySpaceBetweenIcon, JustifySpaceAroundIcon,
+} from "./webflowIcons";
 
 // ─── Text Alignment Icons ────────────────────────────────────────────
 
@@ -70,7 +74,16 @@ export const ALIGN_ICON_OPTIONS = [
   { value: "baseline",   icon: <Baseline size={14} strokeWidth={iconSw} />,            title: "Baseline" },
 ];
 
-// ─── Justify Icon Options (justify-content, 6 buttons) ─────────────
+/** Webflow-style align segment options (for SegmentedControl) */
+export const ALIGN_SEGMENT_OPTIONS = [
+  { value: "flex-start", icon: <AlignStartIcon size={16} />,   title: "Start" },
+  { value: "center",     icon: <AlignCenterIcon size={16} />,  title: "Center" },
+  { value: "flex-end",   icon: <AlignEndIcon size={16} />,     title: "End" },
+  { value: "stretch",    icon: <AlignStretchIcon size={16} />, title: "Stretch" },
+  { value: "baseline",   icon: <AlignBaselineIcon size={16} />,title: "Baseline" },
+];
+
+// ─── Justify Icon Options (justify-content, 5+1 buttons) ───────────
 
 export const JUSTIFY_ICON_OPTIONS = [
   { value: "flex-start",    icon: <AlignHorizontalJustifyStart size={14} strokeWidth={iconSw} />,   title: "Start" },
@@ -79,6 +92,15 @@ export const JUSTIFY_ICON_OPTIONS = [
   { value: "space-between", icon: <AlignHorizontalSpaceBetween size={14} strokeWidth={iconSw} />,   title: "Between" },
   { value: "space-around",  icon: <AlignHorizontalSpaceAround size={14} strokeWidth={iconSw} />,    title: "Around" },
   { value: "space-evenly",  icon: <AlignHorizontalDistributeCenter size={14} strokeWidth={iconSw} />, title: "Evenly" },
+];
+
+/** Webflow-style justify segment options (for SegmentedControl) — 5 options matching Figma */
+export const JUSTIFY_SEGMENT_OPTIONS = [
+  { value: "flex-start",    icon: <JustifyStartIcon size={16} />,        title: "Start" },
+  { value: "center",        icon: <JustifyCenterIcon size={16} />,       title: "Center" },
+  { value: "flex-end",      icon: <JustifyEndIcon size={16} />,          title: "End" },
+  { value: "space-between", icon: <JustifySpaceBetweenIcon size={16} />, title: "Between" },
+  { value: "space-around",  icon: <JustifySpaceAroundIcon size={16} />,  title: "Around" },
 ];
 
 // ─── Font Options ────────────────────────────────────────────────────

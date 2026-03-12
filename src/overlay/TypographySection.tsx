@@ -262,10 +262,17 @@ export const TypographySection = memo(function TypographySection({
         <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
       </div>
 
-      {/* Decor — with none X button + ... overflow */}
-      <div className="flex items-center gap-1.5 px-3 py-1">
-        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Decoration</span>
-        <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
+      {/* Style — Italicize + Decoration side by side with sub-labels */}
+      <div className="flex items-start gap-1.5 px-3 py-1">
+        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Style</span>
+        <div className="flex flex-col items-center gap-[3px]">
+          <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
+          <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Italicize</span>
+        </div>
+        <div className="flex flex-col items-center gap-[3px] flex-1">
+          <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
+          <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Decoration</span>
+        </div>
       </div>
 
       {/* More type options toggle */}
@@ -357,12 +364,8 @@ export const TypographySection = memo(function TypographySection({
             </div>
           </div>
 
-          {/* Italicize + Capitalize + Direction — toggle groups with labels below */}
+          {/* Capitalize + Direction — toggle groups with labels below */}
           <div className="flex gap-1.5 px-3 py-1.5 items-start">
-            <div className="flex flex-col items-center gap-[3px]">
-              <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
-              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Style</span>
-            </div>
             <div className="flex flex-col items-center gap-[3px] flex-1">
               <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
               <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Case</span>

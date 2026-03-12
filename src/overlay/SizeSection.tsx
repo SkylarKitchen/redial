@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useMemo, memo } from "react";
 import { Section, SliderRow, SelectRow, TextRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
+import { WebflowSegmentedControl } from "./WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
@@ -15,12 +16,12 @@ import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
 import { isAutoSize } from "./getAuthoredValue";
-import { ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
 import { ms } from "./timing";
-import { text, border } from "./theme";
+import { text, border, blackAlpha } from "./theme";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
-  OVERFLOW_ICON_OPTIONS,
   CHILDREN_MODE_OPTIONS,
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BOX_SIZING_OPTIONS,
@@ -353,32 +354,100 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           onReset={() => { resetCss("max-height", setMaxHeight); setMaxHeightNone(true); setMaxHeightVar(null); }}
         />
       </div>
-      {/* Overflow: icon button row */}
-      <div className="flex items-center gap-1.5 py-1 px-3">
-        <span className="text-[10px] shrink-0 w-16" style={{ color: text.disabled }}>Overflow</span>
-        <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
+      {/* Overflow: Webflow segmented control */}
+      <div className="flex items-center gap-1 py-1 px-3">
+        <span
+          className="shrink-0"
+          style={{
+            width: 49,
+            fontSize: 11.5,
+            letterSpacing: "-0.115px",
+            color: text.label,
+            fontFamily: "Inter, system-ui, sans-serif",
+            paddingLeft: 1,
+          }}
+        >
+          Overflow
+        </span>
+        <WebflowSegmentedControl
+          options={[
+            { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
+            { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
+            { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
+            { value: "auto", label: "Auto", title: "Auto" },
+          ]}
+          value={overflow}
+          onChange={handleOverflowChange}
+          aria-label="Overflow"
+        />
       </div>
       {/* Children: sizing mode for flex/grid containers */}
       {(display === "flex" || display === "grid" || display === "inline-flex" || display === "inline-grid") && (
-        <div className="flex items-center gap-1.5 py-1 px-3">
-          <span className="text-[10px] shrink-0 w-16" style={{ color: text.disabled }}>Children</span>
-          <select
-            value={childrenMode}
-            onChange={(e) => handleChildrenModeChange(e.target.value)}
-            className="flex-1 h-6 text-[11px] rounded-[4px] border px-1.5 appearance-none cursor-pointer bg-transparent outline-none"
-            style={{ color: text.primary, borderColor: border.subtle }}
+        <div className="flex items-center gap-1 py-1 px-3">
+          <span
+            className="shrink-0"
+            style={{
+              width: 49,
+              fontSize: 11.5,
+              letterSpacing: "-0.115px",
+              color: text.label,
+              fontFamily: "Inter, system-ui, sans-serif",
+              paddingLeft: 1,
+            }}
           >
-            {CHILDREN_MODE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            Children
+          </span>
+          {/* Webflow-style select dropdown */}
+          <div
+            className="flex-1 relative"
+            style={{
+              height: 24,
+              background: "#f3f3f0",
+              borderRadius: 4,
+              boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
+            }}
+          >
+            <select
+              value={childrenMode}
+              onChange={(e) => handleChildrenModeChange(e.target.value)}
+              className="w-full h-full appearance-none cursor-pointer outline-none bg-transparent"
+              style={{
+                fontSize: 11.5,
+                letterSpacing: "-0.115px",
+                color: text.primary,
+                fontFamily: "Inter, system-ui, sans-serif",
+                paddingLeft: 8,
+                paddingRight: 24,
+                border: "none",
+              }}
+            >
+              {CHILDREN_MODE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+            <span
+              className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none"
+              style={{ color: text.label }}
+            >
+              <ChevronSmallDownIcon size={16} />
+            </span>
+          </div>
+          {/* More options button */}
           <button
             onClick={() => setShowMoreSize(!showMoreSize)}
             title="More size options"
-            className="w-6 h-6 flex items-center justify-center bg-transparent border rounded-[4px] cursor-pointer shrink-0"
-            style={{ color: text.disabled, borderColor: border.subtle }}
+            className="flex items-center justify-center cursor-pointer shrink-0 outline-none"
+            style={{
+              width: 24,
+              height: 24,
+              background: "#f3f3f0",
+              borderRadius: 4,
+              boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
+              border: "none",
+              color: text.primary,
+            }}
           >
-            <MoreHorizontal size={14} strokeWidth={1.5} />
+            <MoreDotsIcon size={16} />
           </button>
         </div>
       )}

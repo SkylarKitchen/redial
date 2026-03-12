@@ -249,20 +249,21 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
 
 // ─── DirectionRow ───────────────────────────────────────────────────
 
-/** Direction row: Horizontal/Vertical text toggle + reverse button */
-export function DirectionRow({ direction, onDirectionChange, onReset }: {
+/** Direction row: Horizontal/Vertical segmented control + reverse button */
+export function DirectionRow({ direction, onDirectionChange, onReset, indicator }: {
   direction: string;
   onDirectionChange: (v: string) => void;
   onReset?: () => void;
+  indicator?: IndicatorType;
 }) {
   const isHorizontal = !direction.startsWith("column");
   const isReverse = direction.includes("reverse");
   const isSet = direction !== "row";
 
   return (
-    <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <RowLabel label="Direction" isSet={isSet} onReset={onReset} />
-      <TextToggle
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <RowLabel label="Direction" indicator={indicator} isSet={isSet} onReset={onReset} />
+      <SegmentedControl
         options={[
           { value: "horizontal", label: "Horizontal" },
           { value: "vertical", label: "Vertical" },
@@ -272,6 +273,7 @@ export function DirectionRow({ direction, onDirectionChange, onReset }: {
           const base = v === "horizontal" ? "row" : "column";
           onDirectionChange(isReverse ? `${base}-reverse` : base);
         }}
+        aria-label="Flex direction"
       />
       <ReverseButton
         active={isReverse}
@@ -286,9 +288,119 @@ export function DirectionRow({ direction, onDirectionChange, onReset }: {
 
 // ─── GapRow (Dual Inputs) ───────────────────────────────────────────
 
-/** Gap row: dual number inputs (column + row) with link toggle */
+/** Webflow-style gap input: bordered field with integrated unit suffix */
+function GapInput({ value, unit, onChange }: {
+  value: number;
+  unit: string;
+  onChange: (v: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    if (!editing) setDraft(String(Math.round(value * 100) / 100));
+  }, [value, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onChange(mathResult); return; }
+    const n = parseFloat(draft);
+    if (!isNaN(n) && n !== value) onChange(n);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commit();
+    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); onChange(value + (e.shiftKey ? 10 : 1)); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(0, value - (e.shiftKey ? 10 : 1))); }
+  };
+
+  return (
+    <div style={{
+      display: "flex",
+      width: 70,
+      height: 24,
+      borderRadius: 4,
+      border: "1px solid rgba(31,30,29,0.15)",
+      overflow: "hidden",
+      background: "white",
+      flexShrink: 0,
+    }}>
+      {/* Value area */}
+      <div style={{
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        padding: 4,
+        gap: 2,
+        background: "#f0efec",
+        overflow: "hidden",
+      }}>
+        {editing ? (
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={handleKeyDown}
+            autoFocus
+            style={{
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontSize: 11.5,
+              fontFamily: "Inter, system-ui, sans-serif",
+              letterSpacing: -0.115,
+              color: "#131313",
+              lineHeight: "16px",
+            }}
+          />
+        ) : (
+          <span
+            tabIndex={0}
+            onClick={() => setEditing(true)}
+            onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
+            style={{
+              fontSize: 11.5,
+              fontFamily: "Inter, system-ui, sans-serif",
+              letterSpacing: -0.115,
+              color: "#131313",
+              lineHeight: "16px",
+              cursor: "text",
+              outline: "none",
+            }}
+          >
+            {value}
+          </span>
+        )}
+      </div>
+      {/* Unit suffix */}
+      <div style={{
+        width: 16,
+        height: 24,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#e7e6e1",
+        fontSize: 8,
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontWeight: 600,
+        color: "#383835",
+        letterSpacing: 0.5,
+        textTransform: "uppercase",
+        flexShrink: 0,
+      }}>
+        {unit}
+      </div>
+    </div>
+  );
+}
+
+/** Gap row: dual Webflow-style inputs (column + row) with link toggle */
 export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange, onRowChange,
-                          onColumnUnitChange, onRowUnitChange, linked, onLinkedChange, onReset }: {
+                          onColumnUnitChange, onRowUnitChange, linked, onLinkedChange, onReset,
+                          indicator }: {
   columnGap: number;
   rowGap: number;
   columnUnit: string;
@@ -300,39 +412,49 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
   linked: boolean;
   onLinkedChange: (v: boolean) => void;
   onReset?: () => void;
+  indicator?: IndicatorType;
 }) {
   const isSet = columnGap !== 0 || rowGap !== 0;
   return (
     <div>
-      <div className="flex items-center gap-1 py-0.5 px-3">
-        <RowLabel label="Gap" isSet={isSet} onReset={onReset} />
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+        <RowLabel label="Gap" indicator={indicator} isSet={isSet} onReset={onReset} />
         {/* Column gap input */}
-        <ValueInput value={columnGap} onChange={(v) => {
+        <GapInput value={columnGap} unit={columnUnit} onChange={(v) => {
           onColumnChange(v);
           if (linked) onRowChange(v);
         }} />
-        <UnitSelector value={columnUnit} options={LAYOUT_UNITS} onChange={onColumnUnitChange} />
-        {/* Link toggle */}
+        {/* Link/unlock toggle */}
         <button
           onClick={() => onLinkedChange(!linked)}
           title={linked ? "Gap linked (column = row)" : "Gap unlinked"}
-          className="w-6 h-6 flex items-center justify-center bg-transparent border-none cursor-pointer p-0 shrink-0 rounded transition-colors"
-          style={{ color: linked ? color.primary : text.hint }}
+          style={{
+            width: 24,
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            flexShrink: 0,
+            borderRadius: 4,
+            color: "#383835",
+          }}
         >
-          {linked ? <Link size={13} strokeWidth={1.5} /> : <Unlink size={13} strokeWidth={1.5} />}
+          {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}
         </button>
         {/* Row gap input */}
-        <ValueInput value={rowGap} onChange={(v) => {
+        <GapInput value={rowGap} unit={rowUnit} onChange={(v) => {
           onRowChange(v);
           if (linked) onColumnChange(v);
         }} />
-        <UnitSelector value={rowUnit} options={LAYOUT_UNITS} onChange={onRowUnitChange} />
       </div>
-      {/* Sub-labels */}
-      <div className="flex px-3 mt-0.5" style={{ paddingLeft: "calc(64px + 6px)" }}>
-        <span className="text-[9px] flex-1 text-center" style={{ color: text.hint }}>Column</span>
-        <span className="w-6 shrink-0" /> {/* Spacer for link button */}
-        <span className="text-[9px] flex-1 text-center" style={{ color: text.hint }}>Row</span>
+      {/* Sub-labels: Columns / Rows */}
+      <div style={{ display: "flex", gap: 8, padding: "0 8px", marginTop: 4 }}>
+        <RowLabel label="Columns" indicator={isSet ? "element" : "none"} />
+        <RowLabel label="Rows" indicator={isSet ? "element" : "none"} />
       </div>
     </div>
   );
@@ -340,31 +462,31 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
 
 // ─── ChildrenRow ────────────────────────────────────────────────────
 
-/** Children row: Don't wrap / Wrap text toggle + reverse button */
-export function ChildrenRow({ wrap, onWrapChange }: {
+/** Children row: Don't wrap / Wrap segmented control + reverse button */
+export function ChildrenRow({ wrap, onWrapChange, indicator }: {
   wrap: string;
   onWrapChange: (v: string) => void;
+  indicator?: IndicatorType;
 }) {
   const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
   const isReverse = wrap === "wrap-reverse";
 
   return (
-    <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <RowLabel label="Children" isSet={isWrap} />
-      <TextToggle
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <RowLabel label="Children" indicator={indicator} isSet={isWrap} />
+      <SegmentedControl
         options={[
-          { value: "nowrap", label: "Don't wrap" },
+          { value: "nowrap", label: "Don\u2019t wrap" },
           { value: "wrap", label: "Wrap" },
         ]}
         value={isWrap ? "wrap" : "nowrap"}
         onChange={(v) => onWrapChange(v === "wrap" ? "wrap" : "nowrap")}
+        aria-label="Flex wrap"
       />
-      {isWrap && (
-        <ReverseButton
-          active={isReverse}
-          onClick={() => onWrapChange(isReverse ? "wrap" : "wrap-reverse")}
-        />
-      )}
+      <ReverseButton
+        active={isReverse}
+        onClick={() => onWrapChange(isReverse ? "wrap" : "wrap-reverse")}
+      />
     </div>
   );
 }
