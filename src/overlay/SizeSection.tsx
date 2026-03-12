@@ -361,14 +361,14 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         <div className="flex items-center gap-1.5 py-1 px-3">
           <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow</span>
           <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
-          <button onClick={handleOverflowLockToggle} title="Per-axis overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.hint }}><Link size={12} strokeWidth={1.5} /></button>
+          <button onClick={handleOverflowLockToggle} title="Per-axis overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.disabled }}><Link size={12} strokeWidth={1.5} /></button>
         </div>
       ) : (
         <>
           <div className="flex items-center gap-1.5 py-1 px-3">
             <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Over X</span>
             <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
-            <button onClick={handleOverflowLockToggle} title="Lock overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.hint }}><Link size={12} strokeWidth={1.5} /></button>
+            <button onClick={handleOverflowLockToggle} title="Lock overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.disabled }}><Link size={12} strokeWidth={1.5} /></button>
           </div>
           <div className="flex items-center gap-1.5 py-1 px-3">
             <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Over Y</span>
@@ -378,7 +378,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       )}
       <div onClick={() => setShowMoreSize(!showMoreSize)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t" style={{ borderColor: border.subtle }}>
         <ChevronRight size={9} strokeWidth={2} style={{ color: "#7A7974", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
-        <span className="text-[10px] uppercase tracking-[0.04em]" style={{ color: text.hint }}>More size options</span>
+        <span className="text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>More size options</span>
       </div>
       {showMoreSize && (
         <>

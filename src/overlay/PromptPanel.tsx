@@ -83,7 +83,7 @@ export function PromptPanel({ element }: PromptPanelProps) {
         <Sparkles size={11} strokeWidth={2} className="text-[#D97757]/60 shrink-0" />
         <span className="font-mono">
           {"<"}{tag}{">"}
-          {displayClass && <span style={{ color: text.hint }}>.{displayClass}</span>}
+          {displayClass && <span style={{ color: text.label }}>.{displayClass}</span>}
         </span>
         {reactSource && (
           <>
@@ -112,7 +112,7 @@ export function PromptPanel({ element }: PromptPanelProps) {
 
       {/* Copy button + shortcut hint */}
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono" style={{ color: text.hint }}>
+        <span className="text-[10px] font-mono" style={{ color: text.disabled }}>
           {"\u2318"}+Enter to copy
         </span>
         <Button

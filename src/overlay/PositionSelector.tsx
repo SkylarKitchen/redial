@@ -156,7 +156,7 @@ export function PositionSelector({
             <span style={{ color: text.label, display: "flex" }}>{current.icon}</span>
             {current.label}
           </span>
-          <ChevronDown size={12} strokeWidth={2} style={{ color: blackAlpha(0.3), flexShrink: 0, marginLeft: "4px" }} />
+          <ChevronDown size={12} strokeWidth={2} style={{ color: text.disabled, flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {/* Dropdown */}
@@ -225,7 +225,7 @@ export function PositionSelector({
                         justifyContent: "center",
                         width: "20px",
                         height: "20px",
-                        color: isActive ? color.foreground : blackAlpha(0.4),
+                        color: isActive ? color.foreground : text.label,
                         flexShrink: 0,
                       }}
                     >
@@ -236,7 +236,7 @@ export function PositionSelector({
                     <span
                       style={{
                         fontSize: "12px",
-                        color: isActive ? color.foreground : blackAlpha(0.6),
+                        color: isActive ? color.foreground : text.label,
                         fontWeight: isActive ? 500 : 400,
                       }}
                     >
@@ -259,7 +259,7 @@ export function PositionSelector({
                   margin: 0,
                   fontSize: "11px",
                   lineHeight: 1.45,
-                  color: blackAlpha(0.5),
+                  color: text.label,
                 }}
               >
                 <strong style={{ color: text.secondary }}>{descriptionItem.label}</strong>{" "}

@@ -230,7 +230,7 @@ export function SizeInputCell({
             onClick={() => { onKeywordChange(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
             className="text-[10px] font-mono capitalize pr-1 cursor-text outline-none"
-            style={{ color: blackAlpha(0.5) }}
+            style={{ color: text.label }}
           >
             {keyword}
           </span>
@@ -262,7 +262,7 @@ export function SizeInputCell({
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
             className="w-9 border rounded-sm text-[10px] font-mono text-right px-[3px] py-px outline-none"
-            style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5), color: blackAlpha(0.75) }}
+            style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5), color: text.secondary }}
           />
         ) : (
           <span
@@ -270,7 +270,7 @@ export function SizeInputCell({
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
             className="text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right"
-            style={{ color: value !== 0 ? blackAlpha(0.7) : text.hint }}
+            style={{ color: value !== 0 ? text.label : text.disabled }}
           >
             {value}
           </span>

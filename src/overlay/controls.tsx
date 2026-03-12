@@ -830,7 +830,7 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 border rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          className="w-7 border rounded-sm text-[var(--foreground)] text-[10px] font-mono text-center py-px px-0.5 outline-none"
           style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5) }}
           onClick={(e) => e.stopPropagation()}
         />
@@ -854,7 +854,7 @@ export const EditableValue = memo(
           "text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none",
           "hover:bg-[rgba(0,0,0,0.05)]",
           "focus:ring-2 focus:ring-[var(--ring)]",
-          value !== 0 ? "text-[var(--foreground)]/70" : "text-[var(--foreground)]/30"
+          value !== 0 ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
         )}
         style={{
           transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,

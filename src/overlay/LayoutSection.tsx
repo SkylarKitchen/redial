@@ -265,7 +265,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </div>
             <div className="flex-1 flex flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] w-3 text-right" style={{ color: text.hint }}>x</span>
+                <span className="text-[10px] w-3 text-right" style={{ color: text.disabled }}>x</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? alignItems : justifyContent}
                   options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
@@ -279,7 +279,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] w-3 text-right" style={{ color: text.hint }}>y</span>
+                <span className="text-[10px] w-3 text-right" style={{ color: text.disabled }}>y</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? justifyContent : alignItems}
                   options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
@@ -388,7 +388,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 onClick={handleGapLockToggle}
                 title="Unlock row/column gap"
                 className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
-                style={{ color: text.hint }}
+                style={{ color: text.disabled }}
               >
                 <Link size={12} strokeWidth={1.5} />
               </button>
@@ -426,7 +426,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onClick={handleGapLockToggle}
                   title="Lock gap"
                   className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
-                  style={{ color: text.hint }}
+                  style={{ color: text.disabled }}
                 >
                   <Link size={12} strokeWidth={1.5} />
                 </button>
@@ -462,7 +462,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {parentIsFlexOrGrid && (
         <>
-          <div className="pt-1.5 pb-0.5 px-3 text-[10px] uppercase tracking-[0.04em]" style={{ color: text.hint }}>
+          <div className="pt-1.5 pb-0.5 px-3 text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 

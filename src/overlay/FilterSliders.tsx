@@ -207,7 +207,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 width: "64px",
                 fontSize: "10px",
                 fontFamily: font.sans,
-                color: blackAlpha(0.5),
+                color: text.label,
                 flexShrink: 0,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -254,7 +254,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 width: "18px",
                 fontSize: "9px",
                 fontFamily: font.mono,
-                color: text.hint,
+                color: text.disabled,
                 flexShrink: 0,
               }}
             >
@@ -269,7 +269,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 border: "none",
                 cursor: "pointer",
                 padding: "2px",
-                color: !isHidden ? text.label : blackAlpha(0.15),
+                color: !isHidden ? text.label : text.hint,
                 flexShrink: 0,
               }}
               title={!isHidden ? "Hide filter" : "Show filter"}
@@ -288,7 +288,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                 justifyContent: "center",
                 background: "transparent",
                 border: "none",
-                color: text.hint,
+                color: text.disabled,
                 cursor: "pointer",
                 fontSize: "11px",
                 fontFamily: font.sans,
@@ -299,11 +299,11 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = surface.hover;
-                (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
+                (e.currentTarget as HTMLElement).style.color = text.label;
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "transparent";
-                (e.currentTarget as HTMLElement).style.color = text.hint;
+                (e.currentTarget as HTMLElement).style.color = text.disabled;
               }}
             >
               {"\u00D7"}
@@ -328,7 +328,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
             background: "transparent",
             border: `1px solid ${surface.active}`,
             borderRadius: "3px",
-            color: availableFilters.length === 0 ? blackAlpha(0.15) : text.label,
+            color: availableFilters.length === 0 ? text.hint : text.label,
             fontSize: "10px",
             fontFamily: font.sans,
             padding: "3px 8px",
@@ -370,7 +370,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                   padding: "4px 10px",
                   fontSize: "10px",
                   fontFamily: font.sans,
-                  color: blackAlpha(0.6),
+                  color: text.label,
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {

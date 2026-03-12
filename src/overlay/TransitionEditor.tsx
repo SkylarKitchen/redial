@@ -382,7 +382,7 @@ function TransitionCard({
             justifyContent: "center",
             background: "transparent",
             border: "none",
-            color: playing ? primaryAlpha(0.7) : text.hint,
+            color: playing ? primaryAlpha(0.7) : text.disabled,
             cursor: playing ? "default" : "pointer",
             padding: 0,
             borderRadius: "2px",
@@ -397,7 +397,7 @@ function TransitionCard({
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = playing ? primaryAlpha(0.7) : text.hint;
+            (e.currentTarget as HTMLElement).style.color = playing ? primaryAlpha(0.7) : text.disabled;
           }}
         >
           <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -420,7 +420,7 @@ function TransitionCard({
           justifyContent: "center",
           background: "transparent",
           border: "none",
-          color: text.hint,
+          color: text.disabled,
           cursor: "pointer",
           fontSize: "11px",
           fontFamily: font.sans,
@@ -430,11 +430,11 @@ function TransitionCard({
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = surface.hover;
-          (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
+          (e.currentTarget as HTMLElement).style.color = text.label;
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = text.hint;
+          (e.currentTarget as HTMLElement).style.color = text.disabled;
         }}
       >
         ×
@@ -473,7 +473,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.duration} onChange={(v) => onUpdate({ duration: v })} />
-          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.hint, width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.disabled, width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>
@@ -523,7 +523,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.delay} onChange={(v) => onUpdate({ delay: v })} />
-          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.hint, width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.disabled, width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>

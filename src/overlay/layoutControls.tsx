@@ -57,10 +57,10 @@ export function MiniDropdown({ value, options, onChange }: {
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
         className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono cursor-pointer outline-none"
-        style={{ color: blackAlpha(0.7) }}
+        style={{ color: text.label }}
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
-        <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0" style={{ color: text.hint }} />
+        <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0" style={{ color: text.disabled }} />
       </button>
       {open && (
         <div
@@ -88,7 +88,7 @@ export function MiniDropdown({ value, options, onChange }: {
                     : "hover:bg-[rgba(0,0,0,0.05)]",
                 )}
                 style={!active ? {
-                  color: blackAlpha(0.5),
+                  color: text.label,
                   ...(isHighlighted ? { background: surface.hover } : {}),
                 } : undefined}
               >
@@ -159,7 +159,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                 )}
                 style={{
                   borderColor: surface.track,
-                  ...(isActive ? { background: surface.active, color: blackAlpha(0.87) } : {}),
+                  ...(isActive ? { background: surface.active, color: color.foreground } : {}),
                 }}
               >
                 {opt.icon}
@@ -171,7 +171,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
           onClick={() => setMoreOpen((o) => !o)}
           className="w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
           style={{
-            color: text.hint,
+            color: text.label,
             background: direction.includes("reverse") ? primaryAlpha(0.2) : "transparent",
           }}
         ><ChevronDown size={12} strokeWidth={2} /></button>
@@ -192,7 +192,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                       ? "bg-[var(--primary)] text-white"
                       : "hover:bg-[rgba(0,0,0,0.05)]",
                   )}
-                  style={!active ? { color: blackAlpha(0.5) } : undefined}
+                  style={!active ? { color: text.label } : undefined}
                 >
                   {opt.label}
                 </div>
@@ -236,13 +236,13 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
       {/* Value input */}
       <ValueInput value={value} onChange={onChange} />
       {/* Unit label */}
-      <span className="text-[9px] w-4 font-mono uppercase" style={{ color: text.hint }}>{unit.toUpperCase()}</span>
+      <span className="text-[9px] w-4 font-mono uppercase" style={{ color: text.disabled }}>{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
         onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
         className="w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0"
-        style={{ color: gapLinked ? text.hint : blackAlpha(0.15) }}
+        style={{ color: gapLinked ? text.disabled : text.hint }}
       >
         {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
       </button>
@@ -307,8 +307,8 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                 style={{
                   ...(tab !== "none" ? { borderRightColor: surface.hover } : {}),
                   ...(active
-                    ? { background: surface.active, color: blackAlpha(0.87) }
-                    : { color: text.disabled }),
+                    ? { background: surface.active, color: color.foreground }
+                    : { color: text.label }),
                 }}
               >
                 {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -322,7 +322,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
           className="w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
           style={{
-            color: text.hint,
+            color: text.label,
             background: !isTabValue ? primaryAlpha(0.2) : "transparent",
           }}
         >
@@ -345,7 +345,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                       ? "bg-[var(--primary)] text-white"
                       : "hover:bg-[rgba(0,0,0,0.05)]",
                   )}
-                  style={!active ? { color: blackAlpha(0.5) } : undefined}
+                  style={!active ? { color: text.label } : undefined}
                 >
                   {opt.label}
                 </div>
@@ -431,7 +431,7 @@ export function TypoValueCell({
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
           className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
-          style={{ color: blackAlpha(0.5) }}
+          style={{ color: text.label }}
         >
           {keyword}
         </span>
@@ -444,7 +444,7 @@ export function TypoValueCell({
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
           className="flex-1 w-0 bg-transparent border-none text-[11px] font-mono px-1.5 outline-none"
-          style={{ color: blackAlpha(0.87) }}
+          style={{ color: color.foreground }}
         />
       ) : (
         <span
@@ -452,7 +452,7 @@ export function TypoValueCell({
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
           className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
-          style={{ color: blackAlpha(0.7) }}
+          style={{ color: text.label }}
         >
           {value}
         </span>
@@ -460,7 +460,7 @@ export function TypoValueCell({
       {units && onUnitChange ? (
         <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
-        <span className="text-[9px] uppercase pr-1.5 shrink-0 font-mono" style={{ color: text.hint }}>
+        <span className="text-[9px] uppercase pr-1.5 shrink-0 font-mono" style={{ color: text.disabled }}>
           {unit}
         </span>
       )}

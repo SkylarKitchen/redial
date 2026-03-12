@@ -186,7 +186,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               fontSize: "11px",
               fontFamily: font.mono,
-              color: blackAlpha(0.6),
+              color: text.label,
               minWidth: "32px",
               textAlign: "right",
             }}
@@ -289,7 +289,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
               background: "rgba(0,0,0,0.04)",
               border: "1px solid rgba(0,0,0,0.08)",
               borderRadius: "3px",
-              color: "rgba(0,0,0,0.87)",
+              color: "#1C1B18",
               fontSize: "11px",
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               padding: "0 4px",

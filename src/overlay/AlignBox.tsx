@@ -194,7 +194,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                 onClick={() => onChange(opt.value, align)}
                 style={{
                   background: active ? color.primary : "transparent",
-                  color: active ? color.primaryForeground : blackAlpha(0.4),
+                  color: active ? color.primaryForeground : text.label,
                   border: `1px solid ${color.border}`,
                   borderRadius: "3px",
                   fontSize: "9px",

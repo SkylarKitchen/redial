@@ -14,7 +14,7 @@ import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha } from "./theme";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
@@ -205,7 +205,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.08)] hover:text-[rgba(0,0,0,0.7)]",
             )}
             style={{
-              color: blackAlpha(0.7),
+              color: text.label,
               background: copyOpen ? surface.active : surface.hover,
               borderColor: copyOpen ? border.hover : border.default,
             }}
@@ -289,7 +289,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
 function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3 pt-1 pb-0.5 text-[9px] font-semibold uppercase tracking-wider select-none" style={{ color: text.hint }}>
+    <div className="px-3 pt-1 pb-0.5 text-[9px] font-semibold uppercase tracking-wider select-none" style={{ color: text.label }}>
       {children}
     </div>
   );
@@ -311,11 +311,11 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
           ? "cursor-default"
           : "cursor-pointer hover:bg-[rgba(0,0,0,0.05)]",
       )}
-      style={{ color: disabled ? text.hint : blackAlpha(0.8) }}
+      style={{ color: disabled ? text.disabled : color.foreground }}
     >
       <span>{children}</span>
       {shortcut && (
-        <span className="text-[10px] font-mono ml-3" style={{ color: text.hint }}>{shortcut}</span>
+        <span className="text-[10px] font-mono ml-3" style={{ color: text.disabled }}>{shortcut}</span>
       )}
     </button>
   );

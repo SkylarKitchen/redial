@@ -158,7 +158,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
                   padding: "4px 10px",
                   fontSize: "10px",
                   fontFamily: font.sans,
-                  color: blackAlpha(0.6),
+                  color: text.label,
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
@@ -224,7 +224,7 @@ function TransformCard({
           width: "38px",
           fontSize: "10px",
           fontFamily: font.sans,
-          color: blackAlpha(0.5),
+          color: text.label,
           flexShrink: 0,
         }}
       >
@@ -298,7 +298,7 @@ function TransformCard({
           justifyContent: "center",
           background: "transparent",
           border: "none",
-          color: text.hint,
+          color: text.disabled,
           cursor: "pointer",
           fontSize: "11px",
           fontFamily: font.sans,
@@ -309,11 +309,11 @@ function TransformCard({
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = surface.hover;
-          (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
+          (e.currentTarget as HTMLElement).style.color = text.label;
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = text.hint;
+          (e.currentTarget as HTMLElement).style.color = text.disabled;
         }}
       >
         <X size={11} strokeWidth={2} />
@@ -328,7 +328,7 @@ function AxisLabel({ label }: { label: string }) {
       style={{
         fontSize: "9px",
         fontFamily: font.sans,
-        color: blackAlpha(0.3),
+        color: text.disabled,
         flexShrink: 0,
       }}
     >
@@ -344,7 +344,7 @@ function UnitLabel({ unit }: { unit: string }) {
       style={{
         fontSize: "9px",
         fontFamily: font.mono,
-        color: text.hint,
+        color: text.disabled,
         flexShrink: 0,
         width: "14px",
       }}

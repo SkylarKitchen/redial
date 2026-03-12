@@ -592,7 +592,7 @@ export function ColorPickerEnhanced({
             <div style={{ display: "flex", gap: 4, flex: 1 }}>
               {(["r", "g", "b"] as const).map((ch) => (
                 <div key={ch} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-                  <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono, textTransform: "uppercase" }}>{ch}</span>
+                  <span style={{ fontSize: 9, color: text.disabled, fontFamily: font.mono, textTransform: "uppercase" }}>{ch}</span>
                   <input
                     type="text"
                     value={currentRgb[ch]}
@@ -621,7 +621,7 @@ export function ColorPickerEnhanced({
                 { key: "b" as const, val: Math.round(bri * 100) },
               ]).map(({ key, val }) => (
                 <div key={key} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-                  <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono, textTransform: "uppercase" }}>{key}</span>
+                  <span style={{ fontSize: 9, color: text.disabled, fontFamily: font.mono, textTransform: "uppercase" }}>{key}</span>
                   <input
                     type="text"
                     value={val}
@@ -646,8 +646,8 @@ export function ColorPickerEnhanced({
 
           {/* Opacity display */}
           <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-            <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono }}>A</span>
-            <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.6), minWidth: 26, textAlign: "right" }}>
+            <span style={{ fontSize: 9, color: text.disabled, fontFamily: font.mono }}>A</span>
+            <span style={{ fontSize: 11, fontFamily: font.mono, color: text.label, minWidth: 26, textAlign: "right" }}>
               {Math.round(alpha * 100)}%
             </span>
           </div>
@@ -658,7 +658,7 @@ export function ColorPickerEnhanced({
       {onSelectVariable && (
         <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <span style={{ fontSize: 9, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em" }}>
               Variables
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -808,7 +808,7 @@ export function ColorPickerEnhanced({
               })}
             </div>
           ) : (
-            <div style={{ fontSize: 10, color: blackAlpha(0.2), fontStyle: "italic" }}>
+            <div style={{ fontSize: 10, color: text.hint, fontStyle: "italic" }}>
               Click + to create a variable
             </div>
           )}

@@ -57,7 +57,7 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
               borderRadius: "6px",
               cursor: "pointer",
               background: isActive ? border.hover : surface.hover,
-              color: isActive ? color.foreground : blackAlpha(0.5),
+              color: isActive ? color.foreground : text.label,
               transition: `background ${ms("normal")}, color ${ms("normal")}`,
             }}
           >

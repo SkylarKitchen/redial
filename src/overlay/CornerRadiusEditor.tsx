@@ -120,7 +120,7 @@ function RadiusInput({
         width: "28px",
         fontSize: "10px",
         fontFamily: font.mono,
-        color: value !== 0 ? blackAlpha(0.6) : text.hint,
+        color: value !== 0 ? blackAlpha(0.6) : text.disabled,
         cursor: "text",
         padding: "2px",
         borderRadius: "2px",
@@ -143,7 +143,7 @@ function RadiusInput({
 function LinkIcon({ linked }: { linked: boolean }) {
   return linked
     ? <Link size={12} strokeWidth={1.5} color={color.primary} style={{ display: "block" }} />
-    : <Unlink size={12} strokeWidth={1.5} color={blackAlpha(0.3)} style={{ display: "block" }} />;
+    : <Unlink size={12} strokeWidth={1.5} color={text.disabled} style={{ display: "block" }} />;
 }
 
 export function CornerRadiusEditor({
