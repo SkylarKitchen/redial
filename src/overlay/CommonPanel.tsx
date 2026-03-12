@@ -103,11 +103,24 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
   const [opacity, setOpacity] = useState(() => Math.round(parseNum(cs.opacity) * 100));
   const [borderRadius, setBorderRadius] = useState(() => parseNum(cs.borderRadius));
 
+  // --- Contextual visibility: only show rows with non-default values ---
+  const showBg = bgColor !== "transparent";
+  const showOpacity = opacity < 100;
+  const showRadius = borderRadius > 0;
+  const showStyle = showBg || showOpacity || showRadius;
+
+  const hasSpacing =
+    spacing.margin.top !== 0 || spacing.margin.right !== 0 ||
+    spacing.margin.bottom !== 0 || spacing.margin.left !== 0 ||
+    spacing.padding.top !== 0 || spacing.padding.right !== 0 ||
+    spacing.padding.bottom !== 0 || spacing.padding.left !== 0;
+
   // --- Size group state ---
   const [width, setWidth] = useState(() => parseNum(cs.width));
   const [height, setHeight] = useState(() => parseNum(cs.height));
   const [widthAuto, setWidthAuto] = useState(() => isAutoSize(element, "width"));
   const [heightAuto, setHeightAuto] = useState(() => isAutoSize(element, "height"));
+  const showSize = !widthAuto || !heightAuto;
 
   // --- Position group state ---
   const position = cs.position;
@@ -139,96 +152,108 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
 
   return (
     <div>
-      {/* ── Style ────────────────────────────────── */}
-      <FlatGroup title="Style">
-        <div className="mb-1">
-          <ColorRow
-            label="Bg"
-            value={bgColor}
-            onChange={(v) => {
-              setBgColor(v);
-              apply("background-color", v);
-            }}
+      {/* ── Style (only if any row has a non-default value) ── */}
+      {showStyle && (
+        <FlatGroup title="Style">
+          {showBg && (
+            <div className="mb-1">
+              <ColorRow
+                label="Bg"
+                value={bgColor}
+                onChange={(v) => {
+                  setBgColor(v);
+                  apply("background-color", v);
+                }}
+              />
+            </div>
+          )}
+          {showOpacity && (
+            <SliderRow
+              label="Opacity"
+              value={opacity}
+              min={0}
+              max={100}
+              step={1}
+              unit="%"
+              onChange={(v) => {
+                setOpacity(v);
+                apply("opacity", String(v / 100));
+              }}
+            />
+          )}
+          {showRadius && (
+            <SliderRow
+              label="Radius"
+              value={borderRadius}
+              min={0}
+              max={100}
+              step={1}
+              unit="px"
+              onChange={(v) => {
+                setBorderRadius(v);
+                apply("border-radius", `${v}px`);
+              }}
+            />
+          )}
+        </FlatGroup>
+      )}
+
+      {showStyle && <div className="border-b border-[var(--border)]" />}
+
+      {/* ── Spacing (only if any margin/padding is non-zero) ── */}
+      {hasSpacing && (
+        <FlatGroup title="Spacing">
+          <div className="px-3">
+          <SpacingBoxModel
+            margin={spacing.margin}
+            padding={spacing.padding}
+            onChange={onSpacingChange}
+            marginUnit={marginUnit}
+            paddingUnit={paddingUnit}
+            marginUnits={SPACING_UNITS}
+            paddingUnits={SPACING_UNITS}
+            onMarginUnitChange={setMarginUnit}
+            onPaddingUnitChange={setPaddingUnit}
           />
-        </div>
-        <SliderRow
-          label="Opacity"
-          value={opacity}
-          min={0}
-          max={100}
-          step={1}
-          unit="%"
-          onChange={(v) => {
-            setOpacity(v);
-            apply("opacity", String(v / 100));
-          }}
-        />
-        <SliderRow
-          label="Radius"
-          value={borderRadius}
-          min={0}
-          max={100}
-          step={1}
-          unit="px"
-          onChange={(v) => {
-            setBorderRadius(v);
-            apply("border-radius", `${v}px`);
-          }}
-        />
-      </FlatGroup>
+          </div>
+        </FlatGroup>
+      )}
 
-      <div className="border-b border-[var(--border)]" />
+      {hasSpacing && <div className="border-b border-[var(--border)]" />}
 
-      {/* ── Spacing (Webflow box-model diagram) ─── */}
-      <FlatGroup title="Spacing">
-        <div className="px-3">
-        <SpacingBoxModel
-          margin={spacing.margin}
-          padding={spacing.padding}
-          onChange={onSpacingChange}
-          marginUnit={marginUnit}
-          paddingUnit={paddingUnit}
-          marginUnits={SPACING_UNITS}
-          paddingUnits={SPACING_UNITS}
-          onMarginUnitChange={setMarginUnit}
-          onPaddingUnitChange={setPaddingUnit}
-        />
-        </div>
-      </FlatGroup>
-
-      <div className="border-b border-[var(--border)]" />
-
-      {/* ── Size ─────────────────────────────────── */}
-      <FlatGroup title="Size">
-        <div className="grid grid-cols-2 gap-1.5 px-3">
-          <ValueCell
-            label="W"
-            value={width}
-            keyword={widthAuto ? "auto" : undefined}
-            onClearKeyword={() => {
-              setWidthAuto(false);
-            }}
-            onChange={(v) => {
-              setWidth(v);
-              setWidthAuto(false);
-              apply("width", `${v}px`);
-            }}
-          />
-          <ValueCell
-            label="H"
-            value={height}
-            keyword={heightAuto ? "auto" : undefined}
-            onClearKeyword={() => {
-              setHeightAuto(false);
-            }}
-            onChange={(v) => {
-              setHeight(v);
-              setHeightAuto(false);
-              apply("height", `${v}px`);
-            }}
-          />
-        </div>
-      </FlatGroup>
+      {/* ── Size (only if explicit dimensions are set) ──────── */}
+      {showSize && (
+        <FlatGroup title="Size">
+          <div className="grid grid-cols-2 gap-1.5 px-3">
+            <ValueCell
+              label="W"
+              value={width}
+              keyword={widthAuto ? "auto" : undefined}
+              onClearKeyword={() => {
+                setWidthAuto(false);
+              }}
+              onChange={(v) => {
+                setWidth(v);
+                setWidthAuto(false);
+                apply("width", `${v}px`);
+              }}
+            />
+            <ValueCell
+              label="H"
+              value={height}
+              keyword={heightAuto ? "auto" : undefined}
+              onClearKeyword={() => {
+                setHeightAuto(false);
+              }}
+              onChange={(v) => {
+                setHeight(v);
+                setHeightAuto(false);
+                apply("height", `${v}px`);
+              }}
+            />
+          </div>
+        </FlatGroup>
+      )}
 
       {/* ── Position (conditional) ────────────────── */}
       {showPosition && (
