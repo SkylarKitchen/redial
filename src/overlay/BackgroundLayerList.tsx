@@ -60,7 +60,8 @@ const BLEND_MODES = [
   "luminosity",
 ];
 
-const SIZE_OPTIONS = ["auto", "cover", "contain", "custom"];
+const SIZE_KEYWORDS = ["auto", "cover", "contain"];
+const SIZE_OPTIONS = [...SIZE_KEYWORDS, "custom"];
 const POSITION_OPTIONS = [
   "center",
   "top",
@@ -473,10 +474,37 @@ export function BackgroundLayerList({
                           Size
                         </span>
                         <Select
-                          value={layer.image.size}
+                          value={SIZE_KEYWORDS.includes(layer.image.size) ? layer.image.size : "custom"}
                           options={SIZE_OPTIONS}
-                          onChange={(v) => updateImage(layer.id, { size: v })}
+                          onChange={(v) => updateImage(layer.id, { size: v === "custom" ? "100% auto" : v })}
                         />
+                        {!SIZE_KEYWORDS.includes(layer.image.size) && (() => {
+                          const parts = layer.image.size.split(/\s+/);
+                          const w = parts[0] || "100%";
+                          const h = parts[1] || "auto";
+                          const inputStyle: React.CSSProperties = {
+                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
+                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
+                            fontFamily: "ui-monospace, 'SF Mono', monospace",
+                          };
+                          return (
+                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                              <input
+                                value={w}
+                                placeholder="W"
+                                onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
+                                style={inputStyle}
+                              />
+                              <input
+                                value={h}
+                                placeholder="H"
+                                onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
+                                style={inputStyle}
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                         <span

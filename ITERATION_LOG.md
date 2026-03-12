@@ -367,4 +367,16 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 36 — Background image custom size W/H inputs (spec §8 line 480) (2026-03-11)
+- Spec §8 says `background-size` supports `custom [w] [h]` but the "custom" dropdown option emitted the literal string "custom" as CSS — which is invalid
+- Split `SIZE_KEYWORDS` (`auto`, `cover`, `contain`) from `SIZE_OPTIONS` for proper display mapping
+- Dropdown now shows "custom" when the current size isn't a keyword (e.g., "200px 100px" → "custom")
+- Selecting "custom" initializes to `"100% auto"` as a sensible default
+- Added inline W/H text inputs below the size dropdown when custom is active
+- Inputs parse the current size into two parts and compose `"W H"` on change
+- Supports any CSS length unit (px, %, em, etc.) — user types directly
+- Typecheck: PASS
+
+---
+
 ## Done
