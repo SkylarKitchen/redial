@@ -66,7 +66,7 @@ class PanelErrorBoundary extends Component<
               this.props.onError?.();
             }}
             className="px-2.5 py-1 text-[11px] rounded cursor-pointer"
-            style={{ border: `1px solid ${blackAlpha(0.07)}`, background: surface.hover, color: blackAlpha(0.5) }}
+            style={{ border: `1px solid ${blackAlpha(0.07)}`, background: surface.hover, color: text.label }}
           >
             Retry
           </button>
@@ -1344,13 +1344,13 @@ export function Overlay() {
           <div
             ref={dimensionsBadgeRef}
             className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
-            style={{ display: 'none', background: bgAlpha(0.9), color: blackAlpha(0.7) }}
+            style={{ display: 'none', background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
             className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
-            style={{ display: 'none', background: bgAlpha(0.9), color: blackAlpha(0.7) }}
+            style={{ display: 'none', background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Hover highlight: subtle preview when hovering a different element */}
           <div

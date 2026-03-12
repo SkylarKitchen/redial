@@ -264,7 +264,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
                     className={cn(
                       "flex items-center justify-between gap-1.5 px-2 py-1 text-[10px] font-mono cursor-pointer hover:bg-[var(--accent)]",
-                      "leading-4 transition-colors text-[rgba(0,0,0,0.6)]",
+                      "leading-4 transition-colors text-[var(--muted-foreground)]",
                       isHighlighted && "bg-[var(--accent)]"
                     )}
                   >

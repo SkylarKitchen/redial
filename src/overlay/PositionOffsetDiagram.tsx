@@ -60,7 +60,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             zIndex: 1,
           }}
         >
-          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: text.hint }}>
+          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: text.disabled }}>
             Offset
           </span>
           <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} conversionHint={conversionHint} />
@@ -90,7 +90,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
               justifyContent: "center",
             }}
           >
-            <span style={{ fontSize: "8px", color: "#9A9994", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <span style={{ fontSize: "8px", color: text.disabled, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               element
             </span>
           </div>
@@ -166,7 +166,7 @@ function EditableValue({
           background: "rgba(0,0,0,0.07)",
           border: "1px solid rgba(217, 119, 87, 0.5)",
           borderRadius: "2px",
-          color: "rgba(0,0,0,0.87)",
+          color: "#1C1B18",
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
           textAlign: "center",
@@ -187,7 +187,7 @@ function EditableValue({
       style={{
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
+        color: value !== 0 ? "#504F4A" : "#9A9994",
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",

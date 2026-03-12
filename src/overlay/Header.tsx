@@ -148,7 +148,7 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-hidden" style={{ color: text.label }}>
+          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-x-auto" style={{ color: text.label, scrollbarWidth: "none" }}>
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
