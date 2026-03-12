@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 /*
  * Redial light theme — scoped to .__tuner-root
