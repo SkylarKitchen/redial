@@ -7,7 +7,7 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp, resetAndReadNum } from "./apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { parseNum } from "./cssParsers";
 import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, type SectionCtx } from "./panelUtils";

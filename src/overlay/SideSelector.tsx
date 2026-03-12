@@ -1,18 +1,22 @@
 /**
- * SideSelector.tsx — tab bar for selecting which border side to style
+ * SideSelector.tsx — icon group for selecting which border side to style
  *
- * Tabs: All, Top, Right, Bottom, Left
- * Each tab renders a small 8x8 SVG icon with the relevant side highlighted.
+ * Options: All, Top, Right, Bottom, Left
+ * Each button renders a small 8x8 SVG icon with the relevant side highlighted.
+ * Compact mode: small square icon buttons in a horizontal row (no tab bar).
  */
 
 import { useCallback } from "react";
 import { ms } from "./timing";
+import { surface, border as borderToken } from "./theme";
 
-type Side = "all" | "top" | "right" | "bottom" | "left";
+export type Side = "all" | "top" | "right" | "bottom" | "left";
 
 export interface SideSelectorProps {
   value: Side;
   onChange: (side: Side) => void;
+  /** Compact mode: small square icons instead of full-width tab bar */
+  compact?: boolean;
 }
 
 const SIDES: Side[] = ["all", "top", "right", "bottom", "left"];
@@ -47,11 +51,54 @@ function SideIcon({ side, active }: { side: Side; active: boolean }) {
   );
 }
 
-export function SideSelector({ value, onChange }: SideSelectorProps) {
+export function SideSelector({ value, onChange, compact }: SideSelectorProps) {
   const handleClick = useCallback(
     (side: Side) => () => onChange(side),
     [onChange]
   );
+
+  if (compact) {
+    return (
+      <div style={{ display: "flex", gap: 2, padding: "2px 12px 4px" }}>
+        {SIDES.map((side) => {
+          const active = value === side;
+          return (
+            <button
+              key={side}
+              onClick={handleClick(side)}
+              title={side.charAt(0).toUpperCase() + side.slice(1)}
+              style={{
+                width: 20,
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                border: active ? `1px solid ${borderToken.hover}` : "1px solid transparent",
+                borderRadius: 3,
+                background: active ? surface.active : "transparent",
+                cursor: "pointer",
+                outline: "none",
+                transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = surface.hover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = active
+                  ? surface.active
+                  : "transparent";
+              }}
+            >
+              <SideIcon side={side} active={active} />
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div
