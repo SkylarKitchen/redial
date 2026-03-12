@@ -162,7 +162,7 @@ const BOX_LINE: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-const HATCH_BG = `repeating-linear-gradient(0deg, ${HATCH_FG} 0px, ${HATCH_FG} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
+const HATCH_BG = `repeating-linear-gradient(45deg, ${HATCH_FG} 0px, ${HATCH_FG} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
 
 const BADGE_STYLE: React.CSSProperties = {
   ...BASE,
