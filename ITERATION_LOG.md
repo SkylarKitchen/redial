@@ -600,4 +600,95 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 
 ---
 
+### Phase K — Complete WIP + Testing Foundation (items 53–58) (2026-03-11)
+
+**53. Wire isVariableLinked into getIndicatorType**
+- `isVariableLinked(el, prop)` check now fires in `getIndicatorType()` between the element and inherited checks
+- Properties whose authored value contains `var()` now show the purple "Variable" indicator dot
+- Variable detection uses WeakMap-cached `getAuthoredValue()` → `includes("var(")`
+
+**54. Tests for infer.ts (31 tests)**
+- Created `src/overlay/__tests__/infer.test.ts`
+- Tests: `PX_PROPS`, `TOGGLE_CSS`, `toCSSValue()`, `flattenValues()`, `SPACING_PROPS`, `infer()` structure
+- Verifies returned config shape (layout/size/position/effects sections), name generation with CSS module extraction, spacing values
+
+**55. Tests for panelUtils.ts (31 tests)**
+- Created `src/overlay/__tests__/panelUtils.test.ts`
+- Tests: `getIndicatorType()`, `isVariableLinked()`, `detectUnit()`, `isTextBearing()`, `getIndicatorColor()`, `getIndicatorTitle()`, `getAuthoredValue()`, `TEXT_TAGS`, `INHERITABLE_PROPERTIES`
+
+**56. Tests for util.ts (31 tests)**
+- Created `src/overlay/__tests__/util.test.ts`
+- Tests: `buildBreadcrumb()`, `getStableSelector()`, `isNavigableElement()`, `formatCSSDiff()`, `getSelector()`, `getDisplayClass()`
+
+**57. Section component smoke tests (16 tests)**
+- Created `src/overlay/__tests__/sections.test.ts`
+- `makeMockCtx()` helper creates a valid mock `SectionCtx` with real DOM element
+- Each of 8 sections (Layout, Spacing, Size, Position, Typography, Backgrounds, Borders, Effects) verified via `renderToString` — no throw on valid props
+
+**58. Keyboard shortcut handler tests (43 tests)**
+- Created `src/overlay/__tests__/shortcuts.test.ts`
+- Tests: scrub guard (`isScrubActive`/`setScrubActive`), input focus detection, key→action mapping, arrow navigation, modifier detection, shortcut priority ordering
+
+---
+
+### Phase L — Accessibility (items 59–63) (2026-03-11)
+
+**59. `prefers-reduced-motion` support**
+- `timing.ts`: added `_reducedMotion` flag, `setReducedMotion()`, `getReducedMotion()` exports; `ms()` returns `"0ms"` when active
+- `Overlay.tsx`: reads `matchMedia("(prefers-reduced-motion: reduce)")` at mount, injects `<style>` with `transition-duration: 0s !important; animation-duration: 0s !important` on `.__tuner-root *`
+
+**60. Screen reader announcements**
+- `Overlay.tsx`: hidden `aria-live="assertive"` region with `announce()` helper
+- Wired into: element selected/deselected, undo, redo, reset, save, copy CSS
+
+**61. Focus trap in modals**
+- Created `src/overlay/useFocusTrap.ts` — shared hook: Tab/Shift+Tab cycling, auto-focus first focusable
+- Integrated into: `ShortcutsHelp.tsx`, `CommandPalette.tsx`, `PropertyContextMenu.tsx`
+
+**62. ARIA labels on controls**
+- `controls.tsx`: `aria-label` on SliderRow range input (`{label}: {value}{unit}`) and ValueInput
+- `ColorPickerEnhanced.tsx`: `aria-label` on canvas ("Saturation and brightness"), hue/opacity sliders, swatch buttons
+- `IconButtonGroup.tsx`: already had `aria-label` — verified correct
+
+**63. Keyboard-only element selection**
+- `Selector.tsx`: Tab/Shift+Tab cycles through navigable page elements, Enter selects
+- Builds candidate list via `isNavigableElement()` from `util.ts`
+- Reuses existing outline positioning for focused candidate highlight
+
+---
+
+### Phase M — Developer Experience (items 64–68) (2026-03-11)
+
+**64. Plain CSS export button**
+- `Footer.tsx`: "CSS" button copies clean `selector { prop: value; }` without `/* was */` comments
+- Uses `getSelector()` from `util.ts`, new `formatCleanCSS()` helper
+
+**65. Recent colors (auto-tracked)**
+- `ColorPickerEnhanced.tsx`: automatic "Recent" row (18×18 circles) below Swatches
+- Last 8 colors tracked via `localStorage` under `__tuner-recent-colors`
+- Debounced at 500ms to avoid flooding during drag
+
+**66. Wire CSS import from clipboard (Cmd+Shift+V)**
+- `Overlay.tsx`: keyboard handler reads `navigator.clipboard.readText()`, parses with `parseCSSText()` from `cssImport.ts`
+- Batch-applies declarations via `beginBatch()`/`endBatch()` for single undo
+- Shows confirmation message with count
+
+**67. Copy as CSS custom properties**
+- `Footer.tsx`: "Vars" button exports changes as `:root { --font-size: 16px; }` format
+- `SEMANTIC_NAMES` map for common properties (color→--text-color, font-size→--font-size, etc.)
+
+**68. Property change history drawer**
+- Created `src/overlay/HistoryDrawer.tsx` — slide-out drawer with chronological property change log
+- Each entry: timestamp (HH:MM:SS), property, old→new (red/green), element selector
+- "Undo to here" button calls `undo()` repeatedly to target index
+- `apply.ts`: added `subscribeChanges()` API for push-based change notifications
+- `Overlay.tsx`: "H" keyboard shortcut toggles drawer
+- `ShortcutsHelp.tsx`: added "H" shortcut to help
+
+---
+
+**Phase K–M totals: 16 items, 495 tests passing, TypeScript clean**
+
+---
+
 ## Done
