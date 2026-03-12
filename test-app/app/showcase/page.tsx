@@ -269,7 +269,7 @@ const sectionHeaderStyle: React.CSSProperties = {
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 500,
-  color: blackAlpha(0.75),
+  color: color.foreground,
 };
 
 const chevronWrapStyle: React.CSSProperties = {
@@ -287,21 +287,20 @@ const rowStyle: React.CSSProperties = {
   alignItems: "center",
   gap: layout.controlGap,
   padding: layout.rowPadding,
-  background: color.background,
   borderRadius: 4,
 };
 
 const labelStyle: React.CSSProperties = {
   width: layout.labelWidth,
   fontSize: 11,
-  color: blackAlpha(0.7),
+  color: text.label,
   flexShrink: 0,
 };
 
 const valueInputStyle: React.CSSProperties = {
   width: layout.inputWidth,
   background: color.input,
-  border: `1px solid ${blackAlpha(0.07)}`,
+  border: `1px solid ${border.default}`,
   borderRadius: 2,
   color: blackAlpha(0.7),
   fontSize: 10,
@@ -399,6 +398,8 @@ function SliderThumb({ pct }: { pct: number }) {
   );
 }
 
+// Intentional approximation: actual UI uses shadcn <Slider> with Radix primitives.
+// This static version uses a simple gradient + absolute-positioned thumb for Figma export.
 function SliderTrack({ pct, hover }: { pct: number; hover?: boolean }) {
   return (
     <div style={{
@@ -489,6 +490,29 @@ function ExpandedSectionHeader({ title, hasIndicator }: { title: string; hasIndi
         )}
       </span>
       <span style={{ ...chevronWrapStyle, transform: "rotate(90deg)" }}><ChevronSvg /></span>
+    </div>
+  );
+}
+
+function TabBar({ active = "common" }: { active?: "common" | "custom" | "prompt" }) {
+  return (
+    <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, padding: "0 12px" }}>
+      {(["common", "custom", "prompt"] as const).map((tab) => {
+        const isActive = active === tab;
+        const label = tab === "common" ? "Common" : tab === "custom" ? "Custom" : "Prompt";
+        return (
+          <div key={tab} style={{
+            background: "transparent",
+            borderBottom: isActive ? `2px solid ${color.primary}` : "2px solid transparent",
+            padding: "7px 10px 5px",
+            fontSize: 11,
+            fontFamily: font.sans,
+            fontWeight: isActive ? 600 : 400,
+            color: isActive ? color.foreground : text.label,
+            cursor: "pointer",
+          }}>{label}</div>
+        );
+      })}
     </div>
   );
 }
@@ -850,7 +874,7 @@ export default function ShowcasePage() {
 
             <div className="variant-col" data-variant="modified">
               <div className="variant-label">Modified (blue highlight)</div>
-              <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.10), border: `1px solid ${primaryAlpha(0.25)}` }}>
+              <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}>
                 <div style={{ ...sizeInputLabel, color: color.primary }}>Width</div>
                 <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
                   <span style={sizeInputValue}>320</span>
@@ -1370,7 +1394,7 @@ export default function ShowcasePage() {
 
           {/* Panel 1: Expanded */}
           <div data-component="FullPanel" data-variant="expanded">
-            <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Expanded</div>
+            <div className="variant-label" style={{ marginBottom: 8 }}>Custom — All Expanded</div>
             <div style={panelShell}>
               {/* Header */}
               <PanelHeader
@@ -1387,6 +1411,7 @@ export default function ShowcasePage() {
                 <ScopePill label="element" active />
                 <ScopePill label=".btnPrimary" />
               </div>
+              <TabBar active="custom" />
 
               {/* Layout Section (expanded) */}
               <div style={{ borderBottom: `1px solid ${surface.subtle}` }}>
