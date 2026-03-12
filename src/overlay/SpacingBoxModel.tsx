@@ -18,7 +18,7 @@
  * - Drag-to-scrub with optimistic local state (real-time text updates)
  * - Shift+drag updates all 4 sides uniformly
  * - Alt(Option)+drag updates axis pair (left+right or top+bottom)
- * - Alt+click applies value to all 4 sides
+ * - Alt(Option)+click resets property to default
  * - Tab/Shift+Tab navigation in visual order
  */
 
