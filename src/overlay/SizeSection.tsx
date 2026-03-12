@@ -365,12 +365,12 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       ) : (
         <>
           <div className="flex items-center gap-1.5 py-1 px-3">
-            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Over X</span>
+            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow X</span>
             <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
             <button onClick={handleOverflowLockToggle} title="Lock overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.disabled }}><Link size={12} strokeWidth={1.5} /></button>
           </div>
           <div className="flex items-center gap-1.5 py-1 px-3">
-            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Over Y</span>
+            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow Y</span>
             <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowY} onChange={handleOverflowYChange} />
           </div>
         </>
@@ -381,7 +381,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {showMoreSize && (
         <>
-          <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
+          <TextRow label="Aspect" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
           <div className="flex items-center gap-1.5 py-1 px-3">
             <span className="w-16 text-[11px] shrink-0" style={{ color: text.disabled }}>Box Size</span>
             <IconButtonGroup
@@ -393,7 +393,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           {isMedia && (
             <>
               <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} onContextMenu={ctxMenu("object-fit", objectFit)} computedProp="object-fit" computedElement={element} />
-              <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} computedProp="object-position" computedElement={element} />
+              <SelectRow label="Obj Position" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} computedProp="object-position" computedElement={element} />
             </>
           )}
         </>

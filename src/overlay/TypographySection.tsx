@@ -262,7 +262,7 @@ export const TypographySection = memo(function TypographySection({
 
       {/* Decor — with none X button + ... overflow */}
       <div className="flex items-center gap-1.5 px-3 py-1">
-        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Decor</span>
+        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Decoration</span>
         <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
       </div>
 
@@ -359,11 +359,11 @@ export const TypographySection = memo(function TypographySection({
           <div className="flex gap-1.5 px-3 py-1.5 items-start">
             <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
-              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Italicize</span>
+              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Style</span>
             </div>
             <div className="flex flex-col items-center gap-[3px] flex-1">
               <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Capitalize</span>
+              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Case</span>
             </div>
             <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
