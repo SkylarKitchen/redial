@@ -6,12 +6,19 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
-import { ChevronDown, Link, Unlink, ArrowLeftRight } from "lucide-react";
+import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator } from "./theme";
+import type { IndicatorType } from "./StyleIndicator";
+import { SegmentedControl } from "./SegmentedControl";
+import {
+  DisplayBlockIcon, DisplayFlexIcon, DisplayGridIcon,
+  DisplayInlineBlockIcon, DisplayInlineIcon, DisplayHideIcon,
+  ArrowReverseIcon, UnlockIcon, LockIcon,
+} from "./webflowIcons";
 
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
@@ -21,21 +28,37 @@ import { LAYOUT_UNITS } from "./panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
 
-/** Shared label pattern: highlighted when modified, alt+click to reset */
-export function RowLabel({ label, isSet, onReset }: {
+/**
+ * Shared label pattern with Webflow-style indicator coloring.
+ * - Blue: property actively set on this element (element/direct)
+ * - Orange: property inherited or set via state (inherited/state)
+ * - Gray: default value (none)
+ * Alt+click resets the property.
+ */
+export function RowLabel({ label, isSet, indicator, onReset }: {
   label: string;
+  /** @deprecated Use `indicator` instead for Webflow-style coloring */
   isSet?: boolean;
+  /** Indicator type drives Webflow-style label highlighting */
+  indicator?: IndicatorType;
   onReset?: () => void;
 }) {
+  // Derive effective indicator from either prop
+  const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "element" : "none");
+  const colors = labelIndicator[effectiveIndicator] ?? labelIndicator.none;
+  const hasHighlight = effectiveIndicator !== "none";
+
   return (
     <span
-      className={cn(
-        "text-[11px] shrink-0 select-none",
-        isSet
-          ? "rounded-[3px] px-1.5 py-0.5"
-          : "text-[var(--muted-foreground)] w-16",
-      )}
-      style={isSet ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+      className="text-[11.5px] shrink-0 select-none rounded-[2px] px-[1px] leading-[16px]"
+      style={{
+        width: hasHighlight ? undefined : 49,
+        background: colors.bg,
+        color: colors.text,
+        fontFamily: "Inter, system-ui, sans-serif",
+        letterSpacing: -0.115,
+        cursor: onReset ? "default" : undefined,
+      }}
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
     >
       {label}
@@ -82,24 +105,32 @@ export function TextToggle({ options, value, onChange }: {
 
 // ─── ReverseButton ──────────────────────────────────────────────────
 
-/** Small icon toggle for flex-direction reverse / wrap-reverse */
+/** Webflow-style icon button for flex-direction reverse / wrap-reverse */
 function ReverseButton({ active, onClick }: { active: boolean; onClick: () => void }) {
   return (
     <button
       title={active ? "Reverse (active)" : "Reverse"}
       onClick={onClick}
-      className={cn(
-        "w-7 h-7 flex items-center justify-center rounded cursor-pointer outline-none transition-colors border-none shrink-0",
-        active
-          ? "font-medium"
-          : "bg-transparent hover:bg-[var(--accent)]",
-      )}
-      style={active
-        ? { background: primaryAlpha(0.2), color: primaryAlpha(0.9) }
-        : { color: text.disabled }
-      }
+      style={{
+        width: 24,
+        height: 24,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 4,
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        flexShrink: 0,
+        padding: 4,
+        overflow: "hidden",
+        transition: "background 75ms ease",
+        background: active ? "#e7e6e1" : "#f3f3f0",
+        boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
+        color: active ? "#131313" : "#383835",
+      }}
     >
-      <ArrowLeftRight size={13} strokeWidth={1.5} />
+      <ArrowReverseIcon size={16} />
     </button>
   );
 }
@@ -185,25 +216,33 @@ export function MiniDropdown({ value, options, onChange }: {
   );
 }
 
-// ─── DisplayTabs (Text-based) ───────────────────────────────────────
+// ─── DisplayTabs (Icon-based, Webflow style) ───────────────────────
 
-const DISPLAY_OPTIONS = [
-  { value: "block", label: "block" },
-  { value: "flex", label: "flex" },
-  { value: "grid", label: "grid" },
-  { value: "none", label: "none" },
+const DISPLAY_SEGMENT_OPTIONS = [
+  { value: "block", icon: <DisplayBlockIcon size={16} />, title: "Block" },
+  { value: "flex", icon: <DisplayFlexIcon size={16} />, title: "Flex" },
+  { value: "grid", icon: <DisplayGridIcon size={16} />, title: "Grid" },
+  { value: "inline-block", icon: <DisplayInlineBlockIcon size={16} />, title: "Inline Block" },
+  { value: "inline", icon: <DisplayInlineIcon size={16} />, title: "Inline" },
+  { value: "none", icon: <DisplayHideIcon size={16} />, title: "Hide" },
 ];
 
-/** Display row: 4 text tabs for display modes */
-export function DisplayTabs({ value, onChange, onReset }: {
+/** Display row: 6 icon segments for display modes (matches Webflow) */
+export function DisplayTabs({ value, onChange, onReset, indicator }: {
   value: string;
   onChange: (v: string) => void;
   onReset?: () => void;
+  indicator?: IndicatorType;
 }) {
   return (
-    <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <RowLabel label="Display" isSet={value !== "block"} onReset={onReset} />
-      <TextToggle options={DISPLAY_OPTIONS} value={value} onChange={onChange} />
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <RowLabel label="Display" indicator={indicator} isSet={value !== "block"} onReset={onReset} />
+      <SegmentedControl
+        options={DISPLAY_SEGMENT_OPTIONS}
+        value={value}
+        onChange={onChange}
+        aria-label="Display mode"
+      />
     </div>
   );
 }

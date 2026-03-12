@@ -39,7 +39,7 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { text, font } from "./theme";
+import { color, text, font } from "./theme";
 import { ms } from "./timing";
 
 // ─── Sub-section header ───────────────────────────────────────────────
@@ -53,6 +53,7 @@ function SubSectionHeader({ label, onAdd, onMenu }: {
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "8px 12px 4px",
+      background: color.background,
     }}>
       <span style={{ fontSize: "11px", fontFamily: font.sans, color: text.secondary, fontWeight: 500 }}>
         {label}

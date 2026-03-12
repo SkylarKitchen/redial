@@ -162,6 +162,21 @@ export const indicatorColor: Record<IndicatorColorType, string> = {
   none: "#504F4A",
 } as const;
 
+// ─── Label Indicator Colors (Webflow-style) ────────────────────
+// Labels are highlighted to show where a property value comes from:
+// - Blue: actively set on this element ("element" / "direct")
+// - Orange: inherited from parent or set via state ("inherited" / "state")
+// - No highlight: default value ("none")
+
+export const labelIndicator = {
+  element: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
+  direct: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
+  inherited: { bg: "#f9dca4", text: "#734500" },
+  state: { bg: "#f9dca4", text: "#734500" },
+  variable: { bg: "rgba(167,139,250,0.2)", text: "#5b21b6" },
+  none: { bg: "transparent", text: "#383835" },
+} as const;
+
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
