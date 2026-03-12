@@ -9,6 +9,7 @@ import React, { useState, useCallback, useRef, useEffect, useId, memo } from "re
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { getIndicatorColor, getIndicatorTitle } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
@@ -93,6 +94,8 @@ export function Section({
   forceOpen,
   hidden,
   headerAction,
+  focusOpen,
+  onToggle,
 }: {
   title: string;
   collapsed?: boolean;
@@ -102,9 +105,13 @@ export function Section({
   /** When true, hide the section entirely (used by search filter) */
   hidden?: boolean;
   headerAction?: React.ReactNode;
+  /** In focus mode, externally controlled open state */
+  focusOpen?: boolean;
+  /** Called when section header is clicked (for focus mode coordination) */
+  onToggle?: (title: string) => void;
 }) {
   const [ownOpen, setOwnOpen] = useState(!collapsed);
-  const open = forceOpen || ownOpen;
+  const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
 
   if (hidden) return null;
   return (
@@ -113,8 +120,8 @@ export function Section({
         tabIndex={0}
         role="button"
         aria-expanded={open}
-        onClick={() => setOwnOpen(!ownOpen)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOwnOpen(!ownOpen); } }}
+        onClick={() => { if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); } }}
         onFocus={onFocusRing}
         onBlur={onBlurRing}
         style={{
@@ -124,6 +131,7 @@ export function Section({
           justifyContent: "space-between",
           borderRadius: "2px",
           outline: "none",
+          ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: "#1e1e1e" } : {}),
         }}
       >
         <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", gap: "6px" }}>
@@ -310,12 +318,15 @@ export function SliderRow({
   }, [snapPoints, snapThreshold, min, max]);
 
   const pct = ((value - min) / (max - min)) * 100;
+  const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
+      title={labelTitle}
       style={{
         width: "64px",
         fontSize: "11px",
-        color: "rgba(255,255,255,0.5)",
+        color: labelColor,
         flexShrink: 0,
         display: "inline-flex",
         alignItems: "center",
@@ -458,13 +469,16 @@ export function SelectRow({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      title={selectLabelTitle}
       style={{
         width: "64px",
         fontSize: "11px",
-        color: "rgba(255,255,255,0.5)",
+        color: selectLabelColor,
         flexShrink: 0,
         display: "inline-flex",
         alignItems: "center",
@@ -665,13 +679,16 @@ export function ColorRow({
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
 
+  const colorLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      title={colorLabelTitle}
       style={{
         width: "64px",
         fontSize: "11px",
-        color: "rgba(255,255,255,0.5)",
+        color: colorLabelColor,
         flexShrink: 0,
         display: "inline-flex",
         alignItems: "center",

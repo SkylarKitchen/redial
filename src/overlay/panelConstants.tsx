@@ -292,3 +292,31 @@ export const BOX_SIZING_OPTIONS = [
   { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
   { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
 ];
+
+// ─── Keyboard Shortcuts Reference ───────────────────────────────────
+
+export interface ShortcutEntry { keys: string; description: string; group: string }
+
+export const SHORTCUTS: ShortcutEntry[] = [
+  // Selection
+  { keys: "↑ / ↓", description: "Select sibling element", group: "Selection" },
+  { keys: "← / →", description: "Select parent / first child", group: "Selection" },
+  { keys: "Escape", description: "Deselect element / close panel", group: "Selection" },
+  { keys: "Cmd+F", description: "Search properties in panel", group: "Selection" },
+  // Values
+  { keys: "↑ / ↓ (in input)", description: "Increment / decrement value", group: "Values" },
+  { keys: "Shift + ↑/↓", description: "Step by 10", group: "Values" },
+  { keys: "Alt + ↑/↓", description: "Step by 0.1", group: "Values" },
+  { keys: "Scroll wheel", description: "Adjust focused value", group: "Values" },
+  { keys: "Alt+Click label", description: "Reset property to default", group: "Values" },
+  { keys: "Math expr (e.g. *2)", description: "Evaluate expression in input", group: "Values" },
+  // Panel
+  { keys: "Alt+Shift+S", description: "Toggle focus mode", group: "Panel" },
+  { keys: "Tab / Shift+Tab", description: "Navigate between controls", group: "Panel" },
+  { keys: "S", description: "Cycle scope (element/class/page)", group: "Panel" },
+  { keys: "R", description: "Reset all styles", group: "Panel" },
+  // File
+  { keys: "Cmd+S", description: "Save to source file", group: "File" },
+  { keys: "Cmd+C", description: "Copy CSS to clipboard", group: "File" },
+  { keys: "Cmd+Z / Cmd+Shift+Z", description: "Undo / Redo", group: "File" },
+];

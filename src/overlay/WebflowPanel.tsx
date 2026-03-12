@@ -37,14 +37,21 @@ export interface WebflowPanelProps {
   showBoxModel?: boolean;
   onToggleBoxModel?: () => void;
   searchQuery?: string;
+  focusMode?: boolean;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "" }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
+
+  // ── Focus mode: only one section open at a time ──
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const handleSectionToggle = useCallback((title: string) => {
+    setExpandedSection(prev => prev === title ? null : title);
+  }, []);
 
   /** Build fresh conversion context on demand */
   const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
@@ -120,6 +127,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
   const showSection = (name: string) => sectionMatchesQuery(name, searchQuery);
   const forceOpen = isSearching;
   const noResults = isSearching && !["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].some(s => showSection(s));
+
+  /** Focus-mode props for a named section */
+  const focusProps = (name: string) => focusMode && !isSearching ? {
+    focusOpen: expandedSection === name,
+    onToggle: handleSectionToggle,
+  } : {};
 
   // ── Render ──
   return (
