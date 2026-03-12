@@ -142,7 +142,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: "28px",
                 padding: "0 10px",
                 cursor: "pointer",
-                background: isActive ? "#c17a50" : "transparent",
+                background: isActive ? "#D97757" : "transparent",
                 color: isActive ? "#fff" : "rgba(0,0,0,0.45)",
                 border: "1px solid rgba(0,0,0,0.12)",
                 borderLeft: isFirst ? "1px solid rgba(0,0,0,0.12)" : "none",
@@ -179,7 +179,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             max={360}
             value={angle}
             onChange={(e) => emit({ angle: Number(e.target.value) })}
-            style={{ flex: 1, accentColor: "#c17a50" }}
+            style={{ flex: 1, accentColor: "#D97757" }}
           />
           <span
             style={{
@@ -227,7 +227,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: 0,
                 borderLeft: "4px solid transparent",
                 borderRight: "4px solid transparent",
-                borderBottom: `8px solid ${isSelected ? "#c17a50" : "rgba(0,0,0,0.6)"}`,
+                borderBottom: `8px solid ${isSelected ? "#D97757" : "rgba(0,0,0,0.6)"}`,
                 cursor: "pointer",
               }}
             />

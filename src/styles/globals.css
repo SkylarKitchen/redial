@@ -65,12 +65,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Reset for panel internals */
+/* Reset for panel internals (covers header, footer, and all descendants) */
 .__tuner-root,
 .__tuner-root *,
 .__tuner-root *::before,
 .__tuner-root *::after {
   box-sizing: border-box;
+  margin: 0;
+}
+
+.__tuner-header *,
+.__tuner-footer * {
+  padding: 0;
 }
 
 /* Scrollbar styling */

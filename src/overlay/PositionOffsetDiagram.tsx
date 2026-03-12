@@ -6,6 +6,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ms } from "./timing";
+import { color, text, border, surface, primaryAlpha, blackAlpha, font } from "./theme";
 
 interface PositionOffsetDiagramProps {
   top: number;
@@ -40,9 +41,9 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
       <div
         style={{
           position: "relative",
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: `1px solid ${color.border}`,
           borderRadius: "4px",
-          background: "rgba(193,122,80,0.06)",
+          background: primaryAlpha(0.06),
           padding: "0",
         }}
       >
@@ -59,7 +60,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             zIndex: 1,
           }}
         >
-          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(0,0,0,0.25)" }}>
+          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: text.hint }}>
             Offset
           </span>
           <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} conversionHint={conversionHint} />
@@ -80,9 +81,9 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             style={{
               flex: 1,
               height: "24px",
-              background: "rgba(0,0,0,0.04)",
+              background: color.input,
               borderRadius: "2px",
-              border: "1px dashed rgba(0,0,0,0.07)",
+              border: `1px dashed ${border.input}`,
               margin: "0 4px",
               display: "flex",
               alignItems: "center",
@@ -163,7 +164,7 @@ function EditableValue({
         style={{
           width: "32px",
           background: "rgba(0,0,0,0.07)",
-          border: "1px solid rgba(193, 122, 80, 0.5)",
+          border: "1px solid rgba(217, 119, 87, 0.5)",
           borderRadius: "2px",
           color: "rgba(0,0,0,0.87)",
           fontSize: "10px",

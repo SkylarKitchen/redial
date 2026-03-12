@@ -19,6 +19,7 @@ import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControl
 import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
 import { Link, Grid3x3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { primaryAlpha, blackAlpha, text } from "./theme";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 className={cn(
                   "flex items-center gap-1 py-[3px] px-2 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
                   showGridOverlay
-                    ? "bg-[rgba(193,122,80,0.2)] border border-[rgba(193,122,80,0.4)] text-[rgba(193,122,80,0.9)]"
+                    ? "bg-[rgba(217,119,87,0.2)] border border-[rgba(217,119,87,0.4)] text-[rgba(217,119,87,0.9)]"
                     : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
                 )}
               >

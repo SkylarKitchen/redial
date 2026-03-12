@@ -10,6 +10,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 import { ms } from "./timing";
+import { color, text, border, surface, blackAlpha, primaryAlpha, font } from "./theme";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ export function PositionSelector({
         style={{
           width: "64px",
           fontSize: "11px",
-          color: "rgba(0,0,0,0.45)",
+          color: text.label,
           flexShrink: 0,
           display: "inline-flex",
           alignItems: "center",
@@ -122,7 +123,7 @@ export function PositionSelector({
           tabIndex={0}
           onClick={() => setOpen((o) => !o)}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)";
+            (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px ${color.ring}`;
           }}
           onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = "none";
@@ -133,29 +134,29 @@ export function PositionSelector({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: open ? "rgba(0,0,0,0.07)" : "rgba(0,0,0,0.04)",
-            border: "1px solid rgba(0,0,0,0.08)",
+            background: open ? border.input : color.input,
+            border: `1px solid ${color.border}`,
             borderRadius: "3px",
-            color: "rgba(0,0,0,0.7)",
+            color: text.secondary,
             fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: font.mono,
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
             transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.07)";
+            if (!open) (e.currentTarget as HTMLElement).style.background = border.input;
           }}
           onMouseLeave={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+            if (!open) (e.currentTarget as HTMLElement).style.background = color.input;
           }}
         >
           <span style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-            <span style={{ color: "rgba(0,0,0,0.45)", display: "flex" }}>{current.icon}</span>
+            <span style={{ color: text.label, display: "flex" }}>{current.icon}</span>
             {current.label}
           </span>
-          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(0,0,0,0.3)", flexShrink: 0, marginLeft: "4px" }} />
+          <ChevronDown size={10} strokeWidth={2} style={{ color: blackAlpha(0.3), flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
         {/* Dropdown */}
@@ -167,8 +168,8 @@ export function PositionSelector({
               left: 0,
               right: 0,
               minWidth: "200px",
-              background: "#eae5df",
-              border: "1px solid rgba(0,0,0,0.12)",
+              background: color.popover,
+              border: `1px solid ${border.hover}`,
               borderRadius: "4px",
               boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
               zIndex: 200,
@@ -186,7 +187,7 @@ export function PositionSelector({
                     onMouseEnter={(e) => {
                       setHoveredValue(opt.value);
                       if (!isActive)
-                        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+                        (e.currentTarget as HTMLElement).style.background = color.input;
                     }}
                     onMouseLeave={(e) => {
                       setHoveredValue(null);
@@ -199,7 +200,7 @@ export function PositionSelector({
                       gap: "8px",
                       padding: "6px 10px",
                       cursor: "pointer",
-                      background: isActive ? "rgba(193,122,80,0.15)" : "transparent",
+                      background: isActive ? primaryAlpha(0.15) : "transparent",
                       transition: `background ${ms("micro")}`,
                     }}
                   >
@@ -208,7 +209,7 @@ export function PositionSelector({
                       style={{
                         width: "14px",
                         fontSize: "11px",
-                        color: isActive ? "#c17a50" : "transparent",
+                        color: isActive ? color.primary : "transparent",
                         flexShrink: 0,
                         textAlign: "center",
                       }}
@@ -224,7 +225,7 @@ export function PositionSelector({
                         justifyContent: "center",
                         width: "20px",
                         height: "20px",
-                        color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.4)",
+                        color: isActive ? color.foreground : blackAlpha(0.4),
                         flexShrink: 0,
                       }}
                     >
@@ -235,7 +236,7 @@ export function PositionSelector({
                     <span
                       style={{
                         fontSize: "12px",
-                        color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.6)",
+                        color: isActive ? color.foreground : blackAlpha(0.6),
                         fontWeight: isActive ? 500 : 400,
                       }}
                     >
@@ -249,7 +250,7 @@ export function PositionSelector({
             {/* Description area */}
             <div
               style={{
-                borderTop: "1px solid rgba(0,0,0,0.05)",
+                borderTop: `1px solid ${surface.hover}`,
                 padding: "10px 12px",
               }}
             >
@@ -258,10 +259,10 @@ export function PositionSelector({
                   margin: 0,
                   fontSize: "11px",
                   lineHeight: 1.45,
-                  color: "rgba(0,0,0,0.5)",
+                  color: blackAlpha(0.5),
                 }}
               >
-                <strong style={{ color: "rgba(0,0,0,0.7)" }}>{descriptionItem.label}</strong>{" "}
+                <strong style={{ color: text.secondary }}>{descriptionItem.label}</strong>{" "}
                 {descriptionItem.description.replace(`${descriptionItem.label} `, "")}
               </p>
             </div>

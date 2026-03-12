@@ -6,6 +6,7 @@
  */
 
 import { ms } from "./timing";
+import { text, border, surface, blackAlpha, font, color } from "./theme";
 
 const PRESETS: Array<{ label: string; width: number | null }> = [
   { label: "375", width: 375 },
@@ -27,14 +28,14 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
         alignItems: "center",
         gap: "4px",
         padding: "4px 12px",
-        borderBottom: "1px solid rgba(0,0,0,0.07)",
+        borderBottom: `1px solid ${border.input}`,
       }}
     >
       <span
         style={{
           fontSize: "10px",
-          color: "rgba(0,0,0,0.35)",
-          fontFamily: "system-ui, sans-serif",
+          color: text.disabled,
+          fontFamily: font.sans,
           textTransform: "uppercase",
           letterSpacing: "0.5px",
           marginRight: "4px",
@@ -51,12 +52,12 @@ export function ViewportBar({ active, onChange }: ViewportBarProps) {
             style={{
               padding: "2px 8px",
               fontSize: "11px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              fontFamily: font.mono,
               border: "none",
               borderRadius: "6px",
               cursor: "pointer",
-              background: isActive ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.05)",
-              color: isActive ? "rgba(0,0,0,0.87)" : "rgba(0,0,0,0.5)",
+              background: isActive ? border.hover : surface.hover,
+              color: isActive ? color.foreground : blackAlpha(0.5),
               transition: `background ${ms("normal")}, color ${ms("normal")}`,
             }}
           >

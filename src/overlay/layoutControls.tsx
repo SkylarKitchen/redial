@@ -65,7 +65,7 @@ export function MiniDropdown({ value, options, onChange }: {
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -118,7 +118,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
       <span className={cn(
         "text-[11px] shrink-0",
         isSet
-          ? "bg-[rgba(193,122,80,0.25)] text-[rgba(193,122,80,0.9)] rounded-[3px] px-1.5 py-0.5"
+          ? "bg-[rgba(217,119,87,0.25)] text-[rgba(217,119,87,0.9)] rounded-[3px] px-1.5 py-0.5"
           : "text-[var(--muted-foreground)] w-16",
       )}>Direction</span>
       <div ref={containerRef} className="flex relative">
@@ -159,11 +159,11 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
           onClick={() => setMoreOpen((o) => !o)}
           className={cn(
             "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
-            direction.includes("reverse") ? "bg-[rgba(193,122,80,0.2)]" : "bg-transparent",
+            direction.includes("reverse") ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
           )}
         ><ChevronDown size={10} strokeWidth={2} /></button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const active = opt.value === direction;
               return (
@@ -212,7 +212,7 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
         className="flex-1 h-[3px] outline-none cursor-pointer"
         style={{
           appearance: "none", WebkitAppearance: "none",
-          background: `linear-gradient(to right, #c17a50 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
+          background: `linear-gradient(to right, #D97757 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
           borderRadius: "2px",
         }}
       />
@@ -250,7 +250,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
       <span className={cn(
         "text-[11px] shrink-0",
         value !== "block"
-          ? "bg-[rgba(193,122,80,0.25)] text-[rgba(193,122,80,0.9)] rounded-[3px] px-1.5 py-0.5"
+          ? "bg-[rgba(217,119,87,0.25)] text-[rgba(217,119,87,0.9)] rounded-[3px] px-1.5 py-0.5"
           : "text-[var(--muted-foreground)] w-16",
       )}>Display</span>
       <div ref={containerRef} className="flex flex-1 relative">
@@ -277,7 +277,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                     if (nextTab != null) onChange(nextTab);
                   }
                 }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)"; }}
+                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)"; }}
                 onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 className={cn(
                   "flex-1 h-6 text-[10px] font-mono cursor-pointer border-none outline-none transition-colors capitalize",
@@ -294,17 +294,17 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
         </div>
         <button
           onClick={() => setMoreOpen((o) => !o)}
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(193,122,80,0.3)"; }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
           className={cn(
             "w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
-            !isTabValue ? "bg-[rgba(193,122,80,0.2)]" : "bg-transparent",
+            !isTabValue ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
           )}
         >
           <ChevronDown size={10} strokeWidth={2} />
         </button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DISPLAY_MORE.map((opt) => {
               const active = opt.value === value;
               return (

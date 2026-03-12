@@ -13,6 +13,7 @@
 
 import { useState, useCallback } from "react";
 import { ms } from "./timing";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
 
 export interface AlignBoxProps {
   justify: string;
@@ -121,8 +122,8 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   style={{
                     width: 32,
                     height: 32,
-                    background: "rgba(0,0,0,0.04)",
-                    border: "1px solid rgba(0,0,0,0.12)",
+                    background: color.input,
+                    border: `1px solid ${border.hover}`,
                     borderRadius: 4,
                     display: "flex",
                     alignItems: "center",
@@ -130,7 +131,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                     cursor: "pointer",
                     outline: "none",
                     transition: `border-color ${ms("fast")}`,
-                    borderColor: isHovered ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.12)",
+                    borderColor: isHovered ? blackAlpha(0.2) : border.hover,
                   }}
                 >
                   <div style={{
@@ -138,10 +139,10 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                     height: 10,
                     borderRadius: "50%",
                     background: isActive
-                      ? "#c17a50"
+                      ? color.primary
                       : isHovered
-                        ? "rgba(193,122,80,0.5)"
-                        : "rgba(0,0,0,0.2)",
+                        ? primaryAlpha(0.5)
+                        : blackAlpha(0.2),
                     transition: `background ${ms("fast")}`,
                   }} />
                 </div>
@@ -168,10 +169,10 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   cursor: "pointer",
                   outline: "none",
                   color: isActive
-                    ? "#c17a50"
+                    ? color.primary
                     : isHovered
-                      ? "rgba(0,0,0,0.5)"
-                      : "rgba(0,0,0,0.2)",
+                      ? blackAlpha(0.5)
+                      : blackAlpha(0.2),
                   transition: `color ${ms("fast")}`,
                 }}
               >
@@ -192,19 +193,19 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                 key={opt.value}
                 onClick={() => onChange(opt.value, align)}
                 style={{
-                  background: active ? "#c17a50" : "transparent",
-                  color: active ? "#fff" : "rgba(0,0,0,0.4)",
-                  border: "1px solid rgba(0,0,0,0.08)",
+                  background: active ? color.primary : "transparent",
+                  color: active ? color.primaryForeground : blackAlpha(0.4),
+                  border: `1px solid ${color.border}`,
                   borderRadius: "3px",
                   fontSize: "9px",
-                  fontFamily: "system-ui, sans-serif",
+                  fontFamily: font.sans,
                   padding: "2px 6px",
                   cursor: "pointer",
                   lineHeight: "16px",
                   transition: `background ${ms("fast")}, color ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+                  if (!active) (e.currentTarget as HTMLElement).style.background = surface.hover;
                 }}
                 onMouseLeave={(e) => {
                   if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";

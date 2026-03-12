@@ -99,11 +99,11 @@ function computeMetrics(el: Element): GridMetrics | null {
 // Styles (constants)
 // ---------------------------------------------------------------------------
 
-const LINE_COLOR = "rgba(193, 122, 80, 0.4)";
-const GAP_COLOR = "rgba(193, 122, 80, 0.08)";
-const LABEL_COLOR = "rgba(193, 122, 80, 0.8)";
+const LINE_COLOR = "rgba(217, 119, 87, 0.4)";
+const GAP_COLOR = "rgba(217, 119, 87, 0.08)";
+const LABEL_COLOR = "rgba(217, 119, 87, 0.8)";
 const LABEL_BG = "rgba(245, 240, 234, 0.85)";
-const OUTLINE_COLOR = "rgba(193, 122, 80, 0.25)";
+const OUTLINE_COLOR = "rgba(217, 119, 87, 0.25)";
 
 const LABEL_STYLE: React.CSSProperties = {
   position: "absolute",

@@ -10,6 +10,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
 import { Link, Unlink } from "lucide-react";
 import { ms } from "./timing";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -92,12 +93,12 @@ function RadiusInput({
         title={label}
         style={{
           width: "28px",
-          background: "rgba(0,0,0,0.07)",
-          border: "1px solid rgba(193,122,80,0.5)",
+          background: border.input,
+          border: `1px solid ${primaryAlpha(0.5)}`,
           borderRadius: "2px",
-          color: "rgba(0,0,0,0.87)",
+          color: color.foreground,
           fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
+          fontFamily: font.mono,
           textAlign: "center",
           padding: "2px",
           outline: "none",
@@ -118,20 +119,20 @@ function RadiusInput({
         display: "inline-block",
         width: "28px",
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
+        fontFamily: font.mono,
+        color: value !== 0 ? blackAlpha(0.6) : text.hint,
         cursor: "text",
         padding: "2px",
         borderRadius: "2px",
         textAlign: "center",
-        background: "rgba(0,0,0,0.03)",
+        background: blackAlpha(0.03),
         transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+        (e.currentTarget as HTMLElement).style.background = surface.hover;
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
+        (e.currentTarget as HTMLElement).style.background = blackAlpha(0.03);
       }}
     >
       {value}
@@ -141,8 +142,8 @@ function RadiusInput({
 
 function LinkIcon({ linked }: { linked: boolean }) {
   return linked
-    ? <Link size={12} strokeWidth={1.5} color="#c17a50" style={{ display: "block" }} />
-    : <Unlink size={12} strokeWidth={1.5} color="rgba(0,0,0,0.3)" style={{ display: "block" }} />;
+    ? <Link size={12} strokeWidth={1.5} color={color.primary} style={{ display: "block" }} />
+    : <Unlink size={12} strokeWidth={1.5} color={blackAlpha(0.3)} style={{ display: "block" }} />;
 }
 
 export function CornerRadiusEditor({
@@ -196,7 +197,7 @@ export function CornerRadiusEditor({
             style={{
               width: "24px",
               height: "24px",
-              border: "1px solid rgba(0,0,0,0.15)",
+              border: `1px solid ${border.strong}`,
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
               transition: `border-radius ${ms("normal")}`,
             }}
@@ -215,7 +216,7 @@ export function CornerRadiusEditor({
               justifyContent: "center",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+              (e.currentTarget as HTMLElement).style.background = surface.hover;
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -252,9 +253,9 @@ export function CornerRadiusEditor({
             style={{
               width: "100%",
               height: "32px",
-              border: "1px solid rgba(0,0,0,0.15)",
+              border: `1px solid ${border.strong}`,
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
-              background: "rgba(0,0,0,0.03)",
+              background: blackAlpha(0.03),
               transition: `border-radius ${ms("normal")}`,
             }}
           />
@@ -274,8 +275,8 @@ export function CornerRadiusEditor({
               onClick={() => onLinkedChange(true)}
               title="Link corners"
               style={{
-                background: "rgba(0,0,0,0.04)",
-                border: "1px solid rgba(0,0,0,0.07)",
+                background: color.input,
+                border: `1px solid ${border.input}`,
                 borderRadius: "3px",
                 cursor: "pointer",
                 padding: "3px",
@@ -285,10 +286,10 @@ export function CornerRadiusEditor({
                 transition: `background ${ms("normal")}`,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.08)";
+                (e.currentTarget as HTMLElement).style.background = surface.active;
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+                (e.currentTarget as HTMLElement).style.background = color.input;
               }}
             >
               <LinkIcon linked={false} />

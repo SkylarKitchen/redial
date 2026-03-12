@@ -62,7 +62,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     if (!document.getElementById(id)) {
       const style = document.createElement('style');
       style.id = id;
-      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(193,122,80,0.5); outline-offset: 1px; }`;
+      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(217,119,87,0.5); outline-offset: 1px; }`;
       document.head.appendChild(style);
     }
     return () => { document.getElementById(id)?.remove(); };

@@ -14,6 +14,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
 import { discoverColorVariables, type ColorVariable } from "./colorVariables";
+import { color as themeColor, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -489,7 +490,7 @@ export function ColorPickerEnhanced({
         position: "fixed",
         zIndex: 99999,
         width: 240,
-        background: "#eae5df",
+        background: themeColor.popover,
         borderRadius: 8,
         padding: 12,
         boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
@@ -594,8 +595,8 @@ export function ColorPickerEnhanced({
             onClick={cycleMode}
             style={{
               fontSize: 10,
-              color: "rgba(0,0,0,0.45)",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              color: text.label,
+              fontFamily: font.mono,
               cursor: "pointer",
               userSelect: "none",
               minWidth: 22,
@@ -603,8 +604,8 @@ export function ColorPickerEnhanced({
               letterSpacing: "0.02em",
               transition: `color ${ms("normal")}`,
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.7)"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.45)"; }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = text.secondary; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = text.label; }}
             title="Click to switch color mode"
           >
             {colorMode}
@@ -620,13 +621,13 @@ export function ColorPickerEnhanced({
               onKeyDown={(e) => { if (e.key === "Enter") applyHexInput(); }}
               style={{
                 flex: 1,
-                background: "#f5f0ea",
-                border: "1px solid rgba(0,0,0,0.07)",
+                background: themeColor.background,
+                border: `1px solid ${border.input}`,
                 borderRadius: 4,
                 padding: "3px 6px",
                 fontSize: 11,
-                fontFamily: "ui-monospace, 'SF Mono', monospace",
-                color: "rgba(0,0,0,0.7)",
+                fontFamily: font.mono,
+                color: text.secondary,
                 outline: "none",
                 minWidth: 0,
               }}
@@ -635,20 +636,20 @@ export function ColorPickerEnhanced({
             <div style={{ display: "flex", gap: 4, flex: 1 }}>
               {(["r", "g", "b"] as const).map((ch) => (
                 <div key={ch} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-                  <span style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase" }}>{ch}</span>
+                  <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono, textTransform: "uppercase" }}>{ch}</span>
                   <input
                     type="text"
                     value={currentRgb[ch]}
                     onChange={(e) => applyRgbChannel(ch, e.target.value)}
                     style={{
                       width: 0, flex: 1,
-                      background: "#f5f0ea",
-                      border: "1px solid rgba(0,0,0,0.07)",
+                      background: themeColor.background,
+                      border: `1px solid ${border.input}`,
                       borderRadius: 4,
                       padding: "3px 4px",
                       fontSize: 11,
-                      fontFamily: "ui-monospace, 'SF Mono', monospace",
-                      color: "rgba(0,0,0,0.7)",
+                      fontFamily: font.mono,
+                      color: text.secondary,
                       outline: "none",
                       textAlign: "center",
                     }}
@@ -664,20 +665,20 @@ export function ColorPickerEnhanced({
                 { key: "b" as const, val: Math.round(bri * 100) },
               ]).map(({ key, val }) => (
                 <div key={key} style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-                  <span style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase" }}>{key}</span>
+                  <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono, textTransform: "uppercase" }}>{key}</span>
                   <input
                     type="text"
                     value={val}
                     onChange={(e) => applyHsbChannel(key, e.target.value)}
                     style={{
                       width: 0, flex: 1,
-                      background: "#f5f0ea",
-                      border: "1px solid rgba(0,0,0,0.07)",
+                      background: themeColor.background,
+                      border: `1px solid ${border.input}`,
                       borderRadius: 4,
                       padding: "3px 4px",
                       fontSize: 11,
-                      fontFamily: "ui-monospace, 'SF Mono', monospace",
-                      color: "rgba(0,0,0,0.7)",
+                      fontFamily: font.mono,
+                      color: text.secondary,
                       outline: "none",
                       textAlign: "center",
                     }}
@@ -689,8 +690,8 @@ export function ColorPickerEnhanced({
 
           {/* Opacity display */}
           <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-            <span style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", fontFamily: "ui-monospace, 'SF Mono', monospace" }}>A</span>
-            <span style={{ fontSize: 11, fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(0,0,0,0.6)", minWidth: 26, textAlign: "right" }}>
+            <span style={{ fontSize: 9, color: blackAlpha(0.3), fontFamily: font.mono }}>A</span>
+            <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.6), minWidth: 26, textAlign: "right" }}>
               {Math.round(alpha * 100)}%
             </span>
           </div>
@@ -699,8 +700,8 @@ export function ColorPickerEnhanced({
 
       {/* ── CSS Variables ─────────────────────────────────── */}
       {colorVars.length > 0 && (
-        <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 8 }}>
-          <span style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
+        <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
+          <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
             Variables
           </span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
@@ -717,8 +718,8 @@ export function ColorPickerEnhanced({
                     height: 22,
                     borderRadius: 3,
                     border: isActive
-                      ? "2px solid rgba(193,122,80,0.8)"
-                      : "1px solid rgba(0,0,0,0.12)",
+                      ? `2px solid ${primaryAlpha(0.8)}`
+                      : `1px solid ${border.hover}`,
                     background: cv.resolvedValue,
                     cursor: "pointer",
                     padding: 0,
@@ -727,11 +728,11 @@ export function ColorPickerEnhanced({
                     position: "relative",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = "rgba(193,122,80,0.5)";
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
                     (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.12)";
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
                     (e.currentTarget as HTMLElement).style.transform = "scale(1)";
                   }}
                 />
@@ -742,9 +743,9 @@ export function ColorPickerEnhanced({
       )}
 
       {/* ── Swatches ──────────────────────────────────────── */}
-      <div style={{ borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 8 }}>
+      <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 9, color: "rgba(0,0,0,0.3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em" }}>
             Swatches
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -755,9 +756,9 @@ export function ColorPickerEnhanced({
                 title="Pick color from page"
                 style={{
                   background: "none",
-                  border: "1px solid rgba(0,0,0,0.08)",
+                  border: `1px solid ${themeColor.border}`,
                   borderRadius: 3,
-                  color: "rgba(0,0,0,0.45)",
+                  color: text.label,
                   width: 18,
                   height: 18,
                   cursor: "pointer",
@@ -768,12 +769,12 @@ export function ColorPickerEnhanced({
                   transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.25)";
-                  (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.7)";
+                  (e.currentTarget as HTMLElement).style.borderColor = text.hint;
+                  (e.currentTarget as HTMLElement).style.color = text.secondary;
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
-                  (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.45)";
+                  (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
+                  (e.currentTarget as HTMLElement).style.color = text.label;
                 }}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -790,9 +791,9 @@ export function ColorPickerEnhanced({
               aria-label="Save current color"
               style={{
                 background: "none",
-                border: "1px solid rgba(0,0,0,0.08)",
+                border: `1px solid ${themeColor.border}`,
                 borderRadius: 3,
-                color: "rgba(0,0,0,0.45)",
+                color: text.label,
                 fontSize: 11,
                 lineHeight: 1,
                 width: 18,
@@ -805,12 +806,12 @@ export function ColorPickerEnhanced({
                 transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.25)";
-                (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.7)";
+                (e.currentTarget as HTMLElement).style.borderColor = text.hint;
+                (e.currentTarget as HTMLElement).style.color = text.secondary;
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.08)";
-                (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.45)";
+                (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
+                (e.currentTarget as HTMLElement).style.color = text.label;
               }}
             >
               +
@@ -835,8 +836,8 @@ export function ColorPickerEnhanced({
                   height: 22,
                   borderRadius: 3,
                   border: swatch.toUpperCase() === currentHex.toUpperCase()
-                    ? "2px solid rgba(0,0,0,0.6)"
-                    : "1px solid rgba(0,0,0,0.12)",
+                    ? `2px solid ${blackAlpha(0.6)}`
+                    : `1px solid ${border.hover}`,
                   background: swatch,
                   cursor: "pointer",
                   padding: 0,
@@ -845,13 +846,13 @@ export function ColorPickerEnhanced({
                 }}
                 onMouseEnter={(e) => {
                   if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.35)";
+                    (e.currentTarget as HTMLElement).style.borderColor = text.disabled;
                   }
                   (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
                 }}
                 onMouseLeave={(e) => {
                   if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.12)";
+                    (e.currentTarget as HTMLElement).style.borderColor = border.hover;
                   }
                   (e.currentTarget as HTMLElement).style.transform = "scale(1)";
                 }}
@@ -859,7 +860,7 @@ export function ColorPickerEnhanced({
             ))}
           </div>
         ) : (
-          <div style={{ fontSize: 10, color: "rgba(0,0,0,0.2)", fontStyle: "italic" }}>
+          <div style={{ fontSize: 10, color: blackAlpha(0.2), fontStyle: "italic" }}>
             Click + to save colors
           </div>
         )}
@@ -867,8 +868,8 @@ export function ColorPickerEnhanced({
 
       {/* ── Recent Colors ──────────────────────────────── */}
       {recentColors.length > 0 && (
-        <div style={{ borderTop: "1px solid rgba(0,0,0,0.04)", paddingTop: 6 }}>
-          <span style={{ fontSize: 9, color: "rgba(0,0,0,0.2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+        <div style={{ borderTop: `1px solid ${themeColor.input}`, paddingTop: 6 }}>
+          <span style={{ fontSize: 9, color: blackAlpha(0.2), textTransform: "uppercase", letterSpacing: "0.04em" }}>
             Recent
           </span>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 4 }}>
@@ -880,7 +881,7 @@ export function ColorPickerEnhanced({
                 title={hex}
                 style={{
                   width: 18, height: 18, borderRadius: 2,
-                  border: "1px solid rgba(0,0,0,0.07)",
+                  border: `1px solid ${border.input}`,
                   background: hex, cursor: "pointer", padding: 0,
                 }}
               />

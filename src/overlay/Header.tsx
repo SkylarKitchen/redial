@@ -107,7 +107,7 @@ export function Header({
           </Badge>
           {totalChanges > 0 && (
             <Badge
-              className="bg-[#c17a50]/[0.15] border-[#c17a50]/[0.2] text-[#c17a50]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#c17a50]/[0.2]"
+              className="bg-[#D97757]/[0.15] border-[#D97757]/[0.2] text-[#D97757]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#D97757]/[0.2]"
               onClick={onShowSession}
               title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
             >

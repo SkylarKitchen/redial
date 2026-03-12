@@ -6,6 +6,7 @@
 
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { text } from "./theme";
 
 export interface DragHandleProps {
   isDragging?: boolean;
@@ -23,7 +24,7 @@ export function DragHandle({ isDragging, onPointerDown, style }: DragHandleProps
       )}
       style={style}
     >
-      <GripVertical size={12} color="rgba(0,0,0,0.45)" />
+      <GripVertical size={12} color={text.label} />
     </span>
   );
 }

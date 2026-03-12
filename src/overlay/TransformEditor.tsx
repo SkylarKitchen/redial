@@ -161,7 +161,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.2)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.2)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -412,7 +412,7 @@ function AxisInput({
       style={{
         width: "42px",
         background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(193,122,80,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
         borderRadius: "2px",
         color: "rgba(0,0,0,0.7)",
         fontSize: "10px",

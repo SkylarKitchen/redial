@@ -100,7 +100,7 @@ export const PositionSection = memo(function PositionSection({
               className={cn(
                 "px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border",
                 zIndexAuto
-                  ? "bg-[#c17a50]/20 text-[#c17a50] border-[#c17a50]/30"
+                  ? "bg-[#D97757]/20 text-[#D97757] border-[#D97757]/30"
                   : "bg-black/[0.04] text-black/35 border-black/07"
               )}
             >

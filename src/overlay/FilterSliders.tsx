@@ -230,7 +230,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                   height: "3px",
                   appearance: "none",
                   WebkitAppearance: "none",
-                  background: `linear-gradient(to right, #c17a50 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
+                  background: `linear-gradient(to right, #D97757 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
                   borderRadius: "2px",
                   outline: "none",
                   cursor: "pointer",
@@ -373,7 +373,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.2)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.2)";
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -448,7 +448,7 @@ function NumberInput({
       style={{
         width: "36px",
         background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(193,122,80,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
         borderRadius: "2px",
         color: "rgba(0,0,0,0.7)",
         fontSize: "10px",

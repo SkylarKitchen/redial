@@ -13,6 +13,7 @@ import { useRef, useCallback, useState } from "react";
 import { ms } from "./timing";
 import { setScrubActive } from "./scrubState";
 import { beginBatch, endBatch } from "./apply";
+import { color, text, font } from "./theme";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
@@ -175,9 +176,9 @@ export function LabelScrub({
       style={{
         cursor: "ew-resize",
         userSelect: "none",
-        color: scrubbing ? "#c17a50" : "rgba(0,0,0,0.45)",
+        color: scrubbing ? color.primary : text.label,
         fontSize: "11px",
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: font.sans,
         lineHeight: "20px",
         transition: scrubbing ? "none" : `color ${ms("normal")}`,
         touchAction: "none",

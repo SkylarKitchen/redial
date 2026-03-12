@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ms } from "./timing";
 import { isNavigableElement } from "./util";
+import { color, primaryAlpha, font } from "./theme";
 
 interface SelectorProps {
   active: boolean;
@@ -170,9 +171,9 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           display: "none",
           pointerEvents: "none",
           zIndex: 2147483646,
-          border: "1.5px solid #c17a50",
+          border: `1.5px solid ${color.primary}`,
           borderRadius: "2px",
-          boxShadow: "0 0 0 1px rgba(193, 122, 80, 0.3)",
+          boxShadow: `0 0 0 1px ${primaryAlpha(0.3)}`,
           transition: `all ${ms("instant")} ease-out`,
         }}
       />
@@ -183,10 +184,10 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           display: "none",
           pointerEvents: "none",
           zIndex: 2147483647,
-          background: "#c17a50",
-          color: "#fff",
+          background: color.primary,
+          color: color.primaryForeground,
           fontSize: "10px",
-          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontFamily: font.sans,
           padding: "2px 6px",
           borderRadius: "2px",
           whiteSpace: "nowrap",

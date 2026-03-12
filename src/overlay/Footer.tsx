@@ -257,7 +257,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleSave}
             disabled={count === 0 || saving}
             title="Save to source"
-            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#c17a50] text-white shadow-[0_1px_3px_rgba(193,122,80,0.4)] hover:bg-[#c17a50]/90 disabled:shadow-none"
+            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#D97757] text-white shadow-[0_1px_3px_rgba(217,119,87,0.4)] hover:bg-[#D97757]/90 disabled:shadow-none"
           >
             {saving ? "..." : "Save"}
           </Button>

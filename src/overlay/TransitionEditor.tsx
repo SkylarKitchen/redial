@@ -10,6 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
 
 export interface TransitionValue {
   property: string;
@@ -160,17 +161,17 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
         onClick={handleAdd}
         style={{
           background: "transparent",
-          border: "1px solid rgba(0,0,0,0.08)",
+          border: `1px solid ${color.border}`,
           borderRadius: "3px",
-          color: "rgba(0,0,0,0.45)",
+          color: text.label,
           fontSize: "10px",
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: font.sans,
           padding: "3px 8px",
           cursor: "pointer",
           alignSelf: "flex-start",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+          (e.currentTarget as HTMLElement).style.background = color.input;
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -230,12 +231,12 @@ function TransitionCard({
     const fromValues: Record<string, string> = {
       opacity: "0",
       transform: "translateY(20px)",
-      "background-color": "rgba(193,122,80,0.3)",
-      background: "rgba(193,122,80,0.3)",
-      color: "rgba(193,122,80,0.8)",
-      "border-color": "rgba(193,122,80,0.5)",
+      "background-color": "rgba(217,119,87,0.3)",
+      background: "rgba(217,119,87,0.3)",
+      color: "rgba(217,119,87,0.8)",
+      "border-color": "rgba(217,119,87,0.5)",
       "border-radius": "0px",
-      "box-shadow": "0 0 0 4px rgba(193,122,80,0.3)",
+      "box-shadow": "0 0 0 4px rgba(217,119,87,0.3)",
       width: "50%",
       height: "50%",
       "font-size": "50%",
@@ -324,8 +325,8 @@ function TransitionCard({
   return (
     <div
       style={{
-        background: "rgba(0,0,0,0.02)",
-        border: "1px solid rgba(0,0,0,0.05)",
+        background: blackAlpha(0.02),
+        border: `1px solid ${surface.hover}`,
         borderRadius: "3px",
         padding: "6px 8px",
         display: "flex",
@@ -356,7 +357,7 @@ function TransitionCard({
           border: "none",
           cursor: "pointer",
           padding: "2px",
-          color: transition.visible !== false ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.15)",
+          color: transition.visible !== false ? text.label : border.strong,
           pointerEvents: isDragging ? "none" : "auto",
         }}
         title={transition.visible !== false ? "Hide transition" : "Show transition"}
@@ -381,7 +382,7 @@ function TransitionCard({
             justifyContent: "center",
             background: "transparent",
             border: "none",
-            color: playing ? "rgba(193,122,80,0.7)" : "rgba(0,0,0,0.25)",
+            color: playing ? primaryAlpha(0.7) : text.hint,
             cursor: playing ? "default" : "pointer",
             padding: 0,
             borderRadius: "2px",
@@ -390,13 +391,13 @@ function TransitionCard({
           }}
           onMouseEnter={(e) => {
             if (!playing) {
-              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(193,122,80,0.8)";
+              (e.currentTarget as HTMLElement).style.background = surface.hover;
+              (e.currentTarget as HTMLElement).style.color = primaryAlpha(0.8);
             }
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = playing ? "rgba(193,122,80,0.7)" : "rgba(0,0,0,0.25)";
+            (e.currentTarget as HTMLElement).style.color = playing ? primaryAlpha(0.7) : text.hint;
           }}
         >
           <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -419,21 +420,21 @@ function TransitionCard({
           justifyContent: "center",
           background: "transparent",
           border: "none",
-          color: "rgba(0,0,0,0.25)",
+          color: text.hint,
           cursor: "pointer",
           fontSize: "11px",
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: font.sans,
           padding: 0,
           borderRadius: "2px",
           lineHeight: 1,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
-          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
+          (e.currentTarget as HTMLElement).style.background = surface.hover;
+          (e.currentTarget as HTMLElement).style.color = blackAlpha(0.6);
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.25)";
+          (e.currentTarget as HTMLElement).style.color = text.hint;
         }}
       >
         ×
@@ -464,7 +465,7 @@ function TransitionCard({
                 height: "3px",
                 appearance: "none",
                 WebkitAppearance: "none",
-                background: `linear-gradient(to right, #c17a50 ${durationPct}%, rgba(0,0,0,0.12) ${durationPct}%)`,
+                background: filledTrackBg(durationPct),
                 borderRadius: "2px",
                 outline: "none",
                 cursor: "pointer",
@@ -472,7 +473,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.duration} onChange={(v) => onUpdate({ duration: v })} />
-          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(0,0,0,0.25)", width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.hint, width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>
@@ -514,7 +515,7 @@ function TransitionCard({
                 height: "3px",
                 appearance: "none",
                 WebkitAppearance: "none",
-                background: `linear-gradient(to right, #c17a50 ${delayPct}%, rgba(0,0,0,0.12) ${delayPct}%)`,
+                background: filledTrackBg(delayPct),
                 borderRadius: "2px",
                 outline: "none",
                 cursor: "pointer",
@@ -522,7 +523,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.delay} onChange={(v) => onUpdate({ delay: v })} />
-          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(0,0,0,0.25)", width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: font.mono, color: text.hint, width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>
@@ -539,8 +540,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
         style={{
           width: "46px",
           fontSize: "10px",
-          fontFamily: "system-ui, sans-serif",
-          color: "rgba(0,0,0,0.45)",
+          fontFamily: font.sans,
+          color: text.label,
           flexShrink: 0,
         }}
       >
@@ -566,12 +567,12 @@ function SelectDropdown({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        background: "rgba(0,0,0,0.04)",
-        border: "1px solid rgba(0,0,0,0.07)",
+        background: color.input,
+        border: `1px solid ${border.input}`,
         borderRadius: "2px",
-        color: "rgba(0,0,0,0.7)",
+        color: text.secondary,
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         padding: "2px 4px",
         outline: "none",
         cursor: "pointer",
@@ -638,7 +639,7 @@ function MsInput({ value, onChange }: { value: number; onChange: (v: number) => 
       style={{
         width: "36px",
         background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(193,122,80,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
         borderRadius: "2px",
         color: "rgba(0,0,0,0.7)",
         fontSize: "10px",
@@ -697,14 +698,14 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.lineTo(toX(x1), toY(y1));
-    ctx.strokeStyle = "rgba(193,122,80,0.4)";
+    ctx.strokeStyle = "rgba(217,119,87,0.4)";
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(toX(1), toY(1));
     ctx.lineTo(toX(x2), toY(y2));
-    ctx.strokeStyle = "rgba(193,122,80,0.4)";
+    ctx.strokeStyle = "rgba(217,119,87,0.4)";
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
@@ -712,7 +713,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.bezierCurveTo(toX(x1), toY(y1), toX(x2), toY(y2), toX(1), toY(1));
-    ctx.strokeStyle = "#c17a50";
+    ctx.strokeStyle = "#D97757";
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -720,7 +721,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     for (const [px, py] of [[x1, y1], [x2, y2]] as const) {
       ctx.beginPath();
       ctx.arc(toX(px), toY(py), 2, 0, Math.PI * 2);
-      ctx.fillStyle = "#c17a50";
+      ctx.fillStyle = "#D97757";
       ctx.fill();
     }
   }, [points]);
