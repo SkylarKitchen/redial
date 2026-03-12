@@ -15,7 +15,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
-import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips, useValueFlash } from "./controls";
+import { selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { ms } from "./timing";
 import { color, text, border, surface, blackAlpha, primaryAlpha } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";

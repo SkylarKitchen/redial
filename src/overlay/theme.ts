@@ -165,8 +165,8 @@ export const indicatorColor: Record<IndicatorColorType, string> = {
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: "rgba(255,152,87,0.08)",
-  marginHover: "rgba(255,152,87,0.22)",
-  paddingBase: "rgba(87,168,255,0.08)",
-  paddingHover: "rgba(87,168,255,0.22)",
+  marginBase: "rgba(0,0,0,0.03)",
+  marginHover: "rgba(0,0,0,0.06)",
+  paddingBase: "rgba(0,0,0,0.02)",
+  paddingHover: "rgba(0,0,0,0.05)",
 } as const;
