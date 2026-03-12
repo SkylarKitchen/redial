@@ -3,6 +3,8 @@
 A floating Webflow-style CSS tuning panel for Next.js.
 Click any element, drag to tune, save to source files via HMR.
 
+> Webflow proved that visual CSS tuning should happen in a GUI, not a text editor. But Webflow is a platform — if you build in Next.js, you're back to editing files and waiting. Redial brings that direct-manipulation workflow to your actual codebase. See [Why Redial Exists](position.md) for the full story.
+
 ```tsx
 import { Tuner } from "redial";
 
@@ -59,6 +61,7 @@ npm test           # vitest
 
 ## Further Reading
 
+- [Why Redial Exists](position.md) — Market position and the gap this fills
 - [Workflow & Customer Story](workflow.md)
 - [How Redial Works](how-redial-works.md)
 - [Save Pipeline](save-pipeline.md)

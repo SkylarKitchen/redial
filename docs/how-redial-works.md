@@ -6,6 +6,8 @@ Redial is a floating CSS tuning panel that overlays on top of any Next.js app du
 
 No copying hex codes. No switching tabs to find the right `.module.scss` file. No guessing which line to edit.
 
+Nothing else in the ecosystem fills this gap. DevTools changes evaporate on reload. Libraries like DialKit provide drag-to-tune primitives but don't form a complete workflow — they don't infer which properties matter, and they don't write back to source. AI-assisted coding introduces minutes of latency per visual tweak where a slider would take seconds. Redial is the layer that connects direct manipulation to your actual code.
+
 ## Who Is This For?
 
 - **Designers in code** who think visually and want to tune spacing, color, and typography by feel rather than by typing values
