@@ -11,6 +11,7 @@ import { POSITION_UNITS, FLOAT_OPTIONS, CLEAR_OPTIONS } from "./panelConstants";
 
 interface PositionSectionProps {
   ctx: SectionCtx;
+  forceOpen?: boolean;
 }
 
 export const PositionSection = memo(function PositionSection({

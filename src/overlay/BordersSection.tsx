@@ -11,10 +11,12 @@ import { BORDER_STYLE_OPTIONS, BORDER_UNITS } from "./panelConstants";
 
 interface BordersSectionProps {
   ctx: SectionCtx;
+  forceOpen?: boolean;
 }
 
 export const BordersSection = memo(function BordersSection({
   ctx,
+  forceOpen,
 }: BordersSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
 
@@ -78,7 +80,7 @@ export const BordersSection = memo(function BordersSection({
   );
 
   return (
-    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])}>
+    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen}>
       <SideSelector value={borderSide} onChange={setBorderSide} />
       <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} />
       <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const c = convertUnit(borderWidth, borderWidthUnit, u, getConversionCtx()); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} />

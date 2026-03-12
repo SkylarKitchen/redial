@@ -34,6 +34,7 @@ export interface LayoutSectionProps {
   parentIsGrid: boolean;
   showGridOverlay?: boolean;
   onToggleGridOverlay?: () => void;
+  forceOpen?: boolean;
 }
 
 // ─── Component ───────────────────────────────────────────────────────

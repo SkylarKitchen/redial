@@ -10,6 +10,7 @@ interface SpacingSectionProps {
   ctx: SectionCtx;
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
+  forceOpen?: boolean;
 }
 
 export const SpacingSection = memo(function SpacingSection({
