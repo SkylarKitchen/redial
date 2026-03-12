@@ -14,11 +14,11 @@
       "default": "./dist/server/index.js"
     },
     "./next-plugin": "./next-plugin.cjs",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./dist/index.css"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
@@ -31,7 +31,6 @@
   ],
   "files": [
     "dist",
-    "src/styles.css",
     "next-plugin.cjs"
   ],
   "license": "MIT",
