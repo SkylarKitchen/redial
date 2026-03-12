@@ -16,6 +16,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 import { CommonPanel } from "./CommonPanel";
+import { PromptPanel } from "./PromptPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
@@ -96,8 +97,8 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, [getScrollViewport]);
 
-  // Tab state: "common" (flat simplified view) or "custom" (full WebflowPanel)
-  const [activeTab, setActiveTab] = useState<"common" | "custom">("common");
+  // Tab state: "common" (flat simplified view), "custom" (full WebflowPanel), or "prompt" (AI context copy)
+  const [activeTab, setActiveTab] = useState<"common" | "custom" | "prompt">("common");
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -1371,8 +1372,9 @@ export function Overlay() {
           )}
           {/* -- Common / Custom tab bar -- */}
           <div className="flex border-b border-black/[0.04] px-3 shrink-0">
-            {(["common", "custom"] as const).map((tab) => {
+            {(["common", "custom", "prompt"] as const).map((tab) => {
               const isActive = activeTab === tab;
+              const label = tab === "common" ? "Common" : tab === "custom" ? "Custom" : "Prompt";
               return (
                 <button
                   key={tab}
@@ -1384,7 +1386,7 @@ export function Overlay() {
                       : "border-b-transparent font-normal text-black/35",
                   )}
                 >
-                  {tab === "common" ? "Common" : "Custom"}
+                  {label}
                 </button>
               );
             })}
@@ -1414,7 +1416,7 @@ export function Overlay() {
                     spacing={inferResult.spacing}
                     onSpacingChange={handleSpacingChange}
                   />
-                ) : (
+                ) : activeTab === "custom" ? (
                   <WebflowPanel
                     key={panelKey}
                     element={selectedEl}
@@ -1426,6 +1428,11 @@ export function Overlay() {
                     onToggleBoxModel={() => setShowBoxModel((v) => !v)}
                     searchQuery={searchQuery}
                     focusMode={focusMode}
+                  />
+                ) : (
+                  <PromptPanel
+                    key={panelKey}
+                    element={selectedEl}
                   />
                 )}
               </PanelErrorBoundary>
