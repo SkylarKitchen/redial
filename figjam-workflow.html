@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Redial — Workflow &amp; Customer Story</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f5f0eb;
+    color: #1a1a1a;
+    padding: 80px;
+  }
+
+  /* ── Board container ── */
+  .board {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+  }
+
+  /* ── Title card ── */
+  .title-card {
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 24px;
+    padding: 56px 64px;
+    text-align: center;
+  }
+  .title-card h1 {
+    font-size: 48px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    margin-bottom: 12px;
+  }
+  .title-card .accent { color: #7c6bff; }
+  .title-card p {
+    font-size: 20px;
+    color: rgba(255,255,255,0.6);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* ── Section headers ── */
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #7c6bff;
+    margin-bottom: 24px;
+  }
+
+  /* ── Persona card ── */
+  .persona-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .persona-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    border: 2px solid #e8e3dd;
+  }
+  .persona-card h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .persona-card .role {
+    font-size: 15px;
+    color: #888;
+    margin-bottom: 20px;
+  }
+  .persona-card .detail {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .persona-card .detail .label {
+    font-weight: 600;
+    color: #555;
+    min-width: 80px;
+  }
+
+  /* ── Context card (the problem) ── */
+  .context-card {
+    background: #fff4e0;
+    border-radius: 20px;
+    padding: 40px;
+    border: 2px solid #f0d9a0;
+  }
+  .context-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #a07800;
+  }
+  .context-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .context-card li {
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 6px 0;
+    padding-left: 24px;
+    position: relative;
+  }
+  .context-card li::before {
+    content: "!";
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: #c99600;
+  }
+
+  /* ── Workflow flow ── */
+  .workflow-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .flow-lane {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .lane-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .flow-step {
+    flex: 1;
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .flow-step .step-num {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    opacity: 0.6;
+  }
+  .flow-step h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .flow-step p {
+    font-size: 13px;
+    line-height: 1.4;
+    opacity: 0.75;
+  }
+
+  /* Step colors */
+  .step-trigger { background: #e8e0ff; border: 2px solid #c4b5ff; }
+  .step-trigger h4 { color: #5a47b0; }
+  .step-select  { background: #dce8ff; border: 2px solid #a8c4ff; }
+  .step-select h4 { color: #3363b0; }
+  .step-inspect { background: #d6f0ff; border: 2px solid #8dd0f5; }
+  .step-inspect h4 { color: #1a6fa0; }
+  .step-tune    { background: #d4f5e0; border: 2px solid #8ae0a8; }
+  .step-tune h4 { color: #1a8040; }
+  .step-preview { background: #fff4d6; border: 2px solid #f0d88a; }
+  .step-preview h4 { color: #9a7700; }
+  .step-save    { background: #fde0e0; border: 2px solid #f5a0a0; }
+  .step-save h4 { color: #b03333; }
+  .step-hmr     { background: #e8e0ff; border: 2px solid #c4b5ff; }
+  .step-hmr h4 { color: #5a47b0; }
+
+  .flow-arrow {
+    font-size: 20px;
+    color: #bbb;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── Before / After comparison ── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap: 0;
+    align-items: stretch;
+  }
+  .comparison-col {
+    border-radius: 20px;
+    padding: 36px 32px;
+  }
+  .comparison-before {
+    background: #fff;
+    border: 2px solid #e8e3dd;
+  }
+  .comparison-after {
+    background: #1a1a1a;
+    color: #fff;
+    border: 2px solid #333;
+  }
+  .comparison-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #ccc;
+  }
+  .comparison-col h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .comparison-before h3 { color: #c44; }
+  .comparison-after h3 { color: #6be68c; }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(0,0,0,0.1);
+  }
+  .comparison-after .timeline::before {
+    background: rgba(255,255,255,0.15);
+  }
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+    position: relative;
+  }
+  .timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -24px;
+    top: 14px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ddd;
+    border: 2px solid #ccc;
+  }
+  .comparison-after .timeline-item::before {
+    background: #7c6bff;
+    border-color: #5a47b0;
+  }
+  .timeline-item .time {
+    font-size: 12px;
+    font-weight: 600;
+    color: #aaa;
+    min-width: 44px;
+    padding-top: 2px;
+  }
+  .timeline-item .action {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .comparison-after .timeline-item .time { color: #7c6bff; }
+
+  /* ── Sticky notes row ── */
+  .stickies {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .sticky {
+    border-radius: 4px;
+    padding: 28px 24px;
+    font-size: 15px;
+    line-height: 1.5;
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.08);
+    transform: rotate(var(--rot, 0deg));
+  }
+  .sticky h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .sticky-yellow  { background: #fff9c4; --rot: -1deg; }
+  .sticky-green   { background: #c8f7c5; --rot: 0.5deg; }
+  .sticky-blue    { background: #c5e1f7; --rot: -0.5deg; }
+  .sticky-pink    { background: #f7c5d5; --rot: 1deg; }
+
+  /* ── Outcome card ── */
+  .outcome-card {
+    background: linear-gradient(135deg, #7c6bff, #5a47b0);
+    color: #fff;
+    border-radius: 24px;
+    padding: 48px 56px;
+    text-align: center;
+  }
+  .outcome-card h3 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 16px;
+    letter-spacing: -0.5px;
+  }
+  .outcome-card p {
+    font-size: 18px;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+    opacity: 0.85;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 36px;
+  }
+  .metric {
+    background: rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 28px 20px;
+    text-align: center;
+  }
+  .metric .number {
+    font-size: 40px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .metric .label {
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  /* ── Architecture strip ── */
+  .arch-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .arch-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 28px;
+    border: 2px solid #e8e3dd;
+  }
+  .arch-card .icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .arch-card h4 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .arch-card p {
+    font-size: 14px;
+    color: #777;
+    line-height: 1.5;
+  }
+  .arch-card code {
+    font-size: 12px;
+    background: #f0ede8;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', ui-monospace, monospace;
+  }
+</style>
+</head>
+<body>
+<div class="board">
+
+  <!-- ═══ TITLE ═══ -->
+  <div class="title-card" data-component="title">
+    <h1><span class="accent">Redial</span> — Customer Workflow</h1>
+    <p>A floating Webflow-style CSS tuning panel for Next.js. Click any element, drag to tune, save to source.</p>
+  </div>
+
+  <!-- ═══ PERSONA + PROBLEM ═══ -->
+  <div>
+    <div class="section-label">Customer Story</div>
+    <div class="persona-row">
+      <div class="persona-card" data-component="persona">
+        <h3>Maya Chen</h3>
+        <div class="role">Senior Frontend Engineer @ a SaaS startup</div>
+        <div class="detail"><span class="label">Stack</span> Next.js 15, Tailwind, TypeScript</div>
+        <div class="detail"><span class="label">Focus</span> Landing pages &amp; marketing site</div>
+        <div class="detail"><span class="label">Goal</span> Ship pixel-perfect designs fast without a separate design tool roundtrip</div>
+        <div class="detail"><span class="label">Frustration</span> "I spend more time toggling between VS Code and Chrome than actually designing."</div>
+      </div>
+      <div class="context-card" data-component="problem">
+        <h3>The Problem</h3>
+        <ul>
+          <li>Visual CSS iteration is slow: edit code, save, wait for HMR, check browser, repeat</li>
+          <li>DevTools can tweak styles but changes are lost on reload — no persistence</li>
+          <li>Webflow/Figma give visual control but don't write to her actual codebase</li>
+          <li>Design handoff gaps: Figma says 24px, the computed value is 22px — who's right?</li>
+          <li>Context switching kills flow state — each round-trip costs 30-60 seconds</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WORKFLOW ═══ -->
+  <div class="workflow-section">
+    <div class="section-label">Redial Workflow</div>
+    <div class="flow-lane">
+      <div class="lane-label">Developer Flow</div>
+      <div class="flow-row">
+        <div class="flow-step step-trigger" data-component="step-1">
+          <div class="step-num">Step 1</div>
+          <h4>Activate</h4>
+          <p>Press hotkey to enter selection mode</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-select" data-component="step-2">
+          <div class="step-num">Step 2</div>
+          <h4>Select Element</h4>
+          <p>Click any element on the page to target it</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-inspect" data-component="step-3">
+          <div class="step-num">Step 3</div>
+          <h4>Inspect Styles</h4>
+          <p>Panel shows computed CSS organized by section</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-tune" data-component="step-4">
+          <div class="step-num">Step 4</div>
+          <h4>Tune Properties</h4>
+          <p>Drag sliders, pick colors, toggle layout modes</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-preview" data-component="step-5">
+          <div class="step-num">Step 5</div>
+          <h4>Live Preview</h4>
+          <p>Changes apply instantly via inline styles</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-save" data-component="step-6">
+          <div class="step-num">Step 6</div>
+          <h4>Save to Source</h4>
+          <p>Click save — writes CSS changes to your actual files</p>
+        </div>
+        <div class="flow-arrow">&rarr;</div>
+        <div class="flow-step step-hmr" data-component="step-7">
+          <div class="step-num">Step 7</div>
+          <h4>HMR Sync</h4>
+          <p>Next.js hot-reloads with the persisted changes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BEFORE / AFTER ═══ -->
+  <div>
+    <div class="section-label">Before &amp; After Redial</div>
+    <div class="comparison">
+      <div class="comparison-col comparison-before" data-component="before">
+        <h3>Without Redial</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="time">0:00</span>
+            <span class="action">Open VS Code, find the component file</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:30</span>
+            <span class="action">Guess at a padding value: <code>p-6</code> maybe?</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:45</span>
+            <span class="action">Save file, wait for HMR to rebuild</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">1:10</span>
+            <span class="action">Switch to Chrome, check the result</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">1:20</span>
+            <span class="action">Not quite right. Back to VS Code...</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">1:40</span>
+            <span class="action">Try <code>p-8</code>, save, wait, check...</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">2:15</span>
+            <span class="action">Open DevTools to see computed values</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">2:45</span>
+            <span class="action">Tweak in DevTools — looks perfect!</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">3:00</span>
+            <span class="action">Manually copy values back to source...</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">3:30</span>
+            <span class="action">Finally saved. One property took 3.5 min.</span>
+          </div>
+        </div>
+      </div>
+      <div class="comparison-divider">&rarr;</div>
+      <div class="comparison-col comparison-after" data-component="after">
+        <h3>With Redial</h3>
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="time">0:00</span>
+            <span class="action">Press hotkey, click the element</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:03</span>
+            <span class="action">See all computed styles organized by section</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:05</span>
+            <span class="action">Drag the padding slider — live preview updates instantly</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:12</span>
+            <span class="action">Looks perfect. Click Save.</span>
+          </div>
+          <div class="timeline-item">
+            <span class="time">0:14</span>
+            <span class="action">Source file updated, HMR confirms. Done.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ KEY VALUE PROPS (stickies) ═══ -->
+  <div>
+    <div class="section-label">Why It Matters</div>
+    <div class="stickies">
+      <div class="sticky sticky-yellow" data-component="sticky-1">
+        <h4>Zero Context Switch</h4>
+        Stay in the browser. No more toggling between editor, browser, and DevTools.
+      </div>
+      <div class="sticky sticky-green" data-component="sticky-2">
+        <h4>Real Persistence</h4>
+        Unlike DevTools, changes save directly to your source files. Nothing is lost on reload.
+      </div>
+      <div class="sticky sticky-blue" data-component="sticky-3">
+        <h4>Webflow-Grade UX</h4>
+        Organized sections for Layout, Spacing, Size, Typography, Borders, Effects — like a visual design tool.
+      </div>
+      <div class="sticky sticky-pink" data-component="sticky-4">
+        <h4>Fits Your Stack</h4>
+        Works with Next.js, React, and your existing build pipeline. Drop in as a dev dependency.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ARCHITECTURE LAYER ═══ -->
+  <div>
+    <div class="section-label">Under the Hood</div>
+    <div class="arch-row">
+      <div class="arch-card" data-component="arch-intelligence">
+        <div class="icon">&#x1f9e0;</div>
+        <h4>Intelligence Layer</h4>
+        <p><code>infer.ts</code> reads <code>getComputedStyle()</code> from the selected element and generates a structured config of editable CSS properties.</p>
+      </div>
+      <div class="arch-card" data-component="arch-rendering">
+        <div class="icon">&#x1f3a8;</div>
+        <h4>Rendering Layer</h4>
+        <p>Context-aware sliders, color pickers, and segmented controls — built with DialKit + Radix — organized into collapsible Webflow-style sections.</p>
+      </div>
+      <div class="arch-card" data-component="arch-persistence">
+        <div class="icon">&#x1f4be;</div>
+        <h4>Persistence Layer</h4>
+        <p><code>apply.ts</code> writes inline styles for live preview. <code>commit.ts</code> writes to source files. Next.js HMR hot-reloads to confirm.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OUTCOME ═══ -->
+  <div class="outcome-card" data-component="outcome">
+    <h3>Maya's Outcome</h3>
+    <p>"I tuned the entire hero section — padding, font sizes, colors, border radius — in under 5 minutes. It used to take me 30+ minutes of back-and-forth. Redial changed how I build."</p>
+    <div class="metrics">
+      <div class="metric" data-component="metric-1">
+        <div class="number">15x</div>
+        <div class="label">Faster iteration on visual CSS</div>
+      </div>
+      <div class="metric" data-component="metric-2">
+        <div class="number">0</div>
+        <div class="label">Lost changes (persists to source)</div>
+      </div>
+      <div class="metric" data-component="metric-3">
+        <div class="number">1 line</div>
+        <div class="label">To install as a Next.js plugin</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

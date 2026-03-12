@@ -1,5 +1,4 @@
 import React, { useState, useCallback, memo } from "react";
-import { cn } from "@/lib/utils";
 import { Section, SliderRow } from "./controls";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
@@ -7,28 +6,51 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
+import { resetAndReadNum, resetAndReadStr } from "./apply";
 import { parseNum } from "./cssParsers";
 import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, PIN_PRESETS } from "./panelConstants";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { ms } from "./timing";
-import { ChevronRight, Layers, Minus, AlignLeft, AlignRight, X } from "lucide-react";
+import { ChevronDown, LocateFixed, X } from "lucide-react";
+import {
+  PositionTopLeftIcon, PositionTopRightIcon,
+  PositionBottomLeftIcon, PositionBottomRightIcon,
+  PositionLeftIcon, PositionRightIcon,
+  PositionBottomIcon, PositionTopIcon,
+  PositionAllIcon,
+  FloatLeftIcon, FloatRightIcon,
+  ClearLeftIcon, ClearRightIcon, ClearBothIcon,
+} from "./webflowIcons";
 
-// ─── Float / Clear icon options (JSX — must live in .tsx) ────────────
+// ─── Pin preset order matching Figma layout (single horizontal row) ───
+
+const PIN_PRESET_ICONS: Array<{ presetIndex: number; Icon: React.FC<{ size?: number; className?: string }> }> = [
+  { presetIndex: 0, Icon: PositionTopLeftIcon },      // TL
+  { presetIndex: 2, Icon: PositionTopRightIcon },      // TR
+  { presetIndex: 6, Icon: PositionBottomLeftIcon },    // BL
+  { presetIndex: 8, Icon: PositionBottomRightIcon },   // BR
+  { presetIndex: 3, Icon: PositionLeftIcon },          // L
+  { presetIndex: 5, Icon: PositionRightIcon },         // R
+  { presetIndex: 7, Icon: PositionBottomIcon },        // B
+  { presetIndex: 1, Icon: PositionTopIcon },           // T
+  { presetIndex: 4, Icon: PositionAllIcon },           // All
+];
+
+// ─── Float / Clear icon options ─────────────────────────────────────
 
 const FLOAT_ICON_OPTIONS = [
   { value: "none", icon: <X size={14} strokeWidth={2} />, title: "None" },
-  { value: "left", icon: <AlignLeft size={14} strokeWidth={1.5} />, title: "Float left" },
-  { value: "right", icon: <AlignRight size={14} strokeWidth={1.5} />, title: "Float right" },
+  { value: "left", icon: <FloatLeftIcon size={14} />, title: "Float left" },
+  { value: "right", icon: <FloatRightIcon size={14} />, title: "Float right" },
 ];
 
 const CLEAR_ICON_OPTIONS = [
   { value: "none", icon: <X size={14} strokeWidth={2} />, title: "None" },
-  { value: "left", icon: <AlignLeft size={14} strokeWidth={1.5} />, title: "Clear left" },
-  { value: "right", icon: <AlignRight size={14} strokeWidth={1.5} />, title: "Clear right" },
-  { value: "both", icon: <span style={{ fontSize: "9px", fontWeight: 600, lineHeight: 1 }}>Both</span>, title: "Clear both" },
+  { value: "left", icon: <ClearLeftIcon size={14} />, title: "Clear left" },
+  { value: "right", icon: <ClearRightIcon size={14} />, title: "Clear right" },
+  { value: "both", icon: <ClearBothIcon size={14} />, title: "Clear both" },
 ];
 
 interface PositionSectionProps {
@@ -75,7 +97,6 @@ export const PositionSection = memo(function PositionSection({
   const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── Handlers ──
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);
@@ -113,9 +134,16 @@ export const PositionSection = memo(function PositionSection({
       <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
       {position !== "static" && (
         <>
-          {/* Pin preset icons */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "2px", padding: "4px 12px 2px" }}>
-            {PIN_PRESETS.map((preset) => {
+          {/* Pin preset icons — horizontal row matching Figma */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: "3.75px",
+            padding: "4px 8px 2px",
+          }}>
+            {PIN_PRESET_ICONS.map(({ presetIndex, Icon }) => {
+              const preset = PIN_PRESETS[presetIndex];
               const isActive =
                 preset.pin.top === !topAuto &&
                 preset.pin.right === !rightAuto &&
@@ -127,20 +155,27 @@ export const PositionSection = memo(function PositionSection({
                   title={preset.label}
                   onClick={() => handlePinPreset(preset.pin)}
                   style={{
-                    width: "20px",
-                    height: "20px",
+                    width: 16,
+                    height: 16,
                     padding: 0,
-                    border: `1px solid ${isActive ? primaryAlpha(0.4) : blackAlpha(0.08)}`,
-                    borderRadius: "3px",
-                    background: isActive ? primaryAlpha(0.15) : "transparent",
+                    border: "none",
+                    borderRadius: "2px",
+                    background: isActive ? primaryAlpha(0.12) : "transparent",
                     cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    color: isActive ? color.primary : text.hint,
                     transition: `all ${ms("normal")}`,
                   }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = surface.hover;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
                 >
-                  <PinPresetIcon pin={preset.pin} active={isActive} />
+                  <Icon size={16} />
                 </button>
               );
             })}
@@ -172,93 +207,228 @@ export const PositionSection = memo(function PositionSection({
             conversionHint={posHint}
           />
 
-          {/* Z-Index row */}
-          <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <Layers size={12} strokeWidth={1.5} style={{ color: text.disabled, flexShrink: 0 }} />
-            <span className="text-[11px] shrink-0 inline-flex items-center gap-[3px]" style={{ color: text.disabled }}>
+          {/* Z-Index row — Figma: icon + "Itself" input + "Auto" input with unit */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "4px 7px",
+          }}>
+            {/* Label area */}
+            <div style={{ width: 49, flexShrink: 0, display: "flex", alignItems: "center" }}>
               {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
-              Z-Index
-            </span>
-            <div style={{ flex: 1 }} />
-            {zIndexAuto ? (
-              <button
-                onClick={handleZIndexAutoToggle}
-                className="px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border"
-                style={{ background: primaryAlpha(0.2), color: color.primary, borderColor: primaryAlpha(0.3) }}
-              >
-                Auto
-              </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleZIndexChange(zIndex - 1)}
-                  className="flex items-center justify-center cursor-pointer border rounded-[3px]"
-                  style={{ width: "20px", height: "20px", background: surface.subtle, borderColor: blackAlpha(0.07), color: text.secondary }}
-                  title="Decrement z-index"
-                >
-                  <Minus size={10} strokeWidth={2} />
-                </button>
-                <SliderRow label="" value={zIndex} min={-10} max={9999} step={1} unit="" onChange={handleZIndexChange} onReset={() => { resetCss("z-index", setZIndex); setZIndexAuto(true); }} indicator={"none" as const} onContextMenu={ctxMenu("z-index", String(zIndex))} computedProp="z-index" computedElement={element} />
+            </div>
+
+            {/* "Itself" context dropdown — shows which element z-index is relative to */}
+            <div
+              style={{
+                flex: 1,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                background: color.input,
+                border: `1px solid ${color.border}`,
+                borderRadius: 3,
+                padding: "0 4px",
+                cursor: "default",
+              }}
+            >
+              <LocateFixed size={14} strokeWidth={1.5} style={{ color: text.disabled, flexShrink: 0, marginRight: 4 }} />
+              <span style={{
+                fontSize: 11,
+                fontFamily: font.mono,
+                color: text.secondary,
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}>
+                Itself
+              </span>
+            </div>
+
+            {/* Z-index value input */}
+            <div
+              style={{
+                width: 64,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                background: color.input,
+                border: `1px solid ${color.border}`,
+                borderRadius: 3,
+                overflow: "hidden",
+                flexShrink: 0,
+              }}
+            >
+              {zIndexAuto ? (
                 <button
                   onClick={handleZIndexAutoToggle}
-                  className="px-1.5 py-0.5 text-[9px] font-mono rounded-[3px] cursor-pointer border"
-                  style={{ background: surface.subtle, color: text.disabled, borderColor: blackAlpha(0.07) }}
-                  title="Set to auto"
+                  style={{
+                    flex: 1,
+                    height: "100%",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 11,
+                    fontFamily: font.mono,
+                    color: text.label,
+                    textAlign: "left",
+                    padding: "0 4px",
+                  }}
                 >
-                  auto
+                  Auto
                 </button>
+              ) : (
+                <input
+                  type="text"
+                  value={zIndex}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (!isNaN(v)) handleZIndexChange(v);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowUp") { e.preventDefault(); handleZIndexChange(zIndex + (e.shiftKey ? 10 : 1)); }
+                    else if (e.key === "ArrowDown") { e.preventDefault(); handleZIndexChange(zIndex - (e.shiftKey ? 10 : 1)); }
+                    else if (e.key === "Escape") { handleZIndexAutoToggle(); }
+                  }}
+                  style={{
+                    flex: 1,
+                    height: "100%",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontSize: 11,
+                    fontFamily: font.mono,
+                    color: text.secondary,
+                    padding: "0 4px",
+                    width: "100%",
+                  }}
+                />
+              )}
+              {/* Unit suffix — shows a dash (like Figma) */}
+              <div style={{
+                width: 16,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#E7E6E1",
+                flexShrink: 0,
+                borderLeft: `1px solid ${color.border}`,
+              }}>
+                <svg width="5" height="1" viewBox="0 0 5 1">
+                  <line x1="0" y1="0.5" x2="5" y2="0.5" stroke="#7B7974" strokeWidth="1" />
+                </svg>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Columns / Rows labels */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            padding: "0 7px",
+          }}>
+            <div style={{ width: 49, flexShrink: 0 }} />
+            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+              <span style={{
+                fontSize: 11,
+                color: text.label,
+                flex: 1,
+                textAlign: "center",
+              }}>
+                Columns
+              </span>
+              <span style={{
+                fontSize: 11,
+                color: text.label,
+                width: 64,
+                textAlign: "center",
+                flexShrink: 0,
+              }}>
+                Rows
+              </span>
+            </div>
           </div>
         </>
       )}
 
-      {/* Float and clear collapsible */}
-      <div onClick={() => setShowFloatClear(!showFloatClear)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t" style={{ borderColor: border.subtle }}>
-        <ChevronRight size={9} strokeWidth={2} style={{ color: "#7A7974", transition: `transform ${ms("expand")}`, transform: showFloatClear ? "rotate(90deg)" : "rotate(0deg)" }} />
-        <span className="text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>Float and clear</span>
-      </div>
+      {/* Float and clear collapsible button */}
+      <button
+        onClick={() => setShowFloatClear(!showFloatClear)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 2,
+          width: "calc(100% - 16px)",
+          margin: "4px 8px",
+          padding: "4px 0",
+          height: 24,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          borderRadius: 3,
+          transition: `background ${ms("fast")}`,
+        }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = surface.hover; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+      >
+        <ChevronDown
+          size={14}
+          strokeWidth={2}
+          style={{
+            color: text.label,
+            transition: `transform ${ms("expand")}`,
+            transform: showFloatClear ? "rotate(0deg)" : "rotate(-90deg)",
+          }}
+        />
+        <span style={{ fontSize: 11, color: text.label }}>
+          Float and clear
+        </span>
+      </button>
+
       {showFloatClear && (
-        <div style={{ padding: "2px 12px 6px" }}>
+        <div style={{ padding: "2px 7px 6px" }}>
           {/* Float row */}
-          <div className="flex items-center gap-2 py-1">
-            <span className="w-10 text-[11px] shrink-0" style={{ color: text.disabled }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
+            <span style={{
+              width: 49,
+              fontSize: 11,
+              color: text.label,
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 3,
+            }}>
               {ind("float") !== "none" && <StyleIndicator type={ind("float")} />}
               Float
             </span>
-            <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" />
+            <div style={{ flex: 1 }}>
+              <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" />
+            </div>
           </div>
           {/* Clear row */}
-          <div className="flex items-center gap-2 py-1">
-            <span className="w-10 text-[11px] shrink-0" style={{ color: text.disabled }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
+            <span style={{
+              width: 49,
+              fontSize: 11,
+              color: text.label,
+              flexShrink: 0,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 3,
+            }}>
               {ind("clear") !== "none" && <StyleIndicator type={ind("clear")} />}
               Clear
             </span>
-            <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" />
+            <div style={{ flex: 1 }}>
+              <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" />
+            </div>
           </div>
         </div>
       )}
     </Section>
   );
 });
-
-// ─── Pin Preset Icon (tiny SVG showing which edges are pinned) ──────
-
-function PinPresetIcon({ pin, active }: { pin: { top: boolean; right: boolean; bottom: boolean; left: boolean }; active: boolean }) {
-  const fill = active ? color.primary : "#9A9994";
-  const dim = "#D4D3D0";
-  return (
-    <svg width="12" height="12" viewBox="0 0 12 12">
-      {/* Top edge */}
-      <rect x="3" y="0" width="6" height="2" rx="0.5" fill={pin.top ? fill : dim} />
-      {/* Bottom edge */}
-      <rect x="3" y="10" width="6" height="2" rx="0.5" fill={pin.bottom ? fill : dim} />
-      {/* Left edge */}
-      <rect x="0" y="3" width="2" height="6" rx="0.5" fill={pin.left ? fill : dim} />
-      {/* Right edge */}
-      <rect x="10" y="3" width="2" height="6" rx="0.5" fill={pin.right ? fill : dim} />
-      {/* Center dot */}
-      <circle cx="6" cy="6" r="1.5" fill={active ? fill : dim} />
-    </svg>
-  );
-}
