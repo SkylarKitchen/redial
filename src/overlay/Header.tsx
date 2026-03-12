@@ -94,7 +94,7 @@ export function Header({
             {"<"}{tag}{">"}
           </span>
           {className && (
-            <span className="text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: blackAlpha(0.5) }}>
+            <span className="text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: text.label }}>
               .{className}
             </span>
           )}
