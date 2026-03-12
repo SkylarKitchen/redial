@@ -86,17 +86,12 @@ function makeDefault(type: BackgroundLayerType): BackgroundLayer {
   return base;
 }
 
-function gradientCSS(g: NonNullable<BackgroundLayer["gradient"]>) {
-  const sorted = [...g.stops].sort((a, b) => a.position - b.position);
-  const s = sorted.map((st) => `${st.color} ${st.position}%`).join(", ");
-  if (g.type === "linear") return `linear-gradient(${g.angle}deg, ${s})`;
-  if (g.type === "radial") return `radial-gradient(circle, ${s})`;
-  return `conic-gradient(from ${g.angle}deg, ${s})`;
-}
-
 function layerPreviewBg(layer: BackgroundLayer): string {
   if (layer.type === "color") return layer.color ?? "#ffffff";
-  if (layer.type === "gradient" && layer.gradient) return gradientCSS(layer.gradient);
+  if (layer.type === "gradient" && layer.gradient) {
+    const g = layer.gradient;
+    return buildGradientCSS(g.type as "linear" | "radial" | "conic", g.angle, g.stops);
+  }
   return "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px";
 }
 
