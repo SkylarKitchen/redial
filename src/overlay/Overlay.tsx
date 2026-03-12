@@ -1190,6 +1190,10 @@ export function Overlay() {
           height: 3px;
           background: rgba(255,255,255,0.12);
           border-radius: 2px;
+          transition: background 150ms;
+        }
+        .__tuner-root input[type="range"]:hover::-webkit-slider-runnable-track {
+          background: rgba(255,255,255,0.22);
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -1214,6 +1218,10 @@ export function Overlay() {
           height: 3px;
           background: rgba(255,255,255,0.12);
           border-radius: 2px;
+          transition: background 150ms;
+        }
+        .__tuner-root input[type="range"]:hover::-moz-range-track {
+          background: rgba(255,255,255,0.22);
         }
         .__tuner-root input[type="range"]::-moz-range-thumb {
           width: 12px;

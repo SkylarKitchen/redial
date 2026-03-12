@@ -319,7 +319,9 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
+  const [trackHovered, setTrackHovered] = useState(false);
   const pct = ((value - min) / (max - min)) * 100;
+  const trackBg = trackHovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)";
   const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
@@ -370,6 +372,8 @@ export function SliderRow({
           onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
           onMouseDown={() => beginBatch()}
           onMouseUp={() => endBatch()}
+          onMouseEnter={() => setTrackHovered(true)}
+          onMouseLeave={() => setTrackHovered(false)}
           onFocus={onFocusRing}
           onBlur={onBlurRing}
           style={{
@@ -377,10 +381,11 @@ export function SliderRow({
             height: "3px",
             appearance: "none",
             WebkitAppearance: "none",
-            background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
+            background: `linear-gradient(to right, #6366f1 ${pct}%, ${trackBg} ${pct}%)`,
             borderRadius: "2px",
             outline: "none",
             cursor: "pointer",
+            transition: "background 150ms",
           }}
         />
         <ValueInput value={value} onChange={onChange} />

@@ -728,6 +728,15 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 - Combined with the existing `cursor: grab` on the header, users now have both visual and cursor-based drag cues
 - Typecheck: PASS
 
+### Iteration 58 — Slider track hover feedback (2026-03-12)
+- Added hover state to `SliderRow` in `controls.tsx`: unfilled track brightens from `rgba(255,255,255,0.15)` → `rgba(255,255,255,0.25)` on hover
+- `onMouseEnter`/`onMouseLeave` handlers toggle `trackHovered` state; `trackBg` variable feeds the gradient
+- Added `transition: background 150ms` to the range input for smooth brightness change
+- Added global CSS hover rules in `Overlay.tsx` for both WebKit and Firefox track pseudo-elements (`0.12` → `0.22`)
+- Also added `transition: background 150ms` to the default track pseudo-element rules for smooth animation
+- Two-layer approach: React state covers `SliderRow` (primary slider), CSS pseudo-elements cover any remaining range inputs
+- Typecheck: PASS
+
 ---
 
 ## Done
