@@ -302,7 +302,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               setGap(c);
               setGapUnit(u);
               apply("gap", `${c}${u}`);
-            }
+            }}
             linked={gapLocked}
             onLinkedChange={(v) => {
               setGapLocked(v);

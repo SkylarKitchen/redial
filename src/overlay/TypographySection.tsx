@@ -285,7 +285,7 @@ export const TypographySection = memo(function TypographySection({
               <div style={{ flex: 1 }}>
                 <TypoValueCell
                   value={columnGap}
-                  onChange={onColumnGapChange}
+                  onChange={(v) => { onColumnGapChange(v); apply("column-gap", `${v}${columnGapUnit}`); }}
                   unit={columnGapUnit}
                   units={LAYOUT_UNITS}
                   onUnitChange={(u) => { const c = convertUnit(columnGap, columnGapUnit, u, getConversionCtx()); onColumnGapChange(c); onColumnGapUnitChange(u); apply("column-gap", `${c}${u}`); }}

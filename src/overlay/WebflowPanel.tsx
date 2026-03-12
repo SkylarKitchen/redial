@@ -14,6 +14,7 @@ import type { IndicatorType } from "./StyleIndicator";
 import { parseNum } from "./cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "./panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";
+import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
 
 import { LayoutSection } from "./LayoutSection";
 import { SpacingSection } from "./SpacingSection";
@@ -82,6 +83,19 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     (prop: string, value: string) => { applyInlineStyle(element, prop, value); },
     [element]
   );
+
+  // ── Context menu state (right-click property menu) ──
+  const [ctxMenuState, setCtxMenuState] = useState<ContextMenuState | null>(null);
+
+  /** Creates an onContextMenu handler for a given CSS property + current value */
+  const ctxMenu = useCallback(
+    (prop: string, value: string) => (e: React.MouseEvent) => {
+      e.preventDefault();
+      setCtxMenuState({ x: e.clientX, y: e.clientY, property: prop, value });
+    },
+    [],
+  );
+  const closeCtxMenu = useCallback(() => setCtxMenuState(null), []);
 
   // ── Cross-section state ──
   const [display, setDisplay] = useState(() => cs.display);

@@ -6,6 +6,7 @@
  * without depending on the orchestrator.
  */
 
+import type React from "react";
 import { extractUnit } from "./cssParsers";
 import type { IndicatorType } from "./StyleIndicator";
 import type { UnitConversionContext } from "./unitConversion";
@@ -21,6 +22,8 @@ export interface SectionCtx {
   cs: CSSStyleDeclaration;
   parentCs: CSSStyleDeclaration | null;
   getConversionCtx: () => UnitConversionContext;
+  /** Creates an onContextMenu handler for right-click property menu */
+  ctxMenu: (prop: string, value: string) => (e: React.MouseEvent) => void;
 }
 
 // ─── Indicator Helpers ───────────────────────────────────────────────

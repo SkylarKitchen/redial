@@ -13,7 +13,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector, type SpecialOption } from "./UnitSelector";
+import { UnitSelector, type SpecialOption, type ConversionHint } from "./UnitSelector";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
@@ -34,6 +34,8 @@ export interface SizeInputCellProps {
   step?: number;
   min?: number;
   max?: number;
+  /** Conversion tooltip hint passed through to UnitSelector */
+  conversionHint?: ConversionHint | null;
 }
 
 export function SizeInputCell({
