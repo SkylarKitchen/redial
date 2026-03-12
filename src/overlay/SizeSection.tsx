@@ -257,12 +257,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={maxHeightNone ? "none" : null}
           onValueChange={handleMaxHeightChange}
-          onUnitChange={(u) => { const c = convertUnit(maxHeight, maxHeightUnit, u, getConversionCtx(), "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
+          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(maxHeight, maxHeightUnit, u, ctx, "height"); fireMaxHHint(maxHeight, maxHeightUnit, c, u, ctx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
           onKeywordChange={(k) => { setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
           isModified={isDirty(element, "max-height")}
           supportsNone
           min={0}
           max={1200}
+          conversionHint={maxHHint}
         />
       </div>
       {/* Overflow: icon button row */}

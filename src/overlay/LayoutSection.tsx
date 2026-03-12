@@ -549,6 +549,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             options={ALIGN_SELF_OPTIONS}
             onChange={handleAlignSelfChange}
             indicator={ind("align-self")}
+            onContextMenu={ctxMenu("align-self", alignSelf)}
           />
 
           {/* Order — simple number input, not a slider */}
