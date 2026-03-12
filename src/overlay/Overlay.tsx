@@ -111,6 +111,10 @@ export function Overlay() {
     return d === "grid" || d === "inline-grid";
   }, [selectedEl, panelKey]);
 
+  // Property search
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
 

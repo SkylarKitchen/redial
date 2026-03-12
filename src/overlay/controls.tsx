@@ -289,6 +289,9 @@ export function SelectRow({
   indicator,
   searchable,
   fontPreview,
+  onContextMenu,
+  computedProp,
+  computedElement,
 }: {
   label: string;
   value: string;
@@ -299,6 +302,11 @@ export function SelectRow({
   searchable?: boolean;
   /** Render each option label in its own font-face (for font-family dropdowns) */
   fontPreview?: boolean;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "font-weight") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
 }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

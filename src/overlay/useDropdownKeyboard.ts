@@ -121,6 +121,9 @@ export function useDropdownKeyboard({
     [open, optionCount, onSelect, setOpen, labels]
   );
 
+  // Keep ref in sync so onTriggerKeyDown can delegate
+  onListKeyDownRef.current = onListKeyDown;
+
   const optionRefCallback = useCallback((el: HTMLElement | null) => {
     el?.scrollIntoView({ block: "nearest" });
   }, []);

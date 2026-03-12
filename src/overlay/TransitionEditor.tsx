@@ -130,6 +130,7 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
               onRemove={() => handleRemove(index)}
               dragHandleProps={dragProps}
               isDragging={isDragging}
+              element={element}
             />
           </div>
         );
@@ -174,12 +175,14 @@ function TransitionCard({
   onRemove,
   dragHandleProps,
   isDragging,
+  element,
 }: {
   transition: TransitionValue;
   onUpdate: (updates: Partial<TransitionValue>) => void;
   onRemove: () => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
+  element?: Element;
 }) {
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);

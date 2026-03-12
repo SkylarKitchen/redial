@@ -40,7 +40,7 @@ export interface WebflowPanelProps {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "" }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "" }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -142,6 +142,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           ctx={ctx}
           spacing={spacing}
           onSpacingChange={onSpacingChange}
+          showBoxModel={showBoxModel}
+          onToggleBoxModel={onToggleBoxModel}
           forceOpen={forceOpen}
         />
       )}

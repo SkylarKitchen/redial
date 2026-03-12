@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { ms } from "./timing";
+import { TransformOriginPicker } from "./TransformOriginPicker";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";

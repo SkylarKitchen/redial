@@ -5,11 +5,13 @@
  * Doubles as the drag handle for moving the panel.
  */
 
+import { useState, useEffect } from "react";
 import { getDisplayClass } from "./util";
 import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
+import { ms } from "./timing";
 import { X, ChevronRight } from "lucide-react";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
@@ -47,6 +49,13 @@ export function Header({
   state,
   onStateChange,
 }: HeaderProps) {
+  const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
+
+  // Reset expanded state when the selected element changes
+  useEffect(() => {
+    setBreadcrumbExpanded(false);
+  }, [element]);
+
   const tag = element.tagName.toLowerCase();
   const className = getDisplayClass(element);
   const reactSource = getReactSource(element);
