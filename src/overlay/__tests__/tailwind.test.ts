@@ -194,10 +194,9 @@ describe("typography", () => {
     expect(tw("text-decoration-line", "line-through")).toBe("line-through");
   });
 
-  it("text-decoration-line: unknown → decoration-[…] (no space escape)", () => {
-    // The converter returns `decoration-[${v}]` without escaping spaces
+  it("text-decoration-line: multi-value → decoration-[…] with escaped spaces", () => {
     expect(tw("text-decoration-line", "underline overline")).toBe(
-      "decoration-[underline overline]"
+      "decoration-[underline_overline]"
     );
   });
 
@@ -557,8 +556,19 @@ describe("non-standard spacing values", () => {
     expect(tw("width", "calc(100% - 20px)")).toBe("w-[calc(100%_-_20px)]");
   });
 
-  it("percentage values: parseFloat succeeds so spacing scale is used", () => {
-    // parseFloat("50%") = 50, so spacingValue returns 50/4 = 12.5
-    expect(tw("width", "50%")).toBe("w-12.5");
+  it("percentage values get bracket syntax (not /4 scale)", () => {
+    expect(tw("width", "50%")).toBe("w-[50%]");
+  });
+
+  it("rem values get bracket syntax", () => {
+    expect(tw("width", "1rem")).toBe("w-[1rem]");
+  });
+
+  it("em values get bracket syntax", () => {
+    expect(tw("padding-top", "1.5em")).toBe("pt-[1.5em]");
+  });
+
+  it("vw values get bracket syntax", () => {
+    expect(tw("width", "100vw")).toBe("w-[100vw]");
   });
 });

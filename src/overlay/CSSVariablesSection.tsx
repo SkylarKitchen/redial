@@ -7,8 +7,8 @@
  * appropriate controls for each.
  */
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { applyCustomProperty, isCustomPropertyDirty } from "./apply";
+import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, ColorRow, SliderRow } from "./controls";
 
@@ -261,10 +261,11 @@ function VariableRow({
   // ── Length type → SliderRow ────────────────────────────────────────
   if (variable.type === "length" && variable.numericValue != null && variable.unit) {
     const bounds = boundsForUnit(variable.unit);
+    const draftNum = parseFloat(draft) ?? variable.numericValue;
     return (
       <SliderRow
         label={label}
-        value={variable.numericValue}
+        value={isNaN(draftNum) ? variable.numericValue : draftNum}
         min={bounds.min}
         max={bounds.max}
         step={bounds.step}
@@ -281,10 +282,11 @@ function VariableRow({
 
   // ── Number type → SliderRow (unitless) ─────────────────────────────
   if (variable.type === "number" && variable.numericValue != null) {
+    const draftNum = parseFloat(draft) ?? variable.numericValue;
     return (
       <SliderRow
         label={label}
-        value={variable.numericValue}
+        value={isNaN(draftNum) ? variable.numericValue : draftNum}
         min={0}
         max={100}
         step={1}
@@ -388,7 +390,9 @@ export function CSSVariablesSection({
 }: {
   element: Element;
 }) {
-  const variables = useMemo(() => discoverVariables(element), [element]);
+  // Re-discover variables when overrides change (e.g. after applyCustomProperty)
+  const overrideSnapshot = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
+  const variables = useMemo(() => discoverVariables(element), [element, overrideSnapshot]);
 
   const grouped = useMemo(() => {
     const elementVars: CSSVariable[] = [];
