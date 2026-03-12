@@ -1,0 +1,262 @@
+/*
+ * Anthropic Design System — CSS Custom Properties
+ * Generated from Figma design variable exports
+ *
+ * Architecture:
+ *   Primitives  → raw spacing/unit scale (large values are fluid)
+ *   Effects     → radius + padding tokens (alias primitives)
+ *   Grid        → responsive breakpoint settings
+ *   Typography  → fluid type scale via clamp(), scaled by --text-scale
+ *   Layout      → component-level sizing tokens
+ *   Theme       → semantic color tokens (light only)
+ *
+ * Fluid interpolation: clamp(min, preferred, max)
+ * Range: 375px (mobile) → 1440px (desktop)
+ * Formula: preferred = intercept + slope × 100vw
+ *   slope = (max - min) / (1440 - 375)
+ *   intercept = min - slope × 375
+ *
+ * Accessibility: --text-scale multiplier (default 1)
+ *   Set via JS: document.documentElement.style.setProperty('--text-scale', '1.25')
+ */
+
+/* ============================================================
+   PRIMITIVES — Spacing Unit Scale
+   ============================================================ */
+:root {
+  /* Text scale multiplier — set > 1 for larger text (accessibility) */
+  --text-scale: 1;
+
+  --unit-tiniest: 2px;
+  --unit-tinier: 4px;
+  --unit-tiny: 8px;
+  --unit-smallest: 12px;
+  --unit-smaller: 16px;
+  --unit-small: 24px;
+  --unit-big: clamp(24px, calc(21.18px + 0.75vw), 32px);
+  --unit-bigger: clamp(36px, calc(31.77px + 1.13vw), 48px);
+  --unit-biggest: clamp(48px, calc(42.37px + 1.5vw), 64px);
+  --unit-huge: clamp(72px, calc(63.55px + 2.25vw), 96px);
+  --unit-huger: clamp(96px, calc(84.73px + 3.01vw), 128px);
+  --unit-hugest: clamp(150px, calc(132.39px + 4.69vw), 200px);
+}
+
+/* ============================================================
+   EFFECTS — Radius & Padding
+   ============================================================ */
+:root {
+  /* Border Radius */
+  --radius-tinier: var(--unit-tinier);   /* 4px */
+  --radius-tiny: var(--unit-tiny);       /* 8px */
+  --radius-smallest: var(--unit-smallest); /* 12px */
+  --radius-smaller: var(--unit-smaller); /* 16px */
+  --radius-small: var(--unit-small);     /* 24px */
+  --radius-big: var(--unit-big);         /* 32px */
+  --radius-bigger: var(--unit-bigger);   /* 48px */
+  --radius-biggest: var(--unit-biggest); /* 64px */
+
+  /* Padding */
+  --padding-tiny: var(--unit-tiny);      /* 8px */
+  --padding-small: var(--unit-smaller);  /* 16px */
+  --padding-medium: var(--unit-small);   /* 24px */
+}
+
+/* ============================================================
+   GRID — Responsive Breakpoint Settings
+   ============================================================ */
+:root {
+  /* Gutter — fluid 16→32px */
+  --grid-gutter: clamp(16px, calc(13.18px + 0.75vw), 32px);
+  /* Margin — stepped (intentional layout jump at wide viewports) */
+  --grid-margin: 32px;
+  --grid-columns: 6;
+}
+
+@media (min-width: 768px) and (pointer: fine) {
+  :root {
+    --grid-margin: 64px;
+    --grid-columns: 12;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --grid-margin: 240px;
+  }
+}
+
+/* ============================================================
+   TYPOGRAPHY — Font Families
+   ============================================================ */
+:root {
+  --font-family-sans: var(--font-anthropic-sans, "Anthropic Sans Variable"), "Poppins", system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-serif: var(--font-anthropic-serif, "Anthropic Serif Variable"), "Lora", Georgia, "Times New Roman", Times, serif;
+  --font-family-mono: "Anthropic Mono Variable", "JetBrains Mono", Menlo, Monaco, monospace;
+}
+
+/* ============================================================
+   TYPOGRAPHY — Fluid Type Scale
+   Sizes with no mobile variant stay static.
+   Fluid sizes use clamp(mobile, preferred, desktop).
+   ============================================================ */
+:root {
+  /* Micro — static */
+  --text-micro-size: calc(10px * var(--text-scale));
+  --text-micro-leading: calc(16px * var(--text-scale));
+  --text-micro-tracking: 0.5px;
+
+  /* Caption — static */
+  --text-caption-size: calc(12px * var(--text-scale));
+  --text-caption-leading: calc(18px * var(--text-scale));
+  --text-caption-tracking: 0.15px;
+
+  /* Body 3 — static */
+  --text-body-3-size: calc(15px * var(--text-scale));
+  --text-body-3-leading: calc(24px * var(--text-scale));
+  --text-body-3-tracking: 0px;
+
+  /* Body 2 — static */
+  --text-body-2-size: calc(17px * var(--text-scale));
+  --text-body-2-leading: calc(28px * var(--text-scale));
+  --text-body-2-tracking: 0px;
+
+  /* Body 1 — fluid 19→20 */
+  --text-body-1-size: calc(clamp(19px, calc(18.65px + 0.09vw), 20px) * var(--text-scale));
+  --text-body-1-leading: calc(clamp(30px, calc(29.3px + 0.19vw), 32px) * var(--text-scale));
+  --text-body-1-tracking: 0px;
+
+  /* Body Large 2 — fluid 20→23 */
+  --text-body-lg-2-size: calc(clamp(20px, calc(18.94px + 0.28vw), 23px) * var(--text-scale));
+  --text-body-lg-2-leading: calc(clamp(32px, calc(30.59px + 0.38vw), 36px) * var(--text-scale));
+  --text-body-lg-2-tracking: 0px;
+
+  /* Body Large 1 — fluid 22→25 */
+  --text-body-lg-1-size: calc(clamp(22px, calc(20.94px + 0.28vw), 25px) * var(--text-scale));
+  --text-body-lg-1-leading: calc(clamp(34px, calc(31.89px + 0.56vw), 40px) * var(--text-scale));
+  --text-body-lg-1-tracking: 0px;
+
+  /* Headline 6 — fluid 17→19, Sans, Text Medium */
+  --text-h6-size: calc(clamp(17px, calc(16.3px + 0.19vw), 19px) * var(--text-scale));
+  --text-h6-leading: calc(24px * var(--text-scale));
+  --text-h6-tracking: 0px;
+
+  /* Headline 5 — fluid 20→25, Sans, Text Medium */
+  --text-h5-size: calc(clamp(20px, calc(18.24px + 0.47vw), 25px) * var(--text-scale));
+  --text-h5-leading: calc(clamp(28px, calc(26.59px + 0.38vw), 32px) * var(--text-scale));
+  --text-h5-tracking: 0px;
+
+  /* Headline 4 — fluid 23→32, Sans, Text Medium */
+  --text-h4-size: calc(clamp(23px, calc(19.83px + 0.85vw), 32px) * var(--text-scale));
+  --text-h4-leading: calc(clamp(30px, calc(27.89px + 0.56vw), 36px) * var(--text-scale));
+  --text-h4-tracking: 0px;
+
+  /* Headline 3 — fluid 28→36, Serif, Display Medium */
+  --text-h3-size: calc(clamp(28px, calc(25.18px + 0.75vw), 36px) * var(--text-scale));
+  --text-h3-leading: calc(clamp(32px, calc(26.37px + 1.5vw), 48px) * var(--text-scale));
+  --text-h3-tracking: 0px;
+
+  /* Headline 2 — fluid 30→44, Serif, Display Medium */
+  --text-h2-size: calc(clamp(30px, calc(25.07px + 1.31vw), 44px) * var(--text-scale));
+  --text-h2-leading: calc(clamp(36px, calc(28.96px + 1.88vw), 56px) * var(--text-scale));
+  --text-h2-tracking: 0px;
+
+  /* Headline 1 — fluid 32→52, Serif, Display Medium */
+  --text-h1-size: calc(clamp(32px, calc(24.96px + 1.88vw), 52px) * var(--text-scale));
+  --text-h1-leading: calc(clamp(40px, calc(31.55px + 2.25vw), 64px) * var(--text-scale));
+  --text-h1-tracking: 0px;
+
+  /* Display 2 — fluid 36→64, Serif, Display Medium */
+  --text-display-2-size: calc(clamp(36px, calc(26.14px + 2.63vw), 64px) * var(--text-scale));
+  --text-display-2-leading: calc(clamp(40px, calc(28.73px + 3vw), 72px) * var(--text-scale));
+  --text-display-2-tracking: 0px;
+
+  /* Display 1 — fluid 42→72, Serif, Display Medium */
+  --text-display-1-size: calc(clamp(42px, calc(31.44px + 2.82vw), 72px) * var(--text-scale));
+  --text-display-1-leading: calc(clamp(48px, calc(36.73px + 3vw), 80px) * var(--text-scale));
+  --text-display-1-tracking: 0px;
+}
+
+/* ============================================================
+   LAYOUT — Component Sizing
+   ============================================================ */
+:root {
+  --sidebar-width: clamp(280px, calc(251.83px + 7.51vw), 360px);
+}
+
+/* ============================================================
+   THEME — Light (Ivory) — Default
+   ============================================================ */
+:root {
+  /* Background */
+  --bg-primary: #FAF9F5;
+  --bg-secondary: #F5F4ED;
+  --bg-tertiary: #F0EEE6;
+
+  /* Foreground */
+  --fg-primary: #141413;
+  --fg-secondary: #30302E;
+  --fg-tertiary: #5E5D59;
+
+  /* Border — transparent black so they blend with any background */
+  --border-primary: rgba(0, 0, 0, 0.30);
+  --border-secondary: rgba(0, 0, 0, 0.18);
+  --border-tertiary: rgba(0, 0, 0, 0.10);
+
+  /* Accent — Clay */
+  --accent-clay: #D97757;
+  --accent-clay-interactive: #C6613F;
+
+  /* Accent — Cactus */
+  --accent-cactus: #BCD1CA;
+
+  /* Accent — Coral */
+  --accent-coral: #EBCECE;
+
+  /* Accent — Heather */
+  --accent-heather: #CBCADB;
+
+  /* Accent — Oat */
+  --accent-oat: #E3DACC;
+
+  /* Accent — Pictogram */
+  --accent-pictogram: #E8E6DC;
+  --accent-pictogram-2: #E3DACC;
+
+  /* Button — Primary */
+  --btn-primary-bg: #141413;
+  --btn-primary-fg: #FAF9F5;
+  --btn-primary-weight: 480;
+
+  /* Button — Secondary */
+  --btn-secondary-bg: #E8E6DC;
+  --btn-secondary-fg: #4D4C48;
+  --btn-secondary-weight: 500;
+
+  /* Button — Tertiary */
+  --btn-tertiary-bg: #E8E6DC;
+  --btn-tertiary-fg: #5E5D59;
+  --btn-tertiary-weight: 500;
+
+  /* Button — Clay */
+  --btn-clay-bg: #C6613F;
+  --btn-clay-fg: #FFFFFF;
+  --btn-clay-weight: 500;
+
+  /* Text Input */
+  --input-bg: #FFFFFF;
+  --input-placeholder: #5E5D59;
+  --input-text: #141413;
+
+  /* Checkbox / Radio */
+  --checkbox-bg: #FFFFFF;
+  --checkbox-bg-selected: #000000;
+  --checkbox-fg-selected: #FAF9F5;
+
+  /* Switch */
+  --switch-fg: #FFFFFF;
+  --switch-bg: var(--bg-tertiary);
+  --switch-primary-selected: #141413;
+  --switch-secondary-selected: #2C84DB;
+}
+
+/* Dark theme removed — light only for now (accent colors don't adapt) */
