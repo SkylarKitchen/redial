@@ -1502,9 +1502,9 @@ export function Overlay() {
       {/* Floating action button -- bottom-right activation trigger */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#FAF9F5] border border-black/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
+          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
           (selecting || selectedEl) && "border-[#D97757]/40 shadow-[0_0_0_1px_rgba(217,119,87,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
-          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.04)]",
+          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(255,255,255,0.06)]",
         )}
         onClick={() => {
           if (selectedEl) {
@@ -1518,7 +1518,7 @@ export function Overlay() {
         <Plus
           size={20}
           strokeWidth={1.5}
-          color="rgba(0,0,0,0.7)"
+          color="rgba(255,255,255,0.9)"
           className={cn(
             "transition-transform duration-200 ease",
             (selecting || selectedEl) ? "rotate-45" : "rotate-0",
