@@ -265,13 +265,13 @@ export function SpacingBoxModel({
             const prefix = isMargin ? "margin" : "padding";
 
             // Optimistic local state for instant text update
-            if (shiftHeldRef.current) {
+            if (ev.shiftKey) {
               // Shift+drag: all 4 sides
               const allSides: Record<string, number> = {};
               for (const s of SIDES) allSides[`${prefix}-${s}`] = rounded;
               setScrubValues((prev) => ({ ...prev, ...allSides }));
               for (const s of SIDES) onChangeRef.current(`${prefix}-${s}`, rounded, unit);
-            } else if (altHeldRef.current) {
+            } else if (ev.altKey) {
               // Alt(Option)+drag: axis pair (left+right or top+bottom)
               const side = prop.split("-")[1];
               const partner = AXIS_PARTNER[side];
