@@ -220,7 +220,7 @@ function VariableRow({
       </span>
 
       {/* Color swatch (for color-type variables) */}
-      {variable.type === "color" && <ColorSwatch color={draft} />}
+      {variable.isColor && <ColorSwatch color={draft} />}
 
       {/* Value input */}
       <input
@@ -228,7 +228,7 @@ function VariableRow({
         type="text"
         className="tuner-focusable"
         tabIndex={0}
-        value={focused ? draft : draft}
+        value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onFocus={() => setFocused(true)}
         onBlur={handleBlur}

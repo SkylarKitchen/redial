@@ -30,9 +30,6 @@ function parsePx(value: string): number {
 // ---------------------------------------------------------------------------
 
 interface GridMetrics {
-  /** Element bounding rect (viewport coords) */
-  top: number;
-  left: number;
   /** Content-box origin offsets (inside padding) */
   contentTop: number;
   contentLeft: number;
