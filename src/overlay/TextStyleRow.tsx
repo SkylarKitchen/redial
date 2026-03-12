@@ -4,6 +4,9 @@
  * Shows a searchable dropdown of auto-detected text styles (h1–h6, p, etc.)
  * from the host page. Selecting a style batch-applies all typography props.
  * Follows the SelectRowCustom pattern from controls.tsx.
+ *
+ * Auto-detects available space below the trigger and flips upward when
+ * the panel's ScrollArea would clip the dropdown.
  */
 
 import React, { useState, useRef, useEffect } from "react";
@@ -19,9 +22,14 @@ export interface TextStyleRowProps {
   onApply: (style: TextStyle) => void;
 }
 
+/** Estimated dropdown height: search (28px) + 9 items × 24px + padding */
+const DROPDOWN_HEIGHT = 250;
+
 export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProps) {
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Click-outside to close
   useEffect(() => {
@@ -35,12 +43,26 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
+  // Detect direction on open
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      setOpenUp(spaceBelow < DROPDOWN_HEIGHT);
+    }
+    setOpen((o) => !o);
+  };
+
   // Format font-size for display: "32px" → "32"
   const formatSize = (fontSize: string) => parseFloat(fontSize) || fontSize;
 
   const triggerLabel = matchedStyle
     ? `${matchedStyle.name} · ${formatSize(matchedStyle.fontSize)}`
     : "—";
+
+  const dropdownPosition = openUp
+    ? "absolute bottom-[calc(100%+2px)] left-0 right-0"
+    : "absolute top-[calc(100%+2px)] left-0 right-0";
 
   return (
     <div className="flex items-center gap-2 px-3 py-0.5">
@@ -52,6 +74,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
       </span>
       <div ref={containerRef} className="relative flex-1">
         <button
+          ref={triggerRef}
           className={cn(
             "tuner-focusable w-full h-6 flex items-center justify-between",
             "bg-[var(--input)] border border-[var(--border)] rounded-sm",
@@ -61,7 +84,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           )}
           tabIndex={0}
           aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
+          onClick={handleOpen}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
@@ -78,7 +101,10 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
 
         {open && (
           <Command
-            className="absolute top-[calc(100%+2px)] left-0 right-0 min-w-full bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200]"
+            className={cn(
+              dropdownPosition,
+              "min-w-full bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200]",
+            )}
             filter={(value, search) => {
               const style = styles.find((s) => s.tag === value);
               if (!style) return 0;
