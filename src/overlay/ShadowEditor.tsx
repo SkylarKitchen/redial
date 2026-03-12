@@ -160,6 +160,7 @@ function ShadowRow({
   index,
   onUpdate,
   onDelete,
+  onToggleVisible,
   dragHandleProps,
   isDragging,
 }: {
@@ -167,6 +168,7 @@ function ShadowRow({
   index: number;
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
+  onToggleVisible: (index: number) => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
 }) {
@@ -183,6 +185,8 @@ function ShadowRow({
       style={{
         padding: "6px 0",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
+        opacity: shadow.visible === false ? 0.4 : 1,
+        transition: "opacity 100ms",
       }}
     >
       {/* Row 1: drag handle + numeric inputs */}
@@ -257,6 +261,22 @@ function ShadowRow({
 
         <div style={{ flex: 1 }} />
 
+        {/* Eye visibility toggle */}
+        <button
+          onClick={() => onToggleVisible(index)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "2px",
+            color: shadow.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+            pointerEvents: isDragging ? "none" : "auto",
+          }}
+          title={shadow.visible !== false ? "Hide layer" : "Show layer"}
+        >
+          {shadow.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+        </button>
+
         {/* Delete */}
         <button
           onClick={() => onDelete(index)}
@@ -308,6 +328,15 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
     [shadows, onChange]
   );
 
+  const handleToggleVisible = useCallback(
+    (index: number) => {
+      const next = [...shadows];
+      next[index] = { ...next[index], visible: next[index].visible === false ? true : false };
+      onChange(next);
+    },
+    [shadows, onChange]
+  );
+
   return (
     <div style={{ padding: "4px 12px", position: "relative" }}>
       {/* Add button */}
@@ -346,6 +375,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
               index={i}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
+              onToggleVisible={handleToggleVisible}
               dragHandleProps={dragProps}
               isDragging={isDragging}
             />

@@ -382,6 +382,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
                   computedProp="gap"
                   computedElement={element}
+                  property="gap"
                 />
               </div>
               <button
@@ -554,6 +555,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             onChange={handleAlignSelfChange}
             indicator={ind("align-self")}
             onContextMenu={ctxMenu("align-self", alignSelf)}
+            computedProp="align-self"
+            computedElement={element}
           />
 
           {/* Order — simple number input, not a slider */}

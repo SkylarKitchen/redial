@@ -9,6 +9,7 @@ import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
+import { evaluateMathExpr } from "./inputMath";
 import { ms } from "./timing";
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
@@ -422,6 +423,8 @@ export function TypoValueCell({
 
   const commit = () => {
     setEditing(false);
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onChange(mathResult); return; }
     const n = parseFloat(draft);
     if (!isNaN(n) && n !== value) onChange(n);
   };

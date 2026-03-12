@@ -17,6 +17,7 @@ import { UnitSelector, type SpecialOption, type ConversionHint } from "./UnitSel
 import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
 import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
+import { evaluateMathExpr } from "./inputMath";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 export interface SizeInputCellProps {
@@ -56,6 +57,7 @@ export function SizeInputCell({
   min,
   max,
   conversionHint,
+  property,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -69,6 +71,15 @@ export function SizeInputCell({
 
   const commit = useCallback(() => {
     setEditing(false);
+    // Empty field → contextual keyword (e.g. "auto" for width, "none" for max-width)
+    if (draft.trim() === '') {
+      if (supportsAuto) { onKeywordChange("auto"); return; }
+      if (supportsNone) { onKeywordChange("none"); return; }
+      return;
+    }
+    // Try math expression first (e.g. "*2", "+10")
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onValueChange(mathResult); return; }
     const { value: parsed, unit: parsedUnit } = parseValueWithUnit(draft, units);
     if (isNaN(parsed)) return;
     if (parsedUnit && parsedUnit !== unit) {
@@ -79,7 +90,7 @@ export function SizeInputCell({
     } else if (parsed !== value) {
       onValueChange(parsed);
     }
-  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange]);
+  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange, supportsAuto, supportsNone]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -132,6 +143,24 @@ export function SizeInputCell({
 
   const isKeyword = keyword !== null;
 
+  const handlePresetSelect = useCallback((v: string) => {
+    // Handle keyword presets (auto, none, fit-content)
+    const parsed = parseFloat(v);
+    if (isNaN(parsed)) {
+      // String value like "auto", "none", "fit-content"
+      if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
+        onKeywordChange(v as "auto" | "none");
+      }
+      // For values like "fit-content" or "100%" — apply directly via value change
+      // (parent handles CSS application)
+    } else {
+      if (keyword !== null) onKeywordChange(null);
+      onValueChange(parsed);
+    }
+  }, [keyword, onKeywordChange, onValueChange, supportsAuto, supportsNone]);
+
+  const hasPresets = property && VALUE_PRESETS[property];
+
   // Colors based on modified state
   const labelColor = isModified ? "#6ea8fe" : "rgba(255,255,255,0.5)";
   const cellBg = isModified ? "rgba(99,102,241,0.10)" : "rgba(255,255,255,0.06)";
@@ -140,10 +169,10 @@ export function SizeInputCell({
     : "1px solid rgba(255,255,255,0.1)";
 
   return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
     <div
       ref={cellRef}
       style={{
-        flex: 1,
         display: "flex",
         alignItems: "center",
         height: "28px",
@@ -265,6 +294,8 @@ export function SizeInputCell({
           conversionHint={conversionHint}
         />
       </div>
+    </div>
+    {hasPresets && <PresetChips property={property!} onSelect={handlePresetSelect} />}
     </div>
   );
 }

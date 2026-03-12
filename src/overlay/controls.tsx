@@ -13,6 +13,7 @@ import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
+import { evaluateMathExpr } from "./inputMath";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -160,7 +161,14 @@ export function Section({
 
 // ─── ValueInput ─────────────────────────────────────────────────────
 
-export function ValueInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function ValueInput({ value, onChange, emptyKeyword, onKeywordCommit }: {
+  value: number;
+  onChange: (v: number) => void;
+  /** When draft is empty on commit, apply this keyword instead of ignoring */
+  emptyKeyword?: string;
+  /** Called when the empty keyword is applied (e.g. "auto", "none") */
+  onKeywordCommit?: (keyword: string) => void;
+}) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -172,9 +180,15 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
 
   const commit = useCallback(() => {
     setFocused(false);
+    if (draft.trim() === '' && emptyKeyword && onKeywordCommit) {
+      onKeywordCommit(emptyKeyword);
+      return;
+    }
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onChange(mathResult); return; }
     const parsed = parseFloat(draft);
     if (!isNaN(parsed)) onChange(parsed);
-  }, [draft, onChange]);
+  }, [draft, value, onChange, emptyKeyword, onKeywordCommit]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -773,6 +787,8 @@ export const EditableValue = memo(
 
     const commit = useCallback(() => {
       setEditing(false);
+      const mathResult = evaluateMathExpr(draft, value);
+      if (mathResult !== null) { onChange(mathResult); return; }
       const parsed = parseFloat(draft);
       if (!isNaN(parsed) && parsed !== value) {
         onChange(parsed);

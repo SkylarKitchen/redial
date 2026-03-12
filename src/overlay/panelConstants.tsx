@@ -278,6 +278,14 @@ export const BACKFACE_OPTIONS = [
   { value: "hidden", label: "Hidden" },
 ];
 
+// ─── Empty Field → Contextual Keyword ───────────────────────────────
+
+/** When a numeric input is cleared and committed, these properties get a keyword instead of 0. */
+export const EMPTY_KEYWORD_MAP: Record<string, string> = {
+  'width': 'auto', 'height': 'auto', 'max-width': 'none', 'max-height': 'none',
+  'min-width': '0', 'min-height': '0', 'z-index': 'auto', 'flex-basis': 'auto',
+};
+
 // ─── Box Model Options ──────────────────────────────────────────────
 
 export const BOX_SIZING_OPTIONS = [

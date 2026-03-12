@@ -185,6 +185,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1920}
           conversionHint={wHint}
+          property="width"
         />
         <SizeInputCell
           label="Height"
@@ -200,6 +201,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1200}
           conversionHint={hHint}
+          property="height"
         />
       </div>
       {/* Row 2: Min W + Min H */}
@@ -217,6 +219,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1920}
           conversionHint={minWHint}
+          property="min-width"
         />
         <SizeInputCell
           label="Min H"
@@ -231,6 +234,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1200}
           conversionHint={minHHint}
+          property="min-height"
         />
       </div>
       {/* Row 3: Max W + Max H */}
@@ -249,6 +253,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1920}
           conversionHint={maxWHint}
+          property="max-width"
         />
         <SizeInputCell
           label="Max H"
@@ -264,6 +269,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           min={0}
           max={1200}
           conversionHint={maxHHint}
+          property="max-height"
         />
       </div>
       {/* Overflow: icon button row */}
@@ -303,8 +309,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           </div>
           {isMedia && (
             <>
-              <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} onContextMenu={ctxMenu("object-fit", objectFit)} />
-              <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} />
+              <SelectRow label="Fit" value={objectFit} options={OBJECT_FIT_OPTIONS} onChange={handleObjectFitChange} onContextMenu={ctxMenu("object-fit", objectFit)} computedProp="object-fit" computedElement={element} />
+              <SelectRow label="Obj Pos" value={objectPosition} options={OBJECT_POSITION_OPTIONS} onChange={handleObjectPositionChange} onContextMenu={ctxMenu("object-position", objectPosition)} computedProp="object-position" computedElement={element} />
             </>
           )}
         </>

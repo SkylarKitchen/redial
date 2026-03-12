@@ -358,7 +358,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Wrap */}
-          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} />
+          <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} computedProp="white-space" computedElement={element} />
 
           {/* Truncate — Clip / Ellipsis segmented toggle */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
@@ -419,7 +419,7 @@ export const TypographySection = memo(function TypographySection({
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px 2px" }}>
             <span style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>Text shadows</span>
             <button
-              onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false }])}
+              onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])}
               style={{
                 display: "flex", alignItems: "center", justifyContent: "center",
                 width: "22px", height: "22px", cursor: "pointer",
