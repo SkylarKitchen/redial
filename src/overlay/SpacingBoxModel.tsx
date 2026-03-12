@@ -485,6 +485,7 @@ export function SpacingBoxModel({
         !scrubActiveRef.current &&
         createPortal(
           <div
+            data-tuner-portal
             style={{
               position: "fixed",
               left: `${tooltip.rect.left + tooltip.rect.width / 2}px`,

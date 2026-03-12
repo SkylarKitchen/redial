@@ -1028,6 +1028,7 @@ export function Overlay() {
     const handleContextMenu = (e: MouseEvent) => {
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
+      if (target.closest("[data-tuner-portal]")) return;
 
       e.preventDefault();
       setActiveModal({ type: "contextMenu", x: e.clientX, y: e.clientY });
