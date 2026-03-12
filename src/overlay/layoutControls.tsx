@@ -399,6 +399,7 @@ export function TypoValueCell({
   units,
   step = 1,
   keyword,
+  conversionHint,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -407,6 +408,8 @@ export function TypoValueCell({
   units?: string[];
   step?: number;
   keyword?: string | null;
+  /** Conversion tooltip hint passed through to UnitSelector */
+  conversionHint?: ConversionHint | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));

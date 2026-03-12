@@ -150,6 +150,13 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           Paste
         </ActionButton>
         <ActionButton
+          onClick={onCSSImport ?? (() => {})}
+          disabled={!onCSSImport}
+          title="Import CSS from clipboard"
+        >
+          Import
+        </ActionButton>
+        <ActionButton
           onClick={handleSave}
           disabled={count === 0 || saving}
           title="Save to source"

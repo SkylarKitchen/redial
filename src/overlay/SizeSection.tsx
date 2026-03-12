@@ -35,7 +35,7 @@ export interface SizeSectionProps {
 // ─── Component ────────────────────────────────────────────────────────
 
 export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen }: SizeSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   // ─── resetCss helper ────────────────────────────────────────────────
   const resetCss = useCallback(

@@ -323,10 +323,10 @@ export function Overlay() {
         return;
       }
 
-      // ? to toggle keyboard help modal
+      // ? to toggle keyboard help modal / shortcuts help
       if (e.key === "?" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        setShowHelp((v) => !v);
+        setActiveModal(prev => prev.type === "shortcutsHelp" ? { type: "none" } : { type: "shortcutsHelp" });
         return;
       }
 
