@@ -467,7 +467,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
     (v: number) => {
       setGap(v);
       apply("gap", `${v}${gapUnit}`);
-      if (gapLocked) { setRowGap(v); setColumnGap(v); }
+      if (gapLocked) { setRowGap(v); setColumnGap(v); setColumnGapUnit(gapUnit); }
     },
     [apply, gapUnit, gapLocked]
   );
@@ -475,10 +475,10 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
   const handleColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}${columnGapUnit}`); }, [apply, columnGapUnit]);
   const handleGapLockToggle = useCallback(() => {
     setGapLocked(prev => {
-      if (!prev) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}px`); apply("column-gap", `${gap}px`); }
+      if (!prev) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}${gapUnit}`); apply("column-gap", `${gap}${gapUnit}`); setColumnGapUnit(gapUnit); }
       return !prev;
     });
-  }, [gap, apply]);
+  }, [gap, apply, gapUnit]);
 
   const handleGridColsChange = useCallback(
     (v: string) => { setGridCols(v); if (v.trim()) apply("grid-template-columns", v); },
@@ -895,7 +895,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
                   </div>
                   <button onClick={handleGapLockToggle} title="Lock gap" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", marginRight: "8px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
                 </div>
-                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit="px" onChange={handleColumnGapChange} onReset={() => resetCss("column-gap", setColumnGap)} indicator={ind("column-gap")} />
+                <SliderRow label="Col Gap" value={columnGap} min={0} max={200} step={1} unit={columnGapUnit} units={LAYOUT_UNITS} onUnitChange={(u) => { const c = convertUnit(columnGap, columnGapUnit, u, getConversionCtx()); setColumnGap(c); setColumnGapUnit(u); apply("column-gap", `${c}${u}`); }} onChange={handleColumnGapChange} onReset={() => resetCss("column-gap", setColumnGap)} indicator={ind("column-gap")} />
               </>
             )}
           </>
@@ -1303,7 +1303,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
                     <TypoValueCell
                       value={columnGap}
                       onChange={handleColumnGapChange}
-                      unit="px"
+                      unit={columnGapUnit}
+                      units={LAYOUT_UNITS}
+                      onUnitChange={(u) => { const c = convertUnit(columnGap, columnGapUnit, u, getConversionCtx()); setColumnGap(c); setColumnGapUnit(u); apply("column-gap", `${c}${u}`); }}
                       step={1}
                       keyword={columnGap === 0 ? "Normal" : null}
                     />

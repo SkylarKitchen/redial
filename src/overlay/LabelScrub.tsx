@@ -11,6 +11,7 @@
 
 import { useRef, useCallback, useState } from "react";
 import { ms } from "./timing";
+import { setScrubActive } from "./scrubState";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
@@ -99,6 +100,7 @@ export function LabelScrub({
           // First time exceeding dead zone — start the scrub
           isDraggingRef.current = true;
           setScrubbing(true);
+          setScrubActive(true);
           document.body.style.userSelect = "none";
           document.body.style.cursor = "ew-resize";
           onScrubStartRef.current?.();
@@ -129,6 +131,7 @@ export function LabelScrub({
           document.body.style.userSelect = prevSelect;
           document.body.style.cursor = prevCursor;
           setScrubbing(false);
+          setScrubActive(false);
           onScrubEndRef.current?.();
         }
       }

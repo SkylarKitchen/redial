@@ -33,6 +33,23 @@ function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
   return 'type' in entry && entry.type === 'batch';
 }
 
+// --- Subscription API for useSyncExternalStore ---
+
+const listeners = new Set<() => void>();
+
+export function subscribeOverrides(callback: () => void): () => void {
+  listeners.add(callback);
+  return () => { listeners.delete(callback); };
+}
+
+export function getOverrideSnapshot(): number {
+  return totalOverrideCount();
+}
+
+function notifyListeners() {
+  listeners.forEach(fn => fn());
+}
+
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
@@ -153,6 +170,7 @@ export function applyInlineStyle(
 
   (el as HTMLElement).style.setProperty(prop, value, "important");
   schedulePersist();
+  notifyListeners();
 }
 
 export function undo(): { el: Element; prop: string } | null {
@@ -186,6 +204,7 @@ export function undo(): { el: Element; prop: string } | null {
       redoStack.push({ type: 'batch', entries: redoEntries });
     }
     schedulePersist();
+    notifyListeners();
     return result;
   }
 
@@ -211,6 +230,7 @@ export function undo(): { el: Element; prop: string } | null {
   }
 
   schedulePersist();
+  notifyListeners();
   return { el, prop };
 }
 
@@ -243,6 +263,7 @@ export function redo(): { el: Element; prop: string } | null {
       undoStack.push({ type: 'batch', entries: undoEntries });
     }
     schedulePersist();
+    notifyListeners();
     return result;
   }
 
@@ -264,6 +285,7 @@ export function redo(): { el: Element; prop: string } | null {
   (el as HTMLElement).style.setProperty(prop, redoValue, "important");
 
   schedulePersist();
+  notifyListeners();
   return { el, prop };
 }
 
@@ -289,6 +311,7 @@ export function reset(el: Element): void {
     }
   }
   schedulePersist();
+  notifyListeners();
 }
 
 export function resetAll(): void {

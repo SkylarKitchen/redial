@@ -429,4 +429,13 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Task 3 — Active scrub guard for keyboard shortcuts (2026-03-11)
+- Created `scrubState.ts` with module-level `scrubActive` flag and `setScrubActive()`/`isScrubActive()` exports
+- In `Overlay.tsx`: imported `isScrubActive`, added early-return guard at the top of the `keydown` handler — blocks all shortcuts (Escape, arrow keys, S, R, D, etc.) while a LabelScrub drag is in progress
+- In `LabelScrub.tsx`: imported `setScrubActive`, calls `setScrubActive(true)` when dead zone is exceeded (scrub starts) and `setScrubActive(false)` in the cleanup function (scrub ends via pointerup, lostpointercapture, or blur)
+- Used a separate `scrubState.ts` file to avoid circular dependency (Overlay → WebflowPanel → LabelScrub → Overlay)
+- Typecheck: PASS
+
+---
+
 ## Done

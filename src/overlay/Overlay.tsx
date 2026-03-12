@@ -174,6 +174,9 @@ export function Overlay() {
       const target = e.target instanceof Element ? e.target as HTMLElement : null;
       const insidePanel = target?.closest(".__tuner-root");
 
+      // Block all shortcuts while a LabelScrub drag is active
+      if (isScrubActive()) return;
+
       // Cmd+Shift+Z / Ctrl+Shift+Z for redo
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
         if (diffMode) return;
