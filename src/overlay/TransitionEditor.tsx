@@ -160,9 +160,9 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
         onClick={handleAdd}
         style={{
           background: "transparent",
-          border: "1px solid rgba(255,255,255,0.12)",
+          border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: "3px",
-          color: "rgba(255,255,255,0.5)",
+          color: "rgba(0,0,0,0.45)",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
           padding: "3px 8px",
@@ -170,7 +170,7 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
           alignSelf: "flex-start",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
@@ -230,12 +230,12 @@ function TransitionCard({
     const fromValues: Record<string, string> = {
       opacity: "0",
       transform: "translateY(20px)",
-      "background-color": "rgba(99,102,241,0.3)",
-      background: "rgba(99,102,241,0.3)",
-      color: "rgba(99,102,241,0.8)",
-      "border-color": "rgba(99,102,241,0.5)",
+      "background-color": "rgba(193,122,80,0.3)",
+      background: "rgba(193,122,80,0.3)",
+      color: "rgba(193,122,80,0.8)",
+      "border-color": "rgba(193,122,80,0.5)",
       "border-radius": "0px",
-      "box-shadow": "0 0 0 4px rgba(99,102,241,0.3)",
+      "box-shadow": "0 0 0 4px rgba(193,122,80,0.3)",
       width: "50%",
       height: "50%",
       "font-size": "50%",
@@ -324,8 +324,8 @@ function TransitionCard({
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(0,0,0,0.03)",
+        border: "1px solid rgba(0,0,0,0.05)",
         borderRadius: "3px",
         padding: "6px 8px",
         display: "flex",
@@ -356,7 +356,7 @@ function TransitionCard({
           border: "none",
           cursor: "pointer",
           padding: "2px",
-          color: transition.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+          color: transition.visible !== false ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.15)",
           pointerEvents: isDragging ? "none" : "auto",
         }}
         title={transition.visible !== false ? "Hide transition" : "Show transition"}
@@ -381,7 +381,7 @@ function TransitionCard({
             justifyContent: "center",
             background: "transparent",
             border: "none",
-            color: playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)",
+            color: playing ? "rgba(193,122,80,0.7)" : "rgba(0,0,0,0.3)",
             cursor: playing ? "default" : "pointer",
             padding: 0,
             borderRadius: "2px",
@@ -390,13 +390,13 @@ function TransitionCard({
           }}
           onMouseEnter={(e) => {
             if (!playing) {
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-              (e.currentTarget as HTMLElement).style.color = "rgba(99,102,241,0.8)";
+              (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+              (e.currentTarget as HTMLElement).style.color = "rgba(193,122,80,0.8)";
             }
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.color = playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)";
+            (e.currentTarget as HTMLElement).style.color = playing ? "rgba(193,122,80,0.7)" : "rgba(0,0,0,0.3)";
           }}
         >
           <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -419,7 +419,7 @@ function TransitionCard({
           justifyContent: "center",
           background: "transparent",
           border: "none",
-          color: "rgba(255,255,255,0.3)",
+          color: "rgba(0,0,0,0.3)",
           cursor: "pointer",
           fontSize: "11px",
           fontFamily: "system-ui, sans-serif",
@@ -428,12 +428,12 @@ function TransitionCard({
           lineHeight: 1,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
+          (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.3)";
         }}
       >
         ×
@@ -464,7 +464,7 @@ function TransitionCard({
                 height: "3px",
                 appearance: "none",
                 WebkitAppearance: "none",
-                background: `linear-gradient(to right, #6366f1 ${durationPct}%, rgba(255,255,255,0.15) ${durationPct}%)`,
+                background: `linear-gradient(to right, #c17a50 ${durationPct}%, rgba(0,0,0,0.1) ${durationPct}%)`,
                 borderRadius: "2px",
                 outline: "none",
                 cursor: "pointer",
@@ -472,7 +472,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.duration} onChange={(v) => onUpdate({ duration: v })} />
-          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.3)", width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(0,0,0,0.3)", width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>
@@ -514,7 +514,7 @@ function TransitionCard({
                 height: "3px",
                 appearance: "none",
                 WebkitAppearance: "none",
-                background: `linear-gradient(to right, #6366f1 ${delayPct}%, rgba(255,255,255,0.15) ${delayPct}%)`,
+                background: `linear-gradient(to right, #c17a50 ${delayPct}%, rgba(0,0,0,0.1) ${delayPct}%)`,
                 borderRadius: "2px",
                 outline: "none",
                 cursor: "pointer",
@@ -522,7 +522,7 @@ function TransitionCard({
             />
           </div>
           <MsInput value={transition.delay} onChange={(v) => onUpdate({ delay: v })} />
-          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.3)", width: "14px", flexShrink: 0 }}>
+          <span style={{ fontSize: "9px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(0,0,0,0.3)", width: "14px", flexShrink: 0 }}>
             ms
           </span>
         </div>
@@ -540,7 +540,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
           width: "46px",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
-          color: "rgba(255,255,255,0.5)",
+          color: "rgba(0,0,0,0.45)",
           flexShrink: 0,
         }}
       >
@@ -566,10 +566,10 @@ function SelectDropdown({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "rgba(0,0,0,0.04)",
+        border: "1px solid rgba(0,0,0,0.08)",
         borderRadius: "2px",
-        color: "rgba(255,255,255,0.8)",
+        color: "rgba(0,0,0,0.7)",
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
         padding: "2px 4px",
@@ -578,7 +578,7 @@ function SelectDropdown({
         appearance: "none",
         WebkitAppearance: "none",
         backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg width='6' height='4' viewBox='0 0 6 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4L0 0h6L3 4z' fill='rgba(255,255,255,0.4)'/%3E%3C/svg%3E\")",
+          "url(\"data:image/svg+xml,%3Csvg width='6' height='4' viewBox='0 0 6 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4L0 0h6L3 4z' fill='rgba(0,0,0,0.35)'/%3E%3C/svg%3E\")",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "right 4px center",
         paddingRight: "14px",
@@ -637,10 +637,10 @@ function MsInput({ value, onChange }: { value: number; onChange: (v: number) => 
       onKeyDown={handleKeyDown}
       style={{
         width: "36px",
-        background: "rgba(255,255,255,0.06)",
-        border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
+        background: "rgba(0,0,0,0.04)",
+        border: focused ? "1px solid rgba(193,122,80,0.5)" : "1px solid rgba(0,0,0,0.08)",
         borderRadius: "2px",
-        color: "rgba(255,255,255,0.8)",
+        color: "rgba(0,0,0,0.7)",
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
         textAlign: "center",
@@ -680,14 +680,14 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.clearRect(0, 0, size, size);
 
     // Background
-    ctx.fillStyle = "rgba(255,255,255,0.04)";
+    ctx.fillStyle = "rgba(0,0,0,0.03)";
     ctx.fillRect(0, 0, size, size);
 
     // Grid line (diagonal baseline)
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.lineTo(toX(1), toY(1));
-    ctx.strokeStyle = "rgba(255,255,255,0.1)";
+    ctx.strokeStyle = "rgba(0,0,0,0.08)";
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
@@ -697,14 +697,14 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.lineTo(toX(x1), toY(y1));
-    ctx.strokeStyle = "rgba(99,102,241,0.4)";
+    ctx.strokeStyle = "rgba(193,122,80,0.4)";
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(toX(1), toY(1));
     ctx.lineTo(toX(x2), toY(y2));
-    ctx.strokeStyle = "rgba(99,102,241,0.4)";
+    ctx.strokeStyle = "rgba(193,122,80,0.4)";
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
@@ -712,7 +712,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.bezierCurveTo(toX(x1), toY(y1), toX(x2), toY(y2), toX(1), toY(1));
-    ctx.strokeStyle = "#6366f1";
+    ctx.strokeStyle = "#c17a50";
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
@@ -720,7 +720,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     for (const [px, py] of [[x1, y1], [x2, y2]] as const) {
       ctx.beginPath();
       ctx.arc(toX(px), toY(py), 2, 0, Math.PI * 2);
-      ctx.fillStyle = "#6366f1";
+      ctx.fillStyle = "#c17a50";
       ctx.fill();
     }
   }, [points]);
@@ -736,7 +736,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
         width: "40px",
         height: "40px",
         borderRadius: "3px",
-        border: "1px solid rgba(255,255,255,0.1)",
+        border: "1px solid rgba(0,0,0,0.08)",
         flexShrink: 0,
       }}
     />

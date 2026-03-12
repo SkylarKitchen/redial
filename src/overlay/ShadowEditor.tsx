@@ -94,7 +94,7 @@ function NumericInput({
           fontSize: "8px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "rgba(255,255,255,0.35)",
+          color: "rgba(0,0,0,0.35)",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -110,10 +110,10 @@ function NumericInput({
           autoFocus
           style={{
             width: "36px",
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(99,102,241,0.5)",
+            background: "rgba(0,0,0,0.08)",
+            border: "1px solid rgba(193,122,80,0.5)",
             borderRadius: "2px",
-            color: "rgba(255,255,255,0.9)",
+            color: "rgba(0,0,0,0.87)",
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
             textAlign: "center",
@@ -133,19 +133,19 @@ function NumericInput({
             width: "36px",
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+            color: value !== 0 ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.3)",
             cursor: "text",
             padding: "2px",
             borderRadius: "2px",
             textAlign: "center",
-            background: "rgba(255,255,255,0.04)",
+            background: "rgba(0,0,0,0.03)",
             transition: `background ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+            (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
           }}
         >
           {value}
@@ -184,7 +184,7 @@ function ShadowRow({
     <div
       style={{
         padding: "6px 0",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        borderBottom: "1px solid rgba(0,0,0,0.06)",
         opacity: shadow.visible === false ? 0.4 : 1,
         transition: "opacity 100ms",
       }}
@@ -215,7 +215,7 @@ function ShadowRow({
               width: "16px",
               height: "16px",
               borderRadius: "2px",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: "1px solid rgba(0,0,0,0.15)",
               background: shadow.color,
               cursor: "pointer",
               padding: 0,
@@ -245,11 +245,11 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: shadow.inset ? "#6366f1" : "rgba(255,255,255,0.35)",
-            background: shadow.inset ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)",
+            color: shadow.inset ? "#c17a50" : "rgba(0,0,0,0.35)",
+            background: shadow.inset ? "rgba(193,122,80,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
-              ? "1px solid rgba(99,102,241,0.3)"
-              : "1px solid rgba(255,255,255,0.1)",
+              ? "1px solid rgba(193,122,80,0.3)"
+              : "1px solid rgba(0,0,0,0.08)",
             borderRadius: "2px",
             padding: "1px 4px",
             cursor: "pointer",
@@ -269,7 +269,7 @@ function ShadowRow({
             border: "none",
             cursor: "pointer",
             padding: "2px",
-            color: shadow.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+            color: shadow.visible !== false ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.15)",
             pointerEvents: isDragging ? "none" : "auto",
           }}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}
@@ -283,7 +283,7 @@ function ShadowRow({
           title="Remove shadow"
           style={{
             fontSize: "12px",
-            color: "rgba(255,255,255,0.35)",
+            color: "rgba(0,0,0,0.35)",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -292,10 +292,10 @@ function ShadowRow({
             transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+            (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.6)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.35)";
+            (e.currentTarget as HTMLElement).style.color = "rgba(0,0,0,0.35)";
           }}
         >
           <X size={12} strokeWidth={2} />
@@ -347,19 +347,19 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           padding: "4px 0",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
-          color: "#6366f1",
-          background: "rgba(99,102,241,0.08)",
-          border: "1px dashed rgba(99,102,241,0.3)",
+          color: "#c17a50",
+          background: "rgba(193,122,80,0.08)",
+          border: "1px dashed rgba(193,122,80,0.3)",
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
           transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.15)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.15)";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.08)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(193,122,80,0.08)";
         }}
       >
         + Add shadow
@@ -394,7 +394,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           style={{
             padding: "8px 0",
             fontSize: "10px",
-            color: "rgba(255,255,255,0.25)",
+            color: "rgba(0,0,0,0.25)",
             textAlign: "center",
             fontFamily: "system-ui, sans-serif",
           }}
