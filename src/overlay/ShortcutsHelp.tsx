@@ -46,6 +46,9 @@ const SHORTCUTS = [
 ];
 
 export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef, true);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -73,6 +76,7 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
       }}
     >
       <div
+        ref={modalRef}
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 400,

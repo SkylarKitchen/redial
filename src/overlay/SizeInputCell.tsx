@@ -13,7 +13,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector, type SpecialOption, type ConversionHint } from "./UnitSelector";
+import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
 import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
 import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
@@ -39,6 +39,14 @@ export interface SizeInputCellProps {
   conversionHint?: ConversionHint | null;
   /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
   property?: string;
+  /** Currently selected CSS variable name, or null */
+  cssVar?: string | null;
+  /** Resolved display value of the variable (e.g. "16") */
+  cssVarResolved?: string;
+  /** Called when a CSS variable is selected from the dropdown */
+  onCssVarChange?: (varName: string | null) => void;
+  /** CSS variable options for the UnitSelector dropdown */
+  variableOptions?: VariableOption[];
 }
 
 export function SizeInputCell({
@@ -58,12 +66,17 @@ export function SizeInputCell({
   max,
   conversionHint,
   property,
+  cssVar,
+  cssVarResolved,
+  onCssVarChange,
+  variableOptions,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
-  useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null });
+  const isVariable = keyword === null && (cssVar ?? null) !== null;
+  useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null || isVariable });
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -204,7 +217,7 @@ export function SizeInputCell({
           transition: `color ${ms("normal")}`,
         }}
       >
-        {isKeyword ? (
+        {isKeyword || isVariable ? (
           <span style={{ cursor: "default" }}>{label}</span>
         ) : (
           <LabelScrub
@@ -246,6 +259,34 @@ export function SizeInputCell({
             }}
           >
             {keyword}
+          </span>
+        ) : isVariable ? (
+          <span
+            tabIndex={0}
+            onClick={() => { onCssVarChange?.(null); setEditing(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
+            title={`${cssVar}: ${cssVarResolved ?? ""}`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "10px",
+              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              paddingRight: "4px",
+              cursor: "text",
+              outline: "none",
+              overflow: "hidden",
+              minWidth: 0,
+            }}
+          >
+            <span style={{ color: "#a78bfa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {cssVar!.replace(/^--/, "")}
+            </span>
+            {cssVarResolved && (
+              <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
+                {parseFloat(cssVarResolved) || cssVarResolved}
+              </span>
+            )}
           </span>
         ) : editing ? (
           <input
@@ -294,12 +335,14 @@ export function SizeInputCell({
       {/* Unit / keyword toggle */}
       <div style={{ flexShrink: 0, paddingRight: "3px" }}>
         <UnitSelector
-          value={isKeyword ? "–" : unit}
+          value={isVariable ? "VAR" : isKeyword ? "–" : unit}
           options={units}
           onChange={handleUnitSelect}
           specialOptions={specialOptions}
           onSpecialSelect={handleSpecialSelect}
           conversionHint={conversionHint}
+          variableOptions={variableOptions}
+          onVariableSelect={(name) => onCssVarChange?.(name)}
         />
       </div>
     </div>

@@ -5,7 +5,7 @@
  * box-sizing, aspect-ratio, object-fit/position.
  */
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, useMemo, memo } from "react";
 import { Section, SliderRow, SelectRow, TextRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SizeInputCell } from "./SizeInputCell";
@@ -22,6 +22,7 @@ import {
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BOX_SIZING_OPTIONS,
 } from "./panelConstants";
+import { discoverLengthVariables } from "./discoverVariables";
 
 // ─── Props ────────────────────────────────────────────────────────────
 
@@ -40,6 +41,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+
+  // ─── CSS variable discovery (length-type only) ─────────────────────
+
+  const varOptions = useMemo(() =>
+    discoverLengthVariables(element).map(v => ({ name: v.name, resolvedValue: v.value })),
+    [element]
+  );
 
   // ─── Size state ─────────────────────────────────────────────────────
 
@@ -112,6 +120,25 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
     return !authored || authored === "none";
   });
 
+  // ─── CSS variable state per property ────────────────────────────────
+
+  const extractVar = (prop: string): string | null => {
+    const authored = getAuthoredValue(element, prop);
+    return authored?.match(/^var\(\s*(--[\w-]+)/)?.[1] ?? null;
+  };
+
+  const [widthVar, setWidthVar] = useState<string | null>(() => extractVar("width"));
+  const [heightVar, setHeightVar] = useState<string | null>(() => extractVar("height"));
+  const [minWidthVar, setMinWidthVar] = useState<string | null>(() => extractVar("min-width"));
+  const [maxWidthVar, setMaxWidthVar] = useState<string | null>(() => extractVar("max-width"));
+  const [minHeightVar, setMinHeightVar] = useState<string | null>(() => extractVar("min-height"));
+  const [maxHeightVar, setMaxHeightVar] = useState<string | null>(() => extractVar("max-height"));
+
+  const resolveVar = (varName: string | null): string | undefined => {
+    if (!varName) return undefined;
+    return getComputedStyle(element).getPropertyValue(varName).trim() || undefined;
+  };
+
   // ─── Size handlers ──────────────────────────────────────────────────
 
   const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
@@ -159,6 +186,44 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
     apply("max-height", next ? "none" : `${maxHeight}${maxHeightUnit}`);
   }, [maxHeightNone, maxHeight, maxHeightUnit, apply]);
 
+  // ─── CSS variable handlers ──────────────────────────────────────────
+
+  const handleWidthVarChange = useCallback((varName: string | null) => {
+    setWidthVar(varName);
+    if (varName) { setWidthAuto(false); apply("width", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("width")); setWidth(c); apply("width", `${c}${widthUnit}`); }
+  }, [apply, element, widthUnit]);
+
+  const handleHeightVarChange = useCallback((varName: string | null) => {
+    setHeightVar(varName);
+    if (varName) { setHeightAuto(false); apply("height", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("height")); setHeight(c); apply("height", `${c}${heightUnit}`); }
+  }, [apply, element, heightUnit]);
+
+  const handleMinWidthVarChange = useCallback((varName: string | null) => {
+    setMinWidthVar(varName);
+    if (varName) { apply("min-width", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("min-width")); setMinWidth(c); apply("min-width", `${c}${minWidthUnit}`); }
+  }, [apply, element, minWidthUnit]);
+
+  const handleMaxWidthVarChange = useCallback((varName: string | null) => {
+    setMaxWidthVar(varName);
+    if (varName) { setMaxWidthNone(false); apply("max-width", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("max-width")); setMaxWidth(c); apply("max-width", c === 0 ? "none" : `${c}${maxWidthUnit}`); }
+  }, [apply, element, maxWidthUnit]);
+
+  const handleMinHeightVarChange = useCallback((varName: string | null) => {
+    setMinHeightVar(varName);
+    if (varName) { apply("min-height", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("min-height")); setMinHeight(c); apply("min-height", `${c}${minHeightUnit}`); }
+  }, [apply, element, minHeightUnit]);
+
+  const handleMaxHeightVarChange = useCallback((varName: string | null) => {
+    setMaxHeightVar(varName);
+    if (varName) { setMaxHeightNone(false); apply("max-height", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).getPropertyValue("max-height")); setMaxHeight(c); apply("max-height", c === 0 ? "none" : `${c}${maxHeightUnit}`); }
+  }, [apply, element, maxHeightUnit]);
+
   // ─── JSX ────────────────────────────────────────────────────────────
 
   return (
@@ -172,14 +237,18 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={widthAuto ? "auto" : null}
           onValueChange={handleWidthChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(width, widthUnit, u, ctx, "width"); fireWHint(width, widthUnit, c, u, ctx, "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
-          onKeywordChange={(k) => { setWidthAuto(k === "auto"); apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`); }}
+          onUnitChange={(u) => { if (widthVar) setWidthVar(null); const ctx = getConversionCtx(); const c = convertUnit(width, widthUnit, u, ctx, "width"); fireWHint(width, widthUnit, c, u, ctx, "width"); setWidth(c); setWidthUnit(u); apply("width", `${c}${u}`); }}
+          onKeywordChange={(k) => { if (widthVar) setWidthVar(null); setWidthAuto(k === "auto"); apply("width", k === "auto" ? "auto" : `${width}${widthUnit}`); }}
           isModified={isDirty(element, "width")}
           supportsAuto
           min={0}
           max={1920}
           conversionHint={wHint}
           property="width"
+          cssVar={widthVar}
+          cssVarResolved={resolveVar(widthVar)}
+          onCssVarChange={handleWidthVarChange}
+          variableOptions={varOptions}
         />
         <SizeInputCell
           label="Height"
@@ -188,14 +257,18 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_H}
           keyword={heightAuto ? "auto" : null}
           onValueChange={handleHeightChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(height, heightUnit, u, ctx, "height"); fireHHint(height, heightUnit, c, u, ctx, "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
-          onKeywordChange={(k) => { setHeightAuto(k === "auto"); apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`); }}
+          onUnitChange={(u) => { if (heightVar) setHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(height, heightUnit, u, ctx, "height"); fireHHint(height, heightUnit, c, u, ctx, "height"); setHeight(c); setHeightUnit(u); apply("height", `${c}${u}`); }}
+          onKeywordChange={(k) => { if (heightVar) setHeightVar(null); setHeightAuto(k === "auto"); apply("height", k === "auto" ? "auto" : `${height}${heightUnit}`); }}
           isModified={isDirty(element, "height")}
           supportsAuto
           min={0}
           max={1200}
           conversionHint={hHint}
           property="height"
+          cssVar={heightVar}
+          cssVarResolved={resolveVar(heightVar)}
+          onCssVarChange={handleHeightVarChange}
+          variableOptions={varOptions}
         />
       </div>
       {/* Row 2: Min W + Min H */}
@@ -207,13 +280,17 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           units={SIZE_UNITS_W}
           keyword={null}
           onValueChange={handleMinWidthChange}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(minWidth, minWidthUnit, u, ctx, "width"); fireMinWHint(minWidth, minWidthUnit, c, u, ctx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
+          onUnitChange={(u) => { if (minWidthVar) setMinWidthVar(null); const ctx = getConversionCtx(); const c = convertUnit(minWidth, minWidthUnit, u, ctx, "width"); fireMinWHint(minWidth, minWidthUnit, c, u, ctx, "width"); setMinWidth(c); setMinWidthUnit(u); apply("min-width", `${c}${u}`); }}
           onKeywordChange={() => {}}
           isModified={isDirty(element, "min-width")}
           min={0}
           max={1920}
           conversionHint={minWHint}
           property="min-width"
+          cssVar={minWidthVar}
+          cssVarResolved={resolveVar(minWidthVar)}
+          onCssVarChange={handleMinWidthVarChange}
+          variableOptions={varOptions}
         />
         <SizeInputCell
           label="Min H"

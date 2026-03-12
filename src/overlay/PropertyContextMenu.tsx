@@ -10,6 +10,7 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { resetProp } from "./apply";
+import { useFocusTrap } from "./useFocusTrap";
 
 export interface ContextMenuState {
   x: number;
@@ -41,6 +42,7 @@ export function PropertyContextMenu({
   onReset,
 }: PropertyContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(menuRef, true);
 
   // Clamp position to viewport after mount
   useEffect(() => {
@@ -137,8 +139,9 @@ function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <div
       role="menuitem"
-      tabIndex={-1}
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
       style={{
         padding: "6px 12px",
         fontSize: "12px",

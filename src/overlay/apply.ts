@@ -50,6 +50,21 @@ function notifyListeners() {
   listeners.forEach(fn => fn());
 }
 
+// --- Change listener API (for history tracking) ---
+
+export type ChangeInfo = { el: Element; prop: string; from: string; to: string };
+const changeListeners = new Set<(info: ChangeInfo) => void>();
+
+export function subscribeChanges(callback: (info: ChangeInfo) => void): () => void {
+  changeListeners.add(callback);
+  return () => { changeListeners.delete(callback); };
+}
+
+function notifyChange(el: Element, prop: string, from: string, to: string) {
+  const info: ChangeInfo = { el, prop, from, to };
+  changeListeners.forEach(fn => fn(info));
+}
+
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
@@ -171,6 +186,7 @@ export function applyInlineStyle(
   (el as HTMLElement).style.setProperty(prop, value, "important");
   schedulePersist();
   notifyListeners();
+  notifyChange(el, prop, elOverrides.get(prop)!.initial, value);
 }
 
 export function undo(): { el: Element; prop: string } | null {

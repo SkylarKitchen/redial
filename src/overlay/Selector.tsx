@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ms } from "./timing";
+import { isNavigableElement } from "./util";
 
 interface SelectorProps {
   active: boolean;
@@ -18,6 +19,8 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
   const [hovered, setHovered] = useState<Element | null>(null);
   const outlineRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
+  const candidatesRef = useRef<Element[]>([]);
+  const focusIdxRef = useRef(-1);
 
   // Position the outline over the hovered element (updates on scroll/resize)
   useEffect(() => {
@@ -62,7 +65,20 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     };
   }, [active, hovered]);
 
-  // Mouse tracking
+  // Build candidate list for keyboard selection when active
+  useEffect(() => {
+    if (!active) {
+      candidatesRef.current = [];
+      focusIdxRef.current = -1;
+      return;
+    }
+    const all = document.querySelectorAll("*");
+    candidatesRef.current = Array.from(all).filter(
+      (el) => isNavigableElement(el) && el instanceof HTMLElement,
+    );
+  }, [active]);
+
+  // Mouse tracking + keyboard selection
   useEffect(() => {
     if (!active) return;
 
@@ -94,6 +110,29 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onCancel();
+        return;
+      }
+
+      // Tab / Shift+Tab cycles through page elements (keyboard-only selection)
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const list = candidatesRef.current;
+        if (list.length === 0) return;
+        const idx = focusIdxRef.current;
+        const next = e.shiftKey
+          ? (idx - 1 + list.length) % list.length
+          : (idx + 1) % list.length;
+        focusIdxRef.current = next;
+        setHovered(list[next]);
+        return;
+      }
+
+      // Enter selects the currently focused candidate
+      if (e.key === "Enter" && focusIdxRef.current >= 0) {
+        e.preventDefault();
+        const el = candidatesRef.current[focusIdxRef.current];
+        if (el) onSelect(el);
+        return;
       }
     };
 

@@ -138,16 +138,6 @@ export function ColorPickerEnhanced({
   const currentRgb = hsbToRgb(hue, sat, bri);
   const currentHex = rgbToHex(currentRgb.r, currentRgb.g, currentRgb.b);
 
-  // Emit changes
-  const emitChange = useCallback(
-    (h: number, s: number, b: number, a: number) => {
-      const rgb = hsbToRgb(h, s, b);
-      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
-      onChange(hex, a);
-    },
-    [onChange],
-  );
-
   // ─── Swatches (persisted via localStorage) ──────────────────
   const [swatches, setSwatches] = useState<string[]>(() => {
     try {
@@ -195,6 +185,25 @@ export function ColorPickerEnhanced({
   const recentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRecentRef = useRef<string | null>(null);
 
+  // Emit changes (also schedules debounced recent color tracking)
+  const emitChange = useCallback(
+    (h: number, s: number, b: number, a: number) => {
+      const rgb = hsbToRgb(h, s, b);
+      const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+      onChange(hex, a);
+      // Debounce: track recent color 500ms after last change
+      pendingRecentRef.current = hex;
+      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
+      recentTimerRef.current = setTimeout(() => {
+        if (pendingRecentRef.current) {
+          addRecentColor(pendingRecentRef.current);
+          pendingRecentRef.current = null;
+        }
+      }, 500);
+    },
+    [onChange, addRecentColor],
+  );
+
   // ─── CSS color variables discovery ─────────────────────────────
   const colorVars = useMemo<ColorVariable[]>(() => {
     if (!onSelectVariable) return [];
@@ -240,10 +249,11 @@ export function ColorPickerEnhanced({
     }
   }, [alpha, emitChange]);
 
-  // Abort eyedropper on unmount
+  // Abort eyedropper + clear recent timer on unmount
   useEffect(() => {
     return () => {
       eyedropperAbortRef.current?.abort();
+      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
     };
   }, []);
 
@@ -492,6 +502,7 @@ export function ColorPickerEnhanced({
     >
       {/* ── 2D Saturation / Brightness Canvas ──────────────── */}
       <div
+        aria-label="Saturation and brightness"
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -521,6 +532,7 @@ export function ColorPickerEnhanced({
 
       {/* ── Hue Slider ─────────────────────────────────────── */}
       <div
+        aria-label="Hue"
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -543,6 +555,7 @@ export function ColorPickerEnhanced({
 
       {/* ── Opacity Slider ─────────────────────────────────── */}
       <div
+        aria-label="Opacity"
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -774,6 +787,7 @@ export function ColorPickerEnhanced({
               type="button"
               onClick={addSwatch}
               title="Save current color"
+              aria-label="Save current color"
               style={{
                 background: "none",
                 border: "1px solid rgba(255,255,255,0.12)",
@@ -815,6 +829,7 @@ export function ColorPickerEnhanced({
                   removeSwatch(i);
                 }}
                 title={`${swatch}\nRight-click to remove`}
+                aria-label={`Saved color: ${swatch}`}
                 style={{
                   width: 22,
                   height: 22,
@@ -849,6 +864,30 @@ export function ColorPickerEnhanced({
           </div>
         )}
       </div>
+
+      {/* ── Recent Colors ──────────────────────────────── */}
+      {recentColors.length > 0 && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 6 }}>
+          <span style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Recent
+          </span>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 4 }}>
+            {recentColors.map((hex, i) => (
+              <button
+                key={`recent-${hex}-${i}`}
+                type="button"
+                onClick={() => applySwatch(hex)}
+                title={hex}
+                style={{
+                  width: 18, height: 18, borderRadius: 2,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: hex, cursor: "pointer", padding: 0,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

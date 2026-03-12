@@ -228,6 +228,7 @@ export function ValueInput({ value, onChange, emptyKeyword, onKeywordCommit }: {
   return (
     <input
       ref={inputRef}
+      aria-label="Value"
       value={focused ? draft : String(value)}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={() => setFocused(true)}
@@ -361,6 +362,7 @@ export function SliderRow({
           type="range"
           className="tuner-focusable"
           tabIndex={0}
+          aria-label={`${label}: ${value}${unit}`}
           min={min}
           max={max}
           step={step}

@@ -9,6 +9,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
 import { timing } from "./timing";
+import { useFocusTrap } from "./useFocusTrap";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -143,7 +144,10 @@ export function CommandPalette({
   const [elementResults, setElementResults] = useState<Element[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useFocusTrap(cardRef, true);
 
   // Auto-focus + clear element cache on unmount
   useEffect(() => {
@@ -284,6 +288,7 @@ export function CommandPalette({
       }}
     >
       <div
+        ref={cardRef}
         style={{
           width: "100%",
           minWidth: 400,

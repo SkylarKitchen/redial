@@ -20,8 +20,8 @@ import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { BoxModelOverlay } from "./BoxModelOverlay";
 import { infer, type InferResult } from "./infer";
-import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot } from "./apply";
-import { buildBreadcrumb, getStableSelector, formatCSSDiff, isNavigableElement } from "./util";
+import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./apply";
+import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
@@ -35,6 +35,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { ViewportBar } from "./ViewportBar";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
+import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -143,6 +144,10 @@ export function Overlay() {
 
   // Focus mode: one section open at a time (Phase K)
   const [focusMode, setFocusMode] = useState(false);
+
+  // History drawer
+  const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
@@ -286,6 +291,30 @@ export function Overlay() {
         if (count > 0) {
           setClipboardMessage(`${count} style${count === 1 ? "" : "s"} copied`);
         }
+        return;
+      }
+
+      // Cmd+Shift+V for CSS import from clipboard
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "v") {
+        if (diffMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.readText().then((text) => {
+          const el = selectedElRef.current;
+          if (!el) return;
+          const declarations = parseCSSText(text);
+          if (declarations.length === 0) return;
+          beginBatch();
+          for (const { prop, value } of declarations) {
+            applyInlineStyle(el, prop, value);
+          }
+          endBatch();
+          setInferResult(infer(el));
+          setPanelKey((k) => k + 1);
+          setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
+        }).catch(() => {
+          setClipboardMessage("Clipboard access denied");
+        });
         return;
       }
 

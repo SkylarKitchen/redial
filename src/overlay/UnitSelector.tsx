@@ -25,6 +25,11 @@ export interface ConversionHint {
   basis?: string;
 }
 
+export interface VariableOption {
+  name: string;
+  resolvedValue: string;
+}
+
 export interface UnitSelectorProps {
   value: string;
   options?: string[];
@@ -35,6 +40,10 @@ export interface UnitSelectorProps {
   onSpecialSelect?: (value: string) => void;
   /** When set, shows a transient tooltip describing the conversion. Auto-dismissed after 2s. */
   conversionHint?: ConversionHint | null;
+  /** CSS variable items rendered below special options with a divider */
+  variableOptions?: VariableOption[];
+  /** Called when a variable is selected */
+  onVariableSelect?: (name: string) => void;
 }
 
 const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];
@@ -46,7 +55,7 @@ function formatHint(h: ConversionHint): string {
   return h.basis ? `${from} \u2192 ${to} (${h.basis})` : `${from} \u2192 ${to}`;
 }
 
-export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint }: UnitSelectorProps) {
+export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint, variableOptions, onVariableSelect }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -90,14 +99,19 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
 
   // Build a flat list of all items for keyboard navigation
   const allItems = useMemo(() => {
-    const items: Array<{ value: string; isSpecial: boolean }> = options.map((u) => ({ value: u, isSpecial: false }));
+    const items: Array<{ value: string; isSpecial: boolean; isVariable: boolean }> = options.map((u) => ({ value: u, isSpecial: false, isVariable: false }));
     if (specialOptions) {
       for (const opt of specialOptions) {
-        items.push({ value: opt.value, isSpecial: true });
+        items.push({ value: opt.value, isSpecial: true, isVariable: false });
+      }
+    }
+    if (variableOptions) {
+      for (const v of variableOptions) {
+        items.push({ value: v.name, isSpecial: false, isVariable: true });
       }
     }
     return items;
-  }, [options, specialOptions]);
+  }, [options, specialOptions, variableOptions]);
 
   const labels = useMemo(() => allItems.map(item => item.value), [allItems]);
 
@@ -108,7 +122,9 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     selectedIndex: allItems.findIndex((item) => item.value === value),
     onSelect: (i) => {
       const item = allItems[i];
-      if (item.isSpecial) {
+      if (item.isVariable) {
+        onVariableSelect?.(item.value);
+      } else if (item.isSpecial) {
         onSpecialSelect?.(item.value);
       } else {
         onChange(item.value);
@@ -158,7 +174,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          maxWidth: "28px",
+          maxWidth: "36px",
           height: "20px",
           padding: "0 4px",
           background: open ? "rgba(99,102,241,0.25)" : "transparent",
@@ -197,14 +213,15 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
             position: "absolute",
             top: "calc(100% + 2px)",
             left: 0,
-            minWidth: "42px",
+            minWidth: variableOptions && variableOptions.length > 0 ? "120px" : "42px",
             background: "#2a2a2a",
             border: "1px solid rgba(255,255,255,0.15)",
             borderRadius: "4px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
             zIndex: 100,
             padding: "2px 0",
-            overflow: "hidden",
+            maxHeight: variableOptions && variableOptions.length > 0 ? "220px" : undefined,
+            overflowY: variableOptions && variableOptions.length > 0 ? "auto" : "hidden",
           }}
         >
           {options.map((unit) => {
@@ -270,6 +287,52 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isHighlighted ? "rgba(255,255,255,0.08)" : "transparent"; }}
                   >
                     {opt.label}
+                  </div>
+                );
+              })}
+            </>
+          )}
+          {variableOptions && variableOptions.length > 0 && (
+            <>
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "2px 0" }} />
+              <div style={{ padding: "2px 8px 1px", fontSize: "9px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                Variables
+              </div>
+              {variableOptions.map((v) => {
+                const idx = flatIndex++;
+                const isHighlighted = idx === highlightedIndex;
+                const isActive = value === "VAR" && false; // Variables are not "selected" like units
+                return (
+                  <div
+                    key={v.name}
+                    id={`${id}-opt-${idx}`}
+                    ref={idx === highlightedIndex ? optionRefCallback : undefined}
+                    role="option"
+                    aria-selected={false}
+                    onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "6px",
+                      padding: "3px 8px",
+                      fontSize: "10px",
+                      fontFamily: "ui-monospace, 'SF Mono', monospace",
+                      color: "rgba(255,255,255,0.7)",
+                      background: isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: `background ${ms("micro")}`,
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isHighlighted ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                  >
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {v.name.replace(/^--/, "")}
+                    </span>
+                    <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: "9px" }}>
+                      {v.resolvedValue}
+                    </span>
                   </div>
                 );
               })}
