@@ -13,8 +13,8 @@ import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
 
-// Webflow's standard spacing presets
-const PRESETS = [0, 10, 20, 40, 60, 100, 140, 220];
+// 8px grid spacing presets
+const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];
 
 // Direction arrows for each side
 const SIDE_ICONS: Record<string, string> = {

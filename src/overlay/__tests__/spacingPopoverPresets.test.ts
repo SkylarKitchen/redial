@@ -7,7 +7,7 @@ import { SpacingValuePopover } from "../SpacingValuePopover";
 import { SpacingBoxModel } from "../SpacingBoxModel";
 
 /**
- * Reproduction test: clicking preset buttons (0, 10, 20, 40, etc.)
+ * Reproduction test: clicking preset buttons (0, 8, 16, 32, etc.)
  * in the SpacingValuePopover should call onChange with the preset value.
  *
  * Bug report: preset buttons "aren't working" — clicking them has no effect.
@@ -69,13 +69,13 @@ describe("SpacingValuePopover preset buttons", () => {
     renderPopover(onChange);
 
     const presets = getPresetButtons();
-    expect(presets.length).toBe(8); // 0, 10, 20, 40, 60, 100, 140, 220
+    expect(presets.length).toBe(8); // 0, 8, 16, 32, 48, 64, 96, 128
 
-    // Click "10" (different from current value of 0)
-    const btn10 = presets.find((b) => b.textContent?.trim() === "10");
-    expect(btn10).toBeDefined();
-    act(() => { btn10!.click(); });
-    expect(onChange).toHaveBeenCalledWith(10);
+    // Click "8" (different from current value of 0)
+    const btn8 = presets.find((b) => b.textContent?.trim() === "8");
+    expect(btn8).toBeDefined();
+    act(() => { btn8!.click(); });
+    expect(onChange).toHaveBeenCalledWith(8);
   });
 
   it("should call onChange when clicking preset matching current value", () => {
@@ -89,26 +89,26 @@ describe("SpacingValuePopover preset buttons", () => {
     expect(onChange).toHaveBeenCalledWith(0);
   });
 
-  it("should call onChange for preset 40 when current value is 0", () => {
+  it("should call onChange for preset 32 when current value is 0", () => {
     const onChange = vi.fn();
     renderPopover(onChange);
 
     const presets = getPresetButtons();
-    const btn40 = presets.find((b) => b.textContent?.trim() === "40");
-    expect(btn40).toBeDefined();
-    act(() => { btn40!.click(); });
-    expect(onChange).toHaveBeenCalledWith(40);
+    const btn32 = presets.find((b) => b.textContent?.trim() === "32");
+    expect(btn32).toBeDefined();
+    act(() => { btn32!.click(); });
+    expect(onChange).toHaveBeenCalledWith(32);
   });
 
-  it("should call onChange for preset 10 when current value is 100", () => {
+  it("should call onChange for preset 8 when current value is 64", () => {
     const onChange = vi.fn();
-    renderPopover(onChange, 100); // start at 100
+    renderPopover(onChange, 64); // start at 64
 
     const presets = getPresetButtons();
-    const btn10 = presets.find((b) => b.textContent?.trim() === "10");
-    expect(btn10).toBeDefined();
-    act(() => { btn10!.click(); });
-    expect(onChange).toHaveBeenCalledWith(10);
+    const btn8 = presets.find((b) => b.textContent?.trim() === "8");
+    expect(btn8).toBeDefined();
+    act(() => { btn8!.click(); });
+    expect(onChange).toHaveBeenCalledWith(8);
   });
 });
 
@@ -176,12 +176,12 @@ describe("SpacingBoxModel → popover → preset integration", () => {
     // If popover didn't open, the test will fail here with 0 buttons
     expect(presetButtons.length).toBe(8);
 
-    // Click "20" preset
-    const btn20 = presetButtons.find((b) => b.textContent?.trim() === "20");
-    expect(btn20).toBeDefined();
-    act(() => { btn20!.click(); });
+    // Click "16" preset
+    const btn16 = presetButtons.find((b) => b.textContent?.trim() === "16");
+    expect(btn16).toBeDefined();
+    act(() => { btn16!.click(); });
 
     // onChange should have been called with (prop, value, unit)
-    expect(onChange).toHaveBeenCalledWith("margin-top", 20, "px");
+    expect(onChange).toHaveBeenCalledWith("margin-top", 16, "px");
   });
 });
