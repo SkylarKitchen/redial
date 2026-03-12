@@ -15,152 +15,66 @@ import { Section } from "./controls";
 // ─── Types ───────────────────────────────────────────────────────────
 
 type VarSource = "element" | "inherited" | "root";
-type VarType = "color" | "length" | "number" | "string";
-
 interface CSSVariable {
   name: string;
   value: string;
   source: VarSource;
-  type: VarType;
+  isColor: boolean;
 }
 
-// ─── CSS Named Colors (subset for fast detection) ────────────────────
-
-const CSS_NAMED_COLORS = new Set([
-  "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure",
-  "beige", "bisque", "black", "blanchedalmond", "blue",
-  "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse",
-  "chocolate", "coral", "cornflowerblue", "cornsilk", "crimson",
-  "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
-  "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen",
-  "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
-  "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise",
-  "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey",
-  "dodgerblue", "firebrick", "floralwhite", "forestgreen", "fuchsia",
-  "gainsboro", "ghostwhite", "gold", "goldenrod", "gray", "green",
-  "greenyellow", "grey", "honeydew", "hotpink", "indianred", "indigo",
-  "ivory", "khaki", "lavender", "lavenderblush", "lawngreen",
-  "lemonchiffon", "lightblue", "lightcoral", "lightcyan",
-  "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey",
-  "lightpink", "lightsalmon", "lightseagreen", "lightskyblue",
-  "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow",
-  "lime", "limegreen", "linen", "magenta", "maroon", "mediumaquamarine",
-  "mediumblue", "mediumorchid", "mediumpurple", "mediumseagreen",
-  "mediumslateblue", "mediumspringgreen", "mediumturquoise",
-  "mediumvioletred", "midnightblue", "mintcream", "mistyrose",
-  "moccasin", "navajowhite", "navy", "oldlace", "olive", "olivedrab",
-  "orange", "orangered", "orchid", "palegoldenrod", "palegreen",
-  "paleturquoise", "palevioletred", "papayawhip", "peachpuff", "peru",
-  "pink", "plum", "powderblue", "purple", "rebeccapurple", "red",
-  "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown",
-  "seagreen", "seashell", "sienna", "silver", "skyblue", "slateblue",
-  "slategray", "slategrey", "snow", "springgreen", "steelblue", "tan",
-  "teal", "thistle", "tomato", "turquoise", "violet", "wheat", "white",
-  "whitesmoke", "yellow", "yellowgreen", "transparent", "currentcolor",
-]);
-
-// ─── Value Type Detection ────────────────────────────────────────────
+// ─── Color Detection ─────────────────────────────────────────────────
 
 const HEX_RE = /^#([0-9a-f]{3,8})$/i;
-const LENGTH_RE = /^-?[\d.]+\s*(px|em|rem|%|vw|vh|vmin|vmax|ch|ex|cm|mm|in|pt|pc|svw|svh|dvw|dvh|lvw|lvh|cqw|cqh)$/i;
-const NUMBER_RE = /^-?[\d.]+$/;
+const COMMON_COLOR_NAMES = new Set(["transparent", "currentcolor", "black", "white", "red", "blue", "green"]);
 
-function detectType(value: string): VarType {
+function isColorValue(value: string): boolean {
   const v = value.trim();
-  if (!v) return "string";
-
-  // Color detection
-  if (HEX_RE.test(v)) return "color";
-  if (/^(rgb|rgba|hsl|hsla|oklch|oklab|lch|lab|color)\s*\(/i.test(v)) return "color";
-  if (CSS_NAMED_COLORS.has(v.toLowerCase())) return "color";
-
-  // Length detection
-  if (LENGTH_RE.test(v)) return "length";
-
-  // Number detection
-  if (NUMBER_RE.test(v)) return "number";
-
-  return "string";
+  if (!v) return false;
+  if (HEX_RE.test(v)) return true;
+  if (/^(rgb|rgba|hsl|hsla|oklch|oklab|lch|lab|color)\s*\(/i.test(v)) return true;
+  if (COMMON_COLOR_NAMES.has(v.toLowerCase())) return true;
+  return false;
 }
 
 // ─── Variable Discovery ──────────────────────────────────────────────
 
 function discoverVariables(element: Element): CSSVariable[] {
   const found = new Map<string, CSSVariable>();
+  const rootStyles = getComputedStyle(document.documentElement);
+  const elStyles = getComputedStyle(element);
 
-  // 1. Collect :root variables
-  try {
-    const rootStyles = getComputedStyle(document.documentElement);
-    for (const sheet of Array.from(document.styleSheets)) {
-      try {
-        for (const rule of Array.from(sheet.cssRules)) {
-          if (
-            rule instanceof CSSStyleRule &&
-            (rule.selectorText === ":root" || rule.selectorText === "html")
-          ) {
-            for (let i = 0; i < rule.style.length; i++) {
-              const prop = rule.style[i];
-              if (prop.startsWith("--")) {
-                const value = rootStyles.getPropertyValue(prop).trim();
-                if (value) {
-                  found.set(prop, {
-                    name: prop,
-                    value,
-                    source: "root",
-                    type: detectType(value),
-                  });
-                }
-              }
-            }
+  // 1. Walk stylesheets once — collect :root vars and element-matching vars
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      for (const rule of Array.from(sheet.cssRules)) {
+        if (!(rule instanceof CSSStyleRule)) continue;
+        const isRoot = rule.selectorText === ":root" || rule.selectorText === "html";
+        let matchesEl = false;
+        if (!isRoot) {
+          try { matchesEl = element.matches(rule.selectorText); } catch { /* invalid selector */ }
+        }
+        if (!isRoot && !matchesEl) continue;
+
+        for (let i = 0; i < rule.style.length; i++) {
+          const prop = rule.style[i];
+          if (!prop.startsWith("--")) continue;
+          const value = (isRoot ? rootStyles : elStyles).getPropertyValue(prop).trim();
+          if (value) {
+            found.set(prop, {
+              name: prop,
+              value,
+              source: matchesEl ? "element" : "root",
+              isColor: isColorValue(value),
+            });
           }
         }
-      } catch {
-        // Cross-origin stylesheets throw SecurityError — skip silently
       }
+    } catch {
+      // Cross-origin stylesheets throw SecurityError — skip silently
     }
-  } catch {
-    // Stylesheet access may fail in some environments
   }
 
-  // 2. Collect variables from rules matching this element
-  try {
-    for (const sheet of Array.from(document.styleSheets)) {
-      try {
-        for (const rule of Array.from(sheet.cssRules)) {
-          if (rule instanceof CSSStyleRule) {
-            // Skip :root — already handled
-            if (rule.selectorText === ":root" || rule.selectorText === "html") continue;
-            try {
-              if (element.matches(rule.selectorText)) {
-                for (let i = 0; i < rule.style.length; i++) {
-                  const prop = rule.style[i];
-                  if (prop.startsWith("--")) {
-                    const value = getComputedStyle(element).getPropertyValue(prop).trim();
-                    if (value) {
-                      found.set(prop, {
-                        name: prop,
-                        value,
-                        source: "element",
-                        type: detectType(value),
-                      });
-                    }
-                  }
-                }
-              }
-            } catch {
-              // Invalid selectors can cause matches() to throw
-            }
-          }
-        }
-      } catch {
-        // Cross-origin stylesheets
-      }
-    }
-  } catch {
-    // Stylesheet access may fail
-  }
-
-  // 3. Check inline styles on the element itself
+  // 2. Check inline styles on the element itself
   const htmlEl = element as HTMLElement;
   if (htmlEl.style) {
     for (let i = 0; i < htmlEl.style.length; i++) {
@@ -168,32 +82,22 @@ function discoverVariables(element: Element): CSSVariable[] {
       if (prop.startsWith("--")) {
         const value = htmlEl.style.getPropertyValue(prop).trim();
         if (value) {
-          found.set(prop, {
-            name: prop,
-            value,
-            source: "element",
-            type: detectType(value),
-          });
+          found.set(prop, { name: prop, value, source: "element", isColor: isColorValue(value) });
         }
       }
     }
   }
 
-  // 4. Check ancestors for inherited variables (walk up the DOM)
+  // 3. Check ancestors for inherited variables (walk up the DOM)
   let ancestor = element.parentElement;
   while (ancestor && ancestor !== document.documentElement) {
     if (ancestor.style) {
       for (let i = 0; i < ancestor.style.length; i++) {
         const prop = ancestor.style[i];
         if (prop.startsWith("--") && !found.has(prop)) {
-          const value = getComputedStyle(element).getPropertyValue(prop).trim();
+          const value = elStyles.getPropertyValue(prop).trim();
           if (value) {
-            found.set(prop, {
-              name: prop,
-              value,
-              source: "inherited",
-              type: detectType(value),
-            });
+            found.set(prop, { name: prop, value, source: "inherited", isColor: isColorValue(value) });
           }
         }
       }
@@ -201,7 +105,6 @@ function discoverVariables(element: Element): CSSVariable[] {
     ancestor = ancestor.parentElement;
   }
 
-  // Sort alphabetically within groups
   return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
