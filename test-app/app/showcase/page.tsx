@@ -1430,7 +1430,7 @@ export default function ShowcasePage() {
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
               <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
               <div className="variant-col"><div className="variant-label">Primary (Save)</div><HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton></div>
-              <div className="variant-col"><div className="variant-label">Destructive</div><HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>Reset</HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Destructive</div><HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>Reset</HoverButton></div>
               <div className="variant-col"><div className="variant-label">Disabled</div><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
             </div>
           </div>
@@ -1546,7 +1546,7 @@ export default function ShowcasePage() {
                     <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Import</HoverButton>
                   </div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
+                    <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
                     <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
                   </div>
                 </div>

@@ -81,6 +81,82 @@ function findConflicts(
   return conflicts;
 }
 
+/**
+ * Extracts HoverButton usages and returns paired (style, hoverStyle) raw strings.
+ * Detects cross-prop shorthand/longhand conflicts that cause React warnings
+ * when the two style objects are merged at runtime.
+ */
+function extractHoverButtonPairs(
+  source: string
+): Array<{ lineNumber: number; styleRaw: string; hoverStyleRaw: string }> {
+  const pairs: Array<{
+    lineNumber: number;
+    styleRaw: string;
+    hoverStyleRaw: string;
+  }> = [];
+  // Match <HoverButton ... style={...} ... hoverStyle={...} ...>
+  const hoverBtnRegex =
+    /<HoverButton[^>]*\bstyle=\{(\{[^}]*\})\}[^>]*\bhoverStyle=\{(\{[^}]*\})\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = hoverBtnRegex.exec(source)) !== null) {
+    const upToMatch = source.slice(0, match.index);
+    const lineNumber = upToMatch.split("\n").length;
+    pairs.push({
+      lineNumber,
+      styleRaw: match[1],
+      hoverStyleRaw: match[2],
+    });
+  }
+  return pairs;
+}
+
+/**
+ * Checks whether a base style block and a hover style block conflict
+ * on shorthand vs longhand CSS properties (cross-prop merge).
+ */
+function findCrossPropConflicts(
+  baseRaw: string,
+  hoverRaw: string
+): Array<{ shorthand: string; longhand: string; direction: string }> {
+  const conflicts: Array<{
+    shorthand: string;
+    longhand: string;
+    direction: string;
+  }> = [];
+
+  for (const [shorthand, longhands] of Object.entries(SHORTHAND_LONGHAND_MAP)) {
+    const shorthandKeyRegex = new RegExp(
+      `(?:^|[{,\\s])${shorthand}\\s*[:?]`,
+      "m"
+    );
+    for (const longhand of longhands) {
+      const longhandKeyRegex = new RegExp(
+        `(?:^|[{,\\s])${longhand}\\s*:`,
+        "m"
+      );
+
+      // base has shorthand, hover has longhand
+      if (shorthandKeyRegex.test(baseRaw) && longhandKeyRegex.test(hoverRaw)) {
+        conflicts.push({
+          shorthand,
+          longhand,
+          direction: "style has shorthand, hoverStyle has longhand",
+        });
+      }
+      // base has longhand, hover has shorthand
+      if (longhandKeyRegex.test(baseRaw) && shorthandKeyRegex.test(hoverRaw)) {
+        conflicts.push({
+          shorthand,
+          longhand,
+          direction: "style has longhand, hoverStyle has shorthand",
+        });
+      }
+    }
+  }
+
+  return conflicts;
+}
+
 // ─── Tests ─────────────────────────────────────────────────────────────
 
 describe("no shorthand/non-shorthand CSS conflicts in inline styles", () => {
@@ -119,4 +195,40 @@ describe("no shorthand/non-shorthand CSS conflicts in inline styles", () => {
       expect(violations).toEqual([]);
     });
   }
+});
+
+describe("no cross-prop shorthand/longhand conflicts in HoverButton usages", () => {
+  const showcasePath = join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "test-app",
+    "app",
+    "showcase",
+    "page.tsx"
+  );
+
+  it("showcase page: HoverButton style + hoverStyle should not mix shorthand with longhand", () => {
+    let source: string;
+    try {
+      source = readFileSync(showcasePath, "utf-8");
+    } catch {
+      return; // file not found — skip
+    }
+
+    const pairs = extractHoverButtonPairs(source);
+    const violations: string[] = [];
+
+    for (const { lineNumber, styleRaw, hoverStyleRaw } of pairs) {
+      const conflicts = findCrossPropConflicts(styleRaw, hoverStyleRaw);
+      for (const { shorthand, longhand, direction } of conflicts) {
+        violations.push(
+          `Line ~${lineNumber}: "${shorthand}" vs "${longhand}" — ${direction}`
+        );
+      }
+    }
+
+    expect(violations).toEqual([]);
+  });
 });
