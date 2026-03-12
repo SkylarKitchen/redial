@@ -56,14 +56,14 @@ class PanelErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="p-3 text-white/50 text-[11px]">
+        <div className="p-3 text-black/45 text-[11px]">
           <div className="mb-1.5">Panel crashed — try selecting a different element.</div>
           <button
             onClick={() => {
               this.setState({ error: null });
               this.props.onError?.();
             }}
-            className="px-2.5 py-1 text-[11px] border border-white/10 rounded bg-white/[0.05] text-white/[0.55] cursor-pointer"
+            className="px-2.5 py-1 text-[11px] border border-black/8 rounded bg-black/[0.04] text-black/[0.55] cursor-pointer"
           >
             Retry
           </button>
@@ -936,7 +936,7 @@ export function Overlay() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(193,122,80,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };
@@ -1149,19 +1149,19 @@ export function Overlay() {
         }
         .__tuner-root::-webkit-scrollbar-thumb,
         .__tuner-root *::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0);
+          background: rgba(0,0,0,0);
           border-radius: 4px;
           transition: background ${ms("slow")};
         }
         .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
         .__tuner-root:hover::-webkit-scrollbar-thumb,
         .__tuner-root *:hover::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.15);
+          background: rgba(0,0,0,0.15);
         }
         .__tuner-root.is-scrolling::-webkit-scrollbar-thumb:hover,
         .__tuner-root:hover::-webkit-scrollbar-thumb:hover,
         .__tuner-root *:hover::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,255,255,0.25);
+          background: rgba(0,0,0,0.25);
         }
         .__tuner-root, .__tuner-root * {
           scrollbar-width: thin;
@@ -1170,7 +1170,7 @@ export function Overlay() {
         .__tuner-root.is-scrolling,
         .__tuner-root:hover,
         .__tuner-root *:hover {
-          scrollbar-color: rgba(255,255,255,0.15) transparent;
+          scrollbar-color: rgba(0,0,0,0.15) transparent;
         }
         @keyframes tuner-enter {
           from { opacity: 0; transform: translateY(8px) scale(0.98); }
@@ -1178,7 +1178,7 @@ export function Overlay() {
         }
         .__tuner-enter { animation: tuner-enter ${ms("expand")} ease-out both; }
 
-        /* Slider thumb styling — replaces browser defaults with dark-theme matching thumb */
+        /* Slider thumb styling — replaces browser defaults with light-theme matching thumb */
         .__tuner-root input[type="range"] {
           -webkit-appearance: none;
           appearance: none;
@@ -1187,57 +1187,57 @@ export function Overlay() {
         }
         .__tuner-root input[type="range"]::-webkit-slider-runnable-track {
           height: 3px;
-          background: rgba(255,255,255,0.12);
+          background: rgba(0,0,0,0.08);
           border-radius: 2px;
           transition: background 150ms;
         }
         .__tuner-root input[type="range"]:hover::-webkit-slider-runnable-track {
-          background: rgba(255,255,255,0.22);
+          background: rgba(0,0,0,0.15);
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #6366f1;
+          background: #c17a50;
           border: 2px solid rgba(255,255,255,0.9);
-          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          box-shadow: 0 0 3px rgba(0,0,0,0.1);
           margin-top: -4.5px;
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+          box-shadow: 0 0 0 3px rgba(193,122,80,0.25);
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
           transform: scale(1.1);
-          background: #818cf8;
+          background: #d4956a;
         }
         .__tuner-root input[type="range"]::-moz-range-track {
           height: 3px;
-          background: rgba(255,255,255,0.12);
+          background: rgba(0,0,0,0.08);
           border-radius: 2px;
           transition: background 150ms;
         }
         .__tuner-root input[type="range"]:hover::-moz-range-track {
-          background: rgba(255,255,255,0.22);
+          background: rgba(0,0,0,0.15);
         }
         .__tuner-root input[type="range"]::-moz-range-thumb {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #6366f1;
+          background: #c17a50;
           border: 2px solid rgba(255,255,255,0.9);
-          box-shadow: 0 0 3px rgba(0,0,0,0.4);
+          box-shadow: 0 0 3px rgba(0,0,0,0.1);
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+          box-shadow: 0 0 0 3px rgba(193,122,80,0.25);
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:active {
           transform: scale(1.1);
-          background: #818cf8;
+          background: #d4956a;
         }
       `}} />
 
@@ -1253,22 +1253,22 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-indigo-500 rounded-sm transition-all duration-100 ease-out"
+            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#c17a50] rounded-sm transition-all duration-100 ease-out"
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-indigo-500/50 rounded-sm bg-indigo-500/[0.04]"
+            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#c17a50]/50 rounded-sm bg-[#c17a50]/[0.04]"
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(30,30,30,0.9)] backdrop-blur-[8px] text-white/80 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
+            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(245,240,234,0.9)] backdrop-blur-[8px] text-black/70 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(30,30,30,0.9)] backdrop-blur-[8px] text-white/80 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
+            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(245,240,234,0.9)] backdrop-blur-[8px] text-black/70 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
           />
         </>
       )}
@@ -1287,8 +1287,8 @@ export function Overlay() {
       {selectedEl && inferResult && (
         <div
           className={cn(
-            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#1e1e1e] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_0.5px_rgba(255,255,255,0.06)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
-            diffMode ? "border border-yellow-400/30" : "border border-white/10",
+            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#f5f0ea] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
+            diffMode ? "border border-yellow-400/30" : "border border-black/8",
             selecting ? "pointer-events-none" : "pointer-events-auto",
           )}
           style={{
@@ -1334,17 +1334,17 @@ export function Overlay() {
             onStateChange={setActiveState}
           />
           {focusMode && (
-            <div className="flex justify-center py-0.5 border-b border-white/[0.06]">
+            <div className="flex justify-center py-0.5 border-b border-black/[0.06]">
               <span
                 onClick={() => setFocusMode(false)}
-                className="text-[9px] font-semibold text-indigo-500 bg-indigo-500/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
+                className="text-[9px] font-semibold text-[#c17a50] bg-[#c17a50]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
               >
                 Focus Mode
               </span>
             </div>
           )}
           {/* -- Common / Custom tab bar -- */}
-          <div className="flex border-b border-white/[0.06] px-3 shrink-0">
+          <div className="flex border-b border-black/[0.06] px-3 shrink-0">
             {(["common", "custom"] as const).map((tab) => {
               const isActive = activeTab === tab;
               return (
@@ -1354,8 +1354,8 @@ export function Overlay() {
                   className={cn(
                     "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
                     isActive
-                      ? "border-b-indigo-500 font-semibold text-white/[0.85]"
-                      : "border-b-transparent font-normal text-white/40",
+                      ? "border-b-[#c17a50] font-semibold text-black/[0.85]"
+                      : "border-b-transparent font-normal text-black/40",
                   )}
                 >
                   {tab === "common" ? "Common" : "Custom"}
@@ -1461,7 +1461,7 @@ export function Overlay() {
 
       {/* Selection mode indicator */}
       {selecting && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[2147483647] bg-white text-[#1e1e1e] px-4 py-1.5 rounded-lg text-[13px] font-sans shadow-none pointer-events-none">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[2147483647] bg-[#1e1e1e] text-white px-4 py-1.5 rounded-lg text-[13px] font-sans shadow-none pointer-events-none">
           Click an element to inspect • Esc to cancel
         </div>
       )}
@@ -1469,9 +1469,9 @@ export function Overlay() {
       {/* Floating action button -- bottom-right activation trigger */}
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.12] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
-          (selecting || selectedEl) && "border-indigo-500/40 shadow-[0_0_0_1px_rgba(99,102,241,0.4),0_4px_20px_rgba(0,0,0,0.5)]",
-          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.4),0_0_0_0.5px_rgba(255,255,255,0.06)]",
+          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#f5f0ea] border border-black/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
+          (selecting || selectedEl) && "border-[#c17a50]/40 shadow-[0_0_0_1px_rgba(193,122,80,0.4),0_4px_20px_rgba(0,0,0,0.1)]",
+          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)]",
         )}
         onClick={() => {
           if (selectedEl) {
@@ -1485,7 +1485,7 @@ export function Overlay() {
         <Plus
           size={20}
           strokeWidth={1.5}
-          color="rgba(255,255,255,0.8)"
+          color="rgba(0,0,0,0.6)"
           className={cn(
             "transition-transform duration-200 ease",
             (selecting || selectedEl) ? "rotate-45" : "rotate-0",
