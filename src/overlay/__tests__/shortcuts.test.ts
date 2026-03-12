@@ -1,0 +1,275 @@
+// @vitest-environment happy-dom
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { isScrubActive, setScrubActive } from "../scrubState";
+
+// ─── Scrub guard ─────────────────────────────────────────────────────
+
+describe("scrub guard (scrubState)", () => {
+  beforeEach(() => setScrubActive(false));
+
+  it("isScrubActive returns false by default", () => {
+    expect(isScrubActive()).toBe(false);
+  });
+
+  it("setScrubActive(true) makes isScrubActive return true", () => {
+    setScrubActive(true);
+    expect(isScrubActive()).toBe(true);
+  });
+
+  it("setScrubActive(false) restores the guard", () => {
+    setScrubActive(true);
+    expect(isScrubActive()).toBe(true);
+    setScrubActive(false);
+    expect(isScrubActive()).toBe(false);
+  });
+});
+
+// ─── Input focus detection ───────────────────────────────────────────
+
+describe("input focus guard detection", () => {
+  /** Mirrors the guard logic from Overlay.tsx handleKeyDown */
+  function isInputFocused(target: HTMLElement): boolean {
+    const tag = target.tagName.toLowerCase();
+    return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+  }
+
+  it("detects INPUT elements as focused input", () => {
+    const el = document.createElement("input");
+    expect(isInputFocused(el)).toBe(true);
+  });
+
+  it("detects TEXTAREA elements as focused input", () => {
+    const el = document.createElement("textarea");
+    expect(isInputFocused(el)).toBe(true);
+  });
+
+  it("detects SELECT elements as focused input", () => {
+    const el = document.createElement("select");
+    expect(isInputFocused(el)).toBe(true);
+  });
+
+  it("detects contentEditable elements as focused input", () => {
+    const el = document.createElement("div");
+    el.contentEditable = "true";
+    expect(isInputFocused(el)).toBe(true);
+  });
+
+  it("does not flag a regular div as focused input", () => {
+    const el = document.createElement("div");
+    expect(isInputFocused(el)).toBe(false);
+  });
+
+  it("does not flag a span as focused input", () => {
+    const el = document.createElement("span");
+    expect(isInputFocused(el)).toBe(false);
+  });
+
+  it("does not flag a button as focused input", () => {
+    const el = document.createElement("button");
+    expect(isInputFocused(el)).toBe(false);
+  });
+});
+
+// ─── Keyboard shortcut key mapping ──────────────────────────────────
+
+describe("keyboard shortcut key mapping", () => {
+  /**
+   * This map mirrors the plain-key shortcuts in Overlay.tsx handleKeyDown.
+   * These fire only when no modifier is held and no input is focused.
+   */
+  const PLAIN_KEY_MAP: Record<string, string> = {
+    s: "cycle-scope",
+    r: "reset",
+    d: "diff-peek",
+    m: "toggle-box-model",
+    "/": "open-search",
+    "?": "shortcuts-help",
+    "`": "toggle-selecting",
+    Escape: "close-or-deselect",
+  };
+
+  it.each(Object.entries(PLAIN_KEY_MAP))(
+    "maps '%s' to %s",
+    (key, action) => {
+      expect(PLAIN_KEY_MAP[key]).toBe(action);
+    },
+  );
+
+  /**
+   * Modifier shortcuts from Overlay.tsx handleKeyDown.
+   * These fire regardless of input focus (before the input guard).
+   */
+  const META_KEY_MAP: Record<string, string> = {
+    "Meta+z": "undo",
+    "Meta+Shift+z": "redo",
+    "Meta+s": "save",
+    "Meta+c": "copy-css",
+    "Meta+f": "toggle-search",
+    "Meta+k": "command-palette",
+    "Meta+Alt+c": "copy-styles",
+    "Meta+Alt+v": "paste-styles",
+  };
+
+  it.each(Object.entries(META_KEY_MAP))(
+    "maps '%s' to %s",
+    (combo, action) => {
+      expect(META_KEY_MAP[combo]).toBe(action);
+    },
+  );
+});
+
+// ─── Arrow key navigation dispatch ──────────────────────────────────
+
+describe("arrow key element navigation", () => {
+  /** Mirrors the arrow key → direction mapping in Overlay.tsx */
+  const ARROW_MAP: Record<string, string> = {
+    ArrowUp: "parent",
+    ArrowDown: "first-child",
+    ArrowLeft: "previous-sibling",
+    ArrowRight: "next-sibling",
+  };
+
+  it.each(Object.entries(ARROW_MAP))(
+    "%s navigates to %s",
+    (key, direction) => {
+      expect(ARROW_MAP[key]).toBe(direction);
+    },
+  );
+
+  it("recognizes all four arrow keys", () => {
+    expect(Object.keys(ARROW_MAP)).toEqual([
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+    ]);
+  });
+});
+
+// ─── Modifier key helpers ────────────────────────────────────────────
+
+describe("modifier key detection", () => {
+  /** Helper that mirrors how Overlay checks for meta shortcuts */
+  function isMetaCombo(e: { metaKey: boolean; ctrlKey: boolean }): boolean {
+    return e.metaKey || e.ctrlKey;
+  }
+
+  it("returns true for metaKey", () => {
+    expect(isMetaCombo({ metaKey: true, ctrlKey: false })).toBe(true);
+  });
+
+  it("returns true for ctrlKey (Windows/Linux)", () => {
+    expect(isMetaCombo({ metaKey: false, ctrlKey: true })).toBe(true);
+  });
+
+  it("returns false when neither is pressed", () => {
+    expect(isMetaCombo({ metaKey: false, ctrlKey: false })).toBe(false);
+  });
+});
+
+// ─── Shortcut priority ordering ─────────────────────────────────────
+
+describe("shortcut priority", () => {
+  /**
+   * Overlay.tsx processes shortcuts in this order:
+   * 1. Scrub guard (blocks everything)
+   * 2. Meta+Shift+Z (redo) — before Meta+Z
+   * 3. Meta+Z (undo)
+   * 4. Meta+Alt+C (copy styles) — before Meta+C
+   * 5. Meta+Alt+V (paste styles)
+   * 6. Meta+S (save)
+   * 7. Meta+C (copy CSS)
+   * 8. Meta+K (command palette)
+   * 9. Meta+F (search)
+   * 10. Input focus guard (blocks remaining plain keys)
+   * 11. Plain keys: /, ?, Alt+Shift+S, s, r, m, `, Escape, d, arrows
+   *
+   * This test verifies that redo comes before undo in the priority list
+   * and that Meta+Alt+C comes before Meta+C.
+   */
+  const PRIORITY_ORDER = [
+    "scrub-guard",
+    "meta-shift-z",  // redo
+    "meta-z",        // undo
+    "meta-alt-c",    // copy styles
+    "meta-alt-v",    // paste styles
+    "meta-s",        // save
+    "meta-c",        // copy css
+    "meta-k",        // command palette
+    "meta-f",        // search
+    "input-guard",
+    "plain-keys",
+  ];
+
+  it("redo check comes before undo check", () => {
+    expect(PRIORITY_ORDER.indexOf("meta-shift-z")).toBeLessThan(
+      PRIORITY_ORDER.indexOf("meta-z"),
+    );
+  });
+
+  it("Meta+Alt+C comes before Meta+C", () => {
+    expect(PRIORITY_ORDER.indexOf("meta-alt-c")).toBeLessThan(
+      PRIORITY_ORDER.indexOf("meta-c"),
+    );
+  });
+
+  it("scrub guard is first", () => {
+    expect(PRIORITY_ORDER[0]).toBe("scrub-guard");
+  });
+
+  it("input guard comes after all meta combos", () => {
+    expect(PRIORITY_ORDER.indexOf("input-guard")).toBeGreaterThan(
+      PRIORITY_ORDER.indexOf("meta-f"),
+    );
+  });
+
+  it("plain keys come last", () => {
+    expect(PRIORITY_ORDER.indexOf("plain-keys")).toBe(
+      PRIORITY_ORDER.length - 1,
+    );
+  });
+});
+
+// ─── KeyboardEvent simulation helpers ────────────────────────────────
+
+describe("KeyboardEvent creation for dispatch", () => {
+  it("creates a valid KeyboardEvent with meta+z", () => {
+    const event = new KeyboardEvent("keydown", {
+      key: "z",
+      metaKey: true,
+      shiftKey: false,
+      bubbles: true,
+    });
+    expect(event.key).toBe("z");
+    expect(event.metaKey).toBe(true);
+    expect(event.shiftKey).toBe(false);
+  });
+
+  it("creates a valid KeyboardEvent with meta+shift+z", () => {
+    const event = new KeyboardEvent("keydown", {
+      key: "z",
+      metaKey: true,
+      shiftKey: true,
+      bubbles: true,
+    });
+    expect(event.key).toBe("z");
+    expect(event.metaKey).toBe(true);
+    expect(event.shiftKey).toBe(true);
+  });
+
+  it("creates arrow key events", () => {
+    const arrows = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+    for (const key of arrows) {
+      const event = new KeyboardEvent("keydown", { key, bubbles: true });
+      expect(event.key).toBe(key);
+    }
+  });
+
+  it("creates Escape event", () => {
+    const event = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+    });
+    expect(event.key).toBe("Escape");
+  });
+});

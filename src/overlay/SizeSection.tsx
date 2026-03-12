@@ -11,7 +11,7 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { isDirty, resetProp } from "./apply";
+import { isDirty, resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight, Link } from "lucide-react";
@@ -39,15 +39,7 @@ export interface SizeSectionProps {
 export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen, focusOpen, onToggle }: SizeSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
 
-  // ─── resetCss helper ────────────────────────────────────────────────
-  const resetCss = useCallback(
-    (prop: string, setter: (v: number) => void) => {
-      resetProp(element, prop);
-      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
-      setter(parseFloat(fresh) || 0);
-    },
-    [element],
-  );
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
 
   // ─── Size state ─────────────────────────────────────────────────────
 

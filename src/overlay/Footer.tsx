@@ -8,9 +8,44 @@ import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
-import { formatCSSDiff } from "./util";
+import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { ms, timing } from "./timing";
+import type { DiffEntry } from "./apply";
+
+// ─── Clean CSS format (no "was" comments) ───────────────────────
+function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
+  const selector = getSelector(el);
+  const lines = changes.map((c) => `  ${c.prop}: ${c.to};`);
+  return `${selector} {\n${lines.join("\n")}\n}`;
+}
+
+// ─── CSS Custom Properties export ────────────────────────────────
+const SEMANTIC_NAMES: Record<string, string> = {
+  "font-size": "--font-size",
+  "font-weight": "--font-weight",
+  "font-family": "--font-family",
+  "line-height": "--line-height",
+  "letter-spacing": "--letter-spacing",
+  "color": "--text-color",
+  "background-color": "--bg-color",
+  "border-radius": "--border-radius",
+  "border-color": "--border-color",
+  "border-width": "--border-width",
+  "width": "--width",
+  "height": "--height",
+  "gap": "--gap",
+  "opacity": "--opacity",
+};
+
+function toVarName(prop: string): string {
+  return SEMANTIC_NAMES[prop] ?? `--${prop}`;
+}
+
+function formatCSSVars(changes: DiffEntry[]): string {
+  const lines = changes.map((c) => `  ${toVarName(c.prop)}: ${c.to};`);
+  return `:root {\n${lines.join("\n")}\n}`;
+}
 
 interface SaveResult {
   written?: string[];
@@ -57,12 +92,28 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       .catch(() => showMessage("Copy failed", 1500));
   }, [element, showMessage]);
 
+  const handleCopyCleanCSS = useCallback(() => {
+    const changes = diff(element);
+    if (changes.length === 0) return;
+    navigator.clipboard.writeText(formatCleanCSS(element, changes))
+      .then(() => showMessage("Copied CSS!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
+  }, [element, showMessage]);
+
   const handleCopyTailwind = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
     const tw = formatTailwindDiff(changes);
     navigator.clipboard.writeText(tw)
       .then(() => showMessage("Copied Tailwind!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
+  }, [element, showMessage]);
+
+  const handleCopyVars = useCallback(() => {
+    const changes = diff(element);
+    if (changes.length === 0) return;
+    navigator.clipboard.writeText(formatCSSVars(changes))
+      .then(() => showMessage("Copied vars!", 1200))
       .catch(() => showMessage("Copy failed", 1500));
   }, [element, showMessage]);
 
@@ -141,9 +192,16 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         <ActionButton
           onClick={handleCopy}
           disabled={count === 0}
-          title="Copy SCSS"
+          title="Copy SCSS (with comments)"
         >
           Copy
+        </ActionButton>
+        <ActionButton
+          onClick={handleCopyCleanCSS}
+          disabled={count === 0}
+          title="Copy clean CSS"
+        >
+          CSS
         </ActionButton>
         <ActionButton
           onClick={handleCopyTailwind}
@@ -151,6 +209,13 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           title="Copy Tailwind classes"
         >
           TW
+        </ActionButton>
+        <ActionButton
+          onClick={handleCopyVars}
+          disabled={count === 0}
+          title="Copy as CSS custom properties"
+        >
+          Vars
         </ActionButton>
         <ActionButton
           onClick={onPasteStyles ?? (() => {})}

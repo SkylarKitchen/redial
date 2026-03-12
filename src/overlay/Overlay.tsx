@@ -232,10 +232,12 @@ export function Overlay() {
     if (!selectedEl) return;
     const changes = diff(selectedEl);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSDiff(selectedEl, changes)).catch(() => {
+    navigator.clipboard.writeText(formatCSSDiff(selectedEl, changes)).then(() => {
+      announce("Copied CSS");
+    }).catch(() => {
       // Clipboard API unavailable (non-HTTPS or permission denied) — silent fallback
     });
-  }, [selectedEl]);
+  }, [selectedEl, announce]);
 
   // --- Hotkey: backtick toggles selection ---
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
@@ -398,6 +400,7 @@ export function Overlay() {
           reset(selectedEl);
           setInferResult(infer(selectedEl));
           setPanelKey((k) => k + 1);
+          announce("Reset");
         }
         return;
       }
@@ -484,7 +487,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -520,6 +523,10 @@ export function Overlay() {
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
+    // Screen reader announcement
+    const tag = el.tagName.toLowerCase();
+    const cls = el.classList.length > 0 ? el.classList[0] : "";
+    announce(`Selected ${tag}${cls ? `.${cls}` : ""}`);
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
@@ -538,7 +545,8 @@ export function Overlay() {
     setSearchQuery("");
     setActiveModal({ type: "none" });
     setViewportWidth(null);
-  }, []);
+    announce("Element deselected");
+  }, [announce]);
 
 
   // --- Reset handler: re-infer to get fresh values ---
