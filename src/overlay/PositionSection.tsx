@@ -102,7 +102,7 @@ export const PositionSection = memo(function PositionSection({
               style={
                 zIndexAuto
                   ? { background: primaryAlpha(0.2), color: color.primary, borderColor: primaryAlpha(0.3) }
-                  : { background: surface.subtle, color: text.hint, borderColor: blackAlpha(0.07) }
+                  : { background: surface.subtle, color: text.disabled, borderColor: blackAlpha(0.07) }
               }
             >
               auto
