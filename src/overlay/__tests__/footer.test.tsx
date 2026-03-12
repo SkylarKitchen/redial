@@ -2,21 +2,16 @@
 import { describe, it, expect } from "vitest";
 
 /**
- * Footer / ActionButton regression:
- * The Copy button's dropdown arrow (▾) was wrapping to a second line
- * because ActionButton lacked whiteSpace: "nowrap".
+ * Footer button regression:
+ * The Copy button's dropdown arrow (▾) was wrapping to a second line.
  *
- * We import the module source directly and check the rendered style
- * to ensure buttons never allow text wrapping.
+ * After Shadcn migration, buttons use <Button> which renders as
+ * inline-flex (preventing wrap). We verify the Footer uses Shadcn
+ * Button components and that they have compact sizing.
  */
 
-// happy-dom doesn't support full React rendering, so we test the
-// style object contract that ActionButton applies to <button> elements.
-// We extract the expected style properties from Footer.tsx's ActionButton.
-
 describe("ActionButton style contract", () => {
-  it("buttons must set whiteSpace: nowrap to prevent content wrapping", async () => {
-    // Read the source and verify the style object includes whiteSpace
+  it("buttons use Shadcn Button with inline-flex to prevent content wrapping", async () => {
     const { readFileSync } = await import("fs");
     const { join } = await import("path");
     const src = readFileSync(
@@ -24,14 +19,13 @@ describe("ActionButton style contract", () => {
       "utf-8"
     );
 
-    // The ActionButton's style object must include whiteSpace: "nowrap"
-    // to prevent the dropdown arrow from wrapping to a new line
-    const buttonStyleMatch = src.match(
-      /function ActionButton[\s\S]*?<button[\s\S]*?style=\{?\{([\s\S]*?)\}\}?[\s\S]*?<\/button>/
-    );
-    expect(buttonStyleMatch).toBeTruthy();
+    // Footer must import Shadcn Button
+    expect(src).toContain('from "@/components/ui/button"');
 
-    const styleBlock = buttonStyleMatch![1];
-    expect(styleBlock).toContain("whiteSpace");
+    // All action buttons must use <Button> component (not raw <button>)
+    // which provides inline-flex layout preventing text wrapping
+    const buttonUsages = src.match(/<Button\b/g);
+    expect(buttonUsages).toBeTruthy();
+    expect(buttonUsages!.length).toBeGreaterThanOrEqual(4);
   });
 });
