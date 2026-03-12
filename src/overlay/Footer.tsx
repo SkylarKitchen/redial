@@ -255,6 +255,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleReset}
             disabled={count === 0}
             title="Reset (R)"
+            destructive
           >
             Reset
           </ActionButton>
@@ -299,6 +300,7 @@ function ActionButton({
   title,
   primary,
   active,
+  destructive,
 }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -306,6 +308,7 @@ function ActionButton({
   title?: string;
   primary?: boolean;
   active?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <button
@@ -321,7 +324,9 @@ function ActionButton({
           ? "1px solid rgba(250, 204, 21, 0.4)"
           : primary
             ? "none"
-            : "1px solid rgba(255,255,255,0.1)",
+            : destructive
+              ? "1px solid rgba(239, 68, 68, 0.15)"
+              : "1px solid rgba(255,255,255,0.1)",
         borderRadius: "6px",
         cursor: disabled ? "default" : "pointer",
         opacity: disabled ? 0.35 : 1,
@@ -334,7 +339,9 @@ function ActionButton({
           ? "rgba(250, 204, 21, 0.9)"
           : primary
             ? "#fff"
-            : "rgba(255, 255, 255, 0.7)",
+            : destructive
+              ? "rgba(239, 68, 68, 0.8)"
+              : "rgba(255, 255, 255, 0.7)",
         transition: `opacity ${ms("normal")}, background ${ms("normal")}`,
         boxShadow: primary && !disabled ? "0 1px 3px rgba(99, 102, 241, 0.4)" : "none",
       }}

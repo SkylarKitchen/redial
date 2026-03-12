@@ -713,6 +713,13 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 - The resize event listener and tier calculation (`xs`/`sm`/`md`/`lg`/`xl`) remain unchanged — live-updating on window resize
 - Typecheck: PASS
 
+### Iteration 56 — Reset button visual treatment (2026-03-12)
+- Added `destructive` prop to `ActionButton` in `Footer.tsx`
+- When `destructive` is true: text color shifts to `rgba(239, 68, 68, 0.8)` (red-500 at 80%) and border to `rgba(239, 68, 68, 0.15)`
+- Applied `destructive` to the Reset button — now visually distinct from neutral Paste/Import buttons
+- Added items 56–58 to CLAUDE.md Phase N
+- Typecheck: PASS
+
 ---
 
 ## Done
