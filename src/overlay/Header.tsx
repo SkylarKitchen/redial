@@ -80,7 +80,7 @@ export function Header({
       {/* -- Main row: tag + class | badges + close -- */}
       <div className="flex items-center justify-between px-3 pt-1.5">
         <div className="flex items-baseline gap-1.5 min-w-0">
-          <span className="text-black text-[13px] font-mono font-medium shrink-0">
+          <span className="text-[13px] font-mono font-medium shrink-0" style={{ color: text.primary }}>
             {"<"}{tag}{">"}
           </span>
           {className && (
@@ -92,7 +92,8 @@ export function Header({
         <div className="flex items-center gap-[5px] shrink-0">
           {totalChanges > 0 && (
             <Badge
-              className="bg-[#3B82F6]/[0.15] border-[#3B82F6]/[0.2] text-[#3B82F6]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#3B82F6]/[0.2]"
+              className="text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer"
+              style={{ background: primaryAlpha(0.15), borderColor: primaryAlpha(0.2), color: primaryAlpha(0.95) }}
               onClick={onShowSession}
               title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
             >
@@ -157,10 +158,10 @@ export function Header({
                     className={cn(
                       "whitespace-nowrap rounded-sm transition-colors duration-100",
                       isLast
-                        ? "text-black cursor-default"
+                        ? "cursor-default"
                         : "cursor-pointer px-0.5 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]",
                     )}
-                    style={isLast ? undefined : { color: text.label }}
+                    style={isLast ? { color: text.primary } : { color: text.label }}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
@@ -230,10 +231,10 @@ function ScopePill({
       className={cn(
         "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-[rgba(0,0,0,0.04)] hover:text-[rgba(0,0,0,0.6)]",
         active
-          ? "text-black hover:bg-[rgba(0,0,0,0.08)] hover:text-black"
+          ? "hover:bg-[rgba(0,0,0,0.08)]"
           : "bg-transparent",
       )}
-      style={active ? { background: surface.active } : { color: text.label }}
+      style={active ? { background: surface.active, color: text.primary } : { color: text.label }}
     >
       {label}
     </Badge>

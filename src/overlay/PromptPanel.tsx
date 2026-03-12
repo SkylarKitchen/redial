@@ -15,7 +15,7 @@ import { timing } from "./timing";
 import { cn } from "@/lib/utils";
 import { Copy, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { text, border, color, blackAlpha, primaryAlpha } from "./theme";
+import { text, border, color, blackAlpha, primaryAlpha, bgAlpha } from "./theme";
 
 interface PromptPanelProps {
   element: Element;
@@ -23,6 +23,7 @@ interface PromptPanelProps {
 
 export function PromptPanel({ element }: PromptPanelProps) {
   const [feedback, setFeedback] = useState("");
+  const [focused, setFocused] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -99,15 +100,22 @@ export function PromptPanel({ element }: PromptPanelProps) {
         value={feedback}
         onChange={(e) => setFeedback(e.target.value)}
         onKeyDown={handleKeyDown}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder="Describe what you want to change..."
         rows={3}
         className={cn(
           "w-full resize-none rounded-md border px-2.5 py-2",
-          "text-[12px] font-sans placeholder:text-[rgba(0,0,0,0.25)]",
-          "outline-none focus:border-[#3B82F6]/30 focus:bg-white/50",
+          "text-[12px] font-sans placeholder:text-[var(--placeholder)]",
+          "outline-none",
           "transition-colors duration-100",
         )}
-        style={{ borderColor: border.default, background: blackAlpha(0.03), color: blackAlpha(0.8) }}
+        style={{
+          borderColor: focused ? primaryAlpha(0.3) : border.default,
+          background: focused ? bgAlpha(0.5) : blackAlpha(0.03),
+          color: blackAlpha(0.8),
+          '--placeholder': blackAlpha(0.25),
+        } as React.CSSProperties}
       />
 
       {/* Copy button + shortcut hint */}
