@@ -328,7 +328,7 @@ export function SliderRow({
   }, [snapPoints, snapThreshold, min, max]);
 
   const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
-  const labelColor = isModified ? color.primary : (indicator ? getIndicatorColor(indicator) : text.label);
+  const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -336,9 +336,9 @@ export function SliderRow({
       className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1"
       style={{ color: labelColor }}
     >
+      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
       {indicator && <StyleIndicator type={indicator} />}
       {label}
-      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
     </span>
   );
   const handlePresetSelect = useCallback((v: string) => {
@@ -352,7 +352,7 @@ export function SliderRow({
 
   return (
     <>
-      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
+      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
         <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
@@ -416,7 +416,7 @@ export function SelectRow({
   computedElement?: Element;
 }) {
   const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
-  const selectLabelColor = isModified ? color.primary : (indicator ? getIndicatorColor(indicator) : text.label);
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -425,9 +425,9 @@ export function SelectRow({
       className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
       style={{ color: selectLabelColor }}
     >
+      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
       {indicator && <StyleIndicator type={indicator} />}
       {label}
-      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
     </span>
   );
 
@@ -451,7 +451,7 @@ export function SelectRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -531,7 +531,7 @@ function SelectRowCustom({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const selectLabelColor = isModified ? color.primary : (indicator ? getIndicatorColor(indicator) : text.label);
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -540,14 +540,14 @@ function SelectRowCustom({
       className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
       style={{ color: selectLabelColor }}
     >
+      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
       {indicator && <StyleIndicator type={indicator} />}
       {label}
-      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
     </span>
   );
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -668,7 +668,7 @@ export function ColorRow({
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
   const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
-  const colorLabelColor = isModified ? color.primary : (indicator ? getIndicatorColor(indicator) : text.label);
+  const colorLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -677,9 +677,9 @@ export function ColorRow({
       className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
       style={{ color: colorLabelColor }}
     >
+      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
       {indicator && <StyleIndicator type={indicator} />}
       {label}
-      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
     </span>
   );
 
@@ -688,7 +688,6 @@ export function ColorRow({
       onContextMenu={onContextMenu}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       className="flex items-center gap-2 px-3 py-0.5 relative"
-      style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
@@ -760,14 +759,14 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
 }) {
   const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
         className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
-        style={{ color: isModified ? color.primary : text.label }}
+        style={{ color: text.label }}
       >
-        {label}
         {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0 }} title="Modified — Option+Click to reset" />}
+        {label}
       </span>
       <input
         type="text"

@@ -194,17 +194,15 @@ export function SizeInputCell({
       ref={cellRef}
       className="flex items-center h-[28px] rounded overflow-hidden border"
       style={{
-        background: isModified ? primaryAlpha(0.1) : surface.subtle,
-        borderColor: isModified ? primaryAlpha(0.25) : blackAlpha(0.07),
-        transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
+        background: surface.subtle,
+        borderColor: blackAlpha(0.07),
       }}
     >
       {/* Label */}
       <div
         className="px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]"
         style={{
-          color: isModified ? color.primary : text.disabled,
-          transition: `color ${ms("normal")}`,
+          color: text.disabled,
         }}
       >
         {isKeyword || isVariable ? (
