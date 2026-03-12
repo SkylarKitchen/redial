@@ -788,6 +788,11 @@ export function Overlay() {
         />
       )}
 
+      {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}
+      {selectedEl && isGridContainer && showGridOverlay && !selecting && (
+        <GridOverlay element={selectedEl} refreshKey={panelKey} />
+      )}
+
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
