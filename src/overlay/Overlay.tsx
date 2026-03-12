@@ -99,9 +99,11 @@ export function Overlay() {
 
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
-  const isGridContainer = selectedEl
-    ? (() => { const d = getComputedStyle(selectedEl).display; return d === "grid" || d === "inline-grid"; })()
-    : false;
+  const isGridContainer = useMemo(() => {
+    if (!selectedEl) return false;
+    const d = getComputedStyle(selectedEl).display;
+    return d === "grid" || d === "inline-grid";
+  }, [selectedEl, panelKey]);
 
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
