@@ -25,7 +25,7 @@ import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, resto
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
-import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
+import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
 import { Plus } from "lucide-react";
 import { ms, setReducedMotion } from "./timing";
 import { isScrubActive } from "./scrubState";
@@ -357,6 +357,9 @@ export function Overlay() {
           if (declarations.length === 0) return;
           beginBatch();
           for (const { prop, value } of declarations) {
+            if (scope === "class" && activeClassName) {
+              applyClassStyle(activeClassName, prop, value);
+            }
             applyInlineStyle(el, prop, value);
           }
           endBatch();
@@ -681,6 +684,9 @@ export function Overlay() {
   // so the panel re-renders with fresh values during drag-scrub.
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
+    if (scope === "class" && activeClassName) {
+      applyClassStyle(activeClassName, prop, `${value}${unit}`);
+    }
     applyInlineStyle(selectedEl, prop, `${value}${unit}`);
     // Update inferResult.spacing so the panel receives fresh prop values
     setInferResult((prev) => {
@@ -697,7 +703,7 @@ export function Overlay() {
       }
       return prev;
     });
-  }, [selectedEl]);
+  }, [selectedEl, scope, activeClassName]);
 
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
@@ -1127,6 +1133,9 @@ export function Overlay() {
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
+        if (scope === "class" && activeClassName) {
+          applyClassStyle(activeClassName, prop, value);
+        }
         applyInlineStyle(el, prop, value);
       }
 
@@ -1478,6 +1487,8 @@ export function Overlay() {
                     element={selectedEl}
                     spacing={inferResult.spacing}
                     onSpacingChange={handleSpacingChange}
+                    scope={scope}
+                    activeClassName={activeClassName}
                   />
                 ) : activeTab === "custom" ? (
                   <WebflowPanel
@@ -1491,6 +1502,8 @@ export function Overlay() {
                     onToggleBoxModel={() => setShowBoxModel((v) => !v)}
                     searchQuery={searchQuery}
                     focusMode={focusMode}
+                    scope={scope}
+                    activeClassName={activeClassName}
                   />
                 ) : (
                   <PromptPanel

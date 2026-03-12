@@ -276,4 +276,14 @@ describe("infer", () => {
     const size = result.config["size"] as Record<string, unknown>;
     expect(size).not.toHaveProperty("object-fit");
   });
+
+  it("border-radius range uses step of 4", () => {
+    const el = makeEl("div");
+    el.style.borderRadius = "32px";
+    const result = infer(el);
+    const borders = result.config["borders"] as Record<string, unknown>;
+    const radiusRange = borders["border-radius"] as [number, number, number, number];
+    // [value, min, max, step] — step should be 4px, not 1px
+    expect(radiusRange[3]).toBe(4);
+  });
 });

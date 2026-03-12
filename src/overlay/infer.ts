@@ -436,6 +436,7 @@ export function infer(el: Element): InferResult {
 
   borders["border-radius"] = range(parseNum(cs.borderTopLeftRadius), {
     max: 48,
+    step: 4,
   });
 
   config["borders"] = borders;

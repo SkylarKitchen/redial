@@ -10,6 +10,7 @@ import { useState, useCallback, useMemo } from "react";
 import { ColorRow, SliderRow, ValueInput } from "./controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { applyInlineStyle, beginBatch, endBatch } from "./apply";
+import { applyClassStyle, type Scope } from "./scope";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
@@ -24,6 +25,8 @@ export interface CommonPanelProps {
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
   onDirtyChange?: () => void;
+  scope?: Scope;
+  activeClassName?: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -97,7 +100,7 @@ function ValueCell({
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }: CommonPanelProps) {
+export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, scope = "element", activeClassName }: CommonPanelProps) {
   const cs = getComputedStyle(element);
 
   // --- Style group state ---
@@ -153,10 +156,13 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
   // --- Wrappers ---
   const apply = useCallback(
     (prop: string, value: string) => {
+      if (scope === "class" && activeClassName) {
+        applyClassStyle(activeClassName, prop, value);
+      }
       applyInlineStyle(element, prop, value);
       onDirtyChange?.();
     },
-    [element, onDirtyChange],
+    [element, onDirtyChange, scope, activeClassName],
   );
 
   const handleTextStyleApply = useCallback((style: TextStyle) => {
@@ -212,7 +218,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
               value={borderRadius}
               min={0}
               max={100}
-              step={1}
+              step={4}
               unit="px"
               onChange={(v) => {
                 setBorderRadius(v);

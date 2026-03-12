@@ -9,6 +9,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
+import { applyClassStyle, type Scope } from "./scope";
 import { buildConversionContext } from "./unitConversion";
 import type { IndicatorType } from "./StyleIndicator";
 import { parseNum } from "./cssParsers";
@@ -38,11 +39,13 @@ export interface WebflowPanelProps {
   onToggleBoxModel?: () => void;
   searchQuery?: string;
   focusMode?: boolean;
+  scope?: Scope;
+  activeClassName?: string | null;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false, scope = "element", activeClassName }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -85,10 +88,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     [ind],
   );
 
-  // ── Apply helper ──
+  // ── Apply helper (scope-aware) ──
   const apply = useCallback(
-    (prop: string, value: string) => { applyInlineStyle(element, prop, value); },
-    [element]
+    (prop: string, value: string) => {
+      if (scope === "class" && activeClassName) {
+        applyClassStyle(activeClassName, prop, value);
+      }
+      applyInlineStyle(element, prop, value);
+    },
+    [element, scope, activeClassName]
   );
 
   // ── Context menu state (right-click property menu) ──
