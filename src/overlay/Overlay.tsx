@@ -116,7 +116,7 @@ export function Overlay() {
   const [showGridOverlay, setShowGridOverlay] = useState(false);
 
   // Box model overlay toggle
-  const [showBoxModel, setShowBoxModel] = useState(false);
+  const [showBoxModel, setShowBoxModel] = useState(true);
   const isGridContainer = useMemo(() => {
     if (!selectedEl) return false;
     const d = getComputedStyle(selectedEl).display;
