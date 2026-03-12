@@ -569,6 +569,15 @@ Additional UX enhancements integrated from parallel agent work:
 - Previously SideSelector only wrote per-side values; now it reads them too
 - Typecheck: PASS
 
+### Iteration 52 — Layout: row-gap unit selector (2026-03-11)
+- Added `rowGapUnit` state with `detectUnit(element, "row-gap")` to LayoutSection
+- Added `rowGapHint` conversion hint for unit switching
+- Row Gap SliderRow now has `units={LAYOUT_UNITS}` and `onUnitChange` with conversion
+- Updated `handleRowGapChange` to use `rowGapUnit` instead of hardcoded "px"
+- Updated gap lock handlers (`handleGapLockToggle` + `GapRow.onLinkedChange`) to sync row-gap unit with main gap unit when re-locking
+- Fixed two places that hardcoded `apply("row-gap", \`${gap}px\`)` to use `${gapUnit}` instead
+- Typecheck: PASS
+
 ---
 
 ### Phase J — Webflow UX interaction polish (10-agent swarm) (2026-03-11)
