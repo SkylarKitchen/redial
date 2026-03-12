@@ -9,7 +9,7 @@ export default function Home() {
 
         {/* Hero — typography + spacing */}
         <section className={styles.hero}>
-          <h1>Click any element to start tuning</h1>
+          <h1><a href="https://github.com/skylar/redial">Click any element to start tuning</a></h1>
           <p>
             Press the backtick key (`) to enter selection mode. Hover over
             elements to see the indigo outline, then click to open the tuning
