@@ -371,9 +371,10 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope on new selection
+    // Reset scope and grid overlay on new selection
     setScope("element");
     setActiveClassName(null);
+    setShowGridOverlay(false);
     // Reset position so panel doesn't appear off-screen
     setPos({ x: window.innerWidth - 340, y: 16 });
   }, []);
