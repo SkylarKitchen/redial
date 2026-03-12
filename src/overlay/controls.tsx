@@ -43,21 +43,24 @@ export function Section({
   collapsed,
   children,
   indicator,
+  forceOpen,
 }: {
   title: string;
   collapsed?: boolean;
   children: React.ReactNode;
   indicator?: IndicatorType;
+  forceOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(!collapsed);
+  const [ownOpen, setOwnOpen] = useState(!collapsed);
+  const open = forceOpen || ownOpen;
   return (
     <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div
         tabIndex={0}
         role="button"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(!open); } }}
+        onClick={() => setOwnOpen(!ownOpen)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOwnOpen(!ownOpen); } }}
         onFocus={onFocusRing}
         onBlur={onBlurRing}
         style={{
