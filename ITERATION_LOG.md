@@ -379,4 +379,16 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 37 — Background image custom position X/Y inputs (spec §8 line 481) (2026-03-11)
+- Spec §8 says `background-position` supports presets + custom X/Y, but the dropdown only had keyword presets
+- Added "custom" option to `POSITION_OPTIONS` (split `POSITION_KEYWORDS` for display mapping, same pattern as background-size)
+- Dropdown shows "custom" when position is a non-keyword value (e.g., "50% 20px")
+- Selecting "custom" initializes to `"50% 50%"` (equivalent to `center`)
+- Added inline X/Y text inputs below the position dropdown when custom is active
+- Inputs parse current position into two space-separated parts and compose `"X Y"` on change
+- Supports any CSS position value (px, %, em, keywords like `left 10px`)
+- Typecheck: PASS
+
+---
+
 ## Done
