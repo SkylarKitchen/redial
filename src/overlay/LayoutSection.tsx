@@ -54,6 +54,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     parentIsGrid,
     showGridOverlay,
     onToggleGridOverlay,
+    forceOpen,
   } = props;
 
   const { apply, ind, sectionInd, cs, element, getConversionCtx } = ctx;
@@ -232,6 +233,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
         "display", "flex-direction", "justify-content", "align-items",
         "justify-items", "align-content", "flex-wrap", "gap", "row-gap", "column-gap",
       ])}
+      forceOpen={forceOpen}
     >
       <DisplayTabs value={display} onChange={handleDisplayChange} />
 
