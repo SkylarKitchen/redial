@@ -532,4 +532,35 @@ Six features built in parallel via isolated worktree agents, then merged:
 
 ---
 
+### Phase I (cont.) — Math expressions, shadow visibility, presets (2026-03-11)
+
+Additional UX enhancements integrated from parallel agent work:
+
+**Math Expressions in Numeric Inputs**
+- Added `evaluateMathExpr()` support in `ValueInput`, `EditableValue`, and `SizeInputCell`
+- Users can type `*2`, `+10`, `-5`, `/3` after a value — result replaces the current value
+- Matches Webflow's math-in-inputs feature (top-requested UX pattern)
+
+**Shadow Layer Visibility Toggle**
+- Added Eye/EyeOff toggle button to each shadow row in `ShadowEditor.tsx`
+- Toggling sets `shadow.visible = false`, reducing opacity to 40% and excluding from CSS output
+- Fixed `ShadowValue` type: added missing `visible: true` in `cssParsers.ts` and `TypographySection.tsx`
+
+**Value Preset Chips**
+- Wired `PresetChips` component into `SizeInputCell` via `property` prop
+- Presets for width/height (auto, 100%, fit-content), max-width/max-height (none, 100%), etc.
+- Clicking a preset applies value immediately; keyword presets ("auto", "none") use keyword pathway
+
+**Empty Field → Contextual Keyword**
+- Added `EMPTY_KEYWORD_MAP` in `panelConstants.tsx`
+- Clearing a width input and pressing Enter applies "auto"; clearing max-width applies "none"
+- Context-aware: each property gets its sensible default keyword
+
+**Additional ComputedTooltip Wiring**
+- Wired computed tooltips on align-self, object-fit, object-position controls
+
+- Typecheck: PASS, Tests: 315/315 PASS
+
+---
+
 ## Done

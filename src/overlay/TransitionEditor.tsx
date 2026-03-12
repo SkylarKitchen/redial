@@ -186,6 +186,7 @@ function TransitionCard({
   transition,
   onUpdate,
   onRemove,
+  onToggleVisible,
   dragHandleProps,
   isDragging,
   element,
@@ -193,6 +194,7 @@ function TransitionCard({
   transition: TransitionValue;
   onUpdate: (updates: Partial<TransitionValue>) => void;
   onRemove: () => void;
+  onToggleVisible: () => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
   element?: Element;
@@ -322,6 +324,8 @@ function TransitionCard({
         flexDirection: "column",
         gap: "5px",
         position: "relative",
+        opacity: transition.visible === false ? 0.4 : 1,
+        transition: "opacity 100ms",
       }}
     >
       {/* Drag handle */}
@@ -332,6 +336,25 @@ function TransitionCard({
           style={{ position: "absolute", top: "4px", left: "4px" }}
         />
       )}
+
+      {/* Eye visibility toggle */}
+      <button
+        onClick={onToggleVisible}
+        style={{
+          position: "absolute",
+          top: "4px",
+          right: "40px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "2px",
+          color: transition.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+          pointerEvents: isDragging ? "none" : "auto",
+        }}
+        title={transition.visible !== false ? "Hide transition" : "Show transition"}
+      >
+        {transition.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+      </button>
 
       {/* Play preview button */}
       {element && (

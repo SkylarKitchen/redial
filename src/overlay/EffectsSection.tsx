@@ -132,7 +132,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen }: E
 
   return (
     <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor"])} forceOpen={forceOpen}>
-      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} />
+      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
       <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
       <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>

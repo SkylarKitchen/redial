@@ -8,7 +8,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ms } from "./timing";
@@ -31,6 +31,7 @@ export interface BackgroundLayer {
   };
   opacity: number;
   blendMode: string;
+  visible: boolean;
 }
 
 export type BackgroundLayerType = "color" | "gradient" | "image";
@@ -83,7 +84,7 @@ function uid() {
 }
 
 function makeDefault(type: BackgroundLayerType): BackgroundLayer {
-  const base = { id: uid(), type, opacity: 1, blendMode: "normal" } as BackgroundLayer;
+  const base = { id: uid(), type, opacity: 1, blendMode: "normal", visible: true } as BackgroundLayer;
   if (type === "color") {
     base.color = "#ffffff";
   } else if (type === "gradient") {
@@ -197,6 +198,15 @@ export function BackgroundLayerList({
     [layers, onChange]
   );
 
+  const toggleVisible = useCallback(
+    (id: string) => {
+      onChange(
+        layers.map((l) => (l.id === id ? { ...l, visible: l.visible === false ? true : false } : l))
+      );
+    },
+    [layers, onChange]
+  );
+
   const updateImage = useCallback(
     (id: string, patch: Partial<NonNullable<BackgroundLayer["image"]>>) => {
       onChange(
@@ -297,6 +307,8 @@ export function BackgroundLayerList({
               borderRadius: "4px",
               border: "1px solid rgba(255,255,255,0.08)",
               marginBottom: "4px",
+              opacity: layer.visible === false ? 0.4 : 1,
+              transition: "opacity 100ms",
             }}
           >
             {/* Collapsed row */}
@@ -354,6 +366,25 @@ export function BackgroundLayerList({
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
                 style={{ width: "48px", accentColor: "#6366f1" }}
               />
+
+              {/* Eye visibility toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleVisible(layer.id);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "2px",
+                  color: layer.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                  pointerEvents: isDragging ? "none" : "auto",
+                }}
+                title={layer.visible !== false ? "Hide layer" : "Show layer"}
+              >
+                {layer.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+              </button>
 
               {/* Delete */}
               <button

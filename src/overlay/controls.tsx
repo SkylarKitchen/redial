@@ -337,7 +337,7 @@ export function SliderRow({
   return (
     <>
       <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
-        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
+        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
               {labelContent}
@@ -385,6 +385,7 @@ export function SelectRow({
   value,
   options,
   onChange,
+  onReset,
   indicator,
   searchable,
   fontPreview,
@@ -396,6 +397,8 @@ export function SelectRow({
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
   indicator?: IndicatorType;
   /** Show a search/filter input at the top of the dropdown */
   searchable?: boolean;
@@ -454,6 +457,7 @@ export function SelectRow({
 
   const labelContent = (
     <span
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       style={{
         width: "64px",
         fontSize: "11px",
@@ -462,6 +466,7 @@ export function SelectRow({
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
+        cursor: "default",
       }}
     >
       {indicator && <StyleIndicator type={indicator} />}
@@ -636,6 +641,7 @@ export function ColorRow({
   label,
   value,
   onChange,
+  onReset,
   indicator,
   onContextMenu,
   computedProp,
@@ -644,6 +650,8 @@ export function ColorRow({
   label: string;
   value: string;
   onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
   indicator?: IndicatorType;
   onContextMenu?: (e: React.MouseEvent) => void;
   /** CSS property name for computed tooltip (e.g. "color") */
@@ -656,6 +664,7 @@ export function ColorRow({
 
   const labelContent = (
     <span
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       style={{
         width: "64px",
         fontSize: "11px",
@@ -664,6 +673,7 @@ export function ColorRow({
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
+        cursor: "default",
       }}
     >
       {indicator && <StyleIndicator type={indicator} />}
@@ -746,14 +756,19 @@ export function ColorRow({
 
 // ─── TextRow ────────────────────────────────────────────────────────
 
-export function TextRow({ label, value, placeholder, onChange, onContextMenu }: {
+export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu }: {
   label: string; value: string; placeholder?: string; onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
-      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
+      <span
+        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+        style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, cursor: "default" }}
+      >{label}</span>
       <input
         type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
