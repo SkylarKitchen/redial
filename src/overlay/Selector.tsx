@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ms } from "./timing";
-import { isNavigableElement } from "./util";
+import { isNavigableElement, getDisplayClass } from "./util";
 import { color, primaryAlpha, font } from "./theme";
 
 interface SelectorProps {
@@ -39,7 +39,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
 
       if (labelRef.current) {
         const tag = hovered.tagName.toLowerCase();
-        const cls = hovered.classList[0] || "";
+        const cls = getDisplayClass(hovered);
         const dims = `${Math.round(rect.width)}\u00d7${Math.round(rect.height)}`;
         const label = labelRef.current;
         label.textContent = cls ? `${tag}.${cls}  ${dims}` : `${tag}  ${dims}`;
