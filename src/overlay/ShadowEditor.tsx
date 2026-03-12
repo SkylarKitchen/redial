@@ -35,6 +35,7 @@ const DEFAULT_SHADOW: ShadowValue = {
   spread: 0,
   color: "rgba(0,0,0,0.1)",
   inset: false,
+  visible: true,
 };
 
 function NumericInput({

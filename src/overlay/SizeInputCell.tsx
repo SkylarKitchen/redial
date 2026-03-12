@@ -14,7 +14,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint } from "./UnitSelector";
-import { selectAllOnDoubleClick } from "./controls";
+import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
 import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -36,6 +36,8 @@ export interface SizeInputCellProps {
   max?: number;
   /** Conversion tooltip hint passed through to UnitSelector */
   conversionHint?: ConversionHint | null;
+  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
+  property?: string;
 }
 
 export function SizeInputCell({
