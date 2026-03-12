@@ -20,7 +20,7 @@ import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { evaluateMathExpr } from "./inputMath";
-import { beginBatch, endBatch } from "./apply";
+import { beginBatch, endBatch, isDirty } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
@@ -348,9 +348,11 @@ export function SliderRow({
     }
   }, [onPreset, onChange]);
 
+  const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
+
   return (
     <>
-      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
+      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
         <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
@@ -427,6 +429,8 @@ export function SelectRow({
     </span>
   );
 
+  const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
+
   // Use the searchable custom dropdown for searchable/fontPreview cases
   if (searchable || fontPreview) {
     return (
@@ -447,7 +451,7 @@ export function SelectRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -513,6 +517,7 @@ function SelectRowCustom({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
 
   // Click-outside to close
   useEffect(() => {
@@ -541,7 +546,7 @@ function SelectRowCustom({
   );
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -661,6 +666,7 @@ export function ColorRow({
   const displayLabel = varName ? varName.replace(/^--/, "") : value;
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
+  const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
   const colorLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
@@ -678,7 +684,9 @@ export function ColorRow({
   return (
     <div
       onContextMenu={onContextMenu}
+      onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       className="flex items-center gap-2 px-3 py-0.5 relative"
+      style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
@@ -740,14 +748,17 @@ export function ColorRow({
 
 // ─── TextRow ────────────────────────────────────────────────────────
 
-export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu }: {
+export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu, computedProp, computedElement }: {
   label: string; value: string; placeholder?: string; onChange: (value: string) => void;
   /** Called on alt+click label to reset property */
   onReset?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
+  computedProp?: string;
+  computedElement?: Element;
 }) {
+  const isModified = computedProp && computedElement ? isDirty(computedElement, computedProp) : false;
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} style={{ background: isModified ? primaryAlpha(0.06) : undefined, borderRadius: 2, transition: `background ${ms("normal")}` }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
         className="text-[11px] text-[var(--muted-foreground)] w-[70px] shrink-0 capitalize cursor-default"
