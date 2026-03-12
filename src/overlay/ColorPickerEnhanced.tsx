@@ -6,11 +6,11 @@
  * - Hue slider (0-360)
  * - Opacity slider (0-100%)
  * - HSB/RGB/Hex mode toggle
- * - Saved color swatches (localStorage-persisted, max 16)
+ * - CSS variable discovery + creation
  * - Popover with click-outside dismissal
  */
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
 import { discoverColorVariables, type ColorVariable } from "./colorVariables";
@@ -101,10 +101,6 @@ const CANVAS_W = 216;
 const CANVAS_H = 110;
 const SLIDER_H = 12;
 const HANDLE_SIZE = 14;
-const SWATCHES_KEY = "__tuner-color-swatches";
-const MAX_SWATCHES = 16;
-const RECENT_KEY = "__tuner-recent-colors";
-const MAX_RECENT = 8;
 
 // ─── Checkerboard pattern for opacity backgrounds ────────────────
 
@@ -139,86 +135,49 @@ export function ColorPickerEnhanced({
   const currentRgb = hsbToRgb(hue, sat, bri);
   const currentHex = rgbToHex(currentRgb.r, currentRgb.g, currentRgb.b);
 
-  // ─── Swatches (persisted via localStorage) ──────────────────
-  const [swatches, setSwatches] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(SWATCHES_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
-
-  const saveSwatches = useCallback((next: string[]) => {
-    setSwatches(next);
-    try { localStorage.setItem(SWATCHES_KEY, JSON.stringify(next)); } catch {}
-  }, []);
-
-  const addSwatch = useCallback(() => {
-    const hex = currentHex.toUpperCase();
-    if (swatches.includes(hex)) return;
-    const next = [hex, ...swatches].slice(0, MAX_SWATCHES);
-    saveSwatches(next);
-  }, [currentHex, swatches, saveSwatches]);
-
-  const removeSwatch = useCallback((idx: number) => {
-    const next = swatches.filter((_, i) => i !== idx);
-    saveSwatches(next);
-  }, [swatches, saveSwatches]);
-
-  // ─── Recent Colors (auto-tracked, persisted via localStorage) ──
-  const [recentColors, setRecentColors] = useState<string[]>(() => {
-    try {
-      const stored = localStorage.getItem(RECENT_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch { return []; }
-  });
-
-  const addRecentColor = useCallback((hex: string) => {
-    const upper = hex.toUpperCase();
-    setRecentColors((prev) => {
-      const filtered = prev.filter((c) => c !== upper);
-      const next = [upper, ...filtered].slice(0, MAX_RECENT);
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
-  }, []);
-
-  // Debounced recent color tracking — fires 500ms after last emitChange
-  const recentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingRecentRef = useRef<string | null>(null);
-
-  // Emit changes (also schedules debounced recent color tracking)
+  // ─── Emit changes ───────────────────────────────────────────
   const emitChange = useCallback(
     (h: number, s: number, b: number, a: number) => {
       const rgb = hsbToRgb(h, s, b);
       const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
       onChange(hex, a);
-      // Debounce: track recent color 500ms after last change
-      pendingRecentRef.current = hex;
-      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
-      recentTimerRef.current = setTimeout(() => {
-        if (pendingRecentRef.current) {
-          addRecentColor(pendingRecentRef.current);
-          pendingRecentRef.current = null;
-        }
-      }, 500);
     },
-    [onChange, addRecentColor],
+    [onChange],
   );
 
-  // ─── CSS color variables discovery ─────────────────────────────
-  const colorVars = useMemo<ColorVariable[]>(() => {
-    if (!onSelectVariable) return [];
-    return discoverColorVariables();
-  }, [onSelectVariable]);
+  // ─── CSS color variables (discovered + user-created) ──────────
+  const [colorVars, setColorVars] = useState<ColorVariable[]>(() =>
+    onSelectVariable ? discoverColorVariables() : [],
+  );
+  const [isCreatingVar, setIsCreatingVar] = useState(false);
+  const [newVarName, setNewVarName] = useState("");
+  const newVarInputRef = useRef<HTMLInputElement>(null);
 
-  const applySwatch = useCallback((hex: string) => {
-    const rgb = hexToRgb(hex);
-    const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
-    setHue(hsb.h);
-    setSat(hsb.s);
-    setBri(hsb.b);
-    emitChange(hsb.h, hsb.s, hsb.b, alpha);
-  }, [alpha, emitChange]);
+  // Focus the name input when the create form opens
+  useEffect(() => {
+    if (isCreatingVar) newVarInputRef.current?.focus();
+  }, [isCreatingVar]);
+
+  const createVariable = useCallback(() => {
+    let name = newVarName.trim().replace(/\s+/g, "-");
+    if (!name) return;
+    if (!name.startsWith("--")) name = "--" + name;
+    // Set on :root so it's immediately usable on the page
+    document.documentElement.style.setProperty(name, currentHex);
+    // Re-discover + merge (inline props aren't in stylesheets, so add manually)
+    const discovered = discoverColorVariables();
+    const exists = discovered.some((v) => v.name === name);
+    const merged = exists
+      ? discovered
+      : [...discovered, { name, resolvedValue: currentHex }].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+    setColorVars(merged);
+    // Auto-select the new variable
+    onSelectVariable?.(`var(${name})`);
+    setNewVarName("");
+    setIsCreatingVar(false);
+  }, [newVarName, currentHex, onSelectVariable]);
 
   // ─── Eyedropper (native color picker from page) ───────────────
 
@@ -250,12 +209,9 @@ export function ColorPickerEnhanced({
     }
   }, [alpha, emitChange]);
 
-  // Abort eyedropper + clear recent timer on unmount
+  // Abort eyedropper on unmount
   useEffect(() => {
-    return () => {
-      eyedropperAbortRef.current?.abort();
-      if (recentTimerRef.current) clearTimeout(recentTimerRef.current);
-    };
+    return () => { eyedropperAbortRef.current?.abort(); };
   }, []);
 
   // ─── Drag state (suppresses click-outside during drag) ──────
@@ -699,66 +655,60 @@ export function ColorPickerEnhanced({
       </div>
 
       {/* ── CSS Variables ─────────────────────────────────── */}
-      {colorVars.length > 0 && (
+      {onSelectVariable && (
         <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
-          <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em", display: "block", marginBottom: 6 }}>
-            Variables
-          </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {colorVars.map((cv) => {
-              const isActive = activeVariable === cv.name;
-              return (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              Variables
+            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {hasEyeDropper && (
                 <button
                   type="button"
-                  key={cv.name}
-                  onClick={() => onSelectVariable?.(`var(${cv.name})`)}
-                  title={`${cv.name}\n${cv.resolvedValue}`}
+                  onClick={handleEyedropper}
+                  title="Pick color from page"
                   style={{
-                    width: 22,
-                    height: 22,
+                    background: "none",
+                    border: `1px solid ${themeColor.border}`,
                     borderRadius: 3,
-                    border: isActive
-                      ? `2px solid ${primaryAlpha(0.8)}`
-                      : `1px solid ${border.hover}`,
-                    background: cv.resolvedValue,
+                    color: text.label,
+                    width: 18,
+                    height: 18,
                     cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     padding: 0,
-                    flexShrink: 0,
-                    transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
-                    position: "relative",
+                    transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
-                    (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                    (e.currentTarget as HTMLElement).style.borderColor = text.hint;
+                    (e.currentTarget as HTMLElement).style.color = text.secondary;
                   }}
                   onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
-                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                    (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
+                    (e.currentTarget as HTMLElement).style.color = text.label;
                   }}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Swatches ──────────────────────────────────────── */}
-      <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 9, color: blackAlpha(0.3), textTransform: "uppercase", letterSpacing: "0.04em" }}>
-            Swatches
-          </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {hasEyeDropper && (
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m2 22 1-1h3l9-9"/>
+                    <path d="M3 21v-3l9-9"/>
+                    <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/>
+                  </svg>
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleEyedropper}
-                title="Pick color from page"
+                onClick={() => setIsCreatingVar(true)}
+                title="Create new variable from current color"
+                aria-label="Create new variable"
                 style={{
                   background: "none",
                   border: `1px solid ${themeColor.border}`,
                   borderRadius: 3,
                   color: text.label,
+                  fontSize: 11,
+                  lineHeight: 1,
                   width: 18,
                   height: 18,
                   cursor: "pointer",
@@ -777,116 +727,91 @@ export function ColorPickerEnhanced({
                   (e.currentTarget as HTMLElement).style.color = text.label;
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m2 22 1-1h3l9-9"/>
-                  <path d="M3 21v-3l9-9"/>
-                  <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/>
-                </svg>
+                +
               </button>
-            )}
-            <button
-              type="button"
-              onClick={addSwatch}
-              title="Save current color"
-              aria-label="Save current color"
-              style={{
-                background: "none",
-                border: `1px solid ${themeColor.border}`,
-                borderRadius: 3,
-                color: text.label,
-                fontSize: 11,
-                lineHeight: 1,
-                width: 18,
-                height: 18,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 0,
-                transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = text.hint;
-                (e.currentTarget as HTMLElement).style.color = text.secondary;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
-                (e.currentTarget as HTMLElement).style.color = text.label;
-              }}
-            >
-              +
-            </button>
+            </div>
           </div>
-        </div>
-        {swatches.length > 0 ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {swatches.map((swatch, i) => (
-              <button
-                type="button"
-                key={`${swatch}-${i}`}
-                onClick={() => applySwatch(swatch)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  removeSwatch(i);
-                }}
-                title={`${swatch}\nRight-click to remove`}
-                aria-label={`Saved color: ${swatch}`}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 3,
-                  border: swatch.toUpperCase() === currentHex.toUpperCase()
-                    ? `2px solid ${blackAlpha(0.6)}`
-                    : `1px solid ${border.hover}`,
-                  background: swatch,
-                  cursor: "pointer",
-                  padding: 0,
-                  flexShrink: 0,
-                  transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
-                }}
-                onMouseEnter={(e) => {
-                  if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
-                    (e.currentTarget as HTMLElement).style.borderColor = text.disabled;
-                  }
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
-                }}
-                onMouseLeave={(e) => {
-                  if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
-                    (e.currentTarget as HTMLElement).style.borderColor = border.hover;
-                  }
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 10, color: blackAlpha(0.2), fontStyle: "italic" }}>
-            Click + to save colors
-          </div>
-        )}
-      </div>
 
-      {/* ── Recent Colors ──────────────────────────────── */}
-      {recentColors.length > 0 && (
-        <div style={{ borderTop: `1px solid ${themeColor.input}`, paddingTop: 6 }}>
-          <span style={{ fontSize: 9, color: blackAlpha(0.2), textTransform: "uppercase", letterSpacing: "0.04em" }}>
-            Recent
-          </span>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 3, marginTop: 4 }}>
-            {recentColors.map((hex, i) => (
-              <button
-                key={`recent-${hex}-${i}`}
-                type="button"
-                onClick={() => applySwatch(hex)}
-                title={hex}
+          {/* Inline create form */}
+          {isCreatingVar && (
+            <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+              <div
                 style={{
-                  width: 18, height: 18, borderRadius: 2,
-                  border: `1px solid ${border.input}`,
-                  background: hex, cursor: "pointer", padding: 0,
+                  width: 22, height: 22, borderRadius: 3, flexShrink: 0,
+                  border: `1px solid ${border.hover}`,
+                  background: currentHex,
                 }}
               />
-            ))}
-          </div>
+              <input
+                ref={newVarInputRef}
+                type="text"
+                value={newVarName}
+                placeholder="color-name"
+                onChange={(e) => setNewVarName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") createVariable();
+                  if (e.key === "Escape") { setIsCreatingVar(false); setNewVarName(""); }
+                }}
+                onBlur={() => {
+                  if (!newVarName.trim()) { setIsCreatingVar(false); setNewVarName(""); }
+                }}
+                style={{
+                  flex: 1,
+                  background: themeColor.background,
+                  border: `1px solid ${border.input}`,
+                  borderRadius: 4,
+                  padding: "3px 6px",
+                  fontSize: 10,
+                  fontFamily: font.mono,
+                  color: text.secondary,
+                  outline: "none",
+                  minWidth: 0,
+                }}
+              />
+            </div>
+          )}
+
+          {colorVars.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+              {colorVars.map((cv) => {
+                const isActive = activeVariable === cv.name;
+                return (
+                  <button
+                    type="button"
+                    key={cv.name}
+                    onClick={() => onSelectVariable?.(`var(${cv.name})`)}
+                    title={`${cv.name}\n${cv.resolvedValue}`}
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 3,
+                      border: isActive
+                        ? `2px solid ${primaryAlpha(0.8)}`
+                        : `1px solid ${border.hover}`,
+                      background: cv.resolvedValue,
+                      cursor: "pointer",
+                      padding: 0,
+                      flexShrink: 0,
+                      transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
+                      position: "relative",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
+                      (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
+                      (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ fontSize: 10, color: blackAlpha(0.2), fontStyle: "italic" }}>
+              Click + to create a variable
+            </div>
+          )}
         </div>
       )}
     </div>
