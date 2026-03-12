@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="DisplayInline">
+<g id="icon" opacity="0.6">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M3.62583 3H5.37412L7.72712 11H6.68476L6.0965 8.99994H2.9035L2.31524 11H1.27289L3.62583 3ZM5.80237 7.99994L4.62586 3.9999H4.3741L3.19761 7.99994H5.80237Z" fill="var(--fill-0, #383835)"/>
+<path d="M16 13L1 13V14L16 14V13Z" fill="var(--fill-0, #383835)"/>
+</g>
+<path id="icon_2" fill-rule="evenodd" clip-rule="evenodd" d="M13.3741 3H11.6258L9.27289 11H10.3152L10.9035 8.99994H14.0965L14.6848 11H15.7271L13.3741 3ZM12.6259 3.9999L13.8024 7.99994H11.1976L12.3741 3.9999H12.6259Z" fill="var(--fill-0, #383835)"/>
+</g>
+</svg>
