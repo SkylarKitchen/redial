@@ -21,6 +21,7 @@ import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { FlexGapOverlay } from "./FlexGapOverlay";
 import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
+import { SpacingPreviewOverlay } from "./SpacingPreviewOverlay";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./apply";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
@@ -1395,12 +1396,17 @@ export function Overlay() {
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
+      {/* Ghosted margin + padding preview — always visible on selection */}
+      {selectedEl && !selecting && (
+        <SpacingPreviewOverlay element={selectedEl} refreshKey={panelKey} />
+      )}
+
       {/* Flex gap overlay — pink dashed hatching between flex children */}
       {selectedEl && isFlexContainer && !selecting && (
         <FlexGapOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
-      {/* Spacing guides overlay — self-hides when no scrub is active */}
+      {/* Spacing guides overlay — full intensity during active scrubbing */}
       {selectedEl && !selecting && (
         <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
       )}
