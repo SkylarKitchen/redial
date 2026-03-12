@@ -10,6 +10,9 @@
  */
 
 import { useRef, useCallback, useState } from "react";
+import { ms } from "./timing";
+import { setScrubActive } from "./scrubState";
+import { beginBatch, endBatch } from "./apply";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
@@ -19,6 +22,8 @@ export interface LabelScrubProps {
   onScrubEnd?: () => void;
   /** Called on a plain click (pointer up without exceeding dead zone) */
   onClick?: () => void;
+  /** Called when alt+click is detected (for reset-to-default) */
+  onAltClick?: () => void;
   step?: number;
   min?: number;
   max?: number;
@@ -32,6 +37,7 @@ export function LabelScrub({
   onScrubStart,
   onScrubEnd,
   onClick,
+  onAltClick,
   step = 1,
   min,
   max,
@@ -57,7 +63,11 @@ export function LabelScrub({
   const onClickRef = useRef(onClick);
   onClickRef.current = onClick;
 
+  const onAltClickRef = useRef(onAltClick);
+  onAltClickRef.current = onAltClick;
+
   const isDraggingRef = useRef(false);
+  const altKeyRef = useRef(false);
 
   const clamp = useCallback(
     (v: number) => {
@@ -84,6 +94,7 @@ export function LabelScrub({
       startXRef.current = e.clientX;
       startValueRef.current = latestRef.current;
       isDraggingRef.current = false;
+      altKeyRef.current = e.altKey;
 
       // Save body styles to restore later
       const prevSelect = document.body.style.userSelect;
@@ -98,6 +109,8 @@ export function LabelScrub({
           // First time exceeding dead zone — start the scrub
           isDraggingRef.current = true;
           setScrubbing(true);
+          setScrubActive(true);
+          beginBatch();
           document.body.style.userSelect = "none";
           document.body.style.cursor = "ew-resize";
           onScrubStartRef.current?.();
@@ -127,7 +140,9 @@ export function LabelScrub({
         if (isDraggingRef.current) {
           document.body.style.userSelect = prevSelect;
           document.body.style.cursor = prevCursor;
+          endBatch();
           setScrubbing(false);
+          setScrubActive(false);
           onScrubEndRef.current?.();
         }
       }
@@ -135,7 +150,13 @@ export function LabelScrub({
       function handleUp() {
         const wasDragging = isDraggingRef.current;
         cleanup();
-        if (!wasDragging) onClickRef.current?.();
+        if (!wasDragging) {
+          if (altKeyRef.current && onAltClickRef.current) {
+            onAltClickRef.current();
+          } else {
+            onClickRef.current?.();
+          }
+        }
       }
 
       // Attach listeners synchronously — no useEffect gap
@@ -158,7 +179,7 @@ export function LabelScrub({
         fontSize: "11px",
         fontFamily: "system-ui, sans-serif",
         lineHeight: "20px",
-        transition: scrubbing ? "none" : "color 100ms",
+        transition: scrubbing ? "none" : `color ${ms("normal")}`,
         touchAction: "none",
       }}
     >

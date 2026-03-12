@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
@@ -15,11 +16,14 @@ export interface TransitionValue {
   duration: number;
   easing: string;
   delay: number;
+  visible: boolean;
 }
 
 export interface TransitionEditorProps {
   transitions: TransitionValue[];
   onChange: (transitions: TransitionValue[]) => void;
+  /** The DOM element to preview transitions on */
+  element?: Element;
 }
 
 const PROPERTY_OPTIONS = [
@@ -88,9 +92,10 @@ const DEFAULT_TRANSITION: TransitionValue = {
   duration: 300,
   easing: "ease",
   delay: 0,
+  visible: true,
 };
 
-export function TransitionEditor({ transitions, onChange }: TransitionEditorProps) {
+export function TransitionEditor({ transitions, onChange, element }: TransitionEditorProps) {
   const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transitions, onChange);
 
   const handleAdd = useCallback(() => {
@@ -115,6 +120,15 @@ export function TransitionEditor({ transitions, onChange }: TransitionEditorProp
     [transitions, onChange]
   );
 
+  const handleToggleVisible = useCallback(
+    (index: number) => {
+      const next = [...transitions];
+      next[index] = { ...next[index], visible: next[index].visible === false ? true : false };
+      onChange(next);
+    },
+    [transitions, onChange]
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px", position: "relative" }}>
       {/* Transition cards */}
@@ -126,8 +140,10 @@ export function TransitionEditor({ transitions, onChange }: TransitionEditorProp
               transition={t}
               onUpdate={(updates) => handleUpdate(index, updates)}
               onRemove={() => handleRemove(index)}
+              onToggleVisible={() => handleToggleVisible(index)}
               dragHandleProps={dragProps}
               isDragging={isDragging}
+              element={element}
             />
           </div>
         );
@@ -170,20 +186,119 @@ function TransitionCard({
   transition,
   onUpdate,
   onRemove,
+  onToggleVisible,
   dragHandleProps,
   isDragging,
+  element,
 }: {
   transition: TransitionValue;
   onUpdate: (updates: Partial<TransitionValue>) => void;
   onRemove: () => void;
+  onToggleVisible: () => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
+  element?: Element;
 }) {
+  const [playing, setPlaying] = useState(false);
+  const playTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  /** Saved inline styles so we can restore if unmounted mid-animation */
+  const savedStylesRef = useRef<{ prop: string; transition: string; value: string } | null>(null);
+
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);
 
   // Parse custom bezier values for inputs
   const [cx1, cy1, cx2, cy2] = bezierPoints ?? [0.25, 0.1, 0.25, 1];
+
+  const handlePlay = useCallback(() => {
+    if (!element || playing) return;
+    const el = element as HTMLElement;
+    setPlaying(true);
+
+    // Clear any pending timer
+    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+
+    const prop = transition.property;
+    const durationMs = transition.duration;
+    const delayMs = transition.delay;
+    const easing = transition.easing;
+
+    // The easing value is already valid CSS (named or cubic-bezier(...))
+    const cssEasing = easing;
+
+    // Determine a "from" value for the property to create a visible animation
+    const fromValues: Record<string, string> = {
+      opacity: "0",
+      transform: "translateY(20px)",
+      "background-color": "rgba(99,102,241,0.3)",
+      background: "rgba(99,102,241,0.3)",
+      color: "rgba(99,102,241,0.8)",
+      "border-color": "rgba(99,102,241,0.5)",
+      "border-radius": "0px",
+      "box-shadow": "0 0 0 4px rgba(99,102,241,0.3)",
+      width: "50%",
+      height: "50%",
+      "font-size": "50%",
+      filter: "blur(4px)",
+      "backdrop-filter": "blur(4px)",
+      visibility: "hidden",
+    };
+
+    // For "all" or unknown properties, do an opacity flash
+    const targetProp = prop === "all" ? "opacity" : prop;
+    const fromValue = fromValues[targetProp] ?? null;
+
+    if (!fromValue) {
+      // For truly unknown properties, just flash opacity
+      const savedTransition = el.style.transition;
+      const savedOpacity = el.style.opacity;
+
+      savedStylesRef.current = { prop: "opacity", transition: savedTransition, value: savedOpacity };
+
+      el.style.transition = "none";
+      el.style.opacity = "0.3";
+      // Force reflow
+      void el.offsetHeight;
+      el.style.transition = `opacity ${durationMs}ms ${cssEasing} ${delayMs}ms`;
+      el.style.opacity = savedOpacity || "";
+      playTimerRef.current = setTimeout(() => {
+        el.style.transition = savedTransition;
+        savedStylesRef.current = null;
+        setPlaying(false);
+      }, durationMs + delayMs + 50);
+      return;
+    }
+
+    // Save the current inline values
+    const savedTransition = el.style.transition;
+    const savedValue = el.style.getPropertyValue(targetProp);
+
+    savedStylesRef.current = { prop: targetProp, transition: savedTransition, value: savedValue };
+
+    // Step 1: Disable transitions, snap to "from" state
+    el.style.transition = "none";
+    el.style.setProperty(targetProp, fromValue);
+    // Force reflow so browser registers the "from" state
+    void el.offsetHeight;
+
+    // Step 2: Enable the transition and restore original value
+    el.style.transition = `${targetProp} ${durationMs}ms ${cssEasing} ${delayMs}ms`;
+    el.style.setProperty(targetProp, savedValue || "");
+
+    // Step 3: After animation completes, restore original transition
+    playTimerRef.current = setTimeout(() => {
+      el.style.transition = savedTransition;
+      savedStylesRef.current = null;
+      setPlaying(false);
+    }, durationMs + delayMs + 50);
+  }, [element, playing, transition]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    };
+  }, []);
 
   const handleBezierChange = useCallback(
     (pts: [number, number, number, number]) => {
@@ -217,6 +332,8 @@ function TransitionCard({
         flexDirection: "column",
         gap: "5px",
         position: "relative",
+        opacity: transition.visible === false ? 0.4 : 1,
+        transition: "opacity 100ms",
       }}
     >
       {/* Drag handle */}
@@ -226,6 +343,66 @@ function TransitionCard({
           onPointerDown={dragHandleProps.onPointerDown}
           style={{ position: "absolute", top: "4px", left: "4px" }}
         />
+      )}
+
+      {/* Eye visibility toggle */}
+      <button
+        onClick={onToggleVisible}
+        style={{
+          position: "absolute",
+          top: "4px",
+          right: "40px",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "2px",
+          color: transition.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+          pointerEvents: isDragging ? "none" : "auto",
+        }}
+        title={transition.visible !== false ? "Hide transition" : "Show transition"}
+      >
+        {transition.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+      </button>
+
+      {/* Play preview button */}
+      {element && (
+        <button
+          onClick={handlePlay}
+          disabled={playing}
+          title={playing ? "Playing..." : "Preview transition"}
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "22px",
+            width: "14px",
+            height: "14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            color: playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)",
+            cursor: playing ? "default" : "pointer",
+            padding: 0,
+            borderRadius: "2px",
+            lineHeight: 1,
+            opacity: playing ? 0.6 : 1,
+          }}
+          onMouseEnter={(e) => {
+            if (!playing) {
+              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+              (e.currentTarget as HTMLElement).style.color = "rgba(99,102,241,0.8)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = playing ? "rgba(99,102,241,0.7)" : "rgba(255,255,255,0.3)";
+          }}
+        >
+          <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 0.5v8l6.5-4L1 0.5z" />
+          </svg>
+        </button>
       )}
 
       {/* Remove button */}

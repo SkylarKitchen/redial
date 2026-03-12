@@ -6,11 +6,12 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
+import { ms } from "./timing";
 
 export interface ShadowValue {
   x: number;
@@ -19,6 +20,7 @@ export interface ShadowValue {
   spread: number;
   color: string;
   inset: boolean;
+  visible: boolean;
 }
 
 export interface ShadowEditorProps {
@@ -33,6 +35,7 @@ const DEFAULT_SHADOW: ShadowValue = {
   spread: 0,
   color: "rgba(0,0,0,0.1)",
   inset: false,
+  visible: true,
 };
 
 function NumericInput({
@@ -136,7 +139,7 @@ function NumericInput({
             borderRadius: "2px",
             textAlign: "center",
             background: "rgba(255,255,255,0.04)",
-            transition: "background 100ms",
+            transition: `background ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
@@ -157,6 +160,7 @@ function ShadowRow({
   index,
   onUpdate,
   onDelete,
+  onToggleVisible,
   dragHandleProps,
   isDragging,
 }: {
@@ -164,6 +168,7 @@ function ShadowRow({
   index: number;
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
+  onToggleVisible: (index: number) => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
 }) {
@@ -180,6 +185,8 @@ function ShadowRow({
       style={{
         padding: "6px 0",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
+        opacity: shadow.visible === false ? 0.4 : 1,
+        transition: "opacity 100ms",
       }}
     >
       {/* Row 1: drag handle + numeric inputs */}
@@ -246,13 +253,29 @@ function ShadowRow({
             borderRadius: "2px",
             padding: "1px 4px",
             cursor: "pointer",
-            transition: "all 100ms",
+            transition: `all ${ms("normal")}`,
           }}
         >
           Inset
         </button>
 
         <div style={{ flex: 1 }} />
+
+        {/* Eye visibility toggle */}
+        <button
+          onClick={() => onToggleVisible(index)}
+          style={{
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: "2px",
+            color: shadow.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+            pointerEvents: isDragging ? "none" : "auto",
+          }}
+          title={shadow.visible !== false ? "Hide layer" : "Show layer"}
+        >
+          {shadow.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+        </button>
 
         {/* Delete */}
         <button
@@ -266,7 +289,7 @@ function ShadowRow({
             cursor: "pointer",
             padding: "0 4px",
             lineHeight: 1,
-            transition: "color 100ms",
+            transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
@@ -305,6 +328,15 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
     [shadows, onChange]
   );
 
+  const handleToggleVisible = useCallback(
+    (index: number) => {
+      const next = [...shadows];
+      next[index] = { ...next[index], visible: next[index].visible === false ? true : false };
+      onChange(next);
+    },
+    [shadows, onChange]
+  );
+
   return (
     <div style={{ padding: "4px 12px", position: "relative" }}>
       {/* Add button */}
@@ -321,7 +353,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
-          transition: "background 100ms",
+          transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.15)";
@@ -343,6 +375,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
               index={i}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
+              onToggleVisible={handleToggleVisible}
               dragHandleProps={dragProps}
               isDragging={isDragging}
             />

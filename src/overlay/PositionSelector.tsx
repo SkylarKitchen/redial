@@ -9,6 +9,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
+import { ms } from "./timing";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -141,7 +142,7 @@ export function PositionSelector({
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
-            transition: "background 80ms, box-shadow 80ms",
+            transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
             if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -199,7 +200,7 @@ export function PositionSelector({
                       padding: "6px 10px",
                       cursor: "pointer",
                       background: isActive ? "rgba(99,102,241,0.15)" : "transparent",
-                      transition: "background 60ms",
+                      transition: `background ${ms("micro")}`,
                     }}
                   >
                     {/* Checkmark column */}

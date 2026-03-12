@@ -5,12 +5,14 @@
  * - 2D saturation/brightness canvas (click/drag)
  * - Hue slider (0-360)
  * - Opacity slider (0-100%)
- * - Hex text input
+ * - HSB/RGB/Hex mode toggle
+ * - Saved color swatches (localStorage-persisted, max 16)
  * - Popover with click-outside dismissal
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
+import { ms } from "./timing";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -82,12 +84,19 @@ export interface ColorPickerEnhancedProps {
   onClose: () => void;
 }
 
+// ─── EyeDropper API availability ─────────────────────────────────
+
+const hasEyeDropper =
+  typeof window !== "undefined" && "EyeDropper" in window;
+
 // ─── Constants ───────────────────────────────────────────────────
 
 const CANVAS_W = 216;
 const CANVAS_H = 150;
 const SLIDER_H = 12;
 const HANDLE_SIZE = 14;
+const SWATCHES_KEY = "__tuner-color-swatches";
+const MAX_SWATCHES = 16;
 
 // ─── Checkerboard pattern for opacity backgrounds ────────────────
 
@@ -130,14 +139,88 @@ export function ColorPickerEnhanced({
     [onChange],
   );
 
+  // ─── Swatches (persisted via localStorage) ──────────────────
+  const [swatches, setSwatches] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem(SWATCHES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+
+  const saveSwatches = useCallback((next: string[]) => {
+    setSwatches(next);
+    try { localStorage.setItem(SWATCHES_KEY, JSON.stringify(next)); } catch {}
+  }, []);
+
+  const addSwatch = useCallback(() => {
+    const hex = currentHex.toUpperCase();
+    if (swatches.includes(hex)) return;
+    const next = [hex, ...swatches].slice(0, MAX_SWATCHES);
+    saveSwatches(next);
+  }, [currentHex, swatches, saveSwatches]);
+
+  const removeSwatch = useCallback((idx: number) => {
+    const next = swatches.filter((_, i) => i !== idx);
+    saveSwatches(next);
+  }, [swatches, saveSwatches]);
+
+  const applySwatch = useCallback((hex: string) => {
+    const rgb = hexToRgb(hex);
+    const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
+    setHue(hsb.h);
+    setSat(hsb.s);
+    setBri(hsb.b);
+    emitChange(hsb.h, hsb.s, hsb.b, alpha);
+  }, [alpha, emitChange]);
+
+  // ─── Eyedropper (native color picker from page) ───────────────
+
+  const eyedropperAbortRef = useRef<AbortController | null>(null);
+
+  const handleEyedropper = useCallback(async () => {
+    if (!hasEyeDropper) return;
+    try {
+      isEyedroppingRef.current = true;
+      const controller = new AbortController();
+      eyedropperAbortRef.current = controller;
+      // @ts-expect-error EyeDropper API not in all TS libs
+      const dropper = new EyeDropper();
+      const result = await dropper.open({ signal: controller.signal });
+      const hex: string = result.sRGBHex;
+      const rgb = hexToRgb(hex);
+      const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
+      setHue(hsb.h);
+      setSat(hsb.s);
+      setBri(hsb.b);
+      setHexInput(hex.toUpperCase());
+      emitChange(hsb.h, hsb.s, hsb.b, alpha);
+    } catch (err) {
+      // Ignore AbortError (unmount) and user cancellation
+      if (err instanceof DOMException && err.name === "AbortError") return;
+    } finally {
+      eyedropperAbortRef.current = null;
+      isEyedroppingRef.current = false;
+    }
+  }, [alpha, emitChange]);
+
+  // Abort eyedropper on unmount
+  useEffect(() => {
+    return () => {
+      eyedropperAbortRef.current?.abort();
+    };
+  }, []);
+
   // ─── Drag state (suppresses click-outside during drag) ──────
   const isDraggingRef = useRef(false);
+
+  // ─── Eyedropper state (suppresses click-outside during pick) ──
+  const isEyedroppingRef = useRef(false);
 
   // ─── Click-outside dismissal ─────────────────────────────────
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (isDraggingRef.current) return;
+      if (isDraggingRef.current || isEyedroppingRef.current) return;
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -468,7 +551,7 @@ export function ColorPickerEnhanced({
               minWidth: 22,
               textTransform: "uppercase",
               letterSpacing: "0.02em",
-              transition: "color 100ms",
+              transition: `color ${ms("normal")}`,
             }}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)"; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"; }}
@@ -562,6 +645,128 @@ export function ColorPickerEnhanced({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* ── Swatches ──────────────────────────────────────── */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Swatches
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {hasEyeDropper && (
+              <button
+                type="button"
+                onClick={handleEyedropper}
+                title="Pick color from page"
+                style={{
+                  background: "none",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 3,
+                  color: "rgba(255,255,255,0.5)",
+                  width: 18,
+                  height: 18,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                  transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m2 22 1-1h3l9-9"/>
+                  <path d="M3 21v-3l9-9"/>
+                  <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z"/>
+                </svg>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={addSwatch}
+              title="Save current color"
+              style={{
+                background: "none",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 3,
+                color: "rgba(255,255,255,0.5)",
+                fontSize: 11,
+                lineHeight: 1,
+                width: 18,
+                height: 18,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 0,
+                transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.3)";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.8)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)";
+                (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)";
+              }}
+            >
+              +
+            </button>
+          </div>
+        </div>
+        {swatches.length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {swatches.map((swatch, i) => (
+              <button
+                type="button"
+                key={`${swatch}-${i}`}
+                onClick={() => applySwatch(swatch)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  removeSwatch(i);
+                }}
+                title={`${swatch}\nRight-click to remove`}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 3,
+                  border: swatch.toUpperCase() === currentHex.toUpperCase()
+                    ? "2px solid rgba(255,255,255,0.7)"
+                    : "1px solid rgba(255,255,255,0.15)",
+                  background: swatch,
+                  cursor: "pointer",
+                  padding: 0,
+                  flexShrink: 0,
+                  transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
+                }}
+                onMouseEnter={(e) => {
+                  if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.4)";
+                  }
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  if (swatch.toUpperCase() !== currentHex.toUpperCase()) {
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
+                  }
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", fontStyle: "italic" }}>
+            Click + to save colors
+          </div>
+        )}
       </div>
     </div>
   );

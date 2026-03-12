@@ -246,6 +246,16 @@ export function resetClassStyles(className: string): void {
   rebuildClassStyles();
 }
 
+/** Validate a CSS property name: lowercase letters + hyphens, or custom props starting with -- */
+function isValidCSSProp(prop: string): boolean {
+  return /^--[\w-]+$/.test(prop) || /^[a-z][a-z-]*$/.test(prop);
+}
+
+/** Strip characters that could break out of a CSS value context */
+function sanitizeCSSValue(value: string): string {
+  return value.replace(/[{}]/g, "").replace(/<\/style>/gi, "");
+}
+
 /**
  * Rebuild the class-scope <style> tag from current overrides.
  */
@@ -254,10 +264,13 @@ function rebuildClassStyles(): void {
   const rules: string[] = [];
 
   for (const [className, props] of classOverrides) {
+    const escapedClass = CSS.escape(className);
     const declarations = Array.from(props.entries())
-      .map(([prop, value]) => `  ${prop}: ${value} !important;`)
+      .filter(([prop]) => isValidCSSProp(prop))
+      .map(([prop, value]) => `  ${prop}: ${sanitizeCSSValue(value)} !important;`)
       .join("\n");
-    rules.push(`.${className} {\n${declarations}\n}`);
+    if (!declarations) continue;
+    rules.push(`.${escapedClass} {\n${declarations}\n}`);
   }
 
   style.textContent = rules.join("\n\n");

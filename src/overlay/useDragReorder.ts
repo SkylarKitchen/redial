@@ -39,7 +39,7 @@ export function useDragReorder<T>(
 } {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [settling, setSettling] = useState(false);
-  const settleTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const stateRef = useRef<DragState | null>(null);
   const refsMap = useRef<Map<number, HTMLElement>>(new Map());
   const itemsRef = useRef(items);
@@ -236,7 +236,7 @@ export function useDragReorder<T>(
       return {
         position: "relative",
         transform: shift !== 0 ? `translateY(${shift}px)` : undefined,
-        transition: "transform 200ms ease",
+        transition: `transform ${ms("layout")} ease`,
       };
     },
     [dragState, settling],

@@ -7,12 +7,62 @@
 
 import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector } from "./UnitSelector";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { getIndicatorColor, getIndicatorTitle } from "./panelUtils";
+import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
+import { evaluateMathExpr } from "./inputMath";
+import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { ms } from "./timing";
+import { useWheelAdjust } from "./useWheelAdjust";
+
+// ─── Value Presets ───────────────────────────────────────────────────
+
+export const VALUE_PRESETS: Record<string, string[]> = {
+  "width": ["auto", "100%", "fit-content"],
+  "height": ["auto", "100%", "fit-content"],
+  "max-width": ["none", "100%"],
+  "max-height": ["none", "100%"],
+  "min-width": ["0", "auto"],
+  "min-height": ["0", "auto"],
+  "border-radius": ["0", "4", "8", "9999"],
+  "gap": ["0", "4", "8", "12", "16"],
+  "font-weight": ["400", "500", "600", "700"],
+  "opacity": ["0", "0.5", "1"],
+};
+
+export function PresetChips({ property, onSelect }: { property: string; onSelect: (v: string) => void }) {
+  const presets = VALUE_PRESETS[property];
+  if (!presets) return null;
+  return (
+    <div style={{ display: "flex", gap: 3, marginTop: 2, flexWrap: "wrap", padding: "0 12px" }}>
+      {presets.map(v => (
+        <span
+          key={v}
+          onClick={() => onSelect(v)}
+          style={{
+            fontSize: "9px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.45)",
+            background: "rgba(255,255,255,0.06)",
+            padding: "1px 5px",
+            borderRadius: "3px",
+            cursor: "pointer",
+            userSelect: "none" as const,
+          }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.12)"; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+        >
+          {v}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -40,20 +90,38 @@ export function Section({
   title,
   collapsed,
   children,
+  indicator,
+  forceOpen,
+  hidden,
+  headerAction,
+  focusOpen,
+  onToggle,
 }: {
   title: string;
   collapsed?: boolean;
   children: React.ReactNode;
+  indicator?: IndicatorType;
+  forceOpen?: boolean;
+  /** When true, hide the section entirely (used by search filter) */
+  hidden?: boolean;
+  headerAction?: React.ReactNode;
+  /** In focus mode, externally controlled open state */
+  focusOpen?: boolean;
+  /** Called when section header is clicked (for focus mode coordination) */
+  onToggle?: (title: string) => void;
 }) {
-  const [open, setOpen] = useState(!collapsed);
+  const [ownOpen, setOwnOpen] = useState(!collapsed);
+  const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
+
+  if (hidden) return null;
   return (
     <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
       <div
         tabIndex={0}
         role="button"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(!open); } }}
+        onClick={() => { if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); } }}
         onFocus={onFocusRing}
         onBlur={onBlurRing}
         style={{
@@ -63,25 +131,34 @@ export function Section({
           justifyContent: "space-between",
           borderRadius: "2px",
           outline: "none",
+          ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: "#1e1e1e" } : {}),
         }}
       >
-        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>
+        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", gap: "6px" }}>
           {title}
+          {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
         </span>
-        <span style={{
-          color: "rgba(255,255,255,0.3)",
-          display: "flex",
-          alignItems: "center",
-          transition: "transform 150ms ease",
-          transform: open ? "rotate(90deg)" : "rotate(0deg)",
-        }}>
-          <ChevronRight size={12} strokeWidth={2} />
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {headerAction && (
+            <span onClick={(e) => e.stopPropagation()}>
+              {headerAction}
+            </span>
+          )}
+          <span style={{
+            color: "rgba(255,255,255,0.3)",
+            display: "flex",
+            alignItems: "center",
+            transition: `transform ${ms("expand")} ease`,
+            transform: open ? "rotate(90deg)" : "rotate(0deg)",
+          }}>
+            <ChevronRight size={12} strokeWidth={2} />
+          </span>
+        </div>
       </div>
       <div style={{
         display: "grid",
         gridTemplateRows: open ? "1fr" : "0fr",
-        transition: "grid-template-rows 150ms ease",
+        transition: `grid-template-rows ${ms("expand")} ease`,
       }}>
         <div style={{ overflow: "hidden" }}>
           <div style={{ paddingBottom: "8px" }}>{children}</div>
@@ -93,9 +170,18 @@ export function Section({
 
 // ─── ValueInput ─────────────────────────────────────────────────────
 
-export function ValueInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+export function ValueInput({ value, onChange, emptyKeyword, onKeywordCommit }: {
+  value: number;
+  onChange: (v: number) => void;
+  /** When draft is empty on commit, apply this keyword instead of ignoring */
+  emptyKeyword?: string;
+  /** Called when the empty keyword is applied (e.g. "auto", "none") */
+  onKeywordCommit?: (keyword: string) => void;
+}) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  useWheelAdjust(inputRef, value, onChange);
 
   useEffect(() => {
     if (!focused) setDraft(String(value));
@@ -103,9 +189,15 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
 
   const commit = useCallback(() => {
     setFocused(false);
+    if (draft.trim() === '' && emptyKeyword && onKeywordCommit) {
+      onKeywordCommit(emptyKeyword);
+      return;
+    }
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onChange(mathResult); return; }
     const parsed = parseFloat(draft);
     if (!isNaN(parsed)) onChange(parsed);
-  }, [draft, onChange]);
+  }, [draft, value, onChange, emptyKeyword, onKeywordCommit]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -134,6 +226,7 @@ export function ValueInput({ value, onChange }: { value: number; onChange: (v: n
 
   return (
     <input
+      ref={inputRef}
       value={focused ? draft : String(value)}
       onChange={(e) => setDraft(e.target.value)}
       onFocus={() => setFocused(true)}
@@ -172,6 +265,14 @@ export function SliderRow({
   onChange,
   onReset,
   indicator,
+  onContextMenu,
+  computedProp,
+  computedElement,
+  conversionHint,
+  snapPoints,
+  snapThreshold,
+  property,
+  onPreset,
 }: {
   label: string;
   value: number;
@@ -186,55 +287,108 @@ export function SliderRow({
   /** Called when the label is clicked (not dragged) to reset the property */
   onReset?: () => void;
   indicator?: IndicatorType;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "font-size") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
+  /** Conversion tooltip hint shown after unit change */
+  conversionHint?: ConversionHint | null;
+  /** Magnetic snap values (e.g. [0, 8, 16, 24, 32, 50, 100]) */
+  snapPoints?: number[];
+  /** Pixel distance for snap activation (default 3) */
+  snapThreshold?: number;
+  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
+  property?: string;
+  /** Called when a preset chip is clicked (for string values like "auto"/"none") */
+  onPreset?: (value: string) => void;
 }) {
+  const snapValue = useCallback((raw: number): number => {
+    if (!snapPoints || snapPoints.length === 0) return raw;
+    const threshold = snapThreshold ?? 3;
+    const range = max - min;
+    const valueThreshold = (threshold / 100) * range;
+
+    for (const snap of snapPoints) {
+      if (snap >= min && snap <= max && Math.abs(raw - snap) <= valueThreshold) {
+        return snap;
+      }
+    }
+    return raw;
+  }, [snapPoints, snapThreshold, min, max]);
+
   const pct = ((value - min) / (max - min)) * 100;
+  const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelContent = (
+    <span
+      title={labelTitle}
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: labelColor,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+  const handlePresetSelect = useCallback((v: string) => {
+    if (onPreset) {
+      onPreset(v);
+    } else {
+      const parsed = parseFloat(v);
+      if (!isNaN(parsed)) onChange(parsed);
+    }
+  }, [onPreset, onChange]);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onClick={onReset}>
-        <span
+    <>
+      <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
+          {computedProp && computedElement ? (
+            <ComputedTooltip property={computedProp} element={computedElement}>
+              {labelContent}
+            </ComputedTooltip>
+          ) : labelContent}
+        </LabelScrub>
+        <input
+          type="range"
+          className="tuner-focusable"
+          tabIndex={0}
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
+          onMouseDown={() => beginBatch()}
+          onMouseUp={() => endBatch()}
+          onFocus={onFocusRing}
+          onBlur={onBlurRing}
           style={{
-            width: "64px",
-            fontSize: "11px",
-            color: "rgba(255,255,255,0.5)",
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
+            flex: 1,
+            height: "3px",
+            appearance: "none",
+            WebkitAppearance: "none",
+            background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
+            borderRadius: "2px",
+            outline: "none",
+            cursor: "pointer",
           }}
-        >
-          {indicator && <StyleIndicator type={indicator} />}
-          {label}
-        </span>
-      </LabelScrub>
-      <input
-        type="range"
-        className="tuner-focusable"
-        tabIndex={0}
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        onFocus={onFocusRing}
-        onBlur={onBlurRing}
-        style={{
-          flex: 1,
-          height: "3px",
-          appearance: "none",
-          WebkitAppearance: "none",
-          background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          borderRadius: "2px",
-          outline: "none",
-          cursor: "pointer",
-        }}
-      />
-      <ValueInput value={value} onChange={onChange} />
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
-      ) : unit ? (
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
-      ) : null}
-    </div>
+        />
+        <ValueInput value={value} onChange={onChange} />
+        {units && onUnitChange ? (
+          <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
+        ) : unit ? (
+          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
+        ) : null}
+      </div>
+      {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
+    </>
   );
 }
 
@@ -245,28 +399,64 @@ export function SelectRow({
   value,
   options,
   onChange,
+  onReset,
   indicator,
+  searchable,
+  fontPreview,
+  onContextMenu,
+  computedProp,
+  computedElement,
 }: {
   label: string;
   value: string;
   options: Array<{ value: string; label: string }>;
   onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
   indicator?: IndicatorType;
+  /** Show a search/filter input at the top of the dropdown */
+  searchable?: boolean;
+  /** Render each option label in its own font-face (for font-family dropdowns) */
+  fontPreview?: boolean;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "font-weight") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
 }) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const current = options.find((o) => o.value === value);
   const id = useId();
 
-  const labels = options.map(o => o.label);
+  // Filter options when searchable
+  const filtered = searchable && searchQuery
+    ? options.filter((o) => o.label.toLowerCase().includes(searchQuery.toLowerCase()))
+    : options;
+
+  const optionLabels = filtered.map(o => o.label);
   const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
     open,
     setOpen,
-    optionCount: options.length,
-    selectedIndex: options.findIndex((o) => o.value === value),
-    onSelect: (i) => { onChange(options[i].value); setOpen(false); },
-    labels,
+    optionCount: filtered.length,
+    selectedIndex: filtered.findIndex((o) => o.value === value),
+    onSelect: (i) => { onChange(filtered[i].value); setOpen(false); setSearchQuery(""); },
+    labels: optionLabels,
   });
+
+  // Clear search when dropdown closes
+  useEffect(() => {
+    if (!open) setSearchQuery("");
+  }, [open]);
+
+  // Auto-focus search input when dropdown opens
+  useEffect(() => {
+    if (open && searchable) {
+      requestAnimationFrame(() => searchInputRef.current?.focus());
+    }
+  }, [open, searchable]);
 
   useEffect(() => {
     if (!open) return;
@@ -279,22 +469,35 @@ export function SelectRow({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelContent = (
+    <span
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      title={selectLabelTitle}
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: selectLabelColor,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        cursor: "default",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
           className="tuner-focusable"
@@ -319,11 +522,11 @@ export function SelectRow({
             borderRadius: "3px",
             color: "rgba(255,255,255,0.8)",
             fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
-            transition: "background 80ms, box-shadow 80ms",
+            transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
             if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -349,7 +552,7 @@ export function SelectRow({
               left: 0,
               right: 0,
               minWidth: "100%",
-              maxHeight: "180px",
+              maxHeight: searchable ? "240px" : "180px",
               overflowY: "auto",
               background: "#2a2a2a",
               border: "1px solid rgba(255,255,255,0.15)",
@@ -359,41 +562,89 @@ export function SelectRow({
               padding: "2px 0",
             }}
           >
-            {options.map((opt, i) => {
-              const isActive = opt.value === value;
-              const isHighlighted = i === highlightedIndex;
-              return (
-                <div
-                  key={opt.value}
-                  id={`${id}-opt-${i}`}
-                  ref={i === highlightedIndex ? optionRefCallback : undefined}
-                  role="option"
-                  aria-selected={isActive}
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
+            {/* Search input (when searchable) */}
+            {searchable && (
+              <div style={{ padding: "4px 6px 4px", position: "sticky", top: 0, background: "#2a2a2a", zIndex: 1 }}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  placeholder="Search..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setOpen(false);
+                    } else if (e.key === "Enter" && filtered.length > 0) {
+                      const idx = highlightedIndex >= 0 ? highlightedIndex : 0;
+                      onChange(filtered[idx].value);
+                      setOpen(false);
+                      setSearchQuery("");
+                    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                      // Delegate to list keyboard handler
+                      onListKeyDown(e as unknown as React.KeyboardEvent);
+                    }
                   }}
                   style={{
-                    padding: "4px 8px",
+                    width: "100%",
+                    height: "22px",
+                    background: "#1e1e1e",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "3px",
+                    padding: "0 6px",
                     fontSize: "11px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    transition: "background 60ms",
+                    fontFamily: "system-ui, -apple-system, sans-serif",
+                    color: "rgba(255,255,255,0.85)",
+                    outline: "none",
+                    boxSizing: "border-box",
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
-                  }}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
+                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.5)"; }}
+                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
+                />
+              </div>
+            )}
+            {filtered.length === 0 ? (
+              <div style={{ padding: "6px 8px", fontSize: "11px", color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>
+                No matches
+              </div>
+            ) : (
+              filtered.map((opt, i) => {
+                const isActive = opt.value === value;
+                const isHighlighted = i === highlightedIndex;
+                return (
+                  <div
+                    key={opt.value}
+                    id={`${id}-opt-${i}`}
+                    ref={i === highlightedIndex ? optionRefCallback : undefined}
+                    role="option"
+                    aria-selected={isActive}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                      setSearchQuery("");
+                    }}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: "11px",
+                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
+                      color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
+                      background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: `background ${ms("micro")}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>
@@ -407,18 +658,52 @@ export function ColorRow({
   label,
   value,
   onChange,
+  onReset,
   indicator,
+  onContextMenu,
+  computedProp,
+  computedElement,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
   indicator?: IndicatorType;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "color") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
 
+  const colorLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelContent = (
+    <span
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      title={colorLabelTitle}
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: colorLabelColor,
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+        cursor: "default",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+
   return (
     <div
+      onContextMenu={onContextMenu}
       style={{
         display: "flex",
         alignItems: "center",
@@ -427,20 +712,11 @@ export function ColorRow({
         position: "relative",
       }}
     >
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
       <div
         ref={swatchRef}
         className="tuner-focusable"
@@ -500,13 +776,19 @@ export function ColorRow({
 
 // ─── TextRow ────────────────────────────────────────────────────────
 
-export function TextRow({ label, value, placeholder, onChange }: {
+export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu }: {
   label: string; value: string; placeholder?: string; onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+      <span
+        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+        style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, cursor: "default" }}
+      >{label}</span>
       <input
         type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
@@ -540,6 +822,8 @@ export const EditableValue = memo(
 
     const commit = useCallback(() => {
       setEditing(false);
+      const mathResult = evaluateMathExpr(draft, value);
+      if (mathResult !== null) { onChange(mathResult); return; }
       const parsed = parseFloat(draft);
       if (!isNaN(parsed) && parsed !== value) {
         onChange(parsed);
@@ -625,7 +909,7 @@ export const EditableValue = memo(
           minWidth: "16px",
           textAlign: "center",
           outline: "none",
-          transition: "background 100ms, box-shadow 80ms",
+          transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
         }}
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

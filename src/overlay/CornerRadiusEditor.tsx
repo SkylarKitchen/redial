@@ -9,6 +9,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
 import { Link, Unlink } from "lucide-react";
+import { ms } from "./timing";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -124,7 +125,7 @@ function RadiusInput({
         borderRadius: "2px",
         textAlign: "center",
         background: "rgba(255,255,255,0.04)",
-        transition: "background 100ms",
+        transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
@@ -197,7 +198,7 @@ export function CornerRadiusEditor({
               height: "24px",
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
-              transition: "border-radius 100ms",
+              transition: `border-radius ${ms("normal")}`,
             }}
           />
           <button
@@ -254,7 +255,7 @@ export function CornerRadiusEditor({
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: `${previewTL}px ${previewTR}px ${previewBR}px ${previewBL}px`,
               background: "rgba(255,255,255,0.03)",
-              transition: "border-radius 100ms",
+              transition: `border-radius ${ms("normal")}`,
             }}
           />
           {/* Link/unlink button + unit selector centered */}
@@ -281,7 +282,7 @@ export function CornerRadiusEditor({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "background 100ms",
+                transition: `background ${ms("normal")}`,
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.12)";

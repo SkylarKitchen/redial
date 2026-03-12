@@ -6,6 +6,7 @@
  */
 
 import { useCallback } from "react";
+import { ms } from "./timing";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
@@ -21,7 +22,13 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
   const handleClick = useCallback(
     (optValue: string) => {
       if (multi) {
+        // "none" is a reset value — clicking it clears everything
+        if (optValue === "none") {
+          onChange("none");
+          return;
+        }
         const current = new Set(value.split(" ").filter(Boolean));
+        current.delete("none"); // remove "none" when toggling a real value
         if (current.has(optValue)) {
           current.delete(optValue);
         } else {
@@ -38,7 +45,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
   );
 
   return (
-    <div role="radiogroup" aria-label={ariaLabel} style={{ display: "inline-flex" }}>
+    <div role={multi ? "toolbar" : "radiogroup"} aria-label={ariaLabel} style={{ display: "inline-flex" }}>
       {options.map((opt, i) => {
         const isActive = activeValues.has(opt.value);
         const isFirst = i === 0;
@@ -47,8 +54,9 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
         return (
           <button
             key={opt.value}
-            role="radio"
-            aria-checked={isActive}
+            role={multi ? undefined : "radio"}
+            aria-checked={multi ? undefined : isActive}
+            aria-pressed={multi ? isActive : undefined}
             aria-label={opt.label ?? opt.title ?? opt.value}
             tabIndex={isActive ? 0 : -1}
             title={opt.title ?? opt.value}
@@ -89,7 +97,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
               lineHeight: 1,
               fontFamily: "system-ui, sans-serif",
               outline: "none",
-              transition: "background 80ms, color 80ms, box-shadow 80ms",
+              transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
             }}
             onMouseEnter={(e) => {
               if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

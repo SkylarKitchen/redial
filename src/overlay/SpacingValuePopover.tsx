@@ -11,6 +11,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "./controls";
+import { ms } from "./timing";
 
 // Webflow's standard spacing presets
 const PRESETS = [0, 10, 20, 40, 60, 100, 140, 220];
@@ -173,6 +174,30 @@ export function SpacingValuePopover({
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
+      {/* Scoped slider thumb styles (pseudo-elements can't be inline-styled) */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .spacing-popover-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 12px; height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid #fff;
+          cursor: pointer;
+          margin-top: -4.5px;
+        }
+        .spacing-popover-slider::-moz-range-thumb {
+          width: 12px; height: 12px;
+          border-radius: 50%;
+          background: #6366f1;
+          border: 2px solid #fff;
+          cursor: pointer;
+        }
+      `,
+        }}
+      />
+
       {/* Top row: icon, input, slider, unit */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
         {/* Direction indicator */}
@@ -235,7 +260,7 @@ export function SpacingValuePopover({
         >
           <input
             type="range"
-            className="tuner-focusable"
+            className="spacing-popover-slider"
             min={sliderMin}
             max={sliderMax}
             step={1}
@@ -356,7 +381,7 @@ export function SpacingValuePopover({
               fontFamily: "ui-monospace, 'SF Mono', monospace",
               cursor: "pointer",
               outline: "none",
-              transition: "background 80ms, border-color 80ms",
+              transition: `background ${ms("fast")}, border-color ${ms("fast")}`,
             }}
             onMouseEnter={(e) => {
               if (value !== preset) {

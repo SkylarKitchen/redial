@@ -29,9 +29,9 @@ export async function POST(request: Request) {
 
     const result = await handleCommit(changes);
     return Response.json(result);
-  } catch (err: any) {
+  } catch {
     return Response.json(
-      { error: err.message },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

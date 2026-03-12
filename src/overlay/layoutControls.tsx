@@ -4,13 +4,16 @@
  * MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector } from "./UnitSelector";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
+import { evaluateMathExpr } from "./inputMath";
+import { ms } from "./timing";
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
+import { useWheelAdjust } from "./useWheelAdjust";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
   DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
@@ -27,15 +30,18 @@ export function MiniDropdown({ value, options, onChange }: {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const id = useId();
   const closeDropdown = useCallback(() => setOpen(false), []);
   useClickOutside(ref, open, closeDropdown);
 
-  const { highlightedIndex, onTriggerKeyDown, onListKeyDown } = useDropdownKeyboard({
+  const optionLabels = options.map(o => o.label);
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
     open,
     setOpen,
     optionCount: options.length,
     selectedIndex: options.findIndex((o) => o.value === value),
     onSelect: (i) => { onChange(options[i].value); setOpen(false); },
+    labels: optionLabels,
   });
 
   return (
@@ -44,6 +50,8 @@ export function MiniDropdown({ value, options, onChange }: {
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-controls={`${id}-listbox`}
+        aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
         style={{
@@ -59,6 +67,7 @@ export function MiniDropdown({ value, options, onChange }: {
       </button>
       {open && (
         <div
+          id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
           style={{
@@ -73,6 +82,8 @@ export function MiniDropdown({ value, options, onChange }: {
             return (
               <div
                 key={opt.value}
+                id={`${id}-opt-${i}`}
+                ref={i === highlightedIndex ? optionRefCallback : undefined}
                 role="option"
                 aria-selected={active}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
@@ -148,7 +159,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                   border: "1px solid rgba(255,255,255,0.15)",
                   borderLeft: isFirst ? "1px solid rgba(255,255,255,0.15)" : "none",
                   borderRadius: isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : "0",
-                  outline: "none", transition: "background 80ms, color 80ms",
+                  outline: "none", transition: `background ${ms("fast")}, color ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
                 onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = isActive ? "rgba(255,255,255,0.12)" : "transparent"; }}
@@ -201,11 +212,12 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
 // ─── GapRow ─────────────────────────────────────────────────────────
 
 /** Gap row: color swatch + slider + value input + unit + lock icon */
-export function GapRow({ value, unit, onChange, onUnitChange }: {
+export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedChange }: {
   value: number; unit: string;
   onChange: (v: number) => void; onUnitChange: (u: string) => void;
+  linked: boolean; onLinkedChange: (v: boolean) => void;
 }) {
-  const [gapLinked, setGapLinked] = useState(true);
+  const gapLinked = linked;
   const pct = (value / 200) * 100;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
@@ -236,7 +248,7 @@ export function GapRow({ value, unit, onChange, onUnitChange }: {
       }}>{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
-        onClick={() => setGapLinked(!gapLinked)}
+        onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
         style={{
           width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center",
@@ -265,7 +277,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span style={{ fontSize: "11px", flexShrink: 0, ...(value !== "block" ? { background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)", borderRadius: "3px", padding: "2px 6px" } : { color: "rgba(255,255,255,0.5)", width: "64px" }) }}>Display</span>
       <div ref={containerRef} style={{ display: "flex", flex: 1, position: "relative" }}>
-        <div role="radiogroup" aria-label="Display type" style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
+        <div role="radiogroup" aria-label="Display mode" style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
           {DISPLAY_TABS.map((tab) => {
             const active = value === tab;
             return (
@@ -302,7 +314,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                   color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
                   fontWeight: active ? 500 : 400,
                   outline: "none",
-                  transition: "background 80ms, color 80ms",
+                  transition: `background ${ms("fast")}, color ${ms("fast")}`,
                   textTransform: "capitalize",
                 }}
                 onMouseEnter={(e) => { if (value !== tab) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
@@ -361,7 +373,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                     color: active ? "#fff" : "rgba(255,255,255,0.6)",
                     background: active ? "#6366f1" : "transparent",
                     cursor: "pointer",
-                    transition: "background 60ms",
+                    transition: `background ${ms("micro")}`,
                   }}
                   onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
                   onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -388,6 +400,7 @@ export function TypoValueCell({
   units,
   step = 1,
   keyword,
+  conversionHint,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -396,9 +409,13 @@ export function TypoValueCell({
   units?: string[];
   step?: number;
   keyword?: string | null;
+  /** Conversion tooltip hint passed through to UnitSelector */
+  conversionHint?: ConversionHint | null;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const cellRef = useRef<HTMLDivElement>(null);
+  useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null });
 
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
@@ -406,6 +423,8 @@ export function TypoValueCell({
 
   const commit = () => {
     setEditing(false);
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onChange(mathResult); return; }
     const n = parseFloat(draft);
     if (!isNaN(n) && n !== value) onChange(n);
   };
@@ -432,6 +451,7 @@ export function TypoValueCell({
 
   return (
     <div
+      ref={cellRef}
       style={{
         flex: 1,
         display: "flex",
@@ -474,7 +494,7 @@ export function TypoValueCell({
         </span>
       )}
       {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", padding: "0 6px 0 0", flexShrink: 0, fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
           {unit}

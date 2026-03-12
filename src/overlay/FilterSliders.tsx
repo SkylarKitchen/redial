@@ -8,6 +8,9 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useDragReorder } from "./useDragReorder";
+import { DragHandle } from "./DragHandle";
 
 export interface FilterValues {
   blur: number;
@@ -58,6 +61,9 @@ function isNonDefault(key: FilterKey, value: number | undefined): boolean {
   return value !== FILTER_META[key].defaultValue;
 }
 
+/** Wrapper for useDragReorder — wraps filter keys in objects */
+interface FilterItem { key: FilterKey }
+
 export function FilterSliders({ values, onChange, type = "filter" }: FilterSlidersProps) {
   // Track which filters are explicitly shown (added by user)
   const [addedFilters, setAddedFilters] = useState<Set<FilterKey>>(() => {
@@ -67,6 +73,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     }
     return set;
   });
+  const [hiddenFilters, setHiddenFilters] = useState<Set<FilterKey>>(new Set());
+  const [filterOrder, setFilterOrder] = useState<FilterKey[]>([...ALL_FILTER_KEYS]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -82,18 +90,56 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     return () => document.removeEventListener("mousedown", handler);
   }, [dropdownOpen]);
 
-  const visibleFilters = ALL_FILTER_KEYS.filter(
+  const visibleFilters = filterOrder.filter(
     (key) => addedFilters.has(key) || isNonDefault(key, values[key])
   );
 
-  const availableFilters = ALL_FILTER_KEYS.filter(
+  const availableFilters = filterOrder.filter(
     (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
   );
+
+  // Wrap visible filters as items for useDragReorder
+  const filterItems: FilterItem[] = visibleFilters.map((key) => ({ key }));
+
+  const handleReorder = useCallback(
+    (items: FilterItem[]) => {
+      // Rebuild the full order: keep non-visible keys in place, update visible order
+      const reorderedKeys = items.map((i) => i.key);
+      const hiddenKeys = filterOrder.filter(
+        (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
+      );
+      setFilterOrder([...reorderedKeys, ...hiddenKeys]);
+    },
+    [filterOrder, addedFilters, values]
+  );
+
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(filterItems, handleReorder);
 
   const handleAdd = useCallback((key: FilterKey) => {
     setAddedFilters((prev) => new Set(prev).add(key));
     setDropdownOpen(false);
   }, []);
+
+  const toggleFilterVisible = useCallback(
+    (key: FilterKey) => {
+      setHiddenFilters((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        // Re-fire onChange so CSS updates
+        if (next.has(key)) {
+          onChange(key, FILTER_META[key].defaultValue);
+        } else {
+          onChange(key, values[key] ?? FILTER_META[key].defaultValue);
+        }
+        return next;
+      });
+    },
+    [values, onChange]
+  );
 
   const handleRemove = useCallback(
     (key: FilterKey) => {
@@ -125,21 +171,35 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
       </div>
 
       {/* Filter rows */}
-      {visibleFilters.map((key) => {
+      <div style={{ position: "relative" }}>
+      {visibleFilters.map((key, index) => {
         const meta = FILTER_META[key];
         const val = values[key] ?? meta.defaultValue;
         const pct = ((val - meta.min) / (meta.max - meta.min)) * 100;
 
+        const isHidden = hiddenFilters.has(key);
+        const dragProps = handleProps(index);
+
         return (
           <div
             key={key}
+            ref={registerRef(index)}
             style={{
+              ...itemStyle(index),
               display: "flex",
               alignItems: "center",
               gap: "6px",
               height: "24px",
+              opacity: isHidden ? 0.4 : 1,
+              transition: "opacity 100ms",
             }}
           >
+            {/* Drag handle */}
+            <DragHandle
+              isDragging={isDragging}
+              onPointerDown={dragProps.onPointerDown}
+            />
+
             {/* Label */}
             <span
               style={{
@@ -200,6 +260,22 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               {meta.unit}
             </span>
 
+            {/* Eye visibility toggle */}
+            <button
+              onClick={() => toggleFilterVisible(key)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "2px",
+                color: !isHidden ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                flexShrink: 0,
+              }}
+              title={!isHidden ? "Hide filter" : "Show filter"}
+            >
+              {!isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+            </button>
+
             {/* Remove button */}
             <button
               onClick={() => handleRemove(key)}
@@ -234,6 +310,13 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
           </div>
         );
       })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
+      </div>
 
       {/* Add filter button + dropdown */}
       <div style={{ position: "relative" }} ref={dropdownRef}>

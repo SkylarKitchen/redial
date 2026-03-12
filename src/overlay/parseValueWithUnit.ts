@@ -40,7 +40,6 @@ export function parseValueWithUnit(input: string, allowedUnits: string[]): Parse
   }
 
   // Also check against known CSS units even if not in allowedUnits
-  // (return it so the caller can decide)
   if (KNOWN_UNITS.includes(unitStr)) {
     return { value: numericValue, unit: unitStr };
   }

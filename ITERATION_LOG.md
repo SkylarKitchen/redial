@@ -214,6 +214,390 @@ Merged outputs from 10 parallel worktree agents into WebflowPanel.tsx:
 - Total: 162 tests passing across 5 files.
 - Typecheck: PASS
 
+### Iteration 23 — Color picker swatches/saved colors system (2026-03-11)
+- Added swatches section to `ColorPickerEnhanced` below the mode inputs (spec §12)
+- Swatches persist via `localStorage` under `__tuner-color-swatches` key (max 16 colors)
+- "+" button saves current color to swatches (prepends, deduplicates, caps at 16)
+- Click swatch → applies that color to picker and emits change
+- Right-click swatch → removes it from the saved list
+- Active swatch highlighted with thicker white border
+- Empty state shows italic hint: "Click + to save colors"
+- Hover effect: scale(1.1) + brighter border for visual feedback
+- Fixed pre-existing typecheck errors: added missing `ms` import from `timing.ts` to `controls.tsx` and `ViewportBar.tsx`
+- Typecheck: PASS
+
+### Iteration 24 — Font family: searchable dropdown with font preview (2026-03-11)
+- Added `searchable` and `fontPreview` optional props to `SelectRow` in `controls.tsx`
+- When `searchable` is true and dropdown is open, a sticky search input appears at the top
+- Options are filtered in real-time by case-insensitive substring match
+- "No matches" empty state when filter yields zero results
+- Search input auto-focuses on open, clears on close
+- ArrowUp/ArrowDown in search input delegates to list keyboard navigation, Enter selects
+- When `fontPreview` is true, each option label renders in its own font-face
+- The trigger button also renders in the selected font (font preview in collapsed state)
+- Dropdown height increased to 240px when searchable (vs 180px default) for more visible results
+- Wired `searchable fontPreview` onto the Typography font-family `SelectRow` in `WebflowPanel.tsx`
+- Fixed pre-existing typecheck error: added missing `timing` import to `SessionDrawer.tsx`
+- Typecheck: PASS
+
+---
+
+### Iteration 25 — Scroll-wheel-to-adjust on numeric inputs (2026-03-11)
+- Created `useWheelAdjust` hook (`src/overlay/useWheelAdjust.ts`) — attaches a non-passive native wheel listener that increments/decrements the value when the element has focus
+- Uses a ref-based pattern to avoid re-attaching the listener on every render
+- Modifier keys match arrow-key convention: Shift=10×, Alt=0.1×, default=base step
+- Wired into `ValueInput` (controls.tsx) — ref on the `<input>`, always active
+- Wired into `SizeInputCell` (SizeInputCell.tsx) — ref on container div, disabled in keyword mode
+- Wired into `TypoValueCell` (layoutControls.tsx) — ref on container div, disabled in keyword mode
+- Typecheck: PASS
+
+---
+
+### Iteration 26 — Typography advanced: word-spacing + hyphens (2026-03-11)
+- Added `HYPHENS_OPTIONS` constant (`panelConstants.tsx`): none, manual, auto
+- Added `wordSpacing` state (parsed from `cs.wordSpacing`) and `hyphens` state (from `cs.hyphens`)
+- Added `handleWordSpacingChange` → `apply("word-spacing", ...)` and `handleHyphensChange` → `apply("hyphens", ...)`
+- Rendered `word-spacing` as a `TypoValueCell` with 0.5px step, "Normal" keyword at 0
+- Rendered `hyphens` as a `MiniDropdown` with none/manual/auto options
+- Both placed in the advanced typography sub-section between the letter-spacing/text-indent/columns row and the Italicize/Capitalize/Direction row
+- Typecheck: PASS
+
+---
+
+### Iteration 27 — Typography advanced: column-gap (2026-03-11)
+- Added `column-gap` TypoValueCell to typography advanced section, paired with existing `column-count`
+- Reuses existing `columnGap` state and `handleColumnGapChange` handler from layout section
+- Split the old 3-cell row (letter-spacing + text-indent + columns) into two rows for better spacing:
+  - Row 1: Letter spacing + Text indent
+  - Row 2: Columns + Column gap
+- "Normal" keyword shown when gap is 0, 1px step
+- Fills spec §7 line 411 gap — column-gap is now accessible for multi-column text (`display: block` + `column-count`)
+- Typecheck: PASS
+
+---
+
+### Iteration 28 — StyleIndicator on section headers (2026-03-11)
+- Added optional `indicator` prop to `Section` component (controls.tsx)
+- Renders a `StyleIndicator` dot next to the section title when any property in that section has a non-"none" indicator
+- Added `sectionInd()` helper in WebflowPanel that takes an array of CSS property names and returns the highest-priority indicator type (element > direct > state > inherited > none)
+- Wired into all 8 sections: Layout, Spacing, Size, Position, Typography, Backgrounds, Borders, Effects
+- Each section checks its representative properties — e.g., Typography checks font-family, font-weight, font-size, line-height, letter-spacing, color, text-align, text-decoration, text-transform
+- Fills spec §2 "Inheritance indicator colors on section labels" requirement
+- Typecheck: PASS
+
+---
+
+### Iteration 29 — Background image attachment control (2026-03-11)
+- Added `attachment` field to `BackgroundLayer.image` interface (scroll/fixed/local)
+- Added `ATTACHMENT_OPTIONS` constant and `Select` dropdown in expanded image layer controls
+- Default value: `"scroll"` in `makeDefault()`
+- Updated CSS generation in WebflowPanel: `background-attachment` applied as separate property when any layer uses non-scroll attachment
+- Fills spec §8 line 483: `background-attachment` select with scroll/fixed options
+- Typecheck: PASS
+
+---
+
+### Iteration 30 — Panel Polish Tier 2-3 Swarm (2026-03-11)
+Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
+- **Phase 1 — Timing tokens**: Created `timing.ts` with 7 canonical tokens, replaced magic numbers in 26+ files
+- **Phase 2 — Slider thumb styling**: Custom 12px indigo thumb with hover/active states in global `<style>` block
+- **Phase 3 — Toast animation**: AnimatePresence enter/exit in Footer.tsx with monotonic key counter
+- **Phase 4 — ARIA roles**: combobox/listbox on SelectRow, UnitSelector, MiniDropdown; radiogroup on IconButtonGroup, DisplayTabs; shared `useDropdownKeyboard` hook with type-ahead
+- **Phase 5 — DnD settle**: Spring easing on shadow/transform reorder with rAF-separated settle state
+- **Phase 6 — Color picker swatches**: Save/remove swatches (max 16), localStorage persistence
+- **Review fixes**: Restored slider thumb CSS, MiniDropdown keyboard nav, AnimatePresence counter, DisplayTabs radiogroup, conditional column-gap
+- 42 files changed, 663 insertions, 1615 deletions
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Iteration 31 — Grid AlignBox: justify-items / align-content (2026-03-11)
+- Added `justifyItems` and `alignContent` state (read from `getComputedStyle`)
+- Added `handleGridAlignChange` handler that applies `justify-items` and `align-content`
+- Grid AlignBox now maps X-axis → `justify-items` and Y-axis → `align-content` (per spec §3 lines 174-175)
+- Flex AlignBox unchanged — still maps to `justify-content`/`align-items`
+- Added grid alignment properties to Layout section indicator
+- Fills spec §3: "X axis maps to justify-items for grid, Y axis maps to align-content"
+- Typecheck: PASS
+
+---
+
+### Iteration 32 — Effects section sub-headers + reorganization (2026-03-11)
+- Added sub-section headers for Filter, Backdrop Filter, Cursor, and Interaction
+- Moved Perspective and Backface Visibility from bottom of section into the Transform sub-section (per spec §10 lines 601-602)
+- Effects section now matches spec §10 layout: Opacity → Blend → Box Shadow → Transform (with perspective/backface) → Transition → Filter → Backdrop Filter → Cursor → Interaction
+- Typecheck: PASS
+
+---
+
+### Iteration 33 — Wire background-blend-mode CSS application (2026-03-11)
+- The per-layer `blendMode` field already existed in `BackgroundLayer` data model and the UI dropdown in `BackgroundLayerList.tsx`
+- However, it was never applied as actual `background-blend-mode` CSS — the value was silently discarded during CSS generation
+- Added `blendModes[]` collector in `handleBgLayersChange` (parallel to existing `attachments[]` pattern)
+- Collects blend mode from each gradient/image layer during the CSS generation loop
+- Applies `background-blend-mode` as comma-separated list when any layer uses non-"normal" blend
+- Clears property when all layers are "normal" or no layers exist
+- Added `background-blend-mode` to Backgrounds section indicator property list
+- Fills spec §8 line 485: `background-blend-mode` select with full blend mode list
+- Typecheck: PASS
+
+---
+
+### Iteration 34 — Text-decoration multi-select (spec §7 line 401) (2026-03-11)
+- Spec §7 says text-decoration "Can combine multiple" (e.g., underline + line-through simultaneously)
+- The `IconButtonGroup` already supported `multi` mode, but text-decoration was not using it
+- Added `multi` prop to text-decoration `IconButtonGroup` in WebflowPanel.tsx
+- Fixed multi-mode "none" handling in `IconButtonGroup`: clicking "none" now clears all other values; clicking a real value removes "none" from the active set
+- CSS `text-decoration-line` natively accepts combined values like `"underline line-through"`, so no handler changes needed
+- Initialization already reads `cs.textDecorationLine` which returns space-separated combined values
+- Typecheck: PASS
+
+---
+
+### Iteration 35 — Z-index "auto" keyword toggle (spec §6 line 339) (2026-03-11)
+- Spec §6 lists z-index values as `auto`, `-1` → `9999`, but the panel only had a numeric SliderRow
+- `parseInt("auto") || 0` was silently losing the auto keyword during initialization
+- Added `zIndexAuto` boolean state, initialized from `cs.zIndex === "auto"`
+- Added `handleZIndexAutoToggle` that switches between `z-index: auto` and numeric value
+- Replaced bare SliderRow with a row containing: label (with StyleIndicator), "auto" pill toggle, and conditionally visible SliderRow
+- Auto pill styled with indigo highlight when active (matching existing keyword pill pattern)
+- Reset handler now restores to auto state
+- Numeric changes automatically clear auto mode
+- Typecheck: PASS
+
+---
+
+### Iteration 36 — Background image custom size W/H inputs (spec §8 line 480) (2026-03-11)
+- Spec §8 says `background-size` supports `custom [w] [h]` but the "custom" dropdown option emitted the literal string "custom" as CSS — which is invalid
+- Split `SIZE_KEYWORDS` (`auto`, `cover`, `contain`) from `SIZE_OPTIONS` for proper display mapping
+- Dropdown now shows "custom" when the current size isn't a keyword (e.g., "200px 100px" → "custom")
+- Selecting "custom" initializes to `"100% auto"` as a sensible default
+- Added inline W/H text inputs below the size dropdown when custom is active
+- Inputs parse the current size into two parts and compose `"W H"` on change
+- Supports any CSS length unit (px, %, em, etc.) — user types directly
+- Typecheck: PASS
+
+---
+
+### Iteration 37 — Background image custom position X/Y inputs (spec §8 line 481) (2026-03-11)
+- Spec §8 says `background-position` supports presets + custom X/Y, but the dropdown only had keyword presets
+- Added "custom" option to `POSITION_OPTIONS` (split `POSITION_KEYWORDS` for display mapping, same pattern as background-size)
+- Dropdown shows "custom" when position is a non-keyword value (e.g., "50% 20px")
+- Selecting "custom" initializes to `"50% 50%"` (equivalent to `center`)
+- Added inline X/Y text inputs below the position dropdown when custom is active
+- Inputs parse current position into two space-separated parts and compose `"X Y"` on change
+- Supports any CSS position value (px, %, em, keywords like `left 10px`)
+- Typecheck: PASS
+
+---
+
+### Iteration 38 — CSS Variables / Custom Properties panel (2026-03-11)
+- Created `CSSVariablesSection.tsx` — new "CSS Variables" section in the panel
+- Discovery: walks `document.styleSheets` for `:root`/`html` rules and rules matching the element, checks inline styles, walks ancestor inline styles
+- Each variable classified by source: "Element" (set on element), "Inherited" (from ancestor), "Root" (from :root)
+- Type detection: regex-based classification of values as color (hex/rgb/hsl/named), length (number+unit), number, or string
+- Color-type variables show an inline color swatch (16×16 rounded square)
+- Editing: text input commits on blur/Enter via `applyCustomProperty()` from apply.ts (existing undo system)
+- Groups displayed with sub-headers showing count: "Element (3)", "Inherited (5)", "Root (12)"
+- StyleIndicator dots show dirty state (element dot) vs source (direct/inherited/none)
+- Empty state: "No custom properties" italic hint when no variables found
+- Integrated into WebflowPanel.tsx after Effects section
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Iteration 39 — Visual Grid Overlay (2026-03-11)
+- Created `GridOverlay.tsx` — renders semi-transparent grid visualization over CSS Grid containers
+- Only activates when selected element has `display: grid` or `display: inline-grid`
+- Parses `getComputedStyle().gridTemplateColumns/Rows` for resolved pixel track sizes
+- Calculates grid line positions accounting for `column-gap`, `row-gap`, padding, and border
+- Visual elements: dashed grid lines (indigo), gap bands (subtle fill), column/row number labels, container outline
+- Positioning: `getBoundingClientRect()` + `requestAnimationFrame` loop + `ResizeObserver` for real-time sync
+- Added toggle button ("Show/Hide") with Grid3x3 icon in the Layout section's grid controls
+- Grid overlay state managed in Overlay.tsx, resets on new element selection
+- `refreshKey` prop triggers recalculation when grid properties change in the panel
+- All overlay elements have `pointer-events: none` for click-through
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Task 1 — isConnected guard in applyInlineStyle (2026-03-11)
+- Added `if (!(el as HTMLElement).isConnected) return;` at the top of `applyInlineStyle()` in `apply.ts`
+- Prevents orphaned overrides when HMR disconnects elements mid-drag (old element removed from DOM while pointer events still fire)
+- Without this guard, overrides get recorded for a disconnected element that can never be committed or reset
+- Typecheck: PASS
+
+---
+
+### Task 3 — Active scrub guard for keyboard shortcuts (2026-03-11)
+- Created `scrubState.ts` with module-level `scrubActive` flag and `setScrubActive()`/`isScrubActive()` exports
+- In `Overlay.tsx`: imported `isScrubActive`, added early-return guard at the top of the `keydown` handler — blocks all shortcuts (Escape, arrow keys, S, R, D, etc.) while a LabelScrub drag is in progress
+- In `LabelScrub.tsx`: imported `setScrubActive`, calls `setScrubActive(true)` when dead zone is exceeded (scrub starts) and `setScrubActive(false)` in the cleanup function (scrub ends via pointerup, lostpointercapture, or blur)
+- Used a separate `scrubState.ts` file to avoid circular dependency (Overlay → WebflowPanel → LabelScrub → Overlay)
+- Typecheck: PASS
+
+---
+
+### Task 2 — Fix columnGap unit coherence between Layout and Typography (2026-03-11)
+- Added `columnGapUnit` state initialized via `detectUnit(element, "column-gap")` (was hardcoded "px" everywhere)
+- Updated `handleColumnGapChange` to use `columnGapUnit` instead of hardcoded "px", added `columnGapUnit` to dependency array
+- Updated `handleGapLockToggle` to use `gapUnit` instead of hardcoded "px" for row-gap/column-gap, and syncs `columnGapUnit` from `gapUnit` when locking
+- Updated `handleGapChange` to sync `columnGapUnit` from `gapUnit` when `gapLocked` is true
+- Layout section Col Gap SliderRow: wired `unit={columnGapUnit}`, `units={LAYOUT_UNITS}`, `onUnitChange` with `convertUnit` (matches Gap slider pattern)
+- Typography section column-gap TypoValueCell: wired `unit={columnGapUnit}`, `units={LAYOUT_UNITS}`, `onUnitChange` with `convertUnit` (matches text-indent pattern)
+- Both sections now share the same `columnGapUnit` state — changing unit in one is reflected in the other
+- Typecheck: PASS
+
+---
+
+### Task 4 — Replace onDirtyChange cascade with useSyncExternalStore (2026-03-11)
+- **Problem**: Every slider drag triggered `apply() → onDirtyChange() → setDirtyTick(t+1)` in Overlay → full Overlay re-render → full WebflowPanel re-render → ALL sections re-render at 60fps
+- **Solution**: Added subscription API to `apply.ts` (`subscribeOverrides`, `getOverrideSnapshot`, `notifyListeners`) and replaced the `dirtyTick` state + `onDirtyChange` callback cascade with `useSyncExternalStore` in Overlay.tsx
+- `notifyListeners()` called from: `applyInlineStyle`, `undo` (single + batch), `redo` (single + batch), `reset`, `resetAll`, `resetProp`, `applyCustomProperty`, `clearRedundantOverrides` (when cleared > 0), `restoreSession` (when restored > 0)
+- Removed `onDirtyChange` prop from `WebflowPanelProps` interface and all usage in WebflowPanel.tsx (simplified `apply` and `resetCss` helpers)
+- Removed `onDirtyChange` prop from `CSSVariablesSection` (VariableRow commit no longer needs manual notification)
+- Removed `handleDirtyChange` callback and `dirtyTick` state from Overlay.tsx
+- React now subscribes to override changes via `useSyncExternalStore` — only the Overlay component re-renders when overrides change, not the entire panel tree
+- Typecheck: PASS, Tests: 176/176 PASS
+
+---
+
+### Iteration 37 — CSS Variables Section: rich type-aware controls (2026-03-11)
+- Enhanced `CSSVariablesSection.tsx` to use proper control components per variable type:
+  - Color variables → `ColorRow` with full color picker
+  - Length variables → `SliderRow` with unit-aware bounds
+  - Number variables → `SliderRow` (unitless, 0–100 range)
+  - String variables → plain text input (fallback)
+- Added recursive `walkRules()` helper to discover CSS vars inside `@media`/`@supports`/`@layer` blocks
+- Grouped variables by source: Element, Inherited, Root with `GroupHeader` sub-headers
+- `StyleIndicator` shows override state (element/direct/inherited/none)
+- Typecheck: PASS, Tests: 289/289 PASS
+
+---
+
+### Iteration 38 — Tailwind v4 export with TW button (2026-03-11)
+- Created `src/overlay/tailwind.ts` — pure-function CSS-to-Tailwind v4 class converter
+  - 2-tier architecture: property-specific `CONVERTERS` map → `PROP_PREFIX` arbitrary value fallback
+  - Covers display, position, sizing, padding, margin, gap, colors, typography, flexbox, effects
+  - Tailwind v4 spacing scale: `num/4` with `1px→"px"` exception
+  - Negative margin support via `spacedSigned()` helper
+  - `escapeArbitrary()` handles underscores and spaces in bracket syntax
+- Added `handleCopyTailwind` to Footer.tsx with "TW" button next to Copy
+  - Calls `diff(element)` → `formatTailwindDiff(changes)` → clipboard with "Copied Tailwind!" toast
+- Created 113 unit tests in `src/overlay/__tests__/tailwind.test.ts` covering all converters, spacing scale, negative values, escape logic, and full `formatTailwindDiff` integration
+- Typecheck: PASS, Tests: 289/289 PASS
+
+---
+
+### Phase I — Webflow UX polish (items 45–50, swarm build) (2026-03-11)
+
+Six features built in parallel via isolated worktree agents, then merged:
+
+**45. Breadcrumb Hover Highlight**
+- Added `onBreadcrumbHover` prop to `Header.tsx` — fires on mouseenter/mouseleave of breadcrumb ancestor items
+- Added `hoveredAncestor` state + RAF-positioned dashed indigo outline in `Overlay.tsx`
+- Breadcrumb text brightens on hover via `[data-breadcrumb-ancestor]:hover` CSS rule
+- Highlight clears on element selection and breadcrumb click
+
+**46. Right-Click Property Context Menu**
+- Created `PropertyContextMenu.tsx` — portal-based floating menu with Reset to Default, Copy Value, Copy Declaration
+- Added `onContextMenu` prop to `SliderRow`, `SelectRow`, `ColorRow`, `TextRow` in `controls.tsx`
+- Wired `ctxMenu(property, value)` helper into 30+ control rows in `WebflowPanel.tsx`
+- Menu closes on click-outside and Escape, viewport-edge clamped
+
+**47. Computed Value Tooltip**
+- Created `ComputedTooltip.tsx` — hover tooltip showing resolved `getComputedStyle` value (300ms delay)
+- Added `computedProp`/`computedElement` optional props to `SliderRow`, `SelectRow`, `ColorRow`
+- Wraps label in tooltip when props provided; wired into 11 key properties (gap, font-family, font-weight, color, z-index, border-*, opacity, visibility)
+
+**48. Element Dimensions Badge**
+- Added indigo "W × H" badge (10px monospace, pill shape) near selected element outline
+- Extended existing RAF loop in `Overlay.tsx` to position badge below element
+- Badge flips above if no room below, clamps horizontally, hides during diff mode
+
+**49. Box Model Page Overlay**
+- Created `BoxModelOverlay.tsx` — renders 3 colored `position: fixed` layers over the selected element
+  - Margin: orange `rgba(255, 155, 0, 0.15)`
+  - Padding: green `rgba(99, 196, 99, 0.15)`
+  - Content: blue `rgba(99, 148, 237, 0.15)`
+- Toggle button (Eye/EyeOff icon) in Spacing section header via new `headerAction` prop on `Section`
+- RAF loop + ResizeObserver for live position tracking
+
+**50. Property Search (Cmd+F in panel)**
+- Created `PropertySearch.tsx` — search input + `SECTION_PROPERTIES` mapping + `sectionMatchesQuery` helper
+- Added `forceOpen` and `hidden` props to `Section` component
+- Cmd+F toggles search; typing filters sections (case-insensitive substring match)
+- Non-matching sections hidden, matching sections forced open
+- Clears on Escape, element selection, and panel close
+
+---
+
+### Phase I (cont.) — Math expressions, shadow visibility, presets (2026-03-11)
+
+Additional UX enhancements integrated from parallel agent work:
+
+**Math Expressions in Numeric Inputs**
+- Added `evaluateMathExpr()` support in `ValueInput`, `EditableValue`, and `SizeInputCell`
+- Users can type `*2`, `+10`, `-5`, `/3` after a value — result replaces the current value
+- Matches Webflow's math-in-inputs feature (top-requested UX pattern)
+
+**Shadow Layer Visibility Toggle**
+- Added Eye/EyeOff toggle button to each shadow row in `ShadowEditor.tsx`
+- Toggling sets `shadow.visible = false`, reducing opacity to 40% and excluding from CSS output
+- Fixed `ShadowValue` type: added missing `visible: true` in `cssParsers.ts` and `TypographySection.tsx`
+
+**Value Preset Chips**
+- Wired `PresetChips` component into `SizeInputCell` via `property` prop
+- Presets for width/height (auto, 100%, fit-content), max-width/max-height (none, 100%), etc.
+- Clicking a preset applies value immediately; keyword presets ("auto", "none") use keyword pathway
+
+**Empty Field → Contextual Keyword**
+- Added `EMPTY_KEYWORD_MAP` in `panelConstants.tsx`
+- Clearing a width input and pressing Enter applies "auto"; clearing max-width applies "none"
+- Context-aware: each property gets its sensible default keyword
+
+**Additional ComputedTooltip Wiring**
+- Wired computed tooltips on align-self, object-fit, object-position controls
+
+- Typecheck: PASS, Tests: 315/315 PASS
+
+### Iteration 51 — Borders per-side value reading (2026-03-11)
+- Added `useEffect` on `borderSide` change that reads per-side computed values from the DOM
+- When switching SideSelector tabs (top/right/bottom/left), controls now update to show that side's style, width, and color
+- Updated indicator, computedProp, and onContextMenu bindings to use per-side CSS property names (e.g. `border-top-style`)
+- Updated unit conversion and reset handlers to target the correct per-side property
+- Previously SideSelector only wrote per-side values; now it reads them too
+- Typecheck: PASS
+
+### Iteration 52 — Layout: row-gap unit selector (2026-03-11)
+- Added `rowGapUnit` state with `detectUnit(element, "row-gap")` to LayoutSection
+- Added `rowGapHint` conversion hint for unit switching
+- Row Gap SliderRow now has `units={LAYOUT_UNITS}` and `onUnitChange` with conversion
+- Updated `handleRowGapChange` to use `rowGapUnit` instead of hardcoded "px"
+- Updated gap lock handlers (`handleGapLockToggle` + `GapRow.onLinkedChange`) to sync row-gap unit with main gap unit when re-locking
+- Fixed two places that hardcoded `apply("row-gap", \`${gap}px\`)` to use `${gapUnit}` instead
+- Typecheck: PASS
+
+---
+
+### Phase J — Webflow UX interaction polish (10-agent swarm) (2026-03-11)
+
+Built 10 UX features in parallel via isolated worktree agents, then merged:
+
+**1. Wire BoxModelOverlay** — 'M' shortcut toggle, Box icon in Spacing section header
+**2. Wire PropertySearch (Cmd+F)** — search bar filters sections, '/' hotkey, Escape closes
+**3. Keyboard Help Modal (?)** — centered modal with 6 shortcut categories, capture-phase Escape
+**4. Panel Snap-to-Edge** — 20px threshold, 16px margin, 150ms transition on release
+**5. Transform Origin 2D Picker** — 3x3 grid replacing dropdown, keyword+percentage parsing
+**6. Transition Play Preview** — ▶ button per transition, property-aware from/to animation
+**7. Type-Ahead in Dropdowns** — trigger-to-list delegation fix, 500ms prefix buffer
+**8. Unit Conversion Tooltips** — "16px → 1em (base: 16px)" tooltip, 2s auto-dismiss, 5 sections wired
+**9. Breadcrumb Collapse** — 4+ items collapse to "first > ... > last 2", expandable
+**10. Dimensions Badge** — "W × H" pill + tag label on page, RAF-synced
+**Bonus** — Eye/EyeOff visibility toggles on bg layers + transitions, alt+click label resets
+
+- Typecheck: PASS, Tests: 315/315 PASS
+
 ---
 
 ## Done

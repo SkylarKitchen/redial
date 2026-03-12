@@ -3,8 +3,9 @@
  * Single-layer version of SpacingBoxModel for position offsets.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { UnitSelector } from "./UnitSelector";
+import { useState, useCallback, useEffect } from "react";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
+import { ms } from "./timing";
 
 interface PositionOffsetDiagramProps {
   top: number;
@@ -15,9 +16,11 @@ interface PositionOffsetDiagramProps {
   units: { top: string; right: string; bottom: string; left: string };
   availableUnits: string[];
   onUnitChange: (prop: string, unit: string) => void;
+  /** Conversion tooltip hint passed through to the shared UnitSelector */
+  conversionHint?: ConversionHint | null;
 }
 
-export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange }: PositionOffsetDiagramProps) {
+export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint }: PositionOffsetDiagramProps) {
   // Set all 4 offsets to the same unit at once
   const handleUnitChangeAll = useCallback(
     (unit: string) => {
@@ -59,7 +62,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(255,255,255,0.3)" }}>
             Offset
           </span>
-          <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} />
+          <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} conversionHint={conversionHint} />
         </div>
 
         {/* Top */}
@@ -117,7 +120,6 @@ function EditableValue({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -153,7 +155,6 @@ function EditableValue({
   if (editing) {
     return (
       <input
-        ref={inputRef}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
@@ -191,7 +192,7 @@ function EditableValue({
         borderRadius: "2px",
         minWidth: "16px",
         textAlign: "center",
-        transition: "background 100ms",
+        transition: `background ${ms("normal")}`,
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";

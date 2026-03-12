@@ -13,9 +13,12 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
-import { UnitSelector, type SpecialOption } from "./UnitSelector";
-import { selectAllOnDoubleClick } from "./controls";
+import { UnitSelector, type SpecialOption, type ConversionHint } from "./UnitSelector";
+import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
+import { ms } from "./timing";
 import { parseValueWithUnit } from "./parseValueWithUnit";
+import { evaluateMathExpr } from "./inputMath";
+import { useWheelAdjust } from "./useWheelAdjust";
 
 export interface SizeInputCellProps {
   label: string;
@@ -32,6 +35,10 @@ export interface SizeInputCellProps {
   step?: number;
   min?: number;
   max?: number;
+  /** Conversion tooltip hint passed through to UnitSelector */
+  conversionHint?: ConversionHint | null;
+  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
+  property?: string;
 }
 
 export function SizeInputCell({
@@ -49,10 +56,14 @@ export function SizeInputCell({
   step = 1,
   min,
   max,
+  conversionHint,
+  property,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const inputRef = useRef<HTMLInputElement>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
+  useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null });
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -60,17 +71,26 @@ export function SizeInputCell({
 
   const commit = useCallback(() => {
     setEditing(false);
+    // Empty field → contextual keyword (e.g. "auto" for width, "none" for max-width)
+    if (draft.trim() === '') {
+      if (supportsAuto) { onKeywordChange("auto"); return; }
+      if (supportsNone) { onKeywordChange("none"); return; }
+      return;
+    }
+    // Try math expression first (e.g. "*2", "+10")
+    const mathResult = evaluateMathExpr(draft, value);
+    if (mathResult !== null) { onValueChange(mathResult); return; }
     const { value: parsed, unit: parsedUnit } = parseValueWithUnit(draft, units);
     if (isNaN(parsed)) return;
     if (parsedUnit && parsedUnit !== unit) {
-      // User typed a unit suffix (e.g. "68em") — switch unit and update value
+      // User typed a unit suffix (e.g. "68em") — switch unit and value
       if (keyword !== null) onKeywordChange(null);
       onUnitChange(parsedUnit);
       onValueChange(parsed);
     } else if (parsed !== value) {
       onValueChange(parsed);
     }
-  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange]);
+  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange, supportsAuto, supportsNone]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -97,7 +117,7 @@ export function SizeInputCell({
         onValueChange(next);
       }
     },
-    [commit, value, onValueChange, step]
+    [commit, value, onValueChange, step, min, max]
   );
 
   // Build special options for the unit dropdown
@@ -123,6 +143,32 @@ export function SizeInputCell({
 
   const isKeyword = keyword !== null;
 
+  const handlePresetSelect = useCallback((v: string) => {
+    // Keywords: "auto", "none"
+    if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
+      onKeywordChange(v as "auto" | "none");
+      return;
+    }
+    // Values with unit suffix like "100%" — parse value and switch unit
+    const numMatch = v.match(/^(-?[\d.]+)(%|px|em|rem|vw|vh)$/);
+    if (numMatch) {
+      const num = parseFloat(numMatch[1]);
+      const u = numMatch[2];
+      if (keyword !== null) onKeywordChange(null);
+      if (u !== unit && units.includes(u)) onUnitChange(u);
+      onValueChange(num);
+      return;
+    }
+    // Pure numeric string
+    const parsed = parseFloat(v);
+    if (!isNaN(parsed)) {
+      if (keyword !== null) onKeywordChange(null);
+      onValueChange(parsed);
+    }
+  }, [keyword, onKeywordChange, onValueChange, onUnitChange, unit, units, supportsAuto, supportsNone]);
+
+  const hasPresets = property && VALUE_PRESETS[property];
+
   // Colors based on modified state
   const labelColor = isModified ? "#6ea8fe" : "rgba(255,255,255,0.5)";
   const cellBg = isModified ? "rgba(99,102,241,0.10)" : "rgba(255,255,255,0.06)";
@@ -131,9 +177,10 @@ export function SizeInputCell({
     : "1px solid rgba(255,255,255,0.1)";
 
   return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
     <div
+      ref={cellRef}
       style={{
-        flex: 1,
         display: "flex",
         alignItems: "center",
         height: "28px",
@@ -141,7 +188,7 @@ export function SizeInputCell({
         border: cellBorder,
         borderRadius: "4px",
         overflow: "hidden",
-        transition: "background 100ms, border-color 100ms",
+        transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
       }}
     >
       {/* Label */}
@@ -154,7 +201,7 @@ export function SizeInputCell({
           flexShrink: 0,
           whiteSpace: "nowrap",
           lineHeight: "28px",
-          transition: "color 100ms",
+          transition: `color ${ms("normal")}`,
         }}
       >
         {isKeyword ? (
@@ -252,8 +299,11 @@ export function SizeInputCell({
           onChange={handleUnitSelect}
           specialOptions={specialOptions}
           onSpecialSelect={handleSpecialSelect}
+          conversionHint={conversionHint}
         />
       </div>
+    </div>
+    {hasPresets && <PresetChips property={property!} onSelect={handlePresetSelect} />}
     </div>
   );
 }

@@ -7,6 +7,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronDown } from "lucide-react";
+import { ms } from "./timing";
 
 export interface StateSelectorProps {
   value: string;
@@ -72,7 +73,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
           border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "4px",
           cursor: "pointer",
-          transition: "background 80ms",
+          transition: `background ${ms("fast")}`,
         }}
         onMouseEnter={(e) => {
           if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
@@ -125,7 +126,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
                   background: isActive ? "#6366f1" : "transparent",
                   cursor: "pointer",
                   lineHeight: "16px",
-                  transition: "background 60ms",
+                  transition: `background ${ms("micro")}`,
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive)

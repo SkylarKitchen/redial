@@ -10,7 +10,19 @@
  */
 
 import { readFile, writeFile, readdir, stat } from "fs/promises";
-import { resolve, join, basename } from "path";
+import { resolve, join, basename, normalize } from "path";
+
+/**
+ * Ensure a resolved path is contained within the project root.
+ * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
+ */
+function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
+  const normalizedRoot = normalize(projectRoot);
+  const normalizedPath = normalize(resolvedPath);
+  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
+    throw new Error("Path traversal detected: resolved path escapes project root");
+  }
+}
 
 export type CommitChange = {
   prop: string;
@@ -29,28 +41,6 @@ export type CommitResult = {
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/**
- * Check if a line contains a non-literal CSS value expression:
- * SCSS $variables, var() references, or hex color values.
- * These are values that getComputedStyle() resolves to something different
- * (e.g., var(--accent) → rgb(99,102,241), #eef2ff → rgb(238,242,255)).
- */
-function hasNonLiteralValue(line: string): boolean {
-  return /\$[\w-]+/.test(line)
-    || /var\s*\(/.test(line)
-    || /:\s*#[0-9a-fA-F]{3,8}\b/.test(line);
-}
-
-/**
- * Check if a line has a non-literal value that is safe to replace inline.
- * This includes var() and hex colors, but NOT SCSS $variables
- * (which are defined elsewhere and shouldn't be replaced at usage sites).
- */
-function hasReplaceableNonLiteral(line: string): boolean {
-  return /var\s*\(/.test(line)
-    || /:\s*#[0-9a-fA-F]{3,8}\b/.test(line);
 }
 
 // --- File resolution ---
@@ -74,6 +64,10 @@ async function findFileRecursive(
     for (const entry of entries) {
       if (EXCLUDE_DIRS.has(entry.name)) continue;
       const full = join(dir, entry.name);
+      // Ensure symlinks or unusual names don't escape the starting directory
+      const normalizedFull = normalize(full);
+      const normalizedDir = normalize(dir);
+      if (!normalizedFull.startsWith(normalizedDir + "/")) continue;
       if (entry.isDirectory()) {
         results.push(...await findFileRecursive(full, target, componentHint));
       } else if (entry.name === target) {
@@ -97,8 +91,15 @@ export async function resolveSourceFile(
   sourceFile: string,
   componentName?: string
 ): Promise<string | null> {
+  // Reject path traversal attempts early
+  const segments = sourceFile.split(/[/\\]/);
+  if (segments.includes("..")) {
+    throw new Error("Path traversal detected: sourceFile contains '..' segment");
+  }
+
   // Try direct resolution first
   const direct = resolve(projectRoot, sourceFile);
+  assertWithinRoot(direct, projectRoot);
   try {
     await stat(direct);
     return direct;
@@ -154,7 +155,7 @@ function searchWindow(
   const end = Math.min(lines.length - 1, targetLine + windowSize);
 
   for (let i = start; i <= end; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || hasNonLiteralValue(lines[i]))) {
+    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
       return i;
     }
   }
@@ -199,7 +200,7 @@ function searchClassBlock(
 
       // Search within the block for our property
       if (j > blockStart && depth >= 0) {
-        if (lines[j].includes(prop) && (lines[j].includes(value) || hasNonLiteralValue(lines[j]))) {
+        if (lines[j].includes(prop) && (lines[j].includes(value) || /\$[\w-]+/.test(lines[j]))) {
           return j;
         }
       }
@@ -220,7 +221,7 @@ function searchFullFile(
   value: string
 ): number | null {
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || hasNonLiteralValue(lines[i]))) {
+    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
       return i;
     }
   }
@@ -387,30 +388,13 @@ export async function handleCommit(
         );
 
         if (pattern.test(lines[found.lineIdx])) {
-          // Exact literal match — replace directly
+          // Escape $ in replacement to prevent regex backreference interpretation
+          const safeValue = change.to.replace(/\$/g, "$$$$");
           lines[found.lineIdx] = lines[found.lineIdx].replace(
             pattern,
-            `$1${change.to}`
+            `$1${safeValue}`
           );
           modified = true;
-        } else if (found.strategy !== "fuzzy" && hasReplaceableNonLiteral(lines[found.lineIdx])) {
-          // The line has a replaceable non-literal value (var(), hex color)
-          // Replace the entire value between the colon and the semicolon/end
-          const broadPattern = new RegExp(
-            `(${escapeRegex(change.prop)}\\s*:\\s*)[^;!}]+`
-          );
-          if (broadPattern.test(lines[found.lineIdx])) {
-            lines[found.lineIdx] = lines[found.lineIdx].replace(
-              broadPattern,
-              `$1${change.to}`
-            );
-            modified = true;
-          } else {
-            result.failed.push({
-              ...change,
-              reason: `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
-            });
-          }
         } else if (found.strategy === "fuzzy") {
           // Fuzzy match found the property but not the exact value — report it
           result.failed.push({

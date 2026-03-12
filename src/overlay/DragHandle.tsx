@@ -5,6 +5,7 @@
  */
 
 import { GripVertical } from "lucide-react";
+import { ms } from "./timing";
 
 export interface DragHandleProps {
   isDragging?: boolean;
@@ -26,7 +27,7 @@ export function DragHandle({ isDragging, onPointerDown, style }: DragHandleProps
         opacity: isDragging ? 0.7 : 0,
         cursor: isDragging ? "grabbing" : "grab",
         touchAction: "none",
-        transition: "opacity 100ms",
+        transition: `opacity ${ms("normal")}`,
         ...style,
       }}
       // Show on parent hover via CSS-in-JS workaround:

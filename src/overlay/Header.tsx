@@ -5,6 +5,7 @@
  * Doubles as the drag handle for moving the panel.
  */
 
+import { useState, useEffect } from "react";
 import { getDisplayClass } from "./util";
 import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
@@ -22,6 +23,7 @@ interface HeaderProps {
   onShowSession?: () => void;
   breadcrumb?: BreadcrumbSegment[];
   onBreadcrumbClick?: (el: Element) => void;
+  onBreadcrumbHover?: (el: Element | null) => void;
   scope?: Scope;
   onScopeChange?: (scope: Scope, className?: string) => void;
   cssClasses?: string[];
@@ -38,6 +40,7 @@ export function Header({
   onShowSession,
   breadcrumb,
   onBreadcrumbClick,
+  onBreadcrumbHover,
   scope = "element",
   onScopeChange,
   cssClasses = [],
@@ -45,6 +48,23 @@ export function Header({
   state,
   onStateChange,
 }: HeaderProps) {
+  const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
+  const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 0);
+
+  // Track viewport width
+  useEffect(() => {
+    const handler = () => setVw(window.innerWidth);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  // Reset expanded state when the selected element changes
+  useEffect(() => {
+    setBreadcrumbExpanded(false);
+  }, [element]);
+
+  const tier = vw >= 1280 ? "xl" : vw >= 1024 ? "lg" : vw >= 768 ? "md" : vw >= 640 ? "sm" : "xs";
+
   const tag = element.tagName.toLowerCase();
   const className = getDisplayClass(element);
   const reactSource = getReactSource(element);
@@ -98,46 +118,91 @@ export function Header({
             {sourceFile}
           </span>
         )}
-        {breadcrumb && breadcrumb.length > 1 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "2px",
-              fontSize: "11px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255, 255, 255, 0.4)",
-              marginTop: "2px",
-              overflow: "hidden",
-            }}
-          >
-            {breadcrumb.length > 4 && (
-              <span style={{ opacity: 0.5 }}>...</span>
-            )}
-            {breadcrumb.map((seg, i) => {
-              const isLast = i === breadcrumb.length - 1;
-              const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
-              return (
-                <span key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isLast) onBreadcrumbClick?.(seg.el);
-                    }}
-                    style={{
-                      color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
-                      cursor: isLast ? "default" : "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {label}
+        {breadcrumb && breadcrumb.length > 1 && (() => {
+          // If 4+ items and not expanded: show first > "..." > last 2
+          const shouldCollapse = breadcrumb.length >= 4 && !breadcrumbExpanded;
+          const visibleSegments = shouldCollapse
+            ? [breadcrumb[0], ...breadcrumb.slice(-2)]
+            : breadcrumb;
+          const ellipsisAfterFirst = shouldCollapse;
+
+          return (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "2px",
+                fontSize: "11px",
+                fontFamily: "ui-monospace, 'SF Mono', monospace",
+                color: "rgba(255, 255, 255, 0.4)",
+                marginTop: "2px",
+                overflow: "hidden",
+              }}
+            >
+              {visibleSegments.map((seg, i) => {
+                const isLast = i === visibleSegments.length - 1;
+                const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
+                return (
+                  <span key={i} style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                    {i === 1 && ellipsisAfterFirst && (
+                      <>
+                        <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setBreadcrumbExpanded(true);
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            padding: "0 2px",
+                            borderRadius: "2px",
+                            color: "rgba(255, 255, 255, 0.4)",
+                            transition: "color 100ms, background 100ms",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
+                            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
+                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                          }}
+                          title="Show full breadcrumb"
+                        >
+                          ...
+                        </span>
+                      </>
+                    )}
+                    {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
+                    <span
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!isLast) onBreadcrumbClick?.(seg.el);
+                      }}
+                      onMouseEnter={() => {
+                        if (!isLast) onBreadcrumbHover?.(seg.el);
+                      }}
+                      onMouseLeave={() => {
+                        if (!isLast) onBreadcrumbHover?.(null);
+                      }}
+                      style={{
+                        color: isLast ? "#fff" : "rgba(255, 255, 255, 0.4)",
+                        cursor: isLast ? "default" : "pointer",
+                        whiteSpace: "nowrap",
+                        borderRadius: "2px",
+                        padding: isLast ? undefined : "0 2px",
+                        transition: "color 100ms, background 100ms",
+                      }}
+                      data-breadcrumb-ancestor={!isLast ? "" : undefined}
+                    >
+                      {label}
+                    </span>
                   </span>
-                </span>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          );
+        })()}
         {cssClasses.length > 0 && onScopeChange && (
           <div
             style={{
@@ -171,6 +236,19 @@ export function Header({
         )}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <span
+          style={{
+            fontSize: "10px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.4)",
+            background: "rgba(255,255,255,0.06)",
+            padding: "1px 6px",
+            borderRadius: "4px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {vw}px &middot; {tier}
+        </span>
         {totalChanges > 0 && (
           <button
             onClick={onShowSession}

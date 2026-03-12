@@ -93,6 +93,12 @@ export const LINE_BREAK_OPTIONS = [
   { value: "anywhere", label: "Anywhere" },
 ];
 
+export const HYPHENS_OPTIONS = [
+  { value: "none", label: "None" },
+  { value: "manual", label: "Manual" },
+  { value: "auto", label: "Auto" },
+];
+
 // ─── Position Options ────────────────────────────────────────────────
 
 export const FLOAT_OPTIONS = [
@@ -120,13 +126,6 @@ export const SPACING_UNITS = ["px", "%", "em", "rem"];
 export const LINE_HEIGHT_UNITS = ["\u2014", "px", "em", "%"];
 
 // ─── Overflow / Size Options ─────────────────────────────────────────
-
-export const OVERFLOW_OPTIONS = [
-  { value: "visible", label: "Visible" },
-  { value: "hidden", label: "Hidden" },
-  { value: "scroll", label: "Scroll" },
-  { value: "auto", label: "Auto" },
-];
 
 export const OVERFLOW_ICON_OPTIONS = [
   { value: "visible", icon: <Eye size={14} strokeWidth={1.5} />, title: "Visible" },
@@ -279,9 +278,45 @@ export const BACKFACE_OPTIONS = [
   { value: "hidden", label: "Hidden" },
 ];
 
+// ─── Empty Field → Contextual Keyword ───────────────────────────────
+
+/** When a numeric input is cleared and committed, these properties get a keyword instead of 0. */
+export const EMPTY_KEYWORD_MAP: Record<string, string> = {
+  'width': 'auto', 'height': 'auto', 'max-width': 'none', 'max-height': 'none',
+  'min-width': '0', 'min-height': '0', 'z-index': 'auto', 'flex-basis': 'auto',
+};
+
 // ─── Box Model Options ──────────────────────────────────────────────
 
 export const BOX_SIZING_OPTIONS = [
   { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
   { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
+];
+
+// ─── Keyboard Shortcuts Reference ───────────────────────────────────
+
+export interface ShortcutEntry { keys: string; description: string; group: string }
+
+export const SHORTCUTS: ShortcutEntry[] = [
+  // Selection
+  { keys: "↑ / ↓", description: "Select sibling element", group: "Selection" },
+  { keys: "← / →", description: "Select parent / first child", group: "Selection" },
+  { keys: "Escape", description: "Deselect element / close panel", group: "Selection" },
+  { keys: "Cmd+F", description: "Search properties in panel", group: "Selection" },
+  // Values
+  { keys: "↑ / ↓ (in input)", description: "Increment / decrement value", group: "Values" },
+  { keys: "Shift + ↑/↓", description: "Step by 10", group: "Values" },
+  { keys: "Alt + ↑/↓", description: "Step by 0.1", group: "Values" },
+  { keys: "Scroll wheel", description: "Adjust focused value", group: "Values" },
+  { keys: "Alt+Click label", description: "Reset property to default", group: "Values" },
+  { keys: "Math expr (e.g. *2)", description: "Evaluate expression in input", group: "Values" },
+  // Panel
+  { keys: "Alt+Shift+S", description: "Toggle focus mode", group: "Panel" },
+  { keys: "Tab / Shift+Tab", description: "Navigate between controls", group: "Panel" },
+  { keys: "S", description: "Cycle scope (element/class/page)", group: "Panel" },
+  { keys: "R", description: "Reset all styles", group: "Panel" },
+  // File
+  { keys: "Cmd+S", description: "Save to source file", group: "File" },
+  { keys: "Cmd+C", description: "Copy CSS to clipboard", group: "File" },
+  { keys: "Cmd+Z / Cmd+Shift+Z", description: "Undo / Redo", group: "File" },
 ];

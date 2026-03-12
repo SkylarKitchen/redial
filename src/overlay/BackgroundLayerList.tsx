@@ -8,9 +8,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { ms } from "./timing";
 
 export interface BackgroundLayer {
   id: string;
@@ -26,9 +27,11 @@ export interface BackgroundLayer {
     size: string;
     position: string;
     repeat: string;
+    attachment: string;
   };
   opacity: number;
   blendMode: string;
+  visible: boolean;
 }
 
 export type BackgroundLayerType = "color" | "gradient" | "image";
@@ -58,8 +61,9 @@ const BLEND_MODES = [
   "luminosity",
 ];
 
-const SIZE_OPTIONS = ["auto", "cover", "contain", "custom"];
-const POSITION_OPTIONS = [
+const SIZE_KEYWORDS = ["auto", "cover", "contain"];
+const SIZE_OPTIONS = [...SIZE_KEYWORDS, "custom"];
+const POSITION_KEYWORDS = [
   "center",
   "top",
   "bottom",
@@ -70,7 +74,9 @@ const POSITION_OPTIONS = [
   "bottom left",
   "bottom right",
 ];
+const POSITION_OPTIONS = [...POSITION_KEYWORDS, "custom"];
 const REPEAT_OPTIONS = ["no-repeat", "repeat", "repeat-x", "repeat-y"];
+const ATTACHMENT_OPTIONS = ["scroll", "fixed", "local"];
 
 let _idCounter = 0;
 function uid() {
@@ -78,7 +84,7 @@ function uid() {
 }
 
 function makeDefault(type: BackgroundLayerType): BackgroundLayer {
-  const base = { id: uid(), type, opacity: 1, blendMode: "normal" } as BackgroundLayer;
+  const base = { id: uid(), type, opacity: 1, blendMode: "normal", visible: true } as BackgroundLayer;
   if (type === "color") {
     base.color = "#ffffff";
   } else if (type === "gradient") {
@@ -91,7 +97,7 @@ function makeDefault(type: BackgroundLayerType): BackgroundLayer {
       ],
     };
   } else {
-    base.image = { url: "", size: "cover", position: "center", repeat: "no-repeat" };
+    base.image = { url: "", size: "cover", position: "center", repeat: "no-repeat", attachment: "scroll" };
   }
   return base;
 }
@@ -192,6 +198,15 @@ export function BackgroundLayerList({
     [layers, onChange]
   );
 
+  const toggleVisible = useCallback(
+    (id: string) => {
+      onChange(
+        layers.map((l) => (l.id === id ? { ...l, visible: l.visible === false ? true : false } : l))
+      );
+    },
+    [layers, onChange]
+  );
+
   const updateImage = useCallback(
     (id: string, patch: Partial<NonNullable<BackgroundLayer["image"]>>) => {
       onChange(
@@ -220,7 +235,7 @@ export function BackgroundLayerList({
             fontSize: "11px",
             fontFamily: "system-ui, sans-serif",
             cursor: "pointer",
-            transition: "background 80ms",
+            transition: `background ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
@@ -259,7 +274,7 @@ export function BackgroundLayerList({
                   color: "rgba(255,255,255,0.7)",
                   cursor: "pointer",
                   textTransform: "capitalize",
-                  transition: "background 60ms",
+                  transition: `background ${ms("micro")}`,
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
@@ -292,6 +307,8 @@ export function BackgroundLayerList({
               borderRadius: "4px",
               border: "1px solid rgba(255,255,255,0.08)",
               marginBottom: "4px",
+              opacity: layer.visible === false ? 0.4 : 1,
+              transition: "opacity 100ms",
             }}
           >
             {/* Collapsed row */}
@@ -349,6 +366,25 @@ export function BackgroundLayerList({
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
                 style={{ width: "48px", accentColor: "#6366f1" }}
               />
+
+              {/* Eye visibility toggle */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleVisible(layer.id);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "2px",
+                  color: layer.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                  pointerEvents: isDragging ? "none" : "auto",
+                }}
+                title={layer.visible !== false ? "Hide layer" : "Show layer"}
+              >
+                {layer.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+              </button>
 
               {/* Delete */}
               <button
@@ -470,10 +506,37 @@ export function BackgroundLayerList({
                           Size
                         </span>
                         <Select
-                          value={layer.image.size}
+                          value={SIZE_KEYWORDS.includes(layer.image.size) ? layer.image.size : "custom"}
                           options={SIZE_OPTIONS}
-                          onChange={(v) => updateImage(layer.id, { size: v })}
+                          onChange={(v) => updateImage(layer.id, { size: v === "custom" ? "100% auto" : v })}
                         />
+                        {!SIZE_KEYWORDS.includes(layer.image.size) && (() => {
+                          const parts = layer.image.size.split(/\s+/);
+                          const w = parts[0] || "100%";
+                          const h = parts[1] || "auto";
+                          const inputStyle: React.CSSProperties = {
+                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
+                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
+                            fontFamily: "ui-monospace, 'SF Mono', monospace",
+                          };
+                          return (
+                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                              <input
+                                value={w}
+                                placeholder="W"
+                                onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
+                                style={inputStyle}
+                              />
+                              <input
+                                value={h}
+                                placeholder="H"
+                                onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
+                                style={inputStyle}
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                         <span
@@ -486,10 +549,37 @@ export function BackgroundLayerList({
                           Position
                         </span>
                         <Select
-                          value={layer.image.position}
+                          value={POSITION_KEYWORDS.includes(layer.image.position) ? layer.image.position : "custom"}
                           options={POSITION_OPTIONS}
-                          onChange={(v) => updateImage(layer.id, { position: v })}
+                          onChange={(v) => updateImage(layer.id, { position: v === "custom" ? "50% 50%" : v })}
                         />
+                        {!POSITION_KEYWORDS.includes(layer.image.position) && (() => {
+                          const parts = layer.image.position.split(/\s+/);
+                          const x = parts[0] || "50%";
+                          const y = parts[1] || "50%";
+                          const inputStyle: React.CSSProperties = {
+                            flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
+                            border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
+                            color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
+                            fontFamily: "ui-monospace, 'SF Mono', monospace",
+                          };
+                          return (
+                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                              <input
+                                value={x}
+                                placeholder="X"
+                                onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
+                                style={inputStyle}
+                              />
+                              <input
+                                value={y}
+                                placeholder="Y"
+                                onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
+                                style={inputStyle}
+                              />
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                         <span
@@ -505,6 +595,24 @@ export function BackgroundLayerList({
                           value={layer.image.repeat}
                           options={REPEAT_OPTIONS}
                           onChange={(v) => updateImage(layer.id, { repeat: v })}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontFamily: "system-ui, sans-serif",
+                            color: "rgba(255,255,255,0.4)",
+                          }}
+                        >
+                          Attachment
+                        </span>
+                        <Select
+                          value={layer.image.attachment}
+                          options={ATTACHMENT_OPTIONS}
+                          onChange={(v) => updateImage(layer.id, { attachment: v })}
                         />
                       </div>
                     </div>

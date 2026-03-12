@@ -9,7 +9,13 @@ import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff } from "./util";
-import { timing } from "./timing";
+import { formatTailwindDiff } from "./tailwind";
+import { ms, timing } from "./timing";
+
+interface SaveResult {
+  written?: string[];
+  failed?: string[];
+}
 
 interface FooterProps {
   element: Element;
@@ -20,10 +26,12 @@ interface FooterProps {
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
+  onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -44,13 +52,26 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const handleCopy = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSDiff(element, changes));
-    showMessage("Copied!", 1200);
+    navigator.clipboard.writeText(formatCSSDiff(element, changes))
+      .then(() => showMessage("Copied!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
+  }, [element, showMessage]);
+
+  const handleCopyTailwind = useCallback(() => {
+    const changes = diff(element);
+    if (changes.length === 0) return;
+    const tw = formatTailwindDiff(changes);
+    navigator.clipboard.writeText(tw)
+      .then(() => showMessage("Copied Tailwind!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
   }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+
     const changes = diff(element);
-    if (changes.length === 0) return;
+    if (changes.length === 0) { savingRef.current = false; return; }
 
     setSaving(true);
     setMessage(null);
@@ -78,7 +99,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       if (!res.ok) {
         showMessage("Save failed", 2000);
       } else {
-        const result = await res.json();
+        const result: SaveResult = await res.json();
         const written = result.written?.length ?? 0;
         const failed = result.failed?.length ?? 0;
         if (failed > 0) {
@@ -90,9 +111,10 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       }
     } catch {
       showMessage("Save failed — no route?", 2000);
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
     }
-
-    setSaving(false);
   }, [element, onSaved, showMessage]);
 
   const handleReset = useCallback(() => {
@@ -124,11 +146,25 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           Copy
         </ActionButton>
         <ActionButton
+          onClick={handleCopyTailwind}
+          disabled={count === 0}
+          title="Copy Tailwind classes"
+        >
+          TW
+        </ActionButton>
+        <ActionButton
           onClick={onPasteStyles ?? (() => {})}
           disabled={!hasClipboard}
           title="Paste styles (Cmd+Alt+V)"
         >
           Paste
+        </ActionButton>
+        <ActionButton
+          onClick={onCSSImport ?? (() => {})}
+          disabled={!onCSSImport}
+          title="Import CSS from clipboard"
+        >
+          Import
         </ActionButton>
         <ActionButton
           onClick={handleSave}
@@ -140,15 +176,15 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </ActionButton>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-        <div role="status" aria-live="polite" style={{ minHeight: "20px" }}>
-          <AnimatePresence>
+        <div role="status" aria-live="polite" style={{ minHeight: "16px" }}>
+          <AnimatePresence mode="wait">
             {(clipboardMessage || message) && (
               <motion.span
                 key={`${clipboardMessage || message}-${messageCounterRef.current}`}
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: timing.normal / 1000 }}
+                transition={{ duration: timing.expand / 1000 }}
                 style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
               >
                 {clipboardMessage || message}
@@ -213,7 +249,7 @@ function ActionButton({
           : primary
             ? "#fff"
             : "rgba(255, 255, 255, 0.7)",
-        transition: "opacity 100ms, background 100ms",
+        transition: `opacity ${ms("normal")}, background ${ms("normal")}`,
         boxShadow: primary && !disabled ? "0 1px 3px rgba(38, 128, 235, 0.4)" : "none",
       }}
     >

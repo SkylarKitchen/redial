@@ -33,6 +33,23 @@ function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
   return 'type' in entry && entry.type === 'batch';
 }
 
+// --- Subscription API for useSyncExternalStore ---
+
+const listeners = new Set<() => void>();
+
+export function subscribeOverrides(callback: () => void): () => void {
+  listeners.add(callback);
+  return () => { listeners.delete(callback); };
+}
+
+export function getOverrideSnapshot(): number {
+  return totalOverrideCount();
+}
+
+function notifyListeners() {
+  listeners.forEach(fn => fn());
+}
+
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
@@ -106,6 +123,8 @@ export function applyInlineStyle(
   prop: string,
   value: string
 ): void {
+  if (!(el as HTMLElement).isConnected) return;
+
   // New action invalidates redo history (standard undo/redo semantics)
   if (redoStack.length > 0) redoStack.length = 0;
 
@@ -151,6 +170,7 @@ export function applyInlineStyle(
 
   (el as HTMLElement).style.setProperty(prop, value, "important");
   schedulePersist();
+  notifyListeners();
 }
 
 export function undo(): { el: Element; prop: string } | null {
@@ -184,6 +204,7 @@ export function undo(): { el: Element; prop: string } | null {
       redoStack.push({ type: 'batch', entries: redoEntries });
     }
     schedulePersist();
+    notifyListeners();
     return result;
   }
 
@@ -209,6 +230,7 @@ export function undo(): { el: Element; prop: string } | null {
   }
 
   schedulePersist();
+  notifyListeners();
   return { el, prop };
 }
 
@@ -241,6 +263,7 @@ export function redo(): { el: Element; prop: string } | null {
       undoStack.push({ type: 'batch', entries: undoEntries });
     }
     schedulePersist();
+    notifyListeners();
     return result;
   }
 
@@ -262,6 +285,7 @@ export function redo(): { el: Element; prop: string } | null {
   (el as HTMLElement).style.setProperty(prop, redoValue, "important");
 
   schedulePersist();
+  notifyListeners();
   return { el, prop };
 }
 
@@ -287,6 +311,7 @@ export function reset(el: Element): void {
     }
   }
   schedulePersist();
+  notifyListeners();
 }
 
 export function resetAll(): void {
@@ -300,6 +325,7 @@ export function resetAll(): void {
   undoStack.length = 0;
   redoStack.length = 0;
   clearPersistedSession();
+  notifyListeners();
 }
 
 /**
@@ -415,6 +441,7 @@ export function clearRedundantOverrides(): number {
     if (props.size === 0) overrides.delete(el);
   }
 
+  if (cleared > 0) notifyListeners();
   return cleared;
 }
 
@@ -509,6 +536,7 @@ export function resetProp(el: Element, prop: string): void {
     }
   }
   schedulePersist();
+  notifyListeners();
 }
 
 // --- Transition application ---
@@ -587,6 +615,7 @@ export function applyCustomProperty(
   }
 
   schedulePersist();
+  notifyListeners();
 }
 
 /**
@@ -685,6 +714,7 @@ export function restoreSession(): number {
       }
     }
 
+    if (restored > 0) notifyListeners();
     return restored;
   } catch {
     return 0;

@@ -42,27 +42,34 @@ export function useDropdownKeyboard({
 
   // Type-ahead state
   const typeBuffer = useRef("");
-  const typeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const typeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Cleanup type-ahead timer on unmount
   useEffect(() => {
     return () => clearTimeout(typeTimer.current);
   }, []);
 
-  // Reset highlight when dropdown opens/closes
+  // Reset highlight and type-ahead buffer when dropdown opens/closes
   useEffect(() => {
     if (open) {
       setHighlightedIndex(selectedIndex);
     } else {
       setHighlightedIndex(-1);
+      typeBuffer.current = "";
+      if (typeTimer.current !== undefined) clearTimeout(typeTimer.current);
     }
   }, [open, selectedIndex]);
+
+  const onListKeyDownRef = useRef<((e: React.KeyboardEvent) => void) | null>(null);
 
   const onTriggerKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
         e.preventDefault();
         setOpen(true);
+      } else if (open && onListKeyDownRef.current) {
+        // Delegate to list handler when open (arrow nav + type-ahead)
+        onListKeyDownRef.current(e);
       }
     },
     [open, setOpen]
@@ -115,6 +122,9 @@ export function useDropdownKeyboard({
     },
     [open, optionCount, onSelect, setOpen, labels]
   );
+
+  // Keep ref in sync so onTriggerKeyDown can delegate
+  onListKeyDownRef.current = onListKeyDown;
 
   const optionRefCallback = useCallback((el: HTMLElement | null) => {
     el?.scrollIntoView({ block: "nearest" });

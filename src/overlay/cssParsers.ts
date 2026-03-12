@@ -66,14 +66,16 @@ export function parseBoxShadow(raw: string): ShadowValue[] {
       spread: nums[3] ?? 0,
       color,
       inset,
+      visible: true,
     });
   }
   return shadows;
 }
 
 export function shadowToCSS(shadows: ShadowValue[]): string {
-  if (shadows.length === 0) return "none";
-  return shadows
+  const visible = shadows.filter((s) => s.visible !== false);
+  if (visible.length === 0) return "none";
+  return visible
     .map((s) => {
       const inset = s.inset ? "inset " : "";
       return `${inset}${s.x}px ${s.y}px ${s.blur}px ${s.spread}px ${s.color}`;
@@ -184,12 +186,14 @@ export function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
     duration: durations[i % durations.length] ?? 300,
     easing: easings[i % easings.length] ?? "ease",
     delay: delays[i % delays.length] ?? 0,
+    visible: true,
   }));
 }
 
 export function transitionsToCSS(transitions: TransitionValue[]): string {
-  if (transitions.length === 0) return "none";
-  return transitions
+  const visible = transitions.filter((t) => (t as TransitionValue & { visible?: boolean }).visible !== false);
+  if (visible.length === 0) return "none";
+  return visible
     .map((t) => `${t.property} ${t.duration}ms ${t.easing} ${t.delay}ms`)
     .join(", ");
 }
