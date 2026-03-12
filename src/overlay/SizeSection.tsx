@@ -229,7 +229,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── JSX ────────────────────────────────────────────────────────────
 
   return (
-    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
+    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "align-items", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
       <div className="flex gap-1 px-3 py-0.5">
         <SizeInputCell
