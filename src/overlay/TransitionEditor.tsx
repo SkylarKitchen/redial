@@ -253,6 +253,8 @@ function TransitionCard({
       const savedTransition = el.style.transition;
       const savedOpacity = el.style.opacity;
 
+      savedStylesRef.current = { prop: "opacity", transition: savedTransition, value: savedOpacity };
+
       el.style.transition = "none";
       el.style.opacity = "0.3";
       // Force reflow
@@ -261,6 +263,7 @@ function TransitionCard({
       el.style.opacity = savedOpacity || "";
       playTimerRef.current = setTimeout(() => {
         el.style.transition = savedTransition;
+        savedStylesRef.current = null;
         setPlaying(false);
       }, durationMs + delayMs + 50);
       return;
@@ -269,6 +272,8 @@ function TransitionCard({
     // Save the current inline values
     const savedTransition = el.style.transition;
     const savedValue = el.style.getPropertyValue(targetProp);
+
+    savedStylesRef.current = { prop: targetProp, transition: savedTransition, value: savedValue };
 
     // Step 1: Disable transitions, snap to "from" state
     el.style.transition = "none";
@@ -283,6 +288,7 @@ function TransitionCard({
     // Step 3: After animation completes, restore original transition
     playTimerRef.current = setTimeout(() => {
       el.style.transition = savedTransition;
+      savedStylesRef.current = null;
       setPlaying(false);
     }, durationMs + delayMs + 50);
   }, [element, playing, transition]);
