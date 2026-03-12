@@ -421,4 +421,12 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Task 1 — isConnected guard in applyInlineStyle (2026-03-11)
+- Added `if (!(el as HTMLElement).isConnected) return;` at the top of `applyInlineStyle()` in `apply.ts`
+- Prevents orphaned overrides when HMR disconnects elements mid-drag (old element removed from DOM while pointer events still fire)
+- Without this guard, overrides get recorded for a disconnected element that can never be committed or reset
+- Typecheck: PASS
+
+---
+
 ## Done

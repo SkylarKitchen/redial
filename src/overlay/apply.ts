@@ -106,6 +106,8 @@ export function applyInlineStyle(
   prop: string,
   value: string
 ): void {
+  if (!(el as HTMLElement).isConnected) return;
+
   // New action invalidates redo history (standard undo/redo semantics)
   if (redoStack.length > 0) redoStack.length = 0;
 
