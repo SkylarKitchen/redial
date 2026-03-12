@@ -32,7 +32,7 @@ import { useWheelAdjust } from "./useWheelAdjust";
 export function useValueFlash(value: number) {
   const prev = useRef(value);
   const [flash, setFlash] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (prev.current !== value) {
