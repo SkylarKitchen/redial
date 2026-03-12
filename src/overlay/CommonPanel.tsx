@@ -49,8 +49,8 @@ function parseNum(v: string): number {
 
 function FlatGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="py-2 px-3">
-      <div className="text-[10px] font-semibold text-[rgba(0,0,0,0.4)] tracking-wider uppercase mb-2">
+    <div className="py-2">
+      <div className="text-[10px] font-semibold text-[rgba(0,0,0,0.4)] tracking-wider uppercase mb-2 px-3">
         {title}
       </div>
       {children}
@@ -140,17 +140,15 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
     <div>
       {/* ── Style ────────────────────────────────── */}
       <FlatGroup title="Style">
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="flex-1">
-            <ColorRow
-              label="Bg"
-              value={bgColor}
-              onChange={(v) => {
-                setBgColor(v);
-                apply("background-color", v);
-              }}
-            />
-          </div>
+        <div className="mb-1">
+          <ColorRow
+            label="Bg"
+            value={bgColor}
+            onChange={(v) => {
+              setBgColor(v);
+              apply("background-color", v);
+            }}
+          />
         </div>
         <SliderRow
           label="Opacity"
@@ -182,6 +180,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
 
       {/* ── Spacing (Webflow box-model diagram) ─── */}
       <FlatGroup title="Spacing">
+        <div className="px-3">
         <SpacingBoxModel
           margin={spacing.margin}
           padding={spacing.padding}
@@ -193,13 +192,14 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
           onMarginUnitChange={setMarginUnit}
           onPaddingUnitChange={setPaddingUnit}
         />
+        </div>
       </FlatGroup>
 
       <div className="border-b border-[rgba(0,0,0,0.04)]" />
 
       {/* ── Size ─────────────────────────────────── */}
       <FlatGroup title="Size">
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-2 gap-1.5 px-3">
           <ValueCell
             label="W"
             value={width}
@@ -234,7 +234,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         <>
           <div className="border-b border-[rgba(0,0,0,0.04)]" />
           <FlatGroup title="Position">
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5 px-3">
               <ValueCell
                 label="T"
                 value={top}

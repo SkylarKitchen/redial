@@ -264,7 +264,7 @@ export function SpacingValuePopover({
             className="spacing-popover-slider"
             min={sliderMin}
             max={sliderMax}
-            step={1}
+            step={4}
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value))}
             style={{
