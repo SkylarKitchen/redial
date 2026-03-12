@@ -179,6 +179,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
   const [gapLocked, setGapLocked] = useState(true);
   const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
   const [columnGap, setColumnGap] = useState(() => parseNum(cs.columnGap));
+  const [columnGapUnit, setColumnGapUnit] = useState(() => detectUnit(element, "column-gap"));
 
   // Grid track definitions
   const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
@@ -471,7 +472,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange,
     [apply, gapUnit, gapLocked]
   );
   const handleRowGapChange = useCallback((v: number) => { setRowGap(v); apply("row-gap", `${v}px`); }, [apply]);
-  const handleColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}px`); }, [apply]);
+  const handleColumnGapChange = useCallback((v: number) => { setColumnGap(v); apply("column-gap", `${v}${columnGapUnit}`); }, [apply, columnGapUnit]);
   const handleGapLockToggle = useCallback(() => {
     setGapLocked(prev => {
       if (!prev) { setRowGap(gap); setColumnGap(gap); apply("row-gap", `${gap}px`); apply("column-gap", `${gap}px`); }

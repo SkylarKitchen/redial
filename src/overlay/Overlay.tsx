@@ -25,6 +25,7 @@ import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, type Scope } from "./scope";
 import { Plus } from "lucide-react";
 import { ms } from "./timing";
+import { isScrubActive } from "./scrubState";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
