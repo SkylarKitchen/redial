@@ -368,8 +368,13 @@ export function Overlay() {
         setSelecting((s) => !s);
       }
 
-      // Escape: close search first, then close panel
+      // Escape: dismiss modal first, then close search, then close panel
       if (e.key === "Escape" && selectedEl && !selecting) {
+        if (activeModal.type !== "none") {
+          e.preventDefault();
+          setActiveModal({ type: "none" });
+          return;
+        }
         if (showSearch) {
           e.preventDefault();
           setSearchQuery("");
@@ -433,7 +438,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, showHelp, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -831,6 +836,22 @@ export function Overlay() {
     document.addEventListener("click", handlePageClick, true);
     return () => document.removeEventListener("click", handlePageClick, true);
   }, [selectedEl, selecting, handleSelect]);
+
+  // --- Right-click context menu on page elements ---
+  useEffect(() => {
+    if (!selectedEl || selecting) return;
+
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (target.closest(".__tuner-root")) return;
+
+      e.preventDefault();
+      setActiveModal({ type: "contextMenu", x: e.clientX, y: e.clientY });
+    };
+
+    document.addEventListener("contextmenu", handleContextMenu, true);
+    return () => document.removeEventListener("contextmenu", handleContextMenu, true);
+  }, [selectedEl, selecting]);
 
   return (
     <>

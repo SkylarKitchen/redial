@@ -491,7 +491,7 @@ export function TypoValueCell({
         </span>
       )}
       {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} />
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
         <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", padding: "0 6px 0 0", flexShrink: 0, fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
           {unit}
