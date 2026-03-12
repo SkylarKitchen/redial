@@ -3,11 +3,19 @@
  *
  * Compact trigger shows current state + chevron. Green text when
  * a non-base state is active, matching Webflow's state indicator.
+ *
+ * Uses Shadcn Select (Radix) for dropdown behavior — no manual
+ * click-outside or open state management needed.
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronDown } from "lucide-react";
-import { ms } from "./timing";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface StateSelectorProps {
   value: string;
@@ -32,116 +40,32 @@ const STATES: StateOption[] = [
 ];
 
 export function StateSelector({ value, onChange }: StateSelectorProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
   const current = STATES.find((s) => s.value === value) ?? STATES[0];
   const isBase = value === "none";
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    function handleDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleDown, true);
-    return () => document.removeEventListener("mousedown", handleDown, true);
-  }, [open]);
-
-  const handleSelect = useCallback(
-    (state: string) => {
-      onChange(state);
-      setOpen(false);
-    },
-    [onChange]
-  );
-
   return (
-    <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
-      {/* Trigger */}
-      <button
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          height: "28px",
-          padding: "0 8px",
-          background: open ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: "4px",
-          cursor: "pointer",
-          transition: `background ${ms("fast")}`,
-        }}
-        onMouseEnter={(e) => {
-          if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-        }}
-        onMouseLeave={(e) => {
-          if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-        }}
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "h-6 text-[11px] bg-transparent border-none px-1.5 w-auto gap-1 shadow-none focus:ring-0",
+          isBase ? "text-muted-foreground" : "text-emerald-400"
+        )}
       >
-        <span
-          style={{
-            fontSize: "11px",
-            fontFamily: "system-ui, sans-serif",
-            color: isBase ? "rgba(255,255,255,0.4)" : "#22c55e",
-            lineHeight: 1,
-          }}
-        >
+        <SelectValue>
           {isBase ? "State" : current.label}
-        </span>
-        <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)" }} />
-      </button>
-
-      {/* Dropdown menu */}
-      {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 2px)",
-            left: 0,
-            minWidth: "180px",
-            background: "#2a2a2a",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-            zIndex: 100,
-            padding: "2px 0",
-            overflow: "hidden",
-          }}
-        >
-          {STATES.map((state) => {
-            const isActive = state.value === value;
-            return (
-              <div
-                key={state.value}
-                onClick={() => handleSelect(state.value)}
-                style={{
-                  padding: "6px 10px",
-                  fontSize: "11px",
-                  fontFamily: "system-ui, sans-serif",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                  background: isActive ? "#6366f1" : "transparent",
-                  cursor: "pointer",
-                  lineHeight: "16px",
-                  transition: `background ${ms("micro")}`,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive)
-                    (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
-              >
-                {state.label}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="__tuner-root min-w-[180px]">
+        {STATES.map((state) => (
+          <SelectItem
+            key={state.value}
+            value={state.value}
+            className="text-[11px] py-1.5 pl-2 pr-8"
+          >
+            {state.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

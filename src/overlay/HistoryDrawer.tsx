@@ -5,8 +5,9 @@
  * "Undo to here" button on each entry.
  */
 
-import { AnimatePresence, motion } from "motion/react";
-import { ms, timing } from "./timing";
+import { motion } from "motion/react";
+import { timing } from "./timing";
+import { Button } from "@/components/ui/button";
 
 export interface HistoryEntry {
   timestamp: number;
@@ -39,54 +40,25 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
       animate={{ height: "auto", opacity: 1 }}
       exit={{ height: 0, opacity: 0 }}
       transition={{ duration: timing.expand / 1000 }}
-      style={{
-        overflow: "hidden",
-        borderTop: "1px solid rgba(255,255,255,0.06)",
-      }}
+      className="overflow-hidden border-t border-[var(--border)]"
     >
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "8px 12px 4px",
-      }}>
-        <span style={{
-          fontSize: 10,
-          fontWeight: 600,
-          color: "rgba(255,255,255,0.5)",
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-        }}>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
           History ({entries.length})
         </span>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onClose}
-          style={{
-            background: "none",
-            border: "none",
-            color: "rgba(255,255,255,0.35)",
-            fontSize: 11,
-            cursor: "pointer",
-            padding: "2px 6px",
-          }}
+          className="h-6 px-2 text-[11px] text-[var(--muted-foreground)]"
         >
           Close
-        </button>
+        </Button>
       </div>
 
-      <div style={{
-        maxHeight: 200,
-        overflowY: "auto",
-        overflowX: "hidden",
-      }}>
+      <div className="max-h-[200px] overflow-y-auto overflow-x-hidden">
         {reversed.length === 0 ? (
-          <div style={{
-            padding: "12px",
-            fontSize: 10,
-            color: "rgba(255,255,255,0.25)",
-            fontStyle: "italic",
-            textAlign: "center",
-          }}>
+          <div className="p-3 text-[10px] text-[var(--muted-foreground)] italic text-center">
             No changes yet
           </div>
         ) : (
@@ -95,68 +67,30 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
             return (
               <div
                 key={`${entry.timestamp}-${entry.property}-${ri}`}
-                style={{
-                  padding: "6px 12px",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
+                className="px-3 py-1.5 border-b border-[var(--border)] hover:bg-[var(--accent)]"
               >
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}>
-                  <span style={{
-                    fontSize: 10,
-                    color: "rgba(255,255,255,0.35)",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-[var(--muted-foreground)] font-mono">
                     {formatTime(entry.timestamp)}
                   </span>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onUndoToIndex(originalIndex)}
-                    style={{
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 3,
-                      color: "rgba(255,255,255,0.4)",
-                      fontSize: 9,
-                      cursor: "pointer",
-                      padding: "1px 6px",
-                      transition: `color ${ms("fast")}, background ${ms("fast")}`,
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
-                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-                    }}
+                    className="h-5 px-1.5 text-[9px] text-[var(--muted-foreground)]"
                   >
                     Undo to here
-                  </button>
+                  </Button>
                 </div>
-                <div style={{
-                  fontSize: 11,
-                  color: "rgba(255,255,255,0.7)",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  marginTop: 2,
-                }}>
+                <div className="text-[11px] font-medium text-[var(--foreground)] font-mono mt-0.5">
                   {entry.property}
                 </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>
-                  <span style={{ color: "rgba(239,68,68,0.7)" }}>{entry.from || "(none)"}</span>
-                  <span style={{ margin: "0 4px" }}>&rarr;</span>
-                  <span style={{ color: "rgba(34,197,94,0.7)" }}>{entry.to}</span>
+                <div className="text-[10px] text-[var(--muted-foreground)] mt-px">
+                  <span className="text-red-400/70">{entry.from || "(none)"}</span>
+                  <span className="mx-1">&rarr;</span>
+                  <span className="text-green-400/70">{entry.to}</span>
                 </div>
-                <div style={{
-                  fontSize: 9,
-                  color: "rgba(255,255,255,0.2)",
-                  marginTop: 1,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}>
+                <div className="text-[9px] text-[var(--muted-foreground)] opacity-50 mt-px overflow-hidden text-ellipsis whitespace-nowrap">
                   {entry.selector}
                 </div>
               </div>

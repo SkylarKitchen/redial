@@ -8,7 +8,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { ms } from "./timing";
+import { cn } from "@/lib/utils";
 
 export interface ContextMenuProps {
   x: number;
@@ -108,30 +108,15 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
       ref={menuRef}
       role="menu"
       data-tuner-portal
-      style={{
-        position: "fixed",
-        left: pos.x,
-        top: pos.y,
-        minWidth: 180,
-        background: "#1e1e1e",
-        border: "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "8px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-        zIndex: 2147483647,
-        padding: "4px 0",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
+      className="fixed z-[2147483647] min-w-[180px] bg-[var(--popover)] text-[var(--popover-foreground)] border border-[var(--border)] rounded-md shadow-lg py-1 overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
     >
       {MENU_ITEMS.map((item) => {
         if (item.separator) {
           return (
             <div
               key={item.id}
-              style={{
-                height: 1,
-                background: "rgba(255,255,255,0.08)",
-                margin: "4px 8px",
-              }}
+              className="h-px bg-[var(--border)] my-1 mx-2"
             />
           );
         }
@@ -146,36 +131,14 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
             aria-disabled={disabled || undefined}
             tabIndex={-1}
             onClick={disabled ? undefined : () => handleItemClick(item.id)}
-            style={{
-              padding: "6px 12px",
-              fontSize: "12px",
-              color: disabled ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.8)",
-              cursor: disabled ? "default" : "pointer",
-              userSelect: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 16,
-              transition: `background ${ms("micro")}`,
-            }}
-            onMouseEnter={disabled ? undefined : (e) => {
-              (e.currentTarget as HTMLElement).style.background =
-                "rgba(255,255,255,0.08)";
-            }}
-            onMouseLeave={disabled ? undefined : (e) => {
-              (e.currentTarget as HTMLElement).style.background = "transparent";
-            }}
+            className={cn(
+              "flex items-center justify-between px-3 py-1.5 text-[12px] cursor-pointer hover:bg-[var(--accent)] outline-none select-none gap-4",
+              disabled && "opacity-50 pointer-events-none",
+            )}
           >
             <span>{label}</span>
             {item.shortcut && (
-              <span
-                style={{
-                  color: "rgba(255,255,255,0.3)",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  fontSize: "10px",
-                  flexShrink: 0,
-                }}
-              >
+              <span className="text-[10px] text-[var(--muted-foreground)] ml-4 font-mono shrink-0">
                 {item.shortcut}
               </span>
             )}

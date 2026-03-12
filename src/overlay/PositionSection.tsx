@@ -1,4 +1,5 @@
 import React, { useState, useCallback, memo } from "react";
+import { cn } from "@/lib/utils";
 import { Section, SliderRow, SelectRow } from "./controls";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
@@ -89,20 +90,19 @@ export const PositionSection = memo(function PositionSection({
             }}
             conversionHint={posHint}
           />
-          <div style={{ padding: "2px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+          <div className="flex items-center gap-1.5 py-0.5 px-3">
+            <span className="w-16 text-[11px] text-white/50 shrink-0 inline-flex items-center gap-[3px]">
               {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
               Z-Index
             </span>
             <button
               onClick={handleZIndexAutoToggle}
-              style={{
-                padding: "2px 8px", fontSize: "10px", fontFamily: "ui-monospace, 'SF Mono', monospace",
-                background: zIndexAuto ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
-                color: zIndexAuto ? "#818cf8" : "rgba(255,255,255,0.4)",
-                border: `1px solid ${zIndexAuto ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.1)"}`,
-                borderRadius: "3px", cursor: "pointer",
-              }}
+              className={cn(
+                "px-2 py-0.5 text-[10px] font-mono rounded-[3px] cursor-pointer border",
+                zIndexAuto
+                  ? "bg-indigo-500/20 text-indigo-400 border-indigo-500/30"
+                  : "bg-white/[0.06] text-white/40 border-white/10"
+              )}
             >
               auto
             </button>

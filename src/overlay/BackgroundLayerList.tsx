@@ -6,13 +6,13 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
 import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
-import { ms } from "./timing";
 
 export interface BackgroundLayer {
   id: string;
@@ -62,13 +62,6 @@ const POSITION_OPTIONS = [...POSITION_KEYWORDS, "custom"];
 const REPEAT_OPTIONS = ["no-repeat", "repeat", "repeat-x", "repeat-y"];
 const ATTACHMENT_OPTIONS = ["scroll", "fixed", "local"];
 
-const CUSTOM_INPUT_STYLE = {
-  flex: 1, height: "22px", background: "rgba(255,255,255,0.06)",
-  border: "1px solid rgba(255,255,255,0.12)", borderRadius: "3px",
-  color: "rgba(255,255,255,0.85)", fontSize: "10px", padding: "0 4px",
-  fontFamily: "ui-monospace, 'SF Mono', monospace",
-};
-
 let _idCounter = 0;
 function uid() {
   return `bg_${Date.now()}_${++_idCounter}`;
@@ -116,17 +109,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      style={{
-        height: "24px",
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "3px",
-        color: "rgba(255,255,255,0.8)",
-        fontSize: "11px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        padding: "0 4px",
-        cursor: "pointer",
-      }}
+      className="h-6 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.8)] text-[11px] font-mono px-1 cursor-pointer"
     >
       {options.map((o) => (
         <option key={o} value={o}>
@@ -206,68 +189,23 @@ export function BackgroundLayerList({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+    <div className="flex flex-col gap-1">
       {/* Add button */}
-      <div ref={addRef} style={{ position: "relative" }}>
+      <div ref={addRef} className="relative">
         <button
           onClick={() => setAddOpen((o) => !o)}
-          style={{
-            width: "100%",
-            height: "28px",
-            background: "rgba(255,255,255,0.06)",
-            border: "1px dashed rgba(255,255,255,0.2)",
-            borderRadius: "4px",
-            color: "rgba(255,255,255,0.5)",
-            fontSize: "11px",
-            fontFamily: "system-ui, sans-serif",
-            cursor: "pointer",
-            transition: `background ${ms("fast")}`,
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-          }}
+          className="w-full h-7 bg-[var(--input)] border border-dashed border-[rgba(255,255,255,0.2)] rounded text-[var(--muted-foreground)] text-[11px] font-[system-ui,sans-serif] cursor-pointer transition-colors hover:bg-[var(--muted)]"
         >
           + Add background
         </button>
 
         {addOpen && (
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              background: "#2a2a2a",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "4px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-              zIndex: 100,
-              padding: "2px 0",
-              overflow: "hidden",
-            }}
-          >
+          <div className="absolute top-[calc(100%+2px)] left-0 right-0 bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] z-[100] py-0.5 overflow-hidden">
             {(["color", "gradient", "image"] as BackgroundLayerType[]).map((t) => (
               <div
                 key={t}
                 onClick={() => addLayer(t)}
-                style={{
-                  padding: "6px 10px",
-                  fontSize: "11px",
-                  fontFamily: "system-ui, sans-serif",
-                  color: "rgba(255,255,255,0.7)",
-                  cursor: "pointer",
-                  textTransform: "capitalize",
-                  transition: `background ${ms("micro")}`,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
+                className="py-1.5 px-2.5 text-[11px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.7)] cursor-pointer capitalize transition-colors hover:bg-[var(--muted)]"
               >
                 {t}
               </div>
@@ -277,7 +215,7 @@ export function BackgroundLayerList({
       </div>
 
       {/* Layer rows */}
-      <div style={{ position: "relative" }}>
+      <div className="relative">
       {layers.map((layer, index) => {
         const isExpanded = expandedId === layer.id;
         const typeLabel = layer.type === "color" ? "Color" : layer.type === "gradient" ? "Gradient" : "Image";
@@ -287,26 +225,19 @@ export function BackgroundLayerList({
           <div
             key={layer.id}
             ref={registerRef(index)}
+            className={cn(
+              "rounded border border-[rgba(255,255,255,0.08)] mb-1 transition-opacity group",
+              isExpanded ? "bg-[rgba(255,255,255,0.04)]" : "bg-transparent",
+            )}
             style={{
               ...itemStyle(index),
-              background: isExpanded ? "rgba(255,255,255,0.04)" : "transparent",
-              borderRadius: "4px",
-              border: "1px solid rgba(255,255,255,0.08)",
-              marginBottom: "4px",
               opacity: layer.visible === false ? 0.4 : 1,
-              transition: "opacity 100ms",
             }}
           >
             {/* Collapsed row */}
             <div
               onClick={() => setExpandedId(isExpanded ? null : layer.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "4px 6px",
-                cursor: "pointer",
-              }}
+              className="flex items-center gap-2 p-1 pl-1.5 cursor-pointer"
             >
               {/* Drag handle */}
               <DragHandle
@@ -319,25 +250,12 @@ export function BackgroundLayerList({
 
               {/* Preview swatch */}
               <div
-                style={{
-                  width: "24px",
-                  height: "24px",
-                  borderRadius: "4px",
-                  background: layerPreviewBg(layer),
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  flexShrink: 0,
-                }}
+                className="w-6 h-6 rounded border border-[rgba(255,255,255,0.15)] shrink-0"
+                style={{ background: layerPreviewBg(layer) }}
               />
 
               {/* Label */}
-              <span
-                style={{
-                  flex: 1,
-                  fontSize: "11px",
-                  fontFamily: "system-ui, sans-serif",
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
+              <span className="flex-1 text-[11px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.7)]">
                 {typeLabel}
               </span>
 
@@ -350,7 +268,7 @@ export function BackgroundLayerList({
                 value={layer.opacity}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
-                style={{ width: "48px", accentColor: "#6366f1" }}
+                className="w-12 accent-[#6366f1]"
               />
 
               {/* Eye visibility toggle */}
@@ -359,14 +277,11 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   toggleVisible(layer.id);
                 }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "2px",
-                  color: layer.visible !== false ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
-                  pointerEvents: isDragging ? "none" : "auto",
-                }}
+                className={cn(
+                  "bg-transparent border-none cursor-pointer p-0.5",
+                  layer.visible !== false ? "text-[var(--muted-foreground)]" : "text-[rgba(255,255,255,0.2)]",
+                )}
+                style={{ pointerEvents: isDragging ? "none" : "auto" }}
                 title={layer.visible !== false ? "Hide layer" : "Show layer"}
               >
                 {layer.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -378,20 +293,7 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   removeLayer(layer.id);
                 }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "20px",
-                  height: "20px",
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: "3px",
-                  color: "rgba(255,255,255,0.4)",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  fontFamily: "system-ui, sans-serif",
-                }}
+                className="flex items-center justify-center w-5 h-5 bg-transparent border-none rounded-[3px] text-[rgba(255,255,255,0.4)] text-sm cursor-pointer font-[system-ui,sans-serif] hover:text-[var(--destructive)]"
               >
                 <X size={14} strokeWidth={2} />
               </button>
@@ -399,42 +301,18 @@ export function BackgroundLayerList({
 
             {/* Expanded controls */}
             {isExpanded && (
-              <div
-                style={{
-                  padding: "6px 6px 8px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
-                }}
-              >
+              <div className="flex flex-col gap-1.5 px-1.5 pt-1.5 pb-2 border-t border-[rgba(255,255,255,0.06)]">
                 {/* Color layer */}
                 {layer.type === "color" && (
                   <div
                     onClick={() => onEditColor?.(layer.id)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      cursor: onEditColor ? "pointer" : "default",
-                    }}
+                    className={cn("flex items-center gap-2", onEditColor ? "cursor-pointer" : "cursor-default")}
                   >
                     <div
-                      style={{
-                        width: "32px",
-                        height: "24px",
-                        borderRadius: "4px",
-                        background: layer.color ?? "#ffffff",
-                        border: "1px solid rgba(255,255,255,0.15)",
-                      }}
+                      className="w-8 h-6 rounded border border-[rgba(255,255,255,0.15)]"
+                      style={{ background: layer.color ?? "#ffffff" }}
                     />
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontFamily: "ui-monospace, 'SF Mono', monospace",
-                        color: "rgba(255,255,255,0.6)",
-                      }}
-                    >
+                    <span className="text-[11px] font-mono text-[rgba(255,255,255,0.6)]">
                       {layer.color}
                     </span>
                   </div>
@@ -460,35 +338,18 @@ export function BackgroundLayerList({
 
                 {/* Image layer */}
                 {layer.type === "image" && layer.image && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <div className="flex flex-col gap-1">
                     {/* URL */}
                     <input
                       type="text"
                       placeholder="Image URL"
                       value={layer.image.url}
                       onChange={(e) => updateImage(layer.id, { url: e.target.value })}
-                      style={{
-                        width: "100%",
-                        height: "24px",
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        borderRadius: "3px",
-                        color: "rgba(255,255,255,0.8)",
-                        fontSize: "11px",
-                        fontFamily: "ui-monospace, 'SF Mono', monospace",
-                        padding: "0 6px",
-                        boxSizing: "border-box",
-                      }}
+                      className="w-full h-6 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.8)] text-[11px] font-mono px-1.5 box-border"
                     />
-                    <div style={{ display: "flex", gap: "4px" }}>
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontFamily: "system-ui, sans-serif",
-                            color: "rgba(255,255,255,0.4)",
-                          }}
-                        >
+                    <div className="flex gap-1">
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.4)]">
                           Size
                         </span>
                         <Select
@@ -501,31 +362,25 @@ export function BackgroundLayerList({
                           const w = parts[0] || "100%";
                           const h = parts[1] || "auto";
                           return (
-                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                            <div className="flex gap-0.5 mt-0.5">
                               <input
                                 value={w}
                                 placeholder="W"
                                 onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
-                                style={CUSTOM_INPUT_STYLE}
+                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.85)] text-[10px] px-1 font-mono"
                               />
                               <input
                                 value={h}
                                 placeholder="H"
                                 onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
-                                style={CUSTOM_INPUT_STYLE}
+                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.85)] text-[10px] px-1 font-mono"
                               />
                             </div>
                           );
                         })()}
                       </div>
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontFamily: "system-ui, sans-serif",
-                            color: "rgba(255,255,255,0.4)",
-                          }}
-                        >
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.4)]">
                           Position
                         </span>
                         <Select
@@ -538,31 +393,25 @@ export function BackgroundLayerList({
                           const x = parts[0] || "50%";
                           const y = parts[1] || "50%";
                           return (
-                            <div style={{ display: "flex", gap: "2px", marginTop: "2px" }}>
+                            <div className="flex gap-0.5 mt-0.5">
                               <input
                                 value={x}
                                 placeholder="X"
                                 onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
-                                style={CUSTOM_INPUT_STYLE}
+                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.85)] text-[10px] px-1 font-mono"
                               />
                               <input
                                 value={y}
                                 placeholder="Y"
                                 onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
-                                style={CUSTOM_INPUT_STYLE}
+                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(255,255,255,0.85)] text-[10px] px-1 font-mono"
                               />
                             </div>
                           );
                         })()}
                       </div>
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontFamily: "system-ui, sans-serif",
-                            color: "rgba(255,255,255,0.4)",
-                          }}
-                        >
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.4)]">
                           Repeat
                         </span>
                         <Select
@@ -572,15 +421,9 @@ export function BackgroundLayerList({
                         />
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: "4px" }}>
-                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontFamily: "system-ui, sans-serif",
-                            color: "rgba(255,255,255,0.4)",
-                          }}
-                        >
+                    <div className="flex gap-1">
+                      <div className="flex-1 flex flex-col gap-0.5">
+                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.4)]">
                           Attachment
                         </span>
                         <Select
@@ -594,15 +437,8 @@ export function BackgroundLayerList({
                 )}
 
                 {/* Blend mode */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontFamily: "system-ui, sans-serif",
-                      color: "rgba(255,255,255,0.4)",
-                      minWidth: "36px",
-                    }}
-                  >
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(255,255,255,0.4)] min-w-9">
                     Blend
                   </span>
                   <Select

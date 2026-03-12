@@ -12,6 +12,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
 import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
@@ -185,43 +186,28 @@ export function SizeInputCell({
 
   const hasPresets = property && VALUE_PRESETS[property];
 
-  // Colors based on modified state
-  const labelColor = isModified ? "#6ea8fe" : "rgba(255,255,255,0.5)";
-  const cellBg = isModified ? "rgba(99,102,241,0.10)" : "rgba(255,255,255,0.06)";
-  const cellBorder = isModified
-    ? "1px solid rgba(99,102,241,0.25)"
-    : "1px solid rgba(255,255,255,0.1)";
-
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
+    <div className="flex flex-1 flex-col gap-0.5">
     <div
       ref={cellRef}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        height: "28px",
-        background: cellBg,
-        border: cellBorder,
-        borderRadius: "4px",
-        overflow: "hidden",
-        transition: `background ${ms("normal")}, border-color ${ms("normal")}`,
-      }}
+      className={cn(
+        "flex items-center h-[28px] rounded overflow-hidden",
+        isModified
+          ? "bg-indigo-500/10 border border-indigo-500/25"
+          : "bg-[rgba(255,255,255,0.06)] border border-white/10"
+      )}
+      style={{ transition: `background ${ms("normal")}, border-color ${ms("normal")}` }}
     >
       {/* Label */}
       <div
-        style={{
-          padding: "0 6px",
-          fontSize: "10px",
-          color: labelColor,
-          fontFamily: "system-ui, sans-serif",
-          flexShrink: 0,
-          whiteSpace: "nowrap",
-          lineHeight: "28px",
-          transition: `color ${ms("normal")}`,
-        }}
+        className={cn(
+          "px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]",
+          isModified ? "text-[#6ea8fe]" : "text-white/50"
+        )}
+        style={{ transition: `color ${ms("normal")}` }}
       >
         {isKeyword || isVariable ? (
-          <span style={{ cursor: "default" }}>{label}</span>
+          <span className="cursor-default">{label}</span>
         ) : (
           <LabelScrub
             value={value}
@@ -236,30 +222,13 @@ export function SizeInputCell({
       </div>
 
       {/* Value area */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          paddingRight: "2px",
-          minWidth: 0,
-        }}
-      >
+      <div className="flex flex-1 items-center justify-end pr-0.5 min-w-0">
         {isKeyword ? (
           <span
             tabIndex={0}
             onClick={() => { onKeywordChange(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
-            style={{
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.6)",
-              textTransform: "capitalize",
-              paddingRight: "4px",
-              cursor: "text",
-              outline: "none",
-            }}
+            className="text-[10px] font-mono text-white/60 capitalize pr-1 cursor-text outline-none"
           >
             {keyword}
           </span>
@@ -269,24 +238,13 @@ export function SizeInputCell({
             onClick={() => { onCssVarChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
             title={`${cssVar}: ${cssVarResolved ?? ""}`}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              paddingRight: "4px",
-              cursor: "text",
-              outline: "none",
-              overflow: "hidden",
-              minWidth: 0,
-            }}
+            className="flex items-center gap-1 text-[10px] font-mono pr-1 cursor-text outline-none overflow-hidden min-w-0"
           >
-            <span style={{ color: "#a78bfa", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span className="text-[#a78bfa] overflow-hidden text-ellipsis whitespace-nowrap">
               {cssVar!.replace(/^--/, "")}
             </span>
             {cssVarResolved && (
-              <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
+              <span className="text-white/30 shrink-0">
                 {parseFloat(cssVarResolved) || cssVarResolved}
               </span>
             )}
@@ -301,34 +259,17 @@ export function SizeInputCell({
             onKeyDown={handleKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
-            style={{
-              width: "36px",
-              background: "rgba(255,255,255,0.1)",
-              border: "1px solid rgba(99,102,241,0.5)",
-              borderRadius: "2px",
-              color: "rgba(255,255,255,0.9)",
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              textAlign: "right",
-              padding: "1px 3px",
-              outline: "none",
-            }}
+            className="w-9 bg-white/10 border border-indigo-500/50 rounded-sm text-white/90 text-[10px] font-mono text-right px-[3px] py-px outline-none"
           />
         ) : (
           <span
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-            style={{
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: value !== 0 ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.3)",
-              cursor: "text",
-              paddingRight: "4px",
-              outline: "none",
-              minWidth: "16px",
-              textAlign: "right",
-            }}
+            className={cn(
+              "text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right",
+              value !== 0 ? "text-white/80" : "text-white/30"
+            )}
           >
             {value}
           </span>
@@ -336,7 +277,7 @@ export function SizeInputCell({
       </div>
 
       {/* Unit / keyword toggle */}
-      <div style={{ flexShrink: 0, paddingRight: "3px" }}>
+      <div className="shrink-0 pr-[3px]">
         <UnitSelector
           value={isVariable ? "VAR" : isKeyword ? "–" : unit}
           options={units}

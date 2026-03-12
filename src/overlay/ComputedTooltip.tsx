@@ -1,12 +1,20 @@
 /**
  * ComputedTooltip.tsx — Hover tooltip showing the computed CSS value
  *
- * Wraps any label element; on mouseenter (with 300ms delay) reads
+ * Wraps any label element; on hover reads
  * getComputedStyle(element).getPropertyValue(property) and displays
- * a small tooltip above the label.
+ * a Shadcn/Radix Tooltip above the label.
+ *
+ * Hides when the computed value matches the displayed value.
  */
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface ComputedTooltipProps {
   property: string;
@@ -17,72 +25,46 @@ export interface ComputedTooltipProps {
 }
 
 export function ComputedTooltip({ property, element, displayValue, children }: ComputedTooltipProps) {
-  const [visible, setVisible] = useState(false);
   const [computedValue, setComputedValue] = useState("");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLSpanElement>(null);
+  const [shouldShow, setShouldShow] = useState(false);
 
-  const show = useCallback(() => {
-    timerRef.current = setTimeout(() => {
-      try {
-        const val = getComputedStyle(element).getPropertyValue(property).trim();
-        // Don't show if empty or matches what's already displayed
-        if (!val || (displayValue && val === displayValue)) {
-          return;
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        try {
+          const val = getComputedStyle(element).getPropertyValue(property).trim();
+          // Don't show if empty or matches what's already displayed
+          if (!val || (displayValue && val === displayValue)) {
+            setShouldShow(false);
+            return;
+          }
+          setComputedValue(val);
+          setShouldShow(true);
+        } catch {
+          // Element may have been removed
+          setShouldShow(false);
         }
-        setComputedValue(val);
-        setVisible(true);
-      } catch {
-        // Element may have been removed
+      } else {
+        setShouldShow(false);
       }
-    }, 300);
-  }, [element, property, displayValue]);
-
-  const hide = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    setVisible(false);
-  }, []);
-
-  // Cleanup pending timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
+    },
+    [element, property, displayValue]
+  );
 
   return (
-    <span
-      ref={containerRef}
-      onMouseEnter={show}
-      onMouseLeave={hide}
-      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
-    >
-      {children}
-      {visible && computedValue && (
-        <span
-          style={{
-            position: "absolute",
-            bottom: "calc(100% + 4px)",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#333",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: "4px",
-            padding: "3px 8px",
-            fontSize: "11px",
-            color: "rgba(255,255,255,0.7)",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            whiteSpace: "nowrap",
-            zIndex: 10,
-            pointerEvents: "none",
-          }}
-        >
-          Computed: {computedValue}
-        </span>
-      )}
-    </span>
+    <TooltipProvider>
+      <Tooltip delayDuration={300} open={shouldShow} onOpenChange={handleOpenChange}>
+        <TooltipTrigger asChild>
+          <span className="relative inline-flex items-center">
+            {children}
+          </span>
+        </TooltipTrigger>
+        {shouldShow && computedValue && (
+          <TooltipContent className="text-[10px] font-mono" side="top">
+            Computed: {computedValue}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 }

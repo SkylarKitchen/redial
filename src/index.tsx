@@ -1,5 +1,3 @@
-import "./styles/globals.css";
-
 /**
  * redial — main entry point
  *
@@ -21,6 +19,7 @@ import "./styles/globals.css";
 
 "use client";
 
+import "./styles/globals.css";
 import { Overlay } from "./overlay/Overlay";
 
 export function Tuner() {

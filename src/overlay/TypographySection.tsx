@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
+import { cn } from "@/lib/utils";
 import { Section, SelectRow, ColorRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { StyleIndicator } from "./StyleIndicator";
@@ -19,7 +20,6 @@ import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { MiniDropdown, TypoValueCell } from "./layoutControls";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight } from "lucide-react";
-import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,
@@ -186,8 +186,8 @@ export const TypographySection = memo(function TypographySection({
       <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} />
 
       {/* Size + Height side-by-side compact cells */}
-      <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "2px 12px" }}>
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+      <div className="flex items-center gap-1 px-3 py-0.5">
+        <span className="text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-[3px]">
           {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
           Size
         </span>
@@ -200,7 +200,7 @@ export const TypographySection = memo(function TypographySection({
           step={1}
           conversionHint={fontSizeHint}
         />
-        <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "3px" }}>
+        <span className="text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-[3px]">
           {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
           Height
         </span>
@@ -219,34 +219,24 @@ export const TypographySection = memo(function TypographySection({
       <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} />
 
       {/* Align */}
-      <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-        <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Align</span>
+      <div className="flex items-center gap-1.5 px-3 py-1">
+        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Align</span>
         <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
       </div>
 
       {/* Decor — with none X button + ... overflow */}
-      <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-        <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Decor</span>
+      <div className="flex items-center gap-1.5 px-3 py-1">
+        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Decor</span>
         <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
       </div>
 
       {/* More type options toggle */}
-      <div style={{ padding: "4px 12px" }}>
+      <div className="px-3 py-1">
         <button
           onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
-          style={{
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-            padding: "6px 0", cursor: "pointer",
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)", borderRadius: "4px",
-            color: "rgba(255,255,255,0.45)", fontSize: "11px",
-            fontFamily: "system-ui, sans-serif", outline: "none",
-            transition: `background ${ms("fast")}`,
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 cursor-pointer bg-[var(--accent)] border border-[var(--border)] rounded text-[var(--muted-foreground)] text-[11px] font-[system-ui,sans-serif] outline-none transition-colors hover:bg-[var(--muted)]"
         >
-          <ChevronRight size={10} strokeWidth={2} style={{ transition: `transform ${ms("expand")}`, transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
+          <ChevronRight size={10} strokeWidth={2} className="transition-transform" style={{ transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
           More type options
         </button>
       </div>
@@ -254,8 +244,8 @@ export const TypographySection = memo(function TypographySection({
       {showTypoAdvanced && (
         <>
           {/* Letter spacing + Text indent — compact row */}
-          <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
-            <div style={{ flex: 1 }}>
+          <div className="flex gap-1 px-3 py-1">
+            <div className="flex-1">
               <TypoValueCell
                 value={letterSpacing}
                 onChange={handleLetterSpacingChange}
@@ -266,9 +256,9 @@ export const TypographySection = memo(function TypographySection({
                 keyword={letterSpacing === 0 ? "Normal" : null}
                 conversionHint={letterSpacingHint}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Letter spacing</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Letter spacing</div>
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <TypoValueCell
                 value={textIndent}
                 onChange={handleTextIndentChange}
@@ -278,13 +268,13 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 conversionHint={textIndentHint}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Text indent</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Text indent</div>
             </div>
           </div>
 
-          {/* Columns + Column gap — compact row (column-gap only shown when multi-column is active to avoid duplicate with Layout section) */}
-          <div style={{ display: "flex", gap: "4px", padding: "4px 12px" }}>
-            <div style={{ flex: 1 }}>
+          {/* Columns + Column gap — compact row */}
+          <div className="flex gap-1 px-3 py-1">
+            <div className="flex-1">
               <TypoValueCell
                 value={columnCount}
                 onChange={handleColumnCountChange}
@@ -292,10 +282,10 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 keyword={columnCount <= 1 ? "Auto" : null}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Columns</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Columns</div>
             </div>
             {columnCount > 1 && (
-              <div style={{ flex: 1 }}>
+              <div className="flex-1">
                 <TypoValueCell
                   value={columnGap}
                   onChange={(v) => { onColumnGapChange(v); apply("column-gap", `${v}${columnGapUnit}`); }}
@@ -306,14 +296,14 @@ export const TypographySection = memo(function TypographySection({
                   keyword={columnGap === 0 ? "Normal" : null}
                   conversionHint={typoColGapHint}
                 />
-                <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Column gap</div>
+                <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Column gap</div>
               </div>
             )}
           </div>
 
           {/* Word spacing + Hyphens — compact row */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
-            <div style={{ flex: 1 }}>
+          <div className="flex items-start gap-1 px-3 py-1">
+            <div className="flex-1">
               <TypoValueCell
                 value={wordSpacing}
                 onChange={handleWordSpacingChange}
@@ -321,40 +311,40 @@ export const TypographySection = memo(function TypographySection({
                 step={0.5}
                 keyword={wordSpacing === 0 ? "Normal" : null}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Word spacing</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Word spacing</div>
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <MiniDropdown value={hyphens} options={HYPHENS_OPTIONS} onChange={handleHyphensChange} />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Hyphens</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Hyphens</div>
             </div>
           </div>
 
           {/* Italicize + Capitalize + Direction — toggle groups with labels below */}
-          <div style={{ display: "flex", gap: "6px", padding: "6px 12px", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+          <div className="flex gap-1.5 px-3 py-1.5 items-start">
+            <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
-              <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Italicize</span>
+              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Italicize</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px", flex: 1 }}>
+            <div className="flex flex-col items-center gap-[3px] flex-1">
               <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-              <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Capitalize</span>
+              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Capitalize</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+            <div className="flex flex-col items-center gap-[3px]">
               <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
-              <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)" }}>Direction</span>
+              <span className="text-[9px] text-[rgba(255,255,255,0.3)]">Direction</span>
             </div>
           </div>
 
           {/* Breaking — Word + Line side by side */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Breaking</span>
-            <div style={{ flex: 1 }}>
+          <div className="flex items-start gap-1 px-3 py-1">
+            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Breaking</span>
+            <div className="flex-1">
               <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Word</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Word</div>
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               <MiniDropdown value={lineBreak} options={LINE_BREAK_OPTIONS} onChange={handleLineBreakChange} />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Line</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Line</div>
             </div>
           </div>
 
@@ -362,23 +352,20 @@ export const TypographySection = memo(function TypographySection({
           <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} computedProp="white-space" computedElement={element} />
 
           {/* Truncate — Clip / Ellipsis segmented toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Truncate</span>
-            <div style={{ display: "flex", flex: 1, borderRadius: "4px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.15)" }}>
+          <div className="flex items-center gap-1.5 px-3 py-1">
+            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Truncate</span>
+            <div className="flex flex-1 rounded overflow-hidden border border-[rgba(255,255,255,0.15)]">
               {(["clip", "ellipsis"] as const).map((opt) => (
                 <button
                   key={opt}
                   onClick={() => handleTextOverflowChange(opt)}
-                  style={{
-                    flex: 1, height: "28px", cursor: "pointer",
-                    background: textOverflow === opt ? "rgba(255,255,255,0.12)" : "transparent",
-                    color: textOverflow === opt ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                    border: "none", borderRight: opt === "clip" ? "1px solid rgba(255,255,255,0.15)" : "none",
-                    fontSize: "11px", fontFamily: "system-ui, sans-serif",
-                    fontWeight: textOverflow === opt ? 500 : 400,
-                    outline: "none", transition: `background ${ms("fast")}, color ${ms("fast")}`,
-                    textTransform: "capitalize",
-                  }}
+                  className={cn(
+                    "flex-1 h-7 cursor-pointer border-none text-[11px] font-[system-ui,sans-serif] outline-none transition-colors capitalize",
+                    textOverflow === opt
+                      ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
+                      : "bg-transparent text-[rgba(255,255,255,0.4)] font-normal",
+                  )}
+                  style={opt === "clip" ? { borderRight: "1px solid rgba(255,255,255,0.15)" } : undefined}
                 >
                   {opt === "clip" ? "Clip" : "Ellipsis"}
                 </button>
@@ -387,49 +374,41 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Stroke — width + color side by side */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "4px", padding: "4px 12px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "3px" }}>Stroke</span>
-            <div style={{ flex: 1 }}>
+          <div className="flex items-start gap-1 px-3 py-1">
+            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Stroke</span>
+            <div className="flex-1">
               <TypoValueCell
                 value={textStrokeWidth}
                 onChange={handleTextStrokeWidthChange}
                 unit="px"
                 step={1}
               />
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Width</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Width</div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", height: "28px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden", padding: "0 6px", gap: "6px", position: "relative" }}>
-                <label style={{ width: "16px", height: "16px", borderRadius: "2px", background: textStrokeColor, border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0, cursor: "pointer", display: "block" }}>
+            <div className="flex-1">
+              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden px-1.5 gap-1.5 relative">
+                <label className="w-4 h-4 rounded-sm border border-[rgba(255,255,255,0.2)] shrink-0 cursor-pointer block" style={{ background: textStrokeColor }}>
                   <input
                     type="color"
                     value={textStrokeColor}
                     onChange={(e) => handleTextStrokeColorChange(e.target.value)}
-                    style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
+                    className="absolute w-0 h-0 opacity-0 overflow-hidden"
                   />
                 </label>
-                <span style={{ fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span className="text-[11px] font-mono text-[rgba(255,255,255,0.6)] overflow-hidden text-ellipsis whitespace-nowrap">
                   {textStrokeColor}
                 </span>
               </div>
-              <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", textAlign: "center", marginTop: "3px" }}>Color</div>
+              <div className="text-[9px] text-[rgba(255,255,255,0.3)] text-center mt-[3px]">Color</div>
             </div>
           </div>
 
           {/* Text shadows */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px 2px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.85)" }}>Text shadows</span>
+          <div className="flex items-center justify-between px-3 pt-2 pb-0.5">
+            <span className="text-[11px] font-medium text-[rgba(255,255,255,0.85)]">Text shadows</span>
             <button
               onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: "22px", height: "22px", cursor: "pointer",
-                background: "transparent", border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "3px", color: "rgba(255,255,255,0.5)", fontSize: "14px",
-                lineHeight: 1, outline: "none", transition: `background ${ms("fast")}`,
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              className="flex items-center justify-center w-[22px] h-[22px] cursor-pointer bg-transparent border border-[rgba(255,255,255,0.15)] rounded-[3px] text-[var(--muted-foreground)] text-sm leading-none outline-none transition-colors hover:bg-[var(--muted)]"
             >
               +
             </button>

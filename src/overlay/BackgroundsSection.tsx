@@ -111,7 +111,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
       onToggle={onToggle}
     >
       {bgLayers.length > 0 ? (
-        <div style={{ padding: "0 12px" }}>
+        <div className="px-3">
           <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
         </div>
       ) : (

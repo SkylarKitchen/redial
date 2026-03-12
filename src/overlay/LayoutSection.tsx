@@ -18,6 +18,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControls";
 import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
 import { Link, Grid3x3 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -256,14 +257,14 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Align row: 3x3 grid + X/Y dropdowns side-by-side */}
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "flex-start", gap: "8px" }}>
-            <span style={{ width: "48px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, paddingTop: "6px" }}>Align</span>
-            <div style={{ flexShrink: 0 }}>
+          <div className="flex items-start gap-2 py-1 px-3">
+            <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-1.5">Align</span>
+            <div className="shrink-0">
               <AlignBox justify={justifyContent} align={alignItems} onChange={handleAlignChange} mode="flex" compact />
             </div>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "4px", paddingTop: "2px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>x</span>
+            <div className="flex-1 flex flex-col gap-1 pt-0.5">
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-[rgba(255,255,255,0.35)] w-3 text-right">x</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? alignItems : justifyContent}
                   options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
@@ -276,8 +277,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   }}
                 />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", width: "12px", textAlign: "right" }}>y</span>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-[rgba(255,255,255,0.35)] w-3 text-right">y</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? justifyContent : alignItems}
                   options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
@@ -325,25 +326,17 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
         <>
           {/* Grid overlay toggle */}
           {onToggleGridOverlay && (
-            <div style={{ padding: "2px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Overlay</span>
+            <div className="flex items-center gap-1.5 py-0.5 px-3">
+              <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Overlay</span>
               <button
                 onClick={onToggleGridOverlay}
                 title={showGridOverlay ? "Hide grid overlay" : "Show grid overlay"}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "3px 8px",
-                  fontSize: "10px",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  background: showGridOverlay ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
-                  border: showGridOverlay ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "3px",
-                  color: showGridOverlay ? "rgba(99,102,241,0.9)" : "rgba(255,255,255,0.5)",
-                  cursor: "pointer",
-                  outline: "none",
-                }}
+                className={cn(
+                  "flex items-center gap-1 py-[3px] px-2 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
+                  showGridOverlay
+                    ? "bg-[rgba(99,102,241,0.2)] border border-[rgba(99,102,241,0.4)] text-[rgba(99,102,241,0.9)]"
+                    : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
+                )}
               >
                 <Grid3x3 size={12} strokeWidth={1.5} />
                 {showGridOverlay ? "Hide" : "Show"}
@@ -352,7 +345,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           )}
           <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} onContextMenu={ctxMenu("grid-template-columns", gridCols)} />
           <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} onContextMenu={ctxMenu("grid-template-rows", gridRows)} />
-          <div style={{ padding: "6px 12px" }}>
+          <div className="py-1.5 px-3">
             <AlignBox
               justify={justifyItems}
               align={alignContent}
@@ -361,8 +354,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             />
           </div>
           {gapLocked ? (
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <div style={{ flex: 1 }}>
+            <div className="flex items-center">
+              <div className="flex-1">
                 <SliderRow
                   label="Gap"
                   value={gap}
@@ -392,20 +385,15 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <button
                 onClick={handleGapLockToggle}
                 title="Unlock row/column gap"
-                style={{
-                  width: "20px", height: "20px", display: "flex", alignItems: "center",
-                  justifyContent: "center", background: "transparent", border: "none",
-                  cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px",
-                  marginRight: "8px", borderRadius: "3px", flexShrink: 0,
-                }}
+                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.4)] text-[10px] mr-2 rounded-[3px] shrink-0"
               >
                 <Link size={12} strokeWidth={1.5} />
               </button>
             </div>
           ) : (
             <>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <div style={{ flex: 1 }}>
+              <div className="flex items-center">
+                <div className="flex-1">
                   <SliderRow
                     label="Row Gap"
                     value={rowGap}
@@ -434,12 +422,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 <button
                   onClick={handleGapLockToggle}
                   title="Lock gap"
-                  style={{
-                    width: "20px", height: "20px", display: "flex", alignItems: "center",
-                    justifyContent: "center", background: "transparent", border: "none",
-                    cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px",
-                    marginRight: "8px", borderRadius: "3px", flexShrink: 0,
-                  }}
+                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[rgba(255,255,255,0.25)] text-[10px] mr-2 rounded-[3px] shrink-0"
                 >
                   <Link size={12} strokeWidth={1.5} />
                 </button>
@@ -475,46 +458,24 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {parentIsFlexOrGrid && (
         <>
-          <div style={{
-            padding: "6px 12px 2px",
-            fontSize: "10px",
-            color: "rgba(255,255,255,0.35)",
-            textTransform: "uppercase",
-            letterSpacing: "0.04em",
-          }}>
+          <div className="pt-1.5 pb-0.5 px-3 text-[10px] text-[rgba(255,255,255,0.35)] uppercase tracking-[0.04em]">
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 
           {/* Grow / Shrink — compact inline inputs, flex children only */}
           {parentIsFlex && (
-            <div style={{ display: "flex", gap: "6px", padding: "2px 12px" }}>
-              <div style={{
-                flex: 1, display: "flex", alignItems: "center", height: "28px",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "4px", overflow: "hidden",
-              }}>
+            <div className="flex gap-1.5 py-0.5 px-3">
+              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
                 <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10}>
-                  <span style={{
-                    padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)",
-                    flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex",
-                    alignItems: "center", gap: "3px",
-                  }}>
+                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
                   </span>
                 </LabelScrub>
                 <ValueInput value={flexGrow} onChange={handleFlexGrowChange} />
               </div>
-              <div style={{
-                flex: 1, display: "flex", alignItems: "center", height: "28px",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "4px", overflow: "hidden",
-              }}>
+              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
                 <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10}>
-                  <span style={{
-                    padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)",
-                    flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex",
-                    alignItems: "center", gap: "3px",
-                  }}>
+                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
                   </span>
                 </LabelScrub>
@@ -525,25 +486,17 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
           {/* Basis — compact input with unit selector, flex children only */}
           {parentIsFlex && (
-            <div style={{ padding: "2px 12px" }}>
-              <div style={{
-                display: "flex", alignItems: "center", height: "28px",
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "4px", overflow: "hidden",
-              }}>
+            <div className="py-0.5 px-3">
+              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden">
                 <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500}>
-                  <span style={{
-                    padding: "0 6px", fontSize: "10px", color: "rgba(255,255,255,0.5)",
-                    flexShrink: 0, whiteSpace: "nowrap", display: "inline-flex",
-                    alignItems: "center", gap: "3px",
-                  }}>
+                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
                     {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
                   </span>
                 </LabelScrub>
-                <div style={{ flex: 1, display: "flex", justifyContent: "flex-end", paddingRight: "2px" }}>
+                <div className="flex-1 flex justify-end pr-0.5">
                   <ValueInput value={flexBasis} onChange={handleFlexBasisChange} />
                 </div>
-                <div style={{ flexShrink: 0, paddingRight: "3px" }}>
+                <div className="shrink-0 pr-[3px]">
                   <UnitSelector
                     value={flexBasisUnit}
                     options={LAYOUT_UNITS}
@@ -574,11 +527,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Order — simple number input, not a slider */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-            <span style={{
-              width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)",
-              flexShrink: 0, display: "inline-flex", alignItems: "center", gap: "4px",
-            }}>
+          <div className="flex items-center gap-1.5 py-0.5 px-3">
+            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-1">
               {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}
               Order
             </span>

@@ -1,11 +1,15 @@
 /**
- * controls.tsx — Shared inline-styled UI components
+ * controls.tsx — Shared UI components using Tailwind + Shadcn primitives
  *
  * Section, ValueInput, SliderRow, SelectRow, ColorRow, TextRow, EditableValue.
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
 import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
+import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
@@ -40,23 +44,12 @@ export function PresetChips({ property, onSelect }: { property: string; onSelect
   const presets = VALUE_PRESETS[property];
   if (!presets) return null;
   return (
-    <div style={{ display: "flex", gap: 3, marginTop: 2, flexWrap: "wrap", padding: "0 12px" }}>
+    <div className="flex gap-0.5 mt-0.5 flex-wrap px-3">
       {presets.map(v => (
         <span
           key={v}
           onClick={() => onSelect(v)}
-          style={{
-            fontSize: "9px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: "rgba(255,255,255,0.45)",
-            background: "rgba(255,255,255,0.06)",
-            padding: "1px 5px",
-            borderRadius: "3px",
-            cursor: "pointer",
-            userSelect: "none" as const,
-          }}
-          onMouseEnter={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.12)"; }}
-          onMouseLeave={e => { (e.target as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
+          className="text-[9px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] px-1.5 py-px rounded cursor-pointer select-none hover:bg-[rgba(255,255,255,0.12)]"
         >
           {v}
         </span>
@@ -75,10 +68,6 @@ export interface EditableValueProps {
   onAltClick?: () => void;
   'data-spacing-index'?: number;
 }
-
-const FOCUS_RING = "0 0 0 2px rgba(99,102,241,0.3)";
-const onFocusRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = FOCUS_RING; };
-const onBlurRing = (e: React.FocusEvent) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; };
 
 /** Double-click on a value input selects all text for quick replacement. */
 export const selectAllOnDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
@@ -116,56 +105,58 @@ export function Section({
 
   if (hidden) return null;
   return (
-    <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <div
-        tabIndex={0}
-        role="button"
-        aria-expanded={open}
-        onClick={() => { if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); }}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (onToggle) onToggle(title); else setOwnOpen(!ownOpen); } }}
-        onFocus={onFocusRing}
-        onBlur={onBlurRing}
-        style={{
-          padding: "10px 12px 6px",
-          cursor: "pointer",
-          display: "flex",
-          justifyContent: "space-between",
-          borderRadius: "2px",
-          outline: "none",
-          ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: "#1e1e1e" } : {}),
-        }}
-      >
-        <span style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", gap: "6px" }}>
-          {title}
-          {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
-        </span>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          {headerAction && (
-            <span onClick={(e) => e.stopPropagation()}>
-              {headerAction}
-            </span>
+    <Collapsible
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (onToggle) onToggle(title);
+        else setOwnOpen(isOpen);
+      }}
+      className="border-b border-[var(--border)]"
+    >
+      <CollapsibleTrigger asChild>
+        <div
+          tabIndex={0}
+          role="button"
+          aria-expanded={open}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (onToggle) onToggle(title);
+              else setOwnOpen(!open);
+            }
+          }}
+          className={cn(
+            "flex justify-between items-center cursor-pointer rounded-sm outline-none px-3 pt-2.5 pb-1.5",
+            "focus:ring-2 focus:ring-[var(--ring)]",
+            open && "sticky top-0 z-[2] bg-[var(--background)]"
           )}
-          <span style={{
-            color: "rgba(255,255,255,0.3)",
-            display: "flex",
-            alignItems: "center",
-            transition: `transform ${ms("expand")} ease`,
-            transform: open ? "rotate(90deg)" : "rotate(0deg)",
-          }}>
-            <ChevronRight size={12} strokeWidth={2} />
+        >
+          <span className="text-[13px] font-medium text-[var(--foreground)]/85 flex items-center gap-1.5">
+            {title}
+            {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
           </span>
+          <div className="flex items-center gap-1.5">
+            {headerAction && (
+              <span onClick={(e) => e.stopPropagation()}>
+                {headerAction}
+              </span>
+            )}
+            <span
+              className="text-[var(--muted-foreground)] flex items-center"
+              style={{
+                transition: `transform ${ms("expand")} ease`,
+                transform: open ? "rotate(90deg)" : "rotate(0deg)",
+              }}
+            >
+              <ChevronRight size={12} strokeWidth={2} />
+            </span>
+          </div>
         </div>
-      </div>
-      <div style={{
-        display: "grid",
-        gridTemplateRows: open ? "1fr" : "0fr",
-        transition: `grid-template-rows ${ms("expand")} ease`,
-      }}>
-        <div style={{ overflow: "hidden" }}>
-          <div style={{ paddingBottom: "8px" }}>{children}</div>
-        </div>
-      </div>
-    </div>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pb-2">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -238,20 +229,10 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onBlur={commit}
       onKeyDown={handleKeyDown}
       onDoubleClick={selectAllOnDoubleClick}
-      style={{
-        width: "40px",
-        background: "rgba(255,255,255,0.06)",
-        border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "2px",
-        color: "rgba(255,255,255,0.8)",
-        fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        textAlign: "center",
-        padding: "2px",
-        outline: "none",
-        flexShrink: 0,
-        boxShadow: focused ? FOCUS_RING : "none",
-      }}
+      className={cn(
+        "h-[26px] w-10 bg-[var(--input)] border border-[var(--border)] rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
+        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(99,102,241,0.5)]"
+      )}
     />
   );
 }
@@ -322,23 +303,13 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
-  const [trackHovered, setTrackHovered] = useState(false);
-  const pct = ((value - min) / (max - min)) * 100;
-  const trackBg = trackHovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)";
   const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       title={labelTitle}
-      style={{
-        width: "64px",
-        fontSize: "11px",
-        color: labelColor,
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-      }}
+      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1"
+      style={{ color: labelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -355,7 +326,7 @@ export function SliderRow({
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
         <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
@@ -363,39 +334,22 @@ export function SliderRow({
             </ComputedTooltip>
           ) : labelContent}
         </LabelScrub>
-        <input
-          type="range"
-          className="tuner-focusable"
-          tabIndex={0}
+        <Slider
+          className="tuner-focusable flex-1"
           aria-label={`${label}: ${value}${unit}`}
           min={min}
           max={max}
           step={step}
-          value={value}
-          onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
-          onMouseDown={() => beginBatch()}
-          onMouseUp={() => endBatch()}
-          onMouseEnter={() => setTrackHovered(true)}
-          onMouseLeave={() => setTrackHovered(false)}
-          onFocus={onFocusRing}
-          onBlur={onBlurRing}
-          style={{
-            flex: 1,
-            height: "3px",
-            appearance: "none",
-            WebkitAppearance: "none",
-            background: `linear-gradient(to right, #6366f1 ${pct}%, ${trackBg} ${pct}%)`,
-            borderRadius: "2px",
-            outline: "none",
-            cursor: "pointer",
-            transition: "background 150ms",
-          }}
+          value={[value]}
+          onValueChange={([v]) => onChange(snapValue(v))}
+          onPointerDown={() => beginBatch()}
+          onPointerUp={() => endBatch()}
         />
         <ValueInput value={value} onChange={onChange} onAltClick={onReset} />
         {units && onUnitChange ? (
           <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
         ) : unit ? (
-          <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.3)", width: "16px" }}>{unit}</span>
+          <span className="text-[9px] text-[var(--muted-foreground)] w-4">{unit}</span>
         ) : null}
       </div>
       {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
@@ -433,6 +387,104 @@ export function SelectRow({
   /** CSS property name for computed tooltip (e.g. "font-weight") */
   computedProp?: string;
   /** Target element for computed tooltip */
+  computedElement?: Element;
+}) {
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(255,255,255,0.5)";
+  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelContent = (
+    <span
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      title={selectLabelTitle}
+      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
+      style={{ color: selectLabelColor }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+
+  // Use the searchable custom dropdown for searchable/fontPreview cases
+  if (searchable || fontPreview) {
+    return (
+      <SelectRowCustom
+        label={label}
+        value={value}
+        options={options}
+        onChange={onChange}
+        onReset={onReset}
+        indicator={indicator}
+        searchable={searchable}
+        fontPreview={fontPreview}
+        onContextMenu={onContextMenu}
+        computedProp={computedProp}
+        computedElement={computedElement}
+      />
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger
+          className={cn(
+            "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
+            "text-[11px] font-mono text-[var(--foreground)] px-1.5",
+            "focus:ring-2 focus:ring-[var(--ring)]",
+            "hover:bg-[rgba(255,255,255,0.1)]"
+          )}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent
+          className="bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200] max-h-[180px]"
+        >
+          {options.map((opt) => (
+            <SelectItem
+              key={opt.value}
+              value={opt.value}
+              className={cn(
+                "text-[11px] font-mono cursor-pointer",
+                "focus:bg-[var(--accent)] focus:text-[var(--accent-foreground)]"
+              )}
+            >
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+/** Internal: custom searchable/fontPreview dropdown variant with Tailwind classes */
+function SelectRowCustom({
+  label,
+  value,
+  options,
+  onChange,
+  onReset,
+  indicator,
+  searchable,
+  fontPreview,
+  onContextMenu,
+  computedProp,
+  computedElement,
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+  onReset?: () => void;
+  indicator?: IndicatorType;
+  searchable?: boolean;
+  fontPreview?: boolean;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  computedProp?: string;
   computedElement?: Element;
 }) {
   const [open, setOpen] = useState(false);
@@ -486,16 +538,8 @@ export function SelectRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={selectLabelTitle}
-      style={{
-        width: "64px",
-        fontSize: "11px",
-        color: selectLabelColor,
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        cursor: "default",
-      }}
+      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
+      style={{ color: selectLabelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -503,15 +547,22 @@ export function SelectRow({
   );
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
         </ComputedTooltip>
       ) : labelContent}
-      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
+      <div ref={containerRef} className="relative flex-1">
         <button
-          className="tuner-focusable"
+          className={cn(
+            "tuner-focusable w-full h-6 flex items-center justify-between",
+            "bg-[var(--input)] border border-[var(--border)] rounded-sm",
+            "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
+            "hover:bg-[rgba(255,255,255,0.1)]",
+            "focus:ring-2 focus:ring-[var(--ring)]",
+            open && "bg-[rgba(255,255,255,0.1)]"
+          )}
           tabIndex={0}
           role="combobox"
           aria-expanded={open}
@@ -520,36 +571,14 @@ export function SelectRow({
           aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
           onClick={() => setOpen((o) => !o)}
           onKeyDown={onTriggerKeyDown}
-          onFocus={onFocusRing}
-          onBlur={onBlurRing}
           style={{
-            width: "100%",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: open ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "3px",
-            color: "rgba(255,255,255,0.8)",
-            fontSize: "11px",
-            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
-            padding: "0 6px",
-            cursor: "pointer",
-            outline: "none",
-            transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
-          }}
-          onMouseEnter={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.1)";
-          }}
-          onMouseLeave={(e) => {
-            if (!open) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : undefined,
           }}
         >
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
             {current?.label ?? value}
           </span>
-          <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0, marginLeft: "4px" }} />
+          <ChevronDown size={10} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
         </button>
 
         {open && (
@@ -557,25 +586,16 @@ export function SelectRow({
             id={`${id}-listbox`}
             role="listbox"
             onKeyDown={onListKeyDown}
-            style={{
-              position: "absolute",
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              minWidth: "100%",
-              maxHeight: searchable ? "240px" : "180px",
-              overflowY: "auto",
-              background: "#2a2a2a",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "4px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-              zIndex: 200,
-              padding: "2px 0",
-            }}
+            className={cn(
+              "absolute top-[calc(100%+2px)] left-0 right-0 min-w-full",
+              "bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200] py-0.5",
+              searchable ? "max-h-60" : "max-h-[180px]",
+              "overflow-y-auto"
+            )}
           >
             {/* Search input (when searchable) */}
             {searchable && (
-              <div style={{ padding: "4px 6px 4px", position: "sticky", top: 0, background: "#2a2a2a", zIndex: 1 }}>
+              <div className="px-1.5 pt-1 pb-1 sticky top-0 bg-[var(--popover)] z-[1]">
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -592,30 +612,19 @@ export function SelectRow({
                       setOpen(false);
                       setSearchQuery("");
                     } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                      // Delegate to list keyboard handler
                       onListKeyDown(e as unknown as React.KeyboardEvent);
                     }
                   }}
-                  style={{
-                    width: "100%",
-                    height: "22px",
-                    background: "#1e1e1e",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: "3px",
-                    padding: "0 6px",
-                    fontSize: "11px",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
-                    color: "rgba(255,255,255,0.85)",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.5)"; }}
-                  onBlur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
+                  className={cn(
+                    "w-full h-[22px] bg-[var(--background)] border border-[var(--border)] rounded-sm",
+                    "px-1.5 text-[11px] font-sans text-[var(--foreground)] outline-none box-border",
+                    "focus:border-[rgba(99,102,241,0.5)]"
+                  )}
                 />
               </div>
             )}
             {filtered.length === 0 ? (
-              <div style={{ padding: "6px 8px", fontSize: "11px", color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>
+              <div className="px-2 py-1.5 text-[11px] text-[var(--muted-foreground)] italic">
                 No matches
               </div>
             ) : (
@@ -634,21 +643,16 @@ export function SelectRow({
                       setOpen(false);
                       setSearchQuery("");
                     }}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4",
+                      isActive
+                        ? "bg-[var(--primary)] text-white"
+                        : isHighlighted
+                          ? "bg-[var(--accent)] text-[var(--foreground)]"
+                          : "text-[var(--muted-foreground)] hover:bg-[var(--accent)]"
+                    )}
                     style={{
-                      padding: "4px 8px",
-                      fontSize: "11px",
-                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : "ui-monospace, 'SF Mono', monospace",
-                      color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                      background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      transition: `background ${ms("micro")}`,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
+                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
                     }}
                   >
                     {opt.label}
@@ -703,16 +707,8 @@ export function ColorRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={colorLabelTitle}
-      style={{
-        width: "64px",
-        fontSize: "11px",
-        color: colorLabelColor,
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        cursor: "default",
-      }}
+      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
+      style={{ color: colorLabelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -722,13 +718,7 @@ export function ColorRow({
   return (
     <div
       onContextMenu={onContextMenu}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "2px 12px",
-        position: "relative",
-      }}
+      className="flex items-center gap-2 px-3 py-0.5 relative"
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
@@ -737,7 +727,11 @@ export function ColorRow({
       ) : labelContent}
       <div
         ref={swatchRef}
-        className="tuner-focusable"
+        className={cn(
+          "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
+          "focus:ring-2 focus:ring-[var(--ring)]",
+          varName ? "border-2 border-[rgba(99,102,241,0.6)]" : "border border-[var(--border)]"
+        )}
         tabIndex={0}
         role="button"
         onClick={() => setPickerOpen(!pickerOpen)}
@@ -748,45 +742,23 @@ export function ColorRow({
           }
         }}
         style={{
-          width: "24px",
-          height: "24px",
-          borderRadius: "4px",
           background:
             displayColor === "transparent"
               ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
               : displayColor,
-          border: varName
-            ? "2px solid rgba(99,102,241,0.6)"
-            : "1px solid rgba(255,255,255,0.15)",
-          cursor: "pointer",
-          flexShrink: 0,
         }}
       />
       <span
         title={varName ? value : undefined}
-        style={{
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: varName ? "rgba(99,102,241,0.8)" : "rgba(255,255,255,0.5)",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          flex: 1,
-          minWidth: 0,
-        }}
+        className={cn(
+          "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0",
+          varName ? "text-[rgba(99,102,241,0.8)]" : "text-[var(--muted-foreground)]"
+        )}
       >
         {displayLabel}
       </span>
       {pickerOpen && swatchRef.current && (
-        <div
-          style={{
-            position: "absolute",
-            top: "100%",
-            left: "12px",
-            zIndex: 99999,
-            marginTop: "4px",
-          }}
-        >
+        <div className="absolute top-full left-3 z-[99999] mt-1">
           <ColorPickerEnhanced
             color={pickerColor}
             onChange={(hex, opacity) => {
@@ -812,25 +784,24 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
   onReset?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
 }) {
-  const [focused, setFocused] = useState(false);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-        style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, cursor: "default" }}
+        className="text-[11px] text-[var(--muted-foreground)] w-[70px] shrink-0 capitalize cursor-default"
       >{label}</span>
       <input
-        type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
+        type="text"
+        className={cn(
+          "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
+          "text-[var(--foreground)] text-[10px] font-mono px-1.5 outline-none",
+          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(99,102,241,0.5)]"
+        )}
+        tabIndex={0}
+        value={value}
+        placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         onDoubleClick={selectAllOnDoubleClick}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{
-          flex: 1, height: "24px", background: "rgba(255,255,255,0.06)",
-          border: focused ? "1px solid rgba(99,102,241,0.5)" : "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none",
-          boxShadow: focused ? FOCUS_RING : "none",
-        }}
       />
     </div>
   );
@@ -897,18 +868,7 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          style={{
-            width: "28px",
-            background: "rgba(255,255,255,0.1)",
-            border: "1px solid rgba(99, 102, 241, 0.5)",
-            borderRadius: "2px",
-            color: "rgba(255,255,255,0.9)",
-            fontSize: "10px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            textAlign: "center",
-            padding: "1px 2px",
-            outline: "none",
-          }}
+          className="w-7 bg-[rgba(255,255,255,0.1)] border border-[rgba(99,102,241,0.5)] rounded-sm text-[var(--foreground)]/90 text-[10px] font-mono text-center py-px px-0.5 outline-none"
           onClick={(e) => e.stopPropagation()}
         />
       );
@@ -927,25 +887,14 @@ export const EditableValue = memo(
           setEditing(true);
         }}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-        onFocus={onFocusRing}
-        onBlur={onBlurRing}
+        className={cn(
+          "text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none",
+          "hover:bg-[rgba(255,255,255,0.08)]",
+          "focus:ring-2 focus:ring-[var(--ring)]",
+          value !== 0 ? "text-[var(--foreground)]/70" : "text-[var(--foreground)]/30"
+        )}
         style={{
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
-          cursor: "text",
-          padding: "1px 3px",
-          borderRadius: "2px",
-          minWidth: "16px",
-          textAlign: "center",
-          outline: "none",
           transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "transparent";
         }}
       >
         {value}

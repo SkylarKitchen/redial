@@ -3,13 +3,22 @@
  *
  * Searches across CSS properties/sections, actions, and DOM elements.
  * Fuzzy substring matching with keyboard navigation and debounced element search.
+ * Built on Shadcn Command (cmdk) + Tailwind CSS.
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
-import { timing } from "./timing";
-import { useFocusTrap } from "./useFocusTrap";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -38,16 +47,10 @@ const ACTIONS = [
   "Toggle Diff",
 ] as const;
 
-const CATEGORY_COLORS: Record<SearchResult["category"], string> = {
-  Property: "rgba(99,102,241,0.85)",   // indigo
-  Action: "rgba(52,211,153,0.85)",     // emerald
-  Element: "rgba(251,191,36,0.85)",    // amber
-};
-
-const CATEGORY_BG: Record<SearchResult["category"], string> = {
-  Property: "rgba(99,102,241,0.15)",
-  Action: "rgba(52,211,153,0.15)",
-  Element: "rgba(251,191,36,0.15)",
+const CATEGORY_BADGE_CLASSES: Record<SearchResult["category"], string> = {
+  Property: "text-indigo-400 bg-indigo-500/15",
+  Action: "text-emerald-400 bg-emerald-500/15",
+  Element: "text-amber-400 bg-amber-500/15",
 };
 
 const MAX_RESULTS = 30;
@@ -140,18 +143,11 @@ export function CommandPalette({
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [elementResults, setElementResults] = useState<Element[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useFocusTrap(cardRef, true);
-
-  // Auto-focus + clear element cache on unmount
+  // Clear element cache on unmount
   useEffect(() => {
-    inputRef.current?.focus();
     return () => clearElementCache();
   }, []);
 
@@ -222,226 +218,97 @@ export function CommandPalette({
     return all.slice(0, MAX_RESULTS);
   }, [query, elementResults, onScrollToSection, onAction, onSelectElement]);
 
-  // Clamp selected index when results change
-  useEffect(() => {
-    setSelectedIndex((prev) => Math.min(prev, Math.max(0, results.length - 1)));
-  }, [results.length]);
-
-  // Scroll selected row into view
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const row = list.children[selectedIndex] as HTMLElement | undefined;
-    row?.scrollIntoView({ block: "nearest" });
-  }, [selectedIndex]);
+  // Group results by category
+  const grouped = useMemo(() => {
+    const map: Record<string, SearchResult[]> = {};
+    for (const r of results) {
+      if (!map[r.category]) map[r.category] = [];
+      map[r.category].push(r);
+    }
+    return map;
+  }, [results]);
 
   const executeResult = useCallback(
-    (index: number) => {
-      const r = results[index];
-      if (r) {
-        r.action();
-        onClose();
-      }
+    (result: SearchResult) => {
+      result.action();
+      onClose();
     },
-    [results, onClose],
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev + 1) % Math.max(1, results.length));
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          setSelectedIndex((prev) => (prev - 1 + results.length) % Math.max(1, results.length));
-          break;
-        case "Enter":
-          e.preventDefault();
-          executeResult(selectedIndex);
-          break;
-        case "Escape":
-          e.preventDefault();
-          onClose();
-          break;
-      }
-    },
-    [results.length, selectedIndex, executeResult, onClose],
+    [onClose],
   );
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 2147483647,
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-        paddingTop: "20vh",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div
-        ref={cardRef}
-        style={{
-          width: "100%",
-          minWidth: 400,
-          maxWidth: 500,
-          background: "#1e1e1e",
-          border: "1px solid rgba(255,255,255,0.15)",
-          borderRadius: 12,
-          overflow: "hidden",
-          boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-        }}
-      >
-        {/* Search input */}
-        <div
-          style={{
-            padding: "12px 16px",
-            borderBottom: results.length > 0 ? "1px solid rgba(255,255,255,0.08)" : "none",
-          }}
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setSelectedIndex(0);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Search..."
-            style={{
-              width: "100%",
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              color: "rgba(255,255,255,0.95)",
-              fontSize: 16,
-              fontFamily: "system-ui, -apple-system, sans-serif",
-              padding: 0,
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-        {/* Results list */}
-        {results.length > 0 && (
-          <div
-            ref={listRef}
-            style={{
-              maxHeight: 360,
-              overflowY: "auto",
-              padding: "4px 0",
-            }}
+    <div className="__tuner-root">
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="overflow-hidden p-0 max-w-[500px] bg-[var(--background)] border-[var(--border)]">
+          <Command
+            shouldFilter={false}
+            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-1.5 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
           >
-            {results.map((r, i) => (
-              <div
-                key={`${r.category}-${r.label}-${i}`}
-                onClick={() => executeResult(i)}
-                onMouseEnter={() => setSelectedIndex(i)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  padding: "7px 16px",
-                  cursor: "pointer",
-                  background: i === selectedIndex ? "rgba(255,255,255,0.08)" : "transparent",
-                  transition: `background ${timing.fast}ms ease`,
-                }}
-              >
-                {/* Category badge */}
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    padding: "2px 5px",
-                    borderRadius: 3,
-                    color: CATEGORY_COLORS[r.category],
-                    background: CATEGORY_BG[r.category],
-                    flexShrink: 0,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {r.category}
-                </span>
+            <CommandInput
+              placeholder="Search properties, actions, or elements..."
+              value={query}
+              onValueChange={(value) => setQuery(value)}
+            />
+            <CommandList className="max-h-[360px]">
+              {query && results.length === 0 && (
+                <CommandEmpty>
+                  No results for &ldquo;{query}&rdquo;
+                </CommandEmpty>
+              )}
 
-                {/* Label */}
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "rgba(255,255,255,0.9)",
-                    fontFamily:
-                      r.category === "Property"
-                        ? "ui-monospace, 'SF Mono', monospace"
-                        : "system-ui, -apple-system, sans-serif",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    flexShrink: 0,
-                  }}
-                >
-                  {r.label}
-                </span>
+              {!query && (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Type to search properties, actions, or elements
+                </div>
+              )}
 
-                {/* Detail */}
-                {r.detail && (
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.35)",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      marginLeft: "auto",
-                      flexShrink: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    {r.detail}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              {(["Property", "Action", "Element"] as const).map((category) => {
+                const items = grouped[category];
+                if (!items || items.length === 0) return null;
+                return (
+                  <CommandGroup key={category} heading={category}>
+                    {items.map((r, i) => (
+                      <CommandItem
+                        key={`${r.category}-${r.label}-${i}`}
+                        value={`${r.category}-${r.label}-${i}`}
+                        onSelect={() => executeResult(r)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        {/* Category badge */}
+                        <span
+                          className={cn(
+                            "text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-sm shrink-0 leading-tight",
+                            CATEGORY_BADGE_CLASSES[r.category],
+                          )}
+                        >
+                          {r.category}
+                        </span>
 
-        {/* Empty state */}
-        {query && results.length === 0 && (
-          <div
-            style={{
-              padding: "24px 16px",
-              textAlign: "center",
-              color: "rgba(255,255,255,0.3)",
-              fontSize: 13,
-            }}
-          >
-            No results for &ldquo;{query}&rdquo;
-          </div>
-        )}
+                        {/* Label */}
+                        <span
+                          className={cn(
+                            "text-[13px] text-foreground/90 whitespace-nowrap overflow-hidden text-ellipsis shrink-0",
+                            r.category === "Property" && "font-mono",
+                          )}
+                        >
+                          {r.label}
+                        </span>
 
-        {/* Hint footer */}
-        {!query && (
-          <div
-            style={{
-              padding: "16px",
-              textAlign: "center",
-              color: "rgba(255,255,255,0.25)",
-              fontSize: 11,
-            }}
-          >
-            Type to search properties, actions, or elements
-          </div>
-        )}
-      </div>
+                        {/* Detail */}
+                        {r.detail && (
+                          <span className="text-[11px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis ml-auto shrink min-w-0">
+                            {r.detail}
+                          </span>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                );
+              })}
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

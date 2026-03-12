@@ -35,6 +35,8 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -54,22 +56,14 @@ class PanelErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div style={{ padding: "12px", color: "rgba(255,255,255,0.5)", fontSize: "11px" }}>
-          <div style={{ marginBottom: "6px" }}>Panel crashed — try selecting a different element.</div>
+        <div className="p-3 text-white/50 text-[11px]">
+          <div className="mb-1.5">Panel crashed — try selecting a different element.</div>
           <button
             onClick={() => {
               this.setState({ error: null });
               this.props.onError?.();
             }}
-            style={{
-              padding: "4px 10px",
-              fontSize: "11px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: "4px",
-              background: "rgba(255,255,255,0.05)",
-              color: "rgba(255,255,255,0.55)",
-              cursor: "pointer",
-            }}
+            className="px-2.5 py-1 text-[11px] border border-white/10 rounded bg-white/[0.05] text-white/[0.55] cursor-pointer"
           >
             Retry
           </button>
@@ -89,13 +83,18 @@ export function Overlay() {
   const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
   const panelScrollRef = useRef<HTMLDivElement>(null);
   const savedScrollRef = useRef(0);
+  /** Helper to get the scrollable viewport inside a Radix ScrollArea */
+  const getScrollViewport = useCallback(() => {
+    return panelScrollRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null ?? panelScrollRef.current;
+  }, []);
   /** Wrapper that saves scroll position before triggering a remount */
   const setPanelKey: typeof setPanelKeyRaw = useCallback((v) => {
-    if (panelScrollRef.current) {
-      savedScrollRef.current = panelScrollRef.current.scrollTop;
+    const viewport = getScrollViewport();
+    if (viewport) {
+      savedScrollRef.current = viewport.scrollTop;
     }
     setPanelKeyRaw(v);
-  }, []);
+  }, [getScrollViewport]);
 
   // Tab state: "common" (flat simplified view) or "custom" (full WebflowPanel)
   const [activeTab, setActiveTab] = useState<"common" | "custom">("common");
@@ -975,15 +974,15 @@ export function Overlay() {
 
   // --- Scroll position preservation across panelKey remounts ---
   useEffect(() => {
-    const el = panelScrollRef.current;
+    const el = getScrollViewport();
     if (el && savedScrollRef.current > 0) {
       el.scrollTop = savedScrollRef.current;
     }
-  }, [panelKey]);
+  }, [panelKey, getScrollViewport]);
 
   // --- Auto-hiding scrollbar ---
   useEffect(() => {
-    const el = panelScrollRef.current;
+    const el = getScrollViewport();
     if (!el) return;
     let timer: ReturnType<typeof setTimeout>;
     const onScroll = () => {
@@ -996,7 +995,7 @@ export function Overlay() {
       el.removeEventListener("scroll", onScroll);
       clearTimeout(timer);
     };
-  }, [selectedEl]);
+  }, [selectedEl, getScrollViewport]);
 
   // --- Click-to-switch: clicking a page element while panel is open re-selects ---
   useEffect(() => {
@@ -1254,70 +1253,22 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline"
-            style={{
-              position: "fixed",
-              display: "none",
-              pointerEvents: "none",
-              zIndex: 2147483646,
-              border: "1.5px solid #6366f1",
-              borderRadius: "2px",
-              transition: `all ${ms("fast")} ease-out`,
-            }}
+            className="__tuner-selected-outline fixed hidden pointer-events-none z-[2147483646] border-[1.5px] border-solid border-indigo-500 rounded-sm transition-all duration-100 ease-out"
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            style={{
-              position: "fixed",
-              display: "none",
-              pointerEvents: "none",
-              zIndex: 2147483645,
-              border: "1.5px dashed rgba(99,102,241,0.5)",
-              borderRadius: "2px",
-              background: "rgba(99,102,241,0.04)",
-            }}
+            className="fixed hidden pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-indigo-500/50 rounded-sm bg-indigo-500/[0.04]"
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            style={{
-              position: "fixed",
-              display: "none",
-              pointerEvents: "none",
-              zIndex: 2147483646,
-              background: "rgba(30,30,30,0.9)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              color: "rgba(255,255,255,0.8)",
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              padding: "2px 6px",
-              borderRadius: "3px",
-              whiteSpace: "nowrap",
-            }}
+            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(30,30,30,0.9)] backdrop-blur-[8px] text-white/80 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            style={{
-              position: "fixed",
-              display: "none",
-              pointerEvents: "none",
-              zIndex: 2147483646,
-              background: "rgba(30,30,30,0.9)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              color: "rgba(255,255,255,0.8)",
-              fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              padding: "2px 6px",
-              borderRadius: "3px",
-              whiteSpace: "nowrap",
-              maxWidth: "200px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
+            className="fixed hidden pointer-events-none z-[2147483646] bg-[rgba(30,30,30,0.9)] backdrop-blur-[8px] text-white/80 text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
           />
         </>
       )}
@@ -1327,34 +1278,22 @@ export function Overlay() {
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
-      {/* Spacing guides overlay — self-hides when no scrub is active */}
-      {selectedEl && !selecting && (
+      {/* Spacing guides overlay (Webflow-style green guide lines with dimension badges) */}
+      {showBoxModel && selectedEl && !selecting && (
         <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
       {/* Panel (only when an element is selected) */}
       {selectedEl && inferResult && (
         <div
-          className="__tuner-root __tuner-enter"
+          className={cn(
+            "fixed z-[2147483647] w-[300px] max-h-[85vh] bg-[#1e1e1e] rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_0.5px_rgba(255,255,255,0.06)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
+            diffMode ? "border border-yellow-400/30" : "border border-white/10",
+            selecting ? "pointer-events-none" : "pointer-events-auto",
+          )}
           style={{
-            position: "fixed",
             top: pos.y,
             left: pos.x,
-            width: 300,
-            maxHeight: "85vh",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            zIndex: 2147483647,
-            background: "#1e1e1e",
-            borderRadius: "10px",
-            border: diffMode
-              ? "1px solid rgba(250, 204, 21, 0.3)"
-              : "1px solid rgba(255,255,255,0.1)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.06)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            pointerEvents: selecting ? "none" : "auto",
             ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
           }}
         >
@@ -1373,17 +1312,7 @@ export function Overlay() {
             role="status"
             aria-live="assertive"
             aria-atomic="true"
-            style={{
-              position: "absolute",
-              width: "1px",
-              height: "1px",
-              padding: 0,
-              margin: "-1px",
-              overflow: "hidden",
-              clip: "rect(0, 0, 0, 0)",
-              whiteSpace: "nowrap",
-              border: 0,
-            }}
+            className="sr-only"
           >
             {announcement}
           </div>
@@ -1405,68 +1334,38 @@ export function Overlay() {
             onStateChange={setActiveState}
           />
           {focusMode && (
-            <div style={{
-              display: "flex", justifyContent: "center", padding: "2px 0",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-            }}>
+            <div className="flex justify-center py-0.5 border-b border-white/[0.06]">
               <span
                 onClick={() => setFocusMode(false)}
-                style={{
-                  fontSize: "9px", fontWeight: 600, color: "#6366f1",
-                  background: "rgba(99,102,241,0.15)", padding: "1px 8px",
-                  borderRadius: "9px", cursor: "pointer", userSelect: "none",
-                  letterSpacing: "0.04em", textTransform: "uppercase",
-                }}
+                className="text-[9px] font-semibold text-indigo-500 bg-indigo-500/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
               >
                 Focus Mode
               </span>
             </div>
           )}
-          {/* ── Common / Custom tab bar ──────────────── */}
-          <div
-            style={{
-              display: "flex",
-              gap: 0,
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-              padding: "0 12px",
-              flexShrink: 0,
-            }}
-          >
+          {/* -- Common / Custom tab bar -- */}
+          <div className="flex border-b border-white/[0.06] px-3 shrink-0">
             {(["common", "custom"] as const).map((tab) => {
               const isActive = activeTab === tab;
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  style={{
-                    background: "none",
-                    borderWidth: 0,
-                    borderStyle: "none",
-                    borderColor: "transparent",
-                    borderBottom: isActive ? "2px solid #6366f1" : "2px solid transparent",
-                    padding: "7px 10px 5px",
-                    fontSize: 11,
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
-                    cursor: "pointer",
-                    transition: "color 100ms, border-color 100ms",
-                    fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
-                  }}
+                  className={cn(
+                    "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
+                    isActive
+                      ? "border-b-indigo-500 font-semibold text-white/[0.85]"
+                      : "border-b-transparent font-normal text-white/40",
+                  )}
                 >
                   {tab === "common" ? "Common" : "Custom"}
                 </button>
               );
             })}
           </div>
-          <div
-            ref={panelScrollRef}
-            className="__tuner-root"
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              overflowX: "hidden",
-              minHeight: 0,
-            }}
+          <ScrollArea
+            ref={panelScrollRef as React.RefObject<HTMLDivElement>}
+            className="__tuner-root flex-1 min-h-0"
           >
             {showSearch && (
               <PropertySearch
@@ -1476,12 +1375,10 @@ export function Overlay() {
               />
             )}
             <div
-              style={{
-                padding: "4px 0",
-                pointerEvents: diffMode ? "none" : "auto",
-                opacity: diffMode ? 0.6 : 1,
-                transition: `opacity ${ms("expand")}`,
-              }}
+              className={cn(
+                "py-1 transition-opacity",
+                diffMode ? "pointer-events-none opacity-60" : "pointer-events-auto opacity-100",
+              )}
             >
               <PanelErrorBoundary onError={handleClose}>
                 {activeTab === "common" ? (
@@ -1518,7 +1415,7 @@ export function Overlay() {
                 onClose={() => setShowHistory(false)}
               />
             )}
-          </div>
+          </ScrollArea>
           <Footer
             element={selectedEl}
             onReset={handleReset}
@@ -1564,60 +1461,24 @@ export function Overlay() {
 
       {/* Selection mode indicator */}
       {selecting && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 16,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 2147483647,
-            background: "#fff",
-            color: "#1e1e1e",
-            padding: "6px 16px",
-            borderRadius: "8px",
-            fontSize: "13px",
-            fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
-            boxShadow: "none",
-            pointerEvents: "none",
-          }}
-        >
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[2147483647] bg-white text-[#1e1e1e] px-4 py-1.5 rounded-lg text-[13px] font-sans shadow-none pointer-events-none">
           Click an element to inspect • Esc to cancel
         </div>
       )}
 
-      {/* Floating action button — bottom-right activation trigger */}
+      {/* Floating action button -- bottom-right activation trigger */}
       <div
-        className="__tuner-root"
+        className={cn(
+          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.12] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
+          (selecting || selectedEl) && "border-indigo-500/40 shadow-[0_0_0_1px_rgba(99,102,241,0.4),0_4px_20px_rgba(0,0,0,0.5)]",
+          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.4),0_0_0_0.5px_rgba(255,255,255,0.06)]",
+        )}
         onClick={() => {
           if (selectedEl) {
-            // If panel is open, close it
             handleClose();
           } else {
-            // Toggle selection mode
             setSelecting((s) => !s);
           }
-        }}
-        style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 2147483647,
-          width: 48,
-          height: 48,
-          borderRadius: "50%",
-          background: "#1e1e1e",
-          borderWidth: "1px",
-          borderStyle: "solid",
-          borderColor: "rgba(255,255,255,0.12)",
-          boxShadow: selecting || selectedEl
-            ? "0 0 0 1px rgba(99,102,241,0.4), 0 4px 20px rgba(0,0,0,0.5)"
-            : "0 4px 20px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(255,255,255,0.06)",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: `box-shadow ${ms("layout")} ease, border-color ${ms("layout")} ease`,
-          ...(selecting || selectedEl ? { borderColor: "rgba(99,102,241,0.4)" } : {}),
         }}
         title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
       >
@@ -1625,10 +1486,10 @@ export function Overlay() {
           size={20}
           strokeWidth={1.5}
           color="rgba(255,255,255,0.8)"
-          style={{
-            transition: `transform ${ms("layout")} ease`,
-            transform: selecting || selectedEl ? "rotate(45deg)" : "rotate(0deg)",
-          }}
+          className={cn(
+            "transition-transform duration-200 ease",
+            (selecting || selectedEl) ? "rotate-45" : "rotate-0",
+          )}
         />
       </div>
     </>

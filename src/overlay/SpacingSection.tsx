@@ -6,6 +6,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import type { SpacingValues } from "./infer";
 import { SPACING_UNITS } from "./panelConstants";
 import { Box } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface SpacingSectionProps {
   ctx: SectionCtx;
@@ -37,20 +38,12 @@ export const SpacingSection = memo(function SpacingSection({
     <button
       onClick={onToggleBoxModel}
       title={showBoxModel ? "Hide box model overlay (M)" : "Show box model overlay (M)"}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        padding: "2px 6px",
-        fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        background: showBoxModel ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
-        border: showBoxModel ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "3px",
-        color: showBoxModel ? "rgba(99,102,241,0.9)" : "rgba(255,255,255,0.5)",
-        cursor: "pointer",
-        outline: "none",
-      }}
+      className={cn(
+        "flex items-center gap-1 py-0.5 px-1.5 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
+        showBoxModel
+          ? "bg-[rgba(99,102,241,0.2)] border border-[rgba(99,102,241,0.4)] text-[rgba(99,102,241,0.9)]"
+          : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
+      )}
     >
       <Box size={11} strokeWidth={1.5} />
     </button>

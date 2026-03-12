@@ -7,6 +7,7 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { Search, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Section-to-properties mapping ──────────────────────────────────
 
@@ -94,25 +95,12 @@ export function PropertySearch({ value, onChange, onClose }: PropertySearchProps
   }, [onChange]);
 
   return (
-    <div
-      style={{
-        padding: "6px 12px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        position: "relative",
-      }}
-    >
+    <div className="px-3 py-1.5 border-b border-[var(--border)] relative">
       {/* Search icon */}
       <Search
         size={13}
         strokeWidth={2}
-        style={{
-          position: "absolute",
-          left: 20,
-          top: "50%",
-          transform: "translateY(-50%)",
-          color: "rgba(255,255,255,0.35)",
-          pointerEvents: "none",
-        }}
+        className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none"
       />
 
       <input
@@ -122,53 +110,19 @@ export function PropertySearch({ value, onChange, onClose }: PropertySearchProps
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Search properties..."
-        style={{
-          width: "100%",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "4px",
-          padding: "6px 28px 6px 28px",
-          fontSize: "12px",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-          color: "rgba(255,255,255,0.85)",
-          outline: "none",
-          boxSizing: "border-box",
-        }}
-        onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(99,102,241,0.5)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.15)";
-        }}
-        onBlur={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
-          (e.currentTarget as HTMLElement).style.boxShadow = "none";
-        }}
+        className="w-full h-8 bg-[var(--input)] border-none px-7 text-[12px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none rounded"
       />
 
       {/* Clear button */}
       {value && (
         <button
           onClick={handleClear}
-          style={{
-            position: "absolute",
-            right: 18,
-            top: "50%",
-            transform: "translateY(-50%)",
-            background: "none",
-            border: "none",
-            padding: "2px",
-            cursor: "pointer",
-            color: "rgba(255,255,255,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "2px",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
-          }}
+          className={cn(
+            "absolute right-[18px] top-1/2 -translate-y-1/2",
+            "bg-transparent border-none p-0.5 cursor-pointer",
+            "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+            "flex items-center justify-center rounded-sm",
+          )}
         >
           <X size={12} strokeWidth={2} />
         </button>

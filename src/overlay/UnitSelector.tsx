@@ -4,11 +4,14 @@
  * Shows the current unit in a pill; click to open a dropdown.
  * Closes on outside click. Keyboard navigation via useDropdownKeyboard.
  * Optional conversion tooltip shows "16px -> 1em (base: 16px)" after unit changes.
+ *
+ * Uses Tailwind classes instead of inline styles. Keeps custom dropdown
+ * structure for special options, variable options, and dividers.
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
-import { ms } from "./timing";
+import { cn } from "@/lib/utils";
 
 export interface SpecialOption {
   value: string;
@@ -156,12 +159,14 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     [onChange]
   );
 
+  const hasVariables = variableOptions && variableOptions.length > 0;
+
   // Track the running flat index for highlight across regular + special options
   let flatIndex = 0;
 
   return (
-    <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
-      {/* Pill */}
+    <div ref={containerRef} className="relative inline-block">
+      {/* Pill trigger */}
       <button
         role="combobox"
         aria-expanded={open}
@@ -170,35 +175,11 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          maxWidth: "36px",
-          height: "20px",
-          padding: "0 4px",
-          background: open ? "rgba(99,102,241,0.25)" : "transparent",
-          border: open ? "1px solid rgba(99,102,241,0.4)" : "1px solid transparent",
-          borderRadius: "3px",
-          color: open ? "#a5b4fc" : "rgba(255,255,255,0.7)",
-          fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          cursor: "pointer",
-          lineHeight: 1,
-          transition: `background ${ms("fast")}, color ${ms("fast")}, border-color ${ms("fast")}`,
-        }}
-        onMouseEnter={(e) => {
-          if (!open) {
-            (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-            (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!open) {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-            (e.currentTarget as HTMLElement).style.borderColor = "transparent";
-          }
-        }}
+        className={cn(
+          "h-[20px] px-1.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded cursor-pointer text-[var(--muted-foreground)] hover:border-[rgba(255,255,255,0.2)] transition-colors",
+          "flex items-center justify-center max-w-[36px] leading-none",
+          open && "bg-[rgba(99,102,241,0.25)] border-[rgba(99,102,241,0.4)] text-[#a5b4fc]"
+        )}
       >
         {value}
       </button>
@@ -209,20 +190,10 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          style={{
-            position: "absolute",
-            top: "calc(100% + 2px)",
-            left: 0,
-            minWidth: variableOptions && variableOptions.length > 0 ? "120px" : "42px",
-            background: "#2a2a2a",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-            zIndex: 100,
-            padding: "2px 0",
-            maxHeight: variableOptions && variableOptions.length > 0 ? "220px" : undefined,
-            overflowY: variableOptions && variableOptions.length > 0 ? "auto" : "hidden",
-          }}
+          className={cn(
+            "absolute z-50 top-full mt-0.5 left-0 bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg py-1",
+            hasVariables ? "min-w-[120px] max-h-[220px] overflow-y-auto" : "min-w-[42px] overflow-hidden"
+          )}
         >
           {options.map((unit) => {
             const isActive = unit === value;
@@ -236,22 +207,13 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                 role="option"
                 aria-selected={isActive}
                 onClick={() => handleSelect(unit)}
-                style={{
-                  padding: "3px 8px",
-                  fontSize: "10px",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.6)",
-                  background: isActive ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                  cursor: "pointer",
-                  lineHeight: "16px",
-                  transition: `background ${ms("micro")}`,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) (e.currentTarget as HTMLElement).style.background = isHighlighted && !isActive ? "rgba(255,255,255,0.08)" : isActive ? "#6366f1" : "transparent";
-                }}
+                className={cn(
+                  "px-2 py-1 text-[11px] font-mono cursor-pointer hover:bg-[var(--accent)]",
+                  "leading-4 transition-colors",
+                  isActive && "bg-[var(--primary)] text-white",
+                  !isActive && isHighlighted && "bg-[var(--accent)]",
+                  !isActive && "text-[var(--muted-foreground)]"
+                )}
               >
                 {unit}
               </div>
@@ -259,7 +221,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           })}
           {specialOptions && specialOptions.length > 0 && (
             <>
-              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "2px 0" }} />
+              <div className="h-px bg-[var(--border)] my-1" />
               {specialOptions.map((opt) => {
                 const idx = flatIndex++;
                 const isHighlighted = idx === highlightedIndex;
@@ -271,20 +233,11 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     role="option"
                     aria-selected={false}
                     onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
-                    style={{
-                      padding: "3px 8px",
-                      fontSize: "10px",
-                      fontFamily: "ui-monospace, 'SF Mono', monospace",
-                      color: "rgba(255,255,255,0.6)",
-                      background: isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      transition: `background ${ms("micro")}`,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.03em",
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isHighlighted ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                    className={cn(
+                      "px-2 py-1 text-[11px] font-mono text-[var(--muted-foreground)] cursor-pointer hover:bg-[var(--accent)]",
+                      "leading-4 transition-colors uppercase tracking-wide",
+                      isHighlighted && "bg-[var(--accent)]"
+                    )}
                   >
                     {opt.label}
                   </div>
@@ -292,13 +245,13 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
               })}
             </>
           )}
-          {variableOptions && variableOptions.length > 0 && (
+          {hasVariables && (
             <>
-              <div style={{ height: "1px", background: "rgba(255,255,255,0.1)", margin: "2px 0" }} />
-              <div style={{ padding: "2px 8px 1px", fontSize: "9px", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <div className="h-px bg-[var(--border)] my-1" />
+              <div className="px-2 py-0.5 text-[9px] text-[rgba(255,255,255,0.3)] uppercase tracking-wider">
                 Variables
               </div>
-              {variableOptions.map((v) => {
+              {variableOptions!.map((v) => {
                 const idx = flatIndex++;
                 const isHighlighted = idx === highlightedIndex;
                 return (
@@ -309,27 +262,16 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     role="option"
                     aria-selected={false}
                     onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "6px",
-                      padding: "3px 8px",
-                      fontSize: "10px",
-                      fontFamily: "ui-monospace, 'SF Mono', monospace",
-                      color: "rgba(255,255,255,0.7)",
-                      background: isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      transition: `background ${ms("micro")}`,
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = isHighlighted ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                    className={cn(
+                      "flex items-center justify-between gap-1.5 px-2 py-1 text-[10px] font-mono cursor-pointer hover:bg-[var(--accent)]",
+                      "leading-4 transition-colors text-[rgba(255,255,255,0.7)]",
+                      isHighlighted && "bg-[var(--accent)]"
+                    )}
                   >
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                       {v.name.replace(/^--/, "")}
                     </span>
-                    <span style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0, fontSize: "9px" }}>
+                    <span className="text-[rgba(255,255,255,0.3)] shrink-0 text-[9px]">
                       {v.resolvedValue}
                     </span>
                   </div>
@@ -343,40 +285,19 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       {/* Conversion tooltip */}
       {tooltipText && tooltipPhase && (
         <div
-          style={{
-            position: "absolute",
-            bottom: "calc(100% + 6px)",
-            left: "50%",
-            transform: `translateX(-50%) translateY(${tooltipPhase === "in" ? "0px" : "4px"})`,
-            background: "#2a2a2a",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: "4px",
-            padding: "3px 8px",
-            fontSize: "10px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: "rgba(255,255,255,0.85)",
-            whiteSpace: "nowrap",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-            zIndex: 200,
-            pointerEvents: "none",
-            opacity: tooltipPhase === "in" ? 1 : 0,
-            transition: `opacity ${ms("slow")}, transform ${ms("slow")}`,
-          }}
+          className={cn(
+            "absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2",
+            "bg-[var(--popover)] border border-[var(--border)] rounded",
+            "px-2 py-0.5 text-[10px] font-mono text-[rgba(255,255,255,0.85)]",
+            "whitespace-nowrap shadow-md z-[200] pointer-events-none",
+            "transition-all duration-300",
+            tooltipPhase === "in" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
+          )}
         >
           {tooltipText}
           {/* Arrow pointing down */}
           <div
-            style={{
-              position: "absolute",
-              bottom: "-4px",
-              left: "50%",
-              transform: "translateX(-50%) rotate(45deg)",
-              width: "6px",
-              height: "6px",
-              background: "#2a2a2a",
-              borderRight: "1px solid rgba(255,255,255,0.12)",
-              borderBottom: "1px solid rgba(255,255,255,0.12)",
-            }}
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 rotate-45 w-1.5 h-1.5 bg-[var(--popover)] border-r border-b border-[var(--border)]"
           />
         </div>
       )}

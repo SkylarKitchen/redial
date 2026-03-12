@@ -30,13 +30,13 @@ export const TEXT_DECORATION_OPTIONS = [
 
 export const CAPITALIZE_OPTIONS = [
   { value: "none", title: "None", icon: <X size={11} strokeWidth={2} /> },
-  { value: "uppercase", title: "Uppercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>AA</span> },
-  { value: "capitalize", title: "Capitalize", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>Aa</span> },
-  { value: "lowercase", title: "Lowercase", icon: <span style={{ fontSize: "10px", fontWeight: 600, lineHeight: 1 }}>aa</span> },
+  { value: "uppercase", title: "Uppercase", icon: <span className="text-[10px] font-semibold leading-none">AA</span> },
+  { value: "capitalize", title: "Capitalize", icon: <span className="text-[10px] font-semibold leading-none">Aa</span> },
+  { value: "lowercase", title: "Lowercase", icon: <span className="text-[10px] font-semibold leading-none">aa</span> },
 ];
 
 export const ITALIC_OPTIONS = [
-  { value: "normal", title: "Normal", icon: <span style={{ fontSize: "12px", fontFamily: "Georgia, serif", lineHeight: 1 }}>I</span> },
+  { value: "normal", title: "Normal", icon: <span className="text-xs leading-none" style={{ fontFamily: "Georgia, serif" }}>I</span> },
   { value: "italic", title: "Italic", icon: <Italic size={12} strokeWidth={1.5} /> },
 ];
 
@@ -132,7 +132,7 @@ export const OVERFLOW_ICON_OPTIONS = [
   { value: "hidden", icon: <EyeOff size={14} strokeWidth={1.5} />, title: "Hidden" },
   { value: "clip", icon: <Scissors size={14} strokeWidth={1.5} />, title: "Clip" },
   { value: "scroll", icon: <ScrollText size={14} strokeWidth={1.5} />, title: "Scroll" },
-  { value: "auto", icon: <span style={{ fontSize: "9px", fontFamily: "system-ui, sans-serif", fontWeight: 500 }}>Auto</span>, title: "Auto" },
+  { value: "auto", icon: <span className="text-[9px] font-sans font-medium">Auto</span>, title: "Auto" },
 ];
 
 export const OBJECT_FIT_OPTIONS = [
@@ -289,8 +289,8 @@ export const EMPTY_KEYWORD_MAP: Record<string, string> = {
 // ─── Box Model Options ──────────────────────────────────────────────
 
 export const BOX_SIZING_OPTIONS = [
-  { value: "border-box", icon: <span style={{ fontSize: "9px" }}>Border</span>, title: "border-box" },
-  { value: "content-box", icon: <span style={{ fontSize: "9px" }}>Content</span>, title: "content-box" },
+  { value: "border-box", icon: <span className="text-[9px]">Border</span>, title: "border-box" },
+  { value: "content-box", icon: <span className="text-[9px]">Content</span>, title: "content-box" },
 ];
 
 // ─── Keyboard Shortcuts Reference ───────────────────────────────────

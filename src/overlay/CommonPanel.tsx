@@ -49,17 +49,8 @@ function parseNum(v: string): number {
 
 function FlatGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: "8px 12px" }}>
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          color: "rgba(255,255,255,0.45)",
-          letterSpacing: "0.05em",
-          textTransform: "uppercase" as const,
-          marginBottom: 8,
-        }}
-      >
+    <div className="py-2 px-3">
+      <div className="text-[10px] font-semibold text-[rgba(255,255,255,0.45)] tracking-wider uppercase mb-2">
         {title}
       </div>
       {children}
@@ -83,35 +74,14 @@ function ValueCell({
   onClearKeyword?: () => void;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-      <span
-        style={{
-          fontSize: 10,
-          color: "rgba(255,255,255,0.4)",
-          width: 14,
-          textAlign: "center",
-          flexShrink: 0,
-        }}
-      >
+    <div className="flex items-center gap-1">
+      <span className="text-[10px] text-[rgba(255,255,255,0.4)] w-3.5 text-center shrink-0">
         {label}
       </span>
       {keyword ? (
         <div
           onClick={onClearKeyword}
-          style={{
-            flex: 1,
-            height: 22,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: "rgba(255,255,255,0.35)",
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 3,
-            cursor: "pointer",
-            userSelect: "none",
-          }}
+          className="flex-1 h-[22px] flex items-center justify-center text-[11px] font-mono text-[rgba(255,255,255,0.35)] bg-[rgba(255,255,255,0.04)] rounded-[3px] cursor-pointer select-none"
         >
           {keyword}
         </div>
@@ -170,8 +140,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
     <div>
       {/* ── Style ────────────────────────────────── */}
       <FlatGroup title="Style">
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-          <div style={{ flex: 1 }}>
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex-1">
             <ColorRow
               label="Bg"
               value={bgColor}
@@ -208,7 +178,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         />
       </FlatGroup>
 
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+      <div className="border-b border-[rgba(255,255,255,0.06)]" />
 
       {/* ── Spacing (Webflow box-model diagram) ─── */}
       <FlatGroup title="Spacing">
@@ -225,17 +195,11 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
         />
       </FlatGroup>
 
-      <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+      <div className="border-b border-[rgba(255,255,255,0.06)]" />
 
       {/* ── Size ─────────────────────────────────── */}
       <FlatGroup title="Size">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 6,
-          }}
-        >
+        <div className="grid grid-cols-2 gap-1.5">
           <ValueCell
             label="W"
             value={width}
@@ -268,15 +232,9 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
       {/* ── Position (conditional) ────────────────── */}
       {showPosition && (
         <>
-          <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+          <div className="border-b border-[rgba(255,255,255,0.06)]" />
           <FlatGroup title="Position">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 6,
-              }}
-            >
+            <div className="grid grid-cols-2 gap-1.5">
               <ValueCell
                 label="T"
                 value={top}
@@ -317,7 +275,7 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange }
       {/* ── Typography (conditional) ──────────────── */}
       {showTypo && (
         <>
-          <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} />
+          <div className="border-b border-[rgba(255,255,255,0.06)]" />
           <FlatGroup title="Typography">
             <SliderRow
               label="Size"

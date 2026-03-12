@@ -229,7 +229,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   return (
     <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
-      <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+      <div className="flex gap-1 px-3 py-0.5">
         <SizeInputCell
           label="Width"
           value={width}
@@ -272,7 +272,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Row 2: Min W + Min H */}
-      <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+      <div className="flex gap-1 px-3 py-0.5">
         <SizeInputCell
           label="Min W"
           value={minWidth}
@@ -313,7 +313,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Row 3: Max W + Max H */}
-      <div style={{ display: "flex", gap: "4px", padding: "2px 12px" }}>
+      <div className="flex gap-1 px-3 py-0.5">
         <SizeInputCell
           label="Max W"
           value={maxWidth}
@@ -357,33 +357,33 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {/* Overflow: icon button row */}
       {overflowLocked ? (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Overflow</span>
+        <div className="flex items-center gap-1.5 py-1 px-3">
+          <span className="text-[10px] text-white/50 shrink-0 w-12">Overflow</span>
           <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
-          <button onClick={handleOverflowLockToggle} title="Per-axis overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+          <button onClick={handleOverflowLockToggle} title="Per-axis overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-white/40 text-[10px] rounded-[3px] shrink-0"><Link size={12} strokeWidth={1.5} /></button>
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over X</span>
+          <div className="flex items-center gap-1.5 py-1 px-3">
+            <span className="text-[10px] text-white/50 shrink-0 w-12">Over X</span>
             <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
-            <button onClick={handleOverflowLockToggle} title="Lock overflow" style={{ width: "20px", height: "20px", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "10px", borderRadius: "3px", flexShrink: 0 }}><Link size={12} strokeWidth={1.5} /></button>
+            <button onClick={handleOverflowLockToggle} title="Lock overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-white/25 text-[10px] rounded-[3px] shrink-0"><Link size={12} strokeWidth={1.5} /></button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "4px 12px" }}>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.5)", flexShrink: 0, width: "48px" }}>Over Y</span>
+          <div className="flex items-center gap-1.5 py-1 px-3">
+            <span className="text-[10px] text-white/50 shrink-0 w-12">Over Y</span>
             <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowY} onChange={handleOverflowYChange} />
           </div>
         </>
       )}
-      <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div onClick={() => setShowMoreSize(!showMoreSize)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t border-white/[0.06]">
         <ChevronRight size={9} strokeWidth={2} style={{ color: "rgba(255,255,255,0.35)", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
-        <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>More size options</span>
+        <span className="text-[10px] text-white/35 uppercase tracking-[0.04em]">More size options</span>
       </div>
       {showMoreSize && (
         <>
           <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
-          <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Box Size</span>
+          <div className="flex items-center gap-1.5 py-1 px-3">
+            <span className="w-16 text-[11px] text-white/50 shrink-0">Box Size</span>
             <IconButtonGroup
               options={BOX_SIZING_OPTIONS}
               value={boxSizing}

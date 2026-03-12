@@ -136,9 +136,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
 
   // ── Render ──
   return (
-    <div style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="font-sans">
       {noResults && (
-        <div style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", padding: "40px 20px", fontSize: "12px" }}>
+        <div className="text-center text-[rgba(255,255,255,0.3)] px-5 py-10 text-xs">
           No matching properties
         </div>
       )}

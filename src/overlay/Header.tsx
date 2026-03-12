@@ -12,6 +12,9 @@ import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -74,140 +77,65 @@ export function Header({
 
   return (
     <div
-      className="__tuner-header"
+      className="__tuner-header flex flex-col border-b border-white/[0.08] cursor-grab select-none"
       onMouseDown={onDragStart}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        cursor: "grab",
-        userSelect: "none",
-      }}
     >
-      {/* ── Drag handle indicator ── */}
-      <div style={{ display: "flex", justifyContent: "center", padding: "5px 0 0" }}>
-        <div style={{
-          width: 28,
-          height: 3,
-          borderRadius: 1.5,
-          background: "rgba(255,255,255,0.12)",
-        }} />
+      {/* -- Drag handle indicator -- */}
+      <div className="flex justify-center pt-[5px]">
+        <div className="w-7 h-[3px] rounded-full bg-white/[0.12]" />
       </div>
 
-      {/* ── Main row: tag + class | badges + close ── */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "6px 12px 0",
-      }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-          <span style={{
-            color: "#fff",
-            fontSize: 13,
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            fontWeight: 500,
-            flexShrink: 0,
-          }}>
+      {/* -- Main row: tag + class | badges + close -- */}
+      <div className="flex items-center justify-between px-3 pt-1.5">
+        <div className="flex items-baseline gap-1.5 min-w-0">
+          <span className="text-white text-[13px] font-mono font-medium shrink-0">
             {"<"}{tag}{">"}
           </span>
           {className && (
-            <span style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: 11,
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}>
+            <span className="text-white/50 text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap">
               .{className}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-          <span
-            title={`${vw}px viewport · ${tier} breakpoint`}
-            style={{
-              fontSize: 9,
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
-              color: "rgba(255,255,255,0.35)",
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              padding: "2px 6px",
-              borderRadius: 3,
-              letterSpacing: "0.5px",
-              textTransform: "uppercase",
-              cursor: "default",
-              lineHeight: "14px",
-            }}
+        <div className="flex items-center gap-[5px] shrink-0">
+          <Badge
+            variant="outline"
+            className="text-[9px] font-mono text-white/[0.35] bg-white/[0.06] border-white/[0.06] px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px] hover:bg-white/[0.06] hover:text-white/[0.35]"
+            title={`${vw}px viewport \u00b7 ${tier} breakpoint`}
           >
             {tier}
-          </span>
+          </Badge>
           {totalChanges > 0 && (
-            <button
+            <Badge
+              className="bg-indigo-500/[0.15] border-indigo-500/[0.2] text-indigo-400/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-indigo-500/[0.2]"
               onClick={onShowSession}
-              title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} — click to view session`}
-              style={{
-                background: "rgba(99,102,241,0.15)",
-                border: "1px solid rgba(99,102,241,0.2)",
-                borderRadius: 3,
-                color: "rgba(129,140,248,0.95)",
-                fontSize: 9,
-                fontWeight: 600,
-                fontFamily: "ui-monospace, 'SF Mono', monospace",
-                padding: "2px 6px",
-                cursor: "pointer",
-                lineHeight: "14px",
-                minWidth: 18,
-                textAlign: "center",
-              }}
+              title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
             >
               {totalChanges}
-            </button>
+            </Badge>
           )}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              color: "rgba(255,255,255,0.3)",
-              cursor: "pointer",
-              padding: 3,
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 3,
-              transition: "color 100ms, background 100ms",
-            }}
+            className="h-[18px] w-[18px] p-0 text-white/30 hover:text-white/70 hover:bg-white/[0.08] rounded-[3px] transition-colors duration-100"
             title="Close (Esc)"
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
-              (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.3)";
-              (e.currentTarget as HTMLElement).style.background = "none";
-            }}
           >
             <X size={12} strokeWidth={2} />
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* ── Source file ── */}
+      {/* -- Source file -- */}
       {sourceFile && (
-        <div style={{ padding: "2px 12px 0" }}>
-          <span style={{
-            color: "rgba(255,255,255,0.3)",
-            fontSize: 10,
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-          }}>
+        <div className="px-3 pt-0.5">
+          <span className="text-white/30 text-[10px] font-mono">
             {sourceFile}
           </span>
         </div>
       )}
 
-      {/* ── Breadcrumb ── */}
+      {/* -- Breadcrumb -- */}
       {breadcrumb && breadcrumb.length > 1 && (() => {
         const shouldCollapse = breadcrumb.length >= 4 && !breadcrumbExpanded;
         const visibleSegments = shouldCollapse
@@ -216,60 +144,35 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            fontSize: 11,
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: "rgba(255,255,255,0.35)",
-            padding: "3px 12px 0",
-            overflow: "hidden",
-          }}>
+          <div className="flex items-center gap-0.5 text-[11px] font-mono text-white/[0.35] px-3 pt-[3px] overflow-hidden">
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
               return (
-                <span key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <span key={i} className="flex items-center gap-0.5">
                   {i === 1 && ellipsisAfterFirst && (
                     <>
-                      <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />
+                      <ChevronRight size={10} strokeWidth={2} className="opacity-40" />
                       <span
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
-                        style={{
-                          cursor: "pointer",
-                          padding: "0 2px",
-                          borderRadius: 2,
-                          color: "rgba(255,255,255,0.4)",
-                          transition: "color 100ms, background 100ms",
-                        }}
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.7)";
-                          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.4)";
-                          (e.currentTarget as HTMLElement).style.background = "transparent";
-                        }}
+                        className="cursor-pointer px-0.5 rounded-sm text-white/40 hover:text-white/70 hover:bg-white/[0.08] transition-colors duration-100"
                         title="Show full breadcrumb"
                       >
                         ...
                       </span>
                     </>
                   )}
-                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
+                  {i > 0 && <ChevronRight size={10} strokeWidth={2} className="opacity-40" />}
                   <span
                     onClick={(e) => { e.stopPropagation(); if (!isLast) onBreadcrumbClick?.(seg.el); }}
                     onMouseEnter={() => { if (!isLast) onBreadcrumbHover?.(seg.el); }}
                     onMouseLeave={() => { if (!isLast) onBreadcrumbHover?.(null); }}
-                    style={{
-                      color: isLast ? "#fff" : "rgba(255,255,255,0.35)",
-                      cursor: isLast ? "default" : "pointer",
-                      whiteSpace: "nowrap",
-                      borderRadius: 2,
-                      padding: isLast ? undefined : "0 2px",
-                      transition: "color 100ms, background 100ms",
-                    }}
+                    className={cn(
+                      "whitespace-nowrap rounded-sm transition-colors duration-100",
+                      isLast
+                        ? "text-white cursor-default"
+                        : "text-white/[0.35] hover:text-white/70 hover:bg-white/[0.08] cursor-pointer px-0.5",
+                    )}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
@@ -281,15 +184,9 @@ export function Header({
         );
       })()}
 
-      {/* ── Toolbar: scope pills + state selector on one row ── */}
+      {/* -- Toolbar: scope pills + state selector on one row -- */}
       {hasToolbar && (
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 3,
-          padding: "6px 12px 8px",
-          flexWrap: "wrap",
-        }}>
+        <div className="flex items-center gap-[3px] px-3 pt-1.5 pb-2 flex-wrap">
           {cssClasses.length > 0 && onScopeChange && (
             <>
               <ScopePill
@@ -313,13 +210,7 @@ export function Header({
           {state !== undefined && onStateChange && (
             <>
               {cssClasses.length > 0 && onScopeChange && (
-                <div style={{
-                  width: 1,
-                  height: 14,
-                  background: "rgba(255,255,255,0.08)",
-                  margin: "0 3px",
-                  flexShrink: 0,
-                }} />
+                <div className="w-px h-3.5 bg-white/[0.08] mx-[3px] shrink-0" />
               )}
               <StateSelector value={state} onChange={onStateChange} />
             </>
@@ -328,12 +219,12 @@ export function Header({
       )}
 
       {/* Bottom spacing when no toolbar present */}
-      {!hasToolbar && <div style={{ height: 8 }} />}
+      {!hasToolbar && <div className="h-2" />}
     </div>
   );
 }
 
-// ── Scope pill ──────────────────────────────────────────────
+// -- Scope pill --
 
 function ScopePill({
   label,
@@ -345,35 +236,17 @@ function ScopePill({
   onClick: () => void;
 }) {
   return (
-    <button
+    <Badge
+      variant="outline"
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      style={{
-        padding: "2px 8px",
-        fontSize: 10,
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
-        border: "none",
-        borderRadius: 4,
-        cursor: "pointer",
-        background: active ? "rgba(255,255,255,0.12)" : "transparent",
-        color: active ? "#fff" : "rgba(255,255,255,0.45)",
-        lineHeight: "16px",
-        whiteSpace: "nowrap",
-        transition: "background 100ms, color 100ms",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) {
-          (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
-          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.6)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!active) {
-          (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.45)";
-        }
-      }}
+      className={cn(
+        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-white/[0.06] hover:text-white/60",
+        active
+          ? "bg-white/[0.12] text-white hover:bg-white/[0.12] hover:text-white"
+          : "bg-transparent text-white/[0.45]",
+      )}
     >
       {label}
-    </button>
+    </Badge>
   );
 }

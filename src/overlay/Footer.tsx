@@ -10,17 +10,19 @@ import { resetClassStyles } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
-import { ms, timing } from "./timing";
+import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
-// ─── Clean CSS format (no "was" comments) ───────────────────────
+// --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
   const selector = getSelector(el);
   const lines = changes.map((c) => `  ${c.prop}: ${c.to};`);
   return `${selector} {\n${lines.join("\n")}\n}`;
 }
 
-// ─── CSS Custom Properties export ────────────────────────────────
+// --- CSS Custom Properties export ---
 const SEMANTIC_NAMES: Record<string, string> = {
   "font-size": "--font-size",
   "font-weight": "--font-weight",
@@ -173,7 +175,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         onSaved?.();
       }
     } catch {
-      showMessage("Save failed — no route?", 2000);
+      showMessage("Save failed \u2014 no route?", 2000);
     } finally {
       setSaving(false);
       savingRef.current = false;
@@ -189,43 +191,26 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onReset, scope, activeClassName]);
 
   return (
-    <div
-      className="__tuner-footer"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        padding: "8px 8px",
-        borderTop: "1px solid rgba(255,255,255,0.1)",
-        gap: "6px",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
+    <div className="__tuner-footer flex flex-col px-3 py-2 border-t border-white/10 gap-1.5">
+      <div className="flex items-center justify-between gap-1.5">
         {/* Left: Copy dropdown + Import/Paste */}
-        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          <div ref={copyRef} style={{ position: "relative" }}>
-            <ActionButton
+        <div className="flex gap-1.5 items-center">
+          <div ref={copyRef} className="relative">
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setCopyOpen((o) => !o)}
               disabled={count === 0}
               title="Copy styles"
-              active={copyOpen}
+              className={cn(
+                "h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70",
+                copyOpen && "border-yellow-400/40 bg-yellow-400/[0.12] text-yellow-400/90 hover:bg-yellow-400/[0.15] hover:text-yellow-400/90",
+              )}
             >
-              Copy <span style={{ fontSize: "9px", marginLeft: "2px", opacity: 0.6 }}>&#9662;</span>
-            </ActionButton>
+              Copy <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
+            </Button>
             {copyOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "calc(100% + 4px)",
-                  left: 0,
-                  background: "#2a2a2a",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "6px",
-                  padding: "4px 0",
-                  minWidth: "140px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-                  zIndex: 100,
-                }}
-              >
+              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#2a2a2a] border border-white/[0.12] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.4)] z-[100]">
                 <DropdownItem onClick={handleCopyCleanCSS}>CSS</DropdownItem>
                 <DropdownItem onClick={handleCopyTailwind}>Tailwind</DropdownItem>
                 <DropdownItem onClick={handleCopyVars}>CSS Variables</DropdownItem>
@@ -233,40 +218,49 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               </div>
             )}
           </div>
-          <ActionButton
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onPasteStyles ?? (() => {})}
             disabled={!hasClipboard}
             title="Paste styles (Cmd+Alt+V)"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70"
           >
             Paste
-          </ActionButton>
-          <ActionButton
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onCSSImport ?? (() => {})}
             disabled={!onCSSImport}
             title="Import CSS from clipboard"
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-white/10 bg-white/[0.08] text-white/70 hover:bg-white/[0.12] hover:text-white/70"
           >
             Import
-          </ActionButton>
+          </Button>
         </div>
 
         {/* Right: Reset + Save */}
-        <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-          <ActionButton
+        <div className="flex gap-1.5 items-center">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleReset}
             disabled={count === 0}
             title="Reset (R)"
-            destructive
+            className="h-7 text-[12px] font-normal px-2 rounded-md border border-red-500/[0.15] bg-white/[0.08] text-red-500/80 hover:bg-white/[0.12] hover:text-red-500/80"
           >
             Reset
-          </ActionButton>
-          <ActionButton
+          </Button>
+          <Button
+            size="sm"
             onClick={handleSave}
             disabled={count === 0 || saving}
             title="Save to source"
-            primary
+            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-indigo-500 text-white shadow-[0_1px_3px_rgba(99,102,241,0.4)] hover:bg-indigo-500/90 disabled:shadow-none"
           >
             {saving ? "..." : "Save"}
-          </ActionButton>
+          </Button>
         </div>
       </div>
 
@@ -280,7 +274,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: timing.expand / 1000 }}
-              style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px" }}
+              className="text-white/40 text-[11px]"
             >
               {clipboardMessage || message}
             </motion.span>
@@ -293,84 +287,11 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
 // --- Sub-components ---
 
-function ActionButton({
-  children,
-  onClick,
-  disabled,
-  title,
-  primary,
-  active,
-  destructive,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  title?: string;
-  primary?: boolean;
-  active?: boolean;
-  destructive?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      style={{
-        padding: primary ? "5px 10px" : "4px 6px",
-        fontSize: primary ? "12px" : "11px",
-        fontWeight: primary ? 600 : 400,
-        fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
-        border: active
-          ? "1px solid rgba(250, 204, 21, 0.4)"
-          : primary
-            ? "none"
-            : destructive
-              ? "1px solid rgba(239, 68, 68, 0.15)"
-              : "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "6px",
-        whiteSpace: "nowrap" as const,
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.35 : 1,
-        background: active
-          ? "rgba(250, 204, 21, 0.12)"
-          : primary
-            ? "#6366f1"
-            : "rgba(255,255,255,0.08)",
-        color: active
-          ? "rgba(250, 204, 21, 0.9)"
-          : primary
-            ? "#fff"
-            : destructive
-              ? "rgba(239, 68, 68, 0.8)"
-              : "rgba(255, 255, 255, 0.7)",
-        transition: `opacity ${ms("normal")}, background ${ms("normal")}`,
-        boxShadow: primary && !disabled ? "0 1px 3px rgba(99, 102, 241, 0.4)" : "none",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
 function DropdownItem({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <button
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: "block",
-        width: "100%",
-        padding: "6px 12px",
-        fontSize: "12px",
-        fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
-        border: "none",
-        background: hovered ? "rgba(255,255,255,0.08)" : "transparent",
-        color: "rgba(255,255,255,0.8)",
-        cursor: "pointer",
-        textAlign: "left",
-      }}
+      className="block w-full px-3 py-1.5 text-[12px] font-sans border-none bg-transparent text-white/80 cursor-pointer text-left hover:bg-white/[0.08] transition-colors"
     >
       {children}
     </button>

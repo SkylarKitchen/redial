@@ -10,10 +10,11 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { ms } from "./timing";
+
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
+import { cn } from "@/lib/utils";
 import {
   DISPLAY_TABS, DISPLAY_MORE,
   DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
@@ -45,7 +46,7 @@ export function MiniDropdown({ value, options, onChange }: {
   });
 
   return (
-    <div ref={ref} style={{ position: "relative", flex: 1 }}>
+    <div ref={ref} className="relative flex-1">
       <button
         role="combobox"
         aria-expanded={open}
@@ -54,27 +55,17 @@ export function MiniDropdown({ value, options, onChange }: {
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        style={{
-          width: "100%", height: "22px", display: "flex", alignItems: "center",
-          justifyContent: "space-between", padding: "0 6px",
-          background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "3px", color: "rgba(255,255,255,0.8)", fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace", cursor: "pointer", outline: "none",
-        }}
+        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono text-[rgba(255,255,255,0.8)] cursor-pointer outline-none"
       >
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.label ?? value}</span>
-        <ChevronDown size={10} strokeWidth={2} style={{ color: "rgba(255,255,255,0.3)", marginLeft: "4px", flexShrink: 0 }} />
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
+        <ChevronDown size={10} strokeWidth={2} className="text-[rgba(255,255,255,0.3)] ml-1 shrink-0" />
       </button>
       {open && (
         <div
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          style={{
-            position: "absolute", top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "80px",
-            background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
-          }}
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5"
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -87,14 +78,14 @@ export function MiniDropdown({ value, options, onChange }: {
                 role="option"
                 aria-selected={active}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                style={{
-                  padding: "3px 8px", fontSize: "10px", fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  color: active ? "#fff" : "rgba(255,255,255,0.6)",
-                  background: active ? "#6366f1" : isHighlighted ? "rgba(255,255,255,0.08)" : "transparent",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = isHighlighted && !active ? "rgba(255,255,255,0.08)" : active ? "#6366f1" : "transparent"; }}
+                className={cn(
+                  "px-2 py-[3px] text-[10px] font-mono cursor-pointer",
+                  active
+                    ? "bg-[var(--primary)] text-white"
+                    : isHighlighted
+                      ? "bg-[rgba(255,255,255,0.08)] text-[rgba(255,255,255,0.6)]"
+                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                )}
               >
                 {opt.label}
               </div>
@@ -123,18 +114,15 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
   useClickOutside(containerRef, moreOpen, closeMore);
 
   return (
-    <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
-      <span style={{
-        fontSize: "11px", flexShrink: 0,
-        ...(isSet ? {
-          background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)",
-          borderRadius: "3px", padding: "2px 6px",
-        } : {
-          color: "rgba(255,255,255,0.5)", width: "64px",
-        }),
-      }}>Direction</span>
-      <div ref={containerRef} style={{ display: "flex", position: "relative" }}>
-        <div style={{ display: "inline-flex" }}>
+    <div className="flex items-center gap-1.5 py-1 px-3">
+      <span className={cn(
+        "text-[11px] shrink-0",
+        isSet
+          ? "bg-[rgba(99,102,241,0.25)] text-[rgba(130,140,255,0.9)] rounded-[3px] px-1.5 py-0.5"
+          : "text-[var(--muted-foreground)] w-16",
+      )}>Direction</span>
+      <div ref={containerRef} className="flex relative">
+        <div className="inline-flex">
           {DIRECTION_ICONS_SHORT.map((opt, i) => {
             const isFirst = i === 0;
             const isLast = i === DIRECTION_ICONS_SHORT.length - 1;
@@ -150,19 +138,17 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
                     onDirectionChange(opt.value);
                   }
                 }}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  height: "28px", minWidth: "32px", padding: "0 8px", cursor: "pointer",
-                  background: isActive ? "rgba(255,255,255,0.12)" : "transparent",
-                  color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
-                  fontWeight: isActive ? 500 : 400,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderLeft: isFirst ? "1px solid rgba(255,255,255,0.15)" : "none",
-                  borderRadius: isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : "0",
-                  outline: "none", transition: `background ${ms("fast")}, color ${ms("fast")}`,
-                }}
-                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
-                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.background = isActive ? "rgba(255,255,255,0.12)" : "transparent"; }}
+                className={cn(
+                  "flex items-center justify-center h-7 min-w-[32px] px-2 cursor-pointer outline-none transition-colors",
+                  "border border-[rgba(255,255,255,0.15)]",
+                  !isFirst && "border-l-0",
+                  isFirst && "rounded-l",
+                  isLast && "rounded-r",
+                  !isFirst && !isLast && "rounded-none",
+                  isActive
+                    ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
+                    : "bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--accent)]",
+                )}
               >
                 {opt.icon}
               </button>
@@ -171,32 +157,25 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
         </div>
         <button
           onClick={() => setMoreOpen((o) => !o)}
-          style={{
-            width: "20px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center",
-            background: direction.includes("reverse") ? "rgba(99,102,241,0.2)" : "transparent",
-            border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)",
-            fontSize: "10px", outline: "none", flexShrink: 0, marginLeft: "2px",
-          }}
+          className={cn(
+            "w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[rgba(255,255,255,0.35)] text-[10px] outline-none shrink-0 ml-0.5",
+            direction.includes("reverse") ? "bg-[rgba(99,102,241,0.2)]" : "bg-transparent",
+          )}
         ><ChevronDown size={10} strokeWidth={2} /></button>
         {moreOpen && (
-          <div style={{
-            position: "absolute", top: "calc(100% + 2px)", right: 0, minWidth: "120px",
-            background: "#2a2a2a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)", zIndex: 200, padding: "2px 0",
-          }}>
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5">
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const active = opt.value === direction;
               return (
                 <div
                   key={opt.value}
                   onClick={() => { onDirectionChange(opt.value); setMoreOpen(false); }}
-                  style={{
-                    padding: "4px 8px", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: active ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: active ? "#6366f1" : "transparent", cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  className={cn(
+                    "px-2 py-1 text-[11px] font-mono cursor-pointer",
+                    active
+                      ? "bg-[var(--primary)] text-white"
+                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                  )}
                 >
                   {opt.label}
                 </div>
@@ -220,42 +199,35 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
   const gapLinked = linked;
   const pct = (value / 200) * 100;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+    <div className="flex items-center gap-1.5 py-0.5 px-3">
       <LabelScrub value={value} onChange={onChange} step={1} min={0} max={200}>
-        <span style={{ width: "48px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0, cursor: "ew-resize" }}>Gap</span>
+        <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 cursor-ew-resize">Gap</span>
       </LabelScrub>
       {/* Color swatch indicator */}
-      <div style={{
-        width: "10px", height: "10px", borderRadius: "2px", flexShrink: 0,
-        background: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.2)",
-      }} />
+      <div className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[rgba(255,255,255,0.15)] border border-[rgba(255,255,255,0.2)]" />
       {/* Slider */}
       <input
         type="range" min={0} max={200} step={1} value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="flex-1 h-[3px] outline-none cursor-pointer"
         style={{
-          flex: 1, height: "3px", appearance: "none", WebkitAppearance: "none",
+          appearance: "none", WebkitAppearance: "none",
           background: `linear-gradient(to right, #6366f1 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`,
-          borderRadius: "2px", outline: "none", cursor: "pointer",
+          borderRadius: "2px",
         }}
       />
       {/* Value input */}
       <ValueInput value={value} onChange={onChange} />
       {/* Unit label */}
-      <span style={{
-        fontSize: "9px", color: "rgba(255,255,255,0.4)", width: "16px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace", textTransform: "uppercase",
-      }}>{unit.toUpperCase()}</span>
+      <span className="text-[9px] text-[rgba(255,255,255,0.4)] w-4 font-mono uppercase">{unit.toUpperCase()}</span>
       {/* Link/lock icon */}
       <button
         onClick={() => onLinkedChange(!gapLinked)}
         title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
-        style={{
-          width: "18px", height: "18px", display: "flex", alignItems: "center", justifyContent: "center",
-          background: "transparent", border: "none", cursor: "pointer", padding: 0,
-          color: gapLinked ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.2)",
-          fontSize: "11px", flexShrink: 0,
-        }}
+        className={cn(
+          "w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0",
+          gapLinked ? "text-[rgba(255,255,255,0.4)]" : "text-[rgba(255,255,255,0.2)]",
+        )}
       >
         {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
       </button>
@@ -274,10 +246,15 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
   const isTabValue = (DISPLAY_TABS as readonly string[]).includes(value);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span style={{ fontSize: "11px", flexShrink: 0, ...(value !== "block" ? { background: "rgba(99,102,241,0.25)", color: "rgba(130,140,255,0.9)", borderRadius: "3px", padding: "2px 6px" } : { color: "rgba(255,255,255,0.5)", width: "64px" }) }}>Display</span>
-      <div ref={containerRef} style={{ display: "flex", flex: 1, position: "relative" }}>
-        <div role="radiogroup" aria-label="Display mode" style={{ display: "flex", flex: 1, borderRadius: "3px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.12)" }}>
+    <div className="flex items-center gap-1.5 py-0.5 px-3">
+      <span className={cn(
+        "text-[11px] shrink-0",
+        value !== "block"
+          ? "bg-[rgba(99,102,241,0.25)] text-[rgba(130,140,255,0.9)] rounded-[3px] px-1.5 py-0.5"
+          : "text-[var(--muted-foreground)] w-16",
+      )}>Display</span>
+      <div ref={containerRef} className="flex flex-1 relative">
+        <div role="radiogroup" aria-label="Display mode" className="flex flex-1 rounded-[3px] overflow-hidden border border-[var(--border)]">
           {DISPLAY_TABS.map((tab) => {
             const active = value === tab;
             return (
@@ -302,23 +279,13 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                 }}
                 onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
                 onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-                style={{
-                  flex: 1,
-                  height: "24px",
-                  fontSize: "10px",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                  cursor: "pointer",
-                  border: "none",
-                  borderRight: tab !== "none" ? "1px solid rgba(255,255,255,0.08)" : "none",
-                  background: active ? "rgba(255,255,255,0.12)" : "transparent",
-                  color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
-                  fontWeight: active ? 500 : 400,
-                  outline: "none",
-                  transition: `background ${ms("fast")}, color ${ms("fast")}`,
-                  textTransform: "capitalize",
-                }}
-                onMouseEnter={(e) => { if (value !== tab) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; }}
-                onMouseLeave={(e) => { if (value !== tab) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                className={cn(
+                  "flex-1 h-6 text-[10px] font-mono cursor-pointer border-none outline-none transition-colors capitalize",
+                  tab !== "none" && "border-r border-r-[rgba(255,255,255,0.08)]",
+                  active
+                    ? "bg-[rgba(255,255,255,0.12)] text-[rgba(255,255,255,0.9)] font-medium"
+                    : "bg-transparent text-[rgba(255,255,255,0.45)] font-normal hover:bg-[var(--accent)]",
+                )}
               >
                 {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -329,54 +296,27 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
           onClick={() => setMoreOpen((o) => !o)}
           onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-          style={{
-            width: "20px",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: !isTabValue ? "rgba(99,102,241,0.2)" : "transparent",
-            border: "none",
-            cursor: "pointer",
-            color: "rgba(255,255,255,0.35)",
-            fontSize: "10px",
-            outline: "none",
-            flexShrink: 0,
-            marginLeft: "2px",
-          }}
+          className={cn(
+            "w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[rgba(255,255,255,0.35)] text-[10px] outline-none shrink-0 ml-0.5",
+            !isTabValue ? "bg-[rgba(99,102,241,0.2)]" : "bg-transparent",
+          )}
         >
           <ChevronDown size={10} strokeWidth={2} />
         </button>
         {moreOpen && (
-          <div style={{
-            position: "absolute",
-            top: "calc(100% + 2px)",
-            right: 0,
-            minWidth: "120px",
-            background: "#2a2a2a",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: "4px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
-            zIndex: 200,
-            padding: "2px 0",
-          }}>
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#2a2a2a] border border-[rgba(255,255,255,0.15)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.4)] py-0.5">
             {DISPLAY_MORE.map((opt) => {
               const active = opt.value === value;
               return (
                 <div
                   key={opt.value}
                   onClick={() => { onChange(opt.value); setMoreOpen(false); }}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    color: active ? "#fff" : "rgba(255,255,255,0.6)",
-                    background: active ? "#6366f1" : "transparent",
-                    cursor: "pointer",
-                    transition: `background ${ms("micro")}`,
-                  }}
-                  onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                  className={cn(
+                    "px-2 py-1 text-[11px] font-mono cursor-pointer transition-colors",
+                    active
+                      ? "bg-[var(--primary)] text-white"
+                      : "text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.08)]",
+                  )}
                 >
                   {opt.label}
                 </div>
@@ -452,24 +392,14 @@ export function TypoValueCell({
   return (
     <div
       ref={cellRef}
-      style={{
-        flex: 1,
-        display: "flex",
-        alignItems: "center",
-        height: "28px",
-        background: "rgba(255,255,255,0.06)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "4px",
-        overflow: "hidden",
-        minWidth: 0,
-      }}
+      className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden min-w-0"
     >
       {isKeyword ? (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.6)", padding: "0 6px", cursor: "text", outline: "none" }}
+          className="flex-1 text-[11px] font-mono text-[rgba(255,255,255,0.6)] px-1.5 cursor-text outline-none"
         >
           {keyword}
         </span>
@@ -481,14 +411,14 @@ export function TypoValueCell({
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          style={{ flex: 1, width: 0, background: "transparent", border: "none", color: "rgba(255,255,255,0.9)", fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", padding: "0 6px", outline: "none" }}
+          className="flex-1 w-0 bg-transparent border-none text-[rgba(255,255,255,0.9)] text-[11px] font-mono px-1.5 outline-none"
         />
       ) : (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          style={{ flex: 1, fontSize: "11px", fontFamily: "ui-monospace, 'SF Mono', monospace", color: "rgba(255,255,255,0.8)", padding: "0 6px", cursor: "text", outline: "none" }}
+          className="flex-1 text-[11px] font-mono text-[rgba(255,255,255,0.8)] px-1.5 cursor-text outline-none"
         >
           {value}
         </span>
@@ -496,7 +426,7 @@ export function TypoValueCell({
       {units && onUnitChange ? (
         <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
-        <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", padding: "0 6px 0 0", flexShrink: 0, fontFamily: "ui-monospace, 'SF Mono', monospace" }}>
+        <span className="text-[9px] text-[rgba(255,255,255,0.4)] uppercase pr-1.5 shrink-0 font-mono">
           {unit}
         </span>
       )}

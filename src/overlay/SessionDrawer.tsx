@@ -12,6 +12,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "./util";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { timing } from "./timing";
+import { Button } from "@/components/ui/button";
 
 interface SessionDrawerProps {
   open: boolean;
@@ -105,18 +106,10 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: timing.layout / 1000 }}
-          style={{ overflow: "hidden", borderTop: "1px solid rgba(255,255,255,0.1)" }}
+          className="overflow-hidden border-t border-[var(--border)]"
         >
-          <div style={{ padding: "8px 12px" }}>
-            <div
-              style={{
-                fontSize: "11px",
-                color: "rgba(255, 255, 255, 0.4)",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginBottom: "6px",
-              }}
-            >
+          <div className="px-3 py-2">
+            <div className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] mb-1.5">
               Session — {allDiffs.length} element{allDiffs.length === 1 ? "" : "s"}
             </div>
 
@@ -131,32 +124,35 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
             ))}
 
             {allDiffs.length === 0 && (
-              <div style={{ color: "rgba(255, 255, 255, 0.3)", fontSize: "11px", padding: "4px 0" }}>
+              <div className="text-[11px] text-[var(--muted-foreground)] py-1">
                 No changes yet
               </div>
             )}
 
             {/* Action bar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginTop: "8px",
-                paddingTop: "6px",
-                borderTop: "1px solid rgba(255,255,255,0.1)",
-              }}
-            >
-              <div style={{ display: "flex", gap: "6px" }}>
-                <SmallButton onClick={handleCopyAll} disabled={allDiffs.length === 0}>
+            <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[var(--border)]">
+              <div className="flex gap-1.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyAll}
+                  disabled={allDiffs.length === 0}
+                  className="h-6 px-2 text-[10px]"
+                >
                   Copy All
-                </SmallButton>
-                <SmallButton onClick={handleSaveAll} disabled={allDiffs.length === 0 || saving} primary>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSaveAll}
+                  disabled={allDiffs.length === 0 || saving}
+                  className="h-6 px-2 text-[10px]"
+                >
                   {saving ? "..." : "Save All"}
-                </SmallButton>
+                </Button>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div role="status" aria-live="polite" style={{ minHeight: "14px" }}>
+              <div className="flex items-center gap-1.5">
+                <div role="status" aria-live="polite" className="min-h-[14px]">
                   <AnimatePresence mode="wait">
                     {message && (
                       <motion.span
@@ -165,16 +161,22 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "10px" }}
+                        className="text-[10px] text-[var(--muted-foreground)]"
                       >
                         {message}
                       </motion.span>
                     )}
                   </AnimatePresence>
                 </div>
-                <SmallButton onClick={handleResetAll} disabled={allDiffs.length === 0}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetAll}
+                  disabled={allDiffs.length === 0}
+                  className="h-6 px-2 text-[10px]"
+                >
                   Reset All
-                </SmallButton>
+                </Button>
               </div>
             </div>
           </div>
@@ -201,30 +203,17 @@ function ElementGroup({
   const cls = getDisplayClass(el);
 
   return (
-    <div style={{ marginBottom: "4px" }}>
+    <div className="mb-1">
       <button
         onClick={onToggle}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          width: "100%",
-          background: "none",
-          border: "none",
-          padding: "3px 0",
-          cursor: "pointer",
-          textAlign: "left",
-          fontSize: "12px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: "rgba(255, 255, 255, 0.95)",
-        }}
+        className="flex items-center gap-1.5 w-full bg-transparent border-none py-0.5 cursor-pointer text-left text-[12px] font-mono text-[var(--foreground)]"
       >
-        <span style={{ color: "rgba(255, 255, 255, 0.3)", display: "flex", alignItems: "center" }}>
+        <span className="text-[var(--muted-foreground)] flex items-center">
           {expanded ? <ChevronDown size={10} strokeWidth={2} /> : <ChevronRight size={10} strokeWidth={2} />}
         </span>
-        <span style={{ color: "#fff" }}>{"<"}{tag}{">"}</span>
-        {cls && <span style={{ color: "rgba(255, 255, 255, 0.6)" }}>.{cls}</span>}
-        <span style={{ color: "rgba(255, 255, 255, 0.4)", marginLeft: "auto", fontSize: "10px" }}>
+        <span className="text-[var(--foreground)]">{"<"}{tag}{">"}</span>
+        {cls && <span className="text-[var(--muted-foreground)]">.{cls}</span>}
+        <span className="text-[var(--muted-foreground)] ml-auto text-[10px]">
           {changes.length} change{changes.length === 1 ? "" : "s"}
         </span>
       </button>
@@ -236,61 +225,22 @@ function ElementGroup({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: timing.expand / 1000 }}
-            style={{ overflow: "hidden" }}
+            className="overflow-hidden"
           >
             {changes.map((c, i) => (
               <div
                 key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: "6px",
-                  padding: "2px 0 2px 18px",
-                  fontSize: "11px",
-                  fontFamily: "ui-monospace, 'SF Mono', monospace",
-                }}
+                className="flex items-baseline gap-1.5 py-0.5 pl-[18px] text-[11px] font-mono"
               >
-                <span style={{ color: "rgba(255, 255, 255, 0.6)", minWidth: "100px" }}>{c.prop}</span>
-                <span style={{ color: "rgba(255, 255, 255, 0.4)" }}>{c.from}</span>
-                <span style={{ color: "rgba(255, 255, 255, 0.3)" }}>→</span>
-                <span style={{ color: "#fff" }}>{c.to}</span>
+                <span className="text-[var(--muted-foreground)] min-w-[100px]">{c.prop}</span>
+                <span className="text-[var(--muted-foreground)]">{c.from}</span>
+                <span className="text-[var(--muted-foreground)] opacity-50">&rarr;</span>
+                <span className="text-[var(--foreground)]">{c.to}</span>
               </div>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function SmallButton({
-  children,
-  onClick,
-  disabled,
-  primary,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  primary?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "3px 8px",
-        fontSize: "10px",
-        fontFamily: "system-ui, sans-serif",
-        border: "1px solid rgba(255,255,255,0.1)",
-        borderRadius: "6px",
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.35 : 1,
-        background: primary ? "rgba(255, 255, 255, 0.15)" : "rgba(255,255,255,0.08)",
-        color: primary ? "#fff" : "rgba(255, 255, 255, 0.7)",
-      }}
-    >
-      {children}
-    </button>
   );
 }

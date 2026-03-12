@@ -29,7 +29,6 @@ export interface PropertyContextMenuProps {
   onReset?: () => void;
 }
 
-const MENU_MIN_WIDTH = 160;
 const MENU_PAD = 8;
 
 export function PropertyContextMenu({
@@ -114,49 +113,25 @@ export function PropertyContextMenu({
     <div
       ref={menuRef}
       data-tuner-portal
-      style={{
-        position: "fixed",
-        left: x,
-        top: y,
-        minWidth: MENU_MIN_WIDTH,
-        background: "#252525",
-        border: "1px solid rgba(255,255,255,0.12)",
-        borderRadius: "6px",
-        boxShadow: "0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3)",
-        zIndex: 2147483647,
-        padding: "4px 0",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
+      className="fixed z-[2147483647] min-w-[160px] bg-[var(--popover)] text-[var(--popover-foreground)] border border-[var(--border)] rounded-md shadow-lg py-1 overflow-hidden"
+      style={{ left: x, top: y }}
     >
       {items.map((item) => (
-        <MenuItem key={item.label} label={item.label} onClick={item.action} />
+        <PropertyMenuItem key={item.label} label={item.label} onClick={item.action} />
       ))}
     </div>,
     document.body
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function PropertyMenuItem({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <div
       role="menuitem"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      style={{
-        padding: "6px 12px",
-        fontSize: "12px",
-        color: "rgba(255,255,255,0.8)",
-        cursor: "pointer",
-        userSelect: "none",
-        transition: "background 60ms",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.background = "transparent";
-      }}
+      className="flex items-center justify-between px-3 py-1.5 text-[12px] cursor-pointer hover:bg-[var(--accent)] outline-none select-none"
     >
       {label}
     </div>

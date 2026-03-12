@@ -104,7 +104,7 @@ export const BordersSection = memo(function BordersSection({
       <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind(borderProp("style"))} onContextMenu={ctxMenu(borderProp("style"), borderStyle)} computedProp={borderProp("style")} computedElement={element} />
       <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); apply(borderProp("width"), `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss(borderProp("width"), setBorderWidth)} indicator={ind(borderProp("width"))} conversionHint={bwHint} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)} computedProp={borderProp("width")} computedElement={element} />
       <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} />
-      <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div className="px-3 pt-1 text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider">
         Radius
       </div>
       <CornerRadiusEditor

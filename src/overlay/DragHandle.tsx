@@ -5,7 +5,7 @@
  */
 
 import { GripVertical } from "lucide-react";
-import { ms } from "./timing";
+import { cn } from "@/lib/utils";
 
 export interface DragHandleProps {
   isDragging?: boolean;
@@ -17,22 +17,11 @@ export function DragHandle({ isDragging, onPointerDown, style }: DragHandleProps
   return (
     <span
       onPointerDown={onPointerDown}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "16px",
-        height: "16px",
-        flexShrink: 0,
-        opacity: isDragging ? 0.7 : 0,
-        cursor: isDragging ? "grabbing" : "grab",
-        touchAction: "none",
-        transition: `opacity ${ms("normal")}`,
-        ...style,
-      }}
-      // Show on parent hover via CSS-in-JS workaround:
-      // Parent should set `&:hover .drag-handle { opacity: 0.4 }` equivalent
-      className="__tuner-drag-handle"
+      className={cn(
+        "inline-flex items-center justify-center w-4 h-4 shrink-0 cursor-grab touch-none transition-opacity __tuner-drag-handle",
+        isDragging ? "opacity-70 cursor-grabbing" : "opacity-0",
+      )}
+      style={style}
     >
       <GripVertical size={12} color="rgba(255,255,255,0.5)" />
     </span>

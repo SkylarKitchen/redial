@@ -3,10 +3,12 @@
  *
  * Used for text-align, text-decoration, text-transform, etc.
  * Supports single-select (radio) and multi-select (toggle) modes.
+ * Built on Shadcn ToggleGroup primitives with dark theme styling.
  */
 
 import { useCallback } from "react";
-import { ms } from "./timing";
+import { cn } from "@/lib/utils";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
@@ -44,72 +46,86 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
     [value, onChange, multi]
   );
 
-  return (
-    <div role={multi ? "toolbar" : "radiogroup"} aria-label={ariaLabel} style={{ display: "inline-flex" }}>
-      {options.map((opt, i) => {
-        const isActive = activeValues.has(opt.value);
-        const isFirst = i === 0;
-        const isLast = i === options.length - 1;
+  const items = options.map((opt, i) => {
+    const isActive = activeValues.has(opt.value);
+    const isFirst = i === 0;
+    const isLast = i === options.length - 1;
 
-        return (
-          <button
-            key={opt.value}
-            role={multi ? undefined : "radio"}
-            aria-checked={multi ? undefined : isActive}
-            aria-pressed={multi ? isActive : undefined}
-            aria-label={opt.label ?? opt.title ?? opt.value}
-            tabIndex={isActive ? 0 : -1}
-            title={opt.title ?? opt.value}
-            onClick={() => handleClick(opt.value)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                e.preventDefault();
-                const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
-                const idx = siblings.indexOf(e.currentTarget as HTMLElement);
-                const next = e.key === "ArrowRight"
-                  ? siblings[(idx + 1) % siblings.length]
-                  : siblings[(idx - 1 + siblings.length) % siblings.length];
-                next.focus();
-                const nextOpt = options[siblings.indexOf(next)];
-                if (nextOpt != null) handleClick(nextOpt.value);
-              }
-            }}
-            onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
-            onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "28px",
-              minWidth: "28px",
-              padding: "0 6px",
-              cursor: "pointer",
-              background: isActive ? "#6366f1" : "transparent",
-              color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
-              border: "1px solid rgba(255,255,255,0.15)",
-              borderLeft: isFirst ? "1px solid rgba(255,255,255,0.15)" : "none",
-              borderRadius: isFirst
-                ? "4px 0 0 4px"
-                : isLast
-                  ? "0 4px 4px 0"
-                  : "0",
-              fontSize: "13px",
-              lineHeight: 1,
-              fontFamily: "system-ui, sans-serif",
-              outline: "none",
-              transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
-            }}
-            onMouseEnter={(e) => {
-              if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-            }}
-          >
-            {opt.icon}
-          </button>
-        );
-      })}
-    </div>
+    return (
+      <ToggleGroupItem
+        key={opt.value}
+        value={opt.value}
+        role={multi ? undefined : "radio"}
+        aria-checked={multi ? undefined : isActive}
+        aria-pressed={multi ? isActive : undefined}
+        aria-label={opt.label ?? opt.title ?? opt.value}
+        tabIndex={isActive ? 0 : -1}
+        title={opt.title ?? opt.value}
+        onClick={(e) => {
+          e.preventDefault();
+          handleClick(opt.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+            e.preventDefault();
+            const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
+            const idx = siblings.indexOf(e.currentTarget as HTMLElement);
+            const next = e.key === "ArrowRight"
+              ? siblings[(idx + 1) % siblings.length]
+              : siblings[(idx - 1 + siblings.length) % siblings.length];
+            next.focus();
+            const nextOpt = options[siblings.indexOf(next)];
+            if (nextOpt != null) handleClick(nextOpt.value);
+          }
+        }}
+        className={cn(
+          "flex items-center justify-center h-7 min-w-7 px-1.5 cursor-pointer",
+          "border border-[var(--border)] outline-none",
+          "text-[13px] leading-none font-sans",
+          "transition-colors duration-75",
+          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+          // Active state
+          isActive
+            ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]"
+            : "bg-transparent text-[var(--muted-foreground)] hover:bg-[rgba(255,255,255,0.08)]",
+          // Border radius: first/last rounded, middle flat
+          isFirst && "rounded-l rounded-r-none",
+          isLast && "rounded-r rounded-l-none",
+          !isFirst && !isLast && "rounded-none",
+          // Collapse left border for non-first items
+          !isFirst && "border-l-0"
+        )}
+      >
+        {opt.icon}
+      </ToggleGroupItem>
+    );
+  });
+
+  // Radix ToggleGroup requires separate JSX for single vs multiple
+  // to satisfy the discriminated union types
+  if (multi) {
+    return (
+      <ToggleGroup
+        type="multiple"
+        value={value.split(" ").filter(Boolean)}
+        onValueChange={() => { /* handled via onClick */ }}
+        aria-label={ariaLabel}
+        className="inline-flex gap-0"
+      >
+        {items}
+      </ToggleGroup>
+    );
+  }
+
+  return (
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={() => { /* handled via onClick */ }}
+      aria-label={ariaLabel}
+      className="inline-flex gap-0"
+    >
+      {items}
+    </ToggleGroup>
   );
 }

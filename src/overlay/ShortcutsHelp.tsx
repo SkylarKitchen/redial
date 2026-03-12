@@ -1,6 +1,4 @@
-import { useEffect, useRef } from "react";
-import { ms } from "./timing";
-import { useFocusTrap } from "./useFocusTrap";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface ShortcutsHelpProps {
   onClose: () => void;
@@ -12,14 +10,14 @@ const SHORTCUTS = [
     items: [
       { keys: "`", desc: "Toggle selection mode" },
       { keys: "Esc", desc: "Close panel" },
-      { keys: "↑ ↓ ← →", desc: "Navigate elements" },
+      { keys: "\u2191 \u2193 \u2190 \u2192", desc: "Navigate elements" },
     ],
   },
   {
     category: "Editing",
     items: [
-      { keys: "⌘Z", desc: "Undo" },
-      { keys: "⌘⇧Z", desc: "Redo" },
+      { keys: "\u2318Z", desc: "Undo" },
+      { keys: "\u2318\u21e7Z", desc: "Redo" },
       { keys: "R", desc: "Reset element" },
       { keys: "D (hold)", desc: "Diff peek" },
       { keys: "S", desc: "Cycle scope" },
@@ -28,17 +26,17 @@ const SHORTCUTS = [
   {
     category: "Clipboard",
     items: [
-      { keys: "⌘C", desc: "Copy CSS" },
-      { keys: "⌘S", desc: "Save to source" },
-      { keys: "⌘⌥C", desc: "Copy styles" },
-      { keys: "⌘⌥V", desc: "Paste styles" },
-      { keys: "⌘⇧V", desc: "Import CSS" },
+      { keys: "\u2318C", desc: "Copy CSS" },
+      { keys: "\u2318S", desc: "Save to source" },
+      { keys: "\u2318\u2325C", desc: "Copy styles" },
+      { keys: "\u2318\u2325V", desc: "Paste styles" },
+      { keys: "\u2318\u21e7V", desc: "Import CSS" },
     ],
   },
   {
     category: "Tools",
     items: [
-      { keys: "⌘K", desc: "Command palette" },
+      { keys: "\u2318K", desc: "Command palette" },
       { keys: "?", desc: "This help" },
       { keys: "/", desc: "Search properties" },
       { keys: "H", desc: "Toggle history drawer" },
@@ -48,109 +46,37 @@ const SHORTCUTS = [
 ];
 
 export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(modalRef, true);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose]);
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        zIndex: 2147483647,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        transition: `opacity ${ms("normal")}`,
-      }}
-    >
-      <div
-        ref={modalRef}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: 400,
-          maxHeight: "80vh",
-          overflowY: "auto",
-          background: "#1e1e1e",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 12,
-          padding: "20px 24px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-            color: "rgba(255,255,255,0.9)",
-            marginBottom: 16,
-            fontWeight: 600,
-          }}
-        >
-          Keyboard Shortcuts
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="__tuner-root max-w-[400px] max-h-[80vh] overflow-y-auto bg-[var(--background)] border-[var(--border)]">
+        <DialogHeader>
+          <DialogTitle className="text-[14px] font-semibold text-[var(--foreground)]">
+            Keyboard Shortcuts
+          </DialogTitle>
+        </DialogHeader>
 
         {SHORTCUTS.map((section) => (
-          <div key={section.category}>
-            <div
-              style={{
-                fontSize: 10,
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: 0.5,
-                marginTop: 12,
-                marginBottom: 6,
-              }}
-            >
+          <div key={section.category} className="mb-4">
+            <div className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wider mb-2">
               {section.category}
             </div>
 
             {section.items.map((item) => (
               <div
                 key={item.keys}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "4px 0",
-                }}
+                className="flex items-center justify-between py-1"
               >
-                <span
-                  style={{
-                    background: "rgba(255,255,255,0.1)",
-                    borderRadius: 4,
-                    padding: "2px 6px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
-                    fontSize: 11,
-                    color: "rgba(255,255,255,0.8)",
-                  }}
-                >
+                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded">
                   {item.keys}
                 </span>
-                <span
-                  style={{
-                    color: "rgba(255,255,255,0.7)",
-                    fontSize: 12,
-                  }}
-                >
+                <span className="text-[12px] text-[var(--foreground)]">
                   {item.desc}
                 </span>
               </div>
             ))}
           </div>
         ))}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
