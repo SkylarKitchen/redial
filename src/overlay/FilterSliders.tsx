@@ -171,17 +171,21 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
       </div>
 
       {/* Filter rows */}
-      {visibleFilters.map((key) => {
+      <div style={{ position: "relative" }}>
+      {visibleFilters.map((key, index) => {
         const meta = FILTER_META[key];
         const val = values[key] ?? meta.defaultValue;
         const pct = ((val - meta.min) / (meta.max - meta.min)) * 100;
 
         const isHidden = hiddenFilters.has(key);
+        const dragProps = handleProps(index);
 
         return (
           <div
             key={key}
+            ref={registerRef(index)}
             style={{
+              ...itemStyle(index),
               display: "flex",
               alignItems: "center",
               gap: "6px",
@@ -190,6 +194,12 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               transition: "opacity 100ms",
             }}
           >
+            {/* Drag handle */}
+            <DragHandle
+              isDragging={isDragging}
+              onPointerDown={dragProps.onPointerDown}
+            />
+
             {/* Label */}
             <span
               style={{
@@ -300,6 +310,13 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
           </div>
         );
       })}
+
+      {/* Drop indicator line */}
+      {(() => {
+        const style = dropLineStyle();
+        return style ? <div style={style} /> : null;
+      })()}
+      </div>
 
       {/* Add filter button + dropdown */}
       <div style={{ position: "relative" }} ref={dropdownRef}>

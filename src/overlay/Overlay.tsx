@@ -144,6 +144,10 @@ export function Overlay() {
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
 
+  // Breadcrumb hover ancestor highlight
+  const [hoveredAncestor, setHoveredAncestor] = useState<Element | null>(null);
+  const ancestorOutlineRef = useRef<HTMLDivElement>(null);
+
   // Dimensions badge + tag label refs
   const dimensionsBadgeRef = useRef<HTMLDivElement>(null);
   const tagLabelRef = useRef<HTMLDivElement>(null);
