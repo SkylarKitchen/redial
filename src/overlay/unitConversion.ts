@@ -108,3 +108,32 @@ export function convertUnit(
   const result = fromPx(px, toUnit, ctx, axis);
   return Math.round(result * 100) / 100;
 }
+
+/**
+ * Return a human-readable description of the conversion basis for a target unit.
+ * E.g. "em" → "base: 16px", "%" → "parent: 400px", "vw" → "viewport: 1280px"
+ */
+export function conversionBasis(
+  toUnit: string,
+  ctx: UnitConversionContext,
+  axis: "width" | "height" = "width"
+): string | undefined {
+  switch (toUnit) {
+    case "em":
+      return `base: ${ctx.computedFontSize}px`;
+    case "rem":
+      return `root: ${ctx.rootFontSize}px`;
+    case "%": {
+      const base = axis === "height" ? ctx.parentHeight : ctx.parentWidth;
+      return `parent: ${Math.round(base)}px`;
+    }
+    case "vw":
+      return `viewport: ${ctx.viewportWidth}px`;
+    case "vh":
+      return `viewport: ${ctx.viewportHeight}px`;
+    case "ch":
+      return `base: ${Math.round(ctx.computedFontSize * 0.5)}px`;
+    default:
+      return undefined;
+  }
+}

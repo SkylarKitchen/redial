@@ -919,6 +919,7 @@ export function Overlay() {
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             pointerEvents: selecting ? "none" : "auto",
+            ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
           }}
         >
           <Header
@@ -946,6 +947,13 @@ export function Overlay() {
               minHeight: 0,
             }}
           >
+            {showSearch && (
+              <PropertySearch
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onClose={() => { setSearchQuery(""); setShowSearch(false); }}
+              />
+            )}
             <div
               style={{
                 padding: "4px 0",
@@ -964,6 +972,7 @@ export function Overlay() {
                   onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
                   showBoxModel={showBoxModel}
                   onToggleBoxModel={() => setShowBoxModel((v) => !v)}
+                  searchQuery={searchQuery}
                 />
               </PanelErrorBoundary>
             </div>

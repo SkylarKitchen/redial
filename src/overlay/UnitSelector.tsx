@@ -277,6 +277,47 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           )}
         </div>
       )}
+
+      {/* Conversion tooltip */}
+      {tooltipText && tooltipPhase && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 6px)",
+            left: "50%",
+            transform: `translateX(-50%) translateY(${tooltipPhase === "in" ? "0px" : "4px"})`,
+            background: "#2a2a2a",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: "4px",
+            padding: "3px 8px",
+            fontSize: "10px",
+            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            color: "rgba(255,255,255,0.85)",
+            whiteSpace: "nowrap",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            zIndex: 200,
+            pointerEvents: "none",
+            opacity: tooltipPhase === "in" ? 1 : 0,
+            transition: `opacity ${ms("slow")}, transform ${ms("slow")}`,
+          }}
+        >
+          {tooltipText}
+          {/* Arrow pointing down */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "-4px",
+              left: "50%",
+              transform: "translateX(-50%) rotate(45deg)",
+              width: "6px",
+              height: "6px",
+              background: "#2a2a2a",
+              borderRight: "1px solid rgba(255,255,255,0.12)",
+              borderBottom: "1px solid rgba(255,255,255,0.12)",
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,29 @@ export const SpacingSection = memo(function SpacingSection({
   const [marginUnit, setMarginUnit] = useState(() => detectUnit(element, "margin-top"));
   const [paddingUnit, setPaddingUnit] = useState(() => detectUnit(element, "padding-top"));
 
+  const boxModelToggle = onToggleBoxModel ? (
+    <button
+      onClick={onToggleBoxModel}
+      title={showBoxModel ? "Hide box model overlay (M)" : "Show box model overlay (M)"}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        padding: "2px 6px",
+        fontSize: "10px",
+        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        background: showBoxModel ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.06)",
+        border: showBoxModel ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(255,255,255,0.1)",
+        borderRadius: "3px",
+        color: showBoxModel ? "rgba(99,102,241,0.9)" : "rgba(255,255,255,0.5)",
+        cursor: "pointer",
+        outline: "none",
+      }}
+    >
+      <Box size={11} strokeWidth={1.5} />
+    </button>
+  ) : undefined;
+
   return (
     <Section
       title="Spacing"
@@ -37,6 +60,7 @@ export const SpacingSection = memo(function SpacingSection({
         "padding-top", "padding-right", "padding-bottom", "padding-left",
       ])}
       forceOpen={forceOpen}
+      headerAction={boxModelToggle}
     >
       <SpacingBoxModel
         margin={spacing.margin}
