@@ -1,18 +1,14 @@
 /**
- * AlignBox.tsx — Webflow-style 3x3 alignment grid
+ * AlignBox.tsx — Webflow-style alignment control
  *
- * Clickable grid representing flex/grid alignment:
- * ┌───┬───┬───┐
- * │ ● │ ● │ ● │  ← align: start
- * ├───┼───┼───┤
- * │ ● │ ● │ ● │  ← align: center
- * ├───┼───┼───┤
- * │ ● │ ● │ ● │  ← align: end
- * └───┴───┴───┘
- *   ↑   ↑   ↑
- *  start center end  (justify)
+ * Directional arrows radiating from a center indicator box:
+ *    ↖  ↑  ↗
+ *    ←  ●  →
+ *    ↙  ↓  ↘
  *
- * Plus extra buttons for space-between, space-around, space-evenly.
+ * The center square shows a dot at the active alignment position.
+ * Clicking any arrow or the center sets justify + align simultaneously.
+ * Plus optional spacing buttons (space-between, space-around, space-evenly).
  */
 
 import { useState, useCallback } from "react";
@@ -23,7 +19,7 @@ export interface AlignBoxProps {
   align: string;
   onChange: (justify: string, align: string) => void;
   mode?: "flex" | "grid";
-  /** When true, hides spacing buttons and shows only the 3x3 grid */
+  /** When true, hides spacing buttons and shows only the arrow grid */
   compact?: boolean;
 }
 
@@ -46,42 +42,32 @@ function toIndex(value: string): number {
   return -1; // spacing value — no cell selected
 }
 
-/**
- * Tiny alignment icon: 3 bars positioned according to the cell's
- * justify (col) and align (row) meaning.
- */
-function CellIcon({ col, row }: { col: number; row: number }) {
-  // The bars represent items. Their position inside the cell
-  // illustrates the alignment that cell represents.
-  const justifyMap: Record<number, string> = {
-    0: "flex-start",
-    1: "center",
-    2: "flex-end",
+/** SVG arrow pointing in one of 8 directions */
+function DirectionArrow({ direction, size = 10 }: { direction: string; size?: number }) {
+  const rotations: Record<string, number> = {
+    "up": 0, "up-right": 45, "right": 90, "down-right": 135,
+    "down": 180, "down-left": 225, "left": 270, "up-left": 315,
   };
-  const alignMap: Record<number, string> = {
-    0: "flex-start",
-    1: "center",
-    2: "flex-end",
-  };
+  const rotation = rotations[direction] ?? 0;
 
   return (
-    <div
-      style={{
-        width: "16px",
-        height: "16px",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: alignMap[row],
-        alignItems: justifyMap[col],
-        gap: "1.5px",
-      }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 10 10"
+      style={{ transform: `rotate(${rotation}deg)`, display: "block" }}
     >
-      <div style={{ width: "8px", height: "2px", borderRadius: "0.5px", background: "currentColor", opacity: 0.9 }} />
-      <div style={{ width: "5px", height: "2px", borderRadius: "0.5px", background: "currentColor", opacity: 0.9 }} />
-      <div style={{ width: "7px", height: "2px", borderRadius: "0.5px", background: "currentColor", opacity: 0.9 }} />
-    </div>
+      <path d="M5 2 L7.5 6.5 L2.5 6.5 Z" fill="currentColor" />
+    </svg>
   );
 }
+
+/** Direction labels for the 3x3 positions (row-major) */
+const DIRECTIONS = [
+  ["up-left", "up", "up-right"],
+  ["left", "center", "right"],
+  ["down-left", "down", "down-right"],
+] as const;
 
 export function AlignBox({ justify, align, onChange, mode = "flex", compact = false }: AlignBoxProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
@@ -91,6 +77,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
 
   const activeCol = toIndex(justify);
   const activeRow = toIndex(align);
+  const isSpacingActive = SPACING_OPTIONS.some((o) => o.value === justify);
 
   const handleCellClick = useCallback(
     (col: number, row: number) => {
@@ -99,58 +86,96 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
     [onChange, justifyCols, alignRows]
   );
 
-  const isSpacingActive = SPACING_OPTIONS.some((o) => o.value === justify);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-      {/* 3x3 grid */}
+      {/* Arrow grid: 8 directional arrows around a center indicator */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 28px)",
-          gridTemplateRows: "repeat(3, 28px)",
-          border: "1px solid rgba(255,255,255,0.15)",
-          borderRadius: "4px",
-          overflow: "hidden",
+          gridTemplateColumns: "20px 32px 20px",
+          gridTemplateRows: "20px 32px 20px",
+          gap: "1px",
+          alignItems: "center",
+          justifyItems: "center",
         }}
       >
-        {alignRows.map((_, row) =>
-          justifyCols.map((_, col) => {
-            const key = `${col}-${row}`;
-            const isActive = col === activeCol && row === activeRow && !isSpacingActive;
+        {DIRECTIONS.flatMap((row, r) =>
+          row.map((dir, c) => {
+            const key = `${r}-${c}`;
+            const isActive = c === activeCol && r === activeRow && !isSpacingActive;
             const isHovered = hoveredCell === key;
+            const isCenter = r === 1 && c === 1;
 
+            if (isCenter) {
+              // Center indicator box with dot
+              return (
+                <div
+                  key={key}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Align center center"
+                  onClick={() => handleCellClick(c, r)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(c, r); } }}
+                  onMouseEnter={() => setHoveredCell(key)}
+                  onMouseLeave={() => setHoveredCell(null)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    outline: "none",
+                    transition: `border-color ${ms("fast")}`,
+                    borderColor: isHovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)",
+                  }}
+                >
+                  <div style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: isActive
+                      ? "#6366f1"
+                      : isHovered
+                        ? "rgba(99,102,241,0.5)"
+                        : "rgba(255,255,255,0.25)",
+                    transition: `background ${ms("fast")}`,
+                  }} />
+                </div>
+              );
+            }
+
+            // Directional arrow button
             return (
               <div
                 key={key}
                 tabIndex={0}
                 role="button"
-                onClick={() => handleCellClick(col, row)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(col, row); } }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(99,102,241,0.3)"; }}
-                onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+                aria-label={`Align ${dir}`}
+                onClick={() => handleCellClick(c, r)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(c, r); } }}
                 onMouseEnter={() => setHoveredCell(key)}
                 onMouseLeave={() => setHoveredCell(null)}
                 style={{
-                  width: "28px",
-                  height: "28px",
+                  width: 20,
+                  height: 20,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
                   outline: "none",
-                  background: isActive
+                  color: isActive
                     ? "#6366f1"
                     : isHovered
-                      ? "rgba(99,102,241,0.2)"
-                      : "transparent",
-                  color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
-                  borderRight: col < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                  borderBottom: row < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                  transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
+                      ? "rgba(255,255,255,0.6)"
+                      : "rgba(255,255,255,0.25)",
+                  transition: `color ${ms("fast")}`,
                 }}
               >
-                <CellIcon col={col} row={row} />
+                <DirectionArrow direction={dir} size={10} />
               </div>
             );
           })

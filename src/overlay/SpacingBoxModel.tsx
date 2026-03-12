@@ -26,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
-import { beginBatch, endBatch, isDirty } from "./apply";
+import { beginBatch, endBatch } from "./apply";
 import { ms } from "./timing";
 
 interface SpacingBoxModelProps {
@@ -39,7 +39,6 @@ interface SpacingBoxModelProps {
   paddingUnits: string[];
   onMarginUnitChange: (unit: string) => void;
   onPaddingUnitChange: (unit: string) => void;
-  element?: Element;
 }
 
 // Zone base/highlight colors (slightly stronger highlight for hover feedback)
@@ -70,7 +69,6 @@ export function SpacingBoxModel({
   paddingUnits,
   onMarginUnitChange,
   onPaddingUnitChange,
-  element,
 }: SpacingBoxModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marginZoneRef = useRef<HTMLDivElement>(null);
@@ -181,7 +179,7 @@ export function SpacingBoxModel({
   ) => {
     const isMargin = group === "margin";
     const value = displayVal(prop, propValue);
-    const dirty = element ? isDirty(element, prop) : false;
+    const nonDefault = value !== 0;
 
     return (
       <div
@@ -193,7 +191,7 @@ export function SpacingBoxModel({
         style={{
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
-          color: dirty ? "rgba(119,166,253,0.95)" : value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)",
+          color: nonDefault ? "rgba(119,166,253,0.95)" : "rgba(255,255,255,0.3)",
           cursor: "ew-resize",
           padding: "2px 4px",
           borderRadius: "3px",
@@ -208,14 +206,14 @@ export function SpacingBoxModel({
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "rgba(255,255,255,0.12)";
-          el.style.color = dirty ? "rgba(139,186,255,1)" : "rgba(255,255,255,0.95)";
+          el.style.color = nonDefault ? "rgba(139,186,255,1)" : "rgba(255,255,255,0.95)";
           highlightZone(group);
           setTooltip({ prop, rect: el.getBoundingClientRect() });
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
           el.style.background = "transparent";
-          el.style.color = dirty ? "rgba(119,166,253,0.95)" : value !== 0 ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.3)";
+          el.style.color = nonDefault ? "rgba(119,166,253,0.95)" : "rgba(255,255,255,0.3)";
           clearZone(group);
           setTooltip(null);
         }}
