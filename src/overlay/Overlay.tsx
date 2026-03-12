@@ -986,7 +986,7 @@ export function Overlay() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(217,119,87,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };
@@ -1302,7 +1302,7 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #D97757;
+          background: #3B82F6;
           border: 2px solid #FAF9F5;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           margin-top: -4.5px;
@@ -1310,7 +1310,7 @@ export function Overlay() {
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(217,119,87,0.25);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
           transform: scale(1.1);
@@ -1329,14 +1329,14 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #D97757;
+          background: #3B82F6;
           border: 2px solid #FAF9F5;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(217,119,87,0.25);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:active {
           transform: scale(1.1);
@@ -1356,13 +1356,13 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#D97757] rounded-sm transition-all duration-100 ease-out"
+            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#3B82F6] rounded-sm transition-all duration-100 ease-out"
             style={{ display: 'none' }}
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#D97757]/50 rounded-sm bg-[#D97757]/[0.04]"
+            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#3B82F6]/50 rounded-sm bg-[#3B82F6]/[0.04]"
             style={{ display: 'none' }}
           />
           {/* Dimensions badge: W x H below bottom-right */}
@@ -1468,7 +1468,7 @@ export function Overlay() {
             <div className="flex justify-center py-0.5 border-b" style={{ borderColor: border.subtle }}>
               <span
                 onClick={() => setFocusMode(false)}
-                className="text-[9px] font-semibold text-[#D97757] bg-[#D97757]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
+                className="text-[9px] font-semibold text-[#3B82F6] bg-[#3B82F6]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
               >
                 Focus Mode
               </span>
@@ -1486,7 +1486,7 @@ export function Overlay() {
                   className={cn(
                     "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
                     isActive
-                      ? "border-b-[#D97757] font-semibold"
+                      ? "border-b-[#3B82F6] font-semibold"
                       : "border-b-transparent font-normal",
                   )}
                   style={{ color: isActive ? text.primary : text.label }}
@@ -1615,7 +1615,7 @@ export function Overlay() {
       <div
         className={cn(
           "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
-          (selecting || selectedEl) && "border-[#D97757]/40 shadow-[0_0_0_1px_rgba(217,119,87,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
+          (selecting || selectedEl) && "border-[#3B82F6]/40 shadow-[0_0_0_1px_rgba(59,130,246,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
           !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(255,255,255,0.06)]",
         )}
         onClick={() => {

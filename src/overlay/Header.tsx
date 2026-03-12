@@ -92,7 +92,7 @@ export function Header({
         <div className="flex items-center gap-[5px] shrink-0">
           {totalChanges > 0 && (
             <Badge
-              className="bg-[#D97757]/[0.15] border-[#D97757]/[0.2] text-[#D97757]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#D97757]/[0.2]"
+              className="bg-[#3B82F6]/[0.15] border-[#3B82F6]/[0.2] text-[#3B82F6]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#3B82F6]/[0.2]"
               onClick={onShowSession}
               title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
             >

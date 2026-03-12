@@ -1,7 +1,7 @@
 /**
  * SegmentedControl.tsx — Webflow-style segmented button group
  *
- * A warm gray container with rounded active states and subtle shadow.
+ * A neutral gray container with rounded active states.
  * Supports both icon-only and text segments. Used for Display, Direction,
  * Align, Justify, and Children controls in the Layout section.
  */
@@ -12,25 +12,23 @@ import { useCallback } from "react";
 
 const tokens = {
   /** Container background */
-  bg: "#f3f3f0",
+  bg: "#F0F0F0",
   /** Active segment background */
-  activeBg: "#e7e6e1",
+  activeBg: "#E5E5E5",
   /** Default hover background */
-  hoverBg: "#f0efec",
+  hoverBg: "#EBEBEB",
   /** Container border radius */
   radius: 4,
   /** Segment border radius (inside container) */
   segmentRadius: 3,
   /** Container padding — creates the border effect */
   padding: 1,
-  /** Container shadow */
-  shadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
   /** Segment height */
   segmentHeight: 22,
   /** Text color for active segment */
   activeText: "#131313",
   /** Text color for inactive segment */
-  inactiveText: "#383835",
+  inactiveText: "#404040",
   /** Font */
   fontFamily: "Inter, system-ui, sans-serif",
   fontSize: 11.5,
@@ -82,7 +80,6 @@ export function SegmentedControl({
         background: tokens.bg,
         borderRadius: tokens.radius,
         padding: tokens.padding,
-        boxShadow: tokens.shadow,
         overflow: "hidden",
       }}
     >

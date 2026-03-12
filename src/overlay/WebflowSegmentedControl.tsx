@@ -1,13 +1,12 @@
 /**
- * WebflowSegmentedControl.tsx — Figma-faithful segmented button group
+ * WebflowSegmentedControl.tsx — Flat segmented button group
  *
- * Matches Webflow's design: light container with drop shadow, rounded corners,
- * active segment gets inset shadow + slightly lighter background.
+ * Neutral gray container, active segment is a flat darker background.
  * Used for overflow, box-sizing, and similar multi-option controls.
  */
 
 import { useCallback } from "react";
-import { text, blackAlpha } from "./theme";
+import { text } from "./theme";
 
 export interface SegmentOption {
   value: string;
@@ -22,16 +21,6 @@ export interface WebflowSegmentedControlProps {
   onChange: (value: string) => void;
   "aria-label"?: string;
 }
-
-/** Inset shadow for the active/pressed segment — matches Figma's [Dark] Input inner shadow. */
-const ACTIVE_INSET_SHADOW = [
-  "inset 0px 1px 1px -1px rgba(0,0,0,0.13)",
-  "inset 0px 3px 3px -3px rgba(0,0,0,0.17)",
-  "inset 0px 4px 4px -4px rgba(0,0,0,0.17)",
-  "inset 0px 8px 8px -8px rgba(0,0,0,0.17)",
-  "inset 0px 12px 12px -12px rgba(0,0,0,0.13)",
-  "inset 0px 16px 16px -16px rgba(0,0,0,0.13)",
-].join(", ");
 
 export function WebflowSegmentedControl({
   options,
@@ -53,10 +42,9 @@ export function WebflowSegmentedControl({
       style={{
         display: "flex",
         height: 24,
-        background: "#f3f3f0",
+        background: "#F0F0F0",
         borderRadius: 4,
         padding: 1,
-        boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
         overflow: "hidden",
       }}
     >
@@ -80,17 +68,16 @@ export function WebflowSegmentedControl({
               border: "none",
               cursor: "pointer",
               padding: "0 8px",
-              position: "relative",
-              background: isActive ? "#f0efec" : "transparent",
+              background: isActive ? "#E5E5E5" : "transparent",
               color: isActive ? text.primary : text.label,
               transition: "background 75ms, color 75ms",
               outline: "none",
             }}
             onFocus={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px rgba(217,119,87,0.3)`;
+              (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px rgba(59,130,246,0.3)`;
             }}
             onBlur={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = isActive ? "none" : "none";
+              (e.currentTarget as HTMLElement).style.boxShadow = "none";
             }}
           >
             {opt.icon && (
@@ -109,18 +96,6 @@ export function WebflowSegmentedControl({
               >
                 {opt.label}
               </span>
-            )}
-            {/* Inset shadow overlay for active state */}
-            {isActive && (
-              <span
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: "inherit",
-                  boxShadow: ACTIVE_INSET_SHADOW,
-                  pointerEvents: "none",
-                }}
-              />
             )}
           </button>
         );

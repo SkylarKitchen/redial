@@ -241,7 +241,7 @@ export function useDragReorder<T>(
       right: 0,
       top: `${top}px`,
       height: "2px",
-      background: "#D97757",
+      background: "#3B82F6",
       borderRadius: "1px",
       zIndex: 51,
       pointerEvents: "none",

@@ -48,7 +48,7 @@ const ACTIONS = [
 ] as const;
 
 const CATEGORY_BADGE_CLASSES: Record<SearchResult["category"], string> = {
-  Property: "text-[#D97757] bg-[#D97757]/15",
+  Property: "text-[#3B82F6] bg-[#3B82F6]/15",
   Action: "text-emerald-400 bg-emerald-500/15",
   Element: "text-amber-400 bg-amber-500/15",
 };

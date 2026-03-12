@@ -402,10 +402,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
             className="flex-1 relative"
             style={{
               height: 24,
-              background: "#f3f3f0",
+              background: "#F0F0F0",
               borderRadius: 4,
-              boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
-            }}
+                          }}
           >
             <select
               value={childrenMode}
@@ -442,10 +441,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
             style={{
               width: 24,
               height: 24,
-              background: "#f3f3f0",
+              background: "#F0F0F0",
               borderRadius: 4,
-              boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
-              border: "none",
+                            border: "none",
               color: text.primary,
             }}
           >

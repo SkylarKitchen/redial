@@ -13,30 +13,30 @@
 
 export const color = {
   /** Panel background — --bg-primary */
-  background: "#FAF9F5",
+  background: "#FFFFFF",
   /** Text — --fg-primary */
-  foreground: "#1C1B18",
+  foreground: "#171717",
 
-  /** Clay accent — --accent-clay */
-  primary: "#D97757",
-  /** Clay hover — --accent-clay-interactive */
-  primaryHover: "#C6613F",
+  /** Blue accent */
+  primary: "#3B82F6",
+  /** Blue hover */
+  primaryHover: "#2563EB",
   primaryForeground: "#ffffff",
 
   /** Popover/dropdown surface — --bg-secondary */
-  popover: "#F5F4ED",
+  popover: "#F5F5F5",
 
   /** Muted surface */
   muted: "rgba(0,0,0,0.05)",
   /** Labels, secondary text — --fg-tertiary */
-  mutedForeground: "#504F4A",
+  mutedForeground: "#525252",
 
   /** Input background */
   input: "rgba(0,0,0,0.04)",
   /** Default border — --border-tertiary */
   border: "rgba(0,0,0,0.10)",
-  /** Focus ring — accent-clay at 30% */
-  ring: "rgba(217,119,87,0.3)",
+  /** Focus ring — accent-blue at 30% */
+  ring: "rgba(59,130,246,0.3)",
 
   /** Destructive red */
   destructive: "#ef4444",
@@ -44,8 +44,8 @@ export const color = {
 
 // ─── Opacity Variants ────────────────────────────────────────────
 
-/** Accent clay at a given alpha. rgb(217,119,87) = #D97757 */
-export const primaryAlpha = (a: number) => `rgba(217,119,87,${a})`;
+/** Accent blue at a given alpha. rgb(59,130,246) = #3B82F6 */
+export const primaryAlpha = (a: number) => `rgba(59,130,246,${a})`;
 
 /** Destructive red at a given alpha. rgb(239,68,68) = #ef4444 */
 export const destructiveAlpha = (a: number) => `rgba(239,68,68,${a})`;
@@ -59,13 +59,13 @@ export const text = {
   /** --fg-primary */
   primary: color.foreground,
   /** --fg-secondary */
-  secondary: "#3A3935",
+  secondary: "#404040",
   /** --fg-tertiary (same as mutedForeground) */
   label: color.mutedForeground,
   /** Disabled/placeholder */
-  disabled: "#7A7974",
+  disabled: "#737373",
   /** Subtle hint */
-  hint: "#9A9994",
+  hint: "#A3A3A3",
 } as const;
 
 export const border = {
@@ -112,8 +112,8 @@ export const focusBorder = (focused: boolean) =>
 /** Focus ring box-shadow. */
 export const focusRing = `0 0 0 2px ${color.ring}`;
 
-/** Background at a given alpha. rgb(250,249,245) = #FAF9F5 */
-export const bgAlpha = (a: number) => `rgba(250,249,245,${a})`;
+/** Background at a given alpha. rgb(255,255,255) = #FFFFFF */
+export const bgAlpha = (a: number) => `rgba(255,255,255,${a})`;
 
 /** Light-theme checkerboard for opacity/transparency backgrounds. */
 export const checkerboard =
@@ -177,7 +177,7 @@ export const labelIndicator = {
   inherited: { bg: "#f9dca4", text: "#734500" },
   state: { bg: "#f9dca4", text: "#734500" },
   variable: { bg: "rgba(167,139,250,0.2)", text: "#5b21b6" },
-  none: { bg: "transparent", text: "#383835" },
+  none: { bg: "transparent", text: "#404040" },
 } as const;
 
 // ─── Spacing Zone Colors ────────────────────────────────────────

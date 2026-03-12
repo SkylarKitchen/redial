@@ -104,7 +104,7 @@ export function PromptPanel({ element }: PromptPanelProps) {
         className={cn(
           "w-full resize-none rounded-md border px-2.5 py-2",
           "text-[12px] font-sans placeholder:text-[rgba(0,0,0,0.25)]",
-          "outline-none focus:border-[#D97757]/30 focus:bg-white/50",
+          "outline-none focus:border-[#3B82F6]/30 focus:bg-white/50",
           "transition-colors duration-100",
         )}
         style={{ borderColor: border.default, background: blackAlpha(0.03), color: blackAlpha(0.8) }}

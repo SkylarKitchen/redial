@@ -125,9 +125,8 @@ function ReverseButton({ active, onClick }: { active: boolean; onClick: () => vo
         padding: 4,
         overflow: "hidden",
         transition: "background 75ms ease",
-        background: active ? "#e7e6e1" : "#f3f3f0",
-        boxShadow: "0px 0.5px 1px 0px rgba(0,0,0,0.3)",
-        color: active ? "#131313" : "#383835",
+        background: active ? "#E5E5E5" : "#F0F0F0",
+        color: active ? "#131313" : "#404040",
       }}
     >
       <ArrowReverseIcon size={16} />
@@ -181,7 +180,7 @@ export function MiniDropdown({ value, options, onChange }: {
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F5F5] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
           style={{ borderColor: surface.track }}
         >
           {options.map((opt, i) => {
@@ -280,7 +279,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
             outline: "none",
             cursor: "pointer",
             padding: 0,
-            background: isOverflowActive ? "#e7e6e1" : "transparent",
+            background: isOverflowActive ? "#E5E5E5" : "transparent",
             color: isOverflowActive ? "#131313" : "#888",
             transition: "background 75ms ease",
           }}
@@ -433,7 +432,7 @@ function GapInput({ value, unit, onChange }: {
         alignItems: "center",
         padding: 4,
         gap: 2,
-        background: "#f0efec",
+        background: "#EBEBEB",
         overflow: "hidden",
       }}>
         {editing ? (
@@ -481,11 +480,11 @@ function GapInput({ value, unit, onChange }: {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#e7e6e1",
+        background: "#E5E5E5",
         fontSize: 8,
         fontFamily: "Inter, system-ui, sans-serif",
         fontWeight: 600,
-        color: "#383835",
+        color: "#404040",
         letterSpacing: 0.5,
         textTransform: "uppercase",
         flexShrink: 0,
@@ -539,7 +538,7 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
             padding: 4,
             flexShrink: 0,
             borderRadius: 4,
-            color: "#383835",
+            color: "#404040",
           }}
         >
           {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}

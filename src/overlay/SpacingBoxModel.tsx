@@ -344,7 +344,7 @@ export function SpacingBoxModel({
           }
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)";
+          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(59,130,246,0.3)";
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLElement).style.boxShadow = "none";

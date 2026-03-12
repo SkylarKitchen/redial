@@ -259,7 +259,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
         "h-[26px] w-10 rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
         embedded
           ? "bg-transparent border-none"
-          : "bg-[var(--input)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
+          : "bg-[var(--input)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(59,130,246,0.5)]"
       )}
     />
   );
@@ -777,7 +777,7 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
         className={cn(
           "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
           "text-[var(--foreground)] text-[10px] font-mono px-1.5 outline-none",
-          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
+          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(59,130,246,0.5)]"
         )}
         tabIndex={0}
         value={value}

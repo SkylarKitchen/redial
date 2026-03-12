@@ -94,7 +94,7 @@ function NumericInput({
           fontSize: "8px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "#7A7974",
+          color: "#737373",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -111,7 +111,7 @@ function NumericInput({
           style={{
             width: "36px",
             background: "rgba(0,0,0,0.07)",
-            border: "1px solid rgba(217,119,87,0.5)",
+            border: "1px solid rgba(59,130,246,0.5)",
             borderRadius: "2px",
             color: "#1C1B18",
             fontSize: "10px",
@@ -133,7 +133,7 @@ function NumericInput({
             width: "36px",
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: value !== 0 ? "#504F4A" : "#9A9994",
+            color: value !== 0 ? "#525252" : "#A3A3A3",
             cursor: "text",
             padding: "2px",
             borderRadius: "2px",
@@ -245,10 +245,10 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: shadow.inset ? "#D97757" : "#7A7974",
-            background: shadow.inset ? "rgba(217,119,87,0.15)" : "rgba(0,0,0,0.03)",
+            color: shadow.inset ? "#3B82F6" : "#737373",
+            background: shadow.inset ? "rgba(59,130,246,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
-              ? "1px solid rgba(217,119,87,0.3)"
+              ? "1px solid rgba(59,130,246,0.3)"
               : "1px solid rgba(0,0,0,0.07)",
             borderRadius: "2px",
             padding: "1px 4px",
@@ -269,7 +269,7 @@ function ShadowRow({
             border: "none",
             cursor: "pointer",
             padding: "2px",
-            color: shadow.visible !== false ? "#504F4A" : "#9A9994",
+            color: shadow.visible !== false ? "#525252" : "#A3A3A3",
             pointerEvents: isDragging ? "none" : "auto",
           }}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}
@@ -283,7 +283,7 @@ function ShadowRow({
           title="Remove shadow"
           style={{
             fontSize: "12px",
-            color: "#7A7974",
+            color: "#737373",
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -292,10 +292,10 @@ function ShadowRow({
             transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "#504F4A";
+            (e.currentTarget as HTMLElement).style.color = "#525252";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "#7A7974";
+            (e.currentTarget as HTMLElement).style.color = "#737373";
           }}
         >
           <X size={12} strokeWidth={2} />
@@ -347,19 +347,19 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           padding: "4px 0",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
-          color: "#D97757",
-          background: "rgba(217,119,87,0.08)",
-          border: "1px dashed rgba(217,119,87,0.3)",
+          color: "#3B82F6",
+          background: "rgba(59,130,246,0.08)",
+          border: "1px dashed rgba(59,130,246,0.3)",
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
           transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.15)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(59,130,246,0.15)";
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(217,119,87,0.08)";
+          (e.currentTarget as HTMLElement).style.background = "rgba(59,130,246,0.08)";
         }}
       >
         + Add shadow
@@ -394,7 +394,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           style={{
             padding: "8px 0",
             fontSize: "10px",
-            color: "#9A9994",
+            color: "#A3A3A3",
             textAlign: "center",
             fontFamily: "system-ui, sans-serif",
           }}

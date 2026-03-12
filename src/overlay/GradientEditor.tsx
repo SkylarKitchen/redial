@@ -228,7 +228,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: 0,
                 borderLeft: "4px solid transparent",
                 borderRight: "4px solid transparent",
-                borderBottom: `8px solid ${isSelected ? "#D97757" : "rgba(0,0,0,0.6)"}`,
+                borderBottom: `8px solid ${isSelected ? "#3B82F6" : "rgba(0,0,0,0.6)"}`,
                 cursor: "pointer",
               }}
             />
