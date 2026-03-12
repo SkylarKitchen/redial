@@ -262,12 +262,15 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
 
   return (
     <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <span className={cn(
-        "text-[11px] shrink-0",
-        value !== "block"
-          ? "bg-[rgba(217,119,87,0.25)] text-[rgba(217,119,87,0.9)] rounded-[3px] px-1.5 py-0.5"
-          : "text-[var(--muted-foreground)] w-16",
-      )}>Display</span>
+      <span
+        className={cn(
+          "text-[11px] shrink-0",
+          value !== "block"
+            ? "rounded-[3px] px-1.5 py-0.5"
+            : "text-[var(--muted-foreground)] w-16",
+        )}
+        style={value !== "block" ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+      >Display</span>
       <div ref={containerRef} className="flex flex-1 relative">
         <div role="radiogroup" aria-label="Display mode" className="flex flex-1 rounded-[3px] overflow-hidden border border-[var(--border)]">
           {DISPLAY_TABS.map((tab) => {
@@ -296,11 +299,17 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                 onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                 className={cn(
                   "flex-1 h-6 text-[10px] font-mono cursor-pointer border-none outline-none transition-colors capitalize",
-                  tab !== "none" && "border-r border-r-[rgba(0,0,0,0.05)]",
+                  tab !== "none" && "border-r",
                   active
-                    ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.87)] font-medium"
-                    : "bg-transparent text-[rgba(0,0,0,0.4)] font-normal hover:bg-[var(--accent)]",
+                    ? "font-medium"
+                    : "bg-transparent font-normal hover:bg-[var(--accent)]",
                 )}
+                style={{
+                  ...(tab !== "none" ? { borderRightColor: surface.hover } : {}),
+                  ...(active
+                    ? { background: surface.active, color: blackAlpha(0.87) }
+                    : { color: text.disabled }),
+                }}
               >
                 {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
@@ -311,15 +320,19 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
           onClick={() => setMoreOpen((o) => !o)}
           onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)"; }}
           onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-          className={cn(
-            "w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[rgba(0,0,0,0.3)] text-[10px] outline-none shrink-0 ml-0.5",
-            !isTabValue ? "bg-[rgba(217,119,87,0.2)]" : "bg-transparent",
-          )}
+          className="w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
+          style={{
+            color: text.hint,
+            background: !isTabValue ? primaryAlpha(0.2) : "transparent",
+          }}
         >
           <ChevronDown size={12} strokeWidth={2} />
         </button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div
+            className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+            style={{ borderColor: surface.track }}
+          >
             {DISPLAY_MORE.map((opt) => {
               const active = opt.value === value;
               return (
@@ -330,8 +343,9 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
                     "px-2 py-1 text-[11px] font-mono cursor-pointer transition-colors",
                     active
                       ? "bg-[var(--primary)] text-white"
-                      : "text-[rgba(0,0,0,0.5)] hover:bg-[rgba(0,0,0,0.05)]",
+                      : "hover:bg-[rgba(0,0,0,0.05)]",
                   )}
+                  style={!active ? { color: blackAlpha(0.5) } : undefined}
                 >
                   {opt.label}
                 </div>
@@ -414,7 +428,8 @@ export function TypoValueCell({
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono text-[rgba(0,0,0,0.5)] px-1.5 cursor-text outline-none"
+          className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
+          style={{ color: blackAlpha(0.5) }}
         >
           {keyword}
         </span>
@@ -426,14 +441,16 @@ export function TypoValueCell({
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="flex-1 w-0 bg-transparent border-none text-[rgba(0,0,0,0.87)] text-[11px] font-mono px-1.5 outline-none"
+          className="flex-1 w-0 bg-transparent border-none text-[11px] font-mono px-1.5 outline-none"
+          style={{ color: blackAlpha(0.87) }}
         />
       ) : (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono text-[rgba(0,0,0,0.7)] px-1.5 cursor-text outline-none"
+          className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
+          style={{ color: blackAlpha(0.7) }}
         >
           {value}
         </span>
@@ -441,7 +458,7 @@ export function TypoValueCell({
       {units && onUnitChange ? (
         <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
       ) : (
-        <span className="text-[9px] text-[rgba(0,0,0,0.35)] uppercase pr-1.5 shrink-0 font-mono">
+        <span className="text-[9px] uppercase pr-1.5 shrink-0 font-mono" style={{ color: text.hint }}>
           {unit}
         </span>
       )}

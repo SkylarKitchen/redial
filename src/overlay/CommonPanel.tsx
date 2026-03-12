@@ -12,6 +12,7 @@ import { SpacingBoxModel } from "./SpacingBoxModel";
 import { applyInlineStyle } from "./apply";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import type { SpacingValues } from "./infer";
 
 // ─── Props ───────────────────────────────────────────────────────────
