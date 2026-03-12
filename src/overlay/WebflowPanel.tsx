@@ -123,6 +123,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
   const parentIsFlex = parentCs != null && (parentCs.display === "flex" || parentCs.display === "inline-flex");
   const parentIsGrid = parentCs != null && (parentCs.display === "grid" || parentCs.display === "inline-grid");
   const isMedia = ["img", "video", "canvas"].includes(element.tagName.toLowerCase());
+  const isBlockContainer = ["div", "section", "article", "main", "nav", "aside", "header", "footer"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
   // ── SectionCtx bundle ──
@@ -163,6 +164,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           onColumnGapUnitChange={setColumnGapUnit}
           isFlex={isFlex}
           isGrid={isGrid}
+          isBlockContainer={isBlockContainer}
           parentIsFlex={parentIsFlex}
           parentIsGrid={parentIsGrid}
           showGridOverlay={showGridOverlay}

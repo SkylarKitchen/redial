@@ -20,36 +20,27 @@ import { text, color, surface } from "./theme";
 
 type RadiusMode = "individual" | "linked" | "single";
 
-/** 3 mode toggle icons for the Radius row (individual / linked / single). */
+/** 2 mode toggle icons for the Radius row: single (rounded rect) / individual (4 corners). */
 function RadiusModeIcons({ mode, onChange }: { mode: RadiusMode; onChange: (m: RadiusMode) => void }) {
   const modes: Array<{ key: RadiusMode; title: string; icon: React.ReactNode }> = [
-    {
-      key: "individual",
-      title: "Individual corners",
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
-          <path d="M1 4V1h3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M8 1h3v3" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M11 8v3H8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M4 11H1V8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    {
-      key: "linked",
-      title: "Linked corners",
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
-          <rect x="1" y="1" width="10" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 1.5" />
-        </svg>
-      ),
-    },
     {
       key: "single",
       title: "Single value",
       icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" style={{ display: "block" }}>
-          <rect x="1.5" y="1.5" width="9" height="9" rx="2" fill="currentColor" />
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block" }}>
+          <path d="M2.5 5.5C2.5 3.84315 3.84315 2.5 5.5 2.5H10.5C12.1569 2.5 13.5 3.84315 13.5 5.5V10.5C13.5 12.1569 12.1569 13.5 10.5 13.5H5.5C3.84315 13.5 2.5 12.1569 2.5 10.5V5.5Z" stroke="currentColor" fill="none" />
+        </svg>
+      ),
+    },
+    {
+      key: "individual",
+      title: "Individual corners",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ display: "block" }}>
+          <path d="M4.5 2C3.11929 2 2 3.11929 2 4.5V7H3V4.5C3 3.67157 3.67157 3 4.5 3H7V2H4.5Z" fill="currentColor" />
+          <path d="M9 2V3H11.5C12.3284 3 13 3.67157 13 4.5V7H14V4.5C14 3.11929 12.8807 2 11.5 2H9Z" fill="currentColor" />
+          <path d="M14 9H13V11.5C13 12.3284 12.3284 13 11.5 13H9V14H11.5C12.8807 14 14 12.8807 14 11.5V9Z" fill="currentColor" />
+          <path d="M7 14V13H4.5C3.67157 13 3 12.3284 3 11.5V9H2V11.5C2 12.8807 3.11929 14 4.5 14H7Z" fill="currentColor" />
         </svg>
       ),
     },
@@ -239,47 +230,61 @@ export const BordersSection = memo(function BordersSection({
       )}
 
       {/* ── "Borders" sub-label ── */}
-      <div style={{ padding: "6px 12px 2px", fontSize: 10, color: text.label, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
-        Borders
+      <div style={{ display: "flex", alignItems: "center", padding: "4px 8px", height: 32 }}>
+        <span style={{ width: 52, fontSize: 11.5, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Borders</span>
       </div>
 
-      {/* ── Side selector (compact) ── */}
-      <SideSelector value={borderSide} onChange={setBorderSide} compact />
+      {/* ── Two-column: cross side selector (left) + controls (right) ── */}
+      <div style={{ display: "flex", gap: 10, padding: "0 8px 4px" }}>
 
-      {/* ── Style (icon toggle) ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
-        <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0 }}>Style</span>
-        <IconButtonGroup
-          options={BORDER_STYLE_ICON_OPTIONS}
-          value={borderStyle}
-          onChange={handleBorderStyleChange}
-          aria-label="Border style"
-        />
+        {/* Left: cross-pattern side selector */}
+        <SideSelector value={borderSide} onChange={setBorderSide} cross />
+
+        {/* Right: Style / Width / Color controls */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+
+          {/* ── Style (icon toggle) ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
+            <span style={{ width: 44, fontSize: 11.5, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Style</span>
+            <IconButtonGroup
+              options={BORDER_STYLE_ICON_OPTIONS}
+              value={borderStyle}
+              onChange={handleBorderStyleChange}
+              aria-label="Border style"
+            />
+          </div>
+
+          {/* ── Width (value input + unit) ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
+            <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
+              <span style={{ width: 44, fontSize: 11.5, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}>Width</span>
+            </LabelScrub>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex" }}>
+                <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} />
+                <UnitSelector
+                  value={borderWidthUnit}
+                  options={BORDER_UNITS}
+                  onChange={(u) => {
+                    const ctx = getConversionCtx();
+                    const c = convertUnit(borderWidth, borderWidthUnit, u, ctx);
+                    fireBwHint(borderWidth, borderWidthUnit, c, u, ctx);
+                    setBorderWidth(c);
+                    setBorderWidthUnit(u);
+                    apply(borderProp("width"), `${c}${u}`);
+                  }}
+                  conversionHint={bwHint}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Color ── */}
+          <div style={{ height: 32, padding: "4px 0" }}>
+            <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { resetProp(element, borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} />
+          </div>
+        </div>
       </div>
-
-      {/* ── Width (value input, no slider) ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
-        <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
-          <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0, cursor: "ew-resize" }}>Width</span>
-        </LabelScrub>
-        <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} />
-        <UnitSelector
-          value={borderWidthUnit}
-          options={BORDER_UNITS}
-          onChange={(u) => {
-            const ctx = getConversionCtx();
-            const c = convertUnit(borderWidth, borderWidthUnit, u, ctx);
-            fireBwHint(borderWidth, borderWidthUnit, c, u, ctx);
-            setBorderWidth(c);
-            setBorderWidthUnit(u);
-            apply(borderProp("width"), `${c}${u}`);
-          }}
-          conversionHint={bwHint}
-        />
-      </div>
-
-      {/* ── Color ── */}
-      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { resetProp(element, borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} />
     </Section>
   );
 });

@@ -26,10 +26,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
-import { beginBatch, endBatch } from "./apply";
+import { beginBatch, endBatch, resetProp } from "./apply";
 import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
+import type { IndicatorType } from "./StyleIndicator";
 import { spacingZone, surface, font, blackAlpha, color } from "./theme";
 
 interface SpacingBoxModelProps {
@@ -42,6 +43,10 @@ interface SpacingBoxModelProps {
   paddingUnits: string[];
   onMarginUnitChange: (unit: string) => void;
   onPaddingUnitChange: (unit: string) => void;
+  /** Target element — used for alt+click reset */
+  element: Element;
+  /** Indicator function — returns whether a property has been edited */
+  ind: (prop: string) => IndicatorType;
 }
 
 // Zone base/highlight colors — neutral grays from theme tokens
@@ -57,9 +62,10 @@ const AXIS_PARTNER: Record<string, string> = {
   top: "bottom", bottom: "top", left: "right", right: "left",
 };
 
-/** "margin-top" → "Edit margin top" */
-function propLabel(prop: string): string {
-  return `Edit ${prop.replace("-", " ")}`;
+/** "margin-top" → "Edit margin top" / "Edit margin top · ⌥ click to reset" */
+function propLabel(prop: string, isEdited?: boolean): string {
+  const base = `Edit ${prop.replace("-", " ")}`;
+  return isEdited ? `${base} · ⌥ click to reset` : base;
 }
 
 export function SpacingBoxModel({
@@ -72,6 +78,8 @@ export function SpacingBoxModel({
   paddingUnits,
   onMarginUnitChange,
   onPaddingUnitChange,
+  element,
+  ind,
 }: SpacingBoxModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marginZoneRef = useRef<HTMLDivElement>(null);
@@ -82,7 +90,7 @@ export function SpacingBoxModel({
   const scrubActiveRef = useRef(false);
 
   // --- Tooltip state ---
-  const [tooltip, setTooltip] = useState<{ prop: string; rect: DOMRect } | null>(null);
+  const [tooltip, setTooltip] = useState<{ prop: string; rect: DOMRect; isEdited?: boolean } | null>(null);
 
   // --- Popover state ---
   const [popoverState, setPopoverState] = useState<{ prop: string; rect: DOMRect } | null>(null);
@@ -184,7 +192,10 @@ export function SpacingBoxModel({
   ) => {
     const isMargin = group === "margin";
     const value = displayVal(prop, propValue);
-    const nonDefault = value !== 0;
+    const indicator = ind(prop);
+    const isEdited = indicator === "element" || indicator === "direct";
+    const defaultColor = isEdited ? color.primary : (isMargin ? blackAlpha(0.55) : blackAlpha(0.8));
+    const hoverColor = isEdited ? color.primaryHover : color.primary;
 
     return (
       <div
@@ -196,7 +207,8 @@ export function SpacingBoxModel({
         style={{
           fontSize: 10,
           fontFamily: font.mono,
-          color: isMargin ? blackAlpha(0.55) : blackAlpha(0.8),
+          fontWeight: isEdited ? 600 : 400,
+          color: defaultColor,
           cursor: "ew-resize",
           padding: "2px 4px",
           borderRadius: 3,
@@ -210,13 +222,13 @@ export function SpacingBoxModel({
         // --- Hover: highlight + tooltip ---
         onMouseEnter={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.color = color.primary;
+          el.style.color = hoverColor;
           highlightZone(group);
-          setTooltip({ prop, rect: el.getBoundingClientRect() });
+          setTooltip({ prop, rect: el.getBoundingClientRect(), isEdited });
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget as HTMLElement;
-          el.style.color = isMargin ? blackAlpha(0.55) : blackAlpha(0.8);
+          el.style.color = defaultColor;
           clearZone(group);
           setTooltip(null);
         }}
@@ -318,10 +330,8 @@ export function SpacingBoxModel({
             if (wasClick && ev.type === "pointerup") {
               const pev = ev as PointerEvent;
               if (pev.altKey) {
-                // Alt+click: set all 4 sides to this value
-                const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
-                const prefix = isMargin ? "margin" : "padding";
-                for (const s of SIDES) onChangeRef.current(`${prefix}-${s}`, value, unit);
+                // Alt(Option)+click: reset this property to default
+                resetProp(element, prop);
               } else {
                 // Regular click: open popover
                 const rect = el.getBoundingClientRect();
@@ -514,7 +524,7 @@ export function SpacingBoxModel({
               border: "1px solid rgba(0,0,0,0.07)",
             }}
           >
-            {propLabel(tooltip.prop)}
+            {propLabel(tooltip.prop, tooltip.isEdited)}
           </div>,
           document.body,
         )}

@@ -69,6 +69,8 @@ export const SpacingSection = memo(function SpacingSection({
         paddingUnit={paddingUnit}
         marginUnits={SPACING_UNITS}
         paddingUnits={SPACING_UNITS}
+        element={element}
+        ind={ctx.ind}
         onMarginUnitChange={(u) => {
           const ctx = buildConversionContext(element);
           const sides = ["top", "right", "bottom", "left"] as const;

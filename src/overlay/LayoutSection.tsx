@@ -35,6 +35,8 @@ export interface LayoutSectionProps {
   onColumnGapUnitChange: (u: string) => void;
   isFlex: boolean;
   isGrid: boolean;
+  /** True for div, section, article, etc. — shows flex controls proactively */
+  isBlockContainer?: boolean;
   parentIsFlex: boolean;
   parentIsGrid: boolean;
   showGridOverlay?: boolean;
@@ -57,6 +59,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     onColumnGapUnitChange,
     isFlex,
     isGrid,
+    isBlockContainer = false,
     parentIsFlex,
     parentIsGrid,
     showGridOverlay,
@@ -242,7 +245,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} indicator={ind("display")} />
 
-      {isFlex && (
+      {(isFlex || isBlockContainer) && (
         <>
           {/* Direction: Horizontal/Vertical segmented control + reverse */}
           <DirectionRow
