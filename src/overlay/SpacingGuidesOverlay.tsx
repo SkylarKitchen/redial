@@ -19,8 +19,10 @@ import { getScrubGroup } from "./scrubState";
 // Constants
 // ---------------------------------------------------------------------------
 
-const GUIDE_COLOR = "#4CAF50";
-const HATCH_FG = "rgba(76,175,80,0.18)";
+const MARGIN_COLOR = "#57A8FF";
+const MARGIN_HATCH = "rgba(87,168,255,0.18)";
+const PADDING_COLOR = "#4CAF50";
+const PADDING_HATCH = "rgba(76,175,80,0.18)";
 const HATCH_SPACING = 4; // px between hatching lines
 const Z_INDEX = 2147483645;
 const LABEL_FONT = "ui-monospace, 'SF Mono', monospace";
@@ -162,11 +164,17 @@ const BOX_LINE: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-const HATCH_BG = `repeating-linear-gradient(45deg, ${HATCH_FG} 0px, ${HATCH_FG} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
+function hatchBg(group: "margin" | "padding") {
+  const fg = group === "margin" ? MARGIN_HATCH : PADDING_HATCH;
+  return `repeating-linear-gradient(45deg, ${fg} 0px, ${fg} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
+}
 
-const BADGE_STYLE: React.CSSProperties = {
+function guideColor(group: "margin" | "padding") {
+  return group === "margin" ? MARGIN_COLOR : PADDING_COLOR;
+}
+
+const BADGE_BASE: React.CSSProperties = {
   ...BASE,
-  background: GUIDE_COLOR,
   color: "#fff",
   fontSize: 10,
   fontFamily: LABEL_FONT,
@@ -253,14 +261,14 @@ export function SpacingGuidesOverlay({
             ...BOX_LINE,
             top: marginBox.top, left: marginBox.left,
             width: marginBox.width, height: marginBox.height,
-            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+            border: `1px solid ${MARGIN_COLOR}`, opacity: 0.4,
           }} />
           {/* Border-box boundary */}
           <div style={{
             ...BOX_LINE,
             top: snap.top, left: snap.left,
             width: snap.width, height: snap.height,
-            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+            border: `1px solid ${MARGIN_COLOR}`, opacity: 0.4,
           }} />
         </>
       ) : (
@@ -270,7 +278,7 @@ export function SpacingGuidesOverlay({
             ...BOX_LINE,
             top: snap.top, left: snap.left,
             width: snap.width, height: snap.height,
-            border: `1px solid ${GUIDE_COLOR}`, opacity: 0.4,
+            border: `1px solid ${PADDING_COLOR}`, opacity: 0.4,
           }} />
           {/* Content-box dashed outline */}
           <div style={{
@@ -284,7 +292,7 @@ export function SpacingGuidesOverlay({
 
       {/* Filled hatched zones + dimension badges */}
       {zones.map((z, i) => (
-        <SpacingZone key={`${z.side}-${i}`} zone={z} />
+        <SpacingZone key={`${z.side}-${i}`} zone={z} group={snap.group} />
       ))}
     </div>
   );
@@ -294,8 +302,9 @@ export function SpacingGuidesOverlay({
 // Per-side hatched zone with centered badge
 // ---------------------------------------------------------------------------
 
-function SpacingZone({ zone: z }: { zone: ZoneRect }) {
+function SpacingZone({ zone: z, group }: { zone: ZoneRect; group: "margin" | "padding" }) {
   const label = Math.round(z.value);
+  const color = guideColor(group);
 
   // Badge position: centered in the zone
   const badgeX = z.x + z.w / 2;
@@ -313,11 +322,11 @@ function SpacingZone({ zone: z }: { zone: ZoneRect }) {
         top: z.y,
         width: z.w,
         height: z.h,
-        background: HATCH_BG,
-        borderTop: z.side === "top" ? `1px solid ${GUIDE_COLOR}` : undefined,
-        borderBottom: z.side === "bottom" ? `1px solid ${GUIDE_COLOR}` : undefined,
-        borderLeft: z.side === "left" ? `1px solid ${GUIDE_COLOR}` : undefined,
-        borderRight: z.side === "right" ? `1px solid ${GUIDE_COLOR}` : undefined,
+        background: hatchBg(group),
+        borderTop: z.side === "top" ? `1px solid ${color}` : undefined,
+        borderBottom: z.side === "bottom" ? `1px solid ${color}` : undefined,
+        borderLeft: z.side === "left" ? `1px solid ${color}` : undefined,
+        borderRight: z.side === "right" ? `1px solid ${color}` : undefined,
         opacity: 0.9,
         boxSizing: "border-box",
       }} />
@@ -325,7 +334,8 @@ function SpacingZone({ zone: z }: { zone: ZoneRect }) {
       {/* Dimension badge */}
       {showBadge && (
         <div style={{
-          ...BADGE_STYLE,
+          ...BADGE_BASE,
+          background: color,
           left: badgeX,
           top: badgeY,
           transform: "translate(-50%, -50%)",
