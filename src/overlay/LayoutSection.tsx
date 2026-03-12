@@ -361,7 +361,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   value={gap}
                   min={0}
                   max={200}
-                  step={1}
+                  step={4}
                   unit={gapUnit}
                   units={LAYOUT_UNITS}
                   onUnitChange={(u) => {
@@ -399,7 +399,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     value={rowGap}
                     min={0}
                     max={200}
-                    step={1}
+                    step={4}
                     unit={rowGapUnit}
                     units={LAYOUT_UNITS}
                     onUnitChange={(u) => {
@@ -432,7 +432,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 value={columnGap}
                 min={0}
                 max={200}
-                step={1}
+                step={4}
                 unit={columnGapUnit}
                 units={LAYOUT_UNITS}
                 onUnitChange={(u) => {

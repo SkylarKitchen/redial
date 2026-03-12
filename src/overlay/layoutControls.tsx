@@ -200,14 +200,14 @@ export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedCh
   const pct = (value / 200) * 100;
   return (
     <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <LabelScrub value={value} onChange={onChange} step={1} min={0} max={200}>
+      <LabelScrub value={value} onChange={onChange} step={4} min={0} max={200}>
         <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 cursor-ew-resize">Gap</span>
       </LabelScrub>
       {/* Color swatch indicator */}
       <div className="w-2.5 h-2.5 rounded-sm shrink-0 bg-[rgba(0,0,0,0.12)] border border-[rgba(0,0,0,0.15)]" />
       {/* Slider */}
       <input
-        type="range" min={0} max={200} step={1} value={value}
+        type="range" min={0} max={200} step={4} value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="flex-1 h-[3px] outline-none cursor-pointer"
         style={{
