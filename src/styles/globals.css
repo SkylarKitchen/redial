@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+/*
+ * Redial dark theme — scoped to .__tuner-root
+ * These map to Shadcn's expected CSS variable names
+ */
+.__tuner-root {
+  /* Core */
+  --background: #1e1e1e;
+  --foreground: rgba(255, 255, 255, 0.95);
+
+  /* Muted */
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: rgba(255, 255, 255, 0.5);
+
+  /* Card */
+  --card: #1e1e1e;
+  --card-foreground: rgba(255, 255, 255, 0.95);
+
+  /* Popover */
+  --popover: #252525;
+  --popover-foreground: rgba(255, 255, 255, 0.95);
+
+  /* Primary */
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: rgba(255, 255, 255, 0.08);
+  --secondary-foreground: rgba(255, 255, 255, 0.85);
+
+  /* Accent */
+  --accent: rgba(255, 255, 255, 0.06);
+  --accent-foreground: rgba(255, 255, 255, 0.85);
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Border / Input / Ring */
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: rgba(99, 102, 241, 0.3);
+
+  /* Radius */
+  --radius: 0.125rem;
+
+  /* Sidebar (for Sheet) */
+  --sidebar-background: #1e1e1e;
+  --sidebar-foreground: rgba(255, 255, 255, 0.95);
+  --sidebar-primary: #6366f1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.06);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.85);
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: rgba(99, 102, 241, 0.3);
+
+  /* Typography */
+  font-family: system-ui, -apple-system, 'SF Pro Display', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reset for panel internals */
+.__tuner-root,
+.__tuner-root *,
+.__tuner-root *::before,
+.__tuner-root *::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbar styling */
+.__tuner-root::-webkit-scrollbar {
+  width: 4px;
+}
+
+.__tuner-root::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.__tuner-root::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.__tuner-root::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* DialKit overrides (keep existing) */
+.__tuner-root .dialkit-folder > summary,
+.__tuner-root .dialkit-folder-header {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 10px 12px 6px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  letter-spacing: 0;
+}
+
+.__tuner-root .dialkit-folder:first-child > summary,
+.__tuner-root .dialkit-folder-header:first-child {
+  border-top: none;
+}
+
+.__tuner-root .dialkit-control {
+  padding: 2px 12px !important;
+}
+
+.__tuner-root .dialkit-label {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  text-transform: capitalize;
+}
+
+/* Selection mode highlight pulse */
+.__tuner-selector-outline {
+  animation: __tuner-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes __tuner-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  }
+}
