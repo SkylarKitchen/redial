@@ -198,6 +198,8 @@ export function SizeInputCell({
         borderColor: blackAlpha(0.07),
       }}
     >
+      {/* Modified dot */}
+      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4 }} title="Modified — Option+Click to reset" />}
       {/* Label */}
       <div
         className="px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]"
