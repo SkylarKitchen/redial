@@ -29,7 +29,8 @@ import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavig
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
 import { Plus } from "lucide-react";
-import { ms, setReducedMotion } from "./timing";
+import { ms, setReducedMotion, springConfig } from "./timing";
+import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { CommandPalette } from "./CommandPalette";
@@ -1280,12 +1281,6 @@ export function Overlay() {
         .__tuner-root *:not([data-radix-scroll-area-viewport]):hover {
           scrollbar-color: rgba(0,0,0,0.12) transparent;
         }
-        @keyframes tuner-enter {
-          from { opacity: 0; transform: translateY(8px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .__tuner-enter { animation: tuner-enter ${ms("expand")} ease-out both; }
-
         /* Slider thumb styling — replaces browser defaults with light-theme matching thumb */
         .__tuner-root input[type="range"] {
           -webkit-appearance: none;
@@ -1412,19 +1407,26 @@ export function Overlay() {
       )}
 
       {/* Panel (only when an element is selected) */}
+      <AnimatePresence>
       {selectedEl && inferResult && (
-        <div
+        <motion.div
+          key="tuner-panel"
           className={cn(
-            "fixed z-[2147483647] w-[300px] h-[85vh] max-h-[85vh] bg-white rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root __tuner-enter",
+            "fixed z-[2147483647] w-[300px] h-[85vh] max-h-[85vh] bg-white rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root",
             diffMode ? "border border-yellow-400/30" : "border",
             selecting ? "pointer-events-none" : "pointer-events-auto",
           )}
           style={{
             top: pos.y,
             left: pos.x,
+            transformOrigin: "bottom right",
+            pointerEvents: selectedEl ? undefined : "none",
             ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
             ...(!diffMode ? { borderColor: blackAlpha(0.07) } : {}),
           }}
+          initial={{ opacity: 0, scale: 0.96, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0, transition: springConfig("panelOpen") }}
+          exit={{ opacity: 0, scale: 0.97, y: 4, transition: springConfig("panelClose") }}
         >
           {/* Reduced motion: disable transitions/animations when user prefers */}
           {reducedMotion && (

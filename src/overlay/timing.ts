@@ -31,3 +31,19 @@ export function getReducedMotion(): boolean {
 
 /** Convert timing token to CSS duration string: ms("fast") → "80ms" (or "0ms" when reduced motion is active) */
 export const ms = (key: TimingKey) => _reducedMotion ? "0ms" : `${timing[key]}ms`;
+
+// ─── Spring Presets (Motion library) ────────────────────────────────
+
+export const spring = {
+  /** Panel open — snappy with slight overshoot (Linear/Raycast feel) */
+  panelOpen: { type: "spring" as const, stiffness: 400, damping: 30, mass: 0.8 },
+  /** Panel close — fast, decisive, no overshoot */
+  panelClose: { type: "tween" as const, duration: 0.15, ease: [0.2, 0, 0.5, 1] as const },
+  /** Reduced motion fallback — instant */
+  instant: { type: "tween" as const, duration: 0 },
+} as const;
+
+/** Get spring config with reduced-motion awareness */
+export function springConfig(key: keyof typeof spring) {
+  return _reducedMotion ? spring.instant : spring[key];
+}
