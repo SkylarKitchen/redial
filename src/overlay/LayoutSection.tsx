@@ -458,57 +458,62 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 
-          {/* Grow / Shrink — compact inline inputs, flex children only */}
+          {/* Grow / Shrink / Basis — compact inline inputs, flex children only */}
           {parentIsFlex && (
-            <div className="flex gap-1.5 py-0.5 px-3">
-              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
-                <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
-                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
-                    {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
-                  </span>
-                </LabelScrub>
-                <ValueInput value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
+            <>
+              <div className="flex gap-1.5 py-0.5 px-3">
+                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                  <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
+                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                      {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
+                    </span>
+                  </LabelScrub>
+                  <ValueInput embedded value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
+                </div>
+                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                  <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
+                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                      {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
+                    </span>
+                  </LabelScrub>
+                  <ValueInput embedded value={flexShrink} onChange={handleFlexShrinkChange} onAltClick={() => resetCss("flex-shrink", setFlexShrink)} />
+                </div>
               </div>
-              <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
-                <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
-                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
-                    {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
-                  </span>
-                </LabelScrub>
-                <ValueInput value={flexShrink} onChange={handleFlexShrinkChange} onAltClick={() => resetCss("flex-shrink", setFlexShrink)} />
-              </div>
-            </div>
-          )}
 
-          {/* Basis — compact input with unit selector, flex children only */}
-          {parentIsFlex && (
-            <div className="py-0.5 px-3">
-              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
-                <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
-                  <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
-                    {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
-                  </span>
-                </LabelScrub>
-                <div className="flex-1 flex justify-end pr-0.5">
-                  <ValueInput value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
+              <div className="flex gap-1.5 py-0.5 px-3">
+                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                  <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
+                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                      {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
+                    </span>
+                  </LabelScrub>
+                  <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
+                  <div className="shrink-0 pr-[3px]">
+                    <UnitSelector
+                      value={flexBasisUnit}
+                      options={LAYOUT_UNITS}
+                      onChange={(u) => {
+                        const ctx = getConversionCtx();
+                        const c = convertUnit(flexBasis, flexBasisUnit, u, ctx);
+                        fireBasisHint(flexBasis, flexBasisUnit, c, u, ctx);
+                        setFlexBasis(c);
+                        setFlexBasisUnit(u);
+                        apply("flex-basis", `${c}${u}`);
+                      }}
+                      conversionHint={basisHint}
+                    />
+                  </div>
                 </div>
-                <div className="shrink-0 pr-[3px]">
-                  <UnitSelector
-                    value={flexBasisUnit}
-                    options={LAYOUT_UNITS}
-                    onChange={(u) => {
-                      const ctx = getConversionCtx();
-                      const c = convertUnit(flexBasis, flexBasisUnit, u, ctx);
-                      fireBasisHint(flexBasis, flexBasisUnit, c, u, ctx);
-                      setFlexBasis(c);
-                      setFlexBasisUnit(u);
-                      apply("flex-basis", `${c}${u}`);
-                    }}
-                    conversionHint={basisHint}
-                  />
+                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                  <LabelScrub value={flexOrder} onChange={handleFlexOrderChange} step={1} min={-99} max={99} onAltClick={() => resetCss("order", setFlexOrder)}>
+                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                      {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}Order
+                    </span>
+                  </LabelScrub>
+                  <ValueInput embedded value={flexOrder} onChange={handleFlexOrderChange} onAltClick={() => resetCss("order", setFlexOrder)} />
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           <SelectRow
@@ -522,15 +527,6 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             computedProp="align-self"
             computedElement={element}
           />
-
-          {/* Order — simple number input, not a slider */}
-          <div className="flex items-center gap-1.5 py-0.5 px-3">
-            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-1">
-              {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}
-              Order
-            </span>
-            <ValueInput value={flexOrder} onChange={handleFlexOrderChange} onAltClick={() => resetCss("order", setFlexOrder)} />
-          </div>
         </>
       )}
     </Section>

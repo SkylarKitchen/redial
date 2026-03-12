@@ -184,7 +184,7 @@ export function Section({
 
 // ─── ValueInput ─────────────────────────────────────────────────────
 
-export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit }: {
+export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit, embedded }: {
   value: number;
   onChange: (v: number) => void;
   /** Called when alt+click is detected (resets value to default) */
@@ -193,6 +193,8 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
   emptyKeyword?: string;
   /** Called when the empty keyword is applied (e.g. "auto", "none") */
   onKeywordCommit?: (keyword: string) => void;
+  /** When true, renders without own bg/border (for use inside styled containers) */
+  embedded?: boolean;
 }) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
@@ -254,8 +256,10 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onDoubleClick={selectAllOnDoubleClick}
       style={flashStyle}
       className={cn(
-        "h-[26px] w-10 bg-[var(--input)] border border-[var(--border)] rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
-        "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
+        "h-[26px] w-10 rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
+        embedded
+          ? "bg-transparent border-none"
+          : "bg-[var(--input)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
       )}
     />
   );

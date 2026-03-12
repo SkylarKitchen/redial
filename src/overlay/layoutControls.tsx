@@ -10,7 +10,6 @@ import { ChevronDown, Link, Unlink, ArrowLeftRight } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
-import { IconButtonGroup } from "./IconButtonGroup";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
@@ -18,7 +17,7 @@ import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
 import { cn } from "@/lib/utils";
-import { DISPLAY_ICON_OPTIONS, LAYOUT_UNITS } from "./panelConstants";
+import { LAYOUT_UNITS } from "./panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
 
@@ -186,9 +185,16 @@ export function MiniDropdown({ value, options, onChange }: {
   );
 }
 
-// ─── DisplayTabs (Icon-based) ───────────────────────────────────────
+// ─── DisplayTabs (Text-based) ───────────────────────────────────────
 
-/** Display row: 6 icon buttons for all display modes */
+const DISPLAY_OPTIONS = [
+  { value: "block", label: "block" },
+  { value: "flex", label: "flex" },
+  { value: "grid", label: "grid" },
+  { value: "none", label: "none" },
+];
+
+/** Display row: 4 text tabs for display modes */
 export function DisplayTabs({ value, onChange, onReset }: {
   value: string;
   onChange: (v: string) => void;
@@ -197,12 +203,7 @@ export function DisplayTabs({ value, onChange, onReset }: {
   return (
     <div className="flex items-center gap-1.5 py-0.5 px-3">
       <RowLabel label="Display" isSet={value !== "block"} onReset={onReset} />
-      <IconButtonGroup
-        options={DISPLAY_ICON_OPTIONS}
-        value={value}
-        onChange={onChange}
-        aria-label="Display mode"
-      />
+      <TextToggle options={DISPLAY_OPTIONS} value={value} onChange={onChange} />
     </div>
   );
 }
