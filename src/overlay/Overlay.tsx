@@ -137,6 +137,9 @@ export function Overlay() {
   // Style clipboard message
   const [clipboardMessage, setClipboardMessage] = useState<string | null>(null);
 
+  // Focus mode: one section open at a time (Phase K)
+  const [focusMode, setFocusMode] = useState(false);
+
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle

@@ -218,7 +218,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
 
       {/* 8. Effects */}
       {showSection("Effects") && (
-        <EffectsSection ctx={ctx} forceOpen={forceOpen} />
+        <EffectsSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Effects")} />
       )}
 
       {/* 9. CSS Variables — hide during search to avoid leaking below "No results" */}
