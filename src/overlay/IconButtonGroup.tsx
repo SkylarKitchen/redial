@@ -87,7 +87,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
           // Active state
           isActive
             ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]"
-            : "bg-transparent text-[var(--muted-foreground)] hover:bg-[rgba(255,255,255,0.08)]",
+            : "bg-transparent text-[var(--muted-foreground)] hover:bg-[rgba(0,0,0,0.05)]",
           // Border radius: first/last rounded, middle flat
           isFirst && "rounded-l rounded-r-none",
           isLast && "rounded-r rounded-l-none",
