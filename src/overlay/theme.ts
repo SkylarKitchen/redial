@@ -162,7 +162,7 @@ export const indicatorColor: Record<IndicatorColorType, string> = {
   state: "#34d399",
   variable: "#a78bfa",
   direct: "#60a5fa",
-  none: "#504F4A",
+  none: "#525252",
 } as const;
 
 // ─── Label Indicator Colors (Webflow-style) ────────────────────

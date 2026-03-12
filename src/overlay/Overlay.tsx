@@ -1303,7 +1303,7 @@ export function Overlay() {
           height: 12px;
           border-radius: 50%;
           background: #3B82F6;
-          border: 2px solid #FAF9F5;
+          border: 2px solid #FFFFFF;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           margin-top: -4.5px;
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
@@ -1330,7 +1330,7 @@ export function Overlay() {
           height: 12px;
           border-radius: 50%;
           background: #3B82F6;
-          border: 2px solid #FAF9F5;
+          border: 2px solid #FFFFFF;
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }

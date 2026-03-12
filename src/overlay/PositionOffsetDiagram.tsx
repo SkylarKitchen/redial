@@ -117,7 +117,7 @@ function AutoLabel({ onClick }: { onClick: () => void }) {
       style={{
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: "#9A9994",
+        color: "#A3A3A3",
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",
@@ -191,7 +191,7 @@ function EditableValue({
           background: "rgba(0,0,0,0.07)",
           border: "1px solid rgba(217, 119, 87, 0.5)",
           borderRadius: "2px",
-          color: "#1C1B18",
+          color: "#171717",
           fontSize: "10px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",
           textAlign: "center",
@@ -212,7 +212,7 @@ function EditableValue({
       style={{
         fontSize: "10px",
         fontFamily: "ui-monospace, 'SF Mono', monospace",
-        color: value !== 0 ? "#504F4A" : "#9A9994",
+        color: value !== 0 ? "#525252" : "#A3A3A3",
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",
@@ -229,7 +229,7 @@ function EditableValue({
     >
       {value}
       {suffix && (
-        <span style={{ fontSize: "8px", color: "#9A9994", marginLeft: "1px" }}>
+        <span style={{ fontSize: "8px", color: "#A3A3A3", marginLeft: "1px" }}>
           {suffix}
         </span>
       )}

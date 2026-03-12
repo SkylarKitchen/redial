@@ -71,6 +71,9 @@ function findClippedUnitSelectors(
       const line = lines[j];
       const lineIndent = getIndent(line);
 
+      // Stop at component/function boundary FIRST (before skipping non-elements)
+      if (/^\s*(function|const|export)\s/.test(line)) break;
+
       // Must be at strictly lower indentation (ancestor)
       if (lineIndent >= unitIndent) continue;
 
@@ -87,9 +90,6 @@ function findClippedUnitSelectors(
           snippet: line.trim(),
         });
       }
-
-      // Stop at component/function boundary
-      if (/^\s*(function|const|export)\s/.test(line)) break;
     }
   }
 

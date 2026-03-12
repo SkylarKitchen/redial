@@ -113,7 +113,7 @@ function NumericInput({
             background: "rgba(0,0,0,0.07)",
             border: "1px solid rgba(59,130,246,0.5)",
             borderRadius: "2px",
-            color: "#1C1B18",
+            color: "#171717",
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
             textAlign: "center",

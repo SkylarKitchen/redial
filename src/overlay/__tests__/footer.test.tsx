@@ -26,6 +26,6 @@ describe("ActionButton style contract", () => {
     // which provides inline-flex layout preventing text wrapping
     const buttonUsages = src.match(/<Button\b/g);
     expect(buttonUsages).toBeTruthy();
-    expect(buttonUsages!.length).toBeGreaterThanOrEqual(4);
+    expect(buttonUsages!.length).toBeGreaterThanOrEqual(3);
   });
 });

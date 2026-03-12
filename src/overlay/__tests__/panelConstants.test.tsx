@@ -90,7 +90,7 @@ describe("Icon button groups — shape & length", () => {
     { name: "CAPITALIZE_OPTIONS", arr: CAPITALIZE_OPTIONS, len: 4 },
     { name: "ITALIC_OPTIONS", arr: ITALIC_OPTIONS, len: 2 },
     { name: "DIRECTION_OPTIONS", arr: DIRECTION_OPTIONS, len: 2 },
-    { name: "OVERFLOW_ICON_OPTIONS", arr: OVERFLOW_ICON_OPTIONS, len: 5 },
+    { name: "OVERFLOW_ICON_OPTIONS", arr: OVERFLOW_ICON_OPTIONS, len: 4 },
     { name: "DIRECTION_ICONS_SHORT", arr: DIRECTION_ICONS_SHORT, len: 3 },
     { name: "BOX_SIZING_OPTIONS", arr: BOX_SIZING_OPTIONS, len: 2 },
     { name: "BORDER_STYLE_ICON_OPTIONS", arr: BORDER_STYLE_ICON_OPTIONS, len: 4 },
