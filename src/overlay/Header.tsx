@@ -11,7 +11,7 @@ import { getReactSource } from "./sourcemap";
 import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, GripVertical } from "lucide-react";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
