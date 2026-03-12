@@ -178,7 +178,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         className={cn(
           "h-[20px] px-1.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded cursor-pointer text-[var(--muted-foreground)] hover:border-[rgba(0,0,0,0.15)] transition-colors",
           "flex items-center justify-center max-w-[36px] leading-none",
-          open && "bg-[rgba(217,119,87,0.25)] border-[rgba(217,119,87,0.4)] text-[#D97757]"
+          open && "bg-[rgba(193,122,80,0.25)] border-[rgba(193,122,80,0.4)] text-[#D97757]"
         )}
       >
         {value}

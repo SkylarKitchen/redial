@@ -65,7 +65,7 @@ export function MiniDropdown({ value, options, onChange }: {
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
+          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -163,7 +163,7 @@ export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange 
           )}
         ><ChevronDown size={10} strokeWidth={2} /></button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const active = opt.value === direction;
               return (
@@ -304,7 +304,7 @@ export function DisplayTabs({ value, onChange }: { value: string; onChange: (v: 
           <ChevronDown size={10} strokeWidth={2} />
         </button>
         {moreOpen && (
-          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
+          <div className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5">
             {DISPLAY_MORE.map((opt) => {
               const active = opt.value === value;
               return (

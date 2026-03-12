@@ -210,7 +210,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               Copy <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
             </Button>
             {copyOpen && (
-              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#F5F4ED] border border-black/[0.08] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
+              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#eae5df] border border-black/[0.08] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
                 <DropdownItem onClick={handleCopyCleanCSS}>CSS</DropdownItem>
                 <DropdownItem onClick={handleCopyTailwind}>Tailwind</DropdownItem>
                 <DropdownItem onClick={handleCopyVars}>CSS Variables</DropdownItem>
@@ -257,7 +257,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={handleSave}
             disabled={count === 0 || saving}
             title="Save to source"
-            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#D97757] text-white shadow-[0_1px_3px_rgba(217,119,87,0.4)] hover:bg-[#D97757]/90 disabled:shadow-none"
+            className="h-7 text-[13px] font-semibold px-3 rounded-md border-none bg-[#c17a50] text-white shadow-[0_1px_3px_rgba(193,122,80,0.4)] hover:bg-[#c17a50]/90 disabled:shadow-none"
           >
             {saving ? "..." : "Save"}
           </Button>
