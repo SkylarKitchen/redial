@@ -396,11 +396,25 @@ export async function handleCommit(
           );
           modified = true;
         } else if (found.strategy === "fuzzy") {
-          // Fuzzy match found the property but not the exact value — report it
-          result.failed.push({
-            ...change,
-            reason: `value "${change.from}" not found literally (may be a variable)`,
-          });
+          // Fuzzy match found the property by name but the exact from-value
+          // isn't on this line. Source likely uses a different representation
+          // (hex vs rgb, var() vs computed, etc.). Replace the full CSS value.
+          const broadPattern = new RegExp(
+            `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
+          );
+          if (broadPattern.test(lines[found.lineIdx])) {
+            const safeValue = change.to.replace(/\$/g, "$$$$");
+            lines[found.lineIdx] = lines[found.lineIdx].replace(
+              broadPattern,
+              `$1${safeValue}`
+            );
+            modified = true;
+          } else {
+            result.failed.push({
+              ...change,
+              reason: `value "${change.from}" not found literally (may be a variable)`,
+            });
+          }
         } else {
           result.failed.push({
             ...change,
