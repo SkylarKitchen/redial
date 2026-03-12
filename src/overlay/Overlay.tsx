@@ -19,6 +19,7 @@ import { CommonPanel } from "./CommonPanel";
 import { PromptPanel } from "./PromptPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
+import { FlexGapOverlay } from "./FlexGapOverlay";
 import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
 import { infer, type InferResult } from "./infer";
 import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./apply";
@@ -123,6 +124,12 @@ export function Overlay() {
     if (!selectedEl) return false;
     const d = getComputedStyle(selectedEl).display;
     return d === "grid" || d === "inline-grid";
+  }, [selectedEl, panelKey]);
+
+  const isFlexContainer = useMemo(() => {
+    if (!selectedEl) return false;
+    const d = getComputedStyle(selectedEl).display;
+    return d === "flex" || d === "inline-flex";
   }, [selectedEl, panelKey]);
 
   // Property search
@@ -1386,6 +1393,11 @@ export function Overlay() {
       {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}
       {selectedEl && isGridContainer && showGridOverlay && !selecting && (
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
+      )}
+
+      {/* Flex gap overlay — pink dashed hatching between flex children */}
+      {selectedEl && isFlexContainer && !selecting && (
+        <FlexGapOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
       {/* Spacing guides overlay — self-hides when no scrub is active */}
