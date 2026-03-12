@@ -12,7 +12,7 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 
 ### Tier 2 — Test Coverage: Pure Utility Modules
 - [x] timing.ts — timing tokens, reducedMotion, ms()
-- [ ] scrubState.ts — scrub active flag get/set
+- [x] scrubState.ts — scrub active flag get/set
 - [ ] scope.ts — scope resolution logic
 - [ ] colorVariables.ts — color variable utilities
 - [ ] discoverVariables.ts — CSS variable discovery
@@ -47,3 +47,6 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 
 ### Tier 2 — timing.ts (2026-03-11)
 - **timing.ts test coverage**: 13 tests covering timing token values and ordering, reducedMotion get/set/toggle, ms() CSS string output for all tokens, and reduced-motion zero-duration behavior. +13 tests, 515 total.
+
+### Tier 2 — scrubState.ts (2026-03-11)
+- **scrubState.ts test coverage**: 5 tests for get/set/toggle/idempotent behavior. +5 tests, 520 total.
