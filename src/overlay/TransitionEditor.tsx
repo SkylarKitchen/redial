@@ -184,11 +184,91 @@ function TransitionCard({
   isDragging?: boolean;
   element?: Element;
 }) {
+  const [playing, setPlaying] = useState(false);
+  const playTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+
   const isCustomBezier = isCubicBezierCustom(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);
 
   // Parse custom bezier values for inputs
   const [cx1, cy1, cx2, cy2] = bezierPoints ?? [0.25, 0.1, 0.25, 1];
+
+  const handlePlay = useCallback(() => {
+    if (!element || playing) return;
+    const el = element as HTMLElement;
+    setPlaying(true);
+
+    // Clear any pending timer
+    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+
+    const prop = transition.property;
+    const durationMs = transition.duration;
+    const delayMs = transition.delay;
+    const easing = transition.easing;
+
+    // Build a CSS easing string
+    const cssEasing = easing.startsWith("cubic-bezier(") ? easing : easing;
+
+    // Determine a "from" value for the property to create a visible animation
+    const fromValues: Record<string, string> = {
+      opacity: "0",
+      transform: "translateY(20px)",
+      "background-color": "rgba(99,102,241,0.3)",
+      background: "rgba(99,102,241,0.3)",
+      color: "rgba(99,102,241,0.8)",
+      "border-color": "rgba(99,102,241,0.5)",
+      "border-radius": "0px",
+      "box-shadow": "0 0 0 4px rgba(99,102,241,0.3)",
+      width: "50%",
+      height: "50%",
+      "font-size": "50%",
+      filter: "blur(4px)",
+      "backdrop-filter": "blur(4px)",
+      visibility: "hidden",
+    };
+
+    // For "all" or unknown properties, do an opacity flash
+    const targetProp = prop === "all" ? "opacity" : prop;
+    const fromValue = fromValues[targetProp] ?? null;
+
+    if (!fromValue) {
+      // For truly unknown properties, just flash opacity
+      const savedTransition = el.style.transition;
+      const savedOpacity = el.style.opacity;
+
+      el.style.transition = "none";
+      el.style.opacity = "0.3";
+      // Force reflow
+      void el.offsetHeight;
+      el.style.transition = `opacity ${durationMs}ms ${cssEasing} ${delayMs}ms`;
+      el.style.opacity = savedOpacity || "";
+      playTimerRef.current = setTimeout(() => {
+        el.style.transition = savedTransition;
+        setPlaying(false);
+      }, durationMs + delayMs + 50);
+      return;
+    }
+
+    // Save the current inline values
+    const savedTransition = el.style.transition;
+    const savedValue = el.style.getPropertyValue(targetProp);
+
+    // Step 1: Disable transitions, snap to "from" state
+    el.style.transition = "none";
+    el.style.setProperty(targetProp, fromValue);
+    // Force reflow so browser registers the "from" state
+    void el.offsetHeight;
+
+    // Step 2: Enable the transition and restore original value
+    el.style.transition = `${targetProp} ${durationMs}ms ${cssEasing} ${delayMs}ms`;
+    el.style.setProperty(targetProp, savedValue || "");
+
+    // Step 3: After animation completes, restore original transition
+    playTimerRef.current = setTimeout(() => {
+      el.style.transition = savedTransition;
+      setPlaying(false);
+    }, durationMs + delayMs + 50);
+  }, [element, playing, transition]);
 
   const handleBezierChange = useCallback(
     (pts: [number, number, number, number]) => {

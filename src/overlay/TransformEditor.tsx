@@ -49,17 +49,6 @@ const TRANSFORM_RANGES: Record<TransformType, { min: number; max: number; step: 
   skew: { min: -90, max: 90, step: 1 },
 };
 
-const ORIGIN_GRID = [
-  ["top left", "top center", "top right"],
-  ["center left", "center", "center right"],
-  ["bottom left", "bottom center", "bottom right"],
-];
-
-const ORIGIN_LABELS = [
-  ["TL", "TC", "TR"],
-  ["ML", "MC", "MR"],
-  ["BL", "BC", "BR"],
-];
 
 function getUnit(type: TransformType, axis: "x" | "y" | "z"): string {
   if (type === "translate") return "px";
@@ -197,7 +186,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
         >
           Origin
         </span>
-        <OriginPicker value={origin} onChange={onOriginChange} />
+        <TransformOriginPicker value={origin} onChange={onOriginChange} />
       </div>
     </div>
   );
@@ -438,62 +427,3 @@ function AxisInput({
   );
 }
 
-/** 9-cell transform-origin visual picker */
-function OriginPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-
-  return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 18px)",
-        gridTemplateRows: "repeat(3, 18px)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: "3px",
-        overflow: "hidden",
-      }}
-    >
-      {ORIGIN_GRID.map((row, ri) =>
-        row.map((origin, ci) => {
-          const isActive = value === origin || (origin === "center" && value === "50% 50%");
-          const isHov = hovered === origin;
-
-          return (
-            <div
-              key={origin}
-              onClick={() => onChange(origin)}
-              onMouseEnter={() => setHovered(origin)}
-              onMouseLeave={() => setHovered(null)}
-              title={ORIGIN_LABELS[ri][ci]}
-              style={{
-                width: "18px",
-                height: "18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                background: isActive
-                  ? "#6366f1"
-                  : isHov
-                    ? "rgba(99,102,241,0.2)"
-                    : "transparent",
-                borderRight: ci < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                borderBottom: ri < 2 ? "1px solid rgba(255,255,255,0.1)" : "none",
-                transition: `background ${ms("fast")}`,
-              }}
-            >
-              <div
-                style={{
-                  width: "4px",
-                  height: "4px",
-                  borderRadius: "50%",
-                  background: isActive ? "#fff" : "rgba(255,255,255,0.3)",
-                }}
-              />
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}

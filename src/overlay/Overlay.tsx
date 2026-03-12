@@ -127,6 +127,10 @@ export function Overlay() {
   // Selected element outline ref (Phase 2)
   const selectedOutlineRef = useRef<HTMLDivElement>(null);
 
+  // Dimensions badge + tag label refs
+  const dimensionsBadgeRef = useRef<HTMLDivElement>(null);
+  const tagLabelRef = useRef<HTMLDivElement>(null);
+
   // Stable selector for re-resolving after HMR
   const selectedSelectorRef = useRef<string | null>(null);
 
@@ -265,11 +269,33 @@ export function Overlay() {
         }
       }
 
+      // Cmd+F / Ctrl+F to toggle property search (when panel is open)
+      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowSearch((v) => {
+          if (v) {
+            // Closing: clear query too
+            setSearchQuery("");
+            return false;
+          }
+          return true;
+        });
+        return;
+      }
+
       // For all other shortcuts, skip when typing in inputs or inside our panel
       const tag = target?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
       if (target?.isContentEditable) return;
       if (insidePanel) return;
+
+      // / to open property search (when not in input/textarea)
+      if (e.key === "/" && selectedEl && !selecting) {
+        e.preventDefault();
+        setShowSearch(true);
+        return;
+      }
 
       // S to cycle scope
       if (e.key === "s" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
@@ -463,8 +489,20 @@ export function Overlay() {
   }, [selectedEl]);
 
   // --- Dragging ---
+  const SNAP_THRESHOLD = 20;
+  const SNAP_MARGIN = 16;
+  const PANEL_WIDTH = 300;
+  const PANEL_HEIGHT_ESTIMATE = 500;
+
   const handleDragStart = useCallback(
     (e: React.MouseEvent) => {
+      // Clear any pending snap timer when starting a new drag
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current);
+        snapTimerRef.current = null;
+      }
+      setSnapping(false);
+
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -477,7 +515,7 @@ export function Overlay() {
         const dx = e.clientX - dragRef.current.startX;
         const dy = e.clientY - dragRef.current.startY;
         // Clamp to viewport so panel can't drift off-screen
-        const x = Math.max(0, Math.min(window.innerWidth - 300, dragRef.current.originX + dx));
+        const x = Math.max(0, Math.min(window.innerWidth - PANEL_WIDTH, dragRef.current.originX + dx));
         const y = Math.max(0, Math.min(window.innerHeight - 100, dragRef.current.originY + dy));
         setPos({ x, y });
       };
@@ -486,6 +524,43 @@ export function Overlay() {
         dragRef.current = null;
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+
+        // Snap to nearest edge if within threshold
+        setPos((current) => {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          let x = current.x;
+          let y = current.y;
+          let didSnap = false;
+
+          // Horizontal snap
+          if (x <= SNAP_THRESHOLD) {
+            x = SNAP_MARGIN;
+            didSnap = true;
+          } else if (x >= vw - PANEL_WIDTH - SNAP_THRESHOLD) {
+            x = vw - PANEL_WIDTH - SNAP_MARGIN;
+            didSnap = true;
+          }
+
+          // Vertical snap
+          if (y <= SNAP_THRESHOLD) {
+            y = SNAP_MARGIN;
+            didSnap = true;
+          } else if (y >= vh - PANEL_HEIGHT_ESTIMATE - SNAP_THRESHOLD) {
+            y = vh - PANEL_HEIGHT_ESTIMATE - SNAP_MARGIN;
+            didSnap = true;
+          }
+
+          if (didSnap) {
+            setSnapping(true);
+            snapTimerRef.current = setTimeout(() => {
+              setSnapping(false);
+              snapTimerRef.current = null;
+            }, 150);
+          }
+
+          return { x, y };
+        });
       };
 
       document.addEventListener("mousemove", handleMouseMove);

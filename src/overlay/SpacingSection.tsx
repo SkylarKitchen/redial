@@ -5,11 +5,14 @@ import { buildConversionContext, convertUnit } from "./unitConversion";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import type { SpacingValues } from "./infer";
 import { SPACING_UNITS } from "./panelConstants";
+import { Box } from "lucide-react";
 
 interface SpacingSectionProps {
   ctx: SectionCtx;
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
+  showBoxModel?: boolean;
+  onToggleBoxModel?: () => void;
   forceOpen?: boolean;
 }
 
@@ -17,6 +20,8 @@ export const SpacingSection = memo(function SpacingSection({
   ctx,
   spacing,
   onSpacingChange,
+  showBoxModel,
+  onToggleBoxModel,
   forceOpen,
 }: SpacingSectionProps) {
   const { element, sectionInd } = ctx;

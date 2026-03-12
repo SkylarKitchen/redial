@@ -353,22 +353,30 @@ export function SelectRow({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
+  const labelContent = (
+    <span
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.5)",
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
           className="tuner-focusable"
@@ -530,17 +538,43 @@ export function ColorRow({
   value,
   onChange,
   indicator,
+  onContextMenu,
+  computedProp,
+  computedElement,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   indicator?: IndicatorType;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "color") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
 
+  const labelContent = (
+    <span
+      style={{
+        width: "64px",
+        fontSize: "11px",
+        color: "rgba(255,255,255,0.5)",
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "4px",
+      }}
+    >
+      {indicator && <StyleIndicator type={indicator} />}
+      {label}
+    </span>
+  );
+
   return (
     <div
+      onContextMenu={onContextMenu}
       style={{
         display: "flex",
         alignItems: "center",
@@ -549,20 +583,11 @@ export function ColorRow({
         position: "relative",
       }}
     >
-      <span
-        style={{
-          width: "64px",
-          fontSize: "11px",
-          color: "rgba(255,255,255,0.5)",
-          flexShrink: 0,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-        }}
-      >
-        {indicator && <StyleIndicator type={indicator} />}
-        {label}
-      </span>
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
       <div
         ref={swatchRef}
         className="tuner-focusable"
@@ -622,12 +647,13 @@ export function ColorRow({
 
 // ─── TextRow ────────────────────────────────────────────────────────
 
-export function TextRow({ label, value, placeholder, onChange }: {
+export function TextRow({ label, value, placeholder, onChange, onContextMenu }: {
   label: string; value: string; placeholder?: string; onChange: (value: string) => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }} onContextMenu={onContextMenu}>
       <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>{label}</span>
       <input
         type="text" className="tuner-focusable" tabIndex={0} value={value} placeholder={placeholder}
