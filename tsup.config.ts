@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig((options) => ({
-  entry: ["src/index.tsx"],
+  entry: ["src/index.tsx", "src/server/index.ts"],
   format: ["esm"],
   dts: !options.watch,
   splitting: false,

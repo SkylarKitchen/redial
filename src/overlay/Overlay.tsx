@@ -38,7 +38,7 @@ import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { text, border, surface, blackAlpha, bgAlpha } from "./theme";
+import { text, border, surface, blackAlpha, bgAlpha, primaryAlpha } from "./theme";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -228,6 +228,9 @@ export function Overlay() {
   // Breadcrumb hover ancestor highlight
   const [hoveredAncestor, setHoveredAncestor] = useState<Element | null>(null);
   const ancestorOutlineRef = useRef<HTMLDivElement>(null);
+
+  // Hover highlight ref (shows preview when hovering a different element while panel is open)
+  const hoverHighlightRef = useRef<HTMLDivElement>(null);
 
   // Dimensions badge + tag label refs
   const dimensionsBadgeRef = useRef<HTMLDivElement>(null);
@@ -1047,6 +1050,50 @@ export function Overlay() {
     return () => document.removeEventListener("click", handlePageClick, true);
   }, [selectedEl, selecting, handleSelect]);
 
+  // --- Hover highlight: preview which element you'd re-select on click ---
+  useEffect(() => {
+    if (!selectedEl || selecting || !hoverHighlightRef.current) return;
+    const highlight = hoverHighlightRef.current;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (
+        !el ||
+        el === selectedEl ||
+        el.contains(selectedEl) ||
+        selectedEl.contains(el) ||
+        el.closest(".__tuner-root") ||
+        el.closest(".__tuner-selected-outline") ||
+        el.closest("[data-tuner-portal]") ||
+        el.closest("[data-radix-portal]") ||
+        el.closest("[data-agentation-root]") ||
+        el.closest("[data-feedback-toolbar]") ||
+        el.closest("[data-annotation-marker]")
+      ) {
+        highlight.style.display = "none";
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      highlight.style.top = `${rect.top}px`;
+      highlight.style.left = `${rect.left}px`;
+      highlight.style.width = `${rect.width}px`;
+      highlight.style.height = `${rect.height}px`;
+      highlight.style.display = "block";
+    };
+
+    const handleMouseLeave = () => {
+      highlight.style.display = "none";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove, true);
+    document.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove, true);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      highlight.style.display = "none";
+    };
+  }, [selectedEl, selecting]);
+
   // --- Right-click context menu on page elements ---
   useEffect(() => {
     if (!selectedEl || selecting) return;
@@ -1304,6 +1351,12 @@ export function Overlay() {
             ref={tagLabelRef}
             className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
             style={{ display: 'none', background: bgAlpha(0.9), color: blackAlpha(0.7) }}
+          />
+          {/* Hover highlight: subtle preview when hovering a different element */}
+          <div
+            ref={hoverHighlightRef}
+            className="fixed pointer-events-none z-[2147483644] rounded-sm transition-all duration-75 ease-out"
+            style={{ display: 'none', background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
           />
         </>
       )}
