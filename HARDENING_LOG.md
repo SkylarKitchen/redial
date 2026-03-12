@@ -20,13 +20,13 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] panelConstants.tsx — constant arrays, option definitions
 
 ### Tier 3 — Test Coverage: Hooks (test pure logic, mock DOM)
-- [ ] useWheelAdjust.ts — wheel delta → value increment
-- [ ] useDropdownKeyboard.ts — type-ahead, arrow key handling
-- [ ] useFocusTrap.ts — focus cycling logic
-- [ ] useSwatches.ts — localStorage persistence, add/remove
+- [x] useWheelAdjust.ts — wheel delta → value increment
+- [x] useDropdownKeyboard.ts — type-ahead, arrow key handling
+- [x] useFocusTrap.ts — focus cycling logic
+- [x] useSwatches.ts — localStorage persistence, add/remove
 - [ ] useConversionHint.ts — hint text generation
 - [ ] useDragReorder.ts — reorder index calculation
-- [ ] useClickOutside.ts — outside click detection
+- [x] useClickOutside.ts — outside click detection
 
 ### Tier 4 — Code Quality Review
 - [ ] Dead code scan: unused exports across all .ts/.tsx files
@@ -61,3 +61,11 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 ### Tier 2 — sourcemap.ts + panelConstants.tsx (2026-03-11)
 - **sourcemap.ts**: 30 tests — getModuleClassInfo (webpack/Turbopack/SVG/mixed), getReactSource (fiber walking, path stripping, lineNumber edge cases), getCSSSource (derivation from class patterns), resolveSource (fallback chain).
 - **panelConstants.tsx**: 62 tests — array lengths, shape validation (value+title+icon / value+label), no duplicate values, critical entries (font weights, border styles, blend modes), EMPTY_KEYWORD_MAP mappings, SHORTCUTS group coverage. Also updated vitest.config.ts for .tsx test discovery. +92 tests, 724 total.
+
+### Tier 3 — Hooks (2026-03-11)
+- **useSwatches**: 23 tests — store add/remove, hex normalization, dedup, MAX_SWATCHES cap, localStorage persistence, subscribe/unsubscribe.
+- **useWheelAdjust**: 21 tests — base step, shift (10×), alt (0.1×), priority, rounding, min/max clamping, deltaY sign.
+- **useDropdownKeyboard**: 29 tests — ArrowDown/Up wrapping, Home/End, single/two-option edges, type-ahead prefix matching.
+- **useFocusTrap**: 15 tests — FOCUSABLE_SELECTOR matching (6 element types), getNextFocusTarget boundary cycling.
+- **useClickOutside**: 5 tests — contains logic for child/sibling/exact/nested/null.
+- Pure logic extracted as exported helpers from each hook for direct testability. +93 tests, 817 total.
