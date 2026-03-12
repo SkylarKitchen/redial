@@ -1447,7 +1447,7 @@ export function Overlay() {
                       ? "border-b-[#D97757] font-semibold"
                       : "border-b-transparent font-normal",
                   )}
-                  style={{ color: isActive ? color.foreground : text.label }}
+                  style={{ color: isActive ? text.primary : text.label }}
                 >
                   {label}
                 </button>
