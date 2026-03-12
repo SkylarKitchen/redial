@@ -1392,6 +1392,130 @@ export default function ShowcasePage() {
         <h1 className="section-title">C — Full Panel Compositions</h1>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
 
+          {/* Panel 0: Common Tab (default view) */}
+          <div data-component="FullPanel" data-variant="common">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Common Tab (Default)</div>
+            <div style={panelShell}>
+              <PanelHeader
+                tag="<button>"
+                className=".btnPrimary"
+                showSource
+                badges={<ChangesBadgeCount count={2} />}
+              />
+              {/* Scope pills */}
+              <div style={{ display: "flex", gap: 3, padding: "6px 12px 8px" }}>
+                <ScopePill label="element" active />
+                <ScopePill label=".btnPrimary" />
+              </div>
+              <TabBar active="common" />
+              {/* Focus Mode pill */}
+              <div style={{ display: "flex", justifyContent: "center", padding: "2px 0", borderBottom: `1px solid ${border.subtle}` }}>
+                <span style={{
+                  fontSize: 9, fontWeight: 600, color: color.primary,
+                  background: primaryAlpha(0.15), padding: "1px 8px",
+                  borderRadius: 999, letterSpacing: "0.04em", textTransform: "uppercase" as const,
+                }}>Focus Mode</span>
+              </div>
+
+              {/* FlatGroup: STYLE */}
+              <div style={{ padding: "8px 0" }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Style</div>
+                {/* Bg color row */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Bg</span>
+                  <div style={{ width: 20, height: 20, borderRadius: 4, background: "#e2e8f0", border: `1px solid ${border.default}`, flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, fontFamily: font.mono, color: text.label }}>#e2e8f0</span>
+                </div>
+                {/* Radius slider */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Radius</span>
+                  <SliderTrack pct={16} />
+                  <div style={valueInputStyle}>8</div>
+                  <span style={unitLabelStyle}>px</span>
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: border.subtle }} />
+
+              {/* FlatGroup: SPACING */}
+              <div style={{ padding: "8px 0" }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Spacing</div>
+                <div style={{ padding: "0 12px" }}>
+                  <div style={{ fontSize: 10, color: text.hint, textAlign: "center", padding: 12 }}>[Box Model]</div>
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: border.subtle }} />
+
+              {/* FlatGroup: SIZE */}
+              <div style={{ padding: "8px 0" }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Size</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "0 12px" }}>
+                  {/* W cell */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 10, color: text.label, width: 14, textAlign: "center", flexShrink: 0 }}>W</span>
+                    <div style={{ flex: 1, height: 22, display: "flex", alignItems: "center", justifyContent: "center", background: color.input, borderRadius: 3, fontSize: 11, fontFamily: font.mono, color: color.foreground }}>200</div>
+                  </div>
+                  {/* H cell */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontSize: 10, color: text.label, width: 14, textAlign: "center", flexShrink: 0 }}>H</span>
+                    <div style={{ flex: 1, height: 22, display: "flex", alignItems: "center", justifyContent: "center", background: color.input, borderRadius: 3, fontSize: 11, fontFamily: font.mono, color: text.label }}>auto</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: border.subtle }} />
+
+              {/* FlatGroup: TYPOGRAPHY */}
+              <div style={{ padding: "8px 0" }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: text.label, letterSpacing: "0.05em", textTransform: "uppercase" as const, padding: "0 12px", marginBottom: 8 }}>Typography</div>
+                {/* Style select */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Style</span>
+                  <div style={{ flex: 1, height: 24, display: "flex", alignItems: "center", justifyContent: "space-between", background: color.input, border: `1px solid ${border.default}`, borderRadius: 3, color: color.foreground, fontSize: 11, fontFamily: font.mono, padding: "0 6px" }}>
+                    <span>Body</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={border.strong} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+                {/* Size slider */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Size</span>
+                  <SliderTrack pct={13} />
+                  <div style={valueInputStyle}>16</div>
+                  <span style={unitLabelStyle}>px</span>
+                </div>
+                {/* Color row */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Color</span>
+                  <div style={{ width: 20, height: 20, borderRadius: 4, background: color.foreground, border: `1px solid ${border.default}`, flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, fontFamily: font.mono, color: text.label }}>{color.foreground}</span>
+                </div>
+                {/* Weight slider */}
+                <div style={{ ...rowStyle, padding: layout.rowPadding }}>
+                  <span style={labelStyle}>Weight</span>
+                  <SliderTrack pct={38} />
+                  <div style={valueInputStyle}>400</div>
+                  <span style={unitLabelStyle}></span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+                  <div style={footerBtnStandard}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <div style={{
+                      padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
+                      border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
+                      background: surface.hover, color: "rgba(239,68,68,0.8)",
+                    }}>Reset</div>
+                    <div style={footerBtnPrimary}>Save</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Panel 1: Expanded */}
           <div data-component="FullPanel" data-variant="expanded">
             <div className="variant-label" style={{ marginBottom: 8 }}>Custom — All Expanded</div>
@@ -1450,7 +1574,7 @@ export default function ShowcasePage() {
                 <div style={{ paddingBottom: layout.sectionBodyPadding }}>
                   <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
                     {/* Width cell (modified) */}
-                    <div style={{ flex: 1, ...sizeInputCellBase, background: primaryAlpha(0.10), border: `1px solid ${primaryAlpha(0.25)}` }}>
+                    <div style={{ flex: 1, ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}>
                       <div style={{ ...sizeInputLabel, color: color.primary }}>W</div>
                       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}>
                         <span style={sizeInputValue}>200</span>
@@ -1477,13 +1601,9 @@ export default function ShowcasePage() {
               <CollapsedSection title="Effects" />
 
               {/* Footer */}
-              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6 }}>
+              <div style={{ display: "flex", flexDirection: "column", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <div style={footerBtnStandard}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
-                    <div style={footerBtnStandard}>Paste</div>
-                    <div style={footerBtnStandard}>Import</div>
-                  </div>
+                  <div style={footerBtnStandard}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <div style={{
                       padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
@@ -1499,19 +1619,23 @@ export default function ShowcasePage() {
 
           {/* Panel 2: All Collapsed */}
           <div data-component="FullPanel" data-variant="all-collapsed">
-            <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Collapsed</div>
+            <div className="variant-label" style={{ marginBottom: 8 }}>Custom — All Collapsed</div>
             <div style={panelShell}>
               <PanelHeader tag="<div>" className=".container" />
               <div style={{ height: 8 }} />
+              <TabBar active="custom" />
               {["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].map((s) => (
                 <CollapsedSection key={s} title={s} />
               ))}
               {/* Footer (disabled) */}
-              <div style={{ display: "flex", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}`, gap: 6, justifyContent: "space-between" }}>
+              <div style={{ display: "flex", padding: layout.footerPadding, borderTop: `1px solid ${border.default}`, gap: 6, justifyContent: "space-between" }}>
+                <div style={{ ...footerBtnStandard, opacity: 0.35 }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <div style={{ ...footerBtnStandard, opacity: 0.35 }}>Copy <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></div>
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{
+                    padding: "4px 8px", fontSize: 12, fontFamily: font.sans,
+                    border: `1px solid rgba(239,68,68,0.15)`, borderRadius: 6,
+                    background: surface.hover, color: "rgba(239,68,68,0.8)", opacity: 0.35,
+                  }}>Reset</div>
                   <div style={{ ...footerBtnPrimary, opacity: 0.35 }}>Save</div>
                 </div>
               </div>
@@ -1524,7 +1648,17 @@ export default function ShowcasePage() {
             <div style={panelShell}>
               <PanelHeader tag="<div>" />
               <div style={{ height: 8 }} />
-              <div style={{ textAlign: "center", color: blackAlpha(0.55), padding: "40px 20px", fontSize: 12 }}>No matching properties</div>
+              <TabBar active="custom" />
+              {/* Search input */}
+              <div style={{ padding: "6px 12px", borderBottom: `1px solid ${border.subtle}` }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  height: 28, background: color.input, border: `1px solid ${border.default}`,
+                  borderRadius: 4, padding: "0 8px", fontSize: 11, fontFamily: font.mono,
+                  color: text.hint,
+                }}>Search properties...</div>
+              </div>
+              <div style={{ textAlign: "center", color: text.hint, padding: "40px 20px", fontSize: 12 }}>No matching properties</div>
             </div>
           </div>
 
