@@ -53,21 +53,11 @@ export function Header({
   onStateChange,
 }: HeaderProps) {
   const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
-  const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 0);
-
-  // Track viewport width
-  useEffect(() => {
-    const handler = () => setVw(window.innerWidth);
-    window.addEventListener("resize", handler);
-    return () => window.removeEventListener("resize", handler);
-  }, []);
 
   // Reset expanded state when the selected element changes
   useEffect(() => {
     setBreadcrumbExpanded(false);
   }, [element]);
-
-  const tier = vw >= 1280 ? "xl" : vw >= 1024 ? "lg" : vw >= 768 ? "md" : vw >= 640 ? "sm" : "xs";
 
   const tag = element.tagName.toLowerCase();
   const className = getDisplayClass(element);
@@ -100,14 +90,6 @@ export function Header({
           )}
         </div>
         <div className="flex items-center gap-[5px] shrink-0">
-          <Badge
-            variant="outline"
-            className="text-[9px] font-mono px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px]"
-            style={{ color: text.disabled, background: surface.subtle, borderColor: border.subtle }}
-            title={`${vw}px viewport \u00b7 ${tier} breakpoint`}
-          >
-            {tier}
-          </Badge>
           {totalChanges > 0 && (
             <Badge
               className="bg-[#D97757]/[0.15] border-[#D97757]/[0.2] text-[#D97757]/95 text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer hover:bg-[#D97757]/[0.2]"
