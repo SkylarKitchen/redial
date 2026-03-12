@@ -28,7 +28,7 @@
   font-family: system-ui, -apple-system, 'SF Pro Display', sans-serif;
   font-size: 13px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(0, 0, 0, 0.87);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -43,12 +43,12 @@
 }
 
 .__tuner-root::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 2px;
 }
 
 .__tuner-root::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.18);
 }
 
 /* Webflow-style section headers — clean, bold, spaced */
@@ -56,9 +56,9 @@
 .__tuner-root .dialkit-folder-header {
   font-size: 13px !important;
   font-weight: 500 !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  color: rgba(0, 0, 0, 0.75) !important;
   padding: 10px 12px 6px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   letter-spacing: 0;
 }
 
@@ -76,7 +76,7 @@
 /* Property label styling — compact, muted */
 .__tuner-root .dialkit-label {
   font-size: 11px !important;
-  color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(0, 0, 0, 0.45) !important;
   text-transform: capitalize;
 }
 
@@ -87,9 +87,9 @@
 
 @keyframes __tuner-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 1px rgba(193, 122, 80, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 0 0 2px rgba(193, 122, 80, 0.5);
   }
 }
