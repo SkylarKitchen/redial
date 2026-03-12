@@ -1570,8 +1570,9 @@ export function Overlay() {
             hasClipboard={hasClipboardStyles()}
             onPasteStyles={handlePasteStyles}
           />
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       {/* Command Palette modal */}
       {activeModal.type === "commandPalette" && selectedEl && (

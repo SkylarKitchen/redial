@@ -14,7 +14,7 @@ import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { color, text, border, surface, font, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, destructiveAlpha } from "./theme";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {

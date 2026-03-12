@@ -47,6 +47,9 @@ export const color = {
 /** Accent clay at a given alpha. rgb(217,119,87) = #D97757 */
 export const primaryAlpha = (a: number) => `rgba(217,119,87,${a})`;
 
+/** Destructive red at a given alpha. rgb(239,68,68) = #ef4444 */
+export const destructiveAlpha = (a: number) => `rgba(239,68,68,${a})`;
+
 /** Black at a given alpha. e.g. blackAlpha(0.12) → "rgba(0,0,0,0.12)" */
 export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;
 
