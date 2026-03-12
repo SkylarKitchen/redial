@@ -16,8 +16,8 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 - [x] scope.ts — scope resolution logic
 - [x] colorVariables.ts — color variable utilities
 - [x] discoverVariables.ts — CSS variable discovery
-- [ ] sourcemap.ts — source map parsing
-- [ ] panelConstants.tsx — constant arrays, option definitions
+- [x] sourcemap.ts — source map parsing
+- [x] panelConstants.tsx — constant arrays, option definitions
 
 ### Tier 3 — Test Coverage: Hooks (test pure logic, mock DOM)
 - [ ] useWheelAdjust.ts — wheel delta → value increment
@@ -57,3 +57,7 @@ Tracks progress of the overnight hardening loop. Each iteration picks the highes
 ### Tier 2 — colorVariables.ts + discoverVariables.ts (2026-03-11)
 - **colorVariables.ts**: 20 tests — parseVarRef (var() extraction, whitespace, fallbacks, edge cases), resolveVarColor (DOM resolution), discoverColorVariables (smoke tests).
 - **discoverVariables.ts**: 56 tests — parseLength (all CSS units, decimals, negatives), LENGTH_RE (regex validation), detectVarType (color/length/number/string classification), walkRules (CSSRuleList traversal), discoverVariables (inline/inherited/root sources), discoverLengthVariables (filtering). +76 tests, 632 total.
+
+### Tier 2 — sourcemap.ts + panelConstants.tsx (2026-03-11)
+- **sourcemap.ts**: 30 tests — getModuleClassInfo (webpack/Turbopack/SVG/mixed), getReactSource (fiber walking, path stripping, lineNumber edge cases), getCSSSource (derivation from class patterns), resolveSource (fallback chain).
+- **panelConstants.tsx**: 62 tests — array lengths, shape validation (value+title+icon / value+label), no duplicate values, critical entries (font weights, border styles, blend modes), EMPTY_KEYWORD_MAP mappings, SHORTCUTS group coverage. Also updated vitest.config.ts for .tsx test discovery. +92 tests, 724 total.
