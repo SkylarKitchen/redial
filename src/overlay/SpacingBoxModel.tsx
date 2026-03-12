@@ -28,7 +28,7 @@ import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch } from "./apply";
 import { ms } from "./timing";
-import { setScrubGroup } from "./scrubState";
+import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
 import { spacingZone, surface, font, blackAlpha, color } from "./theme";
 
@@ -105,6 +105,7 @@ export function SpacingBoxModel({
     const ref = group === "margin" ? marginZoneRef : paddingZoneRef;
     const color = group === "margin" ? MARGIN_HIGHLIGHT : PADDING_HIGHLIGHT;
     if (ref.current) ref.current.style.background = color;
+    setHoverGroup(group);
   }, []);
 
   const clearZone = useCallback((group: "margin" | "padding") => {
@@ -112,6 +113,7 @@ export function SpacingBoxModel({
     const ref = group === "margin" ? marginZoneRef : paddingZoneRef;
     const color = group === "margin" ? MARGIN_BASE : PADDING_BASE;
     if (ref.current) ref.current.style.background = color;
+    setHoverGroup(null);
   }, []);
 
   // --- Safety: close undo batch if unmounted mid-scrub ---

@@ -20,10 +20,9 @@ import { getScrubGroup } from "./scrubState";
 // ---------------------------------------------------------------------------
 
 const MARGIN_COLOR = "#57A8FF";
-const MARGIN_HATCH = "rgba(87,168,255,0.18)";
+const MARGIN_FILL = "rgba(87,168,255,0.30)";
 const PADDING_COLOR = "#4CAF50";
-const PADDING_HATCH = "rgba(76,175,80,0.18)";
-const HATCH_SPACING = 4; // px between hatching lines
+const PADDING_FILL = "rgba(76,175,80,0.30)";
 const Z_INDEX = 2147483645;
 const LABEL_FONT = "ui-monospace, 'SF Mono', monospace";
 
@@ -164,9 +163,8 @@ const BOX_LINE: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-function hatchBg(group: "margin" | "padding") {
-  const fg = group === "margin" ? MARGIN_HATCH : PADDING_HATCH;
-  return `repeating-linear-gradient(45deg, ${fg} 0px, ${fg} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
+function fillColor(group: "margin" | "padding") {
+  return group === "margin" ? MARGIN_FILL : PADDING_FILL;
 }
 
 function guideColor(group: "margin" | "padding") {
@@ -315,19 +313,18 @@ function SpacingZone({ zone: z, group }: { zone: ZoneRect; group: "margin" | "pa
 
   return (
     <>
-      {/* Hatched fill */}
+      {/* Solid fill */}
       <div style={{
         ...BASE,
         left: z.x,
         top: z.y,
         width: z.w,
         height: z.h,
-        background: hatchBg(group),
+        background: fillColor(group),
         borderTop: z.side === "top" ? `1px solid ${color}` : undefined,
         borderBottom: z.side === "bottom" ? `1px solid ${color}` : undefined,
         borderLeft: z.side === "left" ? `1px solid ${color}` : undefined,
         borderRight: z.side === "right" ? `1px solid ${color}` : undefined,
-        opacity: 0.9,
         boxSizing: "border-box",
       }} />
 

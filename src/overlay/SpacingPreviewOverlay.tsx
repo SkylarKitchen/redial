@@ -1,25 +1,35 @@
 /**
  * SpacingPreviewOverlay.tsx — Ghosted margin + padding visualization
  *
- * Always shows both margin (blue) and padding (green) zones at reduced
- * opacity whenever an element is selected. No dimension badges — those
- * only appear during active scrubbing via SpacingGuidesOverlay.
+ * Shows margin (blue) and padding (green) zones as solid semi-transparent
+ * fills whenever an element is selected. Zones intensify when the user
+ * hovers over the corresponding group in the SpacingBoxModel panel.
  *
- * This gives persistent visual context about spacing, similar to how
- * Chrome DevTools or Figma show box-model zones on selection.
+ * No dimension badges — those only appear during active scrubbing
+ * via SpacingGuidesOverlay.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { getHoverGroup, getScrubGroup } from "./scrubState";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const MARGIN_COLOR = "#57A8FF";
-const MARGIN_HATCH = "rgba(87,168,255,0.10)";
 const PADDING_COLOR = "#4CAF50";
-const PADDING_HATCH = "rgba(76,175,80,0.10)";
-const HATCH_SPACING = 4;
+
+// Ghosted fills: clearly visible but subdued
+const MARGIN_FILL_BASE = "rgba(87,168,255,0.08)";
+const MARGIN_FILL_HOVER = "rgba(87,168,255,0.18)";
+const MARGIN_BORDER_BASE = "rgba(87,168,255,0.25)";
+const MARGIN_BORDER_HOVER = "rgba(87,168,255,0.5)";
+
+const PADDING_FILL_BASE = "rgba(76,175,80,0.08)";
+const PADDING_FILL_HOVER = "rgba(76,175,80,0.18)";
+const PADDING_BORDER_BASE = "rgba(76,175,80,0.25)";
+const PADDING_BORDER_HOVER = "rgba(76,175,80,0.5)";
+
 const Z_INDEX = 2147483644; // Below the active spacing guides (2147483645)
 
 // ---------------------------------------------------------------------------
@@ -64,10 +74,6 @@ function computeMetrics(el: Element): SpacingMetrics | null {
     bt: px(cs.borderTopWidth), br: px(cs.borderRightWidth),
     bb: px(cs.borderBottomWidth), bl: px(cs.borderLeftWidth),
   };
-}
-
-function metricsKey(m: SpacingMetrics): string {
-  return `${m.top},${m.left},${m.width},${m.height},${m.mt},${m.mr},${m.mb},${m.ml},${m.pt},${m.pr},${m.pb},${m.pl}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,11 +137,6 @@ const BASE: React.CSSProperties = {
   zIndex: Z_INDEX,
 };
 
-function hatchBg(group: "margin" | "padding") {
-  const fg = group === "margin" ? MARGIN_HATCH : PADDING_HATCH;
-  return `repeating-linear-gradient(45deg, ${fg} 0px, ${fg} 1px, transparent 1px, transparent ${HATCH_SPACING}px)`;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -148,15 +149,28 @@ export function SpacingPreviewOverlay({
   refreshKey?: number;
 }) {
   const [metrics, setMetrics] = useState<SpacingMetrics | null>(null);
+  const [hoveredGroup, setHoveredGroup] = useState<"margin" | "padding" | null>(null);
   const rafRef = useRef(0);
-  const prevRef = useRef("");
+  const prevMetricsRef = useRef("");
+  const prevHoverRef = useRef<"margin" | "padding" | null>(null);
 
   const measure = useCallback(() => {
     const m = computeMetrics(element);
-    const key = m ? metricsKey(m) : "";
-    if (key !== prevRef.current) {
-      prevRef.current = key;
+    const metricsKey = m
+      ? `${m.top},${m.left},${m.width},${m.height},${m.mt},${m.mr},${m.mb},${m.ml},${m.pt},${m.pr},${m.pb},${m.pl}`
+      : "";
+    const hover = getScrubGroup() ? null : getHoverGroup();
+
+    const metricsChanged = metricsKey !== prevMetricsRef.current;
+    const hoverChanged = hover !== prevHoverRef.current;
+
+    if (metricsChanged) {
+      prevMetricsRef.current = metricsKey;
       setMetrics(m);
+    }
+    if (hoverChanged) {
+      prevHoverRef.current = hover;
+      setHoveredGroup(hover);
     }
   }, [element]);
 
@@ -188,6 +202,14 @@ export function SpacingPreviewOverlay({
 
   if (marginZones.length === 0 && paddingZones.length === 0) return null;
 
+  const marginHovered = hoveredGroup === "margin";
+  const paddingHovered = hoveredGroup === "padding";
+
+  const marginFill = marginHovered ? MARGIN_FILL_HOVER : MARGIN_FILL_BASE;
+  const marginBorder = marginHovered ? MARGIN_BORDER_HOVER : MARGIN_BORDER_BASE;
+  const paddingFill = paddingHovered ? PADDING_FILL_HOVER : PADDING_FILL_BASE;
+  const paddingBorder = paddingHovered ? PADDING_BORDER_HOVER : PADDING_BORDER_BASE;
+
   return (
     <div style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
       {/* Ghosted margin zones (blue) */}
@@ -200,12 +222,11 @@ export function SpacingPreviewOverlay({
             top: z.y,
             width: z.w,
             height: z.h,
-            background: hatchBg("margin"),
-            borderTop: z.side === "top" ? `1px solid ${MARGIN_COLOR}` : undefined,
-            borderBottom: z.side === "bottom" ? `1px solid ${MARGIN_COLOR}` : undefined,
-            borderLeft: z.side === "left" ? `1px solid ${MARGIN_COLOR}` : undefined,
-            borderRight: z.side === "right" ? `1px solid ${MARGIN_COLOR}` : undefined,
-            opacity: 0.5,
+            background: marginFill,
+            borderTop: z.side === "top" ? `1px solid ${marginBorder}` : undefined,
+            borderBottom: z.side === "bottom" ? `1px solid ${marginBorder}` : undefined,
+            borderLeft: z.side === "left" ? `1px solid ${marginBorder}` : undefined,
+            borderRight: z.side === "right" ? `1px solid ${marginBorder}` : undefined,
             boxSizing: "border-box",
           }}
         />
@@ -221,12 +242,11 @@ export function SpacingPreviewOverlay({
             top: z.y,
             width: z.w,
             height: z.h,
-            background: hatchBg("padding"),
-            borderTop: z.side === "top" ? `1px solid ${PADDING_COLOR}` : undefined,
-            borderBottom: z.side === "bottom" ? `1px solid ${PADDING_COLOR}` : undefined,
-            borderLeft: z.side === "left" ? `1px solid ${PADDING_COLOR}` : undefined,
-            borderRight: z.side === "right" ? `1px solid ${PADDING_COLOR}` : undefined,
-            opacity: 0.5,
+            background: paddingFill,
+            borderTop: z.side === "top" ? `1px solid ${paddingBorder}` : undefined,
+            borderBottom: z.side === "bottom" ? `1px solid ${paddingBorder}` : undefined,
+            borderLeft: z.side === "left" ? `1px solid ${paddingBorder}` : undefined,
+            borderRight: z.side === "right" ? `1px solid ${paddingBorder}` : undefined,
             boxSizing: "border-box",
           }}
         />

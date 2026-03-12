@@ -12,6 +12,7 @@
 
 let scrubActive = false;
 let scrubGroup: "margin" | "padding" | null = null;
+let hoverGroup: "margin" | "padding" | null = null;
 
 export function isScrubActive(): boolean {
   return scrubActive;
@@ -27,4 +28,12 @@ export function getScrubGroup(): "margin" | "padding" | null {
 
 export function setScrubGroup(group: "margin" | "padding" | null): void {
   scrubGroup = group;
+}
+
+export function getHoverGroup(): "margin" | "padding" | null {
+  return hoverGroup;
+}
+
+export function setHoverGroup(group: "margin" | "padding" | null): void {
+  hoverGroup = group;
 }
