@@ -9,6 +9,7 @@
 import type React from "react";
 import { extractUnit } from "./cssParsers";
 import type { IndicatorType } from "./StyleIndicator";
+import { indicatorColor } from "./theme";
 import type { UnitConversionContext } from "./unitConversion";
 
 // ─── SectionCtx ──────────────────────────────────────────────────────
@@ -55,14 +56,8 @@ export function getIndicatorType(
 
 // ─── Indicator Colors & Titles (Phase J) ────────────────────────────
 
-const INDICATOR_COLORS: Record<IndicatorType, string> = {
-  element: "#60a5fa",
-  inherited: "#f59e0b",
-  state: "#34d399",
-  variable: "#a78bfa",
-  direct: "#60a5fa",
-  none: "rgba(0,0,0,0.45)",
-};
+// Indicator colors are canonical in theme.ts — reference them here
+const INDICATOR_COLORS: Record<IndicatorType, string> = indicatorColor;
 
 const INDICATOR_TITLES: Record<IndicatorType, string | null> = {
   element: "Set locally. Alt+Click to reset.",

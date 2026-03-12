@@ -1,11 +1,12 @@
 /**
- * theme.ts — Canonical color tokens for all panel components
+ * theme.ts — Canonical design tokens for all panel components
  *
- * Every color in the overlay must reference these tokens.
+ * Every color, dimension, and shadow in the overlay must reference these tokens.
  * Values sourced from design-tokens.css (Anthropic Design System).
  * Inline styles reference these; Tailwind classes use the same values.
  *
  * Pattern follows timing.ts — single source of truth, import everywhere.
+ * The showcase page also imports from here to stay in sync.
  */
 
 // ─── Core Palette ────────────────────────────────────────────────
@@ -114,3 +115,58 @@ export const bgAlpha = (a: number) => `rgba(250,249,245,${a})`;
 /** Light-theme checkerboard for opacity/transparency backgrounds. */
 export const checkerboard =
   "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/8px 8px";
+
+// ─── Layout Dimensions ──────────────────────────────────────────
+
+export const layout = {
+  panelWidth: 300,
+  panelRadius: 10,
+  sectionPadding: "10px 12px 6px",
+  sectionBodyPadding: 8,
+  rowPadding: "2px 12px",
+  footerPadding: "8px 12px",
+  labelWidth: 64,
+  controlGap: 6,
+  inputWidth: 40,
+  swatchSizeSaved: 22,
+  swatchSizeRecent: 18,
+  iconBtnSize: 28,
+  alignCell: 28,
+  colorSwatch: 24,
+  sliderHeight: 3,
+  pickerCanvasWidth: 216,
+  pickerCanvasHeight: 150,
+} as const;
+
+// ─── Shadows ────────────────────────────────────────────────────
+
+export const shadow = {
+  /** Main panel shadow */
+  panel: "0 8px 32px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04)",
+  /** Dropdown/menu shadow */
+  dropdown: "0 4px 12px rgba(0,0,0,0.1)",
+  /** Color picker / large popover shadow */
+  picker: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+} as const;
+
+// ─── Indicator Colors ───────────────────────────────────────────
+
+export type IndicatorColorType = "element" | "inherited" | "state" | "variable" | "direct" | "none";
+
+export const indicatorColor: Record<IndicatorColorType, string> = {
+  element: "#60a5fa",
+  inherited: "#f59e0b",
+  state: "#34d399",
+  variable: "#a78bfa",
+  direct: "#60a5fa",
+  none: "rgba(0,0,0,0.45)",
+} as const;
+
+// ─── Spacing Zone Colors ────────────────────────────────────────
+
+export const spacingZone = {
+  marginBase: "rgba(255,152,87,0.08)",
+  marginHover: "rgba(255,152,87,0.22)",
+  paddingBase: "rgba(87,168,255,0.08)",
+  paddingHover: "rgba(87,168,255,0.22)",
+} as const;
