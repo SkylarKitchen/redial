@@ -15,7 +15,7 @@ export const color = {
   /** Panel background — --bg-primary */
   background: "#FAF9F5",
   /** Text — --fg-primary */
-  foreground: "#141413",
+  foreground: "#1C1B18",
 
   /** Clay accent — --accent-clay */
   primary: "#D97757",
@@ -29,7 +29,7 @@ export const color = {
   /** Muted surface */
   muted: "rgba(0,0,0,0.05)",
   /** Labels, secondary text — --fg-tertiary */
-  mutedForeground: "rgba(0,0,0,0.7)",
+  mutedForeground: "#504F4A",
 
   /** Input background */
   input: "rgba(0,0,0,0.04)",
@@ -56,13 +56,13 @@ export const text = {
   /** --fg-primary */
   primary: color.foreground,
   /** --fg-secondary */
-  secondary: "#30302E",
+  secondary: "#3A3935",
   /** --fg-tertiary (same as mutedForeground) */
   label: color.mutedForeground,
-  /** Disabled/placeholder — 45% */
-  disabled: "rgba(0,0,0,0.45)",
-  /** Subtle hint — 35% */
-  hint: "rgba(0,0,0,0.35)",
+  /** Disabled/placeholder */
+  disabled: "#7A7974",
+  /** Subtle hint */
+  hint: "#9A9994",
 } as const;
 
 export const border = {
@@ -159,7 +159,7 @@ export const indicatorColor: Record<IndicatorColorType, string> = {
   state: "#34d399",
   variable: "#a78bfa",
   direct: "#60a5fa",
-  none: "rgba(0,0,0,0.7)",
+  none: "#504F4A",
 } as const;
 
 // ─── Spacing Zone Colors ────────────────────────────────────────

@@ -26,6 +26,27 @@ import { ms } from "./timing";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
+// ─── Value Flash Hook ────────────────────────────────────────────────
+
+/** Brief background flash when a numeric value changes — confirms the change registered. */
+export function useValueFlash(value: number) {
+  const prev = useRef(value);
+  const [flash, setFlash] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (prev.current !== value) {
+      prev.current = value;
+      setFlash(true);
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setFlash(false), 200);
+    }
+    return () => clearTimeout(timer.current);
+  }, [value]);
+
+  return flash ? { backgroundColor: primaryAlpha(0.12), transition: "background-color 200ms" } : { transition: "background-color 200ms" };
+}
+
 // ─── Value Presets ───────────────────────────────────────────────────
 
 export const VALUE_PRESETS: Record<string, string[]> = {
@@ -176,6 +197,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const flashStyle = useValueFlash(value);
   useWheelAdjust(inputRef, value, onChange);
 
   useEffect(() => {
@@ -230,6 +252,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onBlur={commit}
       onKeyDown={handleKeyDown}
       onDoubleClick={selectAllOnDoubleClick}
+      style={flashStyle}
       className={cn(
         "h-[26px] w-10 bg-[var(--input)] border border-[var(--border)] rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
         "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(217,119,87,0.5)]"
