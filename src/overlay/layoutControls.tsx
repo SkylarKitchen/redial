@@ -15,8 +15,6 @@ import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndi
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
 import {
-  DisplayBlockIcon, DisplayFlexIcon, DisplayGridIcon,
-  DisplayInlineBlockIcon, DisplayInlineIcon, DisplayHideIcon,
   ArrowReverseIcon, UnlockIcon, LockIcon,
 } from "./webflowIcons";
 
