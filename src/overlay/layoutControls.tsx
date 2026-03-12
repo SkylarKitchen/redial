@@ -219,12 +219,12 @@ export function MiniDropdown({ value, options, onChange }: {
 // ─── DisplayTabs (Icon-based, Webflow style) ───────────────────────
 
 const DISPLAY_SEGMENT_OPTIONS = [
-  { value: "block", icon: <DisplayBlockIcon size={16} />, title: "Block" },
-  { value: "flex", icon: <DisplayFlexIcon size={16} />, title: "Flex" },
-  { value: "grid", icon: <DisplayGridIcon size={16} />, title: "Grid" },
-  { value: "inline-block", icon: <DisplayInlineBlockIcon size={16} />, title: "Inline Block" },
-  { value: "inline", icon: <DisplayInlineIcon size={16} />, title: "Inline" },
-  { value: "none", icon: <DisplayHideIcon size={16} />, title: "Hide" },
+  { value: "block", label: "Block" },
+  { value: "flex", label: "Flex" },
+  { value: "grid", label: "Grid" },
+  { value: "inline-block", label: "Inline Block" },
+  { value: "inline", label: "Inline" },
+  { value: "none", label: "None" },
 ];
 
 /** Display row: 6 icon segments for display modes (matches Webflow) */
