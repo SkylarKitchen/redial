@@ -11,7 +11,7 @@ import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
-import { resetProp } from "./apply";
+import { resetProp, resetAndReadNum } from "./apply";
 import {
   parseNum,
   parseBoxShadow,
@@ -65,15 +65,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [perspective, setPerspective] = useState(() => parseNum(cs.getPropertyValue("perspective")));
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
-  // ── resetCss helper ────────────────────────────────────────────────
-  const resetCss = useCallback(
-    (prop: string, setter: (v: number) => void) => {
-      resetProp(element, prop);
-      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
-      setter(parseFloat(fresh) || 0);
-    },
-    [element]
-  );
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleOpacityChange = useCallback((v: number) => { setOpacity(v); apply("opacity", String(v)); }, [apply]);

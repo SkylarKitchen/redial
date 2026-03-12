@@ -4,7 +4,7 @@ import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
 import { convertUnit, conversionBasis } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp } from "./apply";
+import { resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
@@ -65,15 +65,7 @@ export const BordersSection = memo(function BordersSection({
     }
   }, [borderSide, element]);
 
-  /** Reset a CSS property to its computed value and update React state via setter */
-  const resetCss = useCallback(
-    (prop: string, setter: (v: number) => void) => {
-      resetProp(element, prop);
-      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
-      setter(parseFloat(fresh) || 0);
-    },
-    [element]
-  );
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
 
   // ── Handlers ──
   const handleBorderStyleChange = useCallback((v: string) => {

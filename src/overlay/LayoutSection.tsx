@@ -13,7 +13,7 @@ import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
-import { resetProp } from "./apply";
+import { resetProp, resetAndReadNum } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { MiniDropdown, DirectionRow, GapRow, DisplayTabs } from "./layoutControls";
 import { LAYOUT_UNITS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
@@ -106,14 +106,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   // ── Helpers ──
 
-  const resetCss = useCallback(
-    (prop: string, setter: (v: number) => void) => {
-      resetProp(element, prop);
-      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
-      setter(parseFloat(fresh) || 0);
-    },
-    [element],
-  );
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
 
   // ── Handlers ──
 

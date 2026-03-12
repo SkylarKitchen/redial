@@ -5,7 +5,7 @@ import { PositionSelector } from "./PositionSelector";
 import { StyleIndicator } from "./StyleIndicator";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp } from "./apply";
+import { resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, FLOAT_OPTIONS, CLEAR_OPTIONS } from "./panelConstants";
@@ -44,15 +44,7 @@ export const PositionSection = memo(function PositionSection({
 
   const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
-  // ── resetCss ──
-  const resetCss = useCallback(
-    (prop: string, setter: (v: number) => void) => {
-      resetProp(element, prop);
-      const fresh = getComputedStyle(element).getPropertyValue(prop).trim();
-      setter(parseFloat(fresh) || 0);
-    },
-    [element]
-  );
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
 
   // ── Handlers ──
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);

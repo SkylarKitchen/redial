@@ -539,6 +539,16 @@ export function resetProp(el: Element, prop: string): void {
   notifyListeners();
 }
 
+/**
+ * Reset a CSS property and read back its computed value as a number.
+ * Shared helper to avoid duplicating resetProp + getComputedStyle + parseFloat
+ * across every section component.
+ */
+export function resetAndReadNum(element: Element, prop: string): number {
+  resetProp(element, prop);
+  return parseFloat(getComputedStyle(element).getPropertyValue(prop).trim()) || 0;
+}
+
 // --- Transition application ---
 
 /**

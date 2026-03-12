@@ -20,7 +20,7 @@ export interface GradientEditorProps {
   onChange: (gradient: { type: string; angle: number; stops: GradientStop[] }) => void;
 }
 
-function buildGradientCSS(
+export function buildGradientCSS(
   type: "linear" | "radial" | "conic",
   angle: number,
   stops: GradientStop[]
