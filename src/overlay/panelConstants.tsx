@@ -7,7 +7,7 @@
 import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Underline, Strikethrough, Baseline,
-  Eye, EyeOff, Scissors, ScrollText,
+  Eye, EyeOff, ScrollText,
   ArrowRight, ArrowDown, WrapText,
   Italic, X, PilcrowLeft, PilcrowRight,
 } from "lucide-react";
@@ -114,6 +114,22 @@ export const CLEAR_OPTIONS = [
   { value: "both", label: "Both" },
 ];
 
+/**
+ * Pin presets — each defines which edges to pin (offset=0) and which to leave auto.
+ * The `pin` object maps edge names → true (pinned to 0) or false (auto).
+ */
+export const PIN_PRESETS: Array<{ label: string; pin: { top: boolean; right: boolean; bottom: boolean; left: boolean } }> = [
+  { label: "TL",  pin: { top: true,  right: false, bottom: false, left: true  } },
+  { label: "T",   pin: { top: true,  right: false, bottom: false, left: false } },
+  { label: "TR",  pin: { top: true,  right: true,  bottom: false, left: false } },
+  { label: "L",   pin: { top: false, right: false, bottom: false, left: true  } },
+  { label: "All", pin: { top: true,  right: true,  bottom: true,  left: true  } },
+  { label: "R",   pin: { top: false, right: true,  bottom: false, left: false } },
+  { label: "BL",  pin: { top: false, right: false, bottom: true,  left: true  } },
+  { label: "B",   pin: { top: false, right: false, bottom: true,  left: false } },
+  { label: "BR",  pin: { top: false, right: true,  bottom: true,  left: false } },
+];
+
 // ─── Unit Lists ──────────────────────────────────────────────────────
 
 export const SIZE_UNITS_W = ["px", "%", "vw", "em", "rem", "ch"];
@@ -130,9 +146,14 @@ export const LINE_HEIGHT_UNITS = ["\u2014", "px", "em", "%"];
 export const OVERFLOW_ICON_OPTIONS = [
   { value: "visible", icon: <Eye size={14} strokeWidth={1.5} />, title: "Visible" },
   { value: "hidden", icon: <EyeOff size={14} strokeWidth={1.5} />, title: "Hidden" },
-  { value: "clip", icon: <Scissors size={14} strokeWidth={1.5} />, title: "Clip" },
   { value: "scroll", icon: <ScrollText size={14} strokeWidth={1.5} />, title: "Scroll" },
   { value: "auto", icon: <span className="text-[9px] font-sans font-medium">Auto</span>, title: "Auto" },
+];
+
+export const CHILDREN_MODE_OPTIONS = [
+  { value: "fill", label: "Fill" },
+  { value: "fit", label: "Fit" },
+  { value: "fixed", label: "Fixed" },
 ];
 
 export const OBJECT_FIT_OPTIONS = [

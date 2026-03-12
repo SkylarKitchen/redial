@@ -15,12 +15,13 @@ import { isDirty, resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
 import { isAutoSize } from "./getAuthoredValue";
-import { ChevronRight, Link } from "lucide-react";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { ms } from "./timing";
 import { text, border } from "./theme";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
   OVERFLOW_ICON_OPTIONS,
+  CHILDREN_MODE_OPTIONS,
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BOX_SIZING_OPTIONS,
 } from "./panelConstants";
@@ -81,14 +82,19 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   });
 
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
-  const [overflowLocked, setOverflowLocked] = useState(true);
-  const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
-  const [overflowY, setOverflowY] = useState(() => cs.overflowY || "visible");
   const [boxSizing, setBoxSizing] = useState(() => cs.boxSizing || "border-box");
   const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
   const [objectFit, setObjectFit] = useState(() => cs.objectFit);
   const [objectPosition, setObjectPosition] = useState(() => cs.objectPosition);
   const [showMoreSize, setShowMoreSize] = useState(false);
+
+  // Children sizing mode (only relevant for flex/grid containers)
+  const [childrenMode, setChildrenMode] = useState<string>(() => {
+    const ai = cs.alignItems;
+    if (ai === "stretch") return "fill";
+    if (ai === "flex-start" || ai === "start") return "fit";
+    return "fixed";
+  });
 
   // Size units
   const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));
@@ -146,14 +152,12 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${minHeightUnit}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${maxHeightUnit}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
-  const handleOverflowXChange = useCallback((v: string) => { setOverflowX(v); apply("overflow-x", v); }, [apply]);
-  const handleOverflowYChange = useCallback((v: string) => { setOverflowY(v); apply("overflow-y", v); }, [apply]);
-  const handleOverflowLockToggle = useCallback(() => {
-    setOverflowLocked(prev => {
-      if (!prev) { setOverflowX(overflow); setOverflowY(overflow); apply("overflow-x", overflow); apply("overflow-y", overflow); }
-      return !prev;
-    });
-  }, [overflow, apply]);
+  const handleChildrenModeChange = useCallback((v: string) => {
+    setChildrenMode(v);
+    if (v === "fill") apply("align-items", "stretch");
+    else if (v === "fit") apply("align-items", "flex-start");
+    // "fixed" — no-op, children keep explicit sizes
+  }, [apply]);
   const handleBoxSizingChange = useCallback((v: string) => { setBoxSizing(v); apply("box-sizing", v); }, [apply]);
   const handleAspectRatioChange = useCallback((v: string) => { setAspectRatio(v); apply("aspect-ratio", v || "auto"); }, [apply]);
   const handleObjectFitChange = useCallback((v: string) => { setObjectFit(v); apply("object-fit", v); }, [apply]);
@@ -360,24 +364,33 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Overflow: icon button row */}
-      {overflowLocked ? (
+      <div className="flex items-center gap-1.5 py-1 px-3">
+        <span className="text-[10px] shrink-0 w-16" style={{ color: text.disabled }}>Overflow</span>
+        <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
+      </div>
+      {/* Children: sizing mode for flex/grid containers */}
+      {(display === "flex" || display === "grid" || display === "inline-flex" || display === "inline-grid") && (
         <div className="flex items-center gap-1.5 py-1 px-3">
-          <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow</span>
-          <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflow} onChange={handleOverflowChange} />
-          <button onClick={handleOverflowLockToggle} title="Per-axis overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.disabled }}><Link size={12} strokeWidth={1.5} /></button>
+          <span className="text-[10px] shrink-0 w-16" style={{ color: text.disabled }}>Children</span>
+          <select
+            value={childrenMode}
+            onChange={(e) => handleChildrenModeChange(e.target.value)}
+            className="flex-1 h-6 text-[11px] rounded-[4px] border px-1.5 appearance-none cursor-pointer bg-transparent outline-none"
+            style={{ color: text.primary, borderColor: border.subtle }}
+          >
+            {CHILDREN_MODE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => setShowMoreSize(!showMoreSize)}
+            title="More size options"
+            className="w-6 h-6 flex items-center justify-center bg-transparent border rounded-[4px] cursor-pointer shrink-0"
+            style={{ color: text.disabled, borderColor: border.subtle }}
+          >
+            <MoreHorizontal size={14} strokeWidth={1.5} />
+          </button>
         </div>
-      ) : (
-        <>
-          <div className="flex items-center gap-1.5 py-1 px-3">
-            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow X</span>
-            <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowX} onChange={handleOverflowXChange} />
-            <button onClick={handleOverflowLockToggle} title="Lock overflow" className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] rounded-[3px] shrink-0" style={{ color: text.disabled }}><Link size={12} strokeWidth={1.5} /></button>
-          </div>
-          <div className="flex items-center gap-1.5 py-1 px-3">
-            <span className="text-[10px] shrink-0 w-12" style={{ color: text.disabled }}>Overflow Y</span>
-            <IconButtonGroup options={OVERFLOW_ICON_OPTIONS} value={overflowY} onChange={handleOverflowYChange} />
-          </div>
-        </>
       )}
       <div onClick={() => setShowMoreSize(!showMoreSize)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t" style={{ borderColor: border.subtle }}>
         <ChevronRight size={9} strokeWidth={2} style={{ color: "#7A7974", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />

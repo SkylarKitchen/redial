@@ -19,22 +19,25 @@ interface PositionOffsetDiagramProps {
   onUnitChange: (prop: string, unit: string) => void;
   /** Conversion tooltip hint passed through to the shared UnitSelector */
   conversionHint?: ConversionHint | null;
+  /** Which offsets are currently "auto" (no explicit authored value) */
+  autoStates?: { top: boolean; right: boolean; bottom: boolean; left: boolean };
+  /** Called when user clicks an "Auto" label to switch to editable mode */
+  onAutoDisable?: (prop: string) => void;
 }
 
-export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint }: PositionOffsetDiagramProps) {
-  // Set all 4 offsets to the same unit at once
-  const handleUnitChangeAll = useCallback(
-    (unit: string) => {
-      onUnitChange("top", unit);
-      onUnitChange("right", unit);
-      onUnitChange("bottom", unit);
-      onUnitChange("left", unit);
-    },
-    [onUnitChange]
-  );
+/** Diagonal crosshatch pattern matching Webflow's offset diagram background */
+const HATCHED_BG = [
+  `repeating-linear-gradient(`,
+  `45deg,`,
+  `transparent,`,
+  `transparent 3px,`,
+  `${primaryAlpha(0.07)} 3px,`,
+  `${primaryAlpha(0.07)} 4px`,
+  `)`,
+].join(" ");
 
-  // Show the first unit as the "current" for the shared selector (they may diverge if set individually)
-  const sharedUnit = units.top;
+export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint, autoStates, onAutoDisable }: PositionOffsetDiagramProps) {
+  const auto = autoStates ?? { top: false, right: false, bottom: false, left: false };
 
   return (
     <div style={{ padding: "8px 12px 4px" }}>
@@ -43,38 +46,27 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           position: "relative",
           border: `1px solid ${color.border}`,
           borderRadius: "4px",
-          background: primaryAlpha(0.06),
+          background: HATCHED_BG,
           padding: "0",
         }}
       >
-        {/* OFFSET label + unit selector */}
-        <div
-          style={{
-            position: "absolute",
-            top: "2px",
-            left: "6px",
-            display: "flex",
-            alignItems: "center",
-            gap: "3px",
-            pointerEvents: "auto",
-            zIndex: 1,
-          }}
-        >
-          <span style={{ fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.05em", color: text.disabled }}>
-            Offset
-          </span>
-          <UnitSelector value={sharedUnit} options={availableUnits} onChange={handleUnitChangeAll} conversionHint={conversionHint} />
-        </div>
-
         {/* Top */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
-          <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} />
+        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 4px" }}>
+          {auto.top ? (
+            <AutoLabel onClick={() => onAutoDisable?.("top")} />
+          ) : (
+            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} />
+          )}
         </div>
 
         {/* Left / element / Right */}
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} />
+            {auto.left ? (
+              <AutoLabel onClick={() => onAutoDisable?.("left")} />
+            ) : (
+              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} />
+            )}
           </div>
           {/* Element placeholder */}
           <div
@@ -95,16 +87,49 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             </span>
           </div>
           <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
-            <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} />
+            {auto.right ? (
+              <AutoLabel onClick={() => onAutoDisable?.("right")} />
+            ) : (
+              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} />
+            )}
           </div>
         </div>
 
         {/* Bottom */}
         <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
-          <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} />
+          {auto.bottom ? (
+            <AutoLabel onClick={() => onAutoDisable?.("bottom")} />
+          ) : (
+            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} />
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+// --- Auto keyword label ---
+
+function AutoLabel({ onClick }: { onClick: () => void }) {
+  return (
+    <span
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      style={{
+        fontSize: "10px",
+        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        color: "#9A9994",
+        cursor: "text",
+        padding: "1px 3px",
+        borderRadius: "2px",
+        minWidth: "16px",
+        textAlign: "center" as const,
+        transition: `background ${ms("normal")}`,
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+    >
+      Auto
+    </span>
   );
 }
 
