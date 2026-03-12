@@ -158,7 +158,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen }: E
         Transition
       </div>
       <div style={{ padding: "4px 12px" }}>
-        <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} />
+        <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
       </div>
 
       <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
