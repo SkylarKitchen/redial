@@ -5,11 +5,12 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import React, { useState, useCallback, useRef, useEffect, useId, memo } from "react";
+import React, { useState, useCallback, useRef, useEffect, memo } from "react";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
@@ -18,7 +19,6 @@ import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
-import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
