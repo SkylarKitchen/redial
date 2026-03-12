@@ -1466,6 +1466,8 @@ export function Overlay() {
           <ScrollArea
             ref={panelScrollRef as React.RefObject<HTMLDivElement>}
             className="__tuner-root flex-1 min-h-0"
+            type="scroll"
+            scrollHideDelay={800}
           >
             {showSearch && (
               <PropertySearch
