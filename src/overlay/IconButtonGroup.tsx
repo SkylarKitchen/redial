@@ -15,10 +15,11 @@ export interface IconButtonGroupProps {
   value: string;
   onChange: (value: string) => void;
   multi?: boolean;
+  onReset?: () => void;
   "aria-label"?: string;
 }
 
-export function IconButtonGroup({ options, value, onChange, multi = false, "aria-label": ariaLabel }: IconButtonGroupProps) {
+export function IconButtonGroup({ options, value, onChange, multi = false, onReset, "aria-label": ariaLabel }: IconButtonGroupProps) {
   const activeValues = multi ? new Set(value.split(" ").filter(Boolean)) : new Set([value]);
 
   const handleClick = useCallback(
@@ -63,6 +64,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
         title={opt.title ?? opt.value}
         onClick={(e) => {
           e.preventDefault();
+          if (e.altKey && onReset) { onReset(); return; }
           handleClick(opt.value);
         }}
         onKeyDown={(e) => {

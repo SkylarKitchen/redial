@@ -22,6 +22,7 @@ import {
   copyStyles,
   pasteStyles,
   hasClipboardStyles,
+  clearRedundantOverrides,
 } from "../apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────

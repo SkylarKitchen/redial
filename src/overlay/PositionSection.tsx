@@ -131,7 +131,7 @@ export const PositionSection = memo(function PositionSection({
 
   return (
     <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
-      <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
+      <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} onReset={() => { const v = resetAndReadStr(element, "position"); setPosition(v); }} />
       {position !== "static" && (
         <>
           {/* Pin preset icons — horizontal row matching Figma */}
@@ -193,6 +193,12 @@ export const PositionSection = memo(function PositionSection({
               else if (prop === "right") handleRightChange(v);
               else if (prop === "bottom") handleBottomChange(v);
               else if (prop === "left") handleLeftChange(v);
+            }}
+            onReset={(prop) => {
+              if (prop === "top") { resetCss("top", setTop); setTopAuto(isAutoSize(element, "top")); }
+              else if (prop === "right") { resetCss("right", setRight); setRightAuto(isAutoSize(element, "right")); }
+              else if (prop === "bottom") { resetCss("bottom", setBottom); setBottomAuto(isAutoSize(element, "bottom")); }
+              else if (prop === "left") { resetCss("left", setLeft); setLeftAuto(isAutoSize(element, "left")); }
             }}
             units={{ top: topUnit, right: rightUnit, bottom: bottomUnit, left: leftUnit }}
             availableUnits={POSITION_UNITS}
@@ -263,7 +269,7 @@ export const PositionSection = memo(function PositionSection({
             >
               {zIndexAuto ? (
                 <button
-                  onClick={handleZIndexAutoToggle}
+                  onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); return; } handleZIndexAutoToggle(); }}
                   style={{
                     flex: 1,
                     height: "100%",
@@ -283,6 +289,7 @@ export const PositionSection = memo(function PositionSection({
                 <input
                   type="text"
                   value={zIndex}
+                  onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); } }}
                   onChange={(e) => {
                     const v = parseInt(e.target.value);
                     if (!isNaN(v)) handleZIndexChange(v);
@@ -406,7 +413,7 @@ export const PositionSection = memo(function PositionSection({
               Float
             </span>
             <div style={{ flex: 1 }}>
-              <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" />
+              <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" onReset={() => { const v = resetAndReadStr(element, "float"); setFloat(v || "none"); }} />
             </div>
           </div>
           {/* Clear row */}
@@ -424,7 +431,7 @@ export const PositionSection = memo(function PositionSection({
               Clear
             </span>
             <div style={{ flex: 1 }}>
-              <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" />
+              <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" onReset={() => { const v = resetAndReadStr(element, "clear"); setClear(v || "none"); }} />
             </div>
           </div>
         </div>

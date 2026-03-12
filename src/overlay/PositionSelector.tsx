@@ -68,10 +68,12 @@ export function PositionSelector({
   value,
   onChange,
   indicator,
+  onReset,
 }: {
   value: string;
   onChange: (value: string) => void;
   indicator?: IndicatorType;
+  onReset?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
@@ -121,7 +123,10 @@ export function PositionSelector({
         <button
           className="tuner-focusable"
           tabIndex={0}
-          onClick={() => setOpen((o) => !o)}
+          onClick={(e) => {
+            if (e.altKey && onReset) { e.preventDefault(); onReset(); return; }
+            setOpen((o) => !o);
+          }}
           onFocus={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px ${color.ring}`;
           }}

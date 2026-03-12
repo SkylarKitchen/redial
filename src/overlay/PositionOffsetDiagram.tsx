@@ -23,6 +23,8 @@ interface PositionOffsetDiagramProps {
   autoStates?: { top: boolean; right: boolean; bottom: boolean; left: boolean };
   /** Called when user clicks an "Auto" label to switch to editable mode */
   onAutoDisable?: (prop: string) => void;
+  /** Called on Option+Click (Alt+Click) to reset a property to its default */
+  onReset?: (prop: string) => void;
 }
 
 /** Diagonal crosshatch pattern matching Webflow's offset diagram background */
@@ -36,7 +38,7 @@ const HATCHED_BG = [
   `)`,
 ].join(" ");
 
-export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint, autoStates, onAutoDisable }: PositionOffsetDiagramProps) {
+export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint, autoStates, onAutoDisable, onReset }: PositionOffsetDiagramProps) {
   const auto = autoStates ?? { top: false, right: false, bottom: false, left: false };
 
   return (
@@ -55,7 +57,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           {auto.top ? (
             <AutoLabel onClick={() => onAutoDisable?.("top")} />
           ) : (
-            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} />
+            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} onReset={() => onReset?.("top")} />
           )}
         </div>
 
@@ -65,7 +67,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             {auto.left ? (
               <AutoLabel onClick={() => onAutoDisable?.("left")} />
             ) : (
-              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} />
+              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} onReset={() => onReset?.("left")} />
             )}
           </div>
           {/* Element placeholder */}
@@ -90,7 +92,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             {auto.right ? (
               <AutoLabel onClick={() => onAutoDisable?.("right")} />
             ) : (
-              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} />
+              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} onReset={() => onReset?.("right")} />
             )}
           </div>
         </div>
@@ -100,7 +102,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           {auto.bottom ? (
             <AutoLabel onClick={() => onAutoDisable?.("bottom")} />
           ) : (
-            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} />
+            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} onReset={() => onReset?.("bottom")} />
           )}
         </div>
       </div>
@@ -139,10 +141,12 @@ function EditableValue({
   value,
   onChange,
   suffix,
+  onReset,
 }: {
   value: number;
   onChange: (value: number) => void;
   suffix?: string;
+  onReset?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -207,6 +211,7 @@ function EditableValue({
     <span
       onClick={(e) => {
         e.stopPropagation();
+        if (e.altKey && onReset) { onReset(); return; }
         setEditing(true);
       }}
       style={{
