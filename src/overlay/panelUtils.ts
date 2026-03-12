@@ -115,6 +115,30 @@ export function detectUnit(el: Element, prop: string, fallback: string = "px"): 
   return extractUnit(authored, fallback);
 }
 
+// ─── Unit Step Sizes ─────────────────────────────────────────────────
+
+/** Return the drag/scrub step for a given CSS unit.
+ *  px → 4, rem/em → 0.25, % and viewport units → 1 */
+export function stepForUnit(unit: string): number {
+  switch (unit) {
+    case "px":
+      return 4;
+    case "rem":
+    case "em":
+      return 0.25;
+    default:
+      return 1;
+  }
+}
+
+/** Decimal places needed to display the step cleanly */
+export function precisionForStep(step: number): number {
+  if (step >= 1) return 0;
+  const s = step.toString();
+  const dot = s.indexOf(".");
+  return dot < 0 ? 0 : s.length - dot - 1;
+}
+
 // ─── Variable Detection ─────────────────────────────────────────────
 
 /** WeakMap cache: element → set of properties that use var() */

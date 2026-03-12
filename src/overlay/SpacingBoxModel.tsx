@@ -29,6 +29,7 @@ import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch } from "./apply";
 import { ms } from "./timing";
 import { setScrubGroup } from "./scrubState";
+import { stepForUnit, precisionForStep } from "./panelUtils";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -250,14 +251,17 @@ export function SpacingBoxModel({
               beginBatch();
             }
 
+            const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+            const unitStep = stepForUnit(unit);
             const multiplier = ev.shiftKey ? 10 : 1;
 
-            const delta = dx * multiplier;
+            const delta = dx * unitStep * multiplier;
             const raw = startValue + delta;
             const clamped = isMargin ? raw : Math.max(0, raw);
-            const rounded = parseFloat(clamped.toFixed(0));
-
-            const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+            // Snap to step grid and use appropriate decimal precision
+            const snapped = Math.round(clamped / unitStep) * unitStep;
+            const precision = precisionForStep(unitStep);
+            const rounded = parseFloat(snapped.toFixed(precision));
             const prefix = isMargin ? "margin" : "padding";
 
             // Optimistic local state for instant text update
