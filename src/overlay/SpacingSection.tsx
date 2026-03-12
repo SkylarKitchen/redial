@@ -17,6 +17,7 @@ export const SpacingSection = memo(function SpacingSection({
   ctx,
   spacing,
   onSpacingChange,
+  forceOpen,
 }: SpacingSectionProps) {
   const { element, sectionInd } = ctx;
 
@@ -30,6 +31,7 @@ export const SpacingSection = memo(function SpacingSection({
         "margin-top", "margin-right", "margin-bottom", "margin-left",
         "padding-top", "padding-right", "padding-bottom", "padding-left",
       ])}
+      forceOpen={forceOpen}
     >
       <SpacingBoxModel
         margin={spacing.margin}

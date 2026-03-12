@@ -45,16 +45,18 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const handleCopy = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSDiff(element, changes));
-    showMessage("Copied!", 1200);
+    navigator.clipboard.writeText(formatCSSDiff(element, changes))
+      .then(() => showMessage("Copied!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
   }, [element, showMessage]);
 
   const handleCopyTailwind = useCallback(() => {
     const changes = diff(element);
     if (changes.length === 0) return;
     const tw = formatTailwindDiff(changes);
-    navigator.clipboard.writeText(tw);
-    showMessage("Copied Tailwind!", 1200);
+    navigator.clipboard.writeText(tw)
+      .then(() => showMessage("Copied Tailwind!", 1200))
+      .catch(() => showMessage("Copy failed", 1500));
   }, [element, showMessage]);
 
   const handleSave = useCallback(async () => {
