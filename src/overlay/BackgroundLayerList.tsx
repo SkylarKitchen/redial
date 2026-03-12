@@ -200,7 +200,7 @@ export function BackgroundLayerList({
         </button>
 
         {addOpen && (
-          <div className="absolute top-[calc(100%+2px)] left-0 right-0 bg-[#eae5df] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100] py-0.5 overflow-hidden">
+          <div className="absolute top-[calc(100%+2px)] left-0 right-0 bg-[#F5F4ED] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100] py-0.5 overflow-hidden">
             {(["color", "gradient", "image"] as BackgroundLayerType[]).map((t) => (
               <div
                 key={t}

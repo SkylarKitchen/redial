@@ -495,7 +495,7 @@ export function SpacingBoxModel({
               left: `${tooltip.rect.left + tooltip.rect.width / 2}px`,
               top: `${tooltip.rect.top - 30}px`,
               transform: "translateX(-50%)",
-              background: "rgba(245, 240, 234, 0.97)",
+              background: "rgba(250, 249, 245, 0.97)",
               color: "rgba(0,0,0,0.75)",
               fontSize: "11px",
               fontFamily: "system-ui, -apple-system, sans-serif",

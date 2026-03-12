@@ -638,12 +638,12 @@ function MsInput({ value, onChange }: { value: number; onChange: (v: number) => 
       onKeyDown={handleKeyDown}
       style={{
         width: "36px",
-        background: "rgba(0,0,0,0.04)",
-        border: focused ? "1px solid rgba(217,119,87,0.5)" : "1px solid rgba(0,0,0,0.07)",
+        background: color.input,
+        border: focusBorder(focused),
         borderRadius: "2px",
-        color: "rgba(0,0,0,0.7)",
+        color: text.secondary,
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         textAlign: "center",
         padding: "2px 2px",
         outline: "none",
@@ -698,14 +698,14 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.lineTo(toX(x1), toY(y1));
-    ctx.strokeStyle = "rgba(217,119,87,0.4)";
+    ctx.strokeStyle = primaryAlpha(0.4);
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(toX(1), toY(1));
     ctx.lineTo(toX(x2), toY(y2));
-    ctx.strokeStyle = "rgba(217,119,87,0.4)";
+    ctx.strokeStyle = primaryAlpha(0.4);
     ctx.lineWidth = 0.75;
     ctx.stroke();
 
@@ -713,7 +713,7 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.bezierCurveTo(toX(x1), toY(y1), toX(x2), toY(y2), toX(1), toY(1));
-    ctx.strokeStyle = "#D97757";
+    ctx.strokeStyle = color.primary;
     ctx.lineWidth = 1.5;
     ctx.stroke();
 

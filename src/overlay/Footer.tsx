@@ -210,7 +210,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               Copy <span className="text-[9px] ml-0.5 opacity-60">&#9662;</span>
             </Button>
             {copyOpen && (
-              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#eae5df] border border-black/[0.08] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
+              <div className="absolute bottom-[calc(100%+4px)] left-0 bg-[#F5F4ED] border border-black/[0.08] rounded-md py-1 min-w-[140px] shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100]">
                 <DropdownItem onClick={handleCopyCleanCSS}>CSS</DropdownItem>
                 <DropdownItem onClick={handleCopyTailwind}>Tailwind</DropdownItem>
                 <DropdownItem onClick={handleCopyVars}>CSS Variables</DropdownItem>

@@ -11,6 +11,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
 
 export interface FilterValues {
   blur: number;
@@ -352,7 +353,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               top: "100%",
               left: 0,
               marginTop: "2px",
-              background: "#eae5df",
+              background: "#F5F4ED",
               border: "1px solid rgba(0,0,0,0.12)",
               borderRadius: "4px",
               padding: "2px 0",

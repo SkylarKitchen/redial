@@ -265,7 +265,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </div>
             <div className="flex-1 flex flex-col gap-1 pt-0.5">
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">x</span>
+                <span style={{ color: blackAlpha(0.3) }} className="text-[10px] w-3 text-right">x</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? alignItems : justifyContent}
                   options={flexDirection.startsWith("column") ? ALIGN_ITEMS_OPTIONS : JUSTIFY_OPTIONS}
@@ -279,7 +279,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[rgba(0,0,0,0.3)] w-3 text-right">y</span>
+                <span style={{ color: blackAlpha(0.3) }} className="text-[10px] w-3 text-right">y</span>
                 <MiniDropdown
                   value={flexDirection.startsWith("column") ? justifyContent : alignItems}
                   options={flexDirection.startsWith("column") ? JUSTIFY_OPTIONS : ALIGN_ITEMS_OPTIONS}
