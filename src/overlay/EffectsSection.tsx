@@ -134,12 +134,12 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
       <SelectRow label="Blend" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Box Shadow
       </div>
       <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Transform
       </div>
       <div style={{ padding: "4px 12px" }}>
@@ -153,33 +153,33 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SliderRow label="Perspect" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
       <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Transition
       </div>
       <div style={{ padding: "4px 12px" }}>
         <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
       </div>
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Filter
       </div>
       <div style={{ padding: "4px 12px" }}>
         <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
       </div>
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Backdrop Filter
       </div>
       <div style={{ padding: "4px 12px" }}>
         <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
       </div>
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Cursor
       </div>
       <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} indicator={ind("cursor")} onContextMenu={ctxMenu("cursor", cursor)} computedProp="cursor" computedElement={element} />
 
-      <div style={{ padding: "8px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+      <div style={SUB_HEADER_STYLE}>
         Interaction
       </div>
       <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} indicator={ind("pointer-events")} onContextMenu={ctxMenu("pointer-events", pointerEvents)} computedProp="pointer-events" computedElement={element} />

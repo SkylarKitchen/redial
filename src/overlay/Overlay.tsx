@@ -15,6 +15,7 @@ import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
+import { CommonPanel } from "./CommonPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
 import { BoxModelOverlay } from "./BoxModelOverlay";
@@ -95,6 +96,9 @@ export function Overlay() {
     }
     setPanelKeyRaw(v);
   }, []);
+
+  // Tab state: "common" (flat simplified view) or "custom" (full WebflowPanel)
+  const [activeTab, setActiveTab] = useState<"common" | "custom">("common");
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -483,9 +487,10 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope, overlays, search, and modals on new selection
+    // Reset scope, tab, overlays, search, and modals on new selection
     setScope("element");
     setActiveClassName(null);
+    setActiveTab("common");
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setShowSearch(false);
@@ -1267,6 +1272,40 @@ export function Overlay() {
             </div>
           )}
           <ViewportBar active={viewportWidth} onChange={setViewportWidth} />
+          {/* ── Common / Custom tab bar ──────────────── */}
+          <div
+            style={{
+              display: "flex",
+              gap: 0,
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              padding: "0 12px",
+              flexShrink: 0,
+            }}
+          >
+            {(["common", "custom"] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    borderBottom: isActive ? "2px solid #c45d35" : "2px solid transparent",
+                    padding: "7px 10px 5px",
+                    fontSize: 11,
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.4)",
+                    cursor: "pointer",
+                    transition: "color 100ms, border-color 100ms",
+                    fontFamily: "system-ui, -apple-system, 'SF Pro Display', sans-serif",
+                  }}
+                >
+                  {tab === "common" ? "Common" : "Custom"}
+                </button>
+              );
+            })}
+          </div>
           <div
             ref={panelScrollRef}
             className="__tuner-root"
@@ -1293,18 +1332,27 @@ export function Overlay() {
               }}
             >
               <PanelErrorBoundary onError={handleClose}>
-                <WebflowPanel
-                  key={panelKey}
-                  element={selectedEl}
-                  spacing={inferResult.spacing}
-                  onSpacingChange={handleSpacingChange}
-                  showGridOverlay={showGridOverlay}
-                  onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
-                  showBoxModel={showBoxModel}
-                  onToggleBoxModel={() => setShowBoxModel((v) => !v)}
-                  searchQuery={searchQuery}
-                  focusMode={focusMode}
-                />
+                {activeTab === "common" ? (
+                  <CommonPanel
+                    key={panelKey}
+                    element={selectedEl}
+                    spacing={inferResult.spacing}
+                    onSpacingChange={handleSpacingChange}
+                  />
+                ) : (
+                  <WebflowPanel
+                    key={panelKey}
+                    element={selectedEl}
+                    spacing={inferResult.spacing}
+                    onSpacingChange={handleSpacingChange}
+                    showGridOverlay={showGridOverlay}
+                    onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
+                    showBoxModel={showBoxModel}
+                    onToggleBoxModel={() => setShowBoxModel((v) => !v)}
+                    searchQuery={searchQuery}
+                    focusMode={focusMode}
+                  />
+                )}
               </PanelErrorBoundary>
             </div>
             <SessionDrawer

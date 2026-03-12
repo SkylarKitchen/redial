@@ -6,8 +6,9 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { GradientEditor } from "./GradientEditor";
+import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
+import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
@@ -42,24 +43,7 @@ export interface BackgroundLayerListProps {
   onEditColor?: (layerId: string) => void;
 }
 
-const BLEND_MODES = [
-  "normal",
-  "multiply",
-  "screen",
-  "overlay",
-  "darken",
-  "lighten",
-  "color-dodge",
-  "color-burn",
-  "hard-light",
-  "soft-light",
-  "difference",
-  "exclusion",
-  "hue",
-  "saturation",
-  "color",
-  "luminosity",
-];
+const BLEND_MODES = BLEND_MODE_OPTIONS.map(o => o.value);
 
 const SIZE_KEYWORDS = ["auto", "cover", "contain"];
 const SIZE_OPTIONS = [...SIZE_KEYWORDS, "custom"];
