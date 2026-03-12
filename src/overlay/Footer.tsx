@@ -328,6 +328,7 @@ function ActionButton({
               ? "1px solid rgba(239, 68, 68, 0.15)"
               : "1px solid rgba(255,255,255,0.1)",
         borderRadius: "6px",
+        whiteSpace: "nowrap" as const,
         cursor: disabled ? "default" : "pointer",
         opacity: disabled ? 0.35 : 1,
         background: active
