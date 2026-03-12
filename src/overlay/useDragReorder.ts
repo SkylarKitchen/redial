@@ -99,18 +99,7 @@ export function useDragReorder<T>(
         const prevCursor = document.body.style.cursor;
 
         function getOverIndex(dragIdx: number, offsetY: number): number {
-          const dragCenter = tops[dragIdx] + heights[dragIdx] / 2 + offsetY;
-          let best = dragIdx;
-          let bestDist = Infinity;
-          for (let i = 0; i < heights.length; i++) {
-            const center = tops[i] + heights[i] / 2;
-            const dist = Math.abs(dragCenter - center);
-            if (dist < bestDist) {
-              bestDist = dist;
-              best = i;
-            }
-          }
-          return best;
+          return computeOverIndex(dragIdx, offsetY, tops, heights);
         }
 
         function handleMove(ev: PointerEvent) {
@@ -220,18 +209,7 @@ export function useDragReorder<T>(
       }
 
       // Items between dragIndex and overIndex need to shift
-      let shift = 0;
-      if (dragIndex < overIndex) {
-        // Dragging down: items between (dragIndex, overIndex] shift up
-        if (index > dragIndex && index <= overIndex) {
-          shift = -heights[dragIndex];
-        }
-      } else if (dragIndex > overIndex) {
-        // Dragging up: items between [overIndex, dragIndex) shift down
-        if (index >= overIndex && index < dragIndex) {
-          shift = heights[dragIndex];
-        }
-      }
+      const shift = computeItemShift(index, dragIndex, overIndex, heights[dragIndex]);
 
       return {
         position: "relative",
@@ -277,4 +255,40 @@ export function useDragReorder<T>(
     dropLineStyle,
     isDragging: dragState !== null || settling,
   };
+}
+
+/** Pure computation: find which item index the dragged item is closest to. Exported for testing. */
+export function computeOverIndex(
+  dragIdx: number,
+  offsetY: number,
+  tops: number[],
+  heights: number[],
+): number {
+  const dragCenter = tops[dragIdx] + heights[dragIdx] / 2 + offsetY;
+  let best = dragIdx;
+  let bestDist = Infinity;
+  for (let i = 0; i < heights.length; i++) {
+    const center = tops[i] + heights[i] / 2;
+    const dist = Math.abs(dragCenter - center);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    }
+  }
+  return best;
+}
+
+/** Pure computation: translateY shift for a displaced item. Exported for testing. */
+export function computeItemShift(
+  index: number,
+  dragIndex: number,
+  overIndex: number,
+  dragHeight: number,
+): number {
+  if (dragIndex < overIndex) {
+    if (index > dragIndex && index <= overIndex) return -dragHeight;
+  } else if (dragIndex > overIndex) {
+    if (index >= overIndex && index < dragIndex) return dragHeight;
+  }
+  return 0;
 }

@@ -10,6 +10,19 @@ import { useState, useCallback } from "react";
 import type { ConversionHint } from "./UnitSelector";
 import { conversionBasis, type UnitConversionContext } from "./unitConversion";
 
+/** Pure computation: build a ConversionHint object. Exported for testing. */
+export function buildConversionHint(
+  oldValue: number,
+  oldUnit: string,
+  newValue: number,
+  newUnit: string,
+  ctx?: UnitConversionContext,
+  axis?: "width" | "height",
+): ConversionHint {
+  const basis = ctx ? conversionBasis(newUnit, ctx, axis) : undefined;
+  return { oldValue, oldUnit, newValue, newUnit, basis };
+}
+
 export function useConversionHint() {
   const [hint, setHint] = useState<ConversionHint | null>(null);
 
@@ -22,9 +35,8 @@ export function useConversionHint() {
       ctx?: UnitConversionContext,
       axis?: "width" | "height"
     ) => {
-      const basis = ctx ? conversionBasis(newUnit, ctx, axis) : undefined;
       // Always create a fresh object so UnitSelector detects the change
-      setHint({ oldValue, oldUnit, newValue, newUnit, basis });
+      setHint(buildConversionHint(oldValue, oldUnit, newValue, newUnit, ctx, axis));
     },
     []
   );
