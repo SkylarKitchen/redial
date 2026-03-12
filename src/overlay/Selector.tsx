@@ -87,10 +87,13 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       const el = document.elementFromPoint(e.clientX, e.clientY);
       if (!el) return;
 
-      // Don't select our own UI elements
+      // Don't select our own UI elements or third-party tool overlays
       if (
         el.closest(".__tuner-root") ||
-        el.closest(".__tuner-selector-outline")
+        el.closest(".__tuner-selector-outline") ||
+        el.closest("[data-agentation-root]") ||
+        el.closest("[data-feedback-toolbar]") ||
+        el.closest("[data-annotation-marker]")
       ) {
         return;
       }
@@ -100,7 +103,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
 
     const handleClick = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root")) return;
+      if (!el || el.closest(".__tuner-root") || el.closest("[data-agentation-root]") || el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]")) return;
 
       // Only suppress propagation for actual page element clicks —
       // tuner UI clicks (FAB, panel) must bubble through to React handlers

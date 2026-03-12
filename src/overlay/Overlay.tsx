@@ -1024,9 +1024,15 @@ export function Overlay() {
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;
       if (target.closest("[data-tuner-portal]")) return;
+      // Don't intercept clicks on third-party tool overlays (e.g. Agentation)
+      if (target.closest("[data-agentation-root]")) return;
+      if (target.closest("[data-feedback-toolbar]")) return;
+      if (target.closest("[data-annotation-marker]")) return;
+      if (target.closest("[data-annotation-popup]")) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
       if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]")) return;
+      if (el.closest("[data-agentation-root]") || el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]") || el.closest("[data-annotation-popup]")) return;
 
       e.preventDefault();
       e.stopPropagation();
@@ -1045,6 +1051,8 @@ export function Overlay() {
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest("[data-tuner-portal]")) return;
+      if (target.closest("[data-agentation-root]")) return;
+      if (target.closest("[data-feedback-toolbar]")) return;
 
       e.preventDefault();
       setActiveModal({ type: "contextMenu", x: e.clientX, y: e.clientY });
