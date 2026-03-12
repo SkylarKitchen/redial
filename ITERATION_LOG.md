@@ -561,6 +561,14 @@ Additional UX enhancements integrated from parallel agent work:
 
 - Typecheck: PASS, Tests: 315/315 PASS
 
+### Iteration 51 — Borders per-side value reading (2026-03-11)
+- Added `useEffect` on `borderSide` change that reads per-side computed values from the DOM
+- When switching SideSelector tabs (top/right/bottom/left), controls now update to show that side's style, width, and color
+- Updated indicator, computedProp, and onContextMenu bindings to use per-side CSS property names (e.g. `border-top-style`)
+- Updated unit conversion and reset handlers to target the correct per-side property
+- Previously SideSelector only wrote per-side values; now it reads them too
+- Typecheck: PASS
+
 ---
 
 ## Done
