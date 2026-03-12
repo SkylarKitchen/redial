@@ -47,6 +47,8 @@ export interface SizeInputCellProps {
   onCssVarChange?: (varName: string | null) => void;
   /** CSS variable options for the UnitSelector dropdown */
   variableOptions?: VariableOption[];
+  /** Called on alt+click the value to reset to default */
+  onReset?: () => void;
 }
 
 export function SizeInputCell({
@@ -70,6 +72,7 @@ export function SizeInputCell({
   cssVarResolved,
   onCssVarChange,
   variableOptions,
+  onReset,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -293,6 +296,7 @@ export function SizeInputCell({
             ref={inputRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { e.preventDefault(); onReset(); setEditing(false); } }}
             onBlur={commit}
             onKeyDown={handleKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
@@ -309,12 +313,11 @@ export function SizeInputCell({
               padding: "1px 3px",
               outline: "none",
             }}
-            onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <span
             tabIndex={0}
-            onClick={() => setEditing(true)}
+            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
             style={{
               fontSize: "10px",

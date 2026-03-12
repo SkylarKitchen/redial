@@ -171,9 +171,11 @@ export function Section({
 
 // ─── ValueInput ─────────────────────────────────────────────────────
 
-export function ValueInput({ value, onChange, emptyKeyword, onKeywordCommit }: {
+export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit }: {
   value: number;
   onChange: (v: number) => void;
+  /** Called when alt+click is detected (resets value to default) */
+  onAltClick?: () => void;
   /** When draft is empty on commit, apply this keyword instead of ignoring */
   emptyKeyword?: string;
   /** Called when the empty keyword is applied (e.g. "auto", "none") */
@@ -231,6 +233,7 @@ export function ValueInput({ value, onChange, emptyKeyword, onKeywordCommit }: {
       aria-label="Value"
       value={focused ? draft : String(value)}
       onChange={(e) => setDraft(e.target.value)}
+      onClick={(e) => { if (e.altKey && onAltClick) { e.preventDefault(); onAltClick(); } }}
       onFocus={() => setFocused(true)}
       onBlur={commit}
       onKeyDown={handleKeyDown}
@@ -388,7 +391,7 @@ export function SliderRow({
             transition: "background 150ms",
           }}
         />
-        <ValueInput value={value} onChange={onChange} />
+        <ValueInput value={value} onChange={onChange} onAltClick={onReset} />
         {units && onUnitChange ? (
           <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
         ) : unit ? (
