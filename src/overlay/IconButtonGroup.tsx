@@ -22,7 +22,13 @@ export function IconButtonGroup({ options, value, onChange, multi = false, "aria
   const handleClick = useCallback(
     (optValue: string) => {
       if (multi) {
+        // "none" is a reset value — clicking it clears everything
+        if (optValue === "none") {
+          onChange("none");
+          return;
+        }
         const current = new Set(value.split(" ").filter(Boolean));
+        current.delete("none"); // remove "none" when toggling a real value
         if (current.has(optValue)) {
           current.delete(optValue);
         } else {

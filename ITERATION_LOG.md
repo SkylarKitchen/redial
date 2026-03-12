@@ -343,4 +343,15 @@ Implemented all remaining Tier 2-3 polish items via 6 parallel agents:
 
 ---
 
+### Iteration 34 — Text-decoration multi-select (spec §7 line 401) (2026-03-11)
+- Spec §7 says text-decoration "Can combine multiple" (e.g., underline + line-through simultaneously)
+- The `IconButtonGroup` already supported `multi` mode, but text-decoration was not using it
+- Added `multi` prop to text-decoration `IconButtonGroup` in WebflowPanel.tsx
+- Fixed multi-mode "none" handling in `IconButtonGroup`: clicking "none" now clears all other values; clicking a real value removes "none" from the active set
+- CSS `text-decoration-line` natively accepts combined values like `"underline line-through"`, so no handler changes needed
+- Initialization already reads `cs.textDecorationLine` which returns space-separated combined values
+- Typecheck: PASS
+
+---
+
 ## Done

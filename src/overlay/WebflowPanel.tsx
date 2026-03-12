@@ -1172,7 +1172,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onDirtyChange 
           {/* Decor — with none X button + ... overflow */}
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Decor</span>
-            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} />
+            <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
           </div>
 
           {/* More type options toggle */}
