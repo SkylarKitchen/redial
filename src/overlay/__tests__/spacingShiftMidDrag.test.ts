@@ -29,6 +29,9 @@ describe("SpacingBoxModel shift mid-drag linking", () => {
     container.remove();
   });
 
+  const stubElement = document.createElement("div");
+  const stubInd = () => "none" as const;
+
   function renderBoxModel(onChange: ReturnType<typeof vi.fn>) {
     act(() => {
       root.render(
@@ -42,6 +45,8 @@ describe("SpacingBoxModel shift mid-drag linking", () => {
           paddingUnits: ["px", "%", "em", "rem"],
           onMarginUnitChange: vi.fn(),
           onPaddingUnitChange: vi.fn(),
+          element: stubElement,
+          ind: stubInd,
         }),
       );
     });

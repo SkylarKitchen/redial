@@ -115,6 +115,8 @@ describe("SpacingValuePopover preset buttons", () => {
 describe("SpacingBoxModel → popover → preset integration", () => {
   let container: HTMLDivElement;
   let root: Root;
+  const stubElement = document.createElement("div");
+  const stubInd = () => "none" as const;
 
   beforeEach(() => {
     container = document.createElement("div");
@@ -145,6 +147,8 @@ describe("SpacingBoxModel → popover → preset integration", () => {
           paddingUnits: ["px", "%", "em"],
           onMarginUnitChange: vi.fn(),
           onPaddingUnitChange: vi.fn(),
+          element: stubElement,
+          ind: stubInd,
         }),
       );
     });
