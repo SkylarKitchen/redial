@@ -77,6 +77,8 @@ export function SegmentedControl({
       style={{
         display: "flex",
         alignItems: "flex-start",
+        flex: 1,
+        minWidth: 0,
         background: tokens.bg,
         borderRadius: tokens.radius,
         padding: tokens.padding,

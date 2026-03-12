@@ -417,13 +417,13 @@ function GapInput({ value, unit, onChange }: {
   return (
     <div style={{
       display: "flex",
-      width: 70,
+      flex: 1,
+      minWidth: 0,
       height: 24,
       borderRadius: 4,
       border: "1px solid rgba(31,30,29,0.15)",
       overflow: "hidden",
       background: "white",
-      flexShrink: 0,
     }}>
       {/* Value area */}
       <div style={{
@@ -552,11 +552,11 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
       {/* Sub-labels: Columns / Rows — positioned under their respective inputs */}
       <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 4 }}>
         <span style={{ width: 49, flexShrink: 0 }} />
-        <span style={{ width: 70, display: "flex", justifyContent: "center", flexShrink: 0 }}>
+        <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <RowLabel label="Columns" indicator={isSet ? "element" : "none"} />
         </span>
         <span style={{ width: 24, flexShrink: 0 }} />
-        <span style={{ width: 70, display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+        <span style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
           <RowLabel label="Rows" indicator={isSet ? "element" : "none"} />
         </span>
       </div>
