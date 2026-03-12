@@ -19,6 +19,7 @@ import {
   FLOAT_OPTIONS,
   CLEAR_OPTIONS,
   BORDER_STYLE_OPTIONS,
+  BORDER_STYLE_ICON_OPTIONS,
   BLEND_MODE_OPTIONS,
   CURSOR_OPTIONS,
   POINTER_EVENTS_OPTIONS,
@@ -92,6 +93,7 @@ describe("Icon button groups — shape & length", () => {
     { name: "OVERFLOW_ICON_OPTIONS", arr: OVERFLOW_ICON_OPTIONS, len: 5 },
     { name: "DIRECTION_ICONS_SHORT", arr: DIRECTION_ICONS_SHORT, len: 3 },
     { name: "BOX_SIZING_OPTIONS", arr: BOX_SIZING_OPTIONS, len: 2 },
+    { name: "BORDER_STYLE_ICON_OPTIONS", arr: BORDER_STYLE_ICON_OPTIONS, len: 4 },
   ] as const;
 
   for (const { name, arr, len } of groups) {

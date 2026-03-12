@@ -1,14 +1,16 @@
 /**
  * layoutControls.tsx — Sub-components extracted from WebflowPanel.tsx
  *
- * MiniDropdown, DirectionRow, GapRow, DisplayTabs, TypoValueCell.
+ * RowLabel, TextToggle, ReverseButton, DisplayTabs, DirectionRow, GapRow, ChildrenRow,
+ * MiniDropdown, TypoValueCell.
  */
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
-import { ChevronDown, Link, Unlink } from "lucide-react";
+import { ChevronDown, Link, Unlink, ArrowLeftRight } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
+import { IconButtonGroup } from "./IconButtonGroup";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 
@@ -16,10 +18,92 @@ import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
 import { cn } from "@/lib/utils";
-import {
-  DISPLAY_TABS, DISPLAY_MORE,
-  DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS,
-} from "./panelConstants";
+import { DISPLAY_ICON_OPTIONS, LAYOUT_UNITS } from "./panelConstants";
+
+// ─── RowLabel ───────────────────────────────────────────────────────
+
+/** Shared label pattern: highlighted when modified, alt+click to reset */
+export function RowLabel({ label, isSet, onReset }: {
+  label: string;
+  isSet?: boolean;
+  onReset?: () => void;
+}) {
+  return (
+    <span
+      className={cn(
+        "text-[11px] shrink-0 select-none",
+        isSet
+          ? "rounded-[3px] px-1.5 py-0.5"
+          : "text-[var(--muted-foreground)] w-16",
+      )}
+      style={isSet ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
+      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+    >
+      {label}
+    </span>
+  );
+}
+
+// ─── TextToggle ─────────────────────────────────────────────────────
+
+/** Segmented text toggle: 2 options as a button pair */
+export function TextToggle({ options, value, onChange }: {
+  options: Array<{ value: string; label: string }>;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="inline-flex rounded overflow-hidden border" style={{ borderColor: surface.track }}>
+      {options.map((opt, i) => {
+        const isActive = opt.value === value;
+        const isFirst = i === 0;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              "h-7 px-2.5 text-[10px] font-sans cursor-pointer border-none outline-none transition-colors",
+              !isFirst && "border-l",
+              isActive ? "font-medium" : "bg-transparent hover:bg-[var(--accent)]",
+            )}
+            style={{
+              ...(!isFirst ? { borderLeftColor: surface.track } : {}),
+              ...(isActive
+                ? { background: surface.active, color: color.foreground }
+                : { color: text.label }),
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── ReverseButton ──────────────────────────────────────────────────
+
+/** Small icon toggle for flex-direction reverse / wrap-reverse */
+function ReverseButton({ active, onClick }: { active: boolean; onClick: () => void }) {
+  return (
+    <button
+      title={active ? "Reverse (active)" : "Reverse"}
+      onClick={onClick}
+      className={cn(
+        "w-7 h-7 flex items-center justify-center rounded cursor-pointer outline-none transition-colors border-none shrink-0",
+        active
+          ? "font-medium"
+          : "bg-transparent hover:bg-[var(--accent)]",
+      )}
+      style={active
+        ? { background: primaryAlpha(0.2), color: primaryAlpha(0.9) }
+        : { color: text.disabled }
+      }
+    >
+      <ArrowLeftRight size={13} strokeWidth={1.5} />
+    </button>
+  );
+}
 
 // ─── MiniDropdown ───────────────────────────────────────────────────
 
@@ -102,261 +186,145 @@ export function MiniDropdown({ value, options, onChange }: {
   );
 }
 
-// ─── DirectionRow ───────────────────────────────────────────────────
+// ─── DisplayTabs (Icon-based) ───────────────────────────────────────
 
-/** Direction row: row/column/wrap icons + dropdown chevron for reverse options */
-export function DirectionRow({ direction, wrap, onDirectionChange, onWrapChange, onReset }: {
-  direction: string;
-  wrap: string;
-  onDirectionChange: (v: string) => void;
-  onWrapChange: (v: string) => void;
+/** Display row: 6 icon buttons for all display modes */
+export function DisplayTabs({ value, onChange, onReset }: {
+  value: string;
+  onChange: (v: string) => void;
   onReset?: () => void;
 }) {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
-  const isSet = direction !== "row" || isWrap;
-  const closeMore = useCallback(() => setMoreOpen(false), []);
-  useClickOutside(containerRef, moreOpen, closeMore);
-
   return (
-    <div className="flex items-center gap-1.5 py-1 px-3">
-      <span
-        className={cn(
-          "text-[11px] shrink-0",
-          isSet
-            ? "rounded-[3px] px-1.5 py-0.5"
-            : "text-[var(--muted-foreground)] w-16",
-        )}
-        style={isSet ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
-        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-      >Direction</span>
-      <div ref={containerRef} className="flex relative">
-        <div className="inline-flex">
-          {DIRECTION_ICONS_SHORT.map((opt, i) => {
-            const isFirst = i === 0;
-            const isLast = i === DIRECTION_ICONS_SHORT.length - 1;
-            const isActive = opt.value === "__wrap__" ? isWrap : opt.value === direction.replace("-reverse", "");
-            return (
-              <button
-                key={opt.value}
-                title={opt.title}
-                onClick={() => {
-                  if (opt.value === "__wrap__") {
-                    onWrapChange(isWrap ? "nowrap" : "wrap");
-                  } else {
-                    onDirectionChange(opt.value);
-                  }
-                }}
-                className={cn(
-                  "flex items-center justify-center h-7 min-w-[32px] px-2 cursor-pointer outline-none transition-colors",
-                  "border",
-                  !isFirst && "border-l-0",
-                  isFirst && "rounded-l",
-                  isLast && "rounded-r",
-                  !isFirst && !isLast && "rounded-none",
-                  isActive
-                    ? "font-medium"
-                    : "bg-transparent text-[var(--muted-foreground)] hover:bg-[var(--accent)]",
-                )}
-                style={{
-                  borderColor: surface.track,
-                  ...(isActive ? { background: surface.active, color: color.foreground } : {}),
-                }}
-              >
-                {opt.icon}
-              </button>
-            );
-          })}
-        </div>
-        <button
-          onClick={() => setMoreOpen((o) => !o)}
-          className="w-5 h-7 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
-          style={{
-            color: text.label,
-            background: direction.includes("reverse") ? primaryAlpha(0.2) : "transparent",
-          }}
-        ><ChevronDown size={12} strokeWidth={2} /></button>
-        {moreOpen && (
-          <div
-            className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
-            style={{ borderColor: surface.track }}
-          >
-            {DIRECTION_MORE_OPTIONS.map((opt) => {
-              const active = opt.value === direction;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => { onDirectionChange(opt.value); setMoreOpen(false); }}
-                  className={cn(
-                    "px-2 py-1 text-[11px] font-mono cursor-pointer",
-                    active
-                      ? "bg-[var(--primary)] text-white"
-                      : "hover:bg-[rgba(0,0,0,0.05)]",
-                  )}
-                  style={!active ? { color: text.label } : undefined}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+    <div className="flex items-center gap-1.5 py-0.5 px-3">
+      <RowLabel label="Display" isSet={value !== "block"} onReset={onReset} />
+      <IconButtonGroup
+        options={DISPLAY_ICON_OPTIONS}
+        value={value}
+        onChange={onChange}
+        aria-label="Display mode"
+      />
     </div>
   );
 }
 
-// ─── GapRow ─────────────────────────────────────────────────────────
+// ─── DirectionRow ───────────────────────────────────────────────────
 
-/** Gap row: color swatch + slider + value input + unit + lock icon */
-export function GapRow({ value, unit, onChange, onUnitChange, linked, onLinkedChange }: {
-  value: number; unit: string;
-  onChange: (v: number) => void; onUnitChange: (u: string) => void;
-  linked: boolean; onLinkedChange: (v: boolean) => void;
+/** Direction row: Horizontal/Vertical text toggle + reverse button */
+export function DirectionRow({ direction, onDirectionChange, onReset }: {
+  direction: string;
+  onDirectionChange: (v: string) => void;
+  onReset?: () => void;
 }) {
-  const gapLinked = linked;
-  const pct = (value / 200) * 100;
+  const isHorizontal = !direction.startsWith("column");
+  const isReverse = direction.includes("reverse");
+  const isSet = direction !== "row";
+
   return (
     <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <LabelScrub value={value} onChange={onChange} step={4} min={0} max={200}>
-        <span className="w-12 text-[11px] text-[var(--muted-foreground)] shrink-0 cursor-ew-resize">Gap</span>
-      </LabelScrub>
-      {/* Color swatch indicator */}
-      <div className="w-2.5 h-2.5 rounded-sm shrink-0 border" style={{ background: surface.track, borderColor: blackAlpha(0.15) }} />
-      {/* Slider */}
-      <input
-        type="range" min={0} max={200} step={4} value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="flex-1 h-[3px] outline-none cursor-pointer"
-        style={{
-          appearance: "none", WebkitAppearance: "none",
-          background: `linear-gradient(to right, #D97757 ${pct}%, rgba(0,0,0,0.12) ${pct}%)`,
-          borderRadius: "2px",
+      <RowLabel label="Direction" isSet={isSet} onReset={onReset} />
+      <TextToggle
+        options={[
+          { value: "horizontal", label: "Horizontal" },
+          { value: "vertical", label: "Vertical" },
+        ]}
+        value={isHorizontal ? "horizontal" : "vertical"}
+        onChange={(v) => {
+          const base = v === "horizontal" ? "row" : "column";
+          onDirectionChange(isReverse ? `${base}-reverse` : base);
         }}
       />
-      {/* Value input */}
-      <ValueInput value={value} onChange={onChange} />
-      {/* Unit label */}
-      <span className="text-[9px] w-4 font-mono uppercase" style={{ color: text.disabled }}>{unit.toUpperCase()}</span>
-      {/* Link/lock icon */}
-      <button
-        onClick={() => onLinkedChange(!gapLinked)}
-        title={gapLinked ? "Gap linked (row = column)" : "Gap unlinked"}
-        className="w-[18px] h-[18px] flex items-center justify-center bg-transparent border-none cursor-pointer p-0 text-[11px] shrink-0"
-        style={{ color: gapLinked ? text.disabled : text.hint }}
-      >
-        {gapLinked ? <Link size={12} strokeWidth={1.5} /> : <Unlink size={12} strokeWidth={1.5} />}
-      </button>
+      <ReverseButton
+        active={isReverse}
+        onClick={() => {
+          const base = isHorizontal ? "row" : "column";
+          onDirectionChange(isReverse ? base : `${base}-reverse`);
+        }}
+      />
     </div>
   );
 }
 
-// ─── DisplayTabs ────────────────────────────────────────────────────
+// ─── GapRow (Dual Inputs) ───────────────────────────────────────────
 
-export function DisplayTabs({ value, onChange, onReset }: { value: string; onChange: (v: string) => void; onReset?: () => void }) {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const closeMore = useCallback(() => setMoreOpen(false), []);
-  useClickOutside(containerRef, moreOpen, closeMore);
+/** Gap row: dual number inputs (column + row) with link toggle */
+export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange, onRowChange,
+                          onColumnUnitChange, onRowUnitChange, linked, onLinkedChange, onReset }: {
+  columnGap: number;
+  rowGap: number;
+  columnUnit: string;
+  rowUnit: string;
+  onColumnChange: (v: number) => void;
+  onRowChange: (v: number) => void;
+  onColumnUnitChange: (u: string) => void;
+  onRowUnitChange: (u: string) => void;
+  linked: boolean;
+  onLinkedChange: (v: boolean) => void;
+  onReset?: () => void;
+}) {
+  const isSet = columnGap !== 0 || rowGap !== 0;
+  return (
+    <div>
+      <div className="flex items-center gap-1 py-0.5 px-3">
+        <RowLabel label="Gap" isSet={isSet} onReset={onReset} />
+        {/* Column gap input */}
+        <ValueInput value={columnGap} onChange={(v) => {
+          onColumnChange(v);
+          if (linked) onRowChange(v);
+        }} />
+        <UnitSelector value={columnUnit} options={LAYOUT_UNITS} onChange={onColumnUnitChange} />
+        {/* Link toggle */}
+        <button
+          onClick={() => onLinkedChange(!linked)}
+          title={linked ? "Gap linked (column = row)" : "Gap unlinked"}
+          className="w-6 h-6 flex items-center justify-center bg-transparent border-none cursor-pointer p-0 shrink-0 rounded transition-colors"
+          style={{ color: linked ? color.primary : text.hint }}
+        >
+          {linked ? <Link size={13} strokeWidth={1.5} /> : <Unlink size={13} strokeWidth={1.5} />}
+        </button>
+        {/* Row gap input */}
+        <ValueInput value={rowGap} onChange={(v) => {
+          onRowChange(v);
+          if (linked) onColumnChange(v);
+        }} />
+        <UnitSelector value={rowUnit} options={LAYOUT_UNITS} onChange={onRowUnitChange} />
+      </div>
+      {/* Sub-labels */}
+      <div className="flex px-3 mt-0.5" style={{ paddingLeft: "calc(64px + 6px)" }}>
+        <span className="text-[9px] flex-1 text-center" style={{ color: text.hint }}>Column</span>
+        <span className="w-6 shrink-0" /> {/* Spacer for link button */}
+        <span className="text-[9px] flex-1 text-center" style={{ color: text.hint }}>Row</span>
+      </div>
+    </div>
+  );
+}
 
-  const isTabValue = (DISPLAY_TABS as readonly string[]).includes(value);
+// ─── ChildrenRow ────────────────────────────────────────────────────
+
+/** Children row: Don't wrap / Wrap text toggle + reverse button */
+export function ChildrenRow({ wrap, onWrapChange }: {
+  wrap: string;
+  onWrapChange: (v: string) => void;
+}) {
+  const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
+  const isReverse = wrap === "wrap-reverse";
 
   return (
     <div className="flex items-center gap-1.5 py-0.5 px-3">
-      <span
-        className={cn(
-          "text-[11px] shrink-0",
-          value !== "block"
-            ? "rounded-[3px] px-1.5 py-0.5"
-            : "text-[var(--muted-foreground)] w-16",
-        )}
-        style={value !== "block" ? { background: primaryAlpha(0.25), color: primaryAlpha(0.9) } : undefined}
-        onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-      >Display</span>
-      <div ref={containerRef} className="flex flex-1 relative">
-        <div role="radiogroup" aria-label="Display mode" className="flex flex-1 rounded-[3px] overflow-hidden border border-[var(--border)]">
-          {DISPLAY_TABS.map((tab) => {
-            const active = value === tab;
-            return (
-              <button
-                key={tab}
-                role="radio"
-                aria-checked={active}
-                tabIndex={active ? 0 : -1}
-                onClick={() => onChange(tab)}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-                    e.preventDefault();
-                    const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
-                    const idx = siblings.indexOf(e.currentTarget as HTMLElement);
-                    const next = e.key === "ArrowRight"
-                      ? siblings[(idx + 1) % siblings.length]
-                      : siblings[(idx - 1 + siblings.length) % siblings.length];
-                    next.focus();
-                    const nextTab = DISPLAY_TABS[siblings.indexOf(next)];
-                    if (nextTab != null) onChange(nextTab);
-                  }
-                }}
-                onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)"; }}
-                onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-                className={cn(
-                  "flex-1 h-6 text-[10px] font-mono cursor-pointer border-none outline-none transition-colors capitalize",
-                  tab !== "none" && "border-r",
-                  active
-                    ? "font-medium"
-                    : "bg-transparent font-normal hover:bg-[var(--accent)]",
-                )}
-                style={{
-                  ...(tab !== "none" ? { borderRightColor: surface.hover } : {}),
-                  ...(active
-                    ? { background: surface.active, color: color.foreground }
-                    : { color: text.label }),
-                }}
-              >
-                {tab === "none" ? "None" : tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            );
-          })}
-        </div>
-        <button
-          onClick={() => setMoreOpen((o) => !o)}
-          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(217,119,87,0.3)"; }}
-          onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-          className="w-5 h-6 flex items-center justify-center border-none cursor-pointer text-[10px] outline-none shrink-0 ml-0.5"
-          style={{
-            color: text.label,
-            background: !isTabValue ? primaryAlpha(0.2) : "transparent",
-          }}
-        >
-          <ChevronDown size={12} strokeWidth={2} />
-        </button>
-        {moreOpen && (
-          <div
-            className="absolute z-[200] top-[calc(100%+2px)] right-0 min-w-[120px] bg-[#F5F4ED] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
-            style={{ borderColor: surface.track }}
-          >
-            {DISPLAY_MORE.map((opt) => {
-              const active = opt.value === value;
-              return (
-                <div
-                  key={opt.value}
-                  onClick={() => { onChange(opt.value); setMoreOpen(false); }}
-                  className={cn(
-                    "px-2 py-1 text-[11px] font-mono cursor-pointer transition-colors",
-                    active
-                      ? "bg-[var(--primary)] text-white"
-                      : "hover:bg-[rgba(0,0,0,0.05)]",
-                  )}
-                  style={!active ? { color: text.label } : undefined}
-                >
-                  {opt.label}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <RowLabel label="Children" isSet={isWrap} />
+      <TextToggle
+        options={[
+          { value: "nowrap", label: "Don't wrap" },
+          { value: "wrap", label: "Wrap" },
+        ]}
+        value={isWrap ? "wrap" : "nowrap"}
+        onChange={(v) => onWrapChange(v === "wrap" ? "wrap" : "nowrap")}
+      />
+      {isWrap && (
+        <ReverseButton
+          active={isReverse}
+          onClick={() => onWrapChange(isReverse ? "wrap" : "wrap-reverse")}
+        />
+      )}
     </div>
   );
 }

@@ -92,8 +92,8 @@ export function SizeInputCell({
     setEditing(false);
     // Empty field → contextual keyword (e.g. "auto" for width, "none" for max-width)
     if (draft.trim() === '') {
-      if (supportsAuto) { onKeywordChange("auto"); return; }
-      if (supportsNone) { onKeywordChange("none"); return; }
+      if (supportsAuto) { onKeywordChange?.("auto"); return; }
+      if (supportsNone) { onKeywordChange?.("none"); return; }
       return;
     }
     // Try math expression first (e.g. "*2", "+10")
@@ -103,7 +103,7 @@ export function SizeInputCell({
     if (isNaN(parsed)) return;
     if (parsedUnit && parsedUnit !== unit) {
       // User typed a unit suffix (e.g. "68em") — switch unit and value
-      if (keyword !== null) onKeywordChange(null);
+      if (keyword !== null) onKeywordChange?.(null);
       onUnitChange(parsedUnit);
       onValueChange(parsed);
     } else if (parsed !== value) {
@@ -146,7 +146,7 @@ export function SizeInputCell({
 
   const handleSpecialSelect = useCallback(
     (val: string) => {
-      onKeywordChange(val as "auto" | "none");
+      onKeywordChange?.(val as "auto" | "none");
     },
     [onKeywordChange]
   );
@@ -154,7 +154,7 @@ export function SizeInputCell({
   const handleUnitSelect = useCallback(
     (u: string) => {
       // Switching to a numeric unit clears keyword
-      if (keyword !== null) onKeywordChange(null);
+      if (keyword !== null) onKeywordChange?.(null);
       onUnitChange(u);
     },
     [keyword, onKeywordChange, onUnitChange]
@@ -165,7 +165,7 @@ export function SizeInputCell({
   const handlePresetSelect = useCallback((v: string) => {
     // Keywords: "auto", "none"
     if ((v === "auto" && supportsAuto) || (v === "none" && supportsNone)) {
-      onKeywordChange(v as "auto" | "none");
+      onKeywordChange?.(v as "auto" | "none");
       return;
     }
     // Values with unit suffix like "100%" — parse value and switch unit
@@ -173,7 +173,7 @@ export function SizeInputCell({
     if (numMatch) {
       const num = parseFloat(numMatch[1]);
       const u = numMatch[2];
-      if (keyword !== null) onKeywordChange(null);
+      if (keyword !== null) onKeywordChange?.(null);
       if (u !== unit && units.includes(u)) onUnitChange(u);
       onValueChange(num);
       return;
@@ -181,7 +181,7 @@ export function SizeInputCell({
     // Pure numeric string
     const parsed = parseFloat(v);
     if (!isNaN(parsed)) {
-      if (keyword !== null) onKeywordChange(null);
+      if (keyword !== null) onKeywordChange?.(null);
       onValueChange(parsed);
     }
   }, [keyword, onKeywordChange, onValueChange, onUnitChange, unit, units, supportsAuto, supportsNone]);
@@ -227,8 +227,8 @@ export function SizeInputCell({
         {isKeyword ? (
           <span
             tabIndex={0}
-            onClick={() => { onKeywordChange(null); setEditing(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange(null); setEditing(true); } }}
+            onClick={() => { onKeywordChange?.(null); setEditing(true); }}
+            onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
             className="text-[10px] font-mono capitalize pr-1 cursor-text outline-none"
             style={{ color: text.label }}
           >
