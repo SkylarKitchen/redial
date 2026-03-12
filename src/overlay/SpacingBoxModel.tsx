@@ -404,13 +404,13 @@ export function SpacingBoxModel({
         </div>
 
         {/* Margin top */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "14px 0 6px" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 2px" }}>
           {renderValue("margin-top", margin.top, "margin", 0)}
         </div>
 
         {/* Margin left / Padding box / Margin right */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ flex: "0 0 44px", display: "flex", justifyContent: "center" }}>
+          <div style={{ flex: "0 0 38px", display: "flex", justifyContent: "center" }}>
             {renderValue("margin-left", margin.left, "margin", 3)}
           </div>
 
@@ -422,7 +422,7 @@ export function SpacingBoxModel({
               border: "1px dashed rgba(0,0,0,0.10)",
               borderRadius: "8px",
               background: PADDING_BASE,
-              margin: "2px 0",
+              margin: "2px 6px",
               position: "relative",
             }}
           >
@@ -457,35 +457,34 @@ export function SpacingBoxModel({
             </div>
 
             {/* Padding top */}
-            <div style={{ display: "flex", justifyContent: "center", padding: "14px 0 6px" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "10px 0 2px" }}>
               {renderValue("padding-top", padding.top, "padding", 4)}
             </div>
 
             {/* Padding left / content / Padding right */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+              <div style={{ flex: "0 0 34px", display: "flex", justifyContent: "center" }}>
                 {renderValue("padding-left", padding.left, "padding", 7)}
               </div>
-              {/* Spacer — no visible content block, matches Webflow's clean look */}
               <div style={{ flex: 1 }} />
-              <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+              <div style={{ flex: "0 0 34px", display: "flex", justifyContent: "center" }}>
                 {renderValue("padding-right", padding.right, "padding", 5)}
               </div>
             </div>
 
             {/* Padding bottom */}
-            <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 14px" }}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 10px" }}>
               {renderValue("padding-bottom", padding.bottom, "padding", 6)}
             </div>
           </div>
 
-          <div style={{ flex: "0 0 44px", display: "flex", justifyContent: "center" }}>
+          <div style={{ flex: "0 0 38px", display: "flex", justifyContent: "center" }}>
             {renderValue("margin-right", margin.right, "margin", 1)}
           </div>
         </div>
 
         {/* Margin bottom */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "6px 0 14px" }}>
+        <div style={{ display: "flex", justifyContent: "center", padding: "2px 0 10px" }}>
           {renderValue("margin-bottom", margin.bottom, "margin", 2)}
         </div>
       </div>
