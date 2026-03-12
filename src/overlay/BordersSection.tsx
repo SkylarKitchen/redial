@@ -42,6 +42,25 @@ export const BordersSection = memo(function BordersSection({
 
   const { conversionHint: bwHint, fireConversionHint: fireBwHint } = useConversionHint();
 
+  // ── Sync controls when side tab changes ──
+  // Reads per-side computed values so the controls reflect the selected side.
+  useEffect(() => {
+    const fresh = getComputedStyle(element);
+    if (borderSide === "all") {
+      setBorderStyle(fresh.borderStyle.split(" ")[0] || "none");
+      setBorderWidth(parseNum(fresh.borderWidth));
+      setBorderColor(rgbToHex(fresh.borderColor));
+    } else {
+      const side = borderSide; // top | right | bottom | left
+      const sideStyle = fresh.getPropertyValue(`border-${side}-style`).trim() || "none";
+      const sideWidth = parseNum(fresh.getPropertyValue(`border-${side}-width`));
+      const sideColor = rgbToHex(fresh.getPropertyValue(`border-${side}-color`));
+      setBorderStyle(sideStyle);
+      setBorderWidth(sideWidth);
+      setBorderColor(sideColor);
+    }
+  }, [borderSide, element]);
+
   /** Reset a CSS property to its computed value and update React state via setter */
   const resetCss = useCallback(
     (prop: string, setter: (v: number) => void) => {
@@ -85,9 +104,9 @@ export const BordersSection = memo(function BordersSection({
   return (
     <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen}>
       <SideSelector value={borderSide} onChange={setBorderSide} />
-      <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind("border-style")} onContextMenu={ctxMenu("border-style", borderStyle)} computedProp="border-style" computedElement={element} />
-      <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); apply("border-width", `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss("border-width", setBorderWidth)} indicator={ind("border-width")} conversionHint={bwHint} onContextMenu={ctxMenu("border-width", `${borderWidth}${borderWidthUnit}`)} computedProp="border-width" computedElement={element} />
-      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind("border-color")} onContextMenu={ctxMenu("border-color", borderColor)} computedProp="border-color" computedElement={element} />
+      <SelectRow label="Style" value={borderStyle} options={BORDER_STYLE_OPTIONS} onChange={handleBorderStyleChange} indicator={ind(borderSide === "all" ? "border-style" : `border-${borderSide}-style`)} onContextMenu={ctxMenu(borderSide === "all" ? "border-style" : `border-${borderSide}-style`, borderStyle)} computedProp={borderSide === "all" ? "border-style" : `border-${borderSide}-style`} computedElement={element} />
+      <SliderRow label="Width" value={borderWidth} min={0} max={20} step={1} unit={borderWidthUnit} units={BORDER_UNITS} onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(borderWidth, borderWidthUnit, u, ctx); fireBwHint(borderWidth, borderWidthUnit, c, u, ctx); setBorderWidth(c); setBorderWidthUnit(u); const prop = borderSide === "all" ? "border-width" : `border-${borderSide}-width`; apply(prop, `${c}${u}`); }} onChange={handleBorderWidthChange} onReset={() => resetCss(borderSide === "all" ? "border-width" : `border-${borderSide}-width`, setBorderWidth)} indicator={ind(borderSide === "all" ? "border-width" : `border-${borderSide}-width`)} conversionHint={bwHint} onContextMenu={ctxMenu(borderSide === "all" ? "border-width" : `border-${borderSide}-width`, `${borderWidth}${borderWidthUnit}`)} computedProp={borderSide === "all" ? "border-width" : `border-${borderSide}-width`} computedElement={element} />
+      <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} indicator={ind(borderSide === "all" ? "border-color" : `border-${borderSide}-color`)} onContextMenu={ctxMenu(borderSide === "all" ? "border-color" : `border-${borderSide}-color`, borderColor)} computedProp={borderSide === "all" ? "border-color" : `border-${borderSide}-color`} computedElement={element} />
       <div style={{ padding: "4px 12px 0", fontSize: "10px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.04em" }}>
         Radius
       </div>

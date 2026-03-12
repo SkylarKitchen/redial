@@ -97,6 +97,27 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
     setDropdownOpen(false);
   }, []);
 
+  const toggleFilterVisible = useCallback(
+    (key: FilterKey) => {
+      setHiddenFilters((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        // Re-fire onChange so CSS updates
+        if (next.has(key)) {
+          onChange(key, FILTER_META[key].defaultValue);
+        } else {
+          onChange(key, values[key] ?? FILTER_META[key].defaultValue);
+        }
+        return next;
+      });
+    },
+    [values, onChange]
+  );
+
   const handleRemove = useCallback(
     (key: FilterKey) => {
       if (key === "blur" && !isNonDefault(key, values[key])) return; // always show blur
@@ -132,6 +153,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
         const val = values[key] ?? meta.defaultValue;
         const pct = ((val - meta.min) / (meta.max - meta.min)) * 100;
 
+        const isHidden = hiddenFilters.has(key);
+
         return (
           <div
             key={key}
@@ -140,6 +163,8 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               alignItems: "center",
               gap: "6px",
               height: "24px",
+              opacity: isHidden ? 0.4 : 1,
+              transition: "opacity 100ms",
             }}
           >
             {/* Label */}
@@ -201,6 +226,22 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
             >
               {meta.unit}
             </span>
+
+            {/* Eye visibility toggle */}
+            <button
+              onClick={() => toggleFilterVisible(key)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "2px",
+                color: !isHidden ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)",
+                flexShrink: 0,
+              }}
+              title={!isHidden ? "Hide filter" : "Show filter"}
+            >
+              {!isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
+            </button>
 
             {/* Remove button */}
             <button
