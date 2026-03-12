@@ -41,6 +41,8 @@ export function WebflowSegmentedControl({
       aria-label={ariaLabel}
       style={{
         display: "flex",
+        flex: 1,
+        minWidth: 0,
         height: 24,
         background: "#F0F0F0",
         borderRadius: 4,
