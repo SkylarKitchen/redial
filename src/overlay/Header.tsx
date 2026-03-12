@@ -103,7 +103,7 @@ export function Header({
           <Badge
             variant="outline"
             className="text-[9px] font-mono px-1.5 py-0 rounded-[3px] tracking-wider uppercase cursor-default leading-[14px]"
-            style={{ color: text.hint, background: surface.subtle, borderColor: border.subtle }}
+            style={{ color: text.disabled, background: surface.subtle, borderColor: border.subtle }}
             title={`${vw}px viewport \u00b7 ${tier} breakpoint`}
           >
             {tier}
@@ -122,7 +122,7 @@ export function Header({
             size="icon"
             onClick={onClose}
             className="h-[18px] w-[18px] p-0 rounded-[3px] transition-colors duration-100 hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]"
-            style={{ color: text.hint }}
+            style={{ color: text.disabled }}
             title="Close (Esc)"
           >
             <X size={12} strokeWidth={2} />
@@ -133,7 +133,7 @@ export function Header({
       {/* -- Source file -- */}
       {sourceFile && (
         <div className="px-3 pt-0.5">
-          <span className="text-[10px] font-mono" style={{ color: text.hint }}>
+          <span className="text-[10px] font-mono" style={{ color: text.disabled }}>
             {sourceFile}
           </span>
         </div>
@@ -148,7 +148,7 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-hidden" style={{ color: text.hint }}>
+          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-hidden" style={{ color: text.label }}>
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
@@ -178,7 +178,7 @@ export function Header({
                         ? "text-black cursor-default"
                         : "cursor-pointer px-0.5 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]",
                     )}
-                    style={isLast ? undefined : { color: text.hint }}
+                    style={isLast ? undefined : { color: text.label }}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
@@ -251,7 +251,7 @@ function ScopePill({
           ? "text-black hover:bg-[rgba(0,0,0,0.08)] hover:text-black"
           : "bg-transparent",
       )}
-      style={active ? { background: surface.active } : { color: text.disabled }}
+      style={active ? { background: surface.active } : { color: text.label }}
     >
       {label}
     </Badge>
