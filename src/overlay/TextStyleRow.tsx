@@ -83,7 +83,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
         bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined,
         left: pos.left,
         width: pos.width,
-        zIndex: 99999,
+        zIndex: 2147483647,
       }}
     >
       <Command

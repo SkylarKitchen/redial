@@ -223,7 +223,7 @@ function ShadowRow({
             }}
           />
           {pickerOpen && (
-            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 99999, marginTop: "4px" }}>
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 2147483647, marginTop: "4px" }}>
               <ColorPickerEnhanced
                 color={cssColorToHex(shadow.color)}
                 onChange={(hex, opacity) => {

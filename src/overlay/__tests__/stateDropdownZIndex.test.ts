@@ -1,51 +1,101 @@
 // @vitest-environment happy-dom
 /**
- * Test: StateSelector dropdown z-index must match the panel z-index.
+ * Test: All portal/overlay z-indices must be >= the panel z-index.
  *
- * Bug: The SelectContent in select.tsx has className "z-50" (Tailwind) AND
- * inline style zIndex: 2147483647. Tailwind is configured with
- * `important: true`, so z-50 compiles to `z-index: 50 !important` — which
- * OVERRIDES inline styles. The panel itself uses z-[2147483647] (→ 2147483647
- * !important). Result: dropdown renders at z-index 50, panel at 2147483647.
- * Dropdown appears behind the panel content.
+ * The panel uses z-[2147483647] with Tailwind's `important: true`.
+ * Any dropdown/popover/portal that appears on top of the panel must
+ * also use z-index 2147483647. Two classes of bugs:
  *
- * Fix: Remove the z-50 class from SelectContent so the inline style applies,
- * OR replace both with a consistent Tailwind class z-[2147483647].
+ * 1. Shadcn/Radix components using `z-50` (Tailwind class) — with
+ *    important: true, this compiles to `z-index: 50 !important`,
+ *    overriding any inline zIndex.
+ *
+ * 2. Manual createPortal components whose portal container has
+ *    zIndex < 2147483647 — these render at body level but behind
+ *    the panel.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
 import { join } from "path";
 
 const PANEL_Z = 2147483647;
-const SELECT_CONTENT_PATH = join(__dirname, "../../components/ui/select.tsx");
+const COMPONENTS_DIR = join(__dirname, "../../components/ui");
+const OVERLAY_DIR = join(__dirname, "..");
 const TAILWIND_CONFIG_PATH = join(__dirname, "../../../tailwind.config.ts");
 
-describe("Bug: State dropdown z-index is behind the panel", () => {
-  const selectSrc = readFileSync(SELECT_CONTENT_PATH, "utf-8");
-  const tailwindSrc = readFileSync(TAILWIND_CONFIG_PATH, "utf-8");
+// ── Helpers ─────────────────────────────────────────────────────
 
-  it("tailwind config has important: true (precondition)", () => {
-    expect(tailwindSrc).toContain("important: true");
+function readSrc(path: string) {
+  return readFileSync(path, "utf-8");
+}
+
+/** Find all .tsx files in a directory (non-recursive). */
+function tsxFiles(dir: string) {
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(".tsx"))
+    .map((f) => join(dir, f));
+}
+
+/** Check if file has at least one panel-level z-index (inline or Tailwind). */
+function hasPanelLevelZ(src: string): boolean {
+  // Inline: zIndex: 2147483647
+  if (src.includes(`zIndex: ${PANEL_Z}`)) return true;
+  // Tailwind arbitrary value: z-[2147483647]
+  if (src.includes(`z-[${PANEL_Z}]`)) return true;
+  return false;
+}
+
+// ── Precondition ────────────────────────────────────────────────
+
+describe("Precondition", () => {
+  it("tailwind config has important: true", () => {
+    expect(readSrc(TAILWIND_CONFIG_PATH)).toContain("important: true");
+  });
+});
+
+// ── Shadcn/Radix portal components: no z-50 class ──────────────
+
+describe("Shadcn portal components must not use z-50 (important: true conflict)", () => {
+  const portalFiles = tsxFiles(COMPONENTS_DIR).filter((f) => {
+    const src = readSrc(f);
+    return src.includes("Portal");
   });
 
-  it("SelectContent must not have a Tailwind z-* class that conflicts with inline zIndex", () => {
-    // Extract the SelectContent className string.
-    // The component definition applies cn("relative z-50 ...", ...)
-    // With important: true, z-50 → z-index: 50 !important, overriding any inline style.
-    //
-    // This test FAILS with the current code (z-50 is present)
-    // and PASSES after removing the conflicting class.
-    const hasTailwindZClass = /SelectPrimitive\.Content[\s\S]*?className=\{cn\(\s*"[^"]*\bz-\d+\b/.test(
-      selectSrc
-    );
+  it.each(portalFiles)("%s has no z-<number> class on portaled content", (file) => {
+    const src = readSrc(file);
+    // z-50 with important: true → z-index: 50 !important → overrides inline styles
+    // Match z-NN (numeric only, not z-[...] which is an arbitrary value)
+    const hasZNumeric = /\bz-\d+\b/.test(src);
     expect(
-      hasTailwindZClass,
-      "SelectContent has a Tailwind z-* class which, with important: true, overrides inline zIndex"
+      hasZNumeric,
+      `${file} has a Tailwind z-<number> class which, with important: true, will override inline zIndex`,
     ).toBe(false);
   });
+});
 
-  it("SelectContent inline zIndex matches the panel z-index", () => {
-    // Verify the inline style still targets the correct z-index value
+// ── Manual createPortal components: portal root must have zIndex >= PANEL_Z ─
+
+describe("createPortal components must have at least one zIndex >= panel z-index", () => {
+  const portalFiles = tsxFiles(OVERLAY_DIR).filter((f) => {
+    const src = readSrc(f);
+    return src.includes("createPortal");
+  });
+
+  it.each(portalFiles)("%s has portal-level zIndex >= 2147483647", (file) => {
+    const src = readSrc(file);
+    expect(
+      hasPanelLevelZ(src),
+      `${file}: no zIndex: ${PANEL_Z} or z-[${PANEL_Z}] found — portal will render behind the panel`,
+    ).toBe(true);
+  });
+});
+
+// ── SelectContent specific check ────────────────────────────────
+
+describe("SelectContent z-index", () => {
+  const selectSrc = readSrc(join(COMPONENTS_DIR, "select.tsx"));
+
+  it("inline zIndex matches the panel z-index", () => {
     expect(selectSrc).toContain(`zIndex: ${PANEL_Z}`);
   });
 });
