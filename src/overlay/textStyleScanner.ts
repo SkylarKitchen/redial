@@ -32,9 +32,26 @@ const PROBES: Array<{ tag: string; name: string }> = [
 ];
 
 /**
+ * Browser-default heading sizes (used when a CSS reset flattens them).
+ * Maps tag → { fontSize in px, fontWeight }.
+ */
+const HEADING_DEFAULTS: Record<string, { fontSize: number; fontWeight: string }> = {
+  h1: { fontSize: 32, fontWeight: "700" },
+  h2: { fontSize: 24, fontWeight: "700" },
+  h3: { fontSize: 19, fontWeight: "700" },
+  h4: { fontSize: 16, fontWeight: "700" },
+  h5: { fontSize: 13, fontWeight: "700" },
+  h6: { fontSize: 11, fontWeight: "700" },
+};
+
+/**
  * Scan the host page for text styles by creating hidden probe elements.
  * Returns up to 9 TextStyle entries (one per probe tag).
  * Runs in <1ms — safe to call on every panel mount.
+ *
+ * If all h1–h6 resolve to the same font-size (indicating a CSS reset like
+ * Tailwind Preflight), applies standard browser-default sizes so the style
+ * picker always shows a useful typographic hierarchy.
  */
 export function scanTextStyles(): TextStyle[] {
   const container = document.createElement("div");
@@ -67,6 +84,25 @@ export function scanTextStyles(): TextStyle[] {
   }
 
   document.body.removeChild(container);
+
+  // Detect CSS reset: if all h1–h6 share the same font-size, apply defaults
+  const headingStyles = styles.filter((s) => s.tag.match(/^h[1-6]$/));
+  const allSameSize =
+    headingStyles.length > 1 &&
+    headingStyles.every((s) => s.fontSize === headingStyles[0].fontSize);
+
+  if (allSameSize) {
+    for (const style of styles) {
+      const defaults = HEADING_DEFAULTS[style.tag];
+      if (defaults) {
+        style.fontSize = `${defaults.fontSize}px`;
+        style.fontWeight = defaults.fontWeight;
+        // Scale line-height proportionally: 1.2× the font size
+        style.lineHeight = `${Math.round(defaults.fontSize * 1.2)}px`;
+      }
+    }
+  }
+
   return styles;
 }
 
