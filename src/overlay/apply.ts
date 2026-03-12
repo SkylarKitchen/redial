@@ -69,6 +69,10 @@ function notifyChange(el: Element, prop: string, from: string, to: string) {
 
 const overrides = new Map<Element, Map<string, Override>>();
 
+// Overrides cleared by clearRedundantOverrides — kept so undo/redo can
+// recover the "current" value that was removed when HMR made it redundant.
+const clearedOverrides = new Map<Element, Map<string, Override>>();
+
 // --- Style Clipboard ---
 
 let styleClipboard: { prop: string; value: string }[] = [];
@@ -199,10 +203,17 @@ export function undo(): { el: Element; prop: string } | null {
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
       const { el, prop, prev } = last.entries[i];
-      const elOverrides = overrides.get(el);
-      if (!elOverrides) continue;
-      const entry = elOverrides.get(prop);
-      if (!entry) continue;
+      if (!overrides.has(el)) overrides.set(el, new Map());
+      const elOverrides = overrides.get(el)!;
+      let entry = elOverrides.get(prop);
+      if (!entry) {
+        // Override was cleared (e.g., by clearRedundantOverrides after save).
+        // Re-create using the stashed cleared value if available, else computed.
+        const cleared = clearedOverrides.get(el)?.get(prop);
+        const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+        entry = { initial: baseline, current: baseline };
+        elOverrides.set(prop, entry);
+      }
 
       redoEntries.push({ el, prop, prev: entry.current });
 
@@ -226,11 +237,18 @@ export function undo(): { el: Element; prop: string } | null {
 
   const single = last as SingleUndoEntry;
   const { el, prop, prev } = single;
-  const elOverrides = overrides.get(el);
-  if (!elOverrides) return null;
+  if (!overrides.has(el)) overrides.set(el, new Map());
+  const elOverrides = overrides.get(el)!;
 
-  const entry = elOverrides.get(prop);
-  if (!entry) return null;
+  let entry = elOverrides.get(prop);
+  if (!entry) {
+    // Override was cleared (e.g., by clearRedundantOverrides after save).
+    // Re-create using the stashed cleared value if available, else computed.
+    const cleared = clearedOverrides.get(el)?.get(prop);
+    const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+    entry = { initial: baseline, current: baseline };
+    elOverrides.set(prop, entry);
+  }
 
   // Capture forward state for redo before restoring
   redoStack.push({ el, prop, prev: entry.current });
@@ -337,6 +355,7 @@ export function resetAll(): void {
     }
   }
   overrides.clear();
+  clearedOverrides.clear();
   // Clear entire undo/redo stack
   undoStack.length = 0;
   redoStack.length = 0;
@@ -443,7 +462,13 @@ export function clearRedundantOverrides(): number {
       real === currentTrimmed ||
       parseFloat(real) === parseFloat(currentTrimmed)
     ) {
-      // Real styles caught up — remove override permanently
+      // Real styles caught up — remove override permanently.
+      // Stash it in clearedOverrides so undo/redo can recover the value.
+      const removed = overrides.get(el)?.get(prop);
+      if (removed) {
+        if (!clearedOverrides.has(el)) clearedOverrides.set(el, new Map());
+        clearedOverrides.get(el)!.set(prop, { ...removed });
+      }
       overrides.get(el)?.delete(prop);
       cleared++;
     } else {
