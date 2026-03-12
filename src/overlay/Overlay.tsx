@@ -1163,13 +1163,14 @@ export function Overlay() {
         .__tuner-root *:hover::-webkit-scrollbar-thumb:hover {
           background: rgba(0,0,0,0.2);
         }
-        .__tuner-root, .__tuner-root * {
+        .__tuner-root,
+        .__tuner-root *:not([data-radix-scroll-area-viewport]) {
           scrollbar-width: thin;
           scrollbar-color: transparent transparent;
         }
         .__tuner-root.is-scrolling,
         .__tuner-root:hover,
-        .__tuner-root *:hover {
+        .__tuner-root *:not([data-radix-scroll-area-viewport]):hover {
           scrollbar-color: rgba(0,0,0,0.12) transparent;
         }
         @keyframes tuner-enter {
