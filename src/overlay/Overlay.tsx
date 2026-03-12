@@ -769,7 +769,7 @@ export function Overlay() {
   }, [hoveredAncestor]);
 
   // --- Breadcrumb computation (Phase 2) ---
-  const breadcrumb = selectedEl ? buildBreadcrumb(selectedEl) : [];
+  const breadcrumb = useMemo(() => selectedEl ? buildBreadcrumb(selectedEl) : [], [selectedEl]);
 
   // --- Restore persisted session on mount ---
   useEffect(() => {
