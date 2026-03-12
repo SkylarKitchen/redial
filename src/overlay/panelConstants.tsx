@@ -308,6 +308,19 @@ export const BACKFACE_OPTIONS = [
   { value: "hidden", label: "Hidden" },
 ];
 
+// ─── Outline Style Icons ────────────────────────────────────────────
+
+const lineIcon = (style: string) => (
+  <span style={{ display: "inline-block", width: 16, height: 12, borderBottom: `2px ${style} currentColor` }} />
+);
+
+export const OUTLINE_STYLE_OPTIONS = [
+  { value: "none", icon: <X size={11} strokeWidth={2} />, title: "None" },
+  { value: "solid", icon: lineIcon("solid"), title: "Solid" },
+  { value: "dashed", icon: lineIcon("dashed"), title: "Dashed" },
+  { value: "dotted", icon: lineIcon("dotted"), title: "Dotted" },
+];
+
 // ─── Empty Field → Contextual Keyword ───────────────────────────────
 
 /** When a numeric input is cleared and committed, these properties get a keyword instead of 0. */

@@ -27,10 +27,7 @@ export interface BackgroundsSectionProps {
 export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceOpen, focusOpen, onToggle }: BackgroundsSectionProps) {
   const { cs, apply, ind, sectionInd, element, ctxMenu } = ctx;
 
-  const resetCssStr = (prop: string, setter: (v: string) => void) => {
-    resetProp(element, prop);
-    setter(getComputedStyle(element).getPropertyValue(prop).trim());
-  };
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── State ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));

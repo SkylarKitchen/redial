@@ -68,10 +68,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => {
-    resetProp(element, prop);
-    setter(getComputedStyle(element).getPropertyValue(prop).trim());
-  };
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleOpacityChange = useCallback((v: number) => { setOpacity(v); apply("opacity", String(v)); }, [apply]);
