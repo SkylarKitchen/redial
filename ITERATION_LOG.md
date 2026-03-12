@@ -699,6 +699,20 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 - All accent colors now consistently use the indigo `#6366f1` family (sliders, focus rings, outlines, buttons, tabs)
 - Typecheck: PASS
 
+### Iteration 54 — Footer button grouping (already implemented) (2026-03-12)
+- Verified the Copy dropdown was already implemented: single "Copy ▾" button opens a dropdown with CSS, Tailwind, CSS Variables, and SCSS (commented) options
+- Footer layout already split into left group (Copy dropdown, Paste, Import) and right group (Reset, Save)
+- `DropdownItem` sub-component with hover states, click-outside dismissal via `copyRef`
+- Checked off as already done — no code changes needed
+
+### Iteration 55 — Viewport badge cleanup (2026-03-12)
+- Replaced always-visible `1280px · xl` badge with compact tier-only indicator (`xl`) in `Header.tsx`
+- Full viewport width now accessible via native `title` tooltip: "1280px viewport · xl breakpoint"
+- Reduces visual noise in the header right-side cluster (was competing with change count badge and close button)
+- Text color slightly dimmed from `0.4` to `0.3` opacity to further reduce visual weight
+- The resize event listener and tier calculation (`xs`/`sm`/`md`/`lg`/`xl`) remain unchanged — live-updating on window resize
+- Typecheck: PASS
+
 ---
 
 ## Done

@@ -237,17 +237,19 @@ export function Header({
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <span
+          title={`${vw}px viewport · ${tier} breakpoint`}
           style={{
             fontSize: "10px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: "rgba(255,255,255,0.4)",
+            color: "rgba(255,255,255,0.3)",
             background: "rgba(255,255,255,0.06)",
-            padding: "1px 6px",
+            padding: "1px 5px",
             borderRadius: "4px",
             whiteSpace: "nowrap",
+            cursor: "default",
           }}
         >
-          {vw}px &middot; {tier}
+          {tier}
         </span>
         {totalChanges > 0 && (
           <button
