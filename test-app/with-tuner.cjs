@@ -4,6 +4,8 @@
  * required directly. This .cjs file is always treated as CommonJS.
  */
 
+const path = require("path");
+
 /** @param {import('next').NextConfig} nextConfig */
 function withTuner(nextConfig = {}) {
   return {
@@ -15,6 +17,18 @@ function withTuner(nextConfig = {}) {
         if (!config.devtool || config.devtool === "eval") {
           config.devtool = "eval-source-map";
         }
+
+        // Prevent webpack from watching generated/tooling dirs in parent root
+        const parentRoot = path.resolve(__dirname, "..");
+        config.watchOptions = {
+          ...config.watchOptions,
+          ignored: [
+            ...(config.watchOptions?.ignored || []),
+            path.join(parentRoot, ".claude", "**"),
+            path.join(parentRoot, ".git", "**"),
+            "**/node_modules/**",
+          ],
+        };
       }
 
       // Call user's webpack config if provided
