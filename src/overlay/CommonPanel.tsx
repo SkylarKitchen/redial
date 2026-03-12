@@ -14,7 +14,7 @@ import { applyInlineStyle, beginBatch, endBatch, isDirty } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
-import { detectUnit, isTextBearing } from "./panelUtils";
+import { detectUnit, isTextBearing, getIndicatorType } from "./panelUtils";
 import { parseNum } from "./cssParsers";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
@@ -57,6 +57,7 @@ function FlatGroup({ title, children }: { title: string; children: React.ReactNo
 export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, scope = "element", activeClassName }: CommonPanelProps) {
   const cs = getComputedStyle(element);
   const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
+  const ind = useCallback((prop: string) => getIndicatorType(element, prop, cs), [element, cs]);
 
   // --- Style group state ---
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -243,6 +244,8 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
             paddingUnits={SP_UNITS}
             onMarginUnitChange={setMarginUnit}
             onPaddingUnitChange={setPaddingUnit}
+            element={element}
+            ind={ind}
           />
           </div>
         </FlatGroup>

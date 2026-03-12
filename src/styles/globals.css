@@ -7,58 +7,58 @@
 /*
  * Redial light theme — scoped to .__tuner-root
  * These map to Shadcn's expected CSS variable names
- * Warm cream palette: #f5f0ea bg, terracotta #c17a50 accent
+ * Neutral gray palette with blue (#3B82F6) accent — synced with theme.ts
  */
 .__tuner-root {
   /* Core */
-  --background: #f5f0ea;
-  --foreground: #1C1B18;
+  --background: #FFFFFF;
+  --foreground: #171717;
 
   /* Muted */
   --muted: rgba(0, 0, 0, 0.05);
-  --muted-foreground: #504F4A;
+  --muted-foreground: #525252;
 
   /* Card */
-  --card: #f5f0ea;
-  --card-foreground: #1C1B18;
+  --card: #FFFFFF;
+  --card-foreground: #171717;
 
   /* Popover */
-  --popover: #eae5df;
-  --popover-foreground: #1C1B18;
+  --popover: #F5F5F5;
+  --popover-foreground: #171717;
 
   /* Primary */
-  --primary: #c17a50;
+  --primary: #3B82F6;
   --primary-foreground: #ffffff;
 
   /* Secondary */
   --secondary: rgba(0, 0, 0, 0.05);
-  --secondary-foreground: #3A3935;
+  --secondary-foreground: #404040;
 
   /* Accent */
   --accent: rgba(0, 0, 0, 0.04);
-  --accent-foreground: #3A3935;
+  --accent-foreground: #404040;
 
   /* Destructive */
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
   /* Border / Input / Ring */
-  --border: rgba(0, 0, 0, 0.08);
+  --border: rgba(0, 0, 0, 0.10);
   --input: rgba(0, 0, 0, 0.04);
-  --ring: rgba(193, 122, 80, 0.3);
+  --ring: rgba(59, 130, 246, 0.3);
 
   /* Radius */
   --radius: 0.125rem;
 
   /* Sidebar (for Sheet) */
-  --sidebar-background: #f5f0ea;
-  --sidebar-foreground: #1C1B18;
-  --sidebar-primary: #c17a50;
+  --sidebar-background: #FFFFFF;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #3B82F6;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(0, 0, 0, 0.04);
-  --sidebar-accent-foreground: #3A3935;
-  --sidebar-border: rgba(0, 0, 0, 0.08);
-  --sidebar-ring: rgba(193, 122, 80, 0.3);
+  --sidebar-accent-foreground: #404040;
+  --sidebar-border: rgba(0, 0, 0, 0.10);
+  --sidebar-ring: rgba(59, 130, 246, 0.3);
 
   /* Typography */
   font-family: system-ui, -apple-system, 'SF Pro Display', sans-serif;
@@ -104,7 +104,7 @@
 .__tuner-root .dialkit-folder-header {
   font-size: 13px !important;
   font-weight: 500 !important;
-  color: #1C1B18 !important;
+  color: #171717 !important;
   padding: 10px 12px 6px !important;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
   letter-spacing: 0;
@@ -121,7 +121,7 @@
 
 .__tuner-root .dialkit-label {
   font-size: 11px !important;
-  color: #504F4A !important;
+  color: #525252 !important;
   text-transform: capitalize;
 }
 
@@ -132,9 +132,9 @@
 
 @keyframes __tuner-pulse {
   0%, 100% {
-    box-shadow: 0 0 0 1px rgba(193, 122, 80, 0.3);
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 2px rgba(193, 122, 80, 0.5);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
 }
