@@ -15,7 +15,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
-import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips } from "./controls";
+import { selectAllOnDoubleClick, VALUE_PRESETS, PresetChips, useValueFlash } from "./controls";
 import { ms } from "./timing";
 import { color, text, border, surface, blackAlpha, primaryAlpha } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";
@@ -81,6 +81,7 @@ export function SizeInputCell({
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const isVariable = keyword === null && (cssVar ?? null) !== null;
+  const flashStyle = useValueFlash(value);
   useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null || isVariable });
 
   useEffect(() => {
