@@ -86,6 +86,11 @@ export function Header({
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <GripVertical
+            size={12}
+            strokeWidth={2.5}
+            style={{ color: "rgba(255,255,255,0.2)", flexShrink: 0, marginLeft: "-2px" }}
+          />
           <span
             style={{
               color: "#fff",

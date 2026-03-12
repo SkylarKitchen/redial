@@ -720,6 +720,14 @@ Built 10 UX features in parallel via isolated worktree agents, then merged:
 - Added items 56–58 to CLAUDE.md Phase N
 - Typecheck: PASS
 
+### Iteration 57 — Drag handle affordance (2026-03-12)
+- Added `GripVertical` icon from lucide-react to the header, placed left of the `<tag>` label
+- Icon is 12px, strokeWidth 2.5, at `rgba(255,255,255,0.2)` — subtle enough not to compete with content but visible on inspection
+- Negative left margin (`-2px`) keeps alignment tight with the rest of the header content
+- `flexShrink: 0` prevents the icon from collapsing when breadcrumbs or class names get long
+- Combined with the existing `cursor: grab` on the header, users now have both visual and cursor-based drag cues
+- Typecheck: PASS
+
 ---
 
 ## Done
