@@ -72,7 +72,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
     const toY = (v: number) => h - pad - v * (h - 2 * pad); // flip Y
 
     // Background grid
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    ctx.strokeStyle = "rgba(0,0,0,0.06)";
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const x = pad + (i / 4) * (w - 2 * pad);
@@ -88,7 +88,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
     }
 
     // Diagonal reference (linear)
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.strokeStyle = "rgba(0,0,0,0.15)";
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
@@ -97,7 +97,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
     ctx.setLineDash([]);
 
     // Control point lines (dashed)
-    ctx.strokeStyle = "rgba(99, 102, 241, 0.4)";
+    ctx.strokeStyle = "rgba(193, 122, 80, 0.4)";
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
@@ -111,7 +111,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
     ctx.setLineDash([]);
 
     // Bezier curve
-    ctx.strokeStyle = "#6366f1";
+    ctx.strokeStyle = "#c17a50";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
@@ -135,8 +135,8 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
       ctx.lineWidth = 1.5;
       ctx.stroke();
     };
-    drawPoint(value[0], value[1], "#6366f1");
-    drawPoint(value[2], value[3], "#6366f1");
+    drawPoint(value[0], value[1], "#c17a50");
+    drawPoint(value[2], value[3], "#c17a50");
   }, [value]);
 
   // Redraw on mount and value change
@@ -204,7 +204,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
   return (
     <div
       style={{
-        background: "#2a2a2a",
+        background: "#eae5df",
         borderRadius: "6px",
         padding: "10px",
         width: "240px",
@@ -227,7 +227,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             style={{
               background: "transparent",
               border: "none",
-              color: "rgba(255,255,255,0.4)",
+              color: "rgba(0,0,0,0.4)",
               cursor: "pointer",
               fontSize: "14px",
               fontFamily: "system-ui, sans-serif",
@@ -237,11 +237,11 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.color =
-                "rgba(255,255,255,0.8)";
+                "rgba(0,0,0,0.7)";
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.color =
-                "rgba(255,255,255,0.4)";
+                "rgba(0,0,0,0.4)";
             }}
           >
             <X size={14} strokeWidth={2} />
@@ -265,9 +265,9 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             width: `${CANVAS_SIZE}px`,
             height: `${CANVAS_SIZE}px`,
             borderRadius: "4px",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid rgba(0,0,0,0.08)",
             cursor: "crosshair",
-            background: "rgba(0,0,0,0.2)",
+            background: "rgba(255,255,255,0.5)",
           }}
         />
       </div>
@@ -277,7 +277,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
         style={{
           position: "relative",
           height: "24px",
-          background: "rgba(255,255,255,0.06)",
+          background: "rgba(0,0,0,0.04)",
           borderRadius: "4px",
           marginTop: "8px",
         }}
@@ -291,7 +291,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             width: "16px",
             height: "16px",
             borderRadius: "3px",
-            background: "#6366f1",
+            background: "#c17a50",
             animation: `tuner-bezier-preview 1.5s cubic-bezier(${value.join(",")}) infinite alternate`,
           }}
         />
@@ -320,16 +320,16 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
                 padding: "2px 6px",
                 fontSize: "9px",
                 borderRadius: "3px",
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid rgba(0,0,0,0.1)",
                 cursor: "pointer",
-                background: isActive ? "#6366f1" : "transparent",
-                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                background: isActive ? "#c17a50" : "transparent",
+                color: isActive ? "#fff" : "rgba(0,0,0,0.45)",
                 fontFamily: "system-ui, sans-serif",
               }}
               onMouseEnter={(e) => {
                 if (!isActive) {
                   (e.currentTarget as HTMLElement).style.background =
-                    "rgba(255,255,255,0.08)";
+                    "rgba(0,0,0,0.05)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -349,7 +349,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
       <div
         style={{
           fontSize: "10px",
-          color: "rgba(255,255,255,0.4)",
+          color: "rgba(0,0,0,0.4)",
           textAlign: "center",
           marginTop: "6px",
           fontFamily: "ui-monospace, 'SF Mono', monospace",

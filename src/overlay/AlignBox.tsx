@@ -121,8 +121,8 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   style={{
                     width: 32,
                     height: 32,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.15)",
+                    background: "rgba(0,0,0,0.04)",
+                    border: "1px solid rgba(0,0,0,0.1)",
                     borderRadius: 4,
                     display: "flex",
                     alignItems: "center",
@@ -130,7 +130,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                     cursor: "pointer",
                     outline: "none",
                     transition: `border-color ${ms("fast")}`,
-                    borderColor: isHovered ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.15)",
+                    borderColor: isHovered ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.1)",
                   }}
                 >
                   <div style={{
@@ -138,10 +138,10 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                     height: 10,
                     borderRadius: "50%",
                     background: isActive
-                      ? "#6366f1"
+                      ? "#c17a50"
                       : isHovered
-                        ? "rgba(99,102,241,0.5)"
-                        : "rgba(255,255,255,0.25)",
+                        ? "rgba(193,122,80,0.5)"
+                        : "rgba(0,0,0,0.2)",
                     transition: `background ${ms("fast")}`,
                   }} />
                 </div>
@@ -168,10 +168,10 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   cursor: "pointer",
                   outline: "none",
                   color: isActive
-                    ? "#6366f1"
+                    ? "#c17a50"
                     : isHovered
-                      ? "rgba(255,255,255,0.6)"
-                      : "rgba(255,255,255,0.25)",
+                      ? "rgba(0,0,0,0.55)"
+                      : "rgba(0,0,0,0.2)",
                   transition: `color ${ms("fast")}`,
                 }}
               >
@@ -192,9 +192,9 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                 key={opt.value}
                 onClick={() => onChange(opt.value, align)}
                 style={{
-                  background: active ? "#6366f1" : "transparent",
-                  color: active ? "#fff" : "rgba(255,255,255,0.45)",
-                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: active ? "#c17a50" : "transparent",
+                  color: active ? "#fff" : "rgba(0,0,0,0.45)",
+                  border: "1px solid rgba(0,0,0,0.08)",
                   borderRadius: "3px",
                   fontSize: "9px",
                   fontFamily: "system-ui, sans-serif",
@@ -204,7 +204,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                   transition: `background ${ms("fast")}, color ${ms("fast")}`,
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)";
+                  if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
                 }}
                 onMouseLeave={(e) => {
                   if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
