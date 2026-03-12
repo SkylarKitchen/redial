@@ -28,8 +28,15 @@ export function getAuthoredValue(el: Element, prop: string): string | null {
   return found;
 }
 
-/** Returns true when the element's property should display as "auto" (no explicit authored value, or explicitly "auto") */
+const AUTO_KEYWORDS = new Set([
+  "auto", "initial", "unset", "inherit", "revert",
+  "fit-content", "max-content", "min-content",
+  "stretch", "-webkit-fill-available", "-moz-available",
+]);
+
+/** Returns true when the element's property should display as "auto" (no explicit authored value, or a CSS-wide / intrinsic sizing keyword) */
 export function isAutoSize(el: Element, prop: string): boolean {
   const authored = getAuthoredValue(el, prop);
-  return !authored || authored === "auto";
+  if (!authored) return true;
+  return AUTO_KEYWORDS.has(authored.trim().toLowerCase());
 }

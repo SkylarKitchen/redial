@@ -14,6 +14,7 @@ import { useConversionHint } from "./useConversionHint";
 import { isDirty, resetProp, resetAndReadNum } from "./apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
+import { isAutoSize } from "./getAuthoredValue";
 import { ChevronRight, Link } from "lucide-react";
 import { ms } from "./timing";
 import { text, border } from "./theme";
@@ -53,12 +54,10 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── Size state ─────────────────────────────────────────────────────
 
   const [width, setWidth] = useState(() => {
-    const authored = getAuthoredValue(element, "width");
-    return (!authored || authored === "auto") ? 0 : parseNum(cs.width);
+    return isAutoSize(element, "width") ? 0 : parseNum(cs.width);
   });
   const [height, setHeight] = useState(() => {
-    const authored = getAuthoredValue(element, "height");
-    return (!authored || authored === "auto") ? 0 : parseNum(cs.height);
+    return isAutoSize(element, "height") ? 0 : parseNum(cs.height);
   });
   const [minWidth, setMinWidth] = useState(() => {
     const authored = getAuthoredValue(element, "min-width");
@@ -104,14 +103,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const { conversionHint: maxHHint, fireConversionHint: fireMaxHHint } = useConversionHint();
 
   // Size keyword toggles
-  const [widthAuto, setWidthAuto] = useState(() => {
-    const authored = getAuthoredValue(element, "width");
-    return !authored || authored === "auto";
-  });
-  const [heightAuto, setHeightAuto] = useState(() => {
-    const authored = getAuthoredValue(element, "height");
-    return !authored || authored === "auto";
-  });
+  const [widthAuto, setWidthAuto] = useState(() => isAutoSize(element, "width"));
+  const [heightAuto, setHeightAuto] = useState(() => isAutoSize(element, "height"));
   const [maxWidthNone, setMaxWidthNone] = useState(() => {
     const authored = getAuthoredValue(element, "max-width");
     return !authored || authored === "none";
