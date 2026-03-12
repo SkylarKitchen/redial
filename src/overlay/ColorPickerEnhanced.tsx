@@ -108,7 +108,7 @@ const MAX_RECENT = 8;
 // ─── Checkerboard pattern for opacity backgrounds ────────────────
 
 const CHECKER =
-  "repeating-conic-gradient(#444 0% 25%, #666 0% 50%) 50%/8px 8px";
+  "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/8px 8px";
 
 // ─── Component ───────────────────────────────────────────────────
 

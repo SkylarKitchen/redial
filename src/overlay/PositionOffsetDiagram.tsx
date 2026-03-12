@@ -42,7 +42,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           position: "relative",
           border: "1px solid rgba(0,0,0,0.08)",
           borderRadius: "4px",
-          background: "rgba(139, 92, 246, 0.06)",
+          background: "rgba(193,122,80,0.06)",
           padding: "0",
         }}
       >
