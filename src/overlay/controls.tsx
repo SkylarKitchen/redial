@@ -461,7 +461,7 @@ export function SelectRow({
   );
 }
 
-/** Internal: custom searchable/fontPreview dropdown variant with Tailwind classes */
+/** Internal: searchable/fontPreview dropdown using shadcn Command (cmdk) */
 function SelectRowCustom({
   label,
   value,
@@ -469,7 +469,6 @@ function SelectRowCustom({
   onChange,
   onReset,
   indicator,
-  searchable,
   fontPreview,
   onContextMenu,
   computedProp,
@@ -488,39 +487,10 @@ function SelectRowCustom({
   computedElement?: Element;
 }) {
   const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const current = options.find((o) => o.value === value);
-  const id = useId();
 
-  // Filter options when searchable
-  const filtered = searchable && searchQuery
-    ? options.filter((o) => o.label.toLowerCase().includes(searchQuery.toLowerCase()))
-    : options;
-
-  const optionLabels = filtered.map(o => o.label);
-  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
-    open,
-    setOpen,
-    optionCount: filtered.length,
-    selectedIndex: filtered.findIndex((o) => o.value === value),
-    onSelect: (i) => { onChange(filtered[i].value); setOpen(false); setSearchQuery(""); },
-    labels: optionLabels,
-  });
-
-  // Clear search when dropdown closes
-  useEffect(() => {
-    if (!open) setSearchQuery("");
-  }, [open]);
-
-  // Auto-focus search input when dropdown opens
-  useEffect(() => {
-    if (open && searchable) {
-      requestAnimationFrame(() => searchInputRef.current?.focus());
-    }
-  }, [open, searchable]);
-
+  // Click-outside to close
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -564,13 +534,14 @@ function SelectRowCustom({
             open && "bg-[rgba(255,255,255,0.1)]"
           )}
           tabIndex={0}
-          role="combobox"
           aria-expanded={open}
-          aria-haspopup="listbox"
-          aria-controls={`${id}-listbox`}
-          aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
           onClick={() => setOpen((o) => !o)}
-          onKeyDown={onTriggerKeyDown}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
           style={{
             fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : undefined,
           }}
@@ -582,85 +553,50 @@ function SelectRowCustom({
         </button>
 
         {open && (
-          <div
-            id={`${id}-listbox`}
-            role="listbox"
-            onKeyDown={onListKeyDown}
-            className={cn(
-              "absolute top-[calc(100%+2px)] left-0 right-0 min-w-full",
-              "bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200] py-0.5",
-              searchable ? "max-h-60" : "max-h-[180px]",
-              "overflow-y-auto"
-            )}
+          <Command
+            className="absolute top-[calc(100%+2px)] left-0 right-0 min-w-full bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200]"
+            filter={(value, search) => {
+              const opt = options.find((o) => o.value === value);
+              if (!opt) return 0;
+              return opt.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+            }}
           >
-            {/* Search input (when searchable) */}
-            {searchable && (
-              <div className="px-1.5 pt-1 pb-1 sticky top-0 bg-[var(--popover)] z-[1]">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  placeholder="Search..."
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      e.stopPropagation();
-                      setOpen(false);
-                    } else if (e.key === "Enter" && filtered.length > 0) {
-                      const idx = highlightedIndex >= 0 ? highlightedIndex : 0;
-                      onChange(filtered[idx].value);
-                      setOpen(false);
-                      setSearchQuery("");
-                    } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                      onListKeyDown(e as unknown as React.KeyboardEvent);
-                    }
+            <CommandInput
+              placeholder="Search..."
+              className="h-7 text-[11px] font-sans"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setOpen(false);
+                }
+              }}
+              autoFocus
+            />
+            <CommandList className="max-h-[180px]">
+              <CommandEmpty className="py-1.5 text-center text-[11px] text-[var(--muted-foreground)] italic">
+                No matches
+              </CommandEmpty>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt.value}
+                  value={opt.value}
+                  onSelect={() => {
+                    onChange(opt.value);
+                    setOpen(false);
                   }}
                   className={cn(
-                    "w-full h-[22px] bg-[var(--background)] border border-[var(--border)] rounded-sm",
-                    "px-1.5 text-[11px] font-sans text-[var(--foreground)] outline-none box-border",
-                    "focus:border-[rgba(99,102,241,0.5)]"
+                    "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4",
+                    opt.value === value && "bg-[var(--primary)] text-white"
                   )}
-                />
-              </div>
-            )}
-            {filtered.length === 0 ? (
-              <div className="px-2 py-1.5 text-[11px] text-[var(--muted-foreground)] italic">
-                No matches
-              </div>
-            ) : (
-              filtered.map((opt, i) => {
-                const isActive = opt.value === value;
-                const isHighlighted = i === highlightedIndex;
-                return (
-                  <div
-                    key={opt.value}
-                    id={`${id}-opt-${i}`}
-                    ref={i === highlightedIndex ? optionRefCallback : undefined}
-                    role="option"
-                    aria-selected={isActive}
-                    onClick={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                      setSearchQuery("");
-                    }}
-                    className={cn(
-                      "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4",
-                      isActive
-                        ? "bg-[var(--primary)] text-white"
-                        : isHighlighted
-                          ? "bg-[var(--accent)] text-[var(--foreground)]"
-                          : "text-[var(--muted-foreground)] hover:bg-[var(--accent)]"
-                    )}
-                    style={{
-                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
-                    }}
-                  >
-                    {opt.label}
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  style={{
+                    fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
+                  }}
+                >
+                  {opt.label}
+                </CommandItem>
+              ))}
+            </CommandList>
+          </Command>
         )}
       </div>
     </div>
