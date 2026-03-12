@@ -3,17 +3,18 @@
  *
  * Shows a searchable dropdown of auto-detected text styles (h1–h6, p, etc.)
  * from the host page. Selecting a style batch-applies all typography props.
- * Follows the SelectRowCustom pattern from controls.tsx.
  *
- * Auto-detects available space below the trigger and flips upward when
- * the panel's ScrollArea would clip the dropdown.
+ * Uses a fixed-position portal to avoid ScrollArea overflow clipping.
+ * The dropdown anchors to the trigger button's bounding rect and auto-flips
+ * upward when there isn't enough space below.
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha } from "./theme";
+import { text, blackAlpha, color, border as borderTokens, shadow } from "./theme";
 import type { TextStyle } from "./textStyleScanner";
 
 export interface TextStyleRowProps {
@@ -27,29 +28,42 @@ const DROPDOWN_HEIGHT = 250;
 
 export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProps) {
   const [open, setOpen] = useState(false);
-  const [openUp, setOpenUp] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Click-outside to close
+  // Calculate position from trigger rect
+  const updatePos = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const up = spaceBelow < DROPDOWN_HEIGHT;
+    setPos({
+      top: up ? rect.top : rect.bottom + 2,
+      left: rect.left,
+      width: rect.width,
+      up,
+    });
+  }, []);
+
+  // Click-outside to close (check both container and portal)
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      // Allow clicks inside the trigger row
+      if (containerRef.current?.contains(target)) return;
+      // Allow clicks inside the portal dropdown (identified by data attribute)
+      const portal = document.querySelector("[data-textstyle-portal]");
+      if (portal?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  // Detect direction on open
   const handleOpen = () => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      setOpenUp(spaceBelow < DROPDOWN_HEIGHT);
-    }
+    if (!open) updatePos();
     setOpen((o) => !o);
   };
 
@@ -60,9 +74,80 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
     ? `${matchedStyle.name} · ${formatSize(matchedStyle.fontSize)}`
     : "—";
 
-  const dropdownPosition = openUp
-    ? "absolute bottom-[calc(100%+2px)] left-0 right-0"
-    : "absolute top-[calc(100%+2px)] left-0 right-0";
+  const dropdown = open && pos && createPortal(
+    <div
+      data-textstyle-portal
+      style={{
+        position: "fixed",
+        top: pos.up ? undefined : pos.top,
+        bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined,
+        left: pos.left,
+        width: pos.width,
+        zIndex: 99999,
+      }}
+    >
+      <Command
+        className={cn(
+          "min-w-full rounded border",
+        )}
+        style={{
+          background: color.popover,
+          borderColor: borderTokens.default,
+          boxShadow: shadow.dropdown,
+        }}
+        filter={(value, search) => {
+          const style = styles.find((s) => s.tag === value);
+          if (!style) return 0;
+          return style.name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+        }}
+      >
+        <CommandInput
+          placeholder="Search styles..."
+          className="h-7 text-[11px] font-sans"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              setOpen(false);
+            }
+          }}
+          autoFocus
+        />
+        <CommandList className="max-h-[180px]">
+          <CommandEmpty className="py-1.5 text-center text-[11px] italic" style={{ color: text.label }}>
+            No matches
+          </CommandEmpty>
+          {styles.map((style) => {
+            const isActive = matchedStyle?.tag === style.tag;
+            return (
+              <CommandItem
+                key={style.tag}
+                value={style.tag}
+                onSelect={() => {
+                  onApply(style);
+                  setOpen(false);
+                }}
+                className={cn(
+                  "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4 flex items-center justify-between",
+                )}
+                style={isActive ? { background: color.primary, color: "#fff" } : undefined}
+              >
+                <span style={{ fontWeight: style.fontWeight }}>
+                  {style.name}
+                </span>
+                <span
+                  className="text-[10px] ml-2 shrink-0"
+                  style={{ color: isActive ? "rgba(255,255,255,0.6)" : text.label }}
+                >
+                  {formatSize(style.fontSize)}
+                </span>
+              </CommandItem>
+            );
+          })}
+        </CommandList>
+      </Command>
+    </div>,
+    document.body,
+  );
 
   return (
     <div className="flex items-center gap-2 px-3 py-0.5">
@@ -88,6 +173,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
+              if (!open) updatePos();
               setOpen(true);
             }
           }}
@@ -98,65 +184,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           </span>
           <ChevronDown size={12} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
         </button>
-
-        {open && (
-          <Command
-            className={cn(
-              dropdownPosition,
-              "min-w-full bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200]",
-            )}
-            filter={(value, search) => {
-              const style = styles.find((s) => s.tag === value);
-              if (!style) return 0;
-              return style.name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-            }}
-          >
-            <CommandInput
-              placeholder="Search styles..."
-              className="h-7 text-[11px] font-sans"
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setOpen(false);
-                }
-              }}
-              autoFocus
-            />
-            <CommandList className="max-h-[180px]">
-              <CommandEmpty className="py-1.5 text-center text-[11px] text-[var(--muted-foreground)] italic">
-                No matches
-              </CommandEmpty>
-              {styles.map((style) => (
-                <CommandItem
-                  key={style.tag}
-                  value={style.tag}
-                  onSelect={() => {
-                    onApply(style);
-                    setOpen(false);
-                  }}
-                  className={cn(
-                    "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4 flex items-center justify-between",
-                    matchedStyle?.tag === style.tag && "bg-[var(--primary)] text-white",
-                  )}
-                >
-                  <span style={{ fontWeight: style.fontWeight }}>
-                    {style.name}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] ml-2 shrink-0",
-                      matchedStyle?.tag === style.tag
-                        ? "text-white/60"
-                        : "text-[var(--muted-foreground)]",
-                    )}
-                  >
-                    {formatSize(style.fontSize)}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandList>
-          </Command>
-        )}
+        {dropdown}
       </div>
     </div>
   );
