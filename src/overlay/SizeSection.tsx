@@ -292,7 +292,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {showMoreSize && (
         <>
-          <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} />
+          <TextRow label="Ratio" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
           <div style={{ padding: "4px 12px", display: "flex", alignItems: "center", gap: "6px" }}>
             <span style={{ width: "64px", fontSize: "11px", color: "rgba(255,255,255,0.5)", flexShrink: 0 }}>Box Size</span>
             <IconButtonGroup

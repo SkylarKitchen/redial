@@ -13,6 +13,7 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { StyleIndicator } from "./StyleIndicator";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "./unitConversion";
+import { useConversionHint } from "./useConversionHint";
 import { parseNum, shadowToCSS } from "./cssParsers";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { MiniDropdown, TypoValueCell } from "./layoutControls";
