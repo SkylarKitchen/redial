@@ -28,11 +28,12 @@ export interface SizeSectionProps {
   ctx: SectionCtx;
   display: string;
   isMedia: boolean;
+  forceOpen?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────
 
-export const SizeSection = memo(function SizeSection({ ctx, display, isMedia }: SizeSectionProps) {
+export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen }: SizeSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
 
   // ─── resetCss helper ────────────────────────────────────────────────

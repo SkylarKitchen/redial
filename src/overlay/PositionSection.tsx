@@ -16,6 +16,7 @@ interface PositionSectionProps {
 
 export const PositionSection = memo(function PositionSection({
   ctx,
+  forceOpen,
 }: PositionSectionProps) {
   const { element, apply, ind, sectionInd, cs, getConversionCtx } = ctx;
 
@@ -62,7 +63,7 @@ export const PositionSection = memo(function PositionSection({
   const handleClearChange = useCallback((v: string) => { setClear(v); apply("clear", v); }, [apply]);
 
   return (
-    <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])}>
+    <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])} forceOpen={forceOpen}>
       <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} />
       {position !== "static" && (
         <>
