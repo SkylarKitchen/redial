@@ -13,6 +13,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { beginBatch, endBatch } from "./apply";
 
 export function useWheelAdjust(
   elRef: React.RefObject<HTMLElement | null>,
@@ -25,6 +26,8 @@ export function useWheelAdjust(
   latest.current = { value, onChange, step: opts?.step ?? 1, min: opts?.min, max: opts?.max };
 
   const disabled = opts?.disabled ?? false;
+  const batchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inBatchRef = useRef(false);
 
   useEffect(() => {
     const el = elRef.current;
@@ -35,6 +38,20 @@ export function useWheelAdjust(
       if (!el.contains(document.activeElement)) return;
 
       e.preventDefault();
+
+      // Begin batch on first wheel tick
+      if (!inBatchRef.current) {
+        beginBatch();
+        inBatchRef.current = true;
+      }
+
+      // Reset the 500ms idle timer
+      if (batchTimerRef.current) clearTimeout(batchTimerRef.current);
+      batchTimerRef.current = setTimeout(() => {
+        endBatch();
+        inBatchRef.current = false;
+        batchTimerRef.current = null;
+      }, 500);
 
       const { value: cur, onChange: emit, step: baseStep, min, max } = latest.current;
       const step = e.shiftKey ? 10 : e.altKey ? 0.1 : baseStep;
@@ -47,6 +64,17 @@ export function useWheelAdjust(
     };
 
     el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
+    return () => {
+      el.removeEventListener("wheel", handler);
+      // Cleanup: end batch and clear timer on unmount
+      if (batchTimerRef.current) {
+        clearTimeout(batchTimerRef.current);
+        batchTimerRef.current = null;
+      }
+      if (inBatchRef.current) {
+        endBatch();
+        inBatchRef.current = false;
+      }
+    };
   }, [elRef, disabled]);
 }

@@ -12,6 +12,7 @@
 import { useRef, useCallback, useState } from "react";
 import { ms } from "./timing";
 import { setScrubActive } from "./scrubState";
+import { beginBatch, endBatch } from "./apply";
 
 export interface LabelScrubProps {
   children: React.ReactNode;
@@ -109,6 +110,7 @@ export function LabelScrub({
           isDraggingRef.current = true;
           setScrubbing(true);
           setScrubActive(true);
+          beginBatch();
           document.body.style.userSelect = "none";
           document.body.style.cursor = "ew-resize";
           onScrubStartRef.current?.();
@@ -138,6 +140,7 @@ export function LabelScrub({
         if (isDraggingRef.current) {
           document.body.style.userSelect = prevSelect;
           document.body.style.cursor = prevCursor;
+          endBatch();
           setScrubbing(false);
           setScrubActive(false);
           onScrubEndRef.current?.();

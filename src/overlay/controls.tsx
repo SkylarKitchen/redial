@@ -14,6 +14,7 @@ import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { evaluateMathExpr } from "./inputMath";
+import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -353,6 +354,8 @@ export function SliderRow({
           step={step}
           value={value}
           onChange={(e) => onChange(snapValue(parseFloat(e.target.value)))}
+          onMouseDown={() => beginBatch()}
+          onMouseUp={() => endBatch()}
           onFocus={onFocusRing}
           onBlur={onBlurRing}
           style={{

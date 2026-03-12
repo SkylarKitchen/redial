@@ -52,6 +52,40 @@ export function getIndicatorType(
   return "none";
 }
 
+// ─── Indicator Colors & Titles (Phase J) ────────────────────────────
+
+const INDICATOR_COLORS: Record<IndicatorType, string> = {
+  element: "#60a5fa",
+  inherited: "#f59e0b",
+  state: "#34d399",
+  variable: "#a78bfa",
+  direct: "#60a5fa",
+  none: "rgba(255,255,255,0.5)",
+};
+
+const INDICATOR_TITLES: Record<IndicatorType, string | null> = {
+  element: "Set locally. Alt+Click to reset.",
+  inherited: "Inherited. Alt+Click to override.",
+  state: "Set on state. Alt+Click to clear.",
+  variable: "Uses CSS variable.",
+  direct: "Set locally. Alt+Click to reset.",
+  none: null,
+};
+
+export function getIndicatorColor(type: IndicatorType): string {
+  return INDICATOR_COLORS[type];
+}
+
+export function getIndicatorTitle(type: IndicatorType, el?: Element, prop?: string): string | undefined {
+  if (type === "inherited" && el && prop) {
+    const parent = el.parentElement;
+    const tag = parent?.tagName.toLowerCase() ?? "";
+    const cls = parent?.className ? `.${parent.className.split(" ")[0]}` : "";
+    return `Inherited from ${tag}${cls}. Alt+Click to override.`;
+  }
+  return INDICATOR_TITLES[type] ?? undefined;
+}
+
 // ─── Authored Value / Unit Detection ─────────────────────────────────
 
 export function getAuthoredValue(el: Element, prop: string): string | null {
@@ -78,6 +112,27 @@ export function detectUnit(el: Element, prop: string, fallback: string = "px"): 
   const authored = getAuthoredValue(el, prop);
   if (!authored) return fallback;
   return extractUnit(authored, fallback);
+}
+
+// ─── Variable Detection ─────────────────────────────────────────────
+
+/** WeakMap cache: element → set of properties that use var() */
+const varCache = new WeakMap<Element, Map<string, boolean>>();
+
+/** Check whether a property's authored value uses a CSS variable */
+export function isVariableLinked(el: Element, prop: string): boolean {
+  let propMap = varCache.get(el);
+  if (!propMap) {
+    propMap = new Map();
+    varCache.set(el, propMap);
+  }
+  const cached = propMap.get(prop);
+  if (cached !== undefined) return cached;
+
+  const authored = getAuthoredValue(el, prop);
+  const result = authored !== null && authored.includes("var(");
+  propMap.set(prop, result);
+  return result;
 }
 
 // ─── Text Detection ──────────────────────────────────────────────────

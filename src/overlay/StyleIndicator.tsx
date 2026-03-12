@@ -9,7 +9,7 @@
  *   none      → not rendered
  */
 
-export type IndicatorType = "direct" | "inherited" | "state" | "element" | "none";
+export type IndicatorType = "direct" | "inherited" | "state" | "element" | "variable" | "none";
 
 export interface StyleIndicatorProps {
   type: IndicatorType;
@@ -23,6 +23,7 @@ const INDICATOR_CONFIG: Record<
   inherited: { color: "#f59e0b", title: "Inherited: from parent or base class" },
   state: { color: "#22c55e", title: "State: state-specific style" },
   element: { color: "#ec4899", title: "Element: element-level override" },
+  variable: { color: "#a78bfa", title: "Variable: uses CSS var()" },
 };
 
 export function StyleIndicator({ type }: StyleIndicatorProps) {
