@@ -23,6 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
+import { text } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Presets ───────────────────────────────────────────────────
@@ -303,7 +304,7 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
-  const labelColor = indicator ? getIndicatorColor(indicator) : "rgba(0,0,0,0.45)";
+  const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -389,7 +390,7 @@ export function SelectRow({
   /** Target element for computed tooltip */
   computedElement?: Element;
 }) {
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(0,0,0,0.45)";
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -502,7 +503,7 @@ function SelectRowCustom({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(0,0,0,0.45)";
+  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
@@ -637,7 +638,7 @@ export function ColorRow({
   const displayLabel = varName ? varName.replace(/^--/, "") : value;
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
-  const colorLabelColor = indicator ? getIndicatorColor(indicator) : "rgba(0,0,0,0.45)";
+  const colorLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span

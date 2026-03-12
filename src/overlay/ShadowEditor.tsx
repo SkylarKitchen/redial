@@ -269,7 +269,7 @@ function ShadowRow({
             border: "none",
             cursor: "pointer",
             padding: "2px",
-            color: shadow.visible !== false ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.15)",
+            color: shadow.visible !== false ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.25)",
             pointerEvents: isDragging ? "none" : "auto",
           }}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}

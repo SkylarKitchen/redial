@@ -16,7 +16,7 @@
 
   /* Muted */
   --muted: rgba(0, 0, 0, 0.05);
-  --muted-foreground: rgba(0, 0, 0, 0.45);
+  --muted-foreground: rgba(0, 0, 0, 0.6);
 
   /* Card */
   --card: #f5f0ea;
@@ -121,7 +121,7 @@
 
 .__tuner-root .dialkit-label {
   font-size: 11px !important;
-  color: rgba(0, 0, 0, 0.45) !important;
+  color: rgba(0, 0, 0, 0.6) !important;
   text-transform: capitalize;
 }
 
