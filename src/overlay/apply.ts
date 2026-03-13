@@ -516,6 +516,18 @@ function isZeroValue(v: string): boolean {
   return n === 0 && !isNaN(n);
 }
 
+/**
+ * Check if a transition value is a no-op default.
+ * Browsers return "all" or "all 0s ease 0s" for elements with no explicit
+ * transition — these are semantically equivalent to "none".
+ */
+function isDefaultTransition(v: string): boolean {
+  if (!v || v === "none" || v === "all") return true;
+  // "all 0s ease 0s" — normalize whitespace and check
+  const trimmed = v.replace(/\s+/g, " ").trim();
+  return trimmed === "all 0s ease 0s";
+}
+
 export function isDirty(el: Element, prop: string): boolean {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return false;
@@ -525,6 +537,8 @@ export function isDirty(el: Element, prop: string): boolean {
   if (entry.initial === entry.current) return false;
   // Defense in depth: "0px" vs "0em" etc. are semantically equal
   if (isZeroValue(entry.initial) && isZeroValue(entry.current)) return false;
+  // "all" / "all 0s ease 0s" / "none" are all no-op transitions
+  if (prop === "transition" && isDefaultTransition(entry.initial) && isDefaultTransition(entry.current)) return false;
   return true;
 }
 

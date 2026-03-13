@@ -181,13 +181,16 @@ export function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
   const durations = cs.transitionDuration.split(",").map((s) => parseFloat(s.trim()) * 1000);
   const easings = cs.transitionTimingFunction.split(",").map((s) => s.trim());
   const delays = cs.transitionDelay.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  return properties.map((p, i) => ({
+  const entries = properties.map((p, i) => ({
     property: p,
     duration: durations[i % durations.length] ?? 300,
     easing: easings[i % easings.length] ?? "ease",
     delay: delays[i % delays.length] ?? 0,
     visible: true,
   }));
+  // Filter out browser-default phantom entries: "all" with zero duration/delay
+  // is what getComputedStyle returns for elements with no explicit transition.
+  return entries.filter((t) => t.duration > 0 || t.delay > 0);
 }
 
 export function transitionsToCSS(transitions: TransitionValue[]): string {
