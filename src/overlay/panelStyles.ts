@@ -132,7 +132,7 @@ export const PILL_BUTTON: React.CSSProperties = {
   padding: "3px 8px",
   fontSize: 10,
   fontFamily: font.mono,
-  borderRadius: 3,
+  borderRadius: layout.pillRadius,
   cursor: "pointer",
   outline: "none",
   border: `1px solid ${border.default}`,

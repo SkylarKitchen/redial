@@ -12,7 +12,7 @@ import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight } from "lucide-react";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha } from "./theme";
 import { ms } from "./timing";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
