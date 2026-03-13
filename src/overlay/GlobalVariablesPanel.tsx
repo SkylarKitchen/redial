@@ -750,6 +750,19 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
   const [showTopAdd, setShowTopAdd] = useState(false);
   const [contextMenu, setContextMenu] = useState<VarContextMenuState | null>(null);
   const [contextRenameTarget, setContextRenameTarget] = useState<string | null>(null);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [addingCollection, setAddingCollection] = useState(false);
+  const [renamingCollectionId, setRenamingCollectionId] = useState<string | null>(null);
+  const newCollectionRef = useRef<HTMLInputElement>(null);
+  const {
+    collections,
+    addCollection: addColl,
+    removeCollection: removeColl,
+    renameCollection: renameColl,
+    assignVariable: assignVar,
+    unassignVariable: unassignVar,
+    getCollectionForVariable,
+  } = useTokenCollections();
 
   const overrideSnapshot = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
   const allVars = useMemo(() => discoverAllVariables(), [overrideSnapshot]);
@@ -785,6 +798,40 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
 
   const categoryGrouped = useMemo(() => groupByCategory(filtered), [filtered]);
   const prefixGrouped = useMemo(() => groupByPrefix(filtered), [filtered]);
+
+  // Collection-grouped: variables sorted into user collections + uncategorized
+  const collectionGrouped = useMemo(() => {
+    const groups: { collection: TokenCollection; vars: CSSVariable[] }[] = [];
+    const uncategorized: CSSVariable[] = [];
+
+    const assigned = new Set<string>();
+    for (const c of collections) {
+      const vars = filtered.filter((v) => c.variableNames.includes(v.name));
+      if (vars.length > 0) {
+        groups.push({ collection: c, vars });
+        vars.forEach((v) => assigned.add(v.name));
+      } else {
+        // Show empty collections too (with no vars after filtering)
+        groups.push({ collection: c, vars: [] });
+      }
+    }
+    for (const v of filtered) {
+      if (!assigned.has(v.name)) uncategorized.push(v);
+    }
+    return { groups, uncategorized };
+  }, [filtered, collections]);
+
+  useEffect(() => {
+    if (addingCollection) newCollectionRef.current?.focus();
+  }, [addingCollection]);
+
+  const handleCreateCollection = useCallback(() => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+    addColl(name);
+    setNewCollectionName("");
+    setAddingCollection(false);
+  }, [newCollectionName, addColl]);
 
   const viewOptions = [
     { value: "category", label: "Category" },
@@ -898,7 +945,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
               />
             );
           })
-        ) : (
+        ) : viewMode === "prefix" ? (
           <>
             {prefixGrouped.groups.map((group) => (
               <PrefixGroupSection
@@ -914,6 +961,89 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
               <VariableGroup
                 title="(Root)"
                 variables={prefixGrouped.ungrouped}
+                searching={searching}
+                order={order}
+                onOrderChange={handleOrderChange}
+                onContextMenu={handleContextMenu}
+              />
+            )}
+          </>
+        ) : (
+          /* Collections view */
+          <>
+            {/* + New Collection */}
+            <div style={{ padding: "4px 12px 2px" }}>
+              {addingCollection ? (
+                <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                  <input
+                    ref={newCollectionRef}
+                    type="text"
+                    placeholder="Collection name..."
+                    value={newCollectionName}
+                    onChange={(e) => setNewCollectionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreateCollection();
+                      if (e.key === "Escape") { setAddingCollection(false); setNewCollectionName(""); }
+                    }}
+                    onBlur={() => { if (!newCollectionName.trim()) { setAddingCollection(false); setNewCollectionName(""); } }}
+                    style={{
+                      flex: 1, height: 24, background: surface.subtle,
+                      border: `1px solid ${border.default}`, borderRadius: 4,
+                      padding: "0 6px", fontSize: 11, fontFamily: font.sans,
+                      color: text.primary, outline: "none", minWidth: 0,
+                    }}
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingCollection(true)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 4,
+                    background: "none", border: `1px dashed ${border.default}`,
+                    borderRadius: 4, padding: "4px 8px", cursor: "pointer",
+                    color: text.label, fontSize: 10, fontFamily: font.sans,
+                    width: "100%",
+                    transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = border.hover;
+                    (e.currentTarget as HTMLElement).style.color = text.secondary;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = border.default;
+                    (e.currentTarget as HTMLElement).style.color = text.label;
+                  }}
+                >
+                  <FolderPlus size={12} />
+                  New Collection
+                </button>
+              )}
+            </div>
+
+            {/* Collection groups */}
+            {collectionGrouped.groups.map(({ collection: coll, vars }) => (
+              <CollectionSection
+                key={coll.id}
+                collection={coll}
+                variables={vars}
+                allFilteredVars={filtered}
+                searching={searching}
+                order={order}
+                onOrderChange={handleOrderChange}
+                onContextMenu={handleContextMenu}
+                onRename={(name) => renameColl(coll.id, name)}
+                onDelete={() => removeColl(coll.id)}
+                onAssignVariable={(varName) => assignVar(coll.id, varName)}
+                renamingCollectionId={renamingCollectionId}
+                setRenamingCollectionId={setRenamingCollectionId}
+              />
+            ))}
+
+            {/* Uncategorized */}
+            {collectionGrouped.uncategorized.length > 0 && (
+              <VariableGroup
+                title="(No Collection)"
+                variables={collectionGrouped.uncategorized}
                 searching={searching}
                 order={order}
                 onOrderChange={handleOrderChange}

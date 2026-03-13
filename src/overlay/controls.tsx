@@ -772,6 +772,7 @@ export function ColorRow({
   computedElement,
   compact,
   labelWidth,
+  actions,
 }: {
   label: string;
   value: string;
