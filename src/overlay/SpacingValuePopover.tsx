@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
-import { text, color } from "./theme";
+import { text, color, font } from "./theme";
 
 // 8px grid spacing presets
 const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];
@@ -173,7 +173,7 @@ export function SpacingValuePopover({
         boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
         zIndex: 2147483647,
         padding: "8px",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: font.sans,
       }}
     >
       {/* Scoped slider thumb styles (pseudo-elements can't be inline-styled) */}
@@ -239,7 +239,7 @@ export function SpacingValuePopover({
             borderRadius: "3px",
             color: text.secondary,
             fontSize: "11px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: font.mono,
             textAlign: "center",
             padding: "0 2px",
             outline: "none",
@@ -296,7 +296,7 @@ export function SpacingValuePopover({
               borderRadius: "3px",
               color: "#525252",
               fontSize: "10px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              fontFamily: font.mono,
               cursor: "pointer",
               textTransform: "uppercase",
               outline: "none",
@@ -336,7 +336,7 @@ export function SpacingValuePopover({
                     width: "100%",
                     padding: "3px 8px",
                     fontSize: "10px",
-                    fontFamily: "ui-monospace, 'SF Mono', monospace",
+                    fontFamily: font.mono,
                     color: u === unit ? "#fff" : "#525252",
                     background: u === unit ? color.primary : "transparent",
                     cursor: "pointer",
@@ -380,7 +380,7 @@ export function SpacingValuePopover({
               borderRadius: "4px",
               color: value === preset ? "#fff" : "#525252",
               fontSize: "11px",
-              fontFamily: "ui-monospace, 'SF Mono', monospace",
+              fontFamily: font.mono,
               cursor: "pointer",
               outline: "none",
               transition: `background ${ms("fast")}, border-color ${ms("fast")}`,

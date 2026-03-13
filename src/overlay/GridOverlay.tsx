@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { font } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -108,7 +109,7 @@ const OUTLINE_COLOR = "rgba(217, 119, 87, 0.25)";
 const LABEL_STYLE: React.CSSProperties = {
   position: "absolute",
   fontSize: 10,
-  fontFamily: "ui-monospace, 'SF Mono', monospace",
+  fontFamily: font.mono,
   color: LABEL_COLOR,
   background: LABEL_BG,
   borderRadius: 3,

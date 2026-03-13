@@ -118,7 +118,7 @@ function AutoLabel({ onClick }: { onClick: () => void }) {
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       style={{
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         color: "#A3A3A3",
         cursor: "text",
         padding: "1px 3px",
@@ -197,7 +197,7 @@ function EditableValue({
           borderRadius: "2px",
           color: "#171717",
           fontSize: "10px",
-          fontFamily: "ui-monospace, 'SF Mono', monospace",
+          fontFamily: font.mono,
           textAlign: "center",
           padding: "1px 2px",
           outline: "none",
@@ -216,7 +216,7 @@ function EditableValue({
       }}
       style={{
         fontSize: "10px",
-        fontFamily: "ui-monospace, 'SF Mono', monospace",
+        fontFamily: font.mono,
         color: value !== 0 ? "#525252" : "#A3A3A3",
         cursor: "text",
         padding: "1px 3px",

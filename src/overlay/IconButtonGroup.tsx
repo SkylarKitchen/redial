@@ -3,13 +3,13 @@
  *
  * Used for text-align, text-decoration, text-transform, etc.
  * Supports single-select (radio) and multi-select (toggle) modes.
- * Built on Shadcn ToggleGroup primitives with dark theme styling.
+ * Pure inline styles with theme.ts tokens.
  */
 
-import { useCallback } from "react";
-import { cn } from "@/lib/utils";
+import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { color } from "./theme";
+import { color, surface, text, border as borderTokens, primaryAlpha, font } from "./theme";
+import { ms } from "./timing";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
@@ -54,58 +54,17 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
     const isLast = i === options.length - 1;
 
     return (
-      <ToggleGroupItem
+      <IconButtonItem
         key={opt.value}
-        value={opt.value}
-        role={multi ? undefined : "radio"}
-        aria-checked={multi ? undefined : isActive}
-        aria-pressed={multi ? isActive : undefined}
-        aria-label={opt.label ?? opt.title ?? opt.value}
-        tabIndex={isActive ? 0 : -1}
-        title={opt.title ?? opt.value}
-        onClick={(e) => {
-          e.preventDefault();
-          if (e.altKey && onReset) { onReset(); return; }
-          handleClick(opt.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-            e.preventDefault();
-            const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
-            const idx = siblings.indexOf(e.currentTarget as HTMLElement);
-            const next = e.key === "ArrowRight"
-              ? siblings[(idx + 1) % siblings.length]
-              : siblings[(idx - 1 + siblings.length) % siblings.length];
-            next.focus();
-            const nextOpt = options[siblings.indexOf(next)];
-            if (nextOpt != null) handleClick(nextOpt.value);
-          }
-        }}
-        style={{
-          borderColor: color.border,
-          backgroundColor: isActive ? color.primary : "transparent",
-          color: isActive ? "#fff" : color.mutedForeground,
-        }}
-        className={cn(
-          "flex items-center justify-center h-7 min-w-7 px-1.5 cursor-pointer",
-          "border outline-none",
-          "text-[13px] leading-none font-sans",
-          "transition-colors duration-75",
-          `focus-visible:ring-2 focus-visible:ring-[rgba(59,130,246,0.3)]`,
-          // Active state hover
-          isActive
-            ? `hover:bg-[#3B82F6]`
-            : "hover:bg-[rgba(0,0,0,0.05)]",
-          // Border radius: first/last rounded, middle flat
-          isFirst && "rounded-l rounded-r-none",
-          isLast && "rounded-r rounded-l-none",
-          !isFirst && !isLast && "rounded-none",
-          // Collapse left border for non-first items
-          !isFirst && "border-l-0"
-        )}
-      >
-        {opt.icon}
-      </ToggleGroupItem>
+        opt={opt}
+        isActive={isActive}
+        isFirst={isFirst}
+        isLast={isLast}
+        multi={multi}
+        onReset={onReset}
+        handleClick={handleClick}
+        options={options}
+      />
     );
   });
 
@@ -118,7 +77,8 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
         value={value.split(" ").filter(Boolean)}
         onValueChange={() => { /* handled via onClick */ }}
         aria-label={ariaLabel}
-        className="inline-flex gap-0"
+        className=""
+        style={{ display: "inline-flex", gap: 0 }}
       >
         {items}
       </ToggleGroup>
@@ -131,9 +91,93 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
       value={value}
       onValueChange={() => { /* handled via onClick */ }}
       aria-label={ariaLabel}
-      className="inline-flex gap-0"
+      className=""
+      style={{ display: "inline-flex", gap: 0 }}
     >
       {items}
     </ToggleGroup>
+  );
+}
+
+/** Individual button item with hover tracking */
+function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handleClick, options }: {
+  opt: { value: string; icon: React.ReactNode; title?: string; label?: string };
+  isActive: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  multi: boolean;
+  onReset?: () => void;
+  handleClick: (v: string) => void;
+  options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <ToggleGroupItem
+      value={opt.value}
+      role={multi ? undefined : "radio"}
+      aria-checked={multi ? undefined : isActive}
+      aria-pressed={multi ? isActive : undefined}
+      aria-label={opt.label ?? opt.title ?? opt.value}
+      tabIndex={isActive ? 0 : -1}
+      title={opt.title ?? opt.value}
+      onClick={(e) => {
+        e.preventDefault();
+        if (e.altKey && onReset) { onReset(); return; }
+        handleClick(opt.value);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          e.preventDefault();
+          const siblings = Array.from(e.currentTarget.parentElement?.children ?? []) as HTMLElement[];
+          const idx = siblings.indexOf(e.currentTarget as HTMLElement);
+          const next = e.key === "ArrowRight"
+            ? siblings[(idx + 1) % siblings.length]
+            : siblings[(idx - 1 + siblings.length) % siblings.length];
+          next.focus();
+          const nextOpt = options[siblings.indexOf(next)];
+          if (nextOpt != null) handleClick(nextOpt.value);
+        }
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      className=""
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: 28,
+        minWidth: 28,
+        paddingLeft: 6,
+        paddingRight: 6,
+        cursor: "pointer",
+        border: `1px solid ${borderTokens.default}`,
+        outline: "none",
+        fontSize: 13,
+        lineHeight: 1,
+        fontFamily: font.sans,
+        transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
+        borderRadius: isFirst && isLast
+          ? 4
+          : isFirst
+            ? "4px 0 0 4px"
+            : isLast
+              ? "0 4px 4px 0"
+              : 0,
+        borderLeftWidth: isFirst ? 1 : 0,
+        backgroundColor: isActive
+          ? color.primary
+          : hovered
+            ? surface.hover
+            : "transparent",
+        color: isActive ? "#fff" : color.mutedForeground,
+        boxShadow: focused ? `0 0 0 2px ${primaryAlpha(0.3)}` : "none",
+      }}
+    >
+      {opt.icon}
+    </ToggleGroupItem>
   );
 }

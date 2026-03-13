@@ -424,6 +424,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
                   computedProp="gap"
                   computedElement={element}
+                  property="gap"
                 />
               </div>
               <button
@@ -601,6 +602,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
                   computedProp="gap"
                   computedElement={element}
+                  property="gap"
                 />
               </div>
               <button

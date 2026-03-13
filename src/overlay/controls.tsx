@@ -23,7 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, focusRing, presets } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, presets } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
