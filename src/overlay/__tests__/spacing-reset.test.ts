@@ -337,18 +337,18 @@ describe("SpacingBoxModel alt+click reset propagates value to parent", () => {
     src = readSrc("SpacingBoxModel.tsx");
   });
 
-  it("alt+click handler calls onChange after reset (not just resetProp alone)", () => {
+  it("alt+click handler calls onReset (or falls back to onChange) after reset", () => {
     const altClickBlock = src.match(
       /if\s*\(pev\.altKey\)\s*\{[\s\S]*?\}/
     );
     expect(altClickBlock, "Could not find alt+click handler block").toBeTruthy();
 
     const block = altClickBlock![0];
-    const callsOnChange =
-      block.includes("onChangeRef") || block.includes("onChange");
+    const callsResetOrChange =
+      block.includes("onReset") || block.includes("onChangeRef") || block.includes("onChange");
     expect(
-      callsOnChange,
-      "Alt+click handler must call onChange/onChangeRef after reset so the parent updates displayed values"
+      callsResetOrChange,
+      "Alt+click handler must call onReset (or onChange as fallback) after reset so the parent updates displayed values"
     ).toBe(true);
   });
 
