@@ -883,7 +883,7 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-        style={labelStyle(text.label)}
+        style={labelStyle()}
       >
         {label}
       </span>
