@@ -1630,7 +1630,7 @@ export function Overlay() {
               <div
                 ref={panelScrollRef}
                 className="__tuner-root"
-                style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+                style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 4 }}
               >
                 {showSearch && (
                   <PropertySearch
@@ -1641,7 +1641,6 @@ export function Overlay() {
                 )}
                 <div
                   style={{
-                    paddingTop: 4,
                     paddingBottom: 4,
                     transition: `opacity ${ms("normal")}`,
                     pointerEvents: diffMode ? "none" : "auto",
