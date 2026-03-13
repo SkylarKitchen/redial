@@ -156,6 +156,7 @@ export const layout = {
   footerPadding: "8px 12px",
   labelWidth: 64,
   controlGap: 6,
+  compactGap: 4,
   inputWidth: 40,
   swatchSizeSaved: 22,
   swatchSizeRecent: 18,

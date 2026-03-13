@@ -44,13 +44,12 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
   return (
     <span
       style={{
-        fontSize: 11.5,
+        fontSize: 11,
         flexShrink: 0,
         userSelect: "none" as const,
         lineHeight: "16px",
-        width: 49,
+        width: layout.labelWidth,
         fontFamily: font.sans,
-        letterSpacing: -0.115,
         cursor: onReset ? "default" : undefined,
       }}
       onClick={altClickReset(onReset)}
@@ -330,7 +329,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
   const isOverflowActive = !PRIMARY_VALUES.has(value);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
+    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
       <RowLabel label="Display" indicator={indicator} isSet={value !== "block"} onReset={onReset} />
       <SegmentedControl
         options={DISPLAY_PRIMARY}
@@ -458,7 +457,7 @@ export function DirectionRow({ direction, onDirectionChange, onReset, indicator 
   const isSet = direction !== "row";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
+    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
       <RowLabel label="Direction" indicator={indicator} isSet={isSet} onReset={onReset} />
       <SegmentedControl
         options={[
@@ -507,7 +506,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
   const base = direction.replace("-reverse", "") as "row" | "column";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
+    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
       <RowLabel label="Direction" indicator={indicator} isSet={direction !== "row"} onReset={onReset} />
       {/* Row / Column icon segments */}
       <SegmentedControl
@@ -729,7 +728,7 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
   const isSet = columnGap !== 0 || rowGap !== 0;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
+      <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
         <RowLabel label="Gap" indicator={indicator} isSet={isSet} onReset={onReset} />
         {/* Column gap input */}
         <GapInput value={columnGap} unit={columnUnit} onChange={(v) => {
@@ -764,8 +763,8 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
         }} />
       </div>
       {/* Sub-labels: Columns / Rows — positioned under their respective inputs */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding, marginTop: 4 }}>
-        <span style={{ width: 49, flexShrink: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding, marginTop: 4 }}>
+        <span style={{ width: layout.labelWidth, flexShrink: 0 }} />
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <RowLabel label="Columns" indicator={isSet ? "modified" : "none"} />
         </span>
@@ -914,7 +913,7 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
 }) {
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
+      <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
         <RowLabel label="Grid" indicator={indicator} onReset={onReset} />
         <TrackCountInput value={columns} onChange={(v) => {
           onColumnsChange(v);
@@ -947,8 +946,8 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
         </button>
       </div>
       {/* Sub-labels: Columns / Rows */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding, marginTop: 2 }}>
-        <span style={{ width: 49, flexShrink: 0 }} />
+      <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding, marginTop: 2 }}>
+        <span style={{ width: layout.labelWidth, flexShrink: 0 }} />
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Columns</span>
         </span>
@@ -974,7 +973,7 @@ export function ChildrenRow({ wrap, onWrapChange, indicator, onReset }: {
   const isReverse = wrap === "wrap-reverse";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: "0 12px" }}>
       <RowLabel label="Children" indicator={indicator} isSet={isWrap} onReset={onReset} />
       <SegmentedControl
         options={[

@@ -346,7 +346,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Direction: Row / Column toggle + grid overlay */}
-          <div style={{ ...ROW, gap: 4, padding: layout.rowPadding }}>
+          <div style={ROW}>
             <RowLabel label="Direction" indicator={ind("grid-auto-flow")} onReset={() => resetCssStr("grid-auto-flow", setGridAutoFlow)} />
             <SegmentedControl
               options={[
@@ -384,7 +384,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           </div>
 
           {/* Align: AlignBox + X/Y dropdowns */}
-          <div style={{ ...ROW, alignItems: "flex-start", gap: 4, padding: layout.rowPadding }}>
+          <div style={{ ...ROW, alignItems: "flex-start" }}>
             <RowLabel label="Align" indicator={sectionInd(["justify-items", "align-items"])} onReset={() => {
               resetCssStr("justify-items", setJustifyItems);
               resetCssStr("align-items", setGridAlignItems);
@@ -565,7 +565,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Align: AlignBox + X/Y dropdowns (matches grid pattern) */}
-          <div style={{ ...ROW, alignItems: "flex-start", gap: 4, padding: layout.rowPadding }}>
+          <div style={{ ...ROW, alignItems: "flex-start" }}>
             <RowLabel label="Align" indicator={sectionInd(["justify-content", "align-items"])} onReset={() => {
               resetCssStr("justify-content", setJustifyContent);
               resetCssStr("align-items", setAlignItems);

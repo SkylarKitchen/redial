@@ -22,7 +22,7 @@ import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScann
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-import { text, border, surface, font, indicatorStyle } from "./theme";
+import { text, border, surface, font, indicatorStyle, layout } from "./theme";
 import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
@@ -225,7 +225,7 @@ export const TypographySection = memo(function TypographySection({
       <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
 
       {/* Size + Height side-by-side compact cells */}
-      <div style={{ ...ROW, gap: 4 }}>
+      <div style={{ ...ROW, gap: layout.compactGap }}>
         <span
           style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
           onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); } }}
@@ -296,7 +296,7 @@ export const TypographySection = memo(function TypographySection({
       {showTypoAdvanced && (
         <>
           {/* Letter spacing + Text indent — compact row */}
-          <div style={{ ...ROW, gap: 4 }}>
+          <div style={{ ...ROW, gap: layout.compactGap }}>
             <div className="flex-1">
               <TypoValueCell
                 value={letterSpacing}
@@ -325,7 +325,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Columns + Column gap — compact row */}
-          <div style={{ ...ROW, gap: 4 }}>
+          <div style={{ ...ROW, gap: layout.compactGap }}>
             <div className="flex-1">
               <TypoValueCell
                 value={columnCount}
@@ -354,7 +354,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Word spacing + Hyphens — compact row */}
-          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: layout.compactGap }}>
             <div className="flex-1">
               <TypoValueCell
                 value={wordSpacing}
@@ -384,7 +384,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Breaking — Word + Line side by side */}
-          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: layout.compactGap }}>
             <span style={{ ...LABEL, paddingTop: 3 }}>Breaking</span>
             <div className="flex-1">
               <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
@@ -420,7 +420,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Stroke — width + color side by side */}
-          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: layout.compactGap }}>
             <span style={{ ...LABEL, paddingTop: 3 }}>Stroke</span>
             <div className="flex-1">
               <TypoValueCell

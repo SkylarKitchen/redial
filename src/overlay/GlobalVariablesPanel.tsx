@@ -117,6 +117,7 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
         className="tuner-focusable"
         style={{
           flex: 1,
+          minWidth: 0,
           height: 24,
           background: surface.subtle,
           border: focused ? `1px solid ${color.primary}` : `1px solid ${border.default}`,
@@ -126,6 +127,7 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
           fontFamily: font.mono,
           color: text.primary,
           outline: "none",
+          boxSizing: "border-box",
           boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
         }}
         tabIndex={0}
@@ -221,7 +223,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 4, paddingBottom: 4, paddingRight: 4 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 4, paddingBottom: 4, paddingRight: 6 }}>
         {filtered.length === 0 ? (
           <div style={{ padding: "16px 12px", fontSize: 11, color: text.label, fontStyle: "italic", textAlign: "center" }}>
             {search ? "No matching variables" : "No CSS custom properties found"}
