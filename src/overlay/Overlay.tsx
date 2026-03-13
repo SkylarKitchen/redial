@@ -34,7 +34,7 @@ import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo }
 import { enrichChangesForCommit } from "./commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "./GlobalVariablesPanel";
-import { ms, setReducedMotion, springConfig } from "./timing";
+import { timing, ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "./scrubState";
 import { PropertySearch } from "./PropertySearch";
@@ -1028,6 +1028,18 @@ export function Overlay() {
     }, []),
   );
 
+  // --- Outline pulse on new element selection ---
+  useEffect(() => {
+    const outline = selectedOutlineRef.current;
+    if (!outline || !selectedEl || selecting) return;
+    outline.classList.remove("--pulse");
+    // Force reflow so re-adding triggers animation restart
+    void outline.offsetWidth;
+    outline.classList.add("--pulse");
+    const timer = setTimeout(() => outline.classList.remove("--pulse"), timing.toolbar);
+    return () => { clearTimeout(timer); outline.classList.remove("--pulse"); };
+  }, [panelKey, selectedEl, selecting]);
+
   // --- Breadcrumb ancestor hover outline ---
   // Event-driven tracking (replaces infinite RAF loop)
   useElementTracker(
@@ -1096,7 +1108,7 @@ export function Overlay() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; }";
+    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; } @keyframes tuner-outline-pulse { 0% { box-shadow: 0 0 0 0 rgba(217,119,87,0.4); } 50% { box-shadow: 0 0 0 4px rgba(217,119,87,0.15); } 100% { box-shadow: 0 0 0 0 rgba(217,119,87,0); } } .__tuner-selected-outline.--pulse { animation: tuner-outline-pulse 400ms ease-out; }";
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };
