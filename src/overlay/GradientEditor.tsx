@@ -214,7 +214,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             height: "24px",
             borderRadius: "4px",
             background: buildGradientCSS(type, angle, stops),
-            border: "1px solid rgba(0,0,0,0.12)",
+            border: `1px solid ${blackAlpha(0.12)}`,
             cursor: "crosshair",
           }}
         />
@@ -236,7 +236,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
                 height: 0,
                 borderLeft: "4px solid transparent",
                 borderRight: "4px solid transparent",
-                borderBottom: `8px solid ${isSelected ? color.primary : "rgba(0,0,0,0.6)"}`,
+                borderBottom: `8px solid ${isSelected ? color.primary : blackAlpha(0.6)}`,
                 cursor: "pointer",
               }}
             />
@@ -306,10 +306,10 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               width: "48px",
               height: "24px",
-              background: "rgba(0,0,0,0.04)",
-              border: "1px solid rgba(0,0,0,0.08)",
+              background: color.input,
+              border: `1px solid ${blackAlpha(0.08)}`,
               borderRadius: "3px",
-              color: "#171717",
+              color: text.primary,
               fontSize: "11px",
               fontFamily: font.mono,
               padding: "0 4px",
@@ -320,7 +320,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
             style={{
               fontSize: "11px",
               fontFamily: font.mono,
-              color: "#737373",
+              color: text.disabled,
             }}
           >
             %
@@ -340,7 +340,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
               background: "transparent",
               border: "none",
               borderRadius: "3px",
-              color: stops.length <= 2 ? "#C4C4C4" : "#737373",
+              color: stops.length <= 2 ? blackAlpha(0.23) : text.disabled,
               fontSize: "14px",
               cursor: stops.length <= 2 ? "default" : "pointer",
               fontFamily: font.sans,
@@ -356,7 +356,7 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
         style={{
           fontSize: "10px",
           fontFamily: font.mono,
-          color: "#737373",
+          color: text.disabled,
           wordBreak: "break-all",
           lineHeight: "14px",
         }}

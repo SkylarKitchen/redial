@@ -186,6 +186,9 @@ Added `SectionMemoryProvider` context in controls.tsx. Overlay.tsx owns the `Rec
 ### 2026-03-13 — Icon opacity audit
 Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (was `opacity: 0.6`), Header.tsx ChevronRight ×2 (were `opacity: 0.4`). All other icon usages already use theme tokens.
 
+### 2026-03-13 — GradientEditor hardcoded text colors
+Replaced 8 hardcoded color values in GradientEditor.tsx with theme tokens: `#171717` → `text.primary`, `#737373` → `text.disabled` (×2), `#C4C4C4` → `blackAlpha(0.23)`, `rgba(0,0,0,0.04)` → `color.input`, `rgba(0,0,0,0.08)` → `blackAlpha(0.08)`, `rgba(0,0,0,0.12)` → `blackAlpha(0.12)`, `rgba(0,0,0,0.6)` → `blackAlpha(0.6)`. Only remaining hex is `#ffffff` default stop color (CSS value, not theme token).
+
 ### 2026-03-13 — ShadowEditor hardcoded text colors
 Replaced 15 hardcoded color values in ShadowEditor.tsx with theme tokens: `#737373` → `text.disabled` (×3), `#171717` → `text.primary` (×1), `#525252` → `text.secondary` (×2), `#A3A3A3` → `text.hint` (×2), `rgba(59,130,246,...)` → `primaryAlpha()` (×5), `rgba(0,0,0,...)` → `blackAlpha()` (×3). Only remaining rgba values are the DEFAULT_SHADOW color constant and a dynamic hex→rgba conversion in the picker callback.
 
@@ -199,7 +202,7 @@ Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInpu
 Deeper sweep of section-specific editors that were missed by the Phase 1 top-level audit.
 
 - [x] **ShadowEditor hardcoded text colors** — `ShadowEditor.tsx` has 10+ hardcoded hex values (`#737373`, `#171717`, `#525252`, `#A3A3A3`) that map directly to existing `text.*` tokens (`text.disabled`, `text.primary`, `text.secondary`, `text.hint`). Also has hardcoded `rgba(59,130,246,...)` that should use `primaryAlpha()` and `rgba(0,0,0,...)` that should use `blackAlpha()`. Target: lines 100, 117, 119, 139, 238, 273–277, 376–387, 422.
-- [ ] **GradientEditor hardcoded text colors** — `GradientEditor.tsx` has `#171717`, `#737373`, `#C4C4C4`, `#525252` for labels and controls. Replace with `text.primary`, `text.disabled`, `text.hint`, `text.secondary`. Also has 5+ `rgba(0,0,0,...)` border/background values that should use `blackAlpha()`. Target: lines 209, 231, 250, 289–303, 323, 339.
+- [x] **GradientEditor hardcoded text colors** — `GradientEditor.tsx` has `#171717`, `#737373`, `#C4C4C4`, `#525252` for labels and controls. Replace with `text.primary`, `text.disabled`, `text.hint`, `text.secondary`. Also has 5+ `rgba(0,0,0,...)` border/background values that should use `blackAlpha()`. Target: lines 209, 231, 250, 289–303, 323, 339.
 - [ ] **PositionOffsetDiagram hardcoded text colors** — `PositionOffsetDiagram.tsx` uses `#A3A3A3`, `#171717`, `#525252` for diagram labels. Replace with `text.hint`, `text.primary`, `text.secondary`. Target: lines 126, 204, 226, 243.
 - [ ] **SpacingGuidesOverlay hardcoded colors** — `SpacingGuidesOverlay.tsx` defines 4 top-level color constants (`#57A8FF`, `rgba(87,168,255,0.30)`, `#4CAF50`, `rgba(76,175,80,0.30)`) outside the token system. Add `overlay.spacing.*` token family to theme.ts (matching the pattern used for `overlay.grid.*` and `overlay.flexGap.*`). Target: lines 23–26.
 - [ ] **Dropdown shadow token adoption** — 4 components use inline `boxShadow: "0 4px 12px rgba(0,0,0,0.1)"` which is identical to `shadow.dropdown`. Replace with the token. Similarly, `ColorPickerEnhanced.tsx:452` uses `"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)"` which matches `shadow.picker`. Target: `TransformEditor.tsx:150`, `FilterSliders.tsx:362`, `SpacingValuePopover.tsx:178`, `ColorPickerEnhanced.tsx:452`.
