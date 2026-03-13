@@ -40,10 +40,10 @@ describe("SliderRow dirty indicator", () => {
         onChange: () => {},
         computedProp: "font-weight",
         computedElement: el,
-        indicator: "modified",
+        indicator: "element",
       }),
     );
-    expect(html).toContain("Modified");
+    expect(html).toContain("Element");
 
     // Cleanup
     document.body.removeChild(el);
@@ -74,7 +74,7 @@ describe("SliderRow dirty indicator", () => {
         // Note: no computedProp or computedElement passed!
       }),
     );
-    expect(html).not.toContain("Modified");
+    expect(html).not.toContain("Element:");
 
     // Cleanup
     document.body.removeChild(el);
