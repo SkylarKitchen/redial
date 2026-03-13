@@ -84,7 +84,7 @@ Start with `:hover` only. Other states (`:focus`, `:active`) follow the same pat
 - [x] Save writes to `.className:hover { }` block in the CSS module
 - [x] If no `:hover` block exists, one is created after the base class
 - [x] Switching back to "None" (base) restores normal inline preview behavior
-- [ ] Undo/redo works across state boundaries
+- [x] Undo/redo works across state boundaries
 - [x] New test: state-specific `<style>` tag injection and cleanup
 - [x] New test: `commit.ts` finds and writes inside `.className:hover { }` block
 - [x] `npm run typecheck` passes
