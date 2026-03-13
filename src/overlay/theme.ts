@@ -95,6 +95,8 @@ export const surface = {
   track: "rgba(0,0,0,0.12)",
   /** Dark dropdown menu surface */
   darkMenu: "#363636",
+  /** Dark toolbar / FAB surface */
+  darkToolbar: "#1e1e1e",
 } as const;
 
 // ─── Typography ──────────────────────────────────────────────────

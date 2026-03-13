@@ -12,7 +12,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
 import { ms, springConfig } from "./timing";
-import { primaryAlpha, blackAlpha, bgAlpha } from "./theme";
+import { primaryAlpha, blackAlpha, bgAlpha, surface } from "./theme";
 import type { ActivePanel } from "./Overlay";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export function Toolbar({
         style={{
           height: 48,
           borderRadius: 24,
-          background: "#1e1e1e",
+          background: surface.darkToolbar,
           border: `1px solid ${isActive ? primaryAlpha(0.4) : "rgba(255,255,255,0.08)"}`,
           cursor: "pointer",
           display: "flex",
