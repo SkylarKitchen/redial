@@ -218,7 +218,7 @@ export function BackgroundLayerList({
             border: `1px dashed ${blackAlpha(0.15)}`,
             color: color.mutedForeground,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = color.muted)}
+          onMouseEnter={(e) => (e.currentTarget.style.background = surface.hover)}
           onMouseLeave={(e) => (e.currentTarget.style.background = color.input)}
         >
           + Add background
@@ -257,7 +257,7 @@ export function BackgroundLayerList({
                   transition: `background-color ${ms("fast")}`,
                   color: blackAlpha(0.6),
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = color.muted)}
+                onMouseEnter={(e) => (e.currentTarget.style.background = surface.hover)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {t}

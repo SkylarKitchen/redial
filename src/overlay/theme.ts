@@ -94,6 +94,12 @@ export const border = {
   strong: "rgba(0,0,0,0.30)",
 } as const;
 
+/**
+ * Hover convention:
+ * - Light backgrounds → `surface.hover` / `surface.active`
+ * - Dark backgrounds → `darkToolbar.hover` / `darkToolbar.active`
+ * - Never use raw `rgba()` for hover states
+ */
 export const surface = {
   /** Hover background — 5% */
   hover: "rgba(0,0,0,0.05)",

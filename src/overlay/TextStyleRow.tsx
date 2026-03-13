@@ -13,7 +13,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, focusRing, font, zIndex } from "./theme";
+import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { TextStyle } from "./textStyleScanner";
 
@@ -211,7 +211,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: open || hovered ? blackAlpha(0.07) : color.input,
+            background: open || hovered ? surface.active : color.input,
             border: `1px solid ${borderTokens.default}`,
             borderRadius: 2,
             fontSize: 11,

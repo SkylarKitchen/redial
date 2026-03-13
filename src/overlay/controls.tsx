@@ -1014,6 +1014,7 @@ export function ColorRow({
               onClose={() => setPickerOpen(false)}
               onSelectVariable={(varExpr) => {
                 onChange(varExpr);
+                setPickerOpen(false);
               }}
               activeVariable={varName}
             />

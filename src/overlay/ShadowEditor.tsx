@@ -12,8 +12,9 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { shadowToCSS } from "./cssParsers";
+import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { ms } from "./timing";
-import { color, font, border, zIndex } from "./theme";
+import { color, font, border, surface, zIndex } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -144,10 +145,10 @@ function NumericInput({
             transition: `background ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+            (e.currentTarget as HTMLElement).style.background = surface.hover;
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.03)";
+            (e.currentTarget as HTMLElement).style.background = color.input;
           }}
         >
           {value}
@@ -235,7 +236,7 @@ function ShadowRow({
               height: "16px",
               borderRadius: "2px",
               border: "1px solid rgba(0,0,0,0.15)",
-              background: shadow.color,
+              background: resolveVarColor(shadow.color) ?? shadow.color,
               cursor: "pointer",
               padding: 0,
               flexShrink: 0,
@@ -244,7 +245,7 @@ function ShadowRow({
           {pickerOpen && (
             <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
               <ColorPickerEnhanced
-                color={cssColorToHex(shadow.color)}
+                color={cssColorToHex(resolveVarColor(shadow.color) ?? shadow.color)}
                 onChange={(hex, opacity) => {
                   const color = opacity < 1
                     ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
@@ -252,6 +253,11 @@ function ShadowRow({
                   onUpdate(index, { ...shadow, color });
                 }}
                 onClose={() => setPickerOpen(false)}
+                onSelectVariable={(varExpr) => {
+                  onUpdate(index, { ...shadow, color: varExpr });
+                  setPickerOpen(false);
+                }}
+                activeVariable={parseVarRef(shadow.color)}
               />
             </div>
           )}

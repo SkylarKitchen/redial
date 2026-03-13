@@ -70,8 +70,10 @@ export function HistoryDrawer({ entries, onUndoToIndex, onClose }: HistoryDrawer
             return (
               <div
                 key={`${entry.timestamp}-${entry.property}-${ri}`}
-                className="px-3 py-1.5 border-b hover:bg-[rgba(0,0,0,0.05)]"
+                className="px-3 py-1.5 border-b"
                 style={{ borderColor: border.default }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = surface.hover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-mono" style={{ color: text.label }}>

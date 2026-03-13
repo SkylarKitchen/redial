@@ -249,20 +249,20 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
               height: "24px",
               padding: 0,
               border: "none",
-              borderBottom: active ? "2px solid rgba(0,0,0,0.35)" : "2px solid transparent",
-              background: active ? "rgba(0,0,0,0.06)" : "transparent",
+              borderBottom: active ? `2px solid ${borderToken.strong}` : "2px solid transparent",
+              background: active ? surface.active : "transparent",
               cursor: "pointer",
               outline: "none",
               transition: `background ${ms("normal")}`,
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
+                (e.currentTarget as HTMLElement).style.background = surface.hover;
               }
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = active
-                ? "rgba(0,0,0,0.06)"
+                ? surface.active
                 : "transparent";
             }}
           >
