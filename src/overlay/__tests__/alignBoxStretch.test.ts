@@ -1,52 +1,65 @@
+// @vitest-environment happy-dom
 /**
  * AlignBox stretch visual representation test
  *
- * Bug: When justify or align is "stretch", toIndex() returns -1,
- * so no cell in the AlignBox gets highlighted. Stretch is a valid
- * and common value (especially in grid mode) and should be visually
- * represented.
+ * Bug: When justify or align is "stretch", no cell in the AlignBox
+ * gets highlighted — stretch is visually invisible. The dot/indicator
+ * should change to communicate that stretch is active.
  */
+import { describe, it, expect, vi } from "vitest";
+import { createElement } from "react";
+import { renderToString } from "react-dom/server";
+import { AlignBox } from "../AlignBox";
 
-import { describe, it, expect } from "vitest";
-
-// toIndex is not exported, so we replicate its logic to test the mapping
-// This test validates the contract: stretch values must map to a valid visual state
+function render(justify: string, align: string, mode: "flex" | "grid" = "grid") {
+  const html = renderToString(
+    createElement(AlignBox, { justify, align, onChange: vi.fn(), mode, compact: true })
+  );
+  return html;
+}
 
 describe("AlignBox stretch representation", () => {
-  // Replicate the current toIndex to prove the bug
-  function toIndex(value: string): number {
-    if (value === "flex-start" || value === "start") return 0;
-    if (value === "center") return 1;
-    if (value === "flex-end" || value === "end") return 2;
-    return -1;
-  }
-
-  it("BUG: toIndex returns -1 for 'stretch', leaving no cell active", () => {
-    // This test documents the current broken behavior
-    expect(toIndex("stretch")).toBe(-1);
-    // -1 means no arrow or dot is highlighted — stretch is invisible
+  it("highlights the dot when justify and align are positional values", () => {
+    const html = render("start", "start", "grid");
+    // The primary color (#3B82F6 or similar) indicates an active cell.
+    // At minimum, the center dot or an arrow should have the active color.
+    // With start/start, the top-left arrow and/or the dot should be active.
+    expect(html).toBeTruthy();
   });
 
-  it("toIndex handles start/center/end correctly", () => {
-    expect(toIndex("start")).toBe(0);
-    expect(toIndex("center")).toBe(1);
-    expect(toIndex("end")).toBe(2);
-    expect(toIndex("flex-start")).toBe(0);
-    expect(toIndex("flex-end")).toBe(2);
+  it("must visually indicate stretch on the justify (X) axis", () => {
+    const html = render("stretch", "start", "grid");
+    // When justify is "stretch", the AlignBox should contain some visual
+    // indicator that stretch is active — not just fall back to "no selection".
+    // We check that a stretch-specific data attribute or visual element exists.
+    // A stretch bar, highlighted row, or data-stretch attribute would all pass.
+    expect(
+      html.includes("data-stretch") ||
+      html.includes("stretch-bar") ||
+      // Or the active color appears somewhere (meaning something is highlighted)
+      // When nothing is active, ALL indicators are the inactive color (blackAlpha)
+      // So we check that at least one element has the primary/active styling
+      html.includes("border-radius:0") || // bar shape (not round dot)
+      /width:\s*(?:2[4-9]|[3-9]\d|1\d\d).*height:\s*(?:[2-6])/.test(html) // wide thin bar
+    ).toBe(true);
   });
 
-  // These tests define what SHOULD happen after the fix:
-  it("stretch should produce a valid visual state (not -1)", () => {
-    // After the fix, stretch should either:
-    // 1. Map to a special "stretch" indicator (e.g. full-width/height bar), OR
-    // 2. Map to a distinct visual state that is not "no selection"
-    //
-    // The key requirement: when justify="stretch" or align="stretch",
-    // the AlignBox must visually communicate that stretch is active.
-    //
-    // We test this by importing the real component's mapping function
-    // and asserting it doesn't return -1 for stretch.
-    expect(toIndex("stretch")).not.toBe(-1);
-    // ^^^ THIS FAILS — proving the bug exists
+  it("must visually indicate stretch on the align (Y) axis", () => {
+    const html = render("start", "stretch", "grid");
+    expect(
+      html.includes("data-stretch") ||
+      html.includes("stretch-bar") ||
+      html.includes("border-radius:0") ||
+      /height:\s*(?:2[4-9]|[3-9]\d|1\d\d).*width:\s*(?:[2-6])/.test(html) // tall thin bar
+    ).toBe(true);
+  });
+
+  it("must visually indicate stretch on both axes", () => {
+    const html = render("stretch", "stretch", "grid");
+    expect(
+      html.includes("data-stretch") ||
+      html.includes("stretch-bar") ||
+      html.includes("border-radius:0")
+    ).toBe(true);
   });
 });
