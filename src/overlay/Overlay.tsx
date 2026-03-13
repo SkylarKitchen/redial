@@ -541,6 +541,56 @@ export function Overlay() {
         return;
       }
 
+      // M to toggle box model overlay
+      if (e.key === "m" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setShowBoxModel((v) => !v);
+        return;
+      }
+
+      // G to toggle grid overlay
+      if (e.key === "g" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setShowGridOverlay((v) => !v);
+        return;
+      }
+
+      // T to toggle Style / AI tab
+      if (e.key === "t" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setActiveTab((prev) => prev === "custom" ? "prompt" : "custom");
+        return;
+      }
+
+      // 1-8: jump to section (auto-enables focus mode)
+      if (selectedEl && !selecting && e.key >= "1" && e.key <= "8" && !e.metaKey && !e.ctrlKey) {
+        const idx = parseInt(e.key) - 1;
+        if (idx < SECTION_ORDER.length) {
+          e.preventDefault();
+          if (!focusMode) setFocusMode(true);
+          setExpandedSection(SECTION_ORDER[idx]);
+          // Ensure we're on the Style tab
+          if (activeTab !== "custom") setActiveTab("custom");
+          return;
+        }
+      }
+
+      // [ / ] to cycle sections in focus mode
+      if ((e.key === "[" || e.key === "]") && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        if (!focusMode) setFocusMode(true);
+        if (activeTab !== "custom") setActiveTab("custom");
+        const currentIdx = expandedSection ? SECTION_ORDER.indexOf(expandedSection as typeof SECTION_ORDER[number]) : -1;
+        let nextIdx: number;
+        if (e.key === "]") {
+          nextIdx = currentIdx < SECTION_ORDER.length - 1 ? currentIdx + 1 : 0;
+        } else {
+          nextIdx = currentIdx > 0 ? currentIdx - 1 : SECTION_ORDER.length - 1;
+        }
+        setExpandedSection(SECTION_ORDER[nextIdx]);
+        return;
+      }
+
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         setSelecting((s) => !s);
@@ -1411,6 +1461,11 @@ export function Overlay() {
       {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}
       {selectedEl && isGridContainer && showGridOverlay && !selecting && (
         <GridOverlay element={selectedEl} refreshKey={panelKey} />
+      )}
+
+      {/* Box model overlay (M key) */}
+      {selectedEl && showBoxModel && !selecting && (
+        <BoxModelOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
       {/* Ghosted margin + padding preview — always visible on selection */}
