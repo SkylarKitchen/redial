@@ -8,7 +8,8 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { discoverVariables, discoverAllVariables, type CSSVariable, type VarType } from "./discoverVariables";
+import { discoverVariables, discoverAllVariables, buildAliasGraph, type CSSVariable, type VarType, type AliasTier } from "./discoverVariables";
+import { inferAutoCollections } from "./autoCollections";
 import { useTokenCollections } from "./tokenCollections";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
 import { ms } from "./timing";
@@ -62,10 +63,12 @@ function VarRow({
   variable,
   isActive,
   onSelect,
+  aliasOf,
 }: {
   variable: CSSVariable;
   isActive: boolean;
   onSelect: () => void;
+  aliasOf?: string;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -103,20 +106,38 @@ function VarRow({
       >
         {variable.name.replace(/^--/, "")}
       </span>
-      <span
-        style={{
-          fontSize: 9,
-          fontFamily: font.mono,
-          color: text.hint,
-          flexShrink: 0,
-          maxWidth: 60,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {variable.value}
-      </span>
+      {aliasOf ? (
+        <span
+          style={{
+            fontSize: 9,
+            fontFamily: font.mono,
+            color: text.disabled,
+            flexShrink: 0,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: 70,
+          }}
+          title={`Aliases ${aliasOf}`}
+        >
+          → {aliasOf.replace(/^--/, "")}
+        </span>
+      ) : (
+        <span
+          style={{
+            fontSize: 9,
+            fontFamily: font.mono,
+            color: text.hint,
+            flexShrink: 0,
+            maxWidth: 60,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {variable.value}
+        </span>
+      )}
     </div>
   );
 }
@@ -154,7 +175,7 @@ export function VariablePicker({
   const searchRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [search, setSearch] = useState("");
-  const { collections, getCollectionForVariable } = useTokenCollections();
+  const { collections, getCollectionForVariable, getManuallyAssignedNames } = useTokenCollections();
 
   // Discover variables
   const allVars = useMemo(() => {
@@ -162,6 +183,9 @@ export function VariablePicker({
     if (type === "all") return vars;
     return vars.filter((v) => v.type === type);
   }, [element, type]);
+
+  // Build alias graph for alias-arrow display
+  const aliasGraph = useMemo(() => buildAliasGraph(allVars), [allVars]);
 
   // Filter by search
   const filtered = useMemo(() => {
@@ -199,6 +223,12 @@ export function VariablePicker({
     }
     return { ordered, uncategorized };
   }, [filtered, collections, getCollectionForVariable]);
+
+  // Auto-group uncategorized variables by prefix
+  const autoGrouped = useMemo(() => {
+    if (grouped.uncategorized.length === 0) return [];
+    return inferAutoCollections(grouped.uncategorized, new Set());
+  }, [grouped.uncategorized]);
 
   // Position below anchor, clamped to viewport
   useEffect(() => {

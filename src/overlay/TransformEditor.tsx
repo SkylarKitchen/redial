@@ -216,6 +216,7 @@ function TransformCard({
         borderRadius: "3px",
         padding: "4px 6px",
         height: "28px",
+        overflow: "hidden",
       }}
     >
       {/* Label */}
@@ -411,7 +412,7 @@ function AxisInput({
       onBlur={commit}
       onKeyDown={handleKeyDown}
       style={{
-        width: "42px",
+        width: "36px",
         background: color.input,
         border: focusBorder(focused),
         borderRadius: "2px",

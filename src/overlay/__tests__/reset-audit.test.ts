@@ -65,6 +65,36 @@ function findMissingResets(src: string, controlName: string): string[] {
   return missing;
 }
 
+/**
+ * Find all SubSectionHeader instances that have an `indicator` prop
+ * but are missing `onReset`. The rule: if a sub-section shows the
+ * orange modified dot, it must support resetting.
+ */
+function findMissingSubSectionResets(src: string): string[] {
+  const regex = /<SubSectionHeader\b/g;
+  const missing: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(src)) !== null) {
+    const start = match.index;
+    let end = start;
+    for (let i = start; i < src.length; i++) {
+      if (src.slice(i, i + 2) === "/>") { end = i + 2; break; }
+    }
+    const block = src.slice(start, end);
+
+    if (!block.includes("indicator")) continue;
+
+    const labelMatch = block.match(/label="([^"]+)"/);
+    const label = labelMatch ? labelMatch[1] : "unknown";
+
+    if (!block.includes("onReset")) {
+      missing.push(label);
+    }
+  }
+  return missing;
+}
+
 describe("Option+Click reset audit: every control with computedProp must have onReset", () => {
   // ── PositionSection ──
   describe("PositionSection", () => {
@@ -143,6 +173,11 @@ describe("Option+Click reset audit: every control with computedProp must have on
     it("all SliderRows with computedProp have onReset", () => {
       const missing = findMissingResets(src, "SliderRow");
       expect(missing, `SliderRows missing onReset: ${missing.join(", ")}`).toEqual([]);
+    });
+
+    it("all SubSectionHeaders with indicator have onReset", () => {
+      const missing = findMissingSubSectionResets(src);
+      expect(missing, `SubSectionHeaders missing onReset: ${missing.join(", ")}`).toEqual([]);
     });
   });
 

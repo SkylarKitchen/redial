@@ -4,14 +4,19 @@
  * Rich dropdown with icons per position mode and a description area
  * explaining what each mode does. Replaces the plain SelectRow for
  * the `position` CSS property.
+ *
+ * Portal-based dropdown to avoid clipping in scroll containers.
+ * Full keyboard navigation via useDropdownKeyboard hook.
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useId, useMemo } from "react";
+import { createPortal } from "react-dom";
 import type { IndicatorType } from "./theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, blackAlpha, primaryAlpha, focusRing, font, labelIndicator, labelHighlight } from "./theme";
+import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndicator, labelHighlight, shadow, zIndex } from "./theme";
 import { useResetPopover } from "./controls";
+import { useDropdownKeyboard } from "./useDropdownKeyboard";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -79,18 +84,52 @@ export function PositionSelector({
   const [open, setOpen] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const id = useId();
   const resetPopover = useResetPopover(indicator, onReset);
   const current = POSITION_ITEMS.find((o) => o.value === value) ?? POSITION_ITEMS[0];
+
+  // Keyboard navigation
+  const labels = useMemo(() => POSITION_ITEMS.map((o) => o.label), []);
+
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: POSITION_ITEMS.length,
+    selectedIndex: POSITION_ITEMS.findIndex((o) => o.value === value),
+    onSelect: (i) => {
+      onChange(POSITION_ITEMS[i].value);
+      setOpen(false);
+    },
+    labels,
+  });
+
+  // Description shows hovered item, keyboard-highlighted item, or current value
+  const highlightedItem = highlightedIndex >= 0 ? POSITION_ITEMS[highlightedIndex] : null;
   const descriptionItem = hoveredValue
     ? POSITION_ITEMS.find((o) => o.value === hoveredValue) ?? current
-    : current;
+    : highlightedItem ?? current;
 
+  // Compute dropdown position from trigger rect with flip-above logic
+  const DROPDOWN_HEIGHT = 280;
+  const updateDropdownPos = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
+    setDropdownPos({ top, left: rect.left, width: rect.width });
+  }, []);
+
+  // Close on outside click (check both container and portal element)
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      const portal = document.querySelector("[data-position-selector-portal]");
+      if (portal?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -129,12 +168,20 @@ export function PositionSelector({
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         {/* Trigger button */}
         <button
+          ref={triggerRef}
           className="tuner-focusable"
           tabIndex={0}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={`${id}-listbox`}
+          aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
           onClick={(e) => {
             if (e.altKey && onReset) { e.preventDefault(); onReset(); return; }
+            if (!open) updateDropdownPos();
             setOpen((o) => !o);
           }}
+          onKeyDown={onTriggerKeyDown}
           onFocus={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
           }}
@@ -149,7 +196,7 @@ export function PositionSelector({
             justifyContent: "space-between",
             background: open ? border.input : color.input,
             border: `1px solid ${color.border}`,
-            borderRadius: "3px",
+            borderRadius: 2,
             color: text.secondary,
             fontSize: "11px",
             fontFamily: font.mono,
@@ -172,114 +219,129 @@ export function PositionSelector({
           <ChevronDown size={12} strokeWidth={2} style={{ color: text.disabled, flexShrink: 0, marginLeft: "4px" }} />
         </button>
 
-        {/* Dropdown */}
-        {open && (
+        {/* Dropdown — portaled to document.body to escape scroll overflow */}
+        {open && dropdownPos && createPortal(
           <div
+            data-tuner-portal
+            data-position-selector-portal
             style={{
-              position: "absolute",
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              minWidth: "200px",
-              background: color.popover,
-              border: `1px solid ${border.hover}`,
-              borderRadius: "4px",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-              zIndex: 200,
-              overflow: "hidden",
+              position: "fixed",
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              zIndex: zIndex.max,
             }}
           >
-            {/* Options list */}
-            <div style={{ padding: "4px 0" }}>
-              {POSITION_ITEMS.map((opt) => {
-                const isActive = opt.value === value;
-                return (
-                  <div
-                    key={opt.value}
-                    onClick={() => handleSelect(opt.value)}
-                    onMouseEnter={(e) => {
-                      setHoveredValue(opt.value);
-                      if (!isActive)
-                        (e.currentTarget as HTMLElement).style.background = color.input;
-                    }}
-                    onMouseLeave={(e) => {
-                      setHoveredValue(null);
-                      if (!isActive)
-                        (e.currentTarget as HTMLElement).style.background = "transparent";
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "6px 10px",
-                      cursor: "pointer",
-                      background: isActive ? primaryAlpha(0.15) : "transparent",
-                      transition: `background ${ms("micro")}`,
-                    }}
-                  >
-                    {/* Checkmark column */}
-                    <span
-                      style={{
-                        width: "14px",
-                        fontSize: "11px",
-                        color: isActive ? color.primary : "transparent",
-                        flexShrink: 0,
-                        textAlign: "center",
+            <div
+              id={`${id}-listbox`}
+              role="listbox"
+              onKeyDown={onListKeyDown}
+              style={{
+                minWidth: Math.max(dropdownPos.width, 200),
+                background: color.popover,
+                border: `1px solid ${border.hover}`,
+                borderRadius: "4px",
+                boxShadow: shadow.dropdown,
+                overflow: "hidden",
+              }}
+            >
+              {/* Options list */}
+              <div style={{ padding: "4px 0" }}>
+                {POSITION_ITEMS.map((opt, idx) => {
+                  const isActive = opt.value === value;
+                  const isHighlighted = idx === highlightedIndex;
+                  return (
+                    <div
+                      key={opt.value}
+                      id={`${id}-opt-${idx}`}
+                      ref={isHighlighted ? optionRefCallback : undefined}
+                      role="option"
+                      aria-selected={isActive}
+                      onClick={() => handleSelect(opt.value)}
+                      onMouseEnter={(e) => {
+                        setHoveredValue(opt.value);
+                        if (!isActive)
+                          (e.currentTarget as HTMLElement).style.background = color.input;
                       }}
-                    >
-                      ✓
-                    </span>
-
-                    {/* Icon */}
-                    <span
+                      onMouseLeave={(e) => {
+                        setHoveredValue(null);
+                        if (!isActive)
+                          (e.currentTarget as HTMLElement).style.background = isHighlighted ? surface.hover : "transparent";
+                      }}
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "center",
-                        width: "20px",
-                        height: "20px",
-                        color: isActive ? color.foreground : text.label,
-                        flexShrink: 0,
+                        gap: "8px",
+                        padding: "6px 10px",
+                        cursor: "pointer",
+                        background: isActive ? primaryAlpha(0.15) : isHighlighted ? surface.hover : "transparent",
+                        transition: `background ${ms("micro")}`,
                       }}
                     >
-                      {opt.icon}
-                    </span>
+                      {/* Checkmark column */}
+                      <span
+                        style={{
+                          width: "14px",
+                          fontSize: "11px",
+                          color: isActive ? color.primary : "transparent",
+                          flexShrink: 0,
+                          textAlign: "center",
+                        }}
+                      >
+                        ✓
+                      </span>
 
-                    {/* Label */}
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        color: isActive ? color.foreground : text.label,
-                        fontWeight: isActive ? 500 : 400,
-                      }}
-                    >
-                      {opt.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                      {/* Icon */}
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "20px",
+                          height: "20px",
+                          color: isActive ? color.foreground : text.label,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {opt.icon}
+                      </span>
 
-            {/* Description area */}
-            <div
-              style={{
-                borderTop: `1px solid ${surface.hover}`,
-                padding: "10px 12px",
-              }}
-            >
-              <p
+                      {/* Label */}
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: isActive ? color.foreground : text.label,
+                          fontWeight: isActive ? 500 : 400,
+                        }}
+                      >
+                        {opt.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Description area */}
+              <div
                 style={{
-                  margin: 0,
-                  fontSize: "11px",
-                  lineHeight: 1.45,
-                  color: text.label,
+                  borderTop: `1px solid ${surface.hover}`,
+                  padding: "10px 12px",
                 }}
               >
-                <strong style={{ color: text.secondary }}>{descriptionItem.label}</strong>{" "}
-                {descriptionItem.description.replace(`${descriptionItem.label} `, "")}
-              </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "11px",
+                    lineHeight: 1.45,
+                    color: text.label,
+                  }}
+                >
+                  <strong style={{ color: text.secondary }}>{descriptionItem.label}</strong>{" "}
+                  {descriptionItem.description.replace(`${descriptionItem.label} `, "")}
+                </p>
+              </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>

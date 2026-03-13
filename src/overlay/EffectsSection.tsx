@@ -246,13 +246,13 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       </div>
 
       {/* 4. Box shadows */}
-      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} indicator={ind("box-shadow")} />
+      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} indicator={ind("box-shadow")} onReset={() => { resetProp(element, "box-shadow"); setShadows(parseBoxShadow(getComputedStyle(element).boxShadow)); }} />
       {shadows.length > 0 && (
         <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
       )}
 
       {/* 5. 2D & 3D transforms */}
-      <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} indicator={ind("transform")} />
+      <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} indicator={ind("transform")} onReset={() => { resetProp(element, "transform"); resetProp(element, "transform-origin"); const fresh = getComputedStyle(element); setTransforms(parseTransform(fresh.transform)); setTransformOrigin(fresh.transformOrigin || "center"); }} />
       {transforms.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransformEditor
@@ -265,7 +265,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 6. Transitions */}
-      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} indicator={ind("transition")} />
+      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} indicator={ind("transition")} onReset={() => { resetProp(element, "transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />
       {transitions.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
@@ -273,7 +273,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 7. Filters */}
-      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} indicator={ind("filter")} />
+      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} indicator={ind("filter")} onReset={() => { resetProp(element, "filter"); setFilterValues(parseFilter(getComputedStyle(element).filter)); }} />
       {filtersExpanded && (
         <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
@@ -281,7 +281,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 8. Backdrop filters */}
-      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} indicator={ind("backdrop-filter")} />
+      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} indicator={ind("backdrop-filter")} onReset={() => { resetProp(element, "backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterValues(parseFilter(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }} />
       {backdropFiltersExpanded && (
         <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
