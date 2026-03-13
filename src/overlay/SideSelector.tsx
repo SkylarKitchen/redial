@@ -132,8 +132,7 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
           outline: "none",
           color: active ? color.foreground : text.disabled,
           background: active ? surface.active : "transparent",
-          boxShadow: active ? "0px 0.5px 1px 0px rgba(0,0,0,0.8)" : "none",
-          transition: `background ${ms("fast")}, color ${ms("fast")}, box-shadow ${ms("fast")}`,
+          transition: `background ${ms("fast")}, color ${ms("fast")}`,
         }}
         onMouseEnter={(e) => {
           if (!active) {
