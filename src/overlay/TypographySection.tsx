@@ -226,7 +226,7 @@ export const TypographySection = memo(function TypographySection({
       <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
 
       {/* Size + Height side-by-side compact cells */}
-      <div style={ROW}>
+      <div style={{ ...ROW, gap: 4 }}>
         <span style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}>
           {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
           Size
