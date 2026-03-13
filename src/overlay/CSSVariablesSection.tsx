@@ -100,13 +100,7 @@ function VariableRow({
     [draft, commit, variable.value]
   );
 
-  const indicator: IndicatorType = dirty
-    ? "element"
-    : variable.source === "element"
-      ? "direct"
-      : variable.source === "inherited"
-        ? "inherited"
-        : "none";
+  const indicator: IndicatorType = dirty ? "modified" : "none";
 
   const label = varLabel(variable.name);
 

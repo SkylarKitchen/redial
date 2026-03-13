@@ -6,13 +6,11 @@ import {
   getIndicatorTitle,
   getAuthoredValue,
   detectUnit,
-  isVariableLinked,
   isTextBearing,
   TEXT_TAGS,
-  INHERITABLE_PROPERTIES,
 } from "../panelUtils";
 
-// ─── Setup ────────────────────────────────────────────────────────────
+// ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
   document.body.innerHTML = "";
@@ -24,7 +22,7 @@ function makeEl(tag = "div"): HTMLElement {
   return el;
 }
 
-// ─── TEXT_TAGS ─────────────────────────────────────────────────────────
+// ─── TEXT_TAGS ───────────────────────────────────────────────────────────────
 
 describe("TEXT_TAGS", () => {
   it("includes common text-bearing tags", () => {
@@ -40,33 +38,14 @@ describe("TEXT_TAGS", () => {
   });
 });
 
-// ─── INHERITABLE_PROPERTIES ───────────────────────────────────────────
-
-describe("INHERITABLE_PROPERTIES", () => {
-  it("includes common inherited properties", () => {
-    expect(INHERITABLE_PROPERTIES.has("color")).toBe(true);
-    expect(INHERITABLE_PROPERTIES.has("font-family")).toBe(true);
-    expect(INHERITABLE_PROPERTIES.has("font-size")).toBe(true);
-    expect(INHERITABLE_PROPERTIES.has("line-height")).toBe(true);
-    expect(INHERITABLE_PROPERTIES.has("cursor")).toBe(true);
-  });
-
-  it("does not include non-inherited properties", () => {
-    expect(INHERITABLE_PROPERTIES.has("width")).toBe(false);
-    expect(INHERITABLE_PROPERTIES.has("display")).toBe(false);
-    expect(INHERITABLE_PROPERTIES.has("padding")).toBe(false);
-    expect(INHERITABLE_PROPERTIES.has("margin")).toBe(false);
-  });
-});
-
-// ─── getIndicatorType ─────────────────────────────────────────────────
+// ─── getIndicatorType ─────────────────────────────────────────────────────
 
 describe("getIndicatorType", () => {
-  it('returns "element" when property is set inline', () => {
+  it('returns "modified" when property is set inline', () => {
     const el = makeEl();
     el.style.setProperty("color", "red");
     const cs = getComputedStyle(el);
-    expect(getIndicatorType(el, "color", cs)).toBe("element");
+    expect(getIndicatorType(el, "color", cs)).toBe("modified");
   });
 
   it('returns "none" for untouched properties', () => {
@@ -78,23 +57,21 @@ describe("getIndicatorType", () => {
   it('returns "none" when no parent computed style is provided', () => {
     const el = makeEl();
     const cs = getComputedStyle(el);
-    // Even for an inheritable prop, without parentCs it returns "none"
     expect(getIndicatorType(el, "font-size", cs, null)).toBe("none");
   });
 
-  it('returns "element" even for inheritable props when set inline', () => {
+  it('returns "modified" for inline styles regardless of inheritance', () => {
     const parent = makeEl();
     const child = document.createElement("span");
     parent.appendChild(child);
     child.style.setProperty("color", "blue");
     const cs = getComputedStyle(child);
     const parentCs = getComputedStyle(parent);
-    // Inline style takes priority over inheritance check
-    expect(getIndicatorType(child, "color", cs, parentCs)).toBe("element");
+    expect(getIndicatorType(child, "color", cs, parentCs)).toBe("modified");
   });
 });
 
-// ─── getAuthoredValue ─────────────────────────────────────────────────
+// ─── getAuthoredValue ─────────────────────────────────────────────────────
 
 describe("getAuthoredValue", () => {
   it("returns inline style value when set", () => {
@@ -115,28 +92,7 @@ describe("getAuthoredValue", () => {
   });
 });
 
-// ─── isVariableLinked ─────────────────────────────────────────────────
-
-describe("isVariableLinked", () => {
-  it("returns true when inline style uses var()", () => {
-    const el = makeEl();
-    el.style.setProperty("color", "var(--primary)");
-    expect(isVariableLinked(el, "color")).toBe(true);
-  });
-
-  it("returns false when value does not use var()", () => {
-    const el = makeEl();
-    el.style.setProperty("color", "red");
-    expect(isVariableLinked(el, "color")).toBe(false);
-  });
-
-  it("returns false when property is not authored", () => {
-    const el = makeEl();
-    expect(isVariableLinked(el, "color")).toBe(false);
-  });
-});
-
-// ─── detectUnit ───────────────────────────────────────────────────────
+// ─── detectUnit ─────────────────────────────────────────────────────────
 
 describe("detectUnit", () => {
   it('returns "px" from inline style with px value', () => {
@@ -169,7 +125,7 @@ describe("detectUnit", () => {
   });
 });
 
-// ─── isTextBearing ────────────────────────────────────────────────────
+// ─── isTextBearing ────────────────────────────────────────────────────────
 
 describe("isTextBearing", () => {
   it("returns true for TEXT_TAGS elements", () => {
@@ -216,51 +172,28 @@ describe("isTextBearing", () => {
   });
 });
 
-// ─── getIndicatorColor ────────────────────────────────────────────────
+// ─── getIndicatorColor ────────────────────────────────────────────────────
 
 describe("getIndicatorColor", () => {
   it("returns a color string for each indicator type", () => {
-    expect(typeof getIndicatorColor("element")).toBe("string");
-    expect(typeof getIndicatorColor("inherited")).toBe("string");
-    expect(typeof getIndicatorColor("state")).toBe("string");
-    expect(typeof getIndicatorColor("variable")).toBe("string");
-    expect(typeof getIndicatorColor("direct")).toBe("string");
+    expect(typeof getIndicatorColor("modified")).toBe("string");
     expect(typeof getIndicatorColor("none")).toBe("string");
   });
 
-  it("returns distinct colors for different active types", () => {
-    const element = getIndicatorColor("element");
-    const inherited = getIndicatorColor("inherited");
-    const variable = getIndicatorColor("variable");
-    const state = getIndicatorColor("state");
-    // All active types should be visually distinct
-    const colors = new Set([element, inherited, variable, state]);
-    expect(colors.size).toBe(4);
+  it("returns distinct colors for modified vs none", () => {
+    expect(getIndicatorColor("modified")).not.toBe(getIndicatorColor("none"));
   });
 });
 
-// ─── getIndicatorTitle ────────────────────────────────────────────────
+// ─── getIndicatorTitle ────────────────────────────────────────────────────
 
 describe("getIndicatorTitle", () => {
-  it("returns a title string for active types", () => {
-    expect(getIndicatorTitle("element")).toBeDefined();
-    expect(getIndicatorTitle("inherited")).toBeDefined();
-    expect(getIndicatorTitle("state")).toBeDefined();
-    expect(getIndicatorTitle("variable")).toBeDefined();
+  it("returns a title string for modified type", () => {
+    expect(getIndicatorTitle("modified")).toBeDefined();
+    expect(getIndicatorTitle("modified")).toContain("Modified");
   });
 
   it("returns undefined for 'none' type", () => {
     expect(getIndicatorTitle("none")).toBeUndefined();
-  });
-
-  it("includes parent info for inherited type when element provided", () => {
-    const parent = makeEl("section");
-    parent.className = "wrapper";
-    const child = document.createElement("p");
-    parent.appendChild(child);
-    const title = getIndicatorTitle("inherited", child, "color");
-    expect(title).toContain("section");
-    expect(title).toContain("wrapper");
-    expect(title).toContain("Inherited");
   });
 });
