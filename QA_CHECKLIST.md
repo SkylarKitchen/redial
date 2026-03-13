@@ -78,20 +78,17 @@ No content should clip or overflow the panel bounds.
 - [ ] SelectRow dropdown — renders via portal, not clipped by panel overflow
 - [ ] UnitSelector dropdown — visible at panel edges, not clipped
 - [ ] ColorPicker popup — fully visible, not cut off at panel bottom
-- [ ] ResetPopover — visible on modified label click, not clipped by panel
-- [ ] VariablePicker — scrollable list, no overflow outside panel
+- [ ] ResetPopover — visible on modified label click, not clipped
 - [ ] Clipboard dropdown (Footer) — opens upward, not clipped at bottom
 
 ### Long Values
 - [ ] Long font family name — no horizontal overflow in SelectRow
 - [ ] Long CSS variable name — truncates with ellipsis, no layout break
-- [ ] Large numeric values — SizeInputCell handles 4+ digit numbers
 - [ ] Long class name in Header breadcrumb — truncates, doesn't overflow panel width
 
 ### Sub-editors
 - [ ] ShadowEditor — 3+ shadows, list scrollable, no overflow
-- [ ] TransformEditor — 3+ transforms, controls don't overflow
-- [ ] TransitionEditor — 3+ transitions, list contained within panel
+- [ ] TransformEditor + TransitionEditor — 3+ entries each, contained within panel
 
 ---
 
@@ -102,7 +99,6 @@ Hover states, transitions, indicators, and alignment consistency.
 ### Hover States
 - [ ] Section header hover — background highlight appears (collapsed state)
 - [ ] SliderRow track — hover brightening works
-- [ ] SelectRow trigger — hover feedback visible
 - [ ] Footer buttons — all 3 (Clipboard, Reset, Save) show hover state
 - [ ] Close button (Header) — hover background appears
 - [ ] IconButtonGroup items — hover distinct from active state

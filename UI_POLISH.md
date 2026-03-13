@@ -252,3 +252,6 @@ Replaced hardcoded `duration: 0.15` in Toolbar.tsx AnimatePresence exit transiti
 
 ### 2026-03-13 — SessionDrawer hardcoded timeout
 Replaced 3 hardcoded values in SessionDrawer.tsx: copy auto-dismiss `1500` → `timing.dismissal` (1700ms), save auto-dismiss `2000` → `timing.dismissal`, and message animation `duration: 0.15` → `timing.expand / 1000`. All timing now governed by tokens.
+
+### 2026-03-13 — Internal z-index values outside token system
+Added 5 internal z-index tiers to theme.ts: `above: 1`, `sticky: 2`, `float: 10`, `dropdown: 100`, `popover: 200`. Replaced hardcoded magic numbers across 10 files: controls.tsx (1→above, 2→sticky), GlobalVariablesPanel.tsx (1→above ×3), SpacingBoxModel.tsx (1→above ×2), SpacingValuePopover.tsx (10→float), TransformEditor.tsx (100→dropdown), FilterSliders.tsx (100→dropdown), BackgroundLayerList.tsx (100→dropdown), Footer.tsx (100→dropdown), layoutControls.tsx (200→popover ×3). Zero internal z-index magic numbers remain.
