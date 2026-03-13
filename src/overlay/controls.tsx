@@ -14,7 +14,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { ResetPopover } from "./ResetPopover";
-import { getIndicatorColor, getIndicatorTitle, convertPresets } from "./panelUtils";
+import { getIndicatorTitle, convertPresets } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
@@ -23,7 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -66,17 +66,26 @@ export const selectAllOnDoubleClick = (e: React.MouseEvent<HTMLInputElement>) =>
 
 // ─── Shared styles ──────────────────────────────────────────────────
 
-const labelStyle = (c: string): React.CSSProperties => ({
-  fontSize: 11,
-  width: 70,
-  flexShrink: 0,
-  textTransform: "capitalize",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 4,
-  cursor: "default",
-  color: c,
-});
+const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
+  const isModified = indicator === "modified";
+  const li = isModified ? labelIndicator.modified : labelIndicator.none;
+  return {
+    fontSize: 11,
+    width: 70,
+    flexShrink: 0,
+    textTransform: "capitalize",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    cursor: "default",
+    color: li.text,
+    ...(isModified ? {
+      background: li.bg,
+      borderRadius: 3,
+      padding: "1px 4px",
+    } : {}),
+  };
+};
 
 const rowStyle: React.CSSProperties = {
   display: "flex",
@@ -400,15 +409,13 @@ export function SliderRow({
   }, [snapPoints, snapThreshold, min, max]);
 
   const resetPopover = useResetPopover(indicator, onReset);
-  const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       title={labelTitle}
-      style={labelStyle(labelColor)}
+      style={labelStyle(indicator)}
     >
-      {indicator && <StyleIndicator type={indicator} />}
       {label}
     </span>
   );
@@ -492,16 +499,14 @@ export function SelectRow({
   computedElement?: Element;
 }) {
   const resetPopover = useResetPopover(indicator, onReset);
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={selectLabelTitle}
-      style={labelStyle(selectLabelColor)}
+      style={labelStyle(indicator)}
     >
-      {indicator && <StyleIndicator type={indicator} />}
       {label}
     </span>
   );
@@ -615,16 +620,14 @@ function SelectRowCustom({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={selectLabelTitle}
-      style={labelStyle(selectLabelColor)}
+      style={labelStyle(indicator)}
     >
-      {indicator && <StyleIndicator type={indicator} />}
       {label}
     </span>
   );
@@ -773,16 +776,14 @@ export function ColorRow({
   const displayLabel = varName ? varName.replace(/^--/, "") : value;
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
-  const colorLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={colorLabelTitle}
-      style={labelStyle(colorLabelColor)}
+      style={labelStyle(indicator)}
     >
-      {indicator && <StyleIndicator type={indicator} />}
       {label}
     </span>
   );
@@ -936,11 +937,9 @@ export function NumberRow({
   computedElement?: Element;
 }) {
   const resetPopover = useResetPopover(indicator, onReset);
-  const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
-    <span ref={resetPopover.anchorRef} title={labelTitle} style={labelStyle(labelColor)}>
-      {indicator && <StyleIndicator type={indicator} />}
+    <span ref={resetPopover.anchorRef} title={labelTitle} style={labelStyle(indicator)}>
       {label}
     </span>
   );
