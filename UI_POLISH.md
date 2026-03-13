@@ -10,7 +10,7 @@ Autonomous improvement queue. Each item is a self-contained, verifiable enhancem
 
 Grep-and-fix passes that enforce the token system uniformly.
 
-- [ ] **GridOverlay hardcoded colors** — `GridOverlay.tsx:103-107` has 5 hardcoded `rgba(217,119,87,...)` values for `LINE_COLOR`, `GAP_COLOR`, `LABEL_COLOR`, `LABEL_BG`, `OUTLINE_COLOR`. Extract to `theme.ts` as `overlay.grid.*` token family.
+- [x] **GridOverlay hardcoded colors** — Extracted 5 hardcoded rgba values to `overlay.grid.*` token family + `gridAlpha()` helper in theme.ts.
 - [ ] **FlexGapOverlay hardcoded colors** — `FlexGapOverlay.tsx:19-21` has `#FF44CC`, `rgba(255,68,204,...)` magenta colors. Extract to `theme.ts` as `overlay.flexGap.*` tokens.
 - [ ] **Toolbar dark theme colors** — `Toolbar.tsx:138` has `#1e1e1e` hardcoded. Extract to `theme.ts` as `surface.darkToolbar` or reuse `surface.darkMenu`.
 - [ ] **CommandPalette badge colors** — `CommandPalette.tsx:51-52` has hardcoded `#34d399` (green), `#fbbf24` (amber). Extract to `theme.ts` as `badge.action`, `badge.element` tokens.
@@ -83,6 +83,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — GridOverlay hardcoded colors
+Added `overlay.grid.*` token family and `gridAlpha()` helper to theme.ts. Replaced 5 hardcoded `rgba(217,119,87,...)` constants in GridOverlay.tsx (LINE_COLOR, GAP_COLOR, LABEL_COLOR, LABEL_BG, OUTLINE_COLOR) with theme tokens.
 
 ### 2026-03-13 — Separator consistency
 Replaced 2 hardcoded rgba separator borders with `border.subtle` token: ShadowEditor.tsx (rgba(0,0,0,0.04)) and SideSelector.tsx (rgba(0,0,0,0.05)). Other rgba values in the codebase are grid lines, hover states, or canvas fills — not separators.
