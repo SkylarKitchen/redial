@@ -160,24 +160,6 @@ Shadows automatically deepen in dark mode for visibility.
 
 ---
 
-## Dark Mode
-
-Dark mode is handled **entirely** at the semantic layer. When the OS/browser is set to dark mode, `semantic.css` remaps ~25 tokens to darker primitive values. No component CSS changes.
-
-```
-Light                              Dark
-─────                              ────
---text-primary: neutral-900    →   neutral-50
---surface-page: neutral-50     →   neutral-900
---surface-primary: #ffffff     →   neutral-800
---interactive-default: brand-500 → brand-400
---border-default: neutral-200  →   neutral-700
-```
-
-This means adding a new component requires zero dark mode work — just use semantic tokens.
-
----
-
 ## Usage Rules
 
 1. **Components reference semantic tokens only** — never `var(--color-brand-500)` directly

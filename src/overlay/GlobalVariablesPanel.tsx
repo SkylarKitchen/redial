@@ -77,6 +77,20 @@ const VAR_LABEL_STYLE: React.CSSProperties = {
   alignItems: "center",
 };
 
+const RENAME_INPUT_STYLE: React.CSSProperties = {
+  width: 130,
+  fontSize: 11,
+  fontFamily: font.mono,
+  border: `1px solid ${color.primary}`,
+  background: surface.subtle,
+  borderRadius: 3,
+  padding: "0 4px",
+  outline: "none",
+  boxSizing: "border-box",
+  height: 20,
+  color: text.primary,
+};
+
 type ViewMode = "category" | "prefix" | "collection" | "tier";
 
 // ─── Ordering Persistence ─────────────────────────────────────────────
@@ -340,6 +354,7 @@ function GlobalVariableRow({
   onDelete,
   onRenameCommit,
   onRenameCancel,
+  onRenameStart,
   dragHandleProps,
   isDragging,
   showDragHandle,
@@ -353,6 +368,7 @@ function GlobalVariableRow({
   onDelete: () => void;
   onRenameCommit: (newName: string) => void;
   onRenameCancel: () => void;
+  onRenameStart: () => void;
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
   showDragHandle: boolean;
@@ -362,6 +378,7 @@ function GlobalVariableRow({
   const [renameDraft, setRenameDraft] = useState(variable.name);
   const inputRef = useRef<HTMLInputElement>(null);
   const renameRef = useRef<HTMLInputElement>(null);
+  const cancelledRef = useRef(false);
   const dirty = isCustomPropertyDirty(variable.name);
 
   useEffect(() => {
@@ -370,6 +387,7 @@ function GlobalVariableRow({
 
   useEffect(() => {
     if (renaming) {
+      cancelledRef.current = false;
       setRenameDraft(variable.name);
       setTimeout(() => renameRef.current?.select(), 0);
     }
@@ -390,34 +408,31 @@ function GlobalVariableRow({
     ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
     : { color: text.label };
 
-  // Rename mode
-  if (renaming) {
-    return (
-      <div
-        style={ROW}
-        onMouseEnter={() => onHoverChange(true)}
-        onMouseLeave={() => onHoverChange(false)}
-      >
-        <input
-          ref={renameRef}
-          type="text"
-          value={renameDraft}
-          onChange={(e) => setRenameDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onRenameCommit(renameDraft.trim());
-            if (e.key === "Escape") { e.stopPropagation(); onRenameCancel(); }
-          }}
-          onBlur={() => onRenameCancel()}
-          style={{
-            flex: 1, height: 22, background: surface.subtle,
-            border: `1px solid ${color.primary}`, borderRadius: 3,
-            padding: "0 6px", fontSize: 10, fontFamily: font.mono,
-            color: text.primary, outline: "none", boxSizing: "border-box",
-          }}
-        />
-      </div>
-    );
-  }
+  // Shared rename input for non-color rows
+  const labelNode = renaming ? (
+    <input
+      ref={renameRef}
+      type="text"
+      value={renameDraft}
+      onChange={(e) => setRenameDraft(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") onRenameCommit(renameDraft.trim());
+        if (e.key === "Escape") { e.stopPropagation(); cancelledRef.current = true; onRenameCancel(); }
+      }}
+      onBlur={() => { if (!cancelledRef.current) onRenameCommit(renameDraft.trim()); }}
+      style={RENAME_INPUT_STYLE}
+    />
+  ) : (
+    <span
+      title={variable.name}
+      style={{ ...VAR_LABEL_STYLE, cursor: "text" }}
+      onClick={(e) => { if (!e.altKey) onRenameStart(); }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = surface.hover; (e.currentTarget as HTMLElement).style.borderRadius = "3px"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+    >
+      <span style={indicatorStyle}>{label}</span>
+    </span>
+  );
 
   const rowContent = (labelNode: React.ReactNode, controlNode: React.ReactNode) => (
     <div
@@ -519,8 +534,39 @@ function GlobalVariableRow({
             <DragHandle isDragging={isDragging} onPointerDown={dragHandleProps.onPointerDown} />
           </div>
         )}
+        {!renaming && (
+          <div
+            onClick={(e) => { if (!e.altKey) onRenameStart(); }}
+            style={{
+              position: "absolute",
+              left: showDragHandle ? 20 : 8,
+              top: 0, bottom: 0, width: 130,
+              cursor: "text", zIndex: zIndex.above - 1,
+            }}
+          />
+        )}
+        {renaming && (
+          <input
+            ref={renameRef}
+            type="text"
+            value={renameDraft}
+            onChange={(e) => setRenameDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onRenameCommit(renameDraft.trim());
+              if (e.key === "Escape") { e.stopPropagation(); cancelledRef.current = true; onRenameCancel(); }
+            }}
+            onBlur={() => { if (!cancelledRef.current) onRenameCommit(renameDraft.trim()); }}
+            style={{
+              ...RENAME_INPUT_STYLE,
+              position: "absolute",
+              left: showDragHandle ? 20 : 8,
+              top: "50%", transform: "translateY(-50%)",
+              zIndex: zIndex.above,
+            }}
+          />
+        )}
         <ColorRow
-          label={label}
+          label={renaming ? "" : label}
           value={draft}
           onChange={(c) => { setDraft(c); commit(c); }}
           indicator={indicator}
@@ -536,9 +582,7 @@ function GlobalVariableRow({
   if (parsed) {
     const { num, unit } = parsed;
     return rowContent(
-      <span title={variable.name} style={VAR_LABEL_STYLE}>
-        <span style={indicatorStyle}>{label}</span>
-      </span>,
+      labelNode,
       <div style={{
         flex: 1, minWidth: 0, display: "flex", alignItems: "center", height: 24,
         borderRadius: 4,
@@ -584,9 +628,7 @@ function GlobalVariableRow({
 
   // String / number fallback
   return rowContent(
-    <span title={variable.name} style={VAR_LABEL_STYLE}>
-      <span style={indicatorStyle}>{label}</span>
-    </span>,
+    labelNode,
     <input
       ref={inputRef}
       type="text"
@@ -707,6 +749,7 @@ function VariableGroup({
               onDelete={() => handleDelete(v)}
               onRenameCommit={(newName) => handleRenameCommit(v.name, newName)}
               onRenameCancel={() => setRenamingName(null)}
+              onRenameStart={() => setRenamingName(v.name)}
               dragHandleProps={!searching ? handleProps(i) : undefined}
               isDragging={isDragging}
               showDragHandle={!searching}
@@ -1033,6 +1076,7 @@ function AutoCollectionSection({
               onDelete={() => handleDelete(v)}
               onRenameCommit={(newName) => handleRenameCommit(v.name, newName)}
               onRenameCancel={() => setRenamingName(null)}
+              onRenameStart={() => setRenamingName(v.name)}
               dragHandleProps={!searching ? handleProps(i) : undefined}
               isDragging={isDragging}
               showDragHandle={!searching}
