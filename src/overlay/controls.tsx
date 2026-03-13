@@ -740,6 +740,13 @@ function SelectRowCustom({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
+              if (!open && triggerRef.current) {
+                const rect = triggerRef.current.getBoundingClientRect();
+                const DROPDOWN_HEIGHT = 220;
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
+                setDropdownPos({ top, left: rect.left, width: rect.width });
+              }
               setOpen(true);
             }
           }}

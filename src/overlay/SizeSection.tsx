@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback, useMemo, memo } from "react";
-import { Section, SliderRow, SelectRow, TextRow, useResetPopover } from "./controls";
+import { Section, SelectRow, TextRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { WebflowSegmentedControl } from "./WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";

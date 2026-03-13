@@ -291,7 +291,6 @@ function ShadowRow({
         <VisibilityToggle
           visible={shadow.visible !== false}
           onToggle={() => onToggleVisible(index)}
-          title={shadow.visible !== false ? "Hide layer" : "Show layer"}
         />
 
         {/* Delete */}

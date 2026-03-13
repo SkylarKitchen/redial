@@ -8,7 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
 import { EditorRemoveButton } from "./controls";
-import { color, text, border, surface, font, shadow, primaryAlpha, blackAlpha, focusBorder } from "./theme";
+import { color, text, surface, font, shadow, zIndex, primaryAlpha, blackAlpha, focusBorder } from "./theme";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
