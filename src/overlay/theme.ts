@@ -21,6 +21,8 @@ export const color = {
   primary: "#3B82F6",
   /** Blue hover */
   primaryHover: "#2563EB",
+  /** Slider thumb active/pressed */
+  primaryActive: "#d4956a",
   primaryForeground: "#ffffff",
 
   /** Popover/dropdown surface — --bg-secondary */

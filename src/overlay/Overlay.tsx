@@ -1423,7 +1423,7 @@ export function Overlay() {
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
           transform: scale(1.1);
-          background: #d4956a; /* TODO: move #d4956a to theme.ts */
+          background: ${color.primaryActive};
         }
         .__tuner-root input[type="range"]::-moz-range-track {
           height: 3px;
@@ -1449,7 +1449,7 @@ export function Overlay() {
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:active {
           transform: scale(1.1);
-          background: #d4956a; /* TODO: move #d4956a to theme.ts */
+          background: ${color.primaryActive};
         }
       `}} />
 
