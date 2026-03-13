@@ -44,7 +44,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
     const blocks = allDiffs.map(({ el, changes }) => formatCSSDiff(el, changes));
     navigator.clipboard.writeText(blocks.join("\n\n"));
     setMessage("Copied!");
-    setTimeout(() => setMessage(null), 1500);
+    setTimeout(() => setMessage(null), timing.dismissal);
   }, [allDiffs]);
 
   const handleSaveAll = useCallback(async () => {
@@ -91,7 +91,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
     }
 
     setSaving(false);
-    setTimeout(() => setMessage(null), 2000);
+    setTimeout(() => setMessage(null), timing.dismissal);
   }, [allDiffs, onSaved]);
 
   const handleResetAll = useCallback(() => {
@@ -165,7 +165,7 @@ export function SessionDrawer({ open, onResetAll, onSaved }: SessionDrawerProps)
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.15 }}
+                        transition={{ duration: timing.expand / 1000 }}
                         className="text-[10px]"
                         style={{ color: text.label }}
                       >
