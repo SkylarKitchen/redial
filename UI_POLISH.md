@@ -255,3 +255,6 @@ Replaced 3 hardcoded values in SessionDrawer.tsx: copy auto-dismiss `1500` → `
 
 ### 2026-03-13 — Internal z-index values outside token system
 Added 5 internal z-index tiers to theme.ts: `above: 1`, `sticky: 2`, `float: 10`, `dropdown: 100`, `popover: 200`. Replaced hardcoded magic numbers across 10 files: controls.tsx (1→above, 2→sticky), GlobalVariablesPanel.tsx (1→above ×3), SpacingBoxModel.tsx (1→above ×2), SpacingValuePopover.tsx (10→float), TransformEditor.tsx (100→dropdown), FilterSliders.tsx (100→dropdown), BackgroundLayerList.tsx (100→dropdown), Footer.tsx (100→dropdown), layoutControls.tsx (200→popover ×3). Zero internal z-index magic numbers remain.
+
+### 2026-03-13 — TransformEditor hover convention
+Replaced `primaryAlpha(0.2)` dropdown hover with `surface.hover` (follows light-bg hover convention). Replaced `surface.track` dropdown border with `border.input` (correct semantic token for control borders). Removed unused `primaryAlpha` import.
