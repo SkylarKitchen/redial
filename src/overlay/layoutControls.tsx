@@ -11,7 +11,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator, segment } from "./theme";
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
 import {
@@ -49,7 +49,7 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
         width: hasHighlight ? undefined : 49,
         background: colors.bg,
         color: colors.text,
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: font.sans,
         letterSpacing: -0.115,
         cursor: onReset ? "default" : undefined,
       }}
@@ -119,8 +119,8 @@ function ReverseButton({ active, onClick }: { active: boolean; onClick: () => vo
         padding: 4,
         overflow: "hidden",
         transition: "background 75ms ease",
-        background: active ? "#E5E5E5" : "#F0F0F0",
-        color: active ? "#131313" : "#404040",
+        background: active ? segment.activeBg : segment.bg,
+        color: active ? text.primary : text.secondary,
       }}
     >
       <ArrowReverseIcon size={16} />
@@ -273,8 +273,8 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
             outline: "none",
             cursor: "pointer",
             padding: 0,
-            background: isOverflowActive ? "#E5E5E5" : "transparent",
-            color: isOverflowActive ? "#131313" : "#888",
+            background: isOverflowActive ? segment.activeBg : "transparent",
+            color: isOverflowActive ? text.primary : text.hint,
             transition: "background 75ms ease",
           }}
         >
@@ -315,7 +315,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
                     cursor: "pointer",
                     color: "#e8e8e8",
                     fontSize: 13,
-                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontFamily: font.sans,
                     letterSpacing: -0.1,
                     textAlign: "left",
                   }}
@@ -429,8 +429,8 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
           padding: 4,
           overflow: "hidden",
           transition: "background 75ms ease",
-          background: isWrap ? "#E5E5E5" : "#F0F0F0",
-          color: isWrap ? "#131313" : "#404040",
+          background: isWrap ? segment.activeBg : segment.bg,
+          color: isWrap ? text.primary : text.secondary,
         }}
       >
         <WrapText size={14} strokeWidth={1.8} />
@@ -453,8 +453,8 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
             outline: "none",
             cursor: "pointer",
             padding: 0,
-            background: isReverse ? "#E5E5E5" : "transparent",
-            color: isReverse ? "#131313" : "#888",
+            background: isReverse ? segment.activeBg : "transparent",
+            color: isReverse ? text.primary : text.hint,
             transition: "background 75ms ease",
           }}
         >
@@ -495,7 +495,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
                     cursor: "pointer",
                     color: "#e8e8e8",
                     fontSize: 13,
-                    fontFamily: "Inter, system-ui, sans-serif",
+                    fontFamily: font.sans,
                     letterSpacing: -0.1,
                     textAlign: "left",
                   }}
@@ -550,10 +550,10 @@ function GapInput({ value, unit, onChange }: {
       flex: 1,
       minWidth: 0,
       height: 24,
-      borderRadius: 4,
-      border: "1px solid rgba(31,30,29,0.15)",
+      borderRadius: segment.radius,
+      border: `1px solid ${border.default}`,
       overflow: "hidden",
-      background: "white",
+      background: color.background,
     }}>
       {/* Value area */}
       <div style={{
@@ -562,7 +562,7 @@ function GapInput({ value, unit, onChange }: {
         alignItems: "center",
         padding: 4,
         gap: 2,
-        background: "#EBEBEB",
+        background: segment.hoverBg,
         overflow: "hidden",
       }}>
         {editing ? (
@@ -578,9 +578,9 @@ function GapInput({ value, unit, onChange }: {
               border: "none",
               outline: "none",
               fontSize: 11.5,
-              fontFamily: "Inter, system-ui, sans-serif",
+              fontFamily: font.sans,
               letterSpacing: -0.115,
-              color: "#131313",
+              color: text.primary,
               lineHeight: "16px",
             }}
           />
@@ -591,9 +591,9 @@ function GapInput({ value, unit, onChange }: {
             onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
             style={{
               fontSize: 11.5,
-              fontFamily: "Inter, system-ui, sans-serif",
+              fontFamily: font.sans,
               letterSpacing: -0.115,
-              color: "#131313",
+              color: text.primary,
               lineHeight: "16px",
               cursor: "text",
               outline: "none",
@@ -610,11 +610,11 @@ function GapInput({ value, unit, onChange }: {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#E5E5E5",
+        background: segment.activeBg,
         fontSize: 8,
-        fontFamily: "Inter, system-ui, sans-serif",
+        fontFamily: font.sans,
         fontWeight: 600,
-        color: "#404040",
+        color: text.secondary,
         letterSpacing: 0.5,
         textTransform: "uppercase",
         flexShrink: 0,
@@ -668,7 +668,7 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
             padding: 4,
             flexShrink: 0,
             borderRadius: 4,
-            color: "#404040",
+            color: text.secondary,
           }}
         >
           {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}
@@ -727,10 +727,10 @@ function TrackCountInput({ value, onChange }: {
       flex: 1,
       minWidth: 0,
       height: 28,
-      borderRadius: 4,
-      border: "1px solid rgba(31,30,29,0.15)",
+      borderRadius: segment.radius,
+      border: `1px solid ${border.default}`,
       overflow: "hidden",
-      background: "#EBEBEB",
+      background: segment.hoverBg,
       alignItems: "center",
     }}>
       {editing ? (
@@ -746,7 +746,7 @@ function TrackCountInput({ value, onChange }: {
             border: "none",
             outline: "none",
             fontSize: 13,
-            fontFamily: "Inter, system-ui, sans-serif",
+            fontFamily: font.sans,
             color: color.foreground,
             textAlign: "center",
             padding: "0 8px",
@@ -760,7 +760,7 @@ function TrackCountInput({ value, onChange }: {
           style={{
             flex: 1,
             fontSize: 13,
-            fontFamily: "Inter, system-ui, sans-serif",
+            fontFamily: font.sans,
             color: color.foreground,
             textAlign: "center",
             cursor: "text",
@@ -855,7 +855,7 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
             padding: 4,
             flexShrink: 0,
             borderRadius: 4,
-            color: "#404040",
+            color: text.secondary,
           }}
         >
           {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}
@@ -865,10 +865,10 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
       <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 2 }}>
         <span style={{ width: 49, flexShrink: 0 }} />
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif" }}>Columns</span>
+          <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Columns</span>
         </span>
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-          <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif" }}>Rows</span>
+          <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Rows</span>
         </span>
         <span style={{ width: 24, flexShrink: 0 }} />
       </div>
