@@ -6,11 +6,14 @@
  *   - default: horizontal tab bar
  *   - compact: small square icon buttons in a horizontal row
  *   - cross: Webflow-style cross/plus pattern (Top above, Left/All/Right middle, Bottom below)
+ *
+ * Full keyboard navigation (arrow keys + roving tabindex) and ARIA radiogroup semantics.
+ * All colors use theme tokens — no hardcoded rgba strings.
  */
 
 import React, { useCallback } from "react";
 import { ms } from "./timing";
-import { surface, border as borderToken, text, color } from "./theme";
+import { surface, border as borderToken, text, color, blackAlpha } from "./theme";
 
 export type Side = "all" | "top" | "right" | "bottom" | "left";
 
@@ -25,11 +28,29 @@ export interface SideSelectorProps {
 
 const SIDES: Side[] = ["all", "top", "right", "bottom", "left"];
 
+// ─── Spatial arrow-key mapping for cross mode ──────────────────────
+
+const CROSS_NAV: Record<Side, Partial<Record<string, Side>>> = {
+  all: { ArrowUp: "top", ArrowDown: "bottom", ArrowLeft: "left", ArrowRight: "right" },
+  top: { ArrowDown: "all", ArrowLeft: "left", ArrowRight: "right" },
+  bottom: { ArrowUp: "all", ArrowLeft: "left", ArrowRight: "right" },
+  left: { ArrowRight: "all", ArrowUp: "top", ArrowDown: "bottom" },
+  right: { ArrowLeft: "all", ArrowUp: "top", ArrowDown: "bottom" },
+};
+
+/** Linear arrow-key navigation for tab/compact modes */
+function linearNextSide(current: Side, key: string): Side | null {
+  const idx = SIDES.indexOf(current);
+  if (key === "ArrowRight" || key === "ArrowDown") return SIDES[(idx + 1) % SIDES.length];
+  if (key === "ArrowLeft" || key === "ArrowUp") return SIDES[(idx - 1 + SIDES.length) % SIDES.length];
+  return null;
+}
+
 // ─── 8×8 line-based icons (compact/tab modes) ────────────────────────
 
 function SideIcon({ side, active }: { side: Side; active: boolean }) {
-  const thin = active ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.15)";
-  const thick = "rgba(0,0,0,0.55)";
+  const thin = active ? blackAlpha(0.25) : blackAlpha(0.15);
+  const thick = blackAlpha(0.55);
   const strokeWidth = 1;
   const thickWidth = 2;
 
@@ -110,13 +131,35 @@ const CROSS_ICONS: Record<Side, () => React.ReactElement> = {
 // ─── Cross-pattern side selector (Webflow style) ─────────────────────
 
 function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: Side) => void }) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, currentSide: Side) => {
+      const nextSide = CROSS_NAV[currentSide]?.[e.key];
+      if (nextSide) {
+        e.preventDefault();
+        onChange(nextSide);
+        requestAnimationFrame(() => {
+          const container = (e.currentTarget as HTMLElement).parentElement;
+          const btn = container?.querySelector(`[data-side="${nextSide}"]`) as HTMLElement;
+          btn?.focus();
+        });
+      }
+    },
+    [onChange]
+  );
+
   const btn = (side: Side, gridArea: string) => {
     const active = value === side;
     const Icon = CROSS_ICONS[side];
     return (
       <button
         key={side}
+        data-side={side}
+        role="radio"
+        aria-checked={active}
+        aria-label={side.charAt(0).toUpperCase() + side.slice(1)}
+        tabIndex={active ? 0 : -1}
         onClick={() => onChange(side)}
+        onKeyDown={(e) => handleKeyDown(e, side)}
         title={side.charAt(0).toUpperCase() + side.slice(1)}
         style={{
           gridArea,
@@ -152,6 +195,8 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
 
   return (
     <div
+      role="radiogroup"
+      aria-label="Border side"
       style={{
         display: "grid",
         gridTemplateAreas: `". top ." "left all right" ". bottom ."`,
@@ -179,19 +224,41 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
     [onChange]
   );
 
+  const handleLinearKeyDown = useCallback(
+    (e: React.KeyboardEvent, currentSide: Side) => {
+      const nextSide = linearNextSide(currentSide, e.key);
+      if (nextSide) {
+        e.preventDefault();
+        onChange(nextSide);
+        requestAnimationFrame(() => {
+          const container = (e.currentTarget as HTMLElement).parentElement;
+          const btn = container?.querySelector(`[data-side="${nextSide}"]`) as HTMLElement;
+          btn?.focus();
+        });
+      }
+    },
+    [onChange]
+  );
+
   if (cross) {
     return <CrossSideSelector value={value} onChange={onChange} />;
   }
 
   if (compact) {
     return (
-      <div style={{ display: "flex", gap: 2, padding: "2px 12px 4px" }}>
+      <div role="radiogroup" aria-label="Border side" style={{ display: "flex", gap: 2, padding: "2px 12px 4px" }}>
         {SIDES.map((side) => {
           const active = value === side;
           return (
             <button
               key={side}
+              data-side={side}
+              role="radio"
+              aria-checked={active}
+              aria-label={side.charAt(0).toUpperCase() + side.slice(1)}
+              tabIndex={active ? 0 : -1}
               onClick={handleClick(side)}
+              onKeyDown={(e) => handleLinearKeyDown(e, side)}
               title={side.charAt(0).toUpperCase() + side.slice(1)}
               style={{
                 width: 20,
@@ -228,6 +295,8 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
 
   return (
     <div
+      role="radiogroup"
+      aria-label="Border side"
       style={{
         display: "flex",
         height: "24px",
@@ -239,7 +308,13 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
         return (
           <button
             key={side}
+            data-side={side}
+            role="radio"
+            aria-checked={active}
+            aria-label={side.charAt(0).toUpperCase() + side.slice(1)}
+            tabIndex={active ? 0 : -1}
             onClick={handleClick(side)}
+            onKeyDown={(e) => handleLinearKeyDown(e, side)}
             title={side.charAt(0).toUpperCase() + side.slice(1)}
             style={{
               flex: 1,
@@ -249,20 +324,20 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
               height: "24px",
               padding: 0,
               border: "none",
-              borderBottom: active ? `2px solid ${borderToken.strong}` : "2px solid transparent",
-              background: active ? surface.active : "transparent",
+              borderBottom: active ? `2px solid ${blackAlpha(0.35)}` : "2px solid transparent",
+              background: active ? borderToken.subtle : "transparent",
               cursor: "pointer",
               outline: "none",
               transition: `background ${ms("normal")}`,
             }}
             onMouseEnter={(e) => {
               if (!active) {
-                (e.currentTarget as HTMLElement).style.background = surface.hover;
+                (e.currentTarget as HTMLElement).style.background = color.input;
               }
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.background = active
-                ? surface.active
+                ? borderToken.subtle
                 : "transparent";
             }}
           >

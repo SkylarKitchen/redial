@@ -902,6 +902,157 @@ function CollectionSection({
   );
 }
 
+// ─── Auto-Collection Section ──────────────────────────────────────────
+
+function AutoCollectionSection({
+  autoCollection,
+  allVars,
+  searching,
+  order,
+  onOrderChange,
+  onContextMenu,
+  onPin,
+}: {
+  autoCollection: AutoCollection;
+  allVars: CSSVariable[];
+  searching: boolean;
+  order: Map<string, number>;
+  onOrderChange: (order: Map<string, number>) => void;
+  onContextMenu: (e: React.MouseEvent, v: CSSVariable) => void;
+  onPin: () => void;
+}) {
+  const [hoverPin, setHoverPin] = useState(false);
+  const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const [renamingName, setRenamingName] = useState<string | null>(null);
+  const [renameMessage, setRenameMessage] = useState<string | null>(null);
+
+  const vars = useMemo(
+    () => allVars.filter((v) => autoCollection.variableNames.includes(v.name)),
+    [allVars, autoCollection.variableNames],
+  );
+
+  const ordered = useMemo(() => applyOrder(vars, order), [vars, order]);
+
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(
+    ordered,
+    (reordered) => {
+      const newOrder = new Map(order);
+      reordered.forEach((v, i) => newOrder.set(v.name, i));
+      onOrderChange(newOrder);
+    },
+  );
+
+  const dropLine = dropLineStyle();
+
+  const handleDuplicate = useCallback((v: CSSVariable) => {
+    try { addCustomProperty(document.documentElement, `${v.name}-copy`, v.value); } catch {}
+  }, []);
+
+  const handleDelete = useCallback((v: CSSVariable) => {
+    removeCustomProperty(document.documentElement, v.name);
+  }, []);
+
+  const handleRenameCommit = useCallback((oldName: string, newName: string) => {
+    if (!newName || newName === oldName) { setRenamingName(null); return; }
+    const count = renameCustomProperty(document.documentElement, oldName, newName, replaceVarReferences);
+    setRenamingName(null);
+    if (count > 0) {
+      setRenameMessage(`Updated ${count} reference${count !== 1 ? "s" : ""}`);
+      setTimeout(() => setRenameMessage(null), 2000);
+    }
+  }, []);
+
+  if (vars.length === 0) return null;
+
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "6px 12px 2px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              color: text.disabled,
+              fontFamily: font.sans,
+            }}
+          >
+            {autoCollection.name}
+          </span>
+          <span
+            style={{
+              fontSize: 8,
+              color: text.disabled,
+              fontFamily: font.mono,
+              opacity: 0.6,
+            }}
+          >
+            auto
+          </span>
+        </div>
+        <button
+          onClick={onPin}
+          onMouseEnter={() => setHoverPin(true)}
+          onMouseLeave={() => setHoverPin(false)}
+          title="Pin as manual collection"
+          style={{
+            width: 18,
+            height: 18,
+            border: "none",
+            background: hoverPin ? surface.hover : "transparent",
+            borderRadius: 3,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: hoverPin ? text.label : text.disabled,
+            transition: `background ${ms("fast")}, color ${ms("fast")}`,
+          }}
+        >
+          <Pin size={10} />
+        </button>
+      </div>
+      <div style={{ position: "relative" }}>
+        {ordered.map((v, i) => (
+          <div key={v.name} ref={registerRef(i)} style={itemStyle(i)}>
+            <GlobalVariableRow
+              variable={v}
+              hovered={hoveredName === v.name}
+              renaming={renamingName === v.name}
+              onHoverChange={(h) => setHoveredName(h ? v.name : null)}
+              onContextMenu={(e) => onContextMenu(e, v)}
+              onDuplicate={() => handleDuplicate(v)}
+              onDelete={() => handleDelete(v)}
+              onRenameCommit={(newName) => handleRenameCommit(v.name, newName)}
+              onRenameCancel={() => setRenamingName(null)}
+              dragHandleProps={!searching ? handleProps(i) : undefined}
+              isDragging={isDragging}
+              showDragHandle={!searching}
+            />
+          </div>
+        ))}
+        {dropLine && <div style={dropLine} />}
+      </div>
+      {renameMessage && (
+        <div style={{
+          padding: "2px 12px", fontSize: 10, color: color.primary,
+          fontFamily: font.mono, fontStyle: "italic",
+        }}>
+          {renameMessage}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Panel ───────────────────────────────────────────────────────
 
 export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {

@@ -680,16 +680,20 @@ function SelectRowCustom({
   const [open, setOpen] = useState(false);
   const [btnHovered, setBtnHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const current = options.find((o) => o.value === value);
   const resetPopover = useResetPopover(indicator, onReset);
 
-  // Click-outside to close
+  // Click-outside to close (check both container and portal element)
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      const portal = document.querySelector("[data-select-custom-portal]");
+      if (portal?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -716,10 +720,20 @@ function SelectRowCustom({
       ) : labelContent}
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
+          ref={triggerRef}
           className="tuner-focusable"
           tabIndex={0}
           aria-expanded={open}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            if (!open && triggerRef.current) {
+              const rect = triggerRef.current.getBoundingClientRect();
+              const DROPDOWN_HEIGHT = 220;
+              const spaceBelow = window.innerHeight - rect.bottom;
+              const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
+              setDropdownPos({ top, left: rect.left, width: rect.width });
+            }
+            setOpen((o) => !o);
+          }}
           onMouseEnter={() => setBtnHovered(true)}
           onMouseLeave={() => setBtnHovered(false)}
           onKeyDown={(e) => {
@@ -751,64 +765,71 @@ function SelectRowCustom({
           <ChevronDown size={12} strokeWidth={2} style={{ flexShrink: 0, marginLeft: 4, color: color.mutedForeground }} />
         </button>
 
-        {open && (
-          <Command
+        {open && dropdownPos && createPortal(
+          <div
+            data-tuner-portal
+            data-select-custom-portal
             style={{
-              position: "absolute" as const,
-              top: "calc(100% + 2px)",
-              left: 0,
-              right: 0,
-              minWidth: "100%",
-              borderRadius: 4,
-              boxShadow: shadow.dropdown,
-              zIndex: 200,
-              backgroundColor: color.popover,
-              border: `1px solid ${color.border}`,
-            }}
-            filter={(value, search) => {
-              const opt = options.find((o) => o.value === value);
-              if (!opt) return 0;
-              return opt.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+              position: "fixed",
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              zIndex: zIndex.max,
             }}
           >
-            <CommandInput
-              placeholder="Search..."
-              className="h-7 text-[11px]"
-              style={{ fontFamily: font.sans }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.stopPropagation();
-                  setOpen(false);
-                }
+            <Command
+              style={{
+                minWidth: Math.max(dropdownPos.width, 200),
+                borderRadius: 4,
+                boxShadow: shadow.dropdown,
+                backgroundColor: color.popover,
+                border: `1px solid ${color.border}`,
               }}
-              autoFocus
-            />
-            <CommandList className="max-h-[180px]">
-              <CommandEmpty style={{ padding: "6px 0", textAlign: "center" as const, fontSize: 11, fontStyle: "italic", color: color.mutedForeground }}>
-                No matches
-              </CommandEmpty>
-              {options.map((opt) => (
-                <CommandItem
-                  key={opt.value}
-                  value={opt.value}
-                  onSelect={() => {
-                    onChange(opt.value);
+              filter={(value, search) => {
+                const opt = options.find((o) => o.value === value);
+                if (!opt) return 0;
+                return opt.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+              }}
+            >
+              <CommandInput
+                placeholder="Search..."
+                className="h-7 text-[11px]"
+                style={{ fontFamily: font.sans }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.stopPropagation();
                     setOpen(false);
-                  }}
-                  style={{
-                    padding: "4px 8px",
-                    fontSize: 11,
-                    fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
-                    cursor: "pointer",
-                    lineHeight: "16px",
-                    ...(opt.value === value ? { backgroundColor: color.primary, color: "#fff" } : {}),
-                  }}
-                >
-                  {opt.label}
-                </CommandItem>
-              ))}
-            </CommandList>
-          </Command>
+                  }
+                }}
+                autoFocus
+              />
+              <CommandList className="max-h-[180px]">
+                <CommandEmpty style={{ padding: "6px 0", textAlign: "center" as const, fontSize: 11, fontStyle: "italic", color: color.mutedForeground }}>
+                  No matches
+                </CommandEmpty>
+                {options.map((opt) => (
+                  <CommandItem
+                    key={opt.value}
+                    value={opt.value}
+                    onSelect={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: 11,
+                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      ...(opt.value === value ? { backgroundColor: color.primary, color: "#fff" } : {}),
+                    }}
+                  >
+                    {opt.label}
+                  </CommandItem>
+                ))}
+              </CommandList>
+            </Command>
+          </div>,
+          document.body
         )}
       </div>
       {resetPopover.node}
