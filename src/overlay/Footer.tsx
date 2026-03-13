@@ -77,14 +77,19 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const savingRef = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const copyRef = useRef<HTMLDivElement>(null);
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const messageCounterRef = useRef(0);
 
-  // Clear timer on unmount to prevent stale setState calls
+  // Clear timers on unmount to prevent stale setState calls
   useEffect(() => {
-    return () => { if (messageTimerRef.current) clearTimeout(messageTimerRef.current); };
+    return () => {
+      if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
   }, []);
 
   // Close dropdown on outside click
@@ -108,7 +113,12 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
   const copyAndClose = useCallback((text: string, label: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => showMessage(`Copied ${label}!`, 1200))
+      .then(() => {
+        showMessage(`Copied ${label}!`, 1200);
+        setCopied(true);
+        if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+        copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
+      })
       .catch(() => showMessage("Copy failed", 1500));
     setCopyOpen(false);
   }, [showMessage]);
@@ -207,12 +217,13 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]",
             )}
             style={{
-              color: text.label,
-              background: copyOpen ? surface.active : surface.hover,
-              borderColor: copyOpen ? border.hover : border.default,
+              color: copied ? "#16a34a" : text.label,
+              background: copied ? "rgba(22,163,74,0.08)" : copyOpen ? surface.active : surface.hover,
+              borderColor: copied ? "rgba(22,163,74,0.25)" : copyOpen ? border.hover : border.default,
+              transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
             }}
           >
-            Clipboard <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0 opacity-60" />
+            {copied ? "✓ Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0 opacity-60" /></>}
           </Button>
           {copyOpen && (
             <div className="absolute bottom-[calc(100%+4px)] left-0 border rounded-md py-1 min-w-[160px] z-[100]" style={{ background: color.popover, borderColor: surface.active, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
