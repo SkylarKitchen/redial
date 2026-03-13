@@ -1,6 +1,0 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Icon">
-<path id="icon" opacity="0.4" d="M13 13.9966H3V12.9966H13V13.9966ZM13 3.00345H3V2.00345H13V3.00345Z" fill="var(--fill-0, #383835)"/>
-<path id="icon_2" d="M12.1025 5.00488C12.6067 5.05621 13 5.48232 13 6V10L12.9951 10.1025C12.9472 10.573 12.573 10.9472 12.1025 10.9951L12 11H4C3.48232 11 3.05621 10.6067 3.00488 10.1025L3 10V6C3 5.44772 3.44772 5 4 5H12L12.1025 5.00488ZM4 10H12V6H4V10Z" fill="var(--fill-0, #383835)"/>
-</g>
-</svg>

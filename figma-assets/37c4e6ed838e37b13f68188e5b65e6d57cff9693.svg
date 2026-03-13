@@ -1,8 +1,0 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="JustifyContentSpaceBetweenRowReverse">
-<g id="icon">
-<path d="M14 4L14 1L15 1L15 14L14 14L14 11L12.5 11C12.2239 11 12 10.7761 12 10.5L12 4.5C12 4.22386 12.2239 4 12.5 4L14 4Z" fill="var(--fill-0, #383835)"/>
-<path d="M2 14L2 1L3 1L3 4L4.5 4C4.77614 4 5 4.22386 5 4.5L5 10.5C5 10.7761 4.77614 11 4.5 11L3 11L3 14L2 14Z" fill="var(--fill-0, #383835)"/>
-</g>
-</g>
-</svg>

@@ -1,5 +1,0 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Unlock">
-<path id="icon" fill-rule="evenodd" clip-rule="evenodd" d="M9 5C9 3.89543 9.89543 3 11 3C12.1046 3 13 3.89543 13 5V6H14V5C14 3.34315 12.6569 2 11 2C9.34315 2 8 3.34315 8 5V7H3C2.44772 7 2 7.44771 2 8V12C2 12.5523 2.44772 13 3 13H9C9.55228 13 10 12.5523 10 12V8C10 7.44772 9.55228 7 9 7V5ZM3 8H9V12H3V8Z" fill="var(--fill-0, #383835)"/>
-</g>
-</svg>
