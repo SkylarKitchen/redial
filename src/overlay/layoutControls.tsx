@@ -77,7 +77,7 @@ export function TextToggle({ options, value, onChange }: {
   onChange: (v: string) => void;
 }) {
   return (
-    <div style={{ display: "inline-flex", borderRadius: 4, border: `1px solid ${surface.track}` }}>
+    <div style={{ display: "inline-flex", borderRadius: 4, border: `1px solid ${border.input}` }}>
       {options.map((opt, i) => {
         const isActive = opt.value === value;
         const isFirst = i === 0;
@@ -117,7 +117,7 @@ function TextToggleButton({ opt, isActive, isFirst, onChange }: {
         border: "none",
         outline: "none",
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
-        ...(!isFirst ? { borderLeft: `1px solid ${surface.track}` } : {}),
+        ...(!isFirst ? { borderLeft: `1px solid ${border.input}` } : {}),
         ...(isActive
           ? { background: surface.active, color: color.foreground, fontWeight: 500 }
           : { background: hovered ? surface.hover : "transparent", color: text.label }),
@@ -228,7 +228,7 @@ export function MiniDropdown({ value, options, onChange }: {
             right: 0,
             minWidth: 80,
             background: color.popover,
-            border: `1px solid ${surface.track}`,
+            border: `1px solid ${border.input}`,
             borderRadius: 4,
             boxShadow: shadow.dropdown,
             paddingTop: 2,
