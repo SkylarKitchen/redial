@@ -454,6 +454,72 @@ export async function handleCommit(
       let modified = false;
 
       for (const change of fileChanges) {
+        // --- Pseudo-class state handling ---
+        // When a state like "hover" is provided, target the `.className:hover { }` block
+        if (change.state && change.className) {
+          const pseudoIdx = searchPseudoClassBlock(
+            lines,
+            change.className,
+            change.state,
+            change.prop,
+            change.from
+          );
+
+          if (pseudoIdx != null) {
+            // Found the property in the pseudo-class block — do surgical replacement
+            const pattern = new RegExp(
+              `(${escapeRegex(change.prop)}\\s*:\\s*)${escapeRegex(change.from)}`
+            );
+            if (pattern.test(lines[pseudoIdx])) {
+              const safeValue = change.to.replace(/\$/g, "$$$$");
+              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1${safeValue}`);
+              modified = true;
+            } else {
+              // Try broad replacement (handles hex vs rgb, etc.)
+              const broadPattern = new RegExp(
+                `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
+              );
+              if (broadPattern.test(lines[pseudoIdx])) {
+                const safeValue = change.to.replace(/\$/g, "$$$$");
+                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1${safeValue}`);
+                modified = true;
+              } else {
+                result.failed.push({
+                  ...change,
+                  reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
+                });
+              }
+            }
+            continue;
+          }
+
+          // No existing pseudo-class block — create one after the base class block
+          const baseEnd = findClassBlockEnd(lines, change.className);
+          if (baseEnd != null) {
+            // Detect indentation from the base block
+            const baseLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
+            const indent = baseLine.match(/^(\s*)/)?.[1] ?? "  ";
+
+            const newBlock = [
+              "",
+              `.${change.className}:${change.state} {`,
+              `${indent}${change.prop}: ${change.to};`,
+              "}",
+            ];
+            lines.splice(baseEnd + 1, 0, ...newBlock);
+            modified = true;
+            continue;
+          }
+
+          // Can't find the base class block at all
+          result.failed.push({
+            ...change,
+            reason: `base class ".${change.className}" not found — cannot create :${change.state} block`,
+          });
+          continue;
+        }
+
+        // --- Standard (non-state) property search ---
         // Tiered search for the property
         const found = findPropertyInFile(
           lines,

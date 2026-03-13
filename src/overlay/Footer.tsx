@@ -6,6 +6,7 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { diff, reset, overrideCount } from "./apply";
+import { diffState, resetStateStyles } from "./statePreview";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { resetClassStyles, getReadableName } from "./scope";
 import type { Scope } from "./scope";
@@ -63,13 +64,15 @@ interface FooterProps {
   onSaved?: () => void;
   scope?: Scope;
   activeClassName?: string | null;
+  /** Active pseudo-class state ("none" = base, "hover", "focus", etc.) */
+  activeState?: string;
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
   onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, activeState = "none", clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -138,27 +141,31 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     if (savingRef.current) return;
     savingRef.current = true;
 
-    const changes = diff(element);
+    // Use state-specific diff when a pseudo-class state is active
+    const isStateActive = activeState !== "none";
+    const changes = isStateActive ? diffState(element, activeState) : diff(element);
     if (changes.length === 0) { savingRef.current = false; return; }
 
     setSaving(true);
     setMessage(null);
 
     // Enrich changes with source file + class info for robust server-side search
-    // Only resolve module class info when in class scope (avoids unnecessary regex in element scope)
-    const moduleInfo = scope === "class" ? getModuleClassInfo(element) : null;
+    // State-specific saves require className for the pseudo-class block target
+    const needsClassInfo = scope === "class" || isStateActive;
+    const moduleInfo = needsClassInfo ? getModuleClassInfo(element) : null;
     const enriched = changes.map((c) => {
       const source = resolveSource(element, c.prop);
       return {
         ...c,
         sourceFile: source?.file,
         sourceLine: source?.line,
-        // Class scope → use the user-selected class (readable name) for Tier 2 search
-        // Element scope → omit className so commit.ts skips Tier 2
-        className: scope === "class" && activeClassName
+        // Class scope or state scope → use the class name for block targeting
+        className: needsClassInfo && activeClassName
           ? (getReadableName(activeClassName) ?? moduleInfo?.className)
           : undefined,
         componentName: moduleInfo?.componentName,
+        // Include pseudo-class state so commit.ts targets .className:state { } blocks
+        state: isStateActive ? activeState : undefined,
       };
     });
 
@@ -190,15 +197,19 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       setSaving(false);
       savingRef.current = false;
     }
-  }, [element, onSaved, showMessage, scope, activeClassName]);
+  }, [element, onSaved, showMessage, scope, activeClassName, activeState]);
 
   const handleReset = useCallback(() => {
-    reset(element);
-    if (scope === "class" && activeClassName) {
-      resetClassStyles(activeClassName);
+    if (activeState !== "none") {
+      resetStateStyles(element, activeState);
+    } else {
+      reset(element);
+      if (scope === "class" && activeClassName) {
+        resetClassStyles(activeClassName);
+      }
     }
     onReset();
-  }, [element, onReset, scope, activeClassName]);
+  }, [element, onReset, scope, activeClassName, activeState]);
 
   return (
     <div className="__tuner-footer flex flex-col px-3 py-2 border-t gap-1.5" style={{ borderColor: border.default }}>

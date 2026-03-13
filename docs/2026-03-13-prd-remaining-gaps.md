@@ -80,14 +80,14 @@ Start with `:hover` only. Other states (`:focus`, `:active`) follow the same pat
 
 ### Acceptance criteria
 
-- [ ] Select an element → choose "Hover" in StateSelector → drag a slider → the change previews when hovering the element (not immediately)
-- [ ] Save writes to `.className:hover { }` block in the CSS module
-- [ ] If no `:hover` block exists, one is created after the base class
-- [ ] Switching back to "None" (base) restores normal inline preview behavior
+- [x] Select an element → choose "Hover" in StateSelector → drag a slider → the change previews when hovering the element (not immediately)
+- [x] Save writes to `.className:hover { }` block in the CSS module
+- [x] If no `:hover` block exists, one is created after the base class
+- [x] Switching back to "None" (base) restores normal inline preview behavior
 - [ ] Undo/redo works across state boundaries
-- [ ] New test: state-specific `<style>` tag injection and cleanup
-- [ ] New test: `commit.ts` finds and writes inside `.className:hover { }` block
-- [ ] `npm run typecheck` passes
+- [x] New test: state-specific `<style>` tag injection and cleanup
+- [x] New test: `commit.ts` finds and writes inside `.className:hover { }` block
+- [x] `npm run typecheck` passes
 
 ---
 

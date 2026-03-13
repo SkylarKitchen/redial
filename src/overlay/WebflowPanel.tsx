@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
+import { applyStateStyle } from "./statePreview";
 import { buildConversionContext } from "./unitConversion";
 import type { IndicatorType } from "./StyleIndicator";
 import { parseNum } from "./cssParsers";
@@ -41,11 +42,13 @@ export interface WebflowPanelProps {
   focusMode?: boolean;
   scope?: Scope;
   activeClassName?: string | null;
+  /** Active pseudo-class state ("none" = base styles, "hover", "focus", etc.) */
+  activeState?: string;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false, scope = "element", activeClassName }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none" }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -88,15 +91,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
     [ind],
   );
 
-  // ── Apply helper (scope-aware) ──
+  // ── Apply helper (scope-aware + state-aware) ──
   const apply = useCallback(
     (prop: string, value: string) => {
+      if (activeState !== "none") {
+        // Pseudo-class state: inject via <style> tag (inline styles can't target :hover etc.)
+        applyStateStyle(element, activeState, prop, value);
+        return;
+      }
       if (scope === "class" && activeClassName) {
         applyClassStyle(activeClassName, prop, value);
       }
       applyInlineStyle(element, prop, value);
     },
-    [element, scope, activeClassName]
+    [element, scope, activeClassName, activeState]
   );
 
   // ── Context menu state (right-click property menu) ──

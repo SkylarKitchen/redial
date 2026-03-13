@@ -27,7 +27,9 @@ import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, resto
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
-import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
+import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, getReadableName, type Scope } from "./scope";
+import { applyStateStyle, diffState, destroyStateStyles } from "./statePreview";
+import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { Plus } from "lucide-react";
 import { ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
@@ -118,6 +120,12 @@ export function Overlay() {
 
   // State selector
   const [activeState, setActiveState] = useState("none");
+
+  // Guarded state change — refuse mid-drag to avoid race conditions
+  const handleStateChange = useCallback((newState: string) => {
+    if (isScrubActive()) return;
+    setActiveState(newState);
+  }, []);
 
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
@@ -270,14 +278,35 @@ export function Overlay() {
   const handleSaveShortcut = useCallback(async () => {
     const el = selectedElRef.current;
     if (!el || savingRef.current) return;
-    const changes = diff(el);
+
+    // Use state-specific diff when a pseudo-class state is active
+    const isStateActive = activeState !== "none";
+    const changes = isStateActive ? diffState(el, activeState) : diff(el);
     if (changes.length === 0) return;
+
+    // Enrich changes with source + class info (same logic as Footer.tsx)
+    const needsClassInfo = scope === "class" || isStateActive;
+    const moduleInfo = needsClassInfo ? getModuleClassInfo(el) : null;
+    const enriched = changes.map((c) => {
+      const source = resolveSource(el, c.prop);
+      return {
+        ...c,
+        sourceFile: source?.file,
+        sourceLine: source?.line,
+        className: needsClassInfo && activeClassName
+          ? (getReadableName(activeClassName) ?? moduleInfo?.className)
+          : undefined,
+        componentName: moduleInfo?.componentName,
+        state: isStateActive ? activeState : undefined,
+      };
+    });
+
     savingRef.current = true;
     try {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes }),
+        body: JSON.stringify({ changes: enriched }),
       });
       // Re-read ref after await — selectedEl may have changed during the fetch
       const currentEl = selectedElRef.current;
@@ -293,7 +322,7 @@ export function Overlay() {
     } finally {
       savingRef.current = false;
     }
-  }, [announce]);
+  }, [announce, activeState, scope, activeClassName]);
 
   const handleCopyShortcut = useCallback(() => {
     if (!selectedEl) return;
@@ -368,10 +397,14 @@ export function Overlay() {
           if (declarations.length === 0) return;
           beginBatch();
           for (const { prop, value } of declarations) {
-            if (scope === "class" && activeClassName) {
-              applyClassStyle(activeClassName, prop, value);
+            if (activeState !== "none") {
+              applyStateStyle(el, activeState, prop, value);
+            } else {
+              if (scope === "class" && activeClassName) {
+                applyClassStyle(activeClassName, prop, value);
+              }
+              applyInlineStyle(el, prop, value);
             }
-            applyInlineStyle(el, prop, value);
           }
           endBatch();
           setInferResult(infer(el));
@@ -656,6 +689,7 @@ export function Overlay() {
     setInferResult(null);
     setScope("element");
     setActiveClassName(null);
+    setActiveState("none");
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
@@ -675,6 +709,7 @@ export function Overlay() {
   const handleResetAll = useCallback(() => {
     resetAll();
     destroyClassStyles();
+    destroyStateStyles();
     if (selectedEl) {
       setInferResult(infer(selectedEl));
       setPanelKey((k) => k + 1);
@@ -707,10 +742,15 @@ export function Overlay() {
   // so the panel re-renders with fresh values during drag-scrub.
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
-    if (scope === "class" && activeClassName) {
-      applyClassStyle(activeClassName, prop, `${value}${unit}`);
+    const cssValue = `${value}${unit}`;
+    if (activeState !== "none") {
+      applyStateStyle(selectedEl, activeState, prop, cssValue);
+    } else {
+      if (scope === "class" && activeClassName) {
+        applyClassStyle(activeClassName, prop, cssValue);
+      }
+      applyInlineStyle(selectedEl, prop, cssValue);
     }
-    applyInlineStyle(selectedEl, prop, `${value}${unit}`);
     // Update inferResult.spacing so the panel receives fresh prop values
     setInferResult((prev) => {
       if (!prev) return prev;
@@ -726,7 +766,7 @@ export function Overlay() {
       }
       return prev;
     });
-  }, [selectedEl, scope, activeClassName]);
+  }, [selectedEl, scope, activeClassName, activeState]);
 
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
@@ -1137,10 +1177,14 @@ export function Overlay() {
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
-        if (scope === "class" && activeClassName) {
-          applyClassStyle(activeClassName, prop, value);
+        if (activeState !== "none") {
+          applyStateStyle(el, activeState, prop, value);
+        } else {
+          if (scope === "class" && activeClassName) {
+            applyClassStyle(activeClassName, prop, value);
+          }
+          applyInlineStyle(el, prop, value);
         }
-        applyInlineStyle(el, prop, value);
       }
 
       // Re-infer to update panel
@@ -1150,7 +1194,7 @@ export function Overlay() {
     } catch {
       setClipboardMessage("Clipboard access denied");
     }
-  }, [diffMode]);
+  }, [diffMode, activeState, scope, activeClassName]);
 
   // --- Command Palette action handler ---
   const handleCommandAction = useCallback((action: string) => {
@@ -1444,7 +1488,7 @@ export function Overlay() {
             cssClasses={cssClasses}
             activeClassName={activeClassName}
             state={activeState}
-            onStateChange={setActiveState}
+            onStateChange={handleStateChange}
           />
           {focusMode && (
             <div className="flex justify-center py-0.5 border-b" style={{ borderColor: border.subtle }}>
@@ -1506,6 +1550,7 @@ export function Overlay() {
                     onSpacingChange={handleSpacingChange}
                     scope={scope}
                     activeClassName={activeClassName}
+                    activeState={activeState}
                   />
                 ) : activeTab === "custom" ? (
                   <WebflowPanel
@@ -1521,6 +1566,7 @@ export function Overlay() {
                     focusMode={focusMode}
                     scope={scope}
                     activeClassName={activeClassName}
+                    activeState={activeState}
                   />
                 ) : (
                   <PromptPanel
@@ -1548,6 +1594,7 @@ export function Overlay() {
             onCSSImport={handleCSSImport}
             scope={scope}
             activeClassName={activeClassName}
+            activeState={activeState}
             clipboardMessage={clipboardMessage}
             hasClipboard={hasClipboardStyles()}
             onPasteStyles={handlePasteStyles}

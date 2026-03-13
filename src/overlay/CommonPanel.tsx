@@ -12,6 +12,7 @@ import { SizeInputCell } from "./SizeInputCell";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { applyInlineStyle, beginBatch, endBatch, isDirty } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
+import { applyStateStyle } from "./statePreview";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, isTextBearing, getIndicatorType } from "./panelUtils";
@@ -33,6 +34,8 @@ export interface CommonPanelProps {
   onDirtyChange?: () => void;
   scope?: Scope;
   activeClassName?: string | null;
+  /** Active pseudo-class state ("none" = base, "hover", "focus", etc.) */
+  activeState?: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────
@@ -54,7 +57,7 @@ function FlatGroup({ title, children }: { title: string; children: React.ReactNo
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, scope = "element", activeClassName }: CommonPanelProps) {
+export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, scope = "element", activeClassName, activeState = "none" }: CommonPanelProps) {
   const cs = getComputedStyle(element);
   const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
   const ind = useCallback((prop: string) => getIndicatorType(element, prop, cs), [element, cs]);
@@ -129,13 +132,18 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   // --- Wrappers ---
   const apply = useCallback(
     (prop: string, value: string) => {
+      if (activeState !== "none") {
+        applyStateStyle(element, activeState, prop, value);
+        onDirtyChange?.();
+        return;
+      }
       if (scope === "class" && activeClassName) {
         applyClassStyle(activeClassName, prop, value);
       }
       applyInlineStyle(element, prop, value);
       onDirtyChange?.();
     },
-    [element, onDirtyChange, scope, activeClassName],
+    [element, onDirtyChange, scope, activeClassName, activeState],
   );
 
   // --- Size handlers ---

@@ -44,7 +44,7 @@ export function parseStateKey(key: string): { state: string; prop: string } {
   return idx < 0 ? { state: "none", prop: key } : { state: key.slice(0, idx), prop: key.slice(idx + 2) };
 }
 
-type SingleUndoEntry = { el: Element; prop: string; prev: string };
+type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
 type UndoEntry = SingleUndoEntry | BatchUndoEntry;
 
@@ -163,6 +163,11 @@ export function applyInlineStyle(
 ): void {
   if (!(el as HTMLElement).isConnected) return;
 
+  // Determine if this is a state-keyed property (e.g. "hover::color")
+  const parsed = parseStateKey(prop);
+  const isStateKeyed = parsed.state !== "none";
+  const cssProp = parsed.prop; // the real CSS property name
+
   // New action invalidates redo history (standard undo/redo semantics)
   if (redoStack.length > 0) redoStack.length = 0;
 
@@ -171,16 +176,16 @@ export function applyInlineStyle(
 
   if (!elOverrides.has(prop)) {
     // First time touching this prop — capture the original computed value
-    const initial = getComputedStyle(el).getPropertyValue(prop).trim();
+    const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: value });
 
     if (batchDepth > 0) {
       // In batch mode: collect undo entries, only first touch per (el, prop)
       if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
-        batchEntries.push({ el, prop, prev: initial });
+        batchEntries.push({ el, prop, prev: initial, state: parsed.state });
       }
     } else {
-      undoStack.push({ el, prop, prev: initial });
+      undoStack.push({ el, prop, prev: initial, state: parsed.state });
     }
   } else {
     const existing = elOverrides.get(prop)!;
@@ -188,14 +193,14 @@ export function applyInlineStyle(
     if (batchDepth > 0) {
       // In batch mode: only record first touch per (el, prop)
       if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
-        batchEntries.push({ el, prop, prev: existing.current });
+        batchEntries.push({ el, prop, prev: existing.current, state: parsed.state });
       }
     } else {
       // Coalesce: if the last undo entry is for the same (el, prop), don't push
       // another entry — keeps the original `prev` so undo reverts the entire drag
       const lastUndo = undoStack[undoStack.length - 1];
       if (!(lastUndo && !isBatch(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
-        undoStack.push({ el, prop, prev: existing.current });
+        undoStack.push({ el, prop, prev: existing.current, state: parsed.state });
       }
     }
     existing.current = value;
@@ -206,10 +211,14 @@ export function applyInlineStyle(
     undoStack.splice(0, undoStack.length - MAX_UNDO);
   }
 
-  (el as HTMLElement).style.setProperty(prop, value, "important");
+  // Only apply to inline style for non-state properties.
+  // State-keyed props are applied via the <style> tag in statePreview.ts.
+  if (!isStateKeyed) {
+    (el as HTMLElement).style.setProperty(prop, value, "important");
+  }
   schedulePersist();
   notifyListeners();
-  notifyChange(el, prop, elOverrides.get(prop)!.initial, value);
+  notifyChange(el, cssProp, elOverrides.get(prop)!.initial, value);
 }
 
 export function undo(): { el: Element; prop: string } | null {
@@ -221,7 +230,9 @@ export function undo(): { el: Element; prop: string } | null {
     const redoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
-      const { el, prop, prev } = last.entries[i];
+      const { el, prop, prev, state } = last.entries[i];
+      const isState = state !== "none";
+      const cssProp = isState ? parseStateKey(prop).prop : prop;
       if (!overrides.has(el)) overrides.set(el, new Map());
       const elOverrides = overrides.get(el)!;
       let entry = elOverrides.get(prop);
@@ -229,19 +240,19 @@ export function undo(): { el: Element; prop: string } | null {
         // Override was cleared (e.g., by clearRedundantOverrides after save).
         // Re-create using the stashed cleared value if available, else computed.
         const cleared = clearedOverrides.get(el)?.get(prop);
-        const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+        const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
         entry = { initial: baseline, current: baseline };
         elOverrides.set(prop, entry);
       }
 
-      redoEntries.push({ el, prop, prev: entry.current });
+      redoEntries.push({ el, prop, prev: entry.current, state });
 
       if (prev === entry.initial) {
-        (el as HTMLElement).style.removeProperty(prop);
+        if (!isState) (el as HTMLElement).style.removeProperty(prop);
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
       } else {
-        (el as HTMLElement).style.setProperty(prop, prev, "important");
+        if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
       }
       result = { el, prop };
@@ -255,7 +266,9 @@ export function undo(): { el: Element; prop: string } | null {
   }
 
   const single = last as SingleUndoEntry;
-  const { el, prop, prev } = single;
+  const { el, prop, prev, state } = single;
+  const isState = state !== "none";
+  const cssProp = isState ? parseStateKey(prop).prop : prop;
   if (!overrides.has(el)) overrides.set(el, new Map());
   const elOverrides = overrides.get(el)!;
 
@@ -264,21 +277,21 @@ export function undo(): { el: Element; prop: string } | null {
     // Override was cleared (e.g., by clearRedundantOverrides after save).
     // Re-create using the stashed cleared value if available, else computed.
     const cleared = clearedOverrides.get(el)?.get(prop);
-    const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+    const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
     entry = { initial: baseline, current: baseline };
     elOverrides.set(prop, entry);
   }
 
   // Capture forward state for redo before restoring
-  redoStack.push({ el, prop, prev: entry.current });
+  redoStack.push({ el, prop, prev: entry.current, state });
 
   if (prev === entry.initial) {
     // Undoing back to original — remove override entirely
-    (el as HTMLElement).style.removeProperty(prop);
+    if (!isState) (el as HTMLElement).style.removeProperty(prop);
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
   } else {
-    (el as HTMLElement).style.setProperty(prop, prev, "important");
+    if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
   }
 
@@ -295,21 +308,23 @@ export function redo(): { el: Element; prop: string } | null {
     // Re-apply batch entries and push an undo batch
     const undoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
-    for (const { el, prop, prev: redoValue } of last.entries) {
+    for (const { el, prop, prev: redoValue, state } of last.entries) {
+      const isState = state !== "none";
+      const cssProp = isState ? parseStateKey(prop).prop : prop;
       if (!overrides.has(el)) overrides.set(el, new Map());
       const elOverrides = overrides.get(el)!;
       const entry = elOverrides.get(prop);
-      const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+      const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
 
-      undoEntries.push({ el, prop, prev: currentValue });
+      undoEntries.push({ el, prop, prev: currentValue, state });
 
       if (entry) {
         entry.current = redoValue;
       } else {
-        const initial = getComputedStyle(el).getPropertyValue(prop).trim();
+        const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
         elOverrides.set(prop, { initial, current: redoValue });
       }
-      (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+      if (!isState) (el as HTMLElement).style.setProperty(prop, redoValue, "important");
       result = { el, prop };
     }
     if (undoEntries.length > 0) {
@@ -320,22 +335,24 @@ export function redo(): { el: Element; prop: string } | null {
     return result;
   }
 
-  const { el, prop, prev: redoValue } = last as SingleUndoEntry;
+  const { el, prop, prev: redoValue, state } = last as SingleUndoEntry;
+  const isState = state !== "none";
+  const cssProp = isState ? parseStateKey(prop).prop : prop;
   if (!overrides.has(el)) overrides.set(el, new Map());
   const elOverrides = overrides.get(el)!;
   const entry = elOverrides.get(prop);
-  const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(prop).trim();
+  const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
 
   // Push undo entry for this redo
-  undoStack.push({ el, prop, prev: currentValue });
+  undoStack.push({ el, prop, prev: currentValue, state });
 
   if (entry) {
     entry.current = redoValue;
   } else {
-    const initial = getComputedStyle(el).getPropertyValue(prop).trim();
+    const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: redoValue });
   }
-  (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+  if (!isState) (el as HTMLElement).style.setProperty(prop, redoValue, "important");
 
   schedulePersist();
   notifyListeners();
@@ -347,7 +364,10 @@ export function reset(el: Element): void {
   if (!elOverrides) return;
 
   for (const [prop] of elOverrides) {
-    (el as HTMLElement).style.removeProperty(prop);
+    // Only remove inline style for non-state-keyed properties
+    if (!prop.includes("::")) {
+      (el as HTMLElement).style.removeProperty(prop);
+    }
   }
   overrides.delete(el);
 
@@ -370,7 +390,9 @@ export function reset(el: Element): void {
 export function resetAll(): void {
   for (const [el, props] of overrides) {
     for (const [prop] of props) {
-      (el as HTMLElement).style.removeProperty(prop);
+      if (!prop.includes("::")) {
+        (el as HTMLElement).style.removeProperty(prop);
+      }
     }
   }
   overrides.clear();
@@ -391,9 +413,10 @@ export function diff(el: Element): DiffEntry[] {
   if (!elOverrides) return [];
 
   const entries: DiffEntry[] = [];
-  for (const [prop, { initial, current }] of elOverrides) {
+  for (const [key, { initial, current }] of elOverrides) {
     if (initial !== current) {
-      entries.push({ prop, from: initial, to: current });
+      const { state, prop } = parseStateKey(key);
+      entries.push({ prop, from: initial, to: current, state: state === "none" ? undefined : state });
     }
   }
   return entries;
@@ -446,10 +469,12 @@ export function getInitial(el: Element, prop: string): string | null {
  * Returns the number of overrides that were auto-cleared.
  */
 export function clearRedundantOverrides(): number {
-  // Collect all (element, prop, current) tuples
+  // Collect all (element, prop, current) tuples — skip state-keyed overrides
+  // (state overrides are managed via the <style> tag, not inline)
   const entries: Array<{ el: Element; prop: string; current: string }> = [];
   for (const [el, props] of overrides) {
     for (const [prop, { current }] of props) {
+      if (prop.includes("::")) continue; // skip state-keyed
       entries.push({ el, prop, current });
     }
   }
@@ -514,7 +539,9 @@ export function stripAllOverrides(): boolean {
   let stripped = false;
   for (const [el, props] of overrides) {
     for (const [prop] of props) {
-      (el as HTMLElement).style.removeProperty(prop);
+      if (!prop.includes("::")) {
+        (el as HTMLElement).style.removeProperty(prop);
+      }
       stripped = true;
     }
   }
@@ -528,7 +555,9 @@ export function stripAllOverrides(): boolean {
 export function restoreAllOverrides(): void {
   for (const [el, props] of overrides) {
     for (const [prop, { current }] of props) {
-      (el as HTMLElement).style.setProperty(prop, current, "important");
+      if (!prop.includes("::")) {
+        (el as HTMLElement).style.setProperty(prop, current, "important");
+      }
     }
   }
 }
@@ -582,7 +611,9 @@ export function touchedElementCount(): number {
 export function resetProp(el: Element, prop: string): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
-  (el as HTMLElement).style.removeProperty(prop);
+  if (!prop.includes("::")) {
+    (el as HTMLElement).style.removeProperty(prop);
+  }
   elOverrides.delete(prop);
   if (elOverrides.size === 0) overrides.delete(el);
   // Remove undo entries for this prop (handle both single and batch)
@@ -650,11 +681,11 @@ export function applyCustomProperty(
   if (!customPropertyOverrides.has(name)) {
     initial = getComputedStyle(scope).getPropertyValue(name).trim();
     customPropertyOverrides.set(name, { scope, initial, current: value });
-    undoStack.push({ el: scope, prop: name, prev: initial });
+    undoStack.push({ el: scope, prop: name, prev: initial, state: "none" });
   } else {
     const existing = customPropertyOverrides.get(name)!;
     initial = existing.initial;
-    undoStack.push({ el: scope, prop: name, prev: existing.current });
+    undoStack.push({ el: scope, prop: name, prev: existing.current, state: "none" });
     existing.current = value;
   }
 
