@@ -103,10 +103,22 @@ export function parseFilter(raw: string): Partial<FilterValues> {
   return result;
 }
 
+const FILTER_DEFAULTS: Record<string, number> = {
+  blur: 0,
+  brightness: 100,
+  contrast: 100,
+  grayscale: 0,
+  "hue-rotate": 0,
+  invert: 0,
+  saturate: 100,
+  sepia: 0,
+};
+
 export function filterToCSS(values: Partial<FilterValues>): string {
   const parts: string[] = [];
   for (const [key, val] of Object.entries(values)) {
     if (val === undefined) continue;
+    if (val === FILTER_DEFAULTS[key]) continue;
     const k = key as keyof FilterValues;
     if (k === "blur") parts.push(`blur(${val}px)`);
     else if (k === "hue-rotate") parts.push(`hue-rotate(${val}deg)`);

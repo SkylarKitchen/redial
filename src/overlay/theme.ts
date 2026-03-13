@@ -193,7 +193,6 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
 // ─── Value Presets ──────────────────────────────────────────────
 
 export const presets: Record<string, (string | number)[]> = {
-  opacity: [0, 0.5, 1],
   gap: [0, 4, 8, 16],
 };
 

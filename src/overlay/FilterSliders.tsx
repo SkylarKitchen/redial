@@ -144,15 +144,14 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
 
   const handleRemove = useCallback(
     (key: FilterKey) => {
-      if (key === "blur" && !isNonDefault(key, values[key])) return; // always show blur
       onChange(key, FILTER_META[key].defaultValue);
       setAddedFilters((prev) => {
         const next = new Set(prev);
-        if (key !== "blur") next.delete(key);
+        next.delete(key);
         return next;
       });
     },
-    [onChange, values]
+    [onChange]
   );
 
   return (
