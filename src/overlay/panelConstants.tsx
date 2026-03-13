@@ -8,7 +8,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   Underline, Strikethrough, Baseline,
   Eye, EyeOff, ScrollText,
-  ArrowRight, ArrowDown, WrapText,
+  WrapText,
   Italic, X, PilcrowLeft, PilcrowRight,
   AlignStartVertical, AlignCenterVertical, AlignEndVertical, MoveVertical,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
@@ -17,6 +17,7 @@ import {
 import {
   AlignStartIcon, AlignCenterIcon, AlignEndIcon, AlignStretchIcon, AlignBaselineIcon,
   JustifyStartIcon, JustifyCenterIcon, JustifyEndIcon, JustifySpaceBetweenIcon, JustifySpaceAroundIcon,
+  FlexRowIcon, FlexColumnIcon,
 } from "./webflowIcons";
 
 // ─── Text Alignment Icons ────────────────────────────────────────────
@@ -314,8 +315,8 @@ export const ALIGN_SELF_OPTIONS = [
 
 // Direction icons reduced to row + column + wrap, with reverse in dropdown
 export const DIRECTION_ICONS_SHORT = [
-  { value: "row", title: "Row", icon: <ArrowRight size={14} strokeWidth={1.8} /> },
-  { value: "column", title: "Column", icon: <ArrowDown size={14} strokeWidth={1.8} /> },
+  { value: "row", title: "Row", icon: <FlexRowIcon size={14} /> },
+  { value: "column", title: "Column", icon: <FlexColumnIcon size={14} /> },
   { value: "__wrap__", title: "Wrap", icon: <WrapText size={14} strokeWidth={1.8} /> },
 ];
 

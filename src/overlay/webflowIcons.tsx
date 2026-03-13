@@ -417,6 +417,30 @@ export function ClearBothIcon({ size = 16, className }: IconProps) {
   );
 }
 
+/** Flex row direction — two parallel horizontal arrows (matches Webflow) */
+export function FlexRowIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      {/* Top arrow pointing right */}
+      <path d="M3 5.5H11.5M11.5 5.5L9 3M11.5 5.5L9 8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Bottom arrow pointing left */}
+      <path d="M13 10.5H4.5M4.5 10.5L7 8M4.5 10.5L7 13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Flex column direction — two parallel vertical arrows (matches Webflow) */
+export function FlexColumnIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      {/* Left arrow pointing down */}
+      <path d="M5.5 3V11.5M5.5 11.5L3 9M5.5 11.5L8 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Right arrow pointing up */}
+      <path d="M10.5 13V4.5M10.5 4.5L8 7M10.5 4.5L13 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** Grid row direction — horizontal zig-zag flow (matches Webflow) */
 export function GridRowDirectionIcon({ size = 16, className }: IconProps) {
   return (
