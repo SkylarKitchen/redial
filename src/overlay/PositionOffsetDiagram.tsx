@@ -6,7 +6,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ms } from "./timing";
-import { color, text, border, surface, primaryAlpha, blackAlpha, font } from "./theme";
+import { color, text, border, surface, primaryAlpha, blackAlpha, gridAlpha, font } from "./theme";
 
 interface PositionOffsetDiagramProps {
   top: number;
@@ -123,7 +123,7 @@ function AutoLabel({ onClick }: { onClick: () => void }) {
       style={{
         fontSize: "10px",
         fontFamily: font.mono,
-        color: "#A3A3A3",
+        color: text.hint,
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",
@@ -198,10 +198,10 @@ function EditableValue({
         autoFocus
         style={{
           width: "32px",
-          background: "rgba(0,0,0,0.07)",
-          border: "1px solid rgba(217, 119, 87, 0.5)",
+          background: blackAlpha(0.07),
+          border: `1px solid ${gridAlpha(0.5)}`,
           borderRadius: "2px",
-          color: "#171717",
+          color: text.primary,
           fontSize: "10px",
           fontFamily: font.mono,
           textAlign: "center",
@@ -223,7 +223,7 @@ function EditableValue({
       style={{
         fontSize: "10px",
         fontFamily: font.mono,
-        color: value !== 0 ? "#525252" : "#A3A3A3",
+        color: value !== 0 ? text.secondary : text.hint,
         cursor: "text",
         padding: "1px 3px",
         borderRadius: "2px",
@@ -240,7 +240,7 @@ function EditableValue({
     >
       {value}
       {suffix && (
-        <span style={{ fontSize: "8px", color: "#A3A3A3", marginLeft: "1px" }}>
+        <span style={{ fontSize: "8px", color: text.hint, marginLeft: "1px" }}>
           {suffix}
         </span>
       )}

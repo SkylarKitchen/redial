@@ -23,11 +23,12 @@ import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { parseVarAlias } from "./discoverVariables";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
-import { ChevronDown, ChevronRight, Link2, Unlink } from "lucide-react";
+import { ChevronDown, ChevronRight, Link2, Unlink, Plus, MoreHorizontal, X, Eye, EyeOff } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";
 import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight, zIndex } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
+import { SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
 
