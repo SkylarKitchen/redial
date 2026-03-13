@@ -79,6 +79,7 @@ export function PositionSelector({
   const [open, setOpen] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resetPopover = useResetPopover(indicator, onReset);
   const current = POSITION_ITEMS.find((o) => o.value === value) ?? POSITION_ITEMS[0];
   const descriptionItem = hoveredValue
     ? POSITION_ITEMS.find((o) => o.value === hoveredValue) ?? current
@@ -106,6 +107,7 @@ export function PositionSelector({
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span
+        ref={resetPopover.anchorRef}
         style={{
           width: "64px",
           fontSize: "11px",
@@ -113,7 +115,7 @@ export function PositionSelector({
           display: "inline-flex",
           alignItems: "center",
         }}
-        onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
+        onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } resetPopover.triggerOpen(); }}
       >
         <span style={{
           ...(indicator && indicator !== "none"
@@ -123,6 +125,7 @@ export function PositionSelector({
           Position
         </span>
       </span>
+      {resetPopover.node}
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         {/* Trigger button */}
         <button
