@@ -31,7 +31,7 @@ import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
 import type { IndicatorType } from "./theme";
-import { spacingZone, surface, font, blackAlpha, color, text } from "./theme";
+import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -525,7 +525,7 @@ export function SpacingBoxModel({
               left: `${tooltip.rect.left + tooltip.rect.width / 2}px`,
               top: `${tooltip.rect.top - 30}px`,
               transform: "translateX(-50%)",
-              background: "rgba(250, 249, 245, 0.97)",
+              background: bgAlpha(0.97),
               color: text.secondary,
               fontSize: "11px",
               fontFamily: font.sans,
@@ -534,8 +534,8 @@ export function SpacingBoxModel({
               whiteSpace: "nowrap",
               pointerEvents: "none",
               zIndex: 2147483647,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              border: "1px solid rgba(0,0,0,0.07)",
+              boxShadow: shadow.dropdown,
+              border: `1px solid ${border.subtle}`,
             }}
           >
             {propLabel(tooltip.prop, tooltip.isEdited)}
