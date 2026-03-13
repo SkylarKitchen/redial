@@ -57,7 +57,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 ## Phase 4 — Accessibility
 
-- [ ] **Standardize focus ring approach** — Components use 3 different focus patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
+- [x] **Standardize focus ring approach** — Components use 3 different focus patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
 - [ ] **Toolbar missing ARIA** — `ToolButton` in `Toolbar.tsx` has no `aria-label` or `aria-pressed` attributes. Add `aria-label={label}` and `aria-pressed={active}`.
 - [ ] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button when navigating with keyboard.
 - [ ] **Hint text contrast** — `text.hint` (#A3A3A3) on white background: contrast ratio is ~2.7:1, below WCAG AA (4.5:1). Darken to ~#8A8A8A for 3.9:1 or ~#757575 for 4.6:1.
@@ -161,6 +161,9 @@ Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. Aft
 
 ### 2026-03-13 — Copy button checkmark
 Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
+
+### 2026-03-13 — Standardize focus ring approach
+Unified 8 inline focus ring variants across 7 files to use the canonical `focusRing` token (`box-shadow: 0 0 0 2px color.ring`). Fixed: CSSVariablesSection (was 20% opacity via hex `33`), GlobalVariablesPanel ×2 (same), IconButtonGroup (was `primaryAlpha(0.3)`), PositionSelector, TextStyleRow, TransformOriginPicker, WebflowSegmentedControl (last two were hardcoded rgba). Converted WebflowPanel.tsx `.tuner-focusable` from `outline` to `box-shadow` to match.
 
 ### 2026-03-13 — Element outline pulse on select
 Added `@keyframes tuner-outline-pulse` to the injected focus-ring stylesheet in Overlay.tsx. A `--pulse` CSS class triggers a 400ms box-shadow expand+fade animation (`color.primary` glow). Applied via `useEffect` watching `panelKey` — triggers on both direct selection and breadcrumb navigation. Uses `timing.toolbar` (400ms) for cleanup timeout.
