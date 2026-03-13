@@ -17,7 +17,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
-import { color, text, border, surface, font, primaryAlpha, shadow } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, shadow, badge } from "./theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -48,8 +48,8 @@ const ACTIONS = [
 
 const CATEGORY_BADGE_STYLES: Record<SearchResult["category"], React.CSSProperties> = {
   Property: { color: color.primary, background: primaryAlpha(0.15) },
-  Action: { color: "#34d399", background: "rgba(16,185,129,0.15)" },
-  Element: { color: "#fbbf24", background: "rgba(245,158,11,0.15)" },
+  Action: { color: badge.action, background: badge.actionBg },
+  Element: { color: badge.element, background: badge.elementBg },
 };
 
 const MAX_RESULTS = 30;

@@ -147,6 +147,17 @@ export const segment = {
   height: 22,
 } as const;
 
+// ─── Badge Colors ───────────────────────────────────────────────
+
+export const badge = {
+  /** Action category — emerald green */
+  action: "#34d399",
+  actionBg: "rgba(16,185,129,0.15)",
+  /** Element category — amber */
+  element: "#fbbf24",
+  elementBg: "rgba(245,158,11,0.15)",
+} as const;
+
 // ─── Layout Dimensions ──────────────────────────────────────────
 
 export const layout = {
