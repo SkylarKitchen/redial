@@ -325,12 +325,18 @@ export function SliderRow({
         onPointerDown={() => beginBatch()}
         onPointerUp={() => endBatch()}
       />
-      <ValueInput value={value} onChange={onChange} onAltClick={onReset} />
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
-      ) : unit ? (
-        <span className="text-[9px] text-[var(--muted-foreground)] w-4">{unit}</span>
-      ) : null}
+      <div style={{ display: "flex", alignItems: "center", height: 26, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, overflow: "hidden" }}>
+        <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded />
+        {units && onUnitChange ? (
+          <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
+            <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />
+          </div>
+        ) : unit ? (
+          <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
+            <span style={{ fontSize: 9, color: text.label }}>{unit}</span>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
