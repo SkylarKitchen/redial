@@ -10,7 +10,8 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { X, Plus, Copy, Trash2 } from "lucide-react";
+import { X, Plus, Copy, Trash2, FolderPlus } from "lucide-react";
+import { useTokenCollections, type TokenCollection } from "./tokenCollections";
 import {
   discoverAllVariables,
   groupByCategory,
@@ -66,7 +67,7 @@ const VAR_LABEL_STYLE: React.CSSProperties = {
   alignItems: "center",
 };
 
-type ViewMode = "category" | "prefix";
+type ViewMode = "category" | "prefix" | "collection";
 
 // ─── Ordering Persistence ─────────────────────────────────────────────
 
@@ -788,6 +789,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
   const viewOptions = [
     { value: "category", label: "Category" },
     { value: "prefix", label: "Prefix" },
+    { value: "collection", label: "Collections" },
   ];
 
   return (
