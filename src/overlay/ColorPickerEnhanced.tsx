@@ -449,7 +449,7 @@ export function ColorPickerEnhanced({
         background: themeColor.popover,
         borderRadius: 8,
         padding: 12,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: shadow.picker,
         display: "flex",
         flexDirection: "column",
         gap: 10,
