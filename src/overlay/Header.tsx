@@ -22,6 +22,7 @@ interface HeaderProps {
   onClose: () => void;
   onDragStart: (e: React.MouseEvent) => void;
   totalChanges?: number;
+  sessionOpen?: boolean;
   onShowSession?: () => void;
   breadcrumb?: BreadcrumbSegment[];
   onBreadcrumbClick?: (el: Element) => void;
@@ -39,6 +40,7 @@ export function Header({
   onClose,
   onDragStart,
   totalChanges = 0,
+  sessionOpen = false,
   onShowSession,
   breadcrumb,
   onBreadcrumbClick,
@@ -97,7 +99,7 @@ export function Header({
           )}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
-          {totalChanges > 0 && (
+          {(totalChanges > 0 || sessionOpen) && (
             <div
               style={{
                 fontSize: 9,
@@ -118,7 +120,7 @@ export function Header({
                 justifyContent: "center",
               }}
               onClick={onShowSession}
-              title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} — click to view session`}
+              title={sessionOpen && totalChanges === 0 ? "Close session" : `${totalChanges} total change${totalChanges === 1 ? "" : "s"} — click to toggle session`}
             >
               {totalChanges}
             </div>

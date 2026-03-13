@@ -443,8 +443,6 @@ export function ColorPickerEnhanced({
     <div
       ref={containerRef}
       style={{
-        position: "fixed",
-        zIndex: 2147483647,
         width: 240,
         background: themeColor.popover,
         borderRadius: 8,

@@ -849,7 +849,7 @@ export function ColorRow({
           ? rect.top - pickerHeight - gap
           : rect.bottom + gap;
         return (
-          <div style={{ position: "fixed", top, left: rect.left, zIndex: 99999 }}>
+          <div style={{ position: "fixed", top, left: rect.left, zIndex: 2147483647 }}>
             <ColorPickerEnhanced
               color={pickerColor}
               onChange={(hex, opacity) => {

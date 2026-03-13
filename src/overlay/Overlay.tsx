@@ -1552,6 +1552,7 @@ export function Overlay() {
             onClose={handleClose}
             onDragStart={handleDragStart}
             totalChanges={totalChanges}
+            sessionOpen={sessionOpen}
             onShowSession={handleToggleSession}
             breadcrumb={breadcrumb}
             onBreadcrumbClick={handleBreadcrumbClick}
