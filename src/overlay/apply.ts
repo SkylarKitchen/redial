@@ -286,23 +286,15 @@ export function undo(): { el: Element; prop: string } | null {
         if (!isState) (el as HTMLElement).style.removeProperty(prop);
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
-<<<<<<< HEAD
         if (isState) notifyStateChange(el, state, cssProp, null);
-||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
-=======
         if (wasDirty) dirtyCount--;
->>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
       } else {
         if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
-<<<<<<< HEAD
         if (isState) notifyStateChange(el, state, cssProp, prev);
-||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
-=======
         const isDirtyNow = entry.initial !== prev;
         if (!wasDirty && isDirtyNow) dirtyCount++;
         else if (wasDirty && !isDirtyNow) dirtyCount--;
->>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
       }
       result = { el, prop };
     }
@@ -341,23 +333,15 @@ export function undo(): { el: Element; prop: string } | null {
     if (!isState) (el as HTMLElement).style.removeProperty(prop);
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
-<<<<<<< HEAD
     if (isState) notifyStateChange(el, state, cssProp, null);
-||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
-=======
     if (wasDirty) dirtyCount--;
->>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
   } else {
     if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
-<<<<<<< HEAD
     if (isState) notifyStateChange(el, state, cssProp, prev);
-||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
-=======
     const isDirtyNow = entry.initial !== prev;
     if (!wasDirty && isDirtyNow) dirtyCount++;
     else if (wasDirty && !isDirtyNow) dirtyCount--;
->>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
   }
 
   schedulePersist();
