@@ -32,7 +32,8 @@ import { LAYOUT_UNITS } from "./panelConstants";
 // ─── RowLabel ───────────────────────────────────────────────────────
 
 /**
- * Shared label with blue highlight when modified. Alt+click resets.
+ * Shared label with blue highlight when modified.
+ * Left-click on modified label opens a reset popover; Alt+click resets directly.
  */
 export function RowLabel({ label, isSet, indicator, onReset }: {
   label: string;
@@ -42,24 +43,29 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
   onReset?: () => void;
 }) {
   const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "modified" : "none");
+  const resetPopover = useResetPopover(effectiveIndicator, onReset);
 
   return (
-    <span
-      style={{
-        fontSize: 11,
-        flexShrink: 0,
-        userSelect: "none" as const,
-        lineHeight: "16px",
-        width: layout.labelWidth,
-        fontFamily: font.sans,
-        cursor: onReset ? "default" : undefined,
-      }}
-      onClick={altClickReset(onReset)}
-    >
-      <span style={indicatorStyle(effectiveIndicator)}>
-        {label}
+    <>
+      <span
+        ref={resetPopover.anchorRef}
+        style={{
+          fontSize: 11,
+          flexShrink: 0,
+          userSelect: "none" as const,
+          lineHeight: "16px",
+          width: layout.labelWidth,
+          fontFamily: font.sans,
+          cursor: onReset ? "default" : undefined,
+        }}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
+      >
+        <span style={indicatorStyle(effectiveIndicator)}>
+          {label}
+        </span>
       </span>
-    </span>
+      {resetPopover.node}
+    </>
   );
 }
 
