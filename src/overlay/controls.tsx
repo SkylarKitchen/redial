@@ -252,7 +252,8 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       className="tuner-focusable"
       style={{
         ...flashStyle,
-        width: 40,
+        minWidth: 40,
+        flex: 1,
         height: 28,
         borderRadius: 2,
         padding: "0 6px",
@@ -260,7 +261,6 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
         fontFamily: font.mono,
         outline: "none",
         textAlign: "right" as const,
-        flexShrink: 0,
         color: color.foreground,
         ...(embedded ? { backgroundColor: "transparent", border: "none" } : {
           backgroundColor: color.input,
