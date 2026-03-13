@@ -219,7 +219,7 @@ Deeper sweep of section-specific editors that were missed by the Phase 1 top-lev
 - [x] **TransformEditor hover uses `primaryAlpha` instead of `surface.*`** — `TransformEditor.tsx:165` uses `primaryAlpha(0.2)` for dropdown item hover, violating the hover convention (`surface.hover` for light backgrounds). Also uses `surface.track` for border (line 145) instead of `border.input`. Target: lines 145, 165.
 - [x] **TextStyleRow dark-on-primary text** — `TextStyleRow.tsx:163` uses `rgba(255,255,255,0.6)` for active text color on primary background. This should use a token — add `color.primaryTextMuted` or use `darkToolbar.textMuted` if the semantic fits. Target: line 163.
 - [x] **layoutControls dark dropdown hardcoded color** — `layoutControls.tsx:433` uses `#e8e8e8` for dark dropdown text. This doesn't match any theme token. Should use `darkToolbar.textMuted` or add an appropriate token. Target: line 433.
-- [ ] **BezierEditor/TransitionEditor canvas hardcoded values** — `BezierEditor.tsx:271` uses `rgba(0,0,0,0.04)` and `TransitionEditor.tsx:814/821` uses `rgba(0,0,0,0.03)` and `rgba(0,0,0,0.07)` for canvas fills and grid lines. These subtle background values should use `blackAlpha()` for consistency, even if the raw values are kept — it makes the intent clear and keeps the convention uniform. Target: `BezierEditor.tsx:271`, `TransitionEditor.tsx:814/821`.
+- [x] **BezierEditor/TransitionEditor canvas hardcoded values** — `BezierEditor.tsx:271` uses `rgba(0,0,0,0.04)` and `TransitionEditor.tsx:814/821` uses `rgba(0,0,0,0.03)` and `rgba(0,0,0,0.07)` for canvas fills and grid lines. These subtle background values should use `blackAlpha()` for consistency, even if the raw values are kept — it makes the intent clear and keeps the convention uniform. Target: `BezierEditor.tsx:271`, `TransitionEditor.tsx:814/821`.
 
 ---
 
@@ -264,3 +264,6 @@ Added `color.primaryForegroundMuted: "rgba(255,255,255,0.6)"` token to theme.ts 
 
 ### 2026-03-13 — layoutControls dark dropdown hardcoded color
 Replaced `#e8e8e8` in `DarkMenuOption` with `darkToolbar.text` — these are primary menu labels on a `surface.darkMenu` (#363636) background. Used `darkToolbar.text` (full white) over `darkToolbar.textMuted` (0.7 opacity, too dim) since menu labels should be clearly legible. The visual difference from #e8e8e8 to full white on dark gray is negligible.
+
+### 2026-03-13 — BezierEditor/TransitionEditor canvas blackAlpha
+Replaced 3 hardcoded `rgba(0,0,0,...)` values with `blackAlpha()` calls: BezierEditor.tsx canvas background (0.04), TransitionEditor.tsx canvas fill (0.03) and grid stroke (0.07). Added `blackAlpha` import to BezierEditor. Two remaining `rgba(0,0,0,0.35)` in TransitionEditor are embedded in SVG data URIs — not practical to tokenize.
