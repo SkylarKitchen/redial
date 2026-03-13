@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, memo } from "react";
-import { Section, SliderRow, SelectRow } from "./controls";
+import { Section, SliderRow, SelectRow, NumberRow } from "./controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
@@ -286,7 +286,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
 
       {/* ── Secondary controls ── */}
 
-      <SliderRow label="Perspective" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
+      <NumberRow label="Perspective" value={perspective} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
       <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} onReset={() => resetCssStr("backface-visibility", setBackfaceVisibility)} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />
       <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} onReset={() => resetCssStr("pointer-events", setPointerEvents)} indicator={ind("pointer-events")} onContextMenu={ctxMenu("pointer-events", pointerEvents)} computedProp="pointer-events" computedElement={element} />
       <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} onReset={() => resetCssStr("visibility", setVisibility)} indicator={ind("visibility")} onContextMenu={ctxMenu("visibility", visibility)} computedProp="visibility" computedElement={element} />

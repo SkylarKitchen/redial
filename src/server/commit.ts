@@ -11,6 +11,7 @@
 
 import { readFile, writeFile, readdir, stat } from "fs/promises";
 import { resolve, join, basename, normalize } from "path";
+import { trySourceMapResolution } from "./sourceMapCache";
 
 /** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
 const VALID_STATES = new Set([
@@ -41,6 +42,8 @@ export type CommitChange = {
   /** CSS pseudo-class state (e.g. "hover", "focus"). When set, targets
    *  the `.className:state { }` block instead of the base class block. */
   state?: string;
+  /** Compiled CSS href for source map resolution (e.g. "/_next/static/css/abc.css") */
+  cssHref?: string;
 };
 
 export type CommitResult = {
