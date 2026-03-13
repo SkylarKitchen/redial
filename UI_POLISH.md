@@ -15,70 +15,61 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **Toolbar dark theme colors** — Added `surface.darkToolbar` (#1e1e1e) token, replaced hardcoded hex in Toolbar.tsx.
 - [x] **CommandPalette badge colors** — Added `badge.action/actionBg` (emerald) and `badge.element/elementBg` (amber) tokens, replaced hardcoded values.
 - [x] **SpacingBoxModel hardcoded colors** — Replaced tooltip background with `bgAlpha(0.97)`, shadow with `shadow.dropdown`, border with `border.subtle`.
-- [ ] **TextToggle wrong border token** — `layoutControls.tsx:80,120,231` uses `surface.track` for borders (3 occurrences). Should use `border.default` or `border.input`.
-- [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx:371` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `color.ring` token.
+- [ ] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
+- [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
+- [ ] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
+- [ ] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
+- [ ] **StateSelector hardcoded green** — `StateSelector.tsx:57` uses `#34d399` for active state color. Should use `badge.action` token (same value, but via theme).
+- [ ] **Footer hardcoded success greens** — `Footer.tsx:264` has `#16a34a` and `Footer.tsx:357` has `#22c55e` for copied/saved states. Add `color.success` + `color.successMuted` tokens.
+- [ ] **ScopePill duplicate hover** — `Header.tsx:311` has `hovered ? surface.active : surface.active` — both branches identical. Active+hovered should use a slightly stronger background (e.g. `blackAlpha(0.1)`).
+- [ ] **z-index sprawl** — 16+ components use `2147483647` (max int). Add `zIndex` tokens to theme.ts (e.g. `zIndex.overlay`, `zIndex.popover`, `zIndex.max`) and replace all occurrences.
+- [ ] **GapInput missing value flash** — `GapInput` in `layoutControls.tsx:610` doesn't use `useValueFlash`. `TrackCountInput` at line 790 also lacks it. Add for consistency with `ValueInput`/`SizeInputCell`.
 
 ---
 
 ## Phase 2 — Input & Control Polish (medium effort, high UX value)
 
 ### Input Improvements
-- [ ] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition.
-- [ ] **Color swatch inset border**: Add `1px inset border` (`border.default`) on color swatches so white/near-white swatches don't disappear against the panel background. Target: `ColorRow` in `controls.tsx`.
-- [ ] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `ValueInput`, `SizeInputCell`.
-- [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") should truncate with ellipsis and show full name via `title` attribute. Target: all `labelStyle` usages.
-- [ ] **Dropdown scroll-to-selected**: When a `SelectRow` dropdown opens, auto-scroll the selected item into view. Target: `SelectRow` in `controls.tsx`.
-- [ ] **Slider value tooltip**: Show a floating tooltip above the slider thumb during drag, displaying the current value. Target: `SliderRow` in `controls.tsx`.
-- [ ] **SizeInputCell width clips large values** — Fixed at 36px, clips "9999". Consider dynamic width or expand-on-focus.
-- [ ] **GapInput/TrackCountInput missing value flash** — `layoutControls.tsx` controls don't use `useValueFlash` like other inputs. Add for consistency.
-- [ ] **UnitSelector dismissal timeout** — Uses hardcoded `1.7s` for hint auto-dismiss. Add `timing.dismissal` token or use existing `timing.slow`.
-- [ ] **MiniDropdown keyboard navigation** — Smaller dropdowns in `layoutControls.tsx` may lack keyboard support that `UnitSelector` already has. Verify and add if missing.
+- [ ] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition. Gives visual feedback that sections are clickable.
+- [ ] **Color swatch inset border**: The `1px solid color.border` on color swatches handles most cases, but pure-white or near-white swatches still blend into the panel background. Add an `inset` shadow or ensure border is always visible even for white swatches. Target: `ColorRow` in `controls.tsx:859`.
+- [ ] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `SizeInputCell` keyword mode.
+- [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") can clip. Add `overflow: hidden`, `textOverflow: ellipsis`, and `title` attribute to `labelStyle` in `controls.tsx`.
+- [ ] **SizeInputCell width clips large values** — Still fixed at `36px` width (`SizeInputCell.tsx:249`). Consider `minWidth: 36` with `flex: 1` or expand-on-focus.
+- [ ] **UnitSelector dismissal timeout** — Uses hardcoded `1700ms` for hint auto-dismiss. Replace with `timing.slow * 5` or a new `timing.dismissal` token.
+- [ ] **Footer reset button hover** — Uses `surface.active` for hover when count > 0, but `surface.active` is also the pressed state token. Use `surface.hover` for hover, `surface.active` only for pressed/active.
 
 ### Section-Specific Polish
-- [ ] **Spacing side hover highlight**: Hovering a margin/padding value in `SpacingBoxModel` should highlight that side of the diagram using `spacingZone.marginHover` / `spacingZone.paddingHover`. Target: `SpacingBoxModel.tsx`.
 - [ ] **Font weight preview**: In the font-weight dropdown, render each option at its actual weight (100=thin, 900=heavy). Target: Typography section `SelectRow`.
-- [ ] **Shadow preview thumbnail**: Show a 24×24 preview square with the current shadow applied next to the shadow editor. Target: `ShadowEditor.tsx`.
+- [ ] **Shadow preview swatch**: Show a small 20×20 preview square with the current shadow applied, next to the shadow layer header. Target: `ShadowEditor.tsx`.
 
 ---
 
 ## Phase 3 — Panel Chrome & Interaction (larger effort)
 
 ### Panel Behavior
-- [ ] **Smooth section collapse animation**: Verify the CSS Grid `0fr→1fr` collapse animation is actually smooth (not popping). If not, add explicit height animation. Target: `Section` component.
-- [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage). Target: `WebflowPanel.tsx`.
-- [ ] **Panel resize handle**: Subtle resize handle on the left edge, draggable between 260–400px. Persist to localStorage. Target: `Overlay.tsx`.
-- [ ] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant). Revert on drop. Target: `Overlay.tsx` drag handlers.
-- [ ] **ResetPopover z-index too aggressive** — Uses `2147483647` (max int). Lower to `100000` or use a z-index token.
+- [ ] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant like `shadow.panelDrag`). Revert on drop. Target: `Overlay.tsx` drag handlers.
+- [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage, just React state). Target: `WebflowPanel.tsx`.
 
 ### Visual Feedback
-- [ ] **Changed property left-border accent**: Properties with overrides should show a 2px `color.primary` left border that fades in on first change. Target: all control row containers.
 - [ ] **Element outline pulse on select**: Brief scale+opacity pulse on the selection outline when selecting a new element (400ms). Target: `Overlay.tsx` selection outline.
-- [ ] **Undo/redo depth indicator**: Small "N changes" badge showing undo stack depth. Clicking opens HistoryDrawer. Target: `Footer.tsx` or `Header.tsx`.
-
-### Advanced Interactions
-- [ ] **Property search autocomplete**: Typing in Cmd+F search shows autocomplete from `SECTION_PROPERTIES`. Arrow keys navigate, Enter jumps. Target: `PropertySearch.tsx`.
-- [ ] **Transition easing curve mini-preview**: Tiny 20×20 bezier curve icon next to easing dropdown. Target: `TransitionEditor.tsx`.
-- [ ] **Filter before/after thumbnail**: Small before/after preview for each active filter. Target: `FilterSliders.tsx`.
 
 ---
 
-## Phase 4 — Accessibility (NEW)
+## Phase 4 — Accessibility
 
-- [ ] **Standardize focus ring approach** — Components use 3 different patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
-- [ ] **UnitSelector missing ARIA** — Dropdown lacks `aria-expanded`, `aria-haspopup` attributes.
-- [ ] **MiniDropdown missing ARIA** — No `aria-label` for screen readers.
-- [ ] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button.
-- [ ] **Footer button focus** — No `:focus-visible` styling beyond browser default.
-- [ ] **Hint text contrast** — `text.hint` (#A3A3A3) on white may not meet WCAG AA (4.5:1 ratio). Verify and darken if needed.
-- [ ] **`text.disabled` contrast** — #737373 on white — verify WCAG AA compliance for normal text.
+- [ ] **Standardize focus ring approach** — Components use 3 different focus patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
+- [ ] **Toolbar missing ARIA** — `ToolButton` in `Toolbar.tsx` has no `aria-label` or `aria-pressed` attributes. Add `aria-label={label}` and `aria-pressed={active}`.
+- [ ] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button when navigating with keyboard.
+- [ ] **Hint text contrast** — `text.hint` (#A3A3A3) on white background: contrast ratio is ~2.7:1, below WCAG AA (4.5:1). Darken to ~#8A8A8A for 3.9:1 or ~#757575 for 4.6:1.
+- [ ] **`text.disabled` contrast** — `#737373` on white is ~4.6:1, which barely passes AA for normal text. Verify it's only used for disabled/decorative elements where AA isn't strictly required.
 
 ---
 
-## Phase 5 — Visual Feedback Refinements (NEW)
+## Phase 5 — Hover & Interaction Consistency
 
-- [ ] **Copy button checkmark animation** — Current "Copied" state is basic text swap. Add a Motion.js checkmark scale-in animation.
-- [ ] **Hover state standardization** — 4 different hover patterns found across components (surface.hover, surface.active, custom rgba, none). Document and standardize.
-- [ ] **Footer reset button hover** — Uses `surface.active` when count > 0, which is also the pressed color. Use `surface.hover` for hover, `surface.active` only for pressed.
+- [ ] **Hover state standardization** — 4 different hover patterns across components: `surface.hover`, `surface.active`, custom `rgba(255,255,255,...)` (dark theme), and no hover. Document the rules: `surface.hover` for light backgrounds, dark-theme tokens for dark backgrounds, no custom rgba.
+- [ ] **Toolbar expanded animation timing** — `Toolbar.tsx:192` uses `duration: 0.15` (hardcoded seconds) for AnimatePresence exit. Should use timing token.
+- [ ] **SessionDrawer hardcoded timeout** — `SessionDrawer.tsx:47` uses `setTimeout(() => ..., 1500)` for "Copied!" message. Should use timing-based constant.
 
 ---
 
@@ -143,3 +134,26 @@ Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Foot
 
 ### 2026-03-12 — Value change flash
 Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`. Brief `primaryAlpha(0.12)` background flash on value change (200ms fade).
+
+---
+
+## Removed (audited 2026-03-13)
+
+Items removed because they were already fixed, became outdated as the codebase evolved, or were too speculative for low-risk polish:
+
+- **Dropdown scroll-to-selected** — Handled by Shadcn Select component natively.
+- **Slider value tooltip** — `ComputedTooltip` already provides this.
+- **MiniDropdown keyboard navigation** — Already implemented via `useDropdownKeyboard` hook.
+- **Spacing side hover highlight** — Already implemented with `spacingZone.*Hover` tokens.
+- **Smooth section collapse animation** — Handled by `CollapsibleContent` from Shadcn.
+- **Panel resize handle** — Drag handle already exists in Header.tsx; resize adds complexity for low value.
+- **ResetPopover z-index too aggressive** — Consolidated into the broader "z-index sprawl" item.
+- **Changed property left-border accent** — `labelIndicator` highlight pills already serve this purpose.
+- **Undo/redo depth indicator** — Header already shows total changes badge; HistoryDrawer provides detail.
+- **Property search autocomplete** — CommandPalette (Cmd+K) already provides this with fuzzy search.
+- **Transition easing curve mini-preview** — BezierEditor already provides full curve editing.
+- **Filter before/after thumbnail** — Too much effort for low-use section.
+- **UnitSelector missing ARIA** — Already has `role`, `aria-expanded`, `aria-haspopup`.
+- **MiniDropdown missing ARIA** — Already has full ARIA via `useDropdownKeyboard`.
+- **Footer button focus** — Buttons use `tuner-focusable` class with injected styles.
+- **Copy button checkmark animation** — Already uses Motion.js transitions.

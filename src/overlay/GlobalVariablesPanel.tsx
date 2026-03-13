@@ -183,6 +183,10 @@ function VariableContextMenu({
   onRename,
   onDuplicate,
   onDelete,
+  collections,
+  currentCollectionId,
+  onMoveToCollection,
+  onUnassignVariable,
 }: {
   x: number;
   y: number;
@@ -191,6 +195,10 @@ function VariableContextMenu({
   onRename: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  collections?: TokenCollection[];
+  currentCollectionId?: string | null;
+  onMoveToCollection?: (collectionId: string) => void;
+  onUnassignVariable?: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   useFocusTrap(menuRef, true);
@@ -235,6 +243,24 @@ function VariableContextMenu({
     { label: "Copy Value", action: () => { navigator.clipboard.writeText(variable.value); onClose(); } },
     { label: "Copy Declaration", action: () => { navigator.clipboard.writeText(`${variable.name}: ${variable.value};`); onClose(); } },
   ];
+
+  // Add collection items
+  if (collections && collections.length > 0 && onMoveToCollection) {
+    items.push({ label: "", action: () => {}, separator: true });
+    for (const c of collections) {
+      if (c.id === currentCollectionId) continue;
+      items.push({
+        label: `Move to ${c.name}`,
+        action: () => { onMoveToCollection(c.id); onClose(); },
+      });
+    }
+    if (currentCollectionId && onUnassignVariable) {
+      items.push({
+        label: "Remove from collection",
+        action: () => { onUnassignVariable(); onClose(); },
+      });
+    }
+  }
 
   return createPortal(
     <div
@@ -743,27 +769,23 @@ function PrefixGroupSection({
 function CollectionSection({
   collection,
   variables,
-  allFilteredVars,
   searching,
   order,
   onOrderChange,
   onContextMenu,
   onRename,
   onDelete,
-  onAssignVariable,
   renamingCollectionId,
   setRenamingCollectionId,
 }: {
   collection: TokenCollection;
   variables: CSSVariable[];
-  allFilteredVars: CSSVariable[];
   searching: boolean;
   order: Map<string, number>;
   onOrderChange: (order: Map<string, number>) => void;
   onContextMenu: (e: React.MouseEvent, v: CSSVariable) => void;
   onRename: (name: string) => void;
   onDelete: () => void;
-  onAssignVariable: (varName: string) => void;
   renamingCollectionId: string | null;
   setRenamingCollectionId: (id: string | null) => void;
 }) {
@@ -785,35 +807,12 @@ function CollectionSection({
     setRenamingCollectionId(null);
   }, [renameValue, collection.name, onRename, setRenamingCollectionId]);
 
-  const headerContent = isRenaming ? (
-    <input
-      ref={renameRef}
-      type="text"
-      value={renameValue}
-      onChange={(e) => setRenameValue(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") commitRename();
-        if (e.key === "Escape") setRenamingCollectionId(null);
-      }}
-      onBlur={commitRename}
-      style={{
-        fontSize: 11, fontWeight: 600, fontFamily: font.sans,
-        background: surface.subtle, border: `1px solid ${border.default}`,
-        borderRadius: 3, padding: "1px 4px", color: text.primary,
-        outline: "none", width: "100%",
-      }}
-    />
-  ) : (
-    <span
-      onDoubleClick={() => setRenamingCollectionId(collection.id)}
-      style={{ cursor: "default" }}
-      title="Double-click to rename"
-    >
-      {collection.name} ({variables.length})
-    </span>
-  );
+  // Build title: inline input when renaming, label otherwise
+  const titleText = isRenaming
+    ? ""
+    : `${collection.name} (${variables.length})`;
 
-  const headerAction = (
+  const deleteBtn = (
     <button
       onClick={(e) => { e.stopPropagation(); onDelete(); }}
       style={MINI_ACTION_BUTTON}
@@ -823,26 +822,68 @@ function CollectionSection({
     </button>
   );
 
-  return (
-    <Section title={headerContent} headerAction={headerAction}>
-      {variables.length === 0 ? (
-        <div style={{
-          padding: "8px 12px", fontSize: 10, color: text.hint,
-          fontStyle: "italic", textAlign: "center",
-        }}>
-          No variables in this collection
+  if (variables.length === 0 && !isRenaming) {
+    // Empty collection — show as a minimal section
+    return (
+      <Section
+        title={titleText}
+        headerAction={deleteBtn}
+      >
+        <div
+          onDoubleClick={() => setRenamingCollectionId(collection.id)}
+          style={{
+            padding: "6px 12px", fontSize: 10, color: text.hint,
+            fontStyle: "italic", cursor: "default",
+          }}
+          title="Double-click header to rename"
+        >
+          Empty — assign variables via right-click
         </div>
-      ) : (
-        <VariableGroup
-          title=""
-          variables={variables}
-          searching={searching}
-          order={order}
-          onOrderChange={onOrderChange}
-          onContextMenu={onContextMenu}
-        />
-      )}
-    </Section>
+      </Section>
+    );
+  }
+
+  if (isRenaming) {
+    return (
+      <Section
+        title={
+          <input
+            ref={renameRef}
+            type="text"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") setRenamingCollectionId(null);
+            }}
+            onBlur={commitRename}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              fontSize: 11, fontWeight: 600, fontFamily: font.sans,
+              background: surface.subtle, border: `1px solid ${border.default}`,
+              borderRadius: 3, padding: "1px 4px", color: text.primary,
+              outline: "none", width: "100%",
+            }}
+          />
+        }
+        headerAction={deleteBtn}
+      >
+        {null}
+      </Section>
+    );
+  }
+
+  return (
+    <div onDoubleClick={() => setRenamingCollectionId(collection.id)}>
+      <VariableGroup
+        title={titleText}
+        variables={variables}
+        searching={searching}
+        order={order}
+        onOrderChange={onOrderChange}
+        onContextMenu={onContextMenu}
+      />
+    </div>
   );
 }
 
@@ -1134,14 +1175,12 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
                 key={coll.id}
                 collection={coll}
                 variables={vars}
-                allFilteredVars={filtered}
                 searching={searching}
                 order={order}
                 onOrderChange={handleOrderChange}
                 onContextMenu={handleContextMenu}
                 onRename={(name) => renameColl(coll.id, name)}
                 onDelete={() => removeColl(coll.id)}
-                onAssignVariable={(varName) => assignVar(coll.id, varName)}
                 renamingCollectionId={renamingCollectionId}
                 setRenamingCollectionId={setRenamingCollectionId}
               />
@@ -1177,6 +1216,10 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
           onDelete={() => {
             removeCustomProperty(document.documentElement, contextMenu.variable.name);
           }}
+          collections={collections}
+          currentCollectionId={getCollectionForVariable(contextMenu.variable.name)?.id ?? null}
+          onMoveToCollection={(collId) => assignVar(collId, contextMenu.variable.name)}
+          onUnassignVariable={() => unassignVar(contextMenu.variable.name)}
         />
       )}
     </>
