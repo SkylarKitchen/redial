@@ -342,6 +342,39 @@ export const BG_CLIP_OPTIONS = [
   { value: "text", label: "Text" },
 ];
 
+export const BG_SIZE_OPTIONS = [
+  { value: "auto", label: "Auto" },
+  { value: "cover", label: "Cover" },
+  { value: "contain", label: "Contain" },
+];
+
+export const BG_POSITION_OPTIONS = [
+  { value: "center", label: "Center" },
+  { value: "top", label: "Top" },
+  { value: "bottom", label: "Bottom" },
+  { value: "left", label: "Left" },
+  { value: "right", label: "Right" },
+  { value: "top left", label: "Top Left" },
+  { value: "top right", label: "Top Right" },
+  { value: "bottom left", label: "Bottom Left" },
+  { value: "bottom right", label: "Bottom Right" },
+];
+
+export const BG_REPEAT_OPTIONS = [
+  { value: "repeat", label: "Repeat" },
+  { value: "repeat-x", label: "Repeat X" },
+  { value: "repeat-y", label: "Repeat Y" },
+  { value: "no-repeat", label: "No Repeat" },
+  { value: "space", label: "Space" },
+  { value: "round", label: "Round" },
+];
+
+export const BG_ATTACHMENT_OPTIONS = [
+  { value: "scroll", label: "Scroll" },
+  { value: "fixed", label: "Fixed" },
+  { value: "local", label: "Local" },
+];
+
 // ─── Interaction Options ────────────────────────────────────────────
 
 export const USER_SELECT_OPTIONS = [

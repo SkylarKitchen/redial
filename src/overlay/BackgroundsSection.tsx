@@ -13,7 +13,7 @@ import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { resetProp, resetAndReadStr } from "./apply";
 import type { SectionCtx } from "./panelUtils";
-import { BG_CLIP_OPTIONS } from "./panelConstants";
+import { BG_CLIP_OPTIONS, BG_SIZE_OPTIONS, BG_POSITION_OPTIONS, BG_REPEAT_OPTIONS, BG_ATTACHMENT_OPTIONS } from "./panelConstants";
 import { Plus } from "lucide-react";
 import { color, text, font } from "./theme";
 import { ms } from "./timing";
@@ -78,6 +78,10 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
     // Map default border-box to "none" for display
     return val === "border-box" ? "none" : val;
   });
+  const [bgSize, setBgSize] = useState(() => cs.backgroundSize);
+  const [bgPosition, setBgPosition] = useState(() => cs.backgroundPosition);
+  const [bgRepeat, setBgRepeat] = useState(() => cs.backgroundRepeat);
+  const [bgAttachment, setBgAttachment] = useState(() => cs.backgroundAttachment);
 
   // ── Handlers ──
   const handleBgColorChange = useCallback(
@@ -158,6 +162,26 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
     handleBgLayersChange([...bgLayers, newLayer]);
   }, [bgLayers, handleBgLayersChange]);
 
+  const handleBgSizeChange = useCallback(
+    (v: string) => { setBgSize(v); apply("background-size", v); },
+    [apply],
+  );
+  const handleBgPositionChange = useCallback(
+    (v: string) => { setBgPosition(v); apply("background-position", v); },
+    [apply],
+  );
+  const handleBgRepeatChange = useCallback(
+    (v: string) => { setBgRepeat(v); apply("background-repeat", v); },
+    [apply],
+  );
+  const handleBgAttachmentChange = useCallback(
+    (v: string) => { setBgAttachment(v); apply("background-attachment", v); },
+    [apply],
+  );
+
+  // Detect whether element has a background-image with url()
+  const hasBgImage = cs.backgroundImage && cs.backgroundImage !== "none" && cs.backgroundImage.includes("url(");
+
   // Clipping options: "None" maps to default border-box
   const clippingOptions = [
     { value: "none", label: "None" },
@@ -168,7 +192,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
   return (
     <Section
       title="Backgrounds"
-      indicator={sectionInd(["background-color", "background-image", "background-clip", "background-blend-mode"])}
+      indicator={sectionInd(["background-color", "background-image", "background-clip", "background-blend-mode", "background-size", "background-position", "background-repeat", "background-attachment"])}
       forceOpen={forceOpen}
       focusOpen={focusOpen}
       onToggle={onToggle}
@@ -208,6 +232,56 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
         computedElement={element}
         onReset={() => resetCssStr("background-clip", (v) => setBgClip(v === "border-box" ? "none" : v))}
       />
+
+      {/* 4. Background image controls (visible only when element has background-image url()) */}
+      {hasBgImage && (
+        <>
+          <SelectRow
+            label="Size"
+            value={bgSize}
+            options={BG_SIZE_OPTIONS}
+            onChange={handleBgSizeChange}
+            onReset={() => resetCssStr("background-size", setBgSize)}
+            indicator={ind("background-size")}
+            onContextMenu={ctxMenu("background-size", bgSize)}
+            computedProp="background-size"
+            computedElement={element}
+          />
+          <SelectRow
+            label="Position"
+            value={bgPosition}
+            options={BG_POSITION_OPTIONS}
+            onChange={handleBgPositionChange}
+            onReset={() => resetCssStr("background-position", setBgPosition)}
+            indicator={ind("background-position")}
+            onContextMenu={ctxMenu("background-position", bgPosition)}
+            computedProp="background-position"
+            computedElement={element}
+          />
+          <SelectRow
+            label="Repeat"
+            value={bgRepeat}
+            options={BG_REPEAT_OPTIONS}
+            onChange={handleBgRepeatChange}
+            onReset={() => resetCssStr("background-repeat", setBgRepeat)}
+            indicator={ind("background-repeat")}
+            onContextMenu={ctxMenu("background-repeat", bgRepeat)}
+            computedProp="background-repeat"
+            computedElement={element}
+          />
+          <SelectRow
+            label="Attachment"
+            value={bgAttachment}
+            options={BG_ATTACHMENT_OPTIONS}
+            onChange={handleBgAttachmentChange}
+            onReset={() => resetCssStr("background-attachment", setBgAttachment)}
+            indicator={ind("background-attachment")}
+            onContextMenu={ctxMenu("background-attachment", bgAttachment)}
+            computedProp="background-attachment"
+            computedElement={element}
+          />
+        </>
+      )}
     </Section>
   );
 });

@@ -162,12 +162,12 @@ The workflow doc says "maybe Tailwind" and there's a `tailwind.ts` with tests. B
 
 ### Acceptance criteria
 
-- [ ] When an element has `background-image: url(...)`, the image controls appear
-- [ ] Each control reads the computed value and allows editing
-- [ ] Changes apply live via inline styles
-- [ ] `background-clip: text` works (requires `-webkit-background-clip` vendor prefix)
-- [ ] All controls save correctly via the commit pipeline
-- [ ] `npm run typecheck` passes
+- [x] When an element has `background-image: url(...)`, the image controls appear
+- [x] Each control reads the computed value and allows editing
+- [x] Changes apply live via inline styles
+- [x] `background-clip: text` works (requires `-webkit-background-clip` vendor prefix)
+- [x] All controls save correctly via the commit pipeline
+- [x] `npm run typecheck` passes
 
 ---
 
