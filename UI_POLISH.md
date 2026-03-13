@@ -186,6 +186,9 @@ Added `SectionMemoryProvider` context in controls.tsx. Overlay.tsx owns the `Rec
 ### 2026-03-13 — Icon opacity audit
 Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (was `opacity: 0.6`), Header.tsx ChevronRight ×2 (were `opacity: 0.4`). All other icon usages already use theme tokens.
 
+### 2026-03-13 — SpacingGuidesOverlay hardcoded colors
+Added `spacingMarginAlpha()` and `spacingPaddingAlpha()` helpers + `overlay.spacing.*` token family (margin, marginFill, padding, paddingFill) to theme.ts. Replaced 4 top-level color constants in SpacingGuidesOverlay.tsx with token references and 1 `rgba(0,0,0,0.25)` with `blackAlpha(0.25)`. Follows the same pattern as `overlay.grid.*` and `overlay.flexGap.*`.
+
 ### 2026-03-13 — PositionOffsetDiagram hardcoded text colors
 Replaced 6 hardcoded color values in PositionOffsetDiagram.tsx: `#A3A3A3` → `text.hint` (×3, AutoLabel + zero-value + unit suffix), `#171717` → `text.primary` (×1, editing input), `#525252` → `text.secondary` (×1, non-zero values), `rgba(0,0,0,0.07)` → `blackAlpha(0.07)`, `rgba(217,119,87,0.5)` → `gridAlpha(0.5)` (focus border matches position section's warm accent). Zero hardcoded hex/rgba remaining.
 
