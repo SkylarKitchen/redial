@@ -11,7 +11,7 @@ Autonomous improvement queue. Each item is a self-contained, verifiable enhancem
 These items fix existing test failures and TypeScript errors. No polish work should start until Phase 0 is clear.
 
 ### TypeScript Errors
-- [ ] **Fix `annotation` not destructured in SliderRow**: `controls.tsx:377` — the `annotation` prop is in the type definition (line 408) but missing from the destructuring (line 377). Add `annotation,` to the destructured params. This fixes 2 TS errors and 2 section render test failures.
+- [x] **Fix `annotation` not destructured in SliderRow**: `controls.tsx:377` — the `annotation` prop is in the type definition (line 408) but missing from the destructuring (line 377). Add `annotation,` to the destructured params. This fixes 2 TS errors and 2 section render test failures.
 
 ### Failing Tests — Behavioral Bugs
 - [ ] **Fix class-scope undo/redo** (`scope.test.ts`): Undo of a class-scoped edit should remove the property from the injected `<style>` tag. Redo should re-apply it. The `apply.ts` undo/redo needs to call back into `scope.ts` so the `<style>` tag stays in sync. Add an `onClassChange` listener pattern (like the existing `onStateChange`).
@@ -74,6 +74,9 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Fix annotation not destructured in SliderRow
+Added missing `annotation` to destructured params in `SliderRow` (`controls.tsx:378`). The prop was defined in the type and used in JSX but never extracted from the props object, so the Tailwind class hint annotation was always `undefined`.
 
 ### 2026-03-13 — Reset shake on no-op
 Added shake animation to Reset button in `Footer.tsx`. When clicked with no overrides (count=0), the button does a 3-cycle horizontal shake (2px amplitude, 300ms via `timing.slow`). Converted to `motion.button` with keyframe animation `x: [0, -2, 2, -2, 2, -2, 2, 0]`. Button remains clickable but visually dimmed at 0.5 opacity.
