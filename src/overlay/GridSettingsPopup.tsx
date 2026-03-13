@@ -82,15 +82,24 @@ function parseToken(token: string): GridTrackDef[] {
     return result;
   }
 
-  // minmax(min, max) — use greedy-first-comma split to handle nested parens
-  const minmaxMatch = token.match(/^minmax\(\s*(.+?)\s*,\s*(.+?)\s*\)$/);
-  if (minmaxMatch) {
-    const min = parseValueUnit(minmaxMatch[1]);
-    const max = parseValueUnit(minmaxMatch[2]);
-    if (min.unit === "auto" && max.unit === "auto") return [makeAuto()];
-    if (min.unit === "auto") return [makeMinmax(0, "auto", max.value, max.unit)];
-    if (max.unit === "auto") return [makeMinmax(min.value, min.unit, 0, "auto")];
-    return [makeMinmax(min.value, min.unit, max.value, max.unit)];
+  // minmax(min, max) — split on first top-level comma (respects nested parens in calc() etc.)
+  if (token.startsWith("minmax(") && token.endsWith(")")) {
+    const inner = token.slice(7, -1); // strip "minmax(" and ")"
+    let depth = 0;
+    let splitIdx = -1;
+    for (let i = 0; i < inner.length; i++) {
+      if (inner[i] === "(") depth++;
+      else if (inner[i] === ")") depth--;
+      else if (inner[i] === "," && depth === 0) { splitIdx = i; break; }
+    }
+    if (splitIdx >= 0) {
+      const min = parseValueUnit(inner.slice(0, splitIdx).trim());
+      const max = parseValueUnit(inner.slice(splitIdx + 1).trim());
+      if (min.unit === "auto" && max.unit === "auto") return [makeAuto()];
+      if (min.unit === "auto") return [makeMinmax(0, "auto", max.value, max.unit)];
+      if (max.unit === "auto") return [makeMinmax(min.value, min.unit, 0, "auto")];
+      return [makeMinmax(min.value, min.unit, max.value, max.unit)];
+    }
   }
 
   // auto
@@ -471,7 +480,7 @@ export function GridSettingsPopup({
     const handler = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         const target = e.target as HTMLElement;
-        if (target.closest?.("[data-tuner-portal]")) return;
+        if (target.closest("[data-tuner-portal]")) return;
         onCloseRef.current();
       }
     };

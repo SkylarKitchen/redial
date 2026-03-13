@@ -4,7 +4,7 @@
  * Manages display mode, flex/grid properties, gap, and flex/grid child controls.
  */
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useRef } from "react";
 import { ms } from "./timing";
 import { Section, SliderRow, SelectRow, TextRow, ValueInput, useResetPopover } from "./controls";
 import { AlignBox } from "./AlignBox";
@@ -21,6 +21,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "./panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
+import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
 import { Link, Grid3x3 } from "lucide-react";
 import { cssToTwClass } from "./tailwind";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "./theme";
@@ -62,6 +63,25 @@ function parseTrackCount(template: string): number {
 function countToTemplate(count: number): string {
   if (count <= 1) return "1fr";
   return `repeat(${count}, 1fr)`;
+}
+
+/** Resize an existing template to the target count, preserving custom tracks.
+ *  Appends 1fr when growing, trims from the end when shrinking. */
+function resizeTemplate(currentTemplate: string, targetCount: number): string {
+  const tracks = parseGridTemplate(currentTemplate);
+  if (tracks.length === targetCount) return serializeGridTemplate(tracks);
+  if (targetCount <= 0) return "1fr";
+  if (targetCount > tracks.length) {
+    // Grow: append default 1fr tracks
+    const extra = targetCount - tracks.length;
+    for (let i = 0; i < extra; i++) {
+      tracks.push({ type: "default", value: 1, unit: "fr", isAuto: false, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" });
+    }
+  } else {
+    // Shrink: remove from the end
+    tracks.length = targetCount;
+  }
+  return serializeGridTemplate(tracks);
 }
 
 // ─── Props ───────────────────────────────────────────────────────────
@@ -214,21 +234,21 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const handleGridColCountChange = useCallback(
     (count: number) => {
       setGridColCount(count);
-      const template = countToTemplate(count);
+      const template = resizeTemplate(gridCols, count);
       setGridCols(template);
       apply("grid-template-columns", template);
     },
-    [apply],
+    [apply, gridCols],
   );
 
   const handleGridRowCountChange = useCallback(
     (count: number) => {
       setGridRowCount(count);
-      const template = countToTemplate(count);
+      const template = resizeTemplate(gridRows, count);
       setGridRows(template);
       apply("grid-template-rows", template);
     },
-    [apply],
+    [apply, gridRows],
   );
 
   const handleFlexWrapChange = useCallback(
