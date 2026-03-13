@@ -12,6 +12,7 @@ import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, PIN_PRESETS } from "./panelConstants";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 import { ms } from "./timing";
 import { ChevronDown, LocateFixed, X } from "lucide-react";
 import {
@@ -320,7 +321,7 @@ export const PositionSection = memo(function PositionSection({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: "#E7E6E1",
+                background: surface.subtle,
                 flexShrink: 0,
                 borderLeft: `1px solid ${color.border}`,
               }}>

@@ -19,7 +19,8 @@ import { isAutoSize } from "./getAuthoredValue";
 import { ChevronRight } from "lucide-react";
 import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
 import { ms } from "./timing";
-import { text, border, blackAlpha } from "./theme";
+import { text, border, surface, font } from "./theme";
+import { ROW, LABEL, SUB_LABEL } from "./panelStyles";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
   CHILDREN_MODE_OPTIONS,
@@ -233,7 +234,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   return (
     <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "align-items", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
-      <div className="flex gap-1 px-3 py-0.5">
+      <div style={{ ...ROW, gap: 4 }}>
         <SizeInputCell
           label="Width"
           value={width}
@@ -277,7 +278,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Row 2: Min W + Min H */}
-      <div className="flex gap-1 px-3 py-0.5">
+      <div style={{ ...ROW, gap: 4 }}>
         <SizeInputCell
           label="Min W"
           value={minWidth}
@@ -316,7 +317,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Row 3: Max W + Max H */}
-      <div className="flex gap-1 px-3 py-0.5">
+      <div style={{ ...ROW, gap: 4 }}>
         <SizeInputCell
           label="Max W"
           value={maxWidth}
@@ -359,18 +360,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
         />
       </div>
       {/* Overflow: Webflow segmented control */}
-      <div className="flex items-center gap-1 py-1 px-3">
-        <span
-          className="shrink-0"
-          style={{
-            width: 49,
-            fontSize: 11.5,
-            letterSpacing: "-0.115px",
-            color: text.label,
-            fontFamily: "Inter, system-ui, sans-serif",
-            paddingLeft: 1,
-          }}
-        >
+      <div style={{ ...ROW, gap: 4, padding: "4px 12px" }}>
+        <span style={{ ...LABEL, width: 49, cursor: "default", letterSpacing: "-0.115px" }}>
           Overflow
         </span>
         <WebflowSegmentedControl

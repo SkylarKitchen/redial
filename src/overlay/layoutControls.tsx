@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
-import { ChevronDown, Link, Unlink } from "lucide-react";
+import { ChevronDown, Link, Unlink, WrapText } from "lucide-react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
@@ -339,7 +339,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
   );
 }
 
-// ─── DirectionRow ───────────────────────────────────────────────────
+// ─── DirectionRow (legacy) ───────────────────────────────────────────
 
 /** Direction row: Horizontal/Vertical segmented control + reverse button */
 export function DirectionRow({ direction, onDirectionChange, onReset, indicator }: {
@@ -374,6 +374,142 @@ export function DirectionRow({ direction, onDirectionChange, onReset, indicator 
           onDirectionChange(isReverse ? base : `${base}-reverse`);
         }}
       />
+    </div>
+  );
+}
+
+// ─── FlexDirectionRow (Webflow-style: icons + wrap toggle + chevron) ─
+
+import { DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "./panelConstants";
+
+/** Webflow-style direction row: 2-icon SegmentedControl + wrap toggle + chevron dropdown */
+export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapChange, onReset, indicator, wrapIndicator }: {
+  direction: string;
+  onDirectionChange: (v: string) => void;
+  wrap: string;
+  onWrapChange: (v: string) => void;
+  onReset?: () => void;
+  indicator?: IndicatorType;
+  wrapIndicator?: IndicatorType;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  useClickOutside(menuRef, menuOpen, closeMenu);
+
+  const isWrap = wrap !== "nowrap";
+  const isReverse = direction.includes("reverse");
+  const base = direction.replace("-reverse", "") as "row" | "column";
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <RowLabel label="Direction" indicator={indicator} isSet={direction !== "row"} onReset={onReset} />
+      {/* Row / Column icon segments */}
+      <SegmentedControl
+        options={DIRECTION_ICONS_SHORT.slice(0, 2)}
+        value={base}
+        onChange={(v) => onDirectionChange(isReverse ? `${v}-reverse` : v)}
+        aria-label="Flex direction"
+      />
+      {/* Wrap toggle button — separate from SegmentedControl since it controls a different prop */}
+      <button
+        title={isWrap ? "Wrap (active)" : "Wrap"}
+        onClick={() => onWrapChange(isWrap ? "nowrap" : "wrap")}
+        style={{
+          width: 24,
+          height: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 4,
+          border: "none",
+          outline: "none",
+          cursor: "pointer",
+          flexShrink: 0,
+          padding: 4,
+          overflow: "hidden",
+          transition: "background 75ms ease",
+          background: isWrap ? "#E5E5E5" : "#F0F0F0",
+          color: isWrap ? "#131313" : "#404040",
+        }}
+      >
+        <WrapText size={14} strokeWidth={1.8} />
+      </button>
+      {/* Chevron dropdown for reverse variants */}
+      <div ref={menuRef} style={{ position: "relative" }}>
+        <button
+          onClick={() => setMenuOpen((o) => !o)}
+          title="More direction options"
+          aria-expanded={menuOpen}
+          aria-haspopup="listbox"
+          style={{
+            width: 20,
+            height: 22,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 3,
+            border: "none",
+            outline: "none",
+            cursor: "pointer",
+            padding: 0,
+            background: isReverse ? "#E5E5E5" : "transparent",
+            color: isReverse ? "#131313" : "#888",
+            transition: "background 75ms ease",
+          }}
+        >
+          <ChevronSmallDownIcon size={16} />
+        </button>
+        {menuOpen && (
+          <div
+            role="listbox"
+            style={{
+              position: "absolute",
+              top: "calc(100% + 6px)",
+              right: 0,
+              minWidth: 180,
+              background: "#363636",
+              borderRadius: 8,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2)",
+              padding: "6px 0",
+              zIndex: 200,
+            }}
+          >
+            {DIRECTION_MORE_OPTIONS.map((opt) => {
+              const isActive = opt.value === direction;
+              return (
+                <button
+                  key={opt.value}
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => { onDirectionChange(opt.value); setMenuOpen(false); }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    width: "100%",
+                    padding: "7px 12px",
+                    background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
+                    border: "none",
+                    outline: "none",
+                    cursor: "pointer",
+                    color: "#e8e8e8",
+                    fontSize: 13,
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    letterSpacing: -0.1,
+                    textAlign: "left",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.08)" : "transparent"; }}
+                >
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  {isActive && <span style={{ opacity: 0.5, fontSize: 14 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

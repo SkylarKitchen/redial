@@ -174,14 +174,14 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
     ).toContain("onReset");
   });
 
-  // ── DirectionRow must accept and use onReset ──
+  // ── FlexDirectionRow must accept and use onReset ──
 
-  it("DirectionRow is passed an onReset callback", () => {
-    const dirRowUsage = layoutSrc.match(/<DirectionRow[\s\S]*?\/>/);
-    expect(dirRowUsage, "Could not find DirectionRow usage").toBeTruthy();
+  it("FlexDirectionRow is passed an onReset callback", () => {
+    const dirRowUsage = layoutSrc.match(/<FlexDirectionRow[\s\S]*?\/>/);
+    expect(dirRowUsage, "Could not find FlexDirectionRow usage").toBeTruthy();
     expect(
       dirRowUsage![0],
-      "DirectionRow must receive onReset prop for Option+Click reset"
+      "FlexDirectionRow must receive onReset prop for Option+Click reset"
     ).toContain("onReset");
   });
 });

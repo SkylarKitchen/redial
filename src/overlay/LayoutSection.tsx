@@ -17,8 +17,8 @@ import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
-import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow, GridTrackRow, MiniDropdown } from "./layoutControls";
-import { LAYOUT_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS } from "./panelConstants";
+import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
+import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "./panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
 import { Link, Grid3x3 } from "lucide-react";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "./theme";
@@ -307,78 +307,179 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {(isFlex || isBlockContainer) && (
         <>
-          {/* Direction: Horizontal/Vertical segmented control + reverse */}
-          <DirectionRow
+          {/* Direction: row/column icons + wrap toggle + reverse dropdown */}
+          <FlexDirectionRow
             direction={flexDirection}
             onDirectionChange={handleFlexDirectionChange}
-            onReset={() => resetCssStr("flex-direction", setFlexDirection)}
+            wrap={flexWrap}
+            onWrapChange={handleFlexWrapChange}
+            onReset={() => { resetCssStr("flex-direction", setFlexDirection); resetCssStr("flex-wrap", setFlexWrap); }}
             indicator={ind("flex-direction")}
+            wrapIndicator={ind("flex-wrap")}
           />
 
-          {/* Align: 5 icon segments for align-items */}
-          <div style={ROW}>
-            <RowLabel label="Align" indicator={ind("align-items")} isSet={alignItems !== "stretch"} onReset={() => resetCssStr("align-items", setAlignItems)} />
-            <SegmentedControl
-              options={ALIGN_SEGMENT_OPTIONS}
-              value={alignItems}
-              onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
-              aria-label="Align items"
+          {/* Align: AlignBox + X/Y dropdowns (matches grid pattern) */}
+          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+            <RowLabel label="Align" indicator={sectionInd(["justify-content", "align-items"])} onReset={() => {
+              resetCssStr("justify-content", setJustifyContent);
+              resetCssStr("align-items", setAlignItems);
+            }} />
+            <AlignBox
+              justify={justifyContent}
+              align={alignItems}
+              onChange={(j, a) => { setJustifyContent(j); setAlignItems(a); apply("justify-content", j); apply("align-items", a); }}
+              mode="flex"
+              compact
             />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
+                <MiniDropdown
+                  value={justifyContent}
+                  options={JUSTIFY_OPTIONS}
+                  onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>Y</span>
+                <MiniDropdown
+                  value={alignItems}
+                  options={ALIGN_ITEMS_OPTIONS}
+                  onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Justify: 5 icon segments for justify-content */}
-          <div style={ROW}>
-            <RowLabel label="Justify" indicator={ind("justify-content")} isSet={justifyContent !== "flex-start"} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
-            <SegmentedControl
-              options={JUSTIFY_SEGMENT_OPTIONS}
-              value={justifyContent}
-              onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
-              aria-label="Justify content"
-            />
-          </div>
-
-          {/* Gap: dual Webflow-style inputs with column/row labels */}
-          <GapRow
-            columnGap={columnGap}
-            rowGap={rowGap}
-            columnUnit={columnGapUnit}
-            rowUnit={rowGapUnit}
-            onColumnChange={handleColumnGapChange}
-            onRowChange={handleRowGapChange}
-            onColumnUnitChange={(u) => {
-              const ctx = getConversionCtx();
-              const c = convertUnit(columnGap, columnGapUnit, u, ctx);
-              fireColGapHint(columnGap, columnGapUnit, c, u, ctx);
-              onColumnGapChange(c);
-              onColumnGapUnitChange(u);
-              apply("column-gap", `${c}${u}`);
-            }}
-            onRowUnitChange={(u) => {
-              const ctx = getConversionCtx();
-              const c = convertUnit(rowGap, rowGapUnit, u, ctx);
-              fireRowGapHint(rowGap, rowGapUnit, c, u, ctx);
-              setRowGap(c);
-              setRowGapUnit(u);
-              apply("row-gap", `${c}${u}`);
-            }}
-            linked={gapLocked}
-            onLinkedChange={(v) => {
-              setGapLocked(v);
-              if (v) {
-                setRowGap(columnGap);
-                setRowGapUnit(columnGapUnit);
-                apply("row-gap", `${columnGap}${columnGapUnit}`);
-              }
-            }}
-            onReset={() => {
-              resetCss("column-gap", (v) => onColumnGapChange(v));
-              resetCss("row-gap", setRowGap);
-            }}
-            indicator={ind("gap")}
-          />
-
-          {/* Children: Don't wrap / Wrap + reverse */}
-          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} indicator={ind("flex-wrap")} onReset={() => resetCssStr("flex-wrap", setFlexWrap)} />
+          {/* Gap: slider + lock (matches grid pattern) */}
+          {gapLocked ? (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
+                <SliderRow
+                  label="Gap"
+                  value={gap}
+                  min={0}
+                  max={200}
+                  step={4}
+                  unit={gapUnit}
+                  units={LAYOUT_UNITS}
+                  onUnitChange={(u) => {
+                    const ctx = getConversionCtx();
+                    const c = convertUnit(gap, gapUnit, u, ctx);
+                    fireGapHint(gap, gapUnit, c, u, ctx);
+                    setGap(c);
+                    setGapUnit(u);
+                    apply("gap", `${c}${u}`);
+                  }}
+                  onChange={handleGapChange}
+                  onReset={() => resetCss("gap", setGap)}
+                  indicator={ind("gap")}
+                  conversionHint={gapHint}
+                  onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
+                  computedProp="gap"
+                  computedElement={element}
+                  property="gap"
+                />
+              </div>
+              <button
+                onClick={handleGapLockToggle}
+                title="Unlock row/column gap"
+                style={{
+                  width: 20,
+                  height: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 10,
+                  marginRight: 8,
+                  borderRadius: 3,
+                  flexShrink: 0,
+                  color: text.disabled,
+                }}
+              >
+                <Link size={12} strokeWidth={1.5} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ flex: 1 }}>
+                  <SliderRow
+                    label="Row Gap"
+                    value={rowGap}
+                    min={0}
+                    max={200}
+                    step={4}
+                    unit={rowGapUnit}
+                    units={LAYOUT_UNITS}
+                    onUnitChange={(u) => {
+                      const ctx = getConversionCtx();
+                      const c = convertUnit(rowGap, rowGapUnit, u, ctx);
+                      fireRowGapHint(rowGap, rowGapUnit, c, u, ctx);
+                      setRowGap(c);
+                      setRowGapUnit(u);
+                      apply("row-gap", `${c}${u}`);
+                    }}
+                    onChange={handleRowGapChange}
+                    onReset={() => resetCss("row-gap", setRowGap)}
+                    indicator={ind("row-gap")}
+                    conversionHint={rowGapHint}
+                    onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
+                    computedProp="row-gap"
+                    computedElement={element}
+                  />
+                </div>
+                <button
+                  onClick={handleGapLockToggle}
+                  title="Lock gap"
+                  style={{
+                    width: 20,
+                    height: 20,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 10,
+                    marginRight: 8,
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    color: text.disabled,
+                  }}
+                >
+                  <Link size={12} strokeWidth={1.5} />
+                </button>
+              </div>
+              <SliderRow
+                label="Col Gap"
+                value={columnGap}
+                min={0}
+                max={200}
+                step={4}
+                unit={columnGapUnit}
+                units={LAYOUT_UNITS}
+                onUnitChange={(u) => {
+                  const ctx = getConversionCtx();
+                  const c = convertUnit(columnGap, columnGapUnit, u, ctx);
+                  fireColGapHint(columnGap, columnGapUnit, c, u, ctx);
+                  onColumnGapChange(c);
+                  onColumnGapUnitChange(u);
+                  apply("column-gap", `${c}${u}`);
+                }}
+                onChange={handleColumnGapChange}
+                onReset={() => resetCss("column-gap", (v) => onColumnGapChange(v))}
+                indicator={ind("column-gap")}
+                conversionHint={colGapHint}
+                onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
+                computedProp="column-gap"
+                computedElement={element}
+              />
+            </>
+          )}
         </>
       )}
 

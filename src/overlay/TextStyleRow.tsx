@@ -165,7 +165,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
             "bg-[var(--input)] border border-[var(--border)] rounded-sm",
             "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
             "hover:bg-[rgba(0,0,0,0.07)]",
-            "focus:ring-2 focus:ring-[var(--ring)]",
+            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
           )}
           tabIndex={0}
           aria-expanded={open}

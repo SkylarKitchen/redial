@@ -149,7 +149,7 @@ export function Section({
           }}
           className={cn(
             "flex justify-between items-center cursor-pointer rounded-sm outline-none px-3 pt-2.5 pb-1.5",
-            "focus:ring-2 focus:ring-[var(--ring)]",
+            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
             open && "sticky top-0 z-[2] bg-white"
           )}
         >
@@ -462,7 +462,7 @@ export function SelectRow({
           className={cn(
             "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
             "text-[11px] font-mono text-[var(--foreground)] px-1.5",
-            "focus:ring-2 focus:ring-[var(--ring)]",
+            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
             "hover:bg-[rgba(0,0,0,0.07)]"
           )}
         >
@@ -558,7 +558,7 @@ function SelectRowCustom({
             "bg-[var(--input)] border border-[var(--border)] rounded-sm",
             "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
             "hover:bg-[rgba(0,0,0,0.07)]",
-            "focus:ring-2 focus:ring-[var(--ring)]",
+            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
           )}
           tabIndex={0}
           aria-expanded={open}
@@ -694,7 +694,7 @@ export function ColorRow({
         ref={swatchRef}
         className={cn(
           "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
-          "focus:ring-2 focus:ring-[var(--ring)]",
+          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
           varName ? "border-2" : "border border-[var(--border)]"
         )}
         tabIndex={0}
@@ -863,7 +863,7 @@ export const EditableValue = memo(
         className={cn(
           "text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none",
           "hover:bg-[rgba(0,0,0,0.05)]",
-          "focus:ring-2 focus:ring-[var(--ring)]",
+          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
           value !== 0 ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
         )}
         style={{
