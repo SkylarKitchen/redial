@@ -145,6 +145,7 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
       onBlur={() => setFocused(false)}
       className={cn(
         "h-7 min-w-7 px-1.5 text-[13px] leading-none rounded-none",
+        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
         isFirst && !isLast && "rounded-l",
         isLast && !isFirst && "rounded-r",
         isFirst && isLast && "rounded",
@@ -158,12 +159,10 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         outline: "none",
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
         borderLeftWidth: isFirst ? 1 : 0,
-        backgroundColor: isActive
-          ? color.primary
-          : hovered
-            ? surface.hover
-            : "transparent",
-        color: isActive ? "#fff" : color.mutedForeground,
+        ...(!isActive && {
+          backgroundColor: hovered ? surface.hover : "transparent",
+          color: color.mutedForeground,
+        }),
         boxShadow: focused ? `0 0 0 2px ${primaryAlpha(0.3)}` : "none",
       }}
     >
