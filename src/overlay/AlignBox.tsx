@@ -89,11 +89,15 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
   );
 
   // Determine visual mode
+  // Bar mode only when the non-stretch axis has a mappable position;
+  // otherwise fall back to dot-grid (e.g. "normal" has no column/row).
   const visualMode = stretchX && stretchY
     ? "crosshair"
-    : (stretchX || stretchY)
+    : stretchY && !stretchX && activeCols.length > 0
       ? "bar"
-      : "dot-grid";
+      : stretchX && !stretchY && activeRows.length > 0
+        ? "bar"
+        : "dot-grid";
 
   return (
     <div

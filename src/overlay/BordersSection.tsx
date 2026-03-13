@@ -14,7 +14,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "./panelConstants";
 import { ms } from "./timing";
-import { text, color, surface, font } from "./theme";
+import { text, color, surface, font, border } from "./theme";
 import { ROW, LABEL } from "./panelStyles";
 
 // ─── Radius mode ──────────────────────────────────────────────────────
@@ -229,8 +229,12 @@ export const BordersSection = memo(function BordersSection({
           onPointerDown={() => beginBatch()}
           onPointerUp={() => endBatch()}
         />
-        <ValueInput value={radiusTL} onChange={handleRadiusAllChange} />
-        <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} />
+        <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
+          <ValueInput value={radiusTL} onChange={handleRadiusAllChange} embedded />
+          <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
+            <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} embedded />
+          </div>
+        </div>
       </div>
 
       {/* ── Expanded corner editor (individual mode) ── */}
@@ -277,9 +281,9 @@ export const BordersSection = memo(function BordersSection({
             <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
               <span style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}>Width</span>
             </LabelScrub>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex" }}>
-                <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} />
+            <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, flex: 1 }}>
+              <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} embedded />
+              <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
                 <UnitSelector
                   value={borderWidthUnit}
                   options={BORDER_UNITS}
@@ -292,6 +296,7 @@ export const BordersSection = memo(function BordersSection({
                     apply(borderProp("width"), `${c}${u}`);
                   }}
                   conversionHint={bwHint}
+                  embedded
                 />
               </div>
             </div>
