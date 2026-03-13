@@ -27,15 +27,15 @@ The existing 1,534 Vitest unit tests cover logic (apply, infer, parsers) but can
 
 ## Acceptance Criteria
 
-- [ ] `.claude/skills/qa.md` — frontmatter with `name: qa`, `description`, `user_invocable: true`
-- [ ] `.claude/skills/qa.md` — step-by-step process (preflight → browser → test → fix → commit → update)
-- [ ] `.claude/skills/qa.md` — rules section matching polish/harden conventions
-- [ ] `.claude/skills/qa.md` — scope selection: `resets`, `overflow`, `visual`, `keyboard`
-- [ ] `QA_CHECKLIST.md` — 4 scope sections with specific interaction items
-- [ ] `QA_CHECKLIST.md` — each item specifies interaction + expected behavior
-- [ ] Skill uses Claude-in-Chrome tools (navigate, computer, javascript_tool, read_page, read_console_messages)
-- [ ] Skill follows test-first workflow: write failing test → fix → verify
-- [ ] Skill resets panel state between test groups
+- [x] `.claude/skills/qa.md` — frontmatter with `name: qa`, `description`, `user_invocable: true`
+- [x] `.claude/skills/qa.md` — step-by-step process (preflight → browser → test → fix → commit → update)
+- [x] `.claude/skills/qa.md` — rules section matching polish/harden conventions
+- [x] `.claude/skills/qa.md` — scope selection: `resets`, `overflow`, `visual`, `keyboard`
+- [x] `QA_CHECKLIST.md` — 4 scope sections with 105 interaction items across 8 CSS sections
+- [x] `QA_CHECKLIST.md` — each item specifies interaction + expected behavior
+- [x] Skill uses Claude-in-Chrome tools (navigate, computer, javascript_tool, read_page, read_console_messages)
+- [x] Skill follows test-first workflow: write failing test → fix → verify
+- [x] Skill resets panel state between test groups via `tuner:select` event
 
 ## Scope Per Invocation
 
