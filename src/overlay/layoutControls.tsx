@@ -14,6 +14,8 @@ import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, layout, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
+import { useResetPopover } from "./controls";
+import { ResetPopover } from "./ResetPopover";
 import { ms } from "./timing";
 import { SegmentedControl } from "./SegmentedControl";
 import {

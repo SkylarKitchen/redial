@@ -341,7 +341,7 @@ function PresetChips({ property, onSelect, unit }: {
 // ─── Reset Popover Hook ─────────────────────────────────────────────
 
 /** Shared hook for the click-on-modified-label reset popover. */
-function useResetPopover(indicator?: IndicatorType, onReset?: () => void) {
+export function useResetPopover(indicator?: IndicatorType, onReset?: () => void) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLSpanElement>(null);
   const triggerOpen = useCallback(() => {
