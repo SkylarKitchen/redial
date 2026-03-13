@@ -47,6 +47,8 @@ export interface UnitSelectorProps {
   variableOptions?: VariableOption[];
   /** Called when a variable is selected */
   onVariableSelect?: (name: string) => void;
+  /** When true, renders without own bg/border (for use inside bordered containers like SizeInputCell) */
+  embedded?: boolean;
 }
 
 const DEFAULT_UNITS = ["px", "%", "em", "rem", "vw", "vh"];

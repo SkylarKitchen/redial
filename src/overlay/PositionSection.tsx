@@ -326,7 +326,7 @@ export const PositionSection = memo(function PositionSection({
                 borderLeft: `1px solid ${color.border}`,
               }}>
                 <svg width="5" height="1" viewBox="0 0 5 1">
-                  <line x1="0" y1="0.5" x2="5" y2="0.5" stroke="#7B7974" strokeWidth="1" />
+                  <line x1="0" y1="0.5" x2="5" y2="0.5" stroke={text.hint} strokeWidth="1" />
                 </svg>
               </div>
             </div>

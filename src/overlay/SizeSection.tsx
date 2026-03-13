@@ -378,18 +378,8 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {/* Children: sizing mode for flex/grid containers */}
       {(display === "flex" || display === "grid" || display === "inline-flex" || display === "inline-grid") && (
-        <div className="flex items-center gap-1 py-1 px-3">
-          <span
-            className="shrink-0"
-            style={{
-              width: 49,
-              fontSize: 11.5,
-              letterSpacing: "-0.115px",
-              color: text.label,
-              fontFamily: "Inter, system-ui, sans-serif",
-              paddingLeft: 1,
-            }}
-          >
+        <div style={{ ...ROW, gap: 4, padding: "4px 12px" }}>
+          <span style={{ ...LABEL, width: 49, cursor: "default", letterSpacing: "-0.115px" }}>
             Children
           </span>
           {/* Webflow-style select dropdown */}
