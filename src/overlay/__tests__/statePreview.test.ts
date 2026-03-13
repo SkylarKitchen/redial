@@ -7,6 +7,7 @@ import {
   diffState,
   destroyStateStyles,
   getStateStyleTag,
+  VALID_STATES,
 } from "../statePreview";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -200,5 +201,42 @@ describe("destroyStateStyles", () => {
     destroyStateStyles();
     destroyStateStyles(); // should not throw
     expect(getStateStyleTag()).toBeNull();
+  });
+});
+
+// ─── State validation (allowlist) ────────────────────────────────────
+
+describe("state validation — VALID_STATES allowlist", () => {
+  it("exports a VALID_STATES set with expected pseudo-classes", () => {
+    expect(VALID_STATES).toBeInstanceOf(Set);
+    expect(VALID_STATES.has("hover")).toBe(true);
+    expect(VALID_STATES.has("focus")).toBe(true);
+    expect(VALID_STATES.has("active")).toBe(true);
+    expect(VALID_STATES.has("focus-visible")).toBe(true);
+  });
+
+  it("applyStateStyle silently rejects an invalid state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "} .evil { color: red", "font-size", "20px");
+    // No style tag should be created, no class added
+    expect(getStateStyleTag()).toBeNull();
+    expect(el.classList.contains("__tuner-state-preview")).toBe(false);
+  });
+
+  it("removeStateStyle silently rejects an invalid state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    // Attempt to remove with invalid state — should be a no-op
+    removeStateStyle(el, "} .evil { color: red", "color");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain("color: red !important");
+  });
+
+  it("valid states like focus-within and last-child are accepted", () => {
+    const el = makeEl();
+    applyStateStyle(el, "focus-within", "outline", "2px solid blue");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain(":focus-within");
+    expect(tag!.textContent).toContain("outline: 2px solid blue !important");
   });
 });

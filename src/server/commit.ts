@@ -12,6 +12,12 @@
 import { readFile, writeFile, readdir, stat } from "fs/promises";
 import { resolve, join, basename, normalize } from "path";
 
+/** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
+const VALID_STATES = new Set([
+  "hover", "focus", "active", "visited",
+  "focus-within", "focus-visible", "first-child", "last-child",
+]);
+
 /**
  * Ensure a resolved path is contained within the project root.
  * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
@@ -672,6 +678,14 @@ export async function handleCommit(
         // --- Pseudo-class state handling ---
         // When a state like "hover" is provided, target the `.className:hover { }` block
         if (change.state && change.className) {
+          // Validate state against allowlist to prevent CSS injection
+          if (!VALID_STATES.has(change.state)) {
+            result.failed.push({
+              ...change,
+              reason: `invalid state "${change.state}" — not in allowlist`,
+            });
+            continue;
+          }
           const pseudoIdx = searchPseudoClassBlock(
             lines,
             change.className,

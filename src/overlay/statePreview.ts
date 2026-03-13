@@ -17,6 +17,13 @@
 
 import type { DiffEntry } from "./apply";
 
+// --- Valid pseudo-class states (allowlist) ---
+
+export const VALID_STATES = new Set([
+  "hover", "focus", "active", "visited",
+  "focus-within", "focus-visible", "first-child", "last-child",
+]);
+
 // --- State ---
 
 // Key: serialized (elId, state) → Map<prop, value>
@@ -122,6 +129,8 @@ export function applyStateStyle(
   prop: string,
   value: string
 ): void {
+  if (!VALID_STATES.has(state)) return;
+
   const key = stateKey(el, state);
 
   // Ensure element has the targeting attribute + preview class
@@ -155,6 +164,8 @@ export function removeStateStyle(
   state: string,
   prop: string
 ): void {
+  if (!VALID_STATES.has(state)) return;
+
   const key = stateKey(el, state);
   const props = overrides.get(key);
   if (!props) return;

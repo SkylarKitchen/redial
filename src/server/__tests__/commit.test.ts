@@ -891,6 +891,41 @@ describe("handleCommit — SCSS nested pseudo-class", () => {
     expect(content).toMatch(/\.btn\s*\{[^}]*color:\s*blue/);
   });
 
+  it("rejects invalid state values with a failure reason", async () => {
+    const filePath = "src/Button.module.css";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  color: blue;",
+      "}",
+      "",
+      ".btn:hover {",
+      "  color: red;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "red",
+        to: "green",
+        sourceFile: filePath,
+        className: "btn",
+        state: "} .evil { color: red",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toContain("invalid state");
+    expect(result.failed[0].reason).toContain("allowlist");
+
+    // File should be unmodified
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("color: red");
+    expect(content).not.toContain("evil");
+  });
+
   it("flat pseudo-class search still works (regression)", async () => {
     const filePath = "src/Link.module.css";
     await writeFixture(filePath, [
