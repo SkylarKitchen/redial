@@ -444,6 +444,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   computedProp="gap"
                   computedElement={element}
                   property="gap"
+                  annotation={twAnn("gap", gap, gapUnit)}
                 />
               </div>
               <button
@@ -495,6 +496,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
                     computedProp="row-gap"
                     computedElement={element}
+                    annotation={twAnn("row-gap", rowGap, rowGapUnit)}
                   />
                 </div>
                 <button
@@ -542,6 +544,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
                 computedProp="column-gap"
                 computedElement={element}
+                annotation={twAnn("column-gap", columnGap, columnGapUnit)}
               />
             </>
           )}
@@ -673,6 +676,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
                     computedProp="row-gap"
                     computedElement={element}
+                    annotation={twAnn("row-gap", rowGap, rowGapUnit)}
                   />
                 </div>
                 <button
@@ -720,6 +724,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
                 computedProp="column-gap"
                 computedElement={element}
+                annotation={twAnn("column-gap", columnGap, columnGapUnit)}
               />
             </>
           )}

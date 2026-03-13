@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
-import { Crosshair, Braces, Sparkles, Clock, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
 import { ms, springConfig } from "./timing";
@@ -30,17 +30,13 @@ interface ToolbarProps {
 
 // ─── Tool Definitions ────────────────────────────────────────────────
 
-const ICON_SIZE = 18;
-const ICON_STROKE = 1.5;
 const HIT_SIZE = 32;
 
 function ToolButton({
-  icon: Icon,
   label,
   active,
   onClick,
 }: {
-  icon: typeof Crosshair;
   label: string;
   active?: boolean;
   onClick: () => void;
@@ -49,7 +45,6 @@ function ToolButton({
 
   return (
     <button
-      title={label}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -57,7 +52,6 @@ function ToolButton({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        width: HIT_SIZE,
         height: HIT_SIZE,
         borderRadius: 6,
         border: "none",
@@ -70,15 +64,17 @@ function ToolButton({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 0,
-        transition: `background ${ms("fast")}`,
+        paddingLeft: 10,
+        paddingRight: 10,
+        fontSize: 12,
+        fontWeight: active ? 500 : 400,
+        fontFamily: "system-ui, -apple-system, sans-serif",
+        color: active ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.7)",
+        whiteSpace: "nowrap" as const,
+        transition: `background ${ms("fast")}, color ${ms("fast")}`,
       }}
     >
-      <Icon
-        size={ICON_SIZE}
-        strokeWidth={ICON_STROKE}
-        color={active ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.7)"}
-      />
+      {label}
     </button>
   );
 }
@@ -155,7 +151,7 @@ export function Toolbar({
             : `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}`,
         }}
         animate={{
-          width: expanded ? 200 : 48,
+          width: expanded ? 300 : 48,
         }}
         transition={springConfig("toolbarExpand")}
       >
@@ -198,26 +194,22 @@ export function Toolbar({
               }}
             >
               <ToolButton
-                icon={Crosshair}
-                label="Select element"
+                label="Select"
                 active={selecting}
                 onClick={onToggleSelecting}
               />
               <ToolButton
-                icon={Braces}
-                label="Design variables"
+                label="Variables"
                 active={activePanel.type === "variables"}
                 onClick={onOpenVariables}
               />
               <ToolButton
-                icon={Sparkles}
-                label="AI prompt"
+                label="AI"
                 active={activePanel.type === "inspector" && "tab" in activePanel && activePanel.tab === "prompt"}
                 onClick={onOpenPrompt}
               />
               <ToolButton
-                icon={Clock}
-                label="Session history"
+                label="Session"
                 active={activePanel.type === "session"}
                 onClick={onToggleSession}
               />
