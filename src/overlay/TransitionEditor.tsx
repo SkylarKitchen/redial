@@ -58,14 +58,97 @@ const PROPERTY_OPTIONS = [
   "visibility",
 ] as const;
 
-const EASING_OPTIONS = [
-  "ease",
-  "linear",
-  "ease-in",
-  "ease-out",
-  "ease-in-out",
-  "cubic-bezier(...)",
-] as const;
+interface EasingPreset {
+  label: string;
+  css: string;
+}
+
+interface EasingGroup {
+  label: string;
+  options: EasingPreset[];
+}
+
+const EASING_GROUPS: EasingGroup[] = [
+  {
+    label: "Standard",
+    options: [
+      { label: "ease", css: "ease" },
+      { label: "linear", css: "linear" },
+      { label: "ease-in", css: "ease-in" },
+      { label: "ease-out", css: "ease-out" },
+      { label: "ease-in-out", css: "ease-in-out" },
+    ],
+  },
+  {
+    label: "Sine",
+    options: [
+      { label: "In Sine", css: "cubic-bezier(0.12, 0, 0.39, 0)" },
+      { label: "Out Sine", css: "cubic-bezier(0.61, 1, 0.88, 1)" },
+      { label: "In Out Sine", css: "cubic-bezier(0.37, 0, 0.63, 1)" },
+    ],
+  },
+  {
+    label: "Quad",
+    options: [
+      { label: "In Quad", css: "cubic-bezier(0.11, 0, 0.5, 0)" },
+      { label: "Out Quad", css: "cubic-bezier(0.5, 1, 0.89, 1)" },
+      { label: "In Out Quad", css: "cubic-bezier(0.45, 0, 0.55, 1)" },
+    ],
+  },
+  {
+    label: "Cubic",
+    options: [
+      { label: "In Cubic", css: "cubic-bezier(0.32, 0, 0.67, 0)" },
+      { label: "Out Cubic", css: "cubic-bezier(0.33, 1, 0.68, 1)" },
+      { label: "In Out Cubic", css: "cubic-bezier(0.65, 0, 0.35, 1)" },
+    ],
+  },
+  {
+    label: "Quart",
+    options: [
+      { label: "In Quart", css: "cubic-bezier(0.5, 0, 0.75, 0)" },
+      { label: "Out Quart", css: "cubic-bezier(0.25, 1, 0.5, 1)" },
+      { label: "In Out Quart", css: "cubic-bezier(0.76, 0, 0.24, 1)" },
+    ],
+  },
+  {
+    label: "Quint",
+    options: [
+      { label: "In Quint", css: "cubic-bezier(0.64, 0, 0.78, 0)" },
+      { label: "Out Quint", css: "cubic-bezier(0.22, 1, 0.36, 1)" },
+      { label: "In Out Quint", css: "cubic-bezier(0.83, 0, 0.17, 1)" },
+    ],
+  },
+  {
+    label: "Expo",
+    options: [
+      { label: "In Expo", css: "cubic-bezier(0.7, 0, 0.84, 0)" },
+      { label: "Out Expo", css: "cubic-bezier(0.16, 1, 0.3, 1)" },
+      { label: "In Out Expo", css: "cubic-bezier(0.87, 0, 0.13, 1)" },
+    ],
+  },
+  {
+    label: "Circ",
+    options: [
+      { label: "In Circ", css: "cubic-bezier(0.55, 0, 1, 0.45)" },
+      { label: "Out Circ", css: "cubic-bezier(0, 0.55, 0.45, 1)" },
+      { label: "In Out Circ", css: "cubic-bezier(0.85, 0, 0.15, 1)" },
+    ],
+  },
+  {
+    label: "Back",
+    options: [
+      { label: "In Back", css: "cubic-bezier(0.36, 0, 0.66, -0.56)" },
+      { label: "Out Back", css: "cubic-bezier(0.34, 1.56, 0.64, 1)" },
+      { label: "In Out Back", css: "cubic-bezier(0.68, -0.6, 0.32, 1.6)" },
+    ],
+  },
+];
+
+/** Set of all known preset CSS values for quick lookup */
+const KNOWN_PRESET_CSS = new Set(
+  EASING_GROUPS.flatMap((g) => g.options.map((o) => o.css))
+);
 
 /** Named easing curves as cubic-bezier control points for the preview */
 const EASING_CURVES: Record<string, [number, number, number, number]> = {
@@ -77,7 +160,7 @@ const EASING_CURVES: Record<string, [number, number, number, number]> = {
 };
 
 function parseCubicBezier(easing: string): [number, number, number, number] | null {
-  const match = easing.match(/cubic-bezier\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)/);
+  const match = easing.match(/cubic-bezier\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\)/);
   if (match) {
     return [parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3]), parseFloat(match[4])];
   }
@@ -205,7 +288,7 @@ function TransitionCard({
   /** Saved inline styles so we can restore if unmounted mid-animation */
   const savedStylesRef = useRef<{ prop: string; transition: string; value: string } | null>(null);
 
-  const isCustomBezier = isCubicBezierCustom(transition.easing);
+  const isCustomBezier = isCubicBezierCustom(transition.easing) && !KNOWN_PRESET_CSS.has(transition.easing);
   const bezierPoints = parseCubicBezier(transition.easing);
 
   // Parse custom bezier values for inputs
@@ -309,12 +392,8 @@ function TransitionCard({
   );
 
   const handleEasingChange = useCallback(
-    (easing: string) => {
-      if (easing === "cubic-bezier(...)") {
-        onUpdate({ easing: "cubic-bezier(0.25, 0.1, 0.25, 1)" });
-      } else {
-        onUpdate({ easing });
-      }
+    (css: string) => {
+      onUpdate({ easing: css });
     },
     [onUpdate]
   );
@@ -482,9 +561,8 @@ function TransitionCard({
       {/* Easing */}
       <Row label="Easing">
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <SelectDropdown
-            value={isCustomBezier ? "cubic-bezier(...)" : transition.easing}
-            options={[...EASING_OPTIONS]}
+          <EasingSelect
+            value={transition.easing}
             onChange={handleEasingChange}
           />
           <BezierPreview points={bezierPoints} />
@@ -590,6 +668,57 @@ function SelectDropdown({
           {opt}
         </option>
       ))}
+    </select>
+  );
+}
+
+/** Grouped easing select with presets + custom option */
+function EasingSelect({ value, onChange }: { value: string; onChange: (css: string) => void }) {
+  const isKnown = KNOWN_PRESET_CSS.has(value);
+  const selectValue = isKnown ? value : "custom";
+
+  return (
+    <select
+      value={selectValue}
+      onChange={(e) => {
+        const v = e.target.value;
+        if (v === "custom") {
+          onChange("cubic-bezier(0.25, 0.1, 0.25, 1)");
+        } else {
+          onChange(v);
+        }
+      }}
+      style={{
+        background: color.input,
+        border: `1px solid ${border.input}`,
+        borderRadius: "2px",
+        color: text.secondary,
+        fontSize: "10px",
+        fontFamily: font.mono,
+        padding: "2px 4px",
+        outline: "none",
+        cursor: "pointer",
+        appearance: "none",
+        WebkitAppearance: "none",
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg width='6' height='4' viewBox='0 0 6 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4L0 0h6L3 4z' fill='rgba(0,0,0,0.35)'/%3E%3C/svg%3E\")",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 4px center",
+        paddingRight: "14px",
+      }}
+    >
+      {EASING_GROUPS.map((group) => (
+        <optgroup key={group.label} label={group.label}>
+          {group.options.map((opt) => (
+            <option key={opt.css} value={opt.css}>
+              {opt.label}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+      <optgroup label="Custom">
+        <option value="custom">cubic-bezier(...)</option>
+      </optgroup>
     </select>
   );
 }

@@ -2,8 +2,7 @@
  * spacingZoneColors.test.ts — Verify spacing zone color design tokens.
  *
  * At rest, both margin and padding zones should be neutral (transparent).
- * Color only appears on hover/interaction — orange for margin, blue for padding.
- * This matches Webflow's actual behavior.
+ * On hover, both zones should use neutral gray tones — no colored tints.
  */
 
 import { describe, it, expect } from "vitest";
@@ -18,31 +17,31 @@ function parseRgba(s: string): { r: number; g: number; b: number; a: number } | 
 
 describe("spacing zone colors", () => {
   it("marginBase should be transparent at rest", () => {
-    // Margin zone at rest = no visible color (transparent)
     expect(spacingZone.marginBase).toBe("transparent");
   });
 
   it("paddingBase should be transparent at rest", () => {
-    // Padding zone at rest = no visible color (transparent)
     expect(spacingZone.paddingBase).toBe("transparent");
   });
 
-  it("marginHover should be a warm orange tone", () => {
+  it("marginHover should NOT be orange/yellow — must be neutral", () => {
     const c = parseRgba(spacingZone.marginHover);
     expect(c).not.toBeNull();
     if (c) {
-      // Orange: high red, low blue
-      expect(c.r).toBeGreaterThan(200);
-      expect(c.b).toBeLessThan(50);
+      // Neutral means R ≈ G ≈ B (no warm orange/yellow tint)
+      // Orange would have high R (>200) and low B (<50) — reject that
+      const isOrangeOrYellow = c.r > 200 && c.b < 50;
+      expect(isOrangeOrYellow).toBe(false);
     }
   });
 
-  it("paddingHover should be a cool blue tone", () => {
+  it("paddingHover should be neutral (not colored)", () => {
     const c = parseRgba(spacingZone.paddingHover);
     expect(c).not.toBeNull();
     if (c) {
-      // Blue-ish: primary color with some blue channel
-      expect(c.b).toBeGreaterThan(100);
+      // Neutral: all channels roughly equal (grayscale)
+      const maxDiff = Math.max(Math.abs(c.r - c.g), Math.abs(c.g - c.b), Math.abs(c.r - c.b));
+      expect(maxDiff).toBeLessThan(30);
     }
   });
 });
