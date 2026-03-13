@@ -1781,10 +1781,23 @@ export function Overlay() {
         selecting={selecting}
         hasSelectedEl={!!selectedEl}
         activePanel={activePanel}
-        onToggleSelecting={() => setSelecting((s) => !s)}
-        onOpenVariables={() => setActivePanel({ type: "variables" })}
+        onToggleSelecting={() => {
+          setSelecting((s) => {
+            if (!s) {
+              setActivePanel((prev) =>
+                prev.type === "variables" || prev.type === "session" ? { type: "none" } : prev
+              );
+            }
+            return !s;
+          });
+        }}
+        onOpenVariables={() => {
+          setSelecting(false);
+          setActivePanel({ type: "variables" });
+        }}
         onOpenPrompt={() => {
           if (selectedEl) {
+            setSelecting(false);
             setActivePanel({ type: "inspector", tab: "prompt" });
           } else {
             pendingTabRef.current = "prompt";
