@@ -216,7 +216,12 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         aria-controls={`${id}-listbox`}
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => { if (!open) updateDropdownPos(); setOpen((o) => !o); }}
-        onKeyDown={onTriggerKeyDown}
+        onKeyDown={(e) => {
+          if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+            updateDropdownPos();
+          }
+          onTriggerKeyDown(e);
+        }}
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}
         style={{

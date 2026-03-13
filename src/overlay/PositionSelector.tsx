@@ -181,7 +181,12 @@ export function PositionSelector({
             if (!open) updateDropdownPos();
             setOpen((o) => !o);
           }}
-          onKeyDown={onTriggerKeyDown}
+          onKeyDown={(e) => {
+            if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+              updateDropdownPos();
+            }
+            onTriggerKeyDown(e);
+          }}
           onFocus={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
           }}

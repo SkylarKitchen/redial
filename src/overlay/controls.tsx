@@ -1331,7 +1331,7 @@ export function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
         onClick={(e) => e.stopPropagation()}>
         {onMenu && (
           <button
-            onClick={(e) => onMenu?.(e)}
+            onClick={onMenu}
             style={{
               background: "none", border: "none", cursor: "pointer", padding: "2px",
               color: text.disabled, display: "flex", alignItems: "center",

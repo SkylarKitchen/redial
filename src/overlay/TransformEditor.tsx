@@ -145,7 +145,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
               border: `1px solid ${surface.track}`,
               borderRadius: "4px",
               padding: "2px 0",
-              zIndex: 100,
+              zIndex: zIndex.dropdown,
               minWidth: "100px",
               boxShadow: shadow.dropdown,
             }}

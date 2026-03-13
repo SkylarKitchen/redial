@@ -322,7 +322,7 @@ export function SpacingValuePopover({
                 border: `1px solid ${border.default}`,
                 borderRadius: "4px",
                 boxShadow: shadow.dropdown,
-                zIndex: 10,
+                zIndex: zIndex.float,
                 padding: "2px 0",
               }}
             >

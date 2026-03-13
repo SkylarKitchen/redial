@@ -402,7 +402,7 @@ export function SpacingBoxModel({
             alignItems: "center",
             gap: "3px",
             pointerEvents: "auto",
-            zIndex: 1,
+            zIndex: zIndex.above,
           }}
         >
           <span
@@ -452,7 +452,7 @@ export function SpacingBoxModel({
                 alignItems: "center",
                 gap: "3px",
                 pointerEvents: "auto",
-                zIndex: 1,
+                zIndex: zIndex.above,
               }}
             >
               <span

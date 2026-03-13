@@ -436,7 +436,7 @@ function GlobalVariableRow({
           left: showDragHandle ? 28 : 12,
           top: 0, bottom: 0,
           display: "flex", alignItems: "center", gap: 2,
-          zIndex: 1, background: color.background,
+          zIndex: zIndex.above, background: color.background,
         }}>
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
@@ -515,7 +515,7 @@ function GlobalVariableRow({
         style={{ position: "relative", minHeight: layout.iconBtnSize, paddingRight: 2 }}
       >
         {showDragHandle && dragHandleProps && (
-          <div style={{ position: "absolute", left: -2, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
+          <div style={{ position: "absolute", left: -2, top: "50%", transform: "translateY(-50%)", zIndex: zIndex.above }}>
             <DragHandle isDragging={isDragging} onPointerDown={dragHandleProps.onPointerDown} />
           </div>
         )}
