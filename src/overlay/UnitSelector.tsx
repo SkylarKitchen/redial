@@ -409,7 +409,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
               boxShadow: shadow.dropdown,
               zIndex: 2147483647,
               pointerEvents: "none",
-              transition: "all 300ms",
+              transition: `all ${ms("slow")}`,
               opacity: tooltipPhase === "in" ? 1 : 0,
             }}
           >

@@ -1401,7 +1401,7 @@ export function Overlay() {
           height: 3px;
           background: rgba(0,0,0,0.08);
           border-radius: 2px;
-          transition: background 150ms;
+          transition: background ${ms("expand")};
         }
         .__tuner-root input[type="range"]:hover::-webkit-slider-runnable-track {
           background: rgba(0,0,0,0.15);
@@ -1429,7 +1429,7 @@ export function Overlay() {
           height: 3px;
           background: rgba(0,0,0,0.08);
           border-radius: 2px;
-          transition: background 150ms;
+          transition: background ${ms("expand")};
         }
         .__tuner-root input[type="range"]:hover::-moz-range-track {
           background: rgba(0,0,0,0.15);
@@ -1486,7 +1486,7 @@ export function Overlay() {
           {/* Hover highlight: subtle preview when hovering a different element */}
           <div
             ref={hoverHighlightRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483644, borderRadius: 2, transition: "all 75ms ease-out", background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483644, borderRadius: 2, transition: `all ${ms("fast")} ease-out`, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
           />
         </>
       )}

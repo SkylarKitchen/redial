@@ -12,6 +12,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
+import { ms } from "./timing";
 
 export interface FilterValues {
   blur: number;
@@ -191,7 +192,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               gap: "6px",
               height: "24px",
               opacity: isHidden ? 0.4 : 1,
-              transition: "opacity 100ms",
+              transition: `opacity ${ms("normal")}`,
             }}
           >
             {/* Drag handle */}

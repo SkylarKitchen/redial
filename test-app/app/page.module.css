@@ -214,43 +214,43 @@
 
 /* ── Testimonial ── */
 .testimonial {
-  padding: 32px;
-  border-radius: 16px;
-  background-color: #f5f3ff;
-  border-left: 4px solid var(--accent);
+  padding: var(--space-8);
+  border-radius: var(--radius-2xl);
+  background-color: var(--color-brand-50);
+  border-left: var(--border-width-thick) solid var(--accent);
   margin: 0;
 }
 
 .testimonial p {
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-relaxed);
   color: var(--text-primary);
   font-style: italic;
-  margin: 0 0 20px 0;
+  margin: 0 0 var(--space-5) 0;
 }
 
 .testimonialAuthor {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .testimonialAuthor strong {
   display: block;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
 }
 
 .testimonialAuthor span {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  width: var(--space-10);
+  height: var(--space-10);
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--accent), var(--color-brand-300));
 }
 
 /* ── Stats ── */
@@ -265,9 +265,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 24px 16px;
-  border-right: 1px solid var(--border);
+  gap: var(--space-1);
+  padding: var(--space-6) var(--space-4);
+  border-right: var(--border-width-thin) solid var(--border);
 }
 
 .stat:last-child {
@@ -275,14 +275,14 @@
 }
 
 .statNumber {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  letter-spacing: -1px;
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 .statLabel {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
 
@@ -290,59 +290,59 @@
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 6px;
-  background-color: #f3f4f6;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral-100);
   color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 }
 
 .tagAccent {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 6px;
-  background-color: #eef2ff;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--color-brand-50);
   color: var(--accent);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
 }
 
 /* ── Form Elements ── */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   max-width: 480px;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .inputGroup label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--text-primary);
 }
 
 .inputGroup input,
 .inputGroup textarea {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 14px;
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-lg);
+  border: var(--border-width-thin) solid var(--border);
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
-  background-color: white;
+  background-color: var(--surface-primary);
   font-family: inherit;
   resize: vertical;
 }
@@ -350,11 +350,11 @@
 .checkboxRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .checkboxRow label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 
@@ -362,87 +362,87 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .table th {
   text-align: left;
-  padding: 10px 16px;
-  font-weight: 600;
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  border-bottom: 2px solid var(--border);
-  font-size: 13px;
+  border-bottom: var(--border-width-medium) solid var(--border);
+  font-size: var(--font-size-xs);
 }
 
 .table td {
-  padding: 10px 16px;
+  padding: var(--space-3) var(--space-4);
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width-thin) solid var(--border);
 }
 
 .table tbody tr:hover {
-  background-color: #fafafa;
+  background-color: var(--surface-secondary);
 }
 
 /* ── Callout / Alert ── */
 .callout {
-  padding: 16px 20px;
-  border-radius: 8px;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  font-size: 14px;
-  line-height: 1.5;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-success-light);
+  border: var(--border-width-thin) solid var(--color-success);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
   color: #166534;
 }
 
 .calloutWarning {
-  padding: 16px 20px;
-  border-radius: 8px;
-  background-color: #fffbeb;
-  border: 1px solid #fde68a;
-  font-size: 14px;
-  line-height: 1.5;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-warning-light);
+  border: var(--border-width-thin) solid var(--color-warning);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
   color: #92400e;
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 /* ── Pricing Cards (grid) ── */
 .pricing {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: var(--space-5);
 }
 
 .pricingCard {
   display: flex;
   flex-direction: column;
-  padding: 32px 24px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background-color: white;
+  padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-2xl);
+  border: var(--border-width-thin) solid var(--border);
+  background-color: var(--surface-primary);
 }
 
 .pricingCard h3 {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
 .pricingCard ul {
   list-style: none;
   padding: 0;
-  margin: 20px 0;
+  margin: var(--space-5) 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
   flex: 1;
 }
 
 .pricingCard li {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  padding-left: 20px;
+  padding-left: var(--space-5);
   position: relative;
 }
 
@@ -450,8 +450,8 @@
   content: "✓";
   position: absolute;
   left: 0;
-  color: #22c55e;
-  font-weight: 600;
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
 }
 
 .pricingFeatured {
@@ -460,70 +460,70 @@
 }
 
 .price {
-  font-size: 40px;
-  font-weight: 700;
+  font-size: var(--font-size-5xl);
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  letter-spacing: -1px;
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 /* ── Progress Bars ── */
 .progressGroup {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .progressRow {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .progressRow span {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--text-primary);
   min-width: 64px;
 }
 
 .progressTrack {
   flex: 1;
-  height: 8px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
+  height: var(--space-2);
+  background-color: var(--color-neutral-100);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
   background-color: var(--accent);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease;
 }
 
 /* ── Footer ── */
 .footer {
   display: flex;
-  gap: 48px;
-  padding-top: 32px;
-  border-top: 1px solid var(--border);
+  gap: var(--space-12);
+  padding-top: var(--space-8);
+  border-top: var(--border-width-thin) solid var(--border);
 }
 
 .footerCol {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .footerCol h4 {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .footerCol a {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   text-decoration: none;
 }
@@ -535,60 +535,60 @@
 /* ── Dark mode ── */
 @media (prefers-color-scheme: dark) {
   .page {
-    --background: #0a0a0a;
-    --foreground: #141414;
-    --text-primary: #ededed;
-    --text-secondary: #999;
-    --accent: #818cf8;
-    --border: #2a2a2a;
+    --background: var(--color-neutral-900);
+    --foreground: var(--color-neutral-800);
+    --text-primary: var(--color-neutral-50);
+    --text-secondary: var(--color-neutral-400);
+    --accent: var(--color-brand-400);
+    --border: var(--color-neutral-700);
   }
 
   .card {
-    background-color: #1a1a1a;
+    background-color: var(--color-neutral-800);
   }
 
   .inputGroup input,
   .inputGroup textarea {
-    background-color: #1a1a1a;
+    background-color: var(--color-neutral-800);
   }
 
   .badge {
-    background-color: #1e1b4b;
+    background-color: var(--color-brand-900);
   }
 
   .testimonial {
-    background-color: #1e1b4b;
+    background-color: var(--color-brand-900);
   }
 
   .callout {
     background-color: #052e16;
-    border-color: #166534;
+    border-color: var(--color-success);
     color: #86efac;
   }
 
   .calloutWarning {
     background-color: #451a03;
-    border-color: #92400e;
+    border-color: var(--color-warning);
     color: #fcd34d;
   }
 
   .tag {
-    background-color: #1f2937;
+    background-color: var(--color-neutral-700);
   }
 
   .tagAccent {
-    background-color: #1e1b4b;
+    background-color: var(--color-brand-900);
   }
 
   .table tbody tr:hover {
-    background-color: #1a1a1a;
+    background-color: var(--color-neutral-800);
   }
 
   .pricingCard {
-    background-color: #1a1a1a;
+    background-color: var(--color-neutral-800);
   }
 
   .progressTrack {
-    background-color: #1f2937;
+    background-color: var(--color-neutral-700);
   }
 }

@@ -187,7 +187,7 @@ function ShadowRow({
         padding: "6px 0",
         borderBottom: "1px solid rgba(0,0,0,0.04)",
         opacity: shadow.visible === false ? 0.4 : 1,
-        transition: "opacity 100ms",
+        transition: `opacity ${ms("normal")}`,
       }}
     >
       {/* Row 1: drag handle + numeric inputs */}

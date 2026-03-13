@@ -22,7 +22,10 @@ export const ROW: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: layout.controlGap,
-  padding: layout.rowPadding,
+  paddingTop: 2,
+  paddingBottom: 2,
+  paddingLeft: 12,
+  paddingRight: 12,
   minHeight: layout.iconBtnSize,
 };
 

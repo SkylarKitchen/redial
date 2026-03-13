@@ -223,7 +223,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 4, paddingBottom: 4, paddingRight: 6 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingTop: 4, paddingBottom: 4 }}>
         {filtered.length === 0 ? (
           <div style={{ padding: "16px 12px", fontSize: 11, color: text.label, fontStyle: "italic", textAlign: "center" }}>
             {search ? "No matching variables" : "No CSS custom properties found"}

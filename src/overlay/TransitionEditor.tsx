@@ -11,6 +11,7 @@ import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
+import { ms } from "./timing";
 
 export interface TransitionValue {
   property: string;
@@ -413,7 +414,7 @@ function TransitionCard({
         gap: "5px",
         position: "relative",
         opacity: transition.visible === false ? 0.4 : 1,
-        transition: "opacity 100ms",
+        transition: `opacity ${ms("normal")}`,
       }}
     >
       {/* Drag handle */}
