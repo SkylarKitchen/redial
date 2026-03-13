@@ -592,7 +592,7 @@ function TrackCountInput({ value, onChange }: {
       minWidth: 0,
       height: 28,
       borderRadius: 4,
-      border: `1px solid ${border.default}`,
+      border: "1px solid rgba(31,30,29,0.15)",
       overflow: "hidden",
       background: "#EBEBEB",
       alignItems: "center",

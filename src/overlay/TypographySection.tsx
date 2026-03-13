@@ -8,7 +8,6 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
-import { cn } from "@/lib/utils";
 import { Section, SelectRow, ColorRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { StyleIndicator } from "./StyleIndicator";
@@ -23,6 +22,9 @@ import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
+import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
+import { text, border, surface, color, font } from "./theme";
+import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
   ITALIC_OPTIONS, DIRECTION_OPTIONS,
@@ -224,8 +226,8 @@ export const TypographySection = memo(function TypographySection({
       <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
 
       {/* Size + Height side-by-side compact cells */}
-      <div className="flex items-center gap-1 px-3 py-0.5">
-        <span className="text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-[3px]">
+      <div style={ROW}>
+        <span style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}>
           {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
           Size
         </span>

@@ -405,7 +405,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Direction: Row / Column toggle + grid overlay */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+          <div style={{ ...ROW, gap: 4 }}>
             <RowLabel label="Direction" indicator={ind("grid-auto-flow")} onReset={() => resetCssStr("grid-auto-flow", setGridAutoFlow)} />
             <SegmentedControl
               options={[
@@ -443,7 +443,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           </div>
 
           {/* Align: AlignBox + X/Y dropdowns */}
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "0 8px" }}>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
             <RowLabel label="Align" indicator={sectionInd(["justify-items", "align-items"])} onReset={() => {
               resetCssStr("justify-items", setJustifyItems);
               resetCssStr("align-items", setGridAlignItems);
@@ -583,7 +583,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {hasFlexChildOverride && (
         <>
-          <div className="pt-1.5 pb-0.5 px-3 text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>
+          <div style={SUB_LABEL}>
             {parentIsFlex ? "Flex Child" : "Grid Child"}
           </div>
 
