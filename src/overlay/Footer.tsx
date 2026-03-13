@@ -7,8 +7,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { diff, reset, overrideCount } from "./apply";
 import { diffState, resetStateStyles } from "./statePreview";
-import { resolveSource, getModuleClassInfo } from "./sourcemap";
-import { resetClassStyles, getReadableName } from "./scope";
+import { resetClassStyles } from "./scope";
+import { enrichChangesForCommit } from "./commitUtils";
 import type { Scope } from "./scope";
 import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
@@ -149,25 +149,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setSaving(true);
     setMessage(null);
 
-    // Enrich changes with source file + class info for robust server-side search
-    // State-specific saves require className for the pseudo-class block target
-    const needsClassInfo = scope === "class" || isStateActive;
-    const moduleInfo = needsClassInfo ? getModuleClassInfo(element) : null;
-    const enriched = changes.map((c) => {
-      const source = resolveSource(element, c.prop);
-      return {
-        ...c,
-        sourceFile: source?.file,
-        sourceLine: source?.line,
-        // Class scope or state scope → use the class name for block targeting
-        className: needsClassInfo && activeClassName
-          ? (getReadableName(activeClassName) ?? moduleInfo?.className)
-          : undefined,
-        componentName: moduleInfo?.componentName,
-        // Include pseudo-class state so commit.ts targets .className:state { } blocks
-        state: isStateActive ? activeState : undefined,
-      };
-    });
+    const enriched = enrichChangesForCommit(element, changes, { scope, activeClassName, activeState });
 
     try {
       const res = await fetch(getConfig().commitEndpoint, {

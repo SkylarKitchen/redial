@@ -27,9 +27,9 @@ import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, resto
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
 
 import { onHmrUpdate } from "./hmr";
-import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, getReadableName, type Scope } from "./scope";
+import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./statePreview";
-import { resolveSource, getModuleClassInfo } from "./sourcemap";
+import { enrichChangesForCommit } from "./commitUtils";
 import { Plus } from "lucide-react";
 import { ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
@@ -287,22 +287,7 @@ export function Overlay() {
     const changes = isStateActive ? diffState(el, activeState) : diff(el);
     if (changes.length === 0) return;
 
-    // Enrich changes with source + class info (same logic as Footer.tsx)
-    const needsClassInfo = scope === "class" || isStateActive;
-    const moduleInfo = needsClassInfo ? getModuleClassInfo(el) : null;
-    const enriched = changes.map((c) => {
-      const source = resolveSource(el, c.prop);
-      return {
-        ...c,
-        sourceFile: source?.file,
-        sourceLine: source?.line,
-        className: needsClassInfo && activeClassName
-          ? (getReadableName(activeClassName) ?? moduleInfo?.className)
-          : undefined,
-        componentName: moduleInfo?.componentName,
-        state: isStateActive ? activeState : undefined,
-      };
-    });
+    const enriched = enrichChangesForCommit(el, changes, { scope, activeClassName, activeState });
 
     savingRef.current = true;
     try {
