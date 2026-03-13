@@ -597,7 +597,7 @@ export function Overlay() {
       if ((e.key === "[" || e.key === "]") && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
         if (!focusMode) setFocusMode(true);
-        if (activeTab !== "custom") setActiveTab("custom");
+        if (!(activePanel.type === "inspector" && activePanel.tab === "custom")) setActivePanel({ type: "inspector", tab: "custom" });
         const currentIdx = expandedSection ? SECTION_ORDER.indexOf(expandedSection as typeof SECTION_ORDER[number]) : -1;
         let nextIdx: number;
         if (e.key === "]") {
@@ -684,7 +684,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activeTab, expandedSection, handleResetAll]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -714,7 +714,7 @@ export function Overlay() {
     // Reset scope, tab, overlays, search, and modals on new selection
     setScope("element");
     setActiveClassName(null);
-    setActiveTab("custom");
+    setActivePanel({ type: "inspector", tab: "custom" });
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setExpandedSection(null);
@@ -771,7 +771,9 @@ export function Overlay() {
 
 
   const handleToggleSession = useCallback(() => {
-    setSessionOpen((s) => !s);
+    setActivePanel((prev) =>
+      prev.type === "session" ? { type: "none" } : { type: "session" }
+    );
   }, []);
 
   // --- History: undo to a specific index ---
