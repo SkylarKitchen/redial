@@ -743,7 +743,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     </span>
                   </LabelScrub>
                   <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
-                  <div style={{ flexShrink: 0, paddingRight: 3 }}>
+                  <div style={{ flexShrink: 0, paddingRight: 3, borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
                     <UnitSelector
                       value={flexBasisUnit}
                       options={LAYOUT_UNITS}
@@ -756,6 +756,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                         apply("flex-basis", `${c}${u}`);
                       }}
                       conversionHint={basisHint}
+                      embedded
                     />
                   </div>
                 </div>
