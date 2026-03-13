@@ -315,6 +315,69 @@ describe("destroyClassStyles", () => {
   });
 });
 
+// ─── Class-scope undo sync (A1 bug) ──────────────────────────────────
+
+describe("class-scope undo reverts <style> tag", () => {
+  it("undo of class-scoped edit removes the property from <style> tag", async () => {
+    const { applyInlineStyle, undo, resetAll, onClassChange } = await import("../apply");
+
+    // Subscribe scope.ts to class change notifications
+    const unsubscribe = onClassChange(({ className, prop, value }) => {
+      if (value !== null) {
+        applyClassStyle(className, prop, value);
+      } else {
+        removeClassStyle(className, prop);
+      }
+    });
+
+    const el = makeEl();
+    const className = "Button_btn__a8f2k";
+
+    // Simulate class-scope apply (same as WebflowPanel.tsx apply callback)
+    applyClassStyle(className, "color", "red");
+    applyInlineStyle(el, "color", "red", className);
+
+    // Verify style tag has the rule
+    const tag = getStyleTag();
+    expect(tag!.textContent).toContain("color: red !important");
+
+    // Undo should revert BOTH inline and <style> tag
+    undo();
+    expect(tag!.textContent).not.toContain("color: red");
+
+    unsubscribe();
+    resetAll();
+  });
+
+  it("redo of class-scoped edit re-applies to <style> tag", async () => {
+    const { applyInlineStyle, undo, redo, resetAll, onClassChange } = await import("../apply");
+
+    const unsubscribe = onClassChange(({ className, prop, value }) => {
+      if (value !== null) {
+        applyClassStyle(className, prop, value);
+      } else {
+        removeClassStyle(className, prop);
+      }
+    });
+
+    const el = makeEl();
+    const className = "Card_title__z3j8n";
+
+    applyClassStyle(className, "font-size", "20px");
+    applyInlineStyle(el, "font-size", "20px", className);
+
+    undo();
+    const tag = getStyleTag();
+    expect(tag!.textContent).not.toContain("font-size: 20px");
+
+    redo();
+    expect(tag!.textContent).toContain("font-size: 20px !important");
+
+    unsubscribe();
+    resetAll();
+  });
+});
+
 // ─── getCustomProperties ──────────────────────────────────────────────
 
 describe("getCustomProperties", () => {

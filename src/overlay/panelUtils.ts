@@ -34,6 +34,8 @@ export interface SectionCtx {
   getConversionCtx: () => UnitConversionContext;
   /** Creates an onContextMenu handler for right-click property menu */
   ctxMenu: (prop: string, value: string) => (e: React.MouseEvent) => void;
+  /** True when the selected element uses Tailwind utility classes */
+  isTailwind: boolean;
 }
 
 // ─── Indicator Helpers ───────────────────────────────────────────────────

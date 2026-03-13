@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { SpacingValues } from "./infer";
 import { applyInlineStyle, stateKey } from "./apply";
-import { applyClassStyle, type Scope } from "./scope";
+import { applyClassStyle, isTailwindElement, type Scope } from "./scope";
 import { applyStateStyle } from "./statePreview";
 import { buildConversionContext } from "./unitConversion";
 import type { IndicatorType } from "./theme";
@@ -138,10 +138,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   const isBlockContainer = ["div", "section", "article", "main", "nav", "aside", "header", "footer"].includes(element.tagName.toLowerCase());
   const showTypography = isTextBearing(element);
 
+  // ── Tailwind detection ──
+  const isTailwind = useMemo(() => isTailwindElement(element), [element]);
+
   // ── SectionCtx bundle ──
   const ctx: SectionCtx = useMemo(() => ({
-    element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu,
-  }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu]);
+    element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind,
+  }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind]);
 
   // ── Search helpers ──
   const isSearching = searchQuery.length > 0;
