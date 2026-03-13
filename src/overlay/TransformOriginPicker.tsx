@@ -15,6 +15,7 @@
 
 import { useState, useCallback } from "react";
 import { ms } from "./timing";
+import { color } from "./theme";
 
 export interface TransformOriginPickerProps {
   value: string;
@@ -173,7 +174,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
                 cursor: "pointer",
                 outline: "none",
                 background: isActive
-                  ? "#3B82F6"
+                  ? color.primary
                   : isHov
                     ? "rgba(59,130,246,0.2)"
                     : "transparent",

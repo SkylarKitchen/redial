@@ -269,7 +269,7 @@ export const BordersSection = memo(function BordersSection({
 
           {/* ── Style (icon toggle) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
-            <span style={{ width: 44, fontSize: 11.5, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Style</span>
+            <span style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Style</span>
             <IconButtonGroup
               options={BORDER_STYLE_ICON_OPTIONS}
               value={borderStyle}
@@ -281,7 +281,7 @@ export const BordersSection = memo(function BordersSection({
           {/* ── Width (value input + unit) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
             <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
-              <span style={{ width: 44, fontSize: 11.5, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}>Width</span>
+              <span style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}>Width</span>
             </LabelScrub>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex" }}>

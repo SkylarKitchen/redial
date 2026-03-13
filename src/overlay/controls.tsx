@@ -121,12 +121,9 @@ export function Section({
           )}
           style={{
             ...(open ? { background: color.background } : {}),
-            boxShadow: undefined, // focus-visible handled below
           }}
-          onFocus={(e) => { e.currentTarget.style.boxShadow = focusRing; }}
-          onBlur={(e) => { e.currentTarget.style.boxShadow = ""; }}
         >
-          <span className="text-[13px] font-medium text-[var(--foreground)] flex items-center gap-1.5">
+          <span className="text-[13px] font-medium flex items-center gap-1.5" style={{ color: color.foreground }}>
             {title}
             {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
           </span>
@@ -137,8 +134,9 @@ export function Section({
               </span>
             )}
             <span
-              className="text-[var(--muted-foreground)] flex items-center"
+              className="flex items-center"
               style={{
+                color: color.mutedForeground,
                 transition: `transform ${ms("expand")} ease`,
                 transform: open ? "rotate(90deg)" : "rotate(0deg)",
               }}
@@ -227,13 +225,19 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onBlur={commit}
       onKeyDown={handleKeyDown}
       onDoubleClick={selectAllOnDoubleClick}
-      style={flashStyle}
       className={cn(
-        "h-[26px] w-10 rounded-sm px-1.5 text-[11px] font-mono text-[var(--foreground)] outline-none text-right shrink-0",
-        embedded
-          ? "bg-transparent border-none"
-          : "bg-[var(--input)] border border-[var(--border)] focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(59,130,246,0.5)]"
+        "w-10 rounded-sm px-1.5 text-[11px] font-mono outline-none text-right shrink-0",
+        embedded ? "bg-transparent border-none" : ""
       )}
+      style={{
+        ...flashStyle,
+        height: 28,
+        color: color.foreground,
+        ...(embedded ? {} : {
+          backgroundColor: color.input,
+          border: `1px solid ${color.border}`,
+        }),
+      }}
     />
   );
 }

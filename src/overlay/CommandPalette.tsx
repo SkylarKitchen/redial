@@ -19,6 +19,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
+import { color } from "./theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ const ACTIONS = [
 ] as const;
 
 const CATEGORY_BADGE_CLASSES: Record<SearchResult["category"], string> = {
-  Property: "text-[#3B82F6] bg-[#3B82F6]/15",
+  Property: `text-[${color.primary}] bg-[${color.primary}]/15`,
   Action: "text-emerald-400 bg-emerald-500/15",
   Element: "text-amber-400 bg-amber-500/15",
 };

@@ -90,6 +90,8 @@ export const surface = {
   subtle: color.input,
   /** Scrollbar / track — 12% */
   track: "rgba(0,0,0,0.12)",
+  /** Dark dropdown menu surface */
+  darkMenu: "#363636",
 } as const;
 
 // ─── Typography ──────────────────────────────────────────────────

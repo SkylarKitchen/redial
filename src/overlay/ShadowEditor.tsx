@@ -12,6 +12,7 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { ms } from "./timing";
+import { color } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -245,7 +246,7 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: "ui-monospace, 'SF Mono', monospace",
-            color: shadow.inset ? "#3B82F6" : "#737373",
+            color: shadow.inset ? color.primary : "#737373",
             background: shadow.inset ? "rgba(59,130,246,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
               ? "1px solid rgba(59,130,246,0.3)"
@@ -347,7 +348,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           padding: "4px 0",
           fontSize: "10px",
           fontFamily: "system-ui, sans-serif",
-          color: "#3B82F6",
+          color: color.primary,
           background: "rgba(59,130,246,0.08)",
           border: "1px dashed rgba(59,130,246,0.3)",
           borderRadius: "3px",

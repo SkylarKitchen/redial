@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
-import { text } from "./theme";
+import { text, color } from "./theme";
 
 // 8px grid spacing presets
 const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];
@@ -184,7 +184,7 @@ export function SpacingValuePopover({
           -webkit-appearance: none;
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: #3B82F6;
+          background: ${color.primary};
           border: 2px solid #fff;
           cursor: pointer;
           margin-top: -4.5px;
@@ -192,7 +192,7 @@ export function SpacingValuePopover({
         .spacing-popover-slider::-moz-range-thumb {
           width: 12px; height: 12px;
           border-radius: 50%;
-          background: #3B82F6;
+          background: ${color.primary};
           border: 2px solid #fff;
           cursor: pointer;
         }
@@ -273,7 +273,7 @@ export function SpacingValuePopover({
               height: "3px",
               appearance: "none",
               WebkitAppearance: "none",
-              background: `linear-gradient(to right, #3B82F6 ${sliderPct}%, rgba(0,0,0,0.12) ${sliderPct}%)`,
+              background: `linear-gradient(to right, ${color.primary} ${sliderPct}%, rgba(0,0,0,0.12) ${sliderPct}%)`,
               borderRadius: "2px",
               outline: "none",
               cursor: "pointer",

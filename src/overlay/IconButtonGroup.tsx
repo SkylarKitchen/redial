@@ -81,16 +81,21 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
             if (nextOpt != null) handleClick(nextOpt.value);
           }
         }}
+        style={{
+          borderColor: color.border,
+          backgroundColor: isActive ? color.primary : "transparent",
+          color: isActive ? "#fff" : color.mutedForeground,
+        }}
         className={cn(
           "flex items-center justify-center h-7 min-w-7 px-1.5 cursor-pointer",
-          "border border-[var(--border)] outline-none",
+          "border outline-none",
           "text-[13px] leading-none font-sans",
           "transition-colors duration-75",
-          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          // Active state
+          `focus-visible:ring-2 focus-visible:ring-[rgba(59,130,246,0.3)]`,
+          // Active state hover
           isActive
-            ? "bg-[var(--primary)] text-white hover:bg-[var(--primary)]"
-            : "bg-transparent text-[var(--muted-foreground)] hover:bg-[rgba(0,0,0,0.05)]",
+            ? `hover:bg-[#3B82F6]`
+            : "hover:bg-[rgba(0,0,0,0.05)]",
           // Border radius: first/last rounded, middle flat
           isFirst && "rounded-l rounded-r-none",
           isLast && "rounded-r rounded-l-none",

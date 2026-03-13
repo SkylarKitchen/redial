@@ -11,6 +11,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { color, text, border, surface, font, shadow, primaryAlpha } from "./theme";
+import { ms } from "./timing";
 
 export interface SpecialOption {
   value: string;
@@ -200,7 +201,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           fontSize: 10,
           fontFamily: font.mono,
           cursor: "pointer",
-          transition: "background-color 150ms, color 150ms, border-color 150ms",
+          transition: `background-color ${ms("expand")}, color ${ms("expand")}, border-color ${ms("expand")}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -258,7 +259,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                   fontFamily: font.mono,
                   cursor: "pointer",
                   lineHeight: "16px",
-                  transition: "background-color 150ms, color 150ms",
+                  transition: `background-color ${ms("expand")}, color ${ms("expand")}`,
                   background: isActive ? color.primary : isHl ? surface.hover : "transparent",
                   color: isActive ? color.primaryForeground : text.label,
                 }}
@@ -290,7 +291,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                       color: text.label,
                       cursor: "pointer",
                       lineHeight: "16px",
-                      transition: "background-color 150ms",
+                      transition: `background-color ${ms("expand")}`,
                       textTransform: "uppercase",
                       letterSpacing: "0.025em",
                       background: isHl ? surface.hover : "transparent",

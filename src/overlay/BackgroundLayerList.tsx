@@ -200,18 +200,35 @@ export function BackgroundLayerList({
       <div ref={addRef} className="relative">
         <button
           onClick={() => setAddOpen((o) => !o)}
-          className="w-full h-7 bg-[var(--input)] border border-dashed border-[rgba(0,0,0,0.15)] rounded text-[var(--muted-foreground)] text-[11px] font-[system-ui,sans-serif] cursor-pointer transition-colors hover:bg-[var(--muted)]"
+          className="w-full h-7 rounded text-[11px] font-[system-ui,sans-serif] cursor-pointer transition-colors"
+          style={{
+            background: color.input,
+            border: `1px dashed ${blackAlpha(0.15)}`,
+            color: color.mutedForeground,
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = color.muted)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = color.input)}
         >
           + Add background
         </button>
 
         {addOpen && (
-          <div className="absolute top-[calc(100%+2px)] left-0 right-0 bg-[#F5F5F5] border border-[rgba(0,0,0,0.12)] rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] z-[100] py-0.5 overflow-hidden">
+          <div
+            className="absolute top-[calc(100%+2px)] left-0 right-0 rounded z-[100] py-0.5 overflow-hidden"
+            style={{
+              background: color.popover,
+              border: `1px solid ${blackAlpha(0.12)}`,
+              boxShadow: shadow.dropdown,
+            }}
+          >
             {(["color", "gradient", "image"] as BackgroundLayerType[]).map((t) => (
               <div
                 key={t}
                 onClick={() => addLayer(t)}
-                className="py-1.5 px-2.5 text-[11px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.6)] cursor-pointer capitalize transition-colors hover:bg-[var(--muted)]"
+                className="py-1.5 px-2.5 text-[11px] font-[system-ui,sans-serif] cursor-pointer capitalize transition-colors"
+                style={{ color: blackAlpha(0.6) }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = color.muted)}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {t}
               </div>
@@ -232,11 +249,12 @@ export function BackgroundLayerList({
             key={layer.id}
             ref={registerRef(index)}
             className={cn(
-              "rounded border border-[rgba(0,0,0,0.05)] mb-1 transition-opacity group",
-              isExpanded ? "bg-[rgba(0,0,0,0.03)]" : "bg-transparent",
+              "rounded mb-1 transition-opacity group",
             )}
             style={{
               ...itemStyle(index),
+              border: `1px solid ${blackAlpha(0.05)}`,
+              background: isExpanded ? blackAlpha(0.03) : "transparent",
               opacity: layer.visible === false ? 0.4 : 1,
             }}
           >
@@ -256,12 +274,12 @@ export function BackgroundLayerList({
 
               {/* Preview swatch */}
               <div
-                className="w-6 h-6 rounded border border-[rgba(0,0,0,0.12)] shrink-0"
-                style={{ background: layerPreviewBg(layer) }}
+                className="w-6 h-6 rounded shrink-0"
+                style={{ background: layerPreviewBg(layer), border: `1px solid ${blackAlpha(0.12)}` }}
               />
 
               {/* Label */}
-              <span className="flex-1 text-[11px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.6)]">
+              <span className="flex-1 text-[11px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.6) }}>
                 {typeLabel}
               </span>
 
@@ -274,7 +292,8 @@ export function BackgroundLayerList({
                 value={layer.opacity}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
-                className="w-12 accent-[#3B82F6]"
+                className="w-12"
+                style={{ accentColor: color.primary }}
               />
 
               {/* Eye visibility toggle */}
@@ -283,11 +302,11 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   toggleVisible(layer.id);
                 }}
-                className={cn(
-                  "bg-transparent border-none cursor-pointer p-0.5",
-                  layer.visible !== false ? "text-[var(--muted-foreground)]" : "text-[rgba(0,0,0,0.15)]",
-                )}
-                style={{ pointerEvents: isDragging ? "none" : "auto" }}
+                className="bg-transparent border-none cursor-pointer p-0.5"
+                style={{
+                  color: layer.visible !== false ? color.mutedForeground : blackAlpha(0.15),
+                  pointerEvents: isDragging ? "none" : "auto",
+                }}
                 title={layer.visible !== false ? "Hide layer" : "Show layer"}
               >
                 {layer.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -299,7 +318,10 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   removeLayer(layer.id);
                 }}
-                className="flex items-center justify-center w-5 h-5 bg-transparent border-none rounded-[3px] text-[rgba(0,0,0,0.35)] text-sm cursor-pointer font-[system-ui,sans-serif] hover:text-[var(--destructive)]"
+                className="flex items-center justify-center w-5 h-5 bg-transparent border-none rounded-[3px] text-sm cursor-pointer font-[system-ui,sans-serif]"
+                style={{ color: blackAlpha(0.35) }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = color.destructive)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = blackAlpha(0.35))}
               >
                 <X size={14} strokeWidth={2} />
               </button>
@@ -307,7 +329,7 @@ export function BackgroundLayerList({
 
             {/* Expanded controls */}
             {isExpanded && (
-              <div className="flex flex-col gap-1.5 px-1.5 pt-1.5 pb-2 border-t border-[rgba(0,0,0,0.04)]">
+              <div className="flex flex-col gap-1.5 px-1.5 pt-1.5 pb-2" style={{ borderTop: `1px solid ${blackAlpha(0.04)}` }}>
                 {/* Color layer */}
                 {layer.type === "color" && (
                   <div
@@ -315,8 +337,8 @@ export function BackgroundLayerList({
                     className={cn("flex items-center gap-2", onEditColor ? "cursor-pointer" : "cursor-default")}
                   >
                     <div
-                      className="w-8 h-6 rounded border border-[rgba(0,0,0,0.12)]"
-                      style={{ background: layer.color ?? "#ffffff" }}
+                      className="w-8 h-6 rounded"
+                      style={{ background: layer.color ?? "#ffffff", border: `1px solid ${blackAlpha(0.12)}` }}
                     />
                     <span className="text-[11px] font-mono text-[rgba(0,0,0,0.5)]">
                       {layer.color}

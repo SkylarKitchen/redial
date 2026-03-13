@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { color } from "./theme";
 
 interface ShortcutsHelpProps {
   onClose: () => void;
@@ -58,16 +59,19 @@ const SHORTCUTS = [
 export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="__tuner-root max-w-[400px] max-h-[80vh] overflow-y-auto bg-[var(--background)] border-[var(--border)]">
+      <DialogContent
+        style={{ backgroundColor: color.background, borderColor: color.border }}
+        className="__tuner-root max-w-[400px] max-h-[80vh] overflow-y-auto border"
+      >
         <DialogHeader>
-          <DialogTitle className="text-[14px] font-semibold text-[var(--foreground)]">
+          <DialogTitle style={{ color: color.foreground }} className="text-[14px] font-semibold">
             Keyboard Shortcuts
           </DialogTitle>
         </DialogHeader>
 
         {SHORTCUTS.map((section) => (
           <div key={section.category} className="mb-4">
-            <div className="text-[11px] font-medium text-[var(--muted-foreground)] uppercase tracking-wider mb-2">
+            <div style={{ color: color.mutedForeground }} className="text-[11px] font-medium uppercase tracking-wider mb-2">
               {section.category}
             </div>
 
@@ -76,10 +80,10 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
                 key={item.keys}
                 className="flex items-center justify-between py-1"
               >
-                <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded">
+                <span style={{ backgroundColor: color.input, borderColor: color.border }} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono border rounded">
                   {item.keys}
                 </span>
-                <span className="text-[12px] text-[var(--foreground)]">
+                <span style={{ color: color.foreground }} className="text-[12px]">
                   {item.desc}
                 </span>
               </div>

@@ -7,6 +7,7 @@
 
 import { useCallback } from "react";
 import { text, font, segment } from "./theme";
+import { ms } from "./timing";
 
 export interface SegmentOption {
   value: string;
@@ -72,7 +73,7 @@ export function WebflowSegmentedControl({
               padding: "0 8px",
               background: isActive ? segment.activeBg : "transparent",
               color: isActive ? text.primary : text.label,
-              transition: "background 75ms, color 75ms",
+              transition: `background ${ms("fast")}, color ${ms("fast")}`,
               outline: "none",
             }}
             onFocus={(e) => {

@@ -8,6 +8,7 @@
 
 import { useCallback } from "react";
 import { segment, text, font } from "./theme";
+import { ms } from "./timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export function SegmentedControl({
               letterSpacing: -0.115,
               fontWeight: 400,
               lineHeight: "16px",
-              transition: "background 75ms ease",
+              transition: `background ${ms("fast")} ease`,
               whiteSpace: "nowrap",
             }}
           >

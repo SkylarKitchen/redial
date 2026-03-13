@@ -47,7 +47,7 @@ import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { text, border, surface, blackAlpha, bgAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, blackAlpha, bgAlpha, primaryAlpha } from "./theme";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -1375,19 +1375,19 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #3B82F6;
-          border: 2px solid #FFFFFF;
+          background: ${color.primary};
+          border: 2px solid ${color.background};
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           margin-top: -4.5px;
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+          box-shadow: 0 0 0 3px ${primaryAlpha(0.25)};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
           transform: scale(1.1);
-          background: #d4956a;
+          background: #d4956a; /* TODO: move #d4956a to theme.ts */
         }
         .__tuner-root input[type="range"]::-moz-range-track {
           height: 3px;
@@ -1402,18 +1402,18 @@ export function Overlay() {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #3B82F6;
-          border: 2px solid #FFFFFF;
+          background: ${color.primary};
+          border: 2px solid ${color.background};
           box-shadow: 0 0 3px rgba(0,0,0,0.15);
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {
           transform: scale(1.15);
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+          box-shadow: 0 0 0 3px ${primaryAlpha(0.25)};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:active {
           transform: scale(1.1);
-          background: #d4956a;
+          background: #d4956a; /* TODO: move #d4956a to theme.ts */
         }
       `}} />
 
@@ -1429,14 +1429,14 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid border-[#3B82F6] rounded-sm transition-all duration-100 ease-out"
-            style={{ display: 'none' }}
+            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid rounded-sm transition-all duration-100 ease-out"
+            style={{ display: 'none', borderColor: color.primary }}
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed border-[#3B82F6]/50 rounded-sm bg-[#3B82F6]/[0.04]"
-            style={{ display: 'none' }}
+            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed rounded-sm"
+            style={{ display: 'none', borderColor: primaryAlpha(0.5), background: primaryAlpha(0.04) }}
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
@@ -1546,7 +1546,8 @@ export function Overlay() {
             <div className="flex justify-center py-0.5 border-b" style={{ borderColor: border.subtle }}>
               <span
                 onClick={() => setFocusMode(false)}
-                className="text-[9px] font-semibold text-[#3B82F6] bg-[#3B82F6]/[0.15] px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
+                className="text-[9px] font-semibold px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
+                style={{ color: color.primary, background: primaryAlpha(0.15) }}
               >
                 Focus Mode
               </span>

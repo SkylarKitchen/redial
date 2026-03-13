@@ -5,13 +5,15 @@
  * INTENTIONAL SIMPLIFICATION — user requested removing multi-type indicators.
  */
 
+import { color } from "./theme";
+
 export type IndicatorType = "modified" | "none";
 
 export interface StyleIndicatorProps {
   type: IndicatorType;
 }
 
-const DOT_COLOR = "#3b82f6";
+const DOT_COLOR = color.primary;
 
 export function StyleIndicator({ type }: StyleIndicatorProps) {
   if (type === "none") return null;
