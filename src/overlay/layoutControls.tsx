@@ -3,6 +3,8 @@
  *
  * RowLabel, TextToggle, ReverseButton, DisplayTabs, DirectionRow, GapRow, ChildrenRow,
  * MiniDropdown, TypoValueCell.
+ *
+ * Pure inline styles with theme.ts tokens — no Tailwind or CSS variables.
  */
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
@@ -11,7 +13,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, labelIndicator, segment } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, labelIndicator, segment, shadow } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
@@ -79,29 +81,49 @@ export function TextToggle({ options, value, onChange }: {
         const isActive = opt.value === value;
         const isFirst = i === 0;
         return (
-          <button
+          <TextToggleButton
             key={opt.value}
-            onClick={() => onChange(opt.value)}
-            style={{
-              height: 28,
-              padding: "0 10px",
-              fontSize: 10,
-              fontFamily: font.sans,
-              cursor: "pointer",
-              border: "none",
-              outline: "none",
-              transition: `color ${ms("fast")}, background ${ms("fast")}`,
-              ...(!isFirst ? { borderLeft: `1px solid ${surface.track}` } : {}),
-              ...(isActive
-                ? { background: surface.active, color: color.foreground, fontWeight: 500 }
-                : { background: "transparent", color: text.label }),
-            }}
-          >
-            {opt.label}
-          </button>
+            opt={opt}
+            isActive={isActive}
+            isFirst={isFirst}
+            onChange={onChange}
+          />
         );
       })}
     </div>
+  );
+}
+
+function TextToggleButton({ opt, isActive, isFirst, onChange }: {
+  opt: { value: string; label: string };
+  isActive: boolean;
+  isFirst: boolean;
+  onChange: (v: string) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      onClick={() => onChange(opt.value)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        height: 28,
+        padding: "0 10px",
+        fontSize: 10,
+        fontFamily: font.sans,
+        cursor: "pointer",
+        border: "none",
+        outline: "none",
+        transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
+        ...(!isFirst ? { borderLeft: `1px solid ${surface.track}` } : {}),
+        ...(isActive
+          ? { background: surface.active, color: color.foreground, fontWeight: 500 }
+          : { background: hovered ? surface.hover : "transparent", color: text.label }),
+      }}
+    >
+      {opt.label}
+    </button>
   );
 }
 
@@ -171,45 +193,106 @@ export function MiniDropdown({ value, options, onChange }: {
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        style={{ width: "100%", height: 22, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 6px", background: color.input, border: `1px solid ${color.border}`, borderRadius: 3, fontSize: 10, fontFamily: font.mono, cursor: "pointer", outline: "none", color: text.label }}
+        style={{
+          width: "100%",
+          height: 22,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingLeft: 6,
+          paddingRight: 6,
+          background: color.input,
+          border: `1px solid ${border.default}`,
+          borderRadius: 3,
+          fontSize: 10,
+          fontFamily: font.mono,
+          cursor: "pointer",
+          outline: "none",
+          color: text.label,
+        }}
       >
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.label ?? value}</span>
-        <ChevronDown size={12} strokeWidth={2} style={{ color: text.disabled, marginLeft: 4, flexShrink: 0 }} />
+        <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, color: text.disabled }} />
       </button>
       {open && (
         <div
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          style={{ position: "absolute", zIndex: 200, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: 80, background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4, boxShadow: shadow.dropdown, padding: "2px 0" }}
+          style={{
+            position: "absolute",
+            zIndex: 200,
+            top: "calc(100% + 2px)",
+            left: 0,
+            right: 0,
+            minWidth: 80,
+            background: color.popover,
+            border: `1px solid ${surface.track}`,
+            borderRadius: 4,
+            boxShadow: shadow.dropdown,
+            paddingTop: 2,
+            paddingBottom: 2,
+          }}
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
             const isHighlighted = i === highlightedIndex;
             return (
-              <div
+              <MiniDropdownOption
                 key={opt.value}
+                opt={opt}
                 id={`${id}-opt-${i}`}
-                ref={i === highlightedIndex ? optionRefCallback : undefined}
-                role="option"
-                aria-selected={active}
-                onClick={() => { onChange(opt.value); setOpen(false); }}
-                style={{
-                  padding: "3px 8px",
-                  fontSize: 10,
-                  fontFamily: font.mono,
-                  cursor: "pointer",
-                  ...(active
-                    ? { background: color.primary, color: "#fff" }
-                    : { color: text.label, ...(isHighlighted ? { background: surface.hover } : {}) }),
-                }}
-              >
-                {opt.label}
-              </div>
+                active={active}
+                isHighlighted={isHighlighted}
+                optionRefCallback={i === highlightedIndex ? optionRefCallback : undefined}
+                onChange={onChange}
+                setOpen={setOpen}
+              />
             );
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function MiniDropdownOption({ opt, id, active, isHighlighted, optionRefCallback, onChange, setOpen }: {
+  opt: { value: string; label: string };
+  id: string;
+  active: boolean;
+  isHighlighted: boolean;
+  optionRefCallback?: (el: HTMLElement | null) => void;
+  onChange: (v: string) => void;
+  setOpen: (v: boolean) => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      id={id}
+      ref={optionRefCallback}
+      role="option"
+      aria-selected={active}
+      onClick={() => { onChange(opt.value); setOpen(false); }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        paddingLeft: 8,
+        paddingRight: 8,
+        paddingTop: 3,
+        paddingBottom: 3,
+        fontSize: 10,
+        fontFamily: font.mono,
+        cursor: "pointer",
+        ...(active
+          ? { background: color.primary, color: color.primaryForeground }
+          : {
+              color: text.label,
+              background: isHighlighted || hovered ? surface.hover : "transparent",
+            }),
+      }}
+    >
+      {opt.label}
     </div>
   );
 }
@@ -295,7 +378,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
               minWidth: 180,
               background: surface.darkMenu,
               borderRadius: 8,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2)",
+              boxShadow: `0 8px 24px ${blackAlpha(0.35)}, 0 2px 8px ${blackAlpha(0.2)}`,
               padding: "6px 0",
               zIndex: 200,
             }}
@@ -303,44 +386,66 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
             {DISPLAY_OVERFLOW.map((opt) => {
               const isActive = opt.value === value;
               return (
-                <button
+                <DarkMenuOption
                   key={opt.value}
-                  role="option"
-                  aria-selected={isActive}
+                  label={opt.label}
+                  icon={opt.icon}
+                  isActive={isActive}
                   onClick={() => { onChange(opt.value); setOpen(false); }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    padding: "7px 12px",
-                    background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
-                    border: "none",
-                    outline: "none",
-                    cursor: "pointer",
-                    color: "#e8e8e8",
-                    fontSize: 13,
-                    fontFamily: font.sans,
-                    letterSpacing: -0.1,
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.08)" : "transparent"; }}
-                >
-                  <span style={{ display: "flex", alignItems: "center", opacity: 0.7 }}>
-                    {opt.icon}
-                  </span>
-                  <span style={{ flex: 1 }}>{opt.label}</span>
-                  {isActive && (
-                    <span style={{ opacity: 0.5, fontSize: 14 }}>✓</span>
-                  )}
-                </button>
+                />
               );
             })}
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+/** Shared dark menu option for DisplayTabs and FlexDirectionRow dropdowns */
+function DarkMenuOption({ label, icon, isActive, onClick }: {
+  label: string;
+  icon?: React.ReactNode;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const activeBg = bgAlpha(0.08);
+
+  return (
+    <button
+      role="option"
+      aria-selected={isActive}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: "7px 12px",
+        background: isActive || hovered ? activeBg : "transparent",
+        border: "none",
+        outline: "none",
+        cursor: "pointer",
+        color: "#e8e8e8",
+        fontSize: 13,
+        fontFamily: font.sans,
+        letterSpacing: -0.1,
+        textAlign: "left",
+      }}
+    >
+      {icon && (
+        <span style={{ display: "flex", alignItems: "center", opacity: 0.7 }}>
+          {icon}
+        </span>
+      )}
+      <span style={{ flex: 1 }}>{label}</span>
+      {isActive && (
+        <span style={{ opacity: 0.5, fontSize: 14 }}>✓</span>
+      )}
+    </button>
   );
 }
 
@@ -475,7 +580,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
               minWidth: 180,
               background: surface.darkMenu,
               borderRadius: 8,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2)",
+              boxShadow: `0 8px 24px ${blackAlpha(0.35)}, 0 2px 8px ${blackAlpha(0.2)}`,
               padding: "6px 0",
               zIndex: 200,
             }}
@@ -483,33 +588,12 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
             {DIRECTION_MORE_OPTIONS.map((opt) => {
               const isActive = opt.value === direction;
               return (
-                <button
+                <DarkMenuOption
                   key={opt.value}
-                  role="option"
-                  aria-selected={isActive}
+                  label={opt.label}
+                  isActive={isActive}
                   onClick={() => { onDirectionChange(opt.value); setMenuOpen(false); }}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    width: "100%",
-                    padding: "7px 12px",
-                    background: isActive ? "rgba(255,255,255,0.08)" : "transparent",
-                    border: "none",
-                    outline: "none",
-                    cursor: "pointer",
-                    color: "#e8e8e8",
-                    fontSize: 13,
-                    fontFamily: font.sans,
-                    letterSpacing: -0.1,
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = isActive ? "rgba(255,255,255,0.08)" : "transparent"; }}
-                >
-                  <span style={{ flex: 1 }}>{opt.label}</span>
-                  {isActive && <span style={{ opacity: 0.5, fontSize: 14 }}>✓</span>}
-                </button>
+                />
               );
             })}
           </div>
@@ -995,7 +1079,16 @@ export function TypoValueCell({
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          style={{ flex: 1, fontSize: 11, fontFamily: font.mono, padding: "0 6px", cursor: "text", outline: "none", color: text.label }}
+          style={{
+            flex: 1,
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 6,
+            paddingRight: 6,
+            cursor: "text",
+            outline: "none",
+            color: text.label,
+          }}
         >
           {keyword}
         </span>
@@ -1007,23 +1100,57 @@ export function TypoValueCell({
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          style={{ flex: 1, width: 0, background: "transparent", border: "none", fontSize: 11, fontFamily: font.mono, padding: "0 6px", outline: "none", color: color.foreground }}
+          style={{
+            flex: 1,
+            width: 0,
+            background: "transparent",
+            border: "none",
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 6,
+            paddingRight: 6,
+            outline: "none",
+            color: color.foreground,
+          }}
         />
       ) : (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          style={{ flex: 1, fontSize: 11, fontFamily: font.mono, padding: "0 6px", cursor: "text", outline: "none", color: text.label }}
+          style={{
+            flex: 1,
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 6,
+            paddingRight: 6,
+            cursor: "text",
+            outline: "none",
+            color: text.label,
+          }}
         >
           {value}
         </span>
       )}
-      <div style={{ flexShrink: 0, paddingRight: 3, borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+      <div style={{
+        flexShrink: 0,
+        paddingRight: 3,
+        borderLeft: `1px solid ${blackAlpha(0.07)}`,
+        alignSelf: "stretch",
+        display: "flex",
+        alignItems: "center",
+      }}>
         {units && onUnitChange ? (
           <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />
         ) : (
-          <span style={{ fontSize: 9, textTransform: "uppercase" as const, paddingRight: 4, flexShrink: 0, fontFamily: font.mono, color: text.disabled }}>
+          <span style={{
+            fontSize: 9,
+            textTransform: "uppercase",
+            paddingRight: 4,
+            flexShrink: 0,
+            fontFamily: font.mono,
+            color: text.disabled,
+          }}>
             {unit}
           </span>
         )}
