@@ -4,7 +4,7 @@
  * Manages display mode, flex/grid properties, gap, and flex/grid child controls.
  */
 
-import { useState, useCallback, memo, useRef } from "react";
+import { useState, useCallback, memo } from "react";
 import { ms } from "./timing";
 import { Section, SliderRow, SelectRow, TextRow, ValueInput, useResetPopover } from "./controls";
 import { AlignBox } from "./AlignBox";
@@ -75,7 +75,7 @@ function resizeTemplate(currentTemplate: string, targetCount: number): string {
     // Grow: append default 1fr tracks
     const extra = targetCount - tracks.length;
     for (let i = 0; i < extra; i++) {
-      tracks.push({ type: "default", value: 1, unit: "fr", isAuto: false, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" });
+      tracks.push({ id: 0, type: "default", value: 1, unit: "fr", isAuto: false, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" });
     }
   } else {
     // Shrink: remove from the end
