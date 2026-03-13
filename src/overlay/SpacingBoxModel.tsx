@@ -26,7 +26,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
-import { beginBatch, endBatch, resetProp } from "./apply";
+import { beginBatch, endBatch, resetProp, resetAndReadNum } from "./apply";
 import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
@@ -331,7 +331,9 @@ export function SpacingBoxModel({
               const pev = ev as PointerEvent;
               if (pev.altKey) {
                 // Alt(Option)+click: reset this property to default
-                resetProp(element, prop);
+                const newValue = resetAndReadNum(element, prop);
+                const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+                onChangeRef.current(prop, newValue, unit);
               } else {
                 // Regular click: open popover
                 const rect = el.getBoundingClientRect();
