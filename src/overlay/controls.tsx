@@ -868,6 +868,7 @@ export function ColorRow({
         {displayLabel}
       </span>
       {pickerOpen && swatchRef.current && (() => {
+        const pickerWidth = 240 + 24; // width + padding
         const pickerHeight = 300;
         const gap = 4;
         const rect = swatchRef.current!.getBoundingClientRect();
@@ -876,8 +877,9 @@ export function ColorRow({
         const top = placeAbove
           ? rect.top - pickerHeight - gap
           : rect.bottom + gap;
+        const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
         return createPortal(
-          <div style={{ position: "fixed", top, left: rect.left, zIndex: 2147483647 }}>
+          <div style={{ position: "fixed", top, left, zIndex: 2147483647 }}>
             <ColorPickerEnhanced
               color={pickerColor}
               onChange={(hex, opacity) => {

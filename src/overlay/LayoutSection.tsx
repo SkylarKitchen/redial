@@ -750,13 +750,13 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
-                    <CompactLabel label="Grow" indicator={ind("flex-grow")} />
+                    <CompactLabel label="Grow" indicator={ind("flex-grow")} onReset={() => resetCss("flex-grow", setFlexGrow)} />
                   </LabelScrub>
                   <ValueInput embedded value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
                 </div>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
-                    <CompactLabel label="Shrink" indicator={ind("flex-shrink")} />
+                    <CompactLabel label="Shrink" indicator={ind("flex-shrink")} onReset={() => resetCss("flex-shrink", setFlexShrink)} />
                   </LabelScrub>
                   <ValueInput embedded value={flexShrink} onChange={handleFlexShrinkChange} onAltClick={() => resetCss("flex-shrink", setFlexShrink)} />
                 </div>
@@ -765,7 +765,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={ctx.isTailwind ? 4 : 1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
-                    <CompactLabel label="Basis" indicator={ind("flex-basis")} />
+                    <CompactLabel label="Basis" indicator={ind("flex-basis")} onReset={() => resetCss("flex-basis", setFlexBasis)} />
                   </LabelScrub>
                   <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
                   <div style={{ flexShrink: 0, paddingRight: 3, borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
@@ -787,7 +787,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 </div>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexOrder} onChange={handleFlexOrderChange} step={1} min={-99} max={99} onAltClick={() => resetCss("order", setFlexOrder)}>
-                    <CompactLabel label="Order" indicator={ind("order")} />
+                    <CompactLabel label="Order" indicator={ind("order")} onReset={() => resetCss("order", setFlexOrder)} />
                   </LabelScrub>
                   <ValueInput embedded value={flexOrder} onChange={handleFlexOrderChange} onAltClick={() => resetCss("order", setFlexOrder)} />
                 </div>

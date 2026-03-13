@@ -842,11 +842,21 @@ export function applyCustomProperty(
   if (!customPropertyOverrides.has(name)) {
     initial = getComputedStyle(scope).getPropertyValue(name).trim();
     customPropertyOverrides.set(name, { scope, initial, current: value });
-    undoStack.push({ el: scope, prop: name, prev: initial, state: "none" });
+    const undoEntry: SingleUndoEntry = { el: scope, prop: name, prev: initial, state: "none" };
+    if (batchDepth > 0) {
+      batchEntries.push(undoEntry);
+    } else {
+      undoStack.push(undoEntry);
+    }
   } else {
     const existing = customPropertyOverrides.get(name)!;
     initial = existing.initial;
-    undoStack.push({ el: scope, prop: name, prev: existing.current, state: "none" });
+    const undoEntry: SingleUndoEntry = { el: scope, prop: name, prev: existing.current, state: "none" };
+    if (batchDepth > 0) {
+      batchEntries.push(undoEntry);
+    } else {
+      undoStack.push(undoEntry);
+    }
     existing.current = value;
   }
 

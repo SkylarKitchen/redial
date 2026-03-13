@@ -117,6 +117,8 @@ describe("renameCustomProperty", () => {
 
     // Single undo should revert the entire rename (batch)
     undo();
+
+    // After undo: old name should have the value, new name should be gone
     expect(el.style.getPropertyValue("--old-name")).toBe("10px");
     expect(el.style.getPropertyValue("--new-name")).toBe("");
   });

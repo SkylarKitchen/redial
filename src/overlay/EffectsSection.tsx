@@ -52,11 +52,13 @@ function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
   indicator?: IndicatorType;
   onReset?: () => void;
 }) {
+  const resetPopover = useResetPopover(indicator, onReset);
   return (
     <div style={SUB_HEADER_ROW}>
       <span
-        style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px" }}
-        onClick={altClickReset(onReset)}
+        ref={resetPopover.anchorRef}
+        style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px", cursor: indicator === "modified" && onReset ? "pointer" : undefined }}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
       >
         <span style={indicatorStyle(indicator)}>
           {label}
@@ -93,6 +95,7 @@ function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
           </button>
         )}
       </div>
+      {resetPopover.node}
     </div>
   );
 }
