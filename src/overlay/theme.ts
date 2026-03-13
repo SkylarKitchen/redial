@@ -185,6 +185,10 @@ export const labelIndicator = {
 export const spacingZone = {
   marginBase: blackAlpha(0.05),
   marginHover: blackAlpha(0.10),
+  marginBorderBase: blackAlpha(0.15),
+  marginBorderHover: blackAlpha(0.30),
   paddingBase: primaryAlpha(0.08),
   paddingHover: primaryAlpha(0.14),
+  paddingBorderBase: primaryAlpha(0.25),
+  paddingBorderHover: primaryAlpha(0.5),
 } as const;

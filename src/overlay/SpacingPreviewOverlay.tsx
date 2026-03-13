@@ -11,24 +11,21 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getHoverGroup, getScrubGroup } from "./scrubState";
+import { spacingZone } from "./theme";
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants — derived from theme tokens
 // ---------------------------------------------------------------------------
 
-const MARGIN_COLOR = "#57A8FF";
-const PADDING_COLOR = "#4CAF50";
+const MARGIN_FILL_BASE = spacingZone.marginBase;
+const MARGIN_FILL_HOVER = spacingZone.marginHover;
+const MARGIN_BORDER_BASE = spacingZone.marginBorderBase;
+const MARGIN_BORDER_HOVER = spacingZone.marginBorderHover;
 
-// Ghosted fills: clearly visible but subdued
-const MARGIN_FILL_BASE = "rgba(87,168,255,0.08)";
-const MARGIN_FILL_HOVER = "rgba(87,168,255,0.18)";
-const MARGIN_BORDER_BASE = "rgba(87,168,255,0.25)";
-const MARGIN_BORDER_HOVER = "rgba(87,168,255,0.5)";
-
-const PADDING_FILL_BASE = "rgba(76,175,80,0.08)";
-const PADDING_FILL_HOVER = "rgba(76,175,80,0.18)";
-const PADDING_BORDER_BASE = "rgba(76,175,80,0.25)";
-const PADDING_BORDER_HOVER = "rgba(76,175,80,0.5)";
+const PADDING_FILL_BASE = spacingZone.paddingBase;
+const PADDING_FILL_HOVER = spacingZone.paddingHover;
+const PADDING_BORDER_BASE = spacingZone.paddingBorderBase;
+const PADDING_BORDER_HOVER = spacingZone.paddingBorderHover;
 
 const Z_INDEX = 2147483644; // Below the active spacing guides (2147483645)
 
