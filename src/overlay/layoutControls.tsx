@@ -24,7 +24,6 @@ import {
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
-import { cn } from "@/lib/utils";
 import { LAYOUT_UNITS } from "./panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
@@ -45,8 +44,13 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
 
   return (
     <span
-      className="text-[11.5px] shrink-0 select-none rounded-[2px] px-[1px] leading-[16px]"
       style={{
+        fontSize: 11.5,
+        flexShrink: 0,
+        userSelect: "none" as const,
+        borderRadius: 2,
+        padding: "0 1px",
+        lineHeight: "16px",
         width: hasHighlight ? undefined : 49,
         background: colors.bg,
         color: colors.text,

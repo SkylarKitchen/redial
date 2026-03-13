@@ -21,6 +21,7 @@ import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ms } from "./timing";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, presets } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -361,8 +362,7 @@ export function SliderRow({
   const labelContent = (
     <span
       title={labelTitle}
-      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1"
-      style={{ color: labelColor }}
+      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, color: labelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
