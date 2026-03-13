@@ -226,11 +226,11 @@ export const presetBaseUnit: Record<string, string> = {
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: primaryAlpha(0.06),
+  marginBase: "transparent",
   marginHover: primaryAlpha(0.14),
   marginBorderBase: primaryAlpha(0.25),
   marginBorderHover: primaryAlpha(0.5),
-  paddingBase: greenAlpha(0.06),
+  paddingBase: "transparent",
   paddingHover: greenAlpha(0.14),
   paddingBorderBase: greenAlpha(0.25),
   paddingBorderHover: greenAlpha(0.5),
