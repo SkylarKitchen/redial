@@ -6,14 +6,14 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { cn } from "@/lib/utils";
 import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
 import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
-import { color, blackAlpha, border, surface, shadow } from "./theme";
+import { color, blackAlpha, border, surface, shadow, font } from "./theme";
+import { ms } from "./timing";
 
 export interface BackgroundLayer {
   id: string;
@@ -110,8 +110,14 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-6 rounded-[3px] text-[11px] font-mono px-1 cursor-pointer"
       style={{
+        height: 24,
+        borderRadius: 3,
+        fontSize: 11,
+        fontFamily: font.mono,
+        paddingLeft: 4,
+        paddingRight: 4,
+        cursor: "pointer",
         background: color.input,
         border: `1px solid ${color.border}`,
         color: blackAlpha(0.7),
@@ -195,13 +201,19 @@ export function BackgroundLayerList({
   );
 
   return (
-    <div className="flex flex-col gap-1">
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Add button */}
-      <div ref={addRef} className="relative">
+      <div ref={addRef} style={{ position: "relative" }}>
         <button
           onClick={() => setAddOpen((o) => !o)}
-          className="w-full h-7 rounded text-[11px] font-[system-ui,sans-serif] cursor-pointer transition-colors"
           style={{
+            width: "100%",
+            height: 28,
+            borderRadius: 4,
+            fontSize: 11,
+            fontFamily: font.sans,
+            cursor: "pointer",
+            transition: `background-color ${ms("fast")}`,
             background: color.input,
             border: `1px dashed ${blackAlpha(0.15)}`,
             color: color.mutedForeground,
@@ -214,8 +226,16 @@ export function BackgroundLayerList({
 
         {addOpen && (
           <div
-            className="absolute top-[calc(100%+2px)] left-0 right-0 rounded z-[100] py-0.5 overflow-hidden"
             style={{
+              position: "absolute",
+              top: "calc(100% + 2px)",
+              left: 0,
+              right: 0,
+              borderRadius: 4,
+              zIndex: 100,
+              paddingTop: 2,
+              paddingBottom: 2,
+              overflow: "hidden",
               background: color.popover,
               border: `1px solid ${blackAlpha(0.12)}`,
               boxShadow: shadow.dropdown,
@@ -225,8 +245,18 @@ export function BackgroundLayerList({
               <div
                 key={t}
                 onClick={() => addLayer(t)}
-                className="py-1.5 px-2.5 text-[11px] font-[system-ui,sans-serif] cursor-pointer capitalize transition-colors"
-                style={{ color: blackAlpha(0.6) }}
+                style={{
+                  paddingTop: 6,
+                  paddingBottom: 6,
+                  paddingLeft: 10,
+                  paddingRight: 10,
+                  fontSize: 11,
+                  fontFamily: font.sans,
+                  cursor: "pointer",
+                  textTransform: "capitalize",
+                  transition: `background-color ${ms("fast")}`,
+                  color: blackAlpha(0.6),
+                }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = color.muted)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
@@ -238,7 +268,7 @@ export function BackgroundLayerList({
       </div>
 
       {/* Layer rows */}
-      <div className="relative">
+      <div style={{ position: "relative" }}>
       {layers.map((layer, index) => {
         const isExpanded = expandedId === layer.id;
         const typeLabel = layer.type === "color" ? "Color" : layer.type === "gradient" ? "Gradient" : "Image";
@@ -248,11 +278,11 @@ export function BackgroundLayerList({
           <div
             key={layer.id}
             ref={registerRef(index)}
-            className={cn(
-              "rounded mb-1 transition-opacity group",
-            )}
             style={{
               ...itemStyle(index),
+              borderRadius: 4,
+              marginBottom: 4,
+              transition: `opacity ${ms("fast")}`,
               border: `1px solid ${blackAlpha(0.05)}`,
               background: isExpanded ? blackAlpha(0.03) : "transparent",
               opacity: layer.visible === false ? 0.4 : 1,
@@ -261,7 +291,14 @@ export function BackgroundLayerList({
             {/* Collapsed row */}
             <div
               onClick={() => setExpandedId(isExpanded ? null : layer.id)}
-              className="flex items-center gap-2 p-1 pl-1.5 cursor-pointer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: 4,
+                paddingLeft: 6,
+                cursor: "pointer",
+              }}
             >
               {/* Drag handle */}
               <DragHandle
@@ -274,12 +311,18 @@ export function BackgroundLayerList({
 
               {/* Preview swatch */}
               <div
-                className="w-6 h-6 rounded shrink-0"
-                style={{ background: layerPreviewBg(layer), border: `1px solid ${blackAlpha(0.12)}` }}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 4,
+                  flexShrink: 0,
+                  background: layerPreviewBg(layer),
+                  border: `1px solid ${blackAlpha(0.12)}`,
+                }}
               />
 
               {/* Label */}
-              <span className="flex-1 text-[11px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.6) }}>
+              <span style={{ flex: 1, fontSize: 11, fontFamily: font.sans, color: blackAlpha(0.6) }}>
                 {typeLabel}
               </span>
 
@@ -292,8 +335,7 @@ export function BackgroundLayerList({
                 value={layer.opacity}
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
-                className="w-12"
-                style={{ accentColor: color.primary }}
+                style={{ width: 48, accentColor: color.primary }}
               />
 
               {/* Eye visibility toggle */}
@@ -302,8 +344,11 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   toggleVisible(layer.id);
                 }}
-                className="bg-transparent border-none cursor-pointer p-0.5"
                 style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 2,
                   color: layer.visible !== false ? color.mutedForeground : blackAlpha(0.15),
                   pointerEvents: isDragging ? "none" : "auto",
                 }}
@@ -318,8 +363,20 @@ export function BackgroundLayerList({
                   e.stopPropagation();
                   removeLayer(layer.id);
                 }}
-                className="flex items-center justify-center w-5 h-5 bg-transparent border-none rounded-[3px] text-sm cursor-pointer font-[system-ui,sans-serif]"
-                style={{ color: blackAlpha(0.35) }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 20,
+                  height: 20,
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: 3,
+                  fontSize: 14,
+                  cursor: "pointer",
+                  fontFamily: font.sans,
+                  color: blackAlpha(0.35),
+                }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = color.destructive)}
                 onMouseLeave={(e) => (e.currentTarget.style.color = blackAlpha(0.35))}
               >
@@ -329,18 +386,37 @@ export function BackgroundLayerList({
 
             {/* Expanded controls */}
             {isExpanded && (
-              <div className="flex flex-col gap-1.5 px-1.5 pt-1.5 pb-2" style={{ borderTop: `1px solid ${blackAlpha(0.04)}` }}>
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                paddingLeft: 6,
+                paddingRight: 6,
+                paddingTop: 6,
+                paddingBottom: 8,
+                borderTop: `1px solid ${blackAlpha(0.04)}`,
+              }}>
                 {/* Color layer */}
                 {layer.type === "color" && (
                   <div
                     onClick={() => onEditColor?.(layer.id)}
-                    className={cn("flex items-center gap-2", onEditColor ? "cursor-pointer" : "cursor-default")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: onEditColor ? "pointer" : "default",
+                    }}
                   >
                     <div
-                      className="w-8 h-6 rounded"
-                      style={{ background: layer.color ?? "#ffffff", border: `1px solid ${blackAlpha(0.12)}` }}
+                      style={{
+                        width: 32,
+                        height: 24,
+                        borderRadius: 4,
+                        background: layer.color ?? "#ffffff",
+                        border: `1px solid ${blackAlpha(0.12)}`,
+                      }}
                     />
-                    <span className="text-[11px] font-mono" style={{ color: blackAlpha(0.5) }}>
+                    <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.5) }}>
                       {layer.color}
                     </span>
                   </div>
@@ -366,23 +442,30 @@ export function BackgroundLayerList({
 
                 {/* Image layer */}
                 {layer.type === "image" && layer.image && (
-                  <div className="flex flex-col gap-1">
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {/* URL */}
                     <input
                       type="text"
                       placeholder="Image URL"
                       value={layer.image.url}
                       onChange={(e) => updateImage(layer.id, { url: e.target.value })}
-                      className="w-full h-6 rounded-[3px] text-[11px] font-mono px-1.5 box-border"
                       style={{
+                        width: "100%",
+                        height: 24,
+                        borderRadius: 3,
+                        fontSize: 11,
+                        fontFamily: font.mono,
+                        paddingLeft: 6,
+                        paddingRight: 6,
+                        boxSizing: "border-box",
                         background: color.input,
                         border: `1px solid ${color.border}`,
                         color: blackAlpha(0.7),
                       }}
                     />
-                    <div className="flex gap-1">
-                      <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span style={{ fontSize: 10, fontFamily: font.sans, color: blackAlpha(0.35) }}>
                           Size
                         </span>
                         <Select
@@ -395,27 +478,47 @@ export function BackgroundLayerList({
                           const w = parts[0] || "100%";
                           const h = parts[1] || "auto";
                           return (
-                            <div className="flex gap-0.5 mt-0.5">
+                            <div style={{ display: "flex", gap: 2, marginTop: 2 }}>
                               <input
                                 value={w}
                                 placeholder="W"
                                 onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
-                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
-                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
+                                style={{
+                                  flex: 1,
+                                  height: 22,
+                                  borderRadius: 3,
+                                  fontSize: 10,
+                                  paddingLeft: 4,
+                                  paddingRight: 4,
+                                  fontFamily: font.mono,
+                                  background: color.input,
+                                  border: `1px solid ${color.border}`,
+                                  color: blackAlpha(0.75),
+                                }}
                               />
                               <input
                                 value={h}
                                 placeholder="H"
                                 onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
-                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
-                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
+                                style={{
+                                  flex: 1,
+                                  height: 22,
+                                  borderRadius: 3,
+                                  fontSize: 10,
+                                  paddingLeft: 4,
+                                  paddingRight: 4,
+                                  fontFamily: font.mono,
+                                  background: color.input,
+                                  border: `1px solid ${color.border}`,
+                                  color: blackAlpha(0.75),
+                                }}
                               />
                             </div>
                           );
                         })()}
                       </div>
-                      <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span style={{ fontSize: 10, fontFamily: font.sans, color: blackAlpha(0.35) }}>
                           Position
                         </span>
                         <Select
@@ -428,27 +531,47 @@ export function BackgroundLayerList({
                           const x = parts[0] || "50%";
                           const y = parts[1] || "50%";
                           return (
-                            <div className="flex gap-0.5 mt-0.5">
+                            <div style={{ display: "flex", gap: 2, marginTop: 2 }}>
                               <input
                                 value={x}
                                 placeholder="X"
                                 onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
-                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
-                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
+                                style={{
+                                  flex: 1,
+                                  height: 22,
+                                  borderRadius: 3,
+                                  fontSize: 10,
+                                  paddingLeft: 4,
+                                  paddingRight: 4,
+                                  fontFamily: font.mono,
+                                  background: color.input,
+                                  border: `1px solid ${color.border}`,
+                                  color: blackAlpha(0.75),
+                                }}
                               />
                               <input
                                 value={y}
                                 placeholder="Y"
                                 onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
-                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
-                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
+                                style={{
+                                  flex: 1,
+                                  height: 22,
+                                  borderRadius: 3,
+                                  fontSize: 10,
+                                  paddingLeft: 4,
+                                  paddingRight: 4,
+                                  fontFamily: font.mono,
+                                  background: color.input,
+                                  border: `1px solid ${color.border}`,
+                                  color: blackAlpha(0.75),
+                                }}
                               />
                             </div>
                           );
                         })()}
                       </div>
-                      <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span style={{ fontSize: 10, fontFamily: font.sans, color: blackAlpha(0.35) }}>
                           Repeat
                         </span>
                         <Select
@@ -458,9 +581,9 @@ export function BackgroundLayerList({
                         />
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+                        <span style={{ fontSize: 10, fontFamily: font.sans, color: blackAlpha(0.35) }}>
                           Attachment
                         </span>
                         <Select
@@ -474,8 +597,8 @@ export function BackgroundLayerList({
                 )}
 
                 {/* Blend mode */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-[system-ui,sans-serif] min-w-9" style={{ color: blackAlpha(0.35) }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 10, fontFamily: font.sans, minWidth: 36, color: blackAlpha(0.35) }}>
                     Blend
                   </span>
                   <Select

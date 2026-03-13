@@ -516,7 +516,7 @@ export function SpacingBoxModel({
               background: "rgba(250, 249, 245, 0.97)",
               color: text.secondary,
               fontSize: "11px",
-              fontFamily: "system-ui, -apple-system, sans-serif",
+              fontFamily: font.sans,
               padding: "4px 10px",
               borderRadius: "4px",
               whiteSpace: "nowrap",

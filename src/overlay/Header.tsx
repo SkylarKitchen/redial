@@ -12,10 +12,8 @@ import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { ms } from "./timing";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -53,6 +51,9 @@ export function Header({
   onStateChange,
 }: HeaderProps) {
   const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
+  const [closeHovered, setCloseHovered] = useState(false);
+  const [ellipsisHovered, setEllipsisHovered] = useState(false);
+  const [hoveredBreadcrumbIdx, setHoveredBreadcrumbIdx] = useState<number | null>(null);
 
   // Reset expanded state when the selected element changes
   useEffect(() => {
@@ -68,55 +69,89 @@ export function Header({
 
   return (
     <div
-      className="__tuner-header flex flex-col border-b cursor-grab select-none"
-      style={{ borderColor: border.subtle }}
+      className="__tuner-header"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        borderBottom: `1px solid ${border.subtle}`,
+        cursor: "grab",
+        userSelect: "none",
+      }}
       onMouseDown={onDragStart}
     >
       {/* -- Drag handle indicator -- */}
-      <div className="flex justify-center pt-[5px]">
-        <div className="w-7 h-[3px] rounded-full" style={{ background: surface.active }} />
+      <div style={{ display: "flex", justifyContent: "center", paddingTop: 5 }}>
+        <div style={{ width: 28, height: 3, borderRadius: 9999, background: surface.active }} />
       </div>
 
       {/* -- Main row: tag + class | badges + close -- */}
-      <div className="flex items-center justify-between px-3 pt-1.5">
-        <div className="flex items-baseline gap-1.5 min-w-0">
-          <span className="text-[13px] font-mono font-medium shrink-0" style={{ color: text.primary }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 12, paddingRight: 12, paddingTop: 6 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontFamily: font.mono, fontWeight: 500, flexShrink: 0, color: text.primary }}>
             {"<"}{tag}{">"}
           </span>
           {className && (
-            <span className="text-[11px] font-mono overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: text.label }}>
+            <span style={{ fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: text.label }}>
               .{className}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-[5px] shrink-0">
+        <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
           {totalChanges > 0 && (
-            <Badge
-              className="text-[9px] font-semibold font-mono px-1.5 py-0 rounded-[3px] leading-[14px] min-w-[18px] text-center cursor-pointer"
-              style={{ background: primaryAlpha(0.15), borderColor: primaryAlpha(0.2), color: primaryAlpha(0.95) }}
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 600,
+                fontFamily: font.mono,
+                paddingLeft: 6,
+                paddingRight: 6,
+                borderRadius: 3,
+                lineHeight: "14px",
+                minWidth: 18,
+                textAlign: "center",
+                cursor: "pointer",
+                background: primaryAlpha(0.15),
+                border: `1px solid ${primaryAlpha(0.2)}`,
+                color: primaryAlpha(0.95),
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
               onClick={onShowSession}
-              title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} \u2014 click to view session`}
+              title={`${totalChanges} total change${totalChanges === 1 ? "" : "s"} — click to view session`}
             >
               {totalChanges}
-            </Badge>
+            </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={onClose}
-            className="h-5 w-5 p-0 rounded-[3px] transition-colors duration-100 hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]"
-            style={{ color: text.disabled }}
+            onMouseEnter={() => setCloseHovered(true)}
+            onMouseLeave={() => setCloseHovered(false)}
             title="Close (Esc)"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 20,
+              width: 20,
+              padding: 0,
+              borderRadius: 3,
+              border: "none",
+              background: closeHovered ? surface.hover : "transparent",
+              color: closeHovered ? blackAlpha(0.7) : text.disabled,
+              cursor: "pointer",
+              transition: `color ${ms("normal")}, background ${ms("normal")}`,
+            }}
           >
             <X size={12} strokeWidth={2} />
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* -- Source file -- */}
       {sourceFile && (
-        <div className="px-3 pt-0.5">
-          <span className="text-[10px] font-mono" style={{ color: text.disabled }}>
+        <div style={{ paddingLeft: 12, paddingRight: 12, paddingTop: 2 }}>
+          <span style={{ fontSize: 10, fontFamily: font.mono, color: text.disabled }}>
             {sourceFile}
           </span>
         </div>
@@ -131,37 +166,67 @@ export function Header({
         const ellipsisAfterFirst = shouldCollapse;
 
         return (
-          <div className="flex items-center gap-0.5 text-[11px] font-mono px-3 pt-[3px] overflow-x-auto" style={{ color: text.label, scrollbarWidth: "none" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 12,
+            paddingRight: 12,
+            paddingTop: 3,
+            overflowX: "auto",
+            color: text.label,
+            scrollbarWidth: "none" as const,
+          }}>
             {visibleSegments.map((seg, i) => {
               const isLast = i === visibleSegments.length - 1;
               const label = seg.className ? `${seg.tag}.${seg.className}` : seg.tag;
+              const isBreadcrumbHovered = hoveredBreadcrumbIdx === i && !isLast;
+              const isEllipsis = i === 1 && ellipsisAfterFirst;
               return (
-                <span key={i} className="flex items-center gap-0.5">
-                  {i === 1 && ellipsisAfterFirst && (
+                <span key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  {isEllipsis && (
                     <>
-                      <ChevronRight size={10} strokeWidth={2} className="opacity-40" />
+                      <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />
                       <span
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
-                        className="cursor-pointer px-0.5 rounded-sm transition-colors duration-100 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]"
-                        style={{ color: text.disabled }}
+                        onMouseEnter={() => setEllipsisHovered(true)}
+                        onMouseLeave={() => setEllipsisHovered(false)}
+                        style={{
+                          cursor: "pointer",
+                          paddingLeft: 2,
+                          paddingRight: 2,
+                          borderRadius: 2,
+                          color: ellipsisHovered ? blackAlpha(0.7) : text.disabled,
+                          background: ellipsisHovered ? surface.hover : "transparent",
+                          transition: `color ${ms("normal")}, background ${ms("normal")}`,
+                        }}
                         title="Show full breadcrumb"
                       >
                         ...
                       </span>
                     </>
                   )}
-                  {i > 0 && <ChevronRight size={10} strokeWidth={2} className="opacity-40" />}
+                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
                   <span
                     onClick={(e) => { e.stopPropagation(); if (!isLast) onBreadcrumbClick?.(seg.el); }}
-                    onMouseEnter={() => { if (!isLast) onBreadcrumbHover?.(seg.el); }}
-                    onMouseLeave={() => { if (!isLast) onBreadcrumbHover?.(null); }}
-                    className={cn(
-                      "whitespace-nowrap rounded-sm transition-colors duration-100",
-                      isLast
-                        ? "cursor-default"
-                        : "cursor-pointer px-0.5 hover:text-[rgba(0,0,0,0.7)] hover:bg-[rgba(0,0,0,0.05)]",
-                    )}
-                    style={isLast ? { color: text.primary } : { color: text.label }}
+                    onMouseEnter={() => { if (!isLast) { setHoveredBreadcrumbIdx(i); onBreadcrumbHover?.(seg.el); } }}
+                    onMouseLeave={() => { if (!isLast) { setHoveredBreadcrumbIdx(null); onBreadcrumbHover?.(null); } }}
+                    style={{
+                      whiteSpace: "nowrap",
+                      borderRadius: 2,
+                      transition: `color ${ms("normal")}, background ${ms("normal")}`,
+                      ...(isLast
+                        ? { cursor: "default", color: text.primary }
+                        : {
+                            cursor: "pointer",
+                            paddingLeft: 2,
+                            paddingRight: 2,
+                            color: isBreadcrumbHovered ? blackAlpha(0.7) : text.label,
+                            background: isBreadcrumbHovered ? surface.hover : "transparent",
+                          }),
+                    }}
                     data-breadcrumb-ancestor={!isLast ? "" : undefined}
                   >
                     {label}
@@ -175,7 +240,7 @@ export function Header({
 
       {/* -- Toolbar: scope pills + state selector on one row -- */}
       {hasToolbar && (
-        <div className="flex items-center gap-[3px] px-3 pt-1.5 pb-2 flex-wrap">
+        <div style={{ display: "flex", alignItems: "center", gap: 3, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 8, flexWrap: "wrap" }}>
           {cssClasses.length > 0 && onScopeChange && (
             <>
               <ScopePill
@@ -199,7 +264,7 @@ export function Header({
           {state !== undefined && onStateChange && (
             <>
               {cssClasses.length > 0 && onScopeChange && (
-                <div className="w-px h-3.5 mx-[3px] shrink-0" style={{ background: surface.hover }} />
+                <div style={{ width: 1, height: 14, marginLeft: 3, marginRight: 3, flexShrink: 0, background: surface.hover }} />
               )}
               <StateSelector value={state} onChange={onStateChange} />
             </>
@@ -208,7 +273,7 @@ export function Header({
       )}
 
       {/* Bottom spacing when no toolbar present */}
-      {!hasToolbar && <div className="h-2" />}
+      {!hasToolbar && <div style={{ height: 8 }} />}
     </div>
   );
 }
@@ -224,19 +289,31 @@ function ScopePill({
   active: boolean;
   onClick: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <Badge
-      variant="outline"
+    <div
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={cn(
-        "px-2 py-0 text-[10px] font-mono border-none rounded cursor-pointer leading-4 whitespace-nowrap transition-colors duration-100 hover:bg-[rgba(0,0,0,0.04)] hover:text-[rgba(0,0,0,0.6)]",
-        active
-          ? "hover:bg-[rgba(0,0,0,0.08)]"
-          : "bg-transparent",
-      )}
-      style={active ? { background: surface.active, color: text.primary } : { color: text.label }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        paddingLeft: 8,
+        paddingRight: 8,
+        fontSize: 10,
+        fontFamily: font.mono,
+        borderRadius: 4,
+        cursor: "pointer",
+        lineHeight: "16px",
+        whiteSpace: "nowrap",
+        transition: `color ${ms("normal")}, background ${ms("normal")}`,
+        background: active
+          ? (hovered ? surface.active : surface.active)
+          : (hovered ? surface.subtle : "transparent"),
+        color: active
+          ? text.primary
+          : (hovered ? blackAlpha(0.6) : text.label),
+      }}
     >
       {label}
-    </Badge>
+    </div>
   );
 }

@@ -1,26 +1,24 @@
 /**
  * AlignBox.tsx — Webflow-style alignment control
  *
- * Directional arrows radiating from a center indicator box:
- *    ↖  ↑  ↗
- *    ←  ●  →
- *    ↙  ↓  ↘
+ * Three visual modes based on stretch state:
+ *   1. Dot grid — 3×3 dots with active position(s) as small squares
+ *   2. Bar — rounded rectangle spanning the stretch axis, positioned by other axis
+ *   3. Crosshair — 4 arrows from center when both axes are stretch
  *
- * The center square shows a dot at the active alignment position.
- * Clicking any arrow or the center sets justify + align simultaneously.
  * Plus optional spacing buttons (space-between, space-around, space-evenly).
  */
 
 import { useState, useCallback } from "react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
+import { color, text, border, surface, font, blackAlpha } from "./theme";
 
 export interface AlignBoxProps {
   justify: string;
   align: string;
   onChange: (justify: string, align: string) => void;
   mode?: "flex" | "grid";
-  /** When true, hides spacing buttons and shows only the arrow grid */
+  /** When true, hides spacing buttons and shows only the alignment box */
   compact?: boolean;
 }
 
@@ -29,7 +27,7 @@ const ALIGN_ROWS_FLEX = ["flex-start", "center", "flex-end"] as const;
 const JUSTIFY_COLS_GRID = ["start", "center", "end"] as const;
 const ALIGN_ROWS_GRID = ["start", "center", "end"] as const;
 
-const SPACING_OPTIONS = [
+export const SPACING_OPTIONS = [
   { value: "space-between", label: "Between" },
   { value: "space-around", label: "Around" },
   { value: "space-evenly", label: "Evenly" },
@@ -54,32 +52,23 @@ export function toRowIndices(value: string): number[] {
   return []; // baseline, unknown — no grid representation
 }
 
-/** SVG arrow pointing in one of 8 directions */
-function DirectionArrow({ direction, size = 10 }: { direction: string; size?: number }) {
-  const rotations: Record<string, number> = {
-    "up": 0, "up-right": 45, "right": 90, "down-right": 135,
-    "down": 180, "down-left": 225, "left": 270, "up-left": 315,
-  };
-  const rotation = rotations[direction] ?? 0;
+// ─── Crosshair Arrow SVG ──────────────────────────────────────────
 
+function CrosshairArrow({ direction, size = 10 }: { direction: "up" | "down" | "left" | "right"; size?: number }) {
+  const rotations = { up: 0, right: 90, down: 180, left: 270 };
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 10 10"
-      style={{ transform: `rotate(${rotation}deg)`, display: "block" }}
+      style={{ transform: `rotate(${rotations[direction]}deg)`, display: "block" }}
     >
-      <path d="M5 2 L7.5 6.5 L2.5 6.5 Z" fill="currentColor" />
+      <path d="M5 1 L8 5 L6 5 L6 9 L4 9 L4 5 L2 5 Z" fill="currentColor" />
     </svg>
   );
 }
 
-/** Direction labels for the 3x3 positions (row-major) */
-const DIRECTIONS = [
-  ["up-left", "up", "up-right"],
-  ["left", "center", "right"],
-  ["down-left", "down", "down-right"],
-] as const;
+// ─── Main Component ───────────────────────────────────────────────
 
 export function AlignBox({ justify, align, onChange, mode = "flex", compact = false }: AlignBoxProps) {
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
@@ -99,135 +88,53 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
     [onChange, justifyCols, alignRows]
   );
 
+  // Determine visual mode
+  const visualMode = stretchX && stretchY
+    ? "crosshair"
+    : (stretchX || stretchY)
+      ? "bar"
+      : "dot-grid";
+
   return (
     <div
       {...(stretchX ? { "data-stretch-x": true } : {})}
       {...(stretchY ? { "data-stretch-y": true } : {})}
       style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
     >
-      {/* Arrow grid: 8 directional arrows around a center indicator */}
+      {/* Main alignment box */}
       <div
+        data-mode={visualMode}
         style={{
-          display: "grid",
-          gridTemplateColumns: "20px 32px 20px",
-          gridTemplateRows: "20px 32px 20px",
-          gap: "1px",
-          alignItems: "center",
-          justifyItems: "center",
+          position: "relative",
+          width: 56,
+          height: 56,
+          background: color.input,
+          border: `1px solid ${color.border}`,
+          borderRadius: 6,
+          overflow: "hidden",
         }}
       >
-        {DIRECTIONS.flatMap((row, r) =>
-          row.map((dir, c) => {
-            const key = `${r}-${c}`;
-            const isActive = activeCols.includes(c) && activeRows.includes(r);
-            const isHovered = hoveredCell === key;
-            const isCenter = r === 1 && c === 1;
-            const hasStretch = stretchX || stretchY;
-
-            if (isCenter) {
-              // Center indicator box — dot normally, bar(s) when stretch
-              const centerIndicator = hasStretch ? (
-                <div style={{ position: "relative", width: 24, height: 24 }}>
-                  {stretchX && (
-                    <div style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: 24,
-                      height: 4,
-                      borderRadius: 2,
-                      background: color.primary,
-                    }} />
-                  )}
-                  {stretchY && (
-                    <div style={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: 4,
-                      height: 24,
-                      borderRadius: 2,
-                      background: color.primary,
-                    }} />
-                  )}
-                </div>
-              ) : (
-                <div style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  background: isActive
-                    ? color.primary
-                    : isHovered
-                      ? primaryAlpha(0.5)
-                      : blackAlpha(0.2),
-                  transition: `background ${ms("fast")}`,
-                }} />
-              );
-
-              return (
-                <div
-                  key={key}
-                  tabIndex={0}
-                  role="button"
-                  aria-label="Align center center"
-                  onClick={() => handleCellClick(c, r)}
-                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(c, r); } }}
-                  onMouseEnter={() => setHoveredCell(key)}
-                  onMouseLeave={() => setHoveredCell(null)}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    background: color.input,
-                    border: `1px solid ${border.hover}`,
-                    borderRadius: 4,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    outline: "none",
-                    transition: `border-color ${ms("fast")}`,
-                    borderColor: isHovered ? blackAlpha(0.2) : border.hover,
-                  }}
-                >
-                  {centerIndicator}
-                </div>
-              );
-            }
-
-            // Directional arrow button
-            return (
-              <div
-                key={key}
-                tabIndex={0}
-                role="button"
-                aria-label={`Align ${dir}`}
-                onClick={() => handleCellClick(c, r)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCellClick(c, r); } }}
-                onMouseEnter={() => setHoveredCell(key)}
-                onMouseLeave={() => setHoveredCell(null)}
-                style={{
-                  width: 20,
-                  height: 20,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  outline: "none",
-                  color: isActive
-                    ? color.primary
-                    : isHovered
-                      ? blackAlpha(0.5)
-                      : blackAlpha(0.2),
-                  transition: `color ${ms("fast")}`,
-                }}
-              >
-                <DirectionArrow direction={dir} size={10} />
-              </div>
-            );
-          })
+        {visualMode === "dot-grid" && (
+          <DotGrid
+            activeCols={activeCols}
+            activeRows={activeRows}
+            hoveredCell={hoveredCell}
+            onCellClick={handleCellClick}
+            onCellHover={setHoveredCell}
+          />
+        )}
+        {visualMode === "bar" && (
+          <BarIndicator
+            stretchX={stretchX}
+            stretchY={stretchY}
+            activeCols={activeCols}
+            activeRows={activeRows}
+            onCellClick={handleCellClick}
+            onCellHover={setHoveredCell}
+          />
+        )}
+        {visualMode === "crosshair" && (
+          <CrosshairIndicator />
         )}
       </div>
 
@@ -265,6 +172,226 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Dot Grid Mode ────────────────────────────────────────────────
+
+function DotGrid({
+  activeCols,
+  activeRows,
+  hoveredCell,
+  onCellClick,
+  onCellHover,
+}: {
+  activeCols: number[];
+  activeRows: number[];
+  hoveredCell: string | null;
+  onCellClick: (col: number, row: number) => void;
+  onCellHover: (key: string | null) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr 1fr",
+        gridTemplateRows: "1fr 1fr 1fr",
+        width: "100%",
+        height: "100%",
+        padding: 8,
+        boxSizing: "border-box",
+      }}
+    >
+      {[0, 1, 2].flatMap((row) =>
+        [0, 1, 2].map((col) => {
+          const key = `${row}-${col}`;
+          const isActive = activeCols.includes(col) && activeRows.includes(row);
+          const isHovered = hoveredCell === key;
+
+          return (
+            <div
+              key={key}
+              {...(isActive ? { "data-active": true } : {})}
+              tabIndex={0}
+              role="button"
+              aria-label={`Align column ${col} row ${row}`}
+              onClick={() => onCellClick(col, row)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onCellClick(col, row);
+                }
+              }}
+              onMouseEnter={() => onCellHover(key)}
+              onMouseLeave={() => onCellHover(null)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              {isActive ? (
+                <div style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 1,
+                  background: color.foreground,
+                  transition: `background ${ms("fast")}`,
+                }} />
+              ) : (
+                <div style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: isHovered ? blackAlpha(0.25) : blackAlpha(0.15),
+                  transition: `background ${ms("fast")}`,
+                }} />
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+// ─── Bar Mode ─────────────────────────────────────────────────────
+
+const COL_POSITIONS = ["25%", "50%", "75%"];
+const ROW_POSITIONS = ["25%", "50%", "75%"];
+
+function BarIndicator({
+  stretchX,
+  stretchY,
+  activeCols,
+  activeRows,
+  onCellClick,
+  onCellHover,
+}: {
+  stretchX: boolean;
+  stretchY: boolean;
+  activeCols: number[];
+  activeRows: number[];
+  onCellClick: (col: number, row: number) => void;
+  onCellHover: (key: string | null) => void;
+}) {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {/* Faded dot backdrop */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr",
+          gridTemplateRows: "1fr 1fr 1fr",
+          padding: 8,
+          boxSizing: "border-box",
+          opacity: 0.5,
+        }}
+      >
+        {[0, 1, 2].flatMap((row) =>
+          [0, 1, 2].map((col) => (
+            <div
+              key={`${row}-${col}`}
+              tabIndex={0}
+              role="button"
+              aria-label={`Align column ${col} row ${row}`}
+              onClick={() => onCellClick(col, row)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onCellClick(col, row);
+                }
+              }}
+              onMouseEnter={() => onCellHover(`${row}-${col}`)}
+              onMouseLeave={() => onCellHover(null)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                outline: "none",
+              }}
+            >
+              <div style={{
+                width: 4,
+                height: 4,
+                borderRadius: "50%",
+                background: blackAlpha(0.15),
+              }} />
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Vertical bar(s): Y=stretch, positioned at X column(s) */}
+      {stretchY && !stretchX && activeCols.map((col) => (
+        <div
+          key={`vbar-${col}`}
+          data-bar="vertical"
+          style={{
+            position: "absolute",
+            left: COL_POSITIONS[col],
+            top: "10%",
+            width: 6,
+            height: "80%",
+            borderRadius: 3,
+            background: color.foreground,
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+
+      {/* Horizontal bar(s): X=stretch, positioned at Y row(s) */}
+      {stretchX && !stretchY && activeRows.map((row) => (
+        <div
+          key={`hbar-${row}`}
+          data-bar="horizontal"
+          style={{
+            position: "absolute",
+            top: ROW_POSITIONS[row],
+            left: "10%",
+            height: 6,
+            width: "80%",
+            borderRadius: 3,
+            background: color.foreground,
+            transform: "translateY(-50%)",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Crosshair Mode ───────────────────────────────────────────────
+
+function CrosshairIndicator() {
+  return (
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gridTemplateRows: "1fr 1fr 1fr",
+      width: "100%",
+      height: "100%",
+      alignItems: "center",
+      justifyItems: "center",
+      color: blackAlpha(0.4),
+    }}>
+      <div />
+      <CrosshairArrow direction="up" size={10} />
+      <div />
+      <CrosshairArrow direction="left" size={10} />
+      <div />
+      <CrosshairArrow direction="right" size={10} />
+      <div />
+      <CrosshairArrow direction="down" size={10} />
+      <div />
     </div>
   );
 }

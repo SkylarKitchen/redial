@@ -7,10 +7,12 @@
  * - Copy CSS Declaration
  */
 
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { resetProp } from "./apply";
 import { useFocusTrap } from "./useFocusTrap";
+import { color, border, surface, shadow, text, font } from "./theme";
+import { ms } from "./timing";
 
 export interface ContextMenuState {
   x: number;
@@ -113,8 +115,20 @@ export function PropertyContextMenu({
     <div
       ref={menuRef}
       data-tuner-portal
-      className="fixed z-[2147483647] min-w-[160px] bg-[var(--popover)] text-[var(--popover-foreground)] border border-[var(--border)] rounded-md shadow-lg py-1 overflow-hidden"
-      style={{ left: x, top: y }}
+      style={{
+        position: "fixed",
+        zIndex: 2147483647,
+        minWidth: 160,
+        background: color.popover,
+        color: text.primary,
+        border: `1px solid ${border.default}`,
+        borderRadius: 6,
+        boxShadow: shadow.dropdown,
+        padding: "4px 0",
+        overflow: "hidden",
+        left: x,
+        top: y,
+      }}
     >
       {items.map((item) => (
         <PropertyMenuItem key={item.label} label={item.label} onClick={item.action} />
@@ -125,13 +139,28 @@ export function PropertyContextMenu({
 }
 
 function PropertyMenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
       role="menuitem"
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
-      className="flex items-center justify-between px-3 py-1.5 text-[12px] cursor-pointer hover:bg-[var(--accent)] outline-none select-none"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "6px 12px",
+        fontSize: 12,
+        cursor: "pointer",
+        background: hovered ? surface.hover : "transparent",
+        outline: "none",
+        userSelect: "none",
+        transition: `background ${ms("fast")}`,
+      }}
     >
       {label}
     </div>

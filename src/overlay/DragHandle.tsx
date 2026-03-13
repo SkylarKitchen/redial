@@ -5,8 +5,8 @@
  */
 
 import { GripVertical } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { text } from "./theme";
+import { ms } from "./timing";
 
 export interface DragHandleProps {
   isDragging?: boolean;
@@ -18,11 +18,20 @@ export function DragHandle({ isDragging, onPointerDown, style }: DragHandleProps
   return (
     <span
       onPointerDown={onPointerDown}
-      className={cn(
-        "inline-flex items-center justify-center w-4 h-4 shrink-0 cursor-grab touch-none transition-opacity __tuner-drag-handle",
-        isDragging ? "opacity-70 cursor-grabbing" : "opacity-0",
-      )}
-      style={style}
+      className="__tuner-drag-handle"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 16,
+        height: 16,
+        flexShrink: 0,
+        cursor: isDragging ? "grabbing" : "grab",
+        touchAction: "none",
+        opacity: isDragging ? 0.7 : 0,
+        transition: `opacity ${ms("normal")}`,
+        ...style,
+      }}
     >
       <GripVertical size={12} color={text.label} />
     </span>

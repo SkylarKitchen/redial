@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { font } from "./theme";
 import { getScrubGroup } from "./scrubState";
 
 // ---------------------------------------------------------------------------
@@ -24,7 +25,7 @@ const MARGIN_FILL = "rgba(87,168,255,0.30)";
 const PADDING_COLOR = "#4CAF50";
 const PADDING_FILL = "rgba(76,175,80,0.30)";
 const Z_INDEX = 2147483645;
-const LABEL_FONT = "ui-monospace, 'SF Mono', monospace";
+const LABEL_FONT = font.mono;
 
 // ---------------------------------------------------------------------------
 // Types

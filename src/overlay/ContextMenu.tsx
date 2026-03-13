@@ -8,7 +8,8 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
+import { color, border, surface, shadow, text, font } from "./theme";
+import { ms } from "./timing";
 
 export interface ContextMenuProps {
   x: number;
@@ -41,6 +42,7 @@ const MENU_PAD = 8;
 export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x, y });
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   // Build dynamic label for "Select Parent"
   const parentLabel = (() => {
@@ -108,21 +110,38 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
       ref={menuRef}
       role="menu"
       data-tuner-portal
-      className="fixed z-[2147483647] min-w-[180px] bg-[var(--popover)] text-[var(--popover-foreground)] border border-[var(--border)] rounded-md shadow-lg py-1 overflow-hidden"
-      style={{ left: pos.x, top: pos.y }}
+      style={{
+        position: "fixed",
+        zIndex: 2147483647,
+        minWidth: 180,
+        background: color.popover,
+        color: text.primary,
+        border: `1px solid ${border.default}`,
+        borderRadius: 6,
+        boxShadow: shadow.dropdown,
+        padding: "4px 0",
+        overflow: "hidden",
+        left: pos.x,
+        top: pos.y,
+      }}
     >
       {MENU_ITEMS.map((item) => {
         if (item.separator) {
           return (
             <div
               key={item.id}
-              className="h-px bg-[var(--border)] my-1 mx-2"
+              style={{
+                height: 1,
+                background: border.default,
+                margin: "4px 8px",
+              }}
             />
           );
         }
 
         const label = item.id === "select-parent" ? parentLabel : item.label ?? "";
         const disabled = item.disabled ?? false;
+        const isHovered = hoveredId === item.id;
 
         return (
           <div
@@ -131,14 +150,33 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
             aria-disabled={disabled || undefined}
             tabIndex={-1}
             onClick={disabled ? undefined : () => handleItemClick(item.id)}
-            className={cn(
-              "flex items-center justify-between px-3 py-1.5 text-[12px] cursor-pointer hover:bg-[var(--accent)] outline-none select-none gap-4",
-              disabled && "opacity-50 pointer-events-none",
-            )}
+            onMouseEnter={() => setHoveredId(item.id)}
+            onMouseLeave={() => setHoveredId(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "6px 12px",
+              fontSize: 12,
+              cursor: "pointer",
+              background: isHovered ? surface.hover : "transparent",
+              outline: "none",
+              userSelect: "none",
+              gap: 16,
+              opacity: disabled ? 0.5 : 1,
+              pointerEvents: disabled ? "none" : "auto",
+              transition: `background ${ms("fast")}`,
+            }}
           >
             <span>{label}</span>
             {item.shortcut && (
-              <span className="text-[10px] text-[var(--muted-foreground)] ml-4 font-mono shrink-0">
+              <span style={{
+                fontSize: 10,
+                color: text.label,
+                marginLeft: 16,
+                fontFamily: font.mono,
+                flexShrink: 0,
+              }}>
                 {item.shortcut}
               </span>
             )}
