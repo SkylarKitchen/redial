@@ -12,7 +12,7 @@ import { applyInlineStyle, stateKey } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle } from "./statePreview";
 import { buildConversionContext } from "./unitConversion";
-import type { IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { parseNum } from "./cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "./panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";

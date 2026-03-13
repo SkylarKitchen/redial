@@ -9,7 +9,7 @@
 import type React from "react";
 import { isDirty } from "./apply";
 import { extractUnit } from "./cssParsers";
-import type { IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { indicatorColor } from "./theme";
 import type { UnitConversionContext } from "./unitConversion";
 

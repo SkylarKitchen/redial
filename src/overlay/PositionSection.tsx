@@ -3,7 +3,7 @@ import { Section, SliderRow } from "./controls";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
 import { IconButtonGroup } from "./IconButtonGroup";
-import { StyleIndicator } from "./StyleIndicator";
+import { RowLabel } from "./layoutControls";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import { resetAndReadNum, resetAndReadStr } from "./apply";
@@ -11,7 +11,7 @@ import { parseNum } from "./cssParsers";
 import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, PIN_PRESETS } from "./panelConstants";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator, labelHighlight } from "./theme";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 import { ms } from "./timing";
 import { ChevronDown, LocateFixed, X } from "lucide-react";
@@ -222,9 +222,7 @@ export const PositionSection = memo(function PositionSection({
             padding: "4px 7px",
           }}>
             {/* Label area */}
-            <div style={{ width: 49, flexShrink: 0, display: "flex", alignItems: "center" }}>
-              {ind("z-index") !== "none" && <StyleIndicator type={ind("z-index")} />}
-            </div>
+            <RowLabel label="Z-Index" indicator={ind("z-index")} onReset={() => { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); }} />
 
             {/* "Itself" context dropdown — shows which element z-index is relative to */}
             <div
@@ -401,20 +399,14 @@ export const PositionSection = memo(function PositionSection({
         <div style={{ padding: "2px 7px 6px" }}>
           {/* Float row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
-            <span style={{ ...LABEL, width: 49, cursor: "default", display: "inline-flex", gap: 3 }}>
-              {ind("float") !== "none" && <StyleIndicator type={ind("float")} />}
-              Float
-            </span>
+            <RowLabel label="Float" indicator={ind("float")} onReset={() => { const v = resetAndReadStr(element, "float"); setFloat(v || "none"); }} />
             <div style={{ flex: 1 }}>
               <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" onReset={() => { const v = resetAndReadStr(element, "float"); setFloat(v || "none"); }} />
             </div>
           </div>
           {/* Clear row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
-            <span style={{ ...LABEL, width: 49, cursor: "default", display: "inline-flex", gap: 3 }}>
-              {ind("clear") !== "none" && <StyleIndicator type={ind("clear")} />}
-              Clear
-            </span>
+            <RowLabel label="Clear" indicator={ind("clear")} onReset={() => { const v = resetAndReadStr(element, "clear"); setClear(v || "none"); }} />
             <div style={{ flex: 1 }}>
               <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" onReset={() => { const v = resetAndReadStr(element, "clear"); setClear(v || "none"); }} />
             </div>

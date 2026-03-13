@@ -185,6 +185,8 @@ export const indicatorColor: Record<string, string> = {
 
 // ─── Label Indicator Colors ─────────────────────────────────────────
 
+export type IndicatorType = "modified" | "none";
+
 export const labelIndicator: Record<string, { bg: string; text: string }> = {
   modified: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
   none: { bg: "transparent", text: "#404040" },

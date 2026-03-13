@@ -12,7 +12,7 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { SegmentedControl } from "./SegmentedControl";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
-import { StyleIndicator } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
@@ -22,8 +22,23 @@ import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } f
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "./panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
 import { Link, Grid3x3 } from "lucide-react";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "./theme";
 import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "./panelStyles";
+
+// ─── Compact label with highlight ─────────────────────────────────────
+
+function CompactLabel({ label, indicator }: { label: string; indicator: IndicatorType }) {
+  const m = indicator !== "none";
+  return (
+    <span style={COMPACT_INPUT_LABEL}>
+      <span style={{
+        background: m ? labelIndicator.modified.bg : "transparent",
+        color: m ? labelIndicator.modified.text : text.label,
+        ...(m ? labelHighlight : {}),
+      }}>{label}</span>
+    </span>
+  );
+}
 
 // ─── Grid helpers ─────────────────────────────────────────────────────
 
@@ -720,17 +735,13 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
-                    <span style={COMPACT_INPUT_LABEL}>
-                      {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
-                    </span>
+                    <CompactLabel label="Grow" indicator={ind("flex-grow")} />
                   </LabelScrub>
                   <ValueInput embedded value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
                 </div>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
-                    <span style={COMPACT_INPUT_LABEL}>
-                      {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
-                    </span>
+                    <CompactLabel label="Shrink" indicator={ind("flex-shrink")} />
                   </LabelScrub>
                   <ValueInput embedded value={flexShrink} onChange={handleFlexShrinkChange} onAltClick={() => resetCss("flex-shrink", setFlexShrink)} />
                 </div>
@@ -739,9 +750,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
-                    <span style={COMPACT_INPUT_LABEL}>
-                      {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
-                    </span>
+                    <CompactLabel label="Basis" indicator={ind("flex-basis")} />
                   </LabelScrub>
                   <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
                   <div style={{ flexShrink: 0, paddingRight: 3, borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
@@ -763,9 +772,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 </div>
                 <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexOrder} onChange={handleFlexOrderChange} step={1} min={-99} max={99} onAltClick={() => resetCss("order", setFlexOrder)}>
-                    <span style={COMPACT_INPUT_LABEL}>
-                      {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}Order
-                    </span>
+                    <CompactLabel label="Order" indicator={ind("order")} />
                   </LabelScrub>
                   <ValueInput embedded value={flexOrder} onChange={handleFlexOrderChange} onAltClick={() => resetCss("order", setFlexOrder)} />
                 </div>

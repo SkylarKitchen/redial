@@ -10,7 +10,6 @@
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import { Section, SelectRow, ColorRow } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
-import { StyleIndicator } from "./StyleIndicator";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
@@ -23,7 +22,7 @@ import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScann
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-import { text, border, surface, font } from "./theme";
+import { text, border, surface, font, labelIndicator, labelHighlight } from "./theme";
 import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
@@ -227,9 +226,13 @@ export const TypographySection = memo(function TypographySection({
 
       {/* Size + Height side-by-side compact cells */}
       <div style={{ ...ROW, gap: 4 }}>
-        <span style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}>
-          {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
-          Size
+        <span
+          style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); const p = parseNum(v); setFontSize(p.value); setFontSizeUnit(p.unit || "px"); } }}
+        >
+          <span style={{
+            ...(ind("font-size") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
+          }}>Size</span>
         </span>
         <TypoValueCell
           value={fontSize}
@@ -240,9 +243,13 @@ export const TypographySection = memo(function TypographySection({
           step={1}
           conversionHint={fontSizeHint}
         />
-        <span style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}>
-          {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
-          Height
+        <span
+          style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); const p = parseNum(v); setLineHeight(p.value); setLineHeightUnit(p.unit || "px"); } }}
+        >
+          <span style={{
+            ...(ind("line-height") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
+          }}>Height</span>
         </span>
         <TypoValueCell
           value={lineHeight}

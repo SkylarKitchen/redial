@@ -15,7 +15,7 @@ import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, labelIndicator, labelHighlight, segment, shadow, layout } from "./theme";
 import { ms } from "./timing";
-import type { IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { SegmentedControl } from "./SegmentedControl";
 import {
   ArrowReverseIcon, UnlockIcon, LockIcon,

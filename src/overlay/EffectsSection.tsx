@@ -16,7 +16,6 @@ import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { IconButtonGroup } from "./IconButtonGroup";
-import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import {
   parseNum,
@@ -40,23 +39,31 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { text, labelIndicator, labelHighlight } from "./theme";
+import { text, labelIndicator, labelHighlight, type IndicatorType } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Sub-section header ───────────────────────────────────────────────
 
-function SubSectionHeader({ label, onAdd, onMenu, indicator }: {
+function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
   label: string;
   onAdd?: () => void;
   onMenu?: () => void;
   indicator?: IndicatorType;
+  onReset?: () => void;
 }) {
+  const m = indicator != null && indicator !== "none";
   return (
     <div style={SUB_HEADER_ROW}>
-      <span style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px" }}>
-        {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
-        {label}
+      <span
+        style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px" }}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+      >
+        <span style={{
+          ...(m ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
+        }}>
+          {label}
+        </span>
       </span>
       <div style={{ display: "flex", alignItems: "center", gap: "2px" }}
         onClick={(e) => e.stopPropagation()}>

@@ -9,11 +9,11 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
-import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { Section, ColorRow, SliderRow } from "./controls";
 import { discoverVariables, type CSSVariable } from "./discoverVariables";
 import { ROW, SUB_LABEL } from "./panelStyles";
-import { text, border, surface, font, color } from "./theme";
+import { text, border, surface, font, color, labelIndicator, labelHighlight } from "./theme";
 
 // ─── Variable Row ────────────────────────────────────────────────────
 

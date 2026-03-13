@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
@@ -106,6 +106,7 @@ export function Section({
   headerAction,
   focusOpen,
   onToggle,
+  onReset,
 }: {
   title: string;
   collapsed?: boolean;
@@ -119,6 +120,8 @@ export function Section({
   focusOpen?: boolean;
   /** Called when section header is clicked (for focus mode coordination) */
   onToggle?: (title: string) => void;
+  /** Alt+click on title resets the section */
+  onReset?: () => void;
 }) {
   const [ownOpen, setOwnOpen] = useState(!collapsed);
   const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
@@ -156,9 +159,19 @@ export function Section({
             ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background } : {}),
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}>
-            {title}
-            {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
+          <span
+            style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}
+            onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+          >
+            <span style={{
+              ...(indicator && indicator !== "none" ? {
+                background: labelIndicator.modified.bg,
+                color: labelIndicator.modified.text,
+                ...labelHighlight,
+              } : {}),
+            }}>
+              {title}
+            </span>
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {headerAction && (

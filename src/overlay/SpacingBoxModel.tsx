@@ -30,7 +30,7 @@ import { beginBatch, endBatch, resetProp, resetAndReadNum } from "./apply";
 import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
-import type { IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { spacingZone, surface, font, blackAlpha, color, text } from "./theme";
 
 interface SpacingBoxModelProps {
