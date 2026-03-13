@@ -198,6 +198,71 @@ describe("Option+Click reset audit: every control with computedProp must have on
   });
 });
 
+// ── BordersSection custom controls: Radius, Style, Width must have indicator + reset ──
+
+describe("BordersSection custom controls have indicator + reset wiring", () => {
+  let src: string;
+  beforeAll(() => { src = readSection("BordersSection.tsx"); });
+
+  it("Radius label uses indicatorStyle (not bare LABEL)", () => {
+    // The Radius label span must use indicatorStyle() for the modified highlight pill.
+    // A bare `style={LABEL}` or `style={{ ...LABEL }}` with no indicator is a bug.
+    const hasIndicator = src.includes("indicatorStyle") && /Radius[\s\S]{0,300}indicatorStyle/.test(src);
+    expect(hasIndicator, "Radius label must use indicatorStyle() for modified highlight").toBe(true);
+  });
+
+  it("Radius row has alt-click reset handler", () => {
+    // The Radius row must handle option+click to batch-reset all 4 corners
+    const hasRadiusReset = /handleRadiusReset|radiusReset|altKey[\s\S]{0,100}Radius|Radius[\s\S]{0,300}altKey/.test(src);
+    expect(hasRadiusReset, "Radius row must have alt-click reset handler").toBe(true);
+  });
+
+  it("Radius row has useResetPopover for click-to-show", () => {
+    const hasPopover = /radiusPopover|useResetPopover[\s\S]{0,100}radius|useResetPopover[\s\S]{0,100}Radius/.test(src);
+    expect(hasPopover, "Radius row must use useResetPopover for click-on-label reset").toBe(true);
+  });
+
+  it("Style label uses indicatorStyle", () => {
+    // The border Style label must show modified highlight via indicatorStyle()
+    const hasIndicator = /Style[\s\S]{0,300}indicatorStyle|styleInd[\s\S]{0,100}indicatorStyle/.test(src);
+    expect(hasIndicator, "Style label must use indicatorStyle() for modified highlight").toBe(true);
+  });
+
+  it("Style row has reset handler", () => {
+    const hasReset = /handleStyleReset|styleReset|Style[\s\S]{0,300}(altKey|onReset|resetProp)/.test(src);
+    expect(hasReset, "Style row must have reset handler").toBe(true);
+  });
+
+  it("Width label uses indicatorStyle", () => {
+    // The border Width label must show modified highlight via indicatorStyle()
+    const hasIndicator = /Width[\s\S]{0,300}indicatorStyle|widthInd[\s\S]{0,100}indicatorStyle/.test(src);
+    expect(hasIndicator, "Width label must use indicatorStyle() for modified highlight").toBe(true);
+  });
+
+  it("sectionInd uses individual corner properties (not shorthand border-radius)", () => {
+    // The section header must list individual corners for accurate dirty tracking
+    const usesIndividual = src.includes("border-top-left-radius") && src.includes("border-bottom-right-radius");
+    expect(usesIndividual, "sectionInd must use individual corner CSS properties for accurate dirty tracking").toBe(true);
+  });
+});
+
+// ── CornerRadiusEditor must accept indicator/reset props ──
+
+describe("CornerRadiusEditor has indicator + reset props", () => {
+  let src: string;
+  beforeAll(() => { src = readSection("CornerRadiusEditor.tsx"); });
+
+  it("accepts indicators prop", () => {
+    const hasIndicators = src.includes("indicators");
+    expect(hasIndicators, "CornerRadiusEditor must accept indicators prop for per-corner modified state").toBe(true);
+  });
+
+  it("accepts onCornerReset prop", () => {
+    const hasReset = src.includes("onCornerReset");
+    expect(hasReset, "CornerRadiusEditor must accept onCornerReset prop for per-corner alt-click reset").toBe(true);
+  });
+});
+
 // ── Import-level check: resetProp and resetAndReadNum must be imported ──
 
 describe("All sections import reset functions", () => {

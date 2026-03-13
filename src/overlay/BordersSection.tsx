@@ -1,5 +1,5 @@
 import React, { useState, useCallback, memo, useEffect } from "react";
-import { Section, ValueInput, ColorRow } from "./controls";
+import { Section, ValueInput, ColorRow, useResetPopover } from "./controls";
 import { SideSelector } from "./SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
 import { IconButtonGroup } from "./IconButtonGroup";
@@ -14,7 +14,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "./panelConstants";
 import { ms } from "./timing";
-import { text, color, surface, font, border } from "./theme";
+import { text, color, surface, font, border, indicatorStyle, type IndicatorType } from "./theme";
 import { ROW, LABEL } from "./panelStyles";
 
 // ─── Radius mode ──────────────────────────────────────────────────────
@@ -165,6 +165,50 @@ export const BordersSection = memo(function BordersSection({
   const borderProp = (suffix: string) =>
     borderSide === "all" ? `border-${suffix}` : `border-${borderSide}-${suffix}`;
 
+  // ── Indicators ──
+  const radiusInd: IndicatorType = [
+    ind("border-top-left-radius"),
+    ind("border-top-right-radius"),
+    ind("border-bottom-right-radius"),
+    ind("border-bottom-left-radius"),
+  ].includes("modified") ? "modified" : "none";
+
+  const styleInd = ind(borderProp("style"));
+  const widthInd = ind(borderProp("width"));
+
+  // ── Radius reset (batch all 4 corners) ──
+  const handleRadiusReset = useCallback(() => {
+    beginBatch();
+    setRadiusTL(resetAndReadNum(element, "border-top-left-radius"));
+    setRadiusTR(resetAndReadNum(element, "border-top-right-radius"));
+    setRadiusBR(resetAndReadNum(element, "border-bottom-right-radius"));
+    setRadiusBL(resetAndReadNum(element, "border-bottom-left-radius"));
+    endBatch();
+  }, [element]);
+
+  const handleStyleReset = useCallback(() => {
+    resetProp(element, borderProp("style"));
+    setBorderStyle(getComputedStyle(element).getPropertyValue(borderProp("style")).split(" ")[0] || "none");
+  }, [element, borderSide]);
+
+  const handleWidthReset = useCallback(() => {
+    resetCss(borderProp("width"), setBorderWidth);
+  }, [element, borderSide]);
+
+  // ── Corner reset (individual) ──
+  const handleCornerReset = useCallback((corner: string) => {
+    const v = resetAndReadNum(element, corner);
+    if (corner === "border-top-left-radius") setRadiusTL(v);
+    else if (corner === "border-top-right-radius") setRadiusTR(v);
+    else if (corner === "border-bottom-right-radius") setRadiusBR(v);
+    else if (corner === "border-bottom-left-radius") setRadiusBL(v);
+  }, [element]);
+
+  // ── Reset popovers ──
+  const radiusPopover = useResetPopover(radiusInd, handleRadiusReset);
+  const stylePopover = useResetPopover(styleInd, handleStyleReset);
+  const widthPopover = useResetPopover(widthInd, handleWidthReset);
+
   // ── Handlers ──
   const handleBorderStyleChange = useCallback((v: string) => {
     setBorderStyle(v);
@@ -212,11 +256,18 @@ export const BordersSection = memo(function BordersSection({
   );
 
   return (
-    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
+    <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
 
       {/* ── Radius row (compact) ── */}
       <div style={ROW}>
-        <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
+        <span
+          ref={radiusPopover.anchorRef}
+          style={{ ...LABEL, cursor: radiusInd === "modified" ? "pointer" : "default" }}
+          onClick={(e) => { if (e.altKey) { handleRadiusReset(); return; } radiusPopover.triggerOpen(); }}
+        >
+          <span style={indicatorStyle(radiusInd)}>Radius</span>
+        </span>
+        {radiusPopover.node}
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
         <Slider
           className="tuner-focusable"
@@ -249,6 +300,13 @@ export const BordersSection = memo(function BordersSection({
           unit={radiusUnit}
           units={BORDER_UNITS}
           onUnitChange={handleRadiusUnitChange}
+          indicators={{
+            "border-top-left-radius": ind("border-top-left-radius"),
+            "border-top-right-radius": ind("border-top-right-radius"),
+            "border-bottom-right-radius": ind("border-bottom-right-radius"),
+            "border-bottom-left-radius": ind("border-bottom-left-radius"),
+          }}
+          onCornerReset={handleCornerReset}
         />
       )}
 
