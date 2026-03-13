@@ -104,7 +104,8 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
       >
         <CommandInput
           placeholder="Search styles..."
-          style={{ height: 28, fontSize: 11, fontFamily: font.sans }}
+          className="h-7"
+          style={{ fontSize: 11, fontFamily: font.sans }}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.stopPropagation();
@@ -113,7 +114,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           }}
           autoFocus
         />
-        <CommandList style={{ maxHeight: 180 }}>
+        <CommandList className="max-h-[180px]">
           <CommandEmpty
             style={{
               paddingTop: 6,

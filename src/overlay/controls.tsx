@@ -416,7 +416,7 @@ export function SliderRow({
         onPointerDown={() => beginBatch()}
         onPointerUp={() => endBatch()}
       />
-      <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
         <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded />
         {units && onUnitChange ? (
           <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
@@ -507,14 +507,9 @@ export function SelectRow({
       ) : labelContent}
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          className="tuner-focusable"
+          className="tuner-focusable flex-1"
           style={{
-            flex: 1,
-            height: 24,
-            borderRadius: 2,
-            fontSize: 11,
             fontFamily: font.mono,
-            padding: "0 6px",
             backgroundColor: color.input,
             border: `1px solid ${color.border}`,
             color: color.foreground,
@@ -523,10 +518,9 @@ export function SelectRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent
+          className="max-h-[180px] rounded"
           style={{
-            borderRadius: 4,
             boxShadow: shadow.dropdown,
-            maxHeight: 180,
             backgroundColor: color.popover,
             border: `1px solid ${color.border}`,
           }}
@@ -671,7 +665,8 @@ function SelectRowCustom({
           >
             <CommandInput
               placeholder="Search..."
-              style={{ height: 28, fontSize: 11, fontFamily: font.sans }}
+              className="h-7 text-[11px]"
+              style={{ fontFamily: font.sans }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.stopPropagation();
@@ -680,7 +675,7 @@ function SelectRowCustom({
               }}
               autoFocus
             />
-            <CommandList style={{ maxHeight: 180 }}>
+            <CommandList className="max-h-[180px]">
               <CommandEmpty style={{ padding: "6px 0", textAlign: "center" as const, fontSize: 11, fontStyle: "italic", color: color.mutedForeground }}>
                 No matches
               </CommandEmpty>

@@ -265,7 +265,7 @@ export function CommandPalette({
               value={query}
               onValueChange={(value) => setQuery(value)}
             />
-            <CommandList style={{ maxHeight: 360 }}>
+            <CommandList className="max-h-[360px]">
               {query && results.length === 0 && (
                 <CommandEmpty>
                   No results for &ldquo;{query}&rdquo;

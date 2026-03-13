@@ -46,13 +46,11 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
+        className="h-6 px-1.5"
         style={{
-          height: 24,
           fontSize: 11,
           background: "transparent",
           border: "none",
-          paddingLeft: 6,
-          paddingRight: 6,
           width: "auto",
           gap: 4,
           boxShadow: "none",

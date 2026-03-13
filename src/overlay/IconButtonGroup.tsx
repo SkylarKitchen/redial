@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import { color, surface, text, border as borderTokens, primaryAlpha, font } from "./theme";
 import { ms } from "./timing";
 
@@ -77,8 +78,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
         value={value.split(" ").filter(Boolean)}
         onValueChange={() => { /* handled via onClick */ }}
         aria-label={ariaLabel}
-        className=""
-        style={{ display: "inline-flex", gap: 0 }}
+        className="inline-flex gap-0"
       >
         {items}
       </ToggleGroup>
@@ -91,8 +91,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
       value={value}
       onValueChange={() => { /* handled via onClick */ }}
       aria-label={ariaLabel}
-      className=""
-      style={{ display: "inline-flex", gap: 0 }}
+      className="inline-flex gap-0"
     >
       {items}
     </ToggleGroup>
@@ -144,29 +143,20 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
       onMouseLeave={() => setHovered(false)}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      className=""
+      className={cn(
+        "h-7 min-w-7 px-1.5 text-[13px] leading-none rounded-none",
+        isFirst && !isLast && "rounded-l",
+        isLast && !isFirst && "rounded-r",
+        isFirst && isLast && "rounded",
+      )}
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        height: 28,
-        minWidth: 28,
-        paddingLeft: 6,
-        paddingRight: 6,
         cursor: "pointer",
         border: `1px solid ${borderTokens.default}`,
         outline: "none",
-        fontSize: 13,
-        lineHeight: 1,
-        fontFamily: font.sans,
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
-        borderRadius: isFirst && isLast
-          ? 4
-          : isFirst
-            ? "4px 0 0 4px"
-            : isLast
-              ? "0 4px 4px 0"
-              : 0,
         borderLeftWidth: isFirst ? 1 : 0,
         backgroundColor: isActive
           ? color.primary
