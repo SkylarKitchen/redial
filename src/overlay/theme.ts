@@ -154,18 +154,31 @@ export const shadow = {
 
 // ─── Indicator Colors ───────────────────────────────────────────
 
-export const indicatorColor: Record<string, string> = {
-  modified: "#3b82f6",
+export type IndicatorColorType = "element" | "inherited" | "state" | "variable" | "direct" | "none";
+
+export const indicatorColor: Record<IndicatorColorType, string> = {
+  element: "#60a5fa",
+  inherited: "#f59e0b",
+  state: "#34d399",
+  variable: "#a78bfa",
+  direct: "#60a5fa",
   none: "#525252",
-};
+} as const;
 
-// ─── Label Indicator Colors ─────────────────────────────────────
-// Blue highlight when a property has been modified, plain otherwise.
+// ─── Label Indicator Colors (Webflow-style) ────────────────────
+// Labels are highlighted to show where a property value comes from:
+// - Blue: actively set on this element ("element" / "direct")
+// - Orange: inherited from parent or set via state ("inherited" / "state")
+// - No highlight: default value ("none")
 
-export const labelIndicator: Record<string, { bg: string; text: string }> = {
-  modified: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
+export const labelIndicator = {
+  element: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
+  direct: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
+  inherited: { bg: "#f9dca4", text: "#734500" },
+  state: { bg: "#f9dca4", text: "#734500" },
+  variable: { bg: "rgba(167,139,250,0.2)", text: "#5b21b6" },
   none: { bg: "transparent", text: "#404040" },
-};
+} as const;
 
 // ─── Spacing Zone Colors ────────────────────────────────────────
 

@@ -10,7 +10,7 @@ import { useState, useCallback, useMemo } from "react";
 import { ColorRow, SliderRow } from "./controls";
 import { SizeInputCell } from "./SizeInputCell";
 import { SpacingBoxModel } from "./SpacingBoxModel";
-import { applyInlineStyle, beginBatch, endBatch, isDirty } from "./apply";
+import { applyInlineStyle, beginBatch, endBatch, isDirty, resetAndReadStr } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle } from "./statePreview";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
@@ -20,7 +20,9 @@ import { parseNum } from "./cssParsers";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
-import { SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS, BORDER_UNITS } from "./panelConstants";
+import { SegmentedControl } from "./SegmentedControl";
+import { DisplayTabs, DirectionRow, RowLabel, ChildrenRow } from "./layoutControls";
+import { SIZE_UNITS_W, SIZE_UNITS_H, POSITION_UNITS, TYPO_SIZE_UNITS, BORDER_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS } from "./panelConstants";
 import { convertUnit, buildConversionContext } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import type { SpacingValues } from "./infer";
@@ -68,6 +70,21 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   const [borderRadius, setBorderRadius] = useState(() => parseNum(cs.borderRadius));
   const [radiusUnit, setRadiusUnit] = useState(() => detectUnit(element, "border-radius"));
   const { conversionHint: radiusHint, fireConversionHint: fireRadiusHint } = useConversionHint();
+
+  // --- Layout group state ---
+  const [display, setDisplay] = useState(() => cs.display);
+  const [flexDirection, setFlexDirection] = useState(() => cs.flexDirection);
+  const [alignItems, setAlignItems] = useState(() => cs.alignSelf !== undefined ? cs.alignItems : "stretch");
+  const [justifyContent, setJustifyContent] = useState(() => cs.justifyContent);
+  const [flexWrap, setFlexWrap] = useState(() => cs.flexWrap);
+  const [gap, setGap] = useState(() => parseNum(cs.gap));
+  const [gapUnit, setGapUnit] = useState(() => detectUnit(element, "gap"));
+  const { conversionHint: gapHint, fireConversionHint: fireGapHint } = useConversionHint();
+
+  const isFlex = display === "flex" || display === "inline-flex";
+  const isGrid = display === "grid" || display === "inline-grid";
+  const isBlockContainer = ["div", "section", "article", "main", "nav", "aside", "header", "footer"].includes(element.tagName.toLowerCase());
+  const showLayout = isBlockContainer || isFlex || isGrid;
 
   // --- Contextual visibility: only show rows with non-default values ---
   const showBg = bgColor !== "transparent";
@@ -150,6 +167,16 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
   const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
   const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}${heightUnit}`); }, [apply, heightUnit]);
 
+  // --- Layout handlers ---
+  const handleDisplayChange = useCallback((v: string) => { setDisplay(v); apply("display", v); }, [apply]);
+  const handleFlexDirectionChange = useCallback((v: string) => {
+    const dir = v === "none" ? "row" : v;
+    setFlexDirection(dir);
+    apply("flex-direction", dir);
+  }, [apply]);
+  const handleGapChange = useCallback((v: number) => { setGap(v); apply("gap", `${v}${gapUnit}`); }, [apply, gapUnit]);
+  const handleFlexWrapChange = useCallback((v: string) => { setFlexWrap(v); apply("flex-wrap", v); }, [apply]);
+
   // --- Position handlers ---
   const handleTopChange = useCallback((v: number) => { setTop(v); apply("top", `${v}${topUnit}`); }, [apply, topUnit]);
   const handleRightChange = useCallback((v: number) => { setRight(v); apply("right", `${v}${rightUnit}`); }, [apply, rightUnit]);
@@ -174,6 +201,77 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
 
   return (
     <div>
+      {/* ── Layout (block containers + flex/grid elements) ── */}
+      {showLayout && (
+        <FlatGroup title="Layout">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <DisplayTabs
+              value={display}
+              onChange={handleDisplayChange}
+              onReset={() => setDisplay(resetAndReadStr(element, "display"))}
+              indicator={ind("display")}
+            />
+
+            {(isFlex || isBlockContainer) && (
+              <>
+                <DirectionRow
+                  direction={flexDirection}
+                  onDirectionChange={handleFlexDirectionChange}
+                  onReset={() => setFlexDirection(resetAndReadStr(element, "flex-direction"))}
+                  indicator={ind("flex-direction")}
+                />
+
+                <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+                  <RowLabel label="Align" indicator={ind("align-items")} isSet={alignItems !== "stretch"} onReset={() => setAlignItems(resetAndReadStr(element, "align-items"))} />
+                  <SegmentedControl
+                    options={ALIGN_SEGMENT_OPTIONS}
+                    value={alignItems}
+                    onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
+                    aria-label="Align items"
+                  />
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+                  <RowLabel label="Justify" indicator={ind("justify-content")} isSet={justifyContent !== "flex-start"} onReset={() => setJustifyContent(resetAndReadStr(element, "justify-content"))} />
+                  <SegmentedControl
+                    options={JUSTIFY_SEGMENT_OPTIONS}
+                    value={justifyContent}
+                    onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+                    aria-label="Justify content"
+                  />
+                </div>
+
+                <SliderRow
+                  label="Gap"
+                  value={gap}
+                  min={0}
+                  max={200}
+                  step={4}
+                  unit={gapUnit}
+                  units={["px", "rem", "em", "%"]}
+                  onUnitChange={(u) => {
+                    const ctx = getConversionCtx();
+                    const c = convertUnit(gap, gapUnit, u, ctx);
+                    fireGapHint(gap, gapUnit, c, u, ctx);
+                    setGap(c);
+                    setGapUnit(u);
+                    apply("gap", `${c}${u}`);
+                  }}
+                  conversionHint={gapHint}
+                  computedProp="gap"
+                  computedElement={element}
+                  onChange={handleGapChange}
+                />
+
+                <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} indicator={ind("flex-wrap")} />
+              </>
+            )}
+          </div>
+        </FlatGroup>
+      )}
+
+      {showLayout && <div className="border-b border-[var(--border)]" />}
+
       {/* ── Style (only if any row has a non-default value) ── */}
       {showStyle && (
         <FlatGroup title="Style">
