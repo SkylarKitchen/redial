@@ -18,6 +18,8 @@ import { ms } from "./timing";
 // ─── Data Model ──────────────────────────────────────────────────
 
 export type GridTrackDef = {
+  /** Stable identity for React list keys — survives inserts/deletes */
+  id: number;
   type: "default" | "minmax";
   value: number;
   unit: string;
@@ -32,21 +34,26 @@ export const GRID_TRACK_UNITS = ["fr", "px", "%", "em", "rem", "vw", "vh"];
 
 // ─── Parsing Helpers ─────────────────────────────────────────────
 
+let nextTrackId = 1;
+
 function makeDefault(value = 1, unit = "fr"): GridTrackDef {
-  return { type: "default", value, unit, isAuto: false, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" };
+  return { id: nextTrackId++, type: "default", value, unit, isAuto: false, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" };
 }
 
 function makeAuto(): GridTrackDef {
-  return { type: "default", value: 0, unit: "fr", isAuto: true, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" };
+  return { id: nextTrackId++, type: "default", value: 0, unit: "fr", isAuto: true, minValue: 0, minUnit: "px", maxValue: 1, maxUnit: "fr" };
 }
 
 function makeMinmax(minValue: number, minUnit: string, maxValue: number, maxUnit: string): GridTrackDef {
-  return { type: "minmax", value: 0, unit: "fr", isAuto: false, minValue, minUnit, maxValue, maxUnit };
+  return { id: nextTrackId++, type: "minmax", value: 0, unit: "fr", isAuto: false, minValue, minUnit, maxValue, maxUnit };
 }
+
+/** CSS sizing keywords that don't have a numeric component */
+const SIZE_KEYWORDS = new Set(["auto", "min-content", "max-content"]);
 
 function parseValueUnit(s: string): { value: number; unit: string } {
   const trimmed = s.trim();
-  if (trimmed === "auto") return { value: 0, unit: "auto" };
+  if (SIZE_KEYWORDS.has(trimmed)) return { value: 0, unit: trimmed };
   const match = trimmed.match(/^(-?[\d.]+)(.+)$/);
   if (!match) return { value: parseFloat(trimmed) || 0, unit: "fr" };
   return { value: parseFloat(match[1]), unit: match[2] };
@@ -72,10 +79,15 @@ function tokenizeTemplate(css: string): string[] {
 }
 
 function parseToken(token: string): GridTrackDef[] {
-  // repeat(N, value)
-  const repeatMatch = token.match(/^repeat\(\s*(\d+)\s*,\s*(.+)\s*\)$/);
+  // repeat(N, value) or repeat(auto-fill/auto-fit, value)
+  const repeatMatch = token.match(/^repeat\(\s*([^,]+)\s*,\s*(.+)\s*\)$/);
   if (repeatMatch) {
-    const count = parseInt(repeatMatch[1], 10);
+    const countStr = repeatMatch[1].trim();
+    const count = parseInt(countStr, 10);
+    // auto-fill / auto-fit: can't expand to a fixed count, treat inner as a single track
+    if (isNaN(count)) {
+      return parseToken(repeatMatch[2].trim());
+    }
     const inner = parseToken(repeatMatch[2].trim());
     const result: GridTrackDef[] = [];
     for (let i = 0; i < count; i++) result.push(...inner.map(t => ({ ...t })));
@@ -102,8 +114,11 @@ function parseToken(token: string): GridTrackDef[] {
     }
   }
 
-  // auto
-  if (token === "auto") return [makeAuto()];
+  // Keywords: auto, min-content, max-content
+  if (SIZE_KEYWORDS.has(token)) {
+    if (token === "auto") return [makeAuto()];
+    return [makeDefault(0, token)];
+  }
 
   // Simple value+unit
   const { value, unit } = parseValueUnit(token);
@@ -120,14 +135,17 @@ export function parseGridTemplate(css: string): GridTrackDef[] {
 export function serializeGridTemplate(tracks: GridTrackDef[]): string {
   if (tracks.length === 0) return "1fr";
 
+  const serializeValue = (value: number, unit: string): string =>
+    SIZE_KEYWORDS.has(unit) ? unit : `${value}${unit}`;
+
   const parts = tracks.map(t => {
     if (t.isAuto) return "auto";
     if (t.type === "minmax") {
-      const min = t.minUnit === "auto" ? "auto" : `${t.minValue}${t.minUnit}`;
-      const max = t.maxUnit === "auto" ? "auto" : `${t.maxValue}${t.maxUnit}`;
+      const min = serializeValue(t.minValue, t.minUnit);
+      const max = serializeValue(t.maxValue, t.maxUnit);
       return `minmax(${min}, ${max})`;
     }
-    return `${t.value}${t.unit}`;
+    return serializeValue(t.value, t.unit);
   });
 
   // Use repeat() shorthand when all tracks are identical
