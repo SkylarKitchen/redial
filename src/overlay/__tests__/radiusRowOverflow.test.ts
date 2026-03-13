@@ -8,36 +8,50 @@ import { join } from "path";
  * The Radius row in BordersSection contains:
  *   label (64px) + mode-icons (~37px) + Slider (flex-1) + composite (ValueInput + UnitSelector)
  *
- * Bug: The composite container has no explicit width — its size is determined by
- * the <input> element's intrinsic preferred width (~150-200px per the HTML spec
- * default `size` attribute). This squeezes the Slider to near-zero and makes the
- * input visually overflow the row.
+ * Bug: The composite container (wrapping ValueInput + UnitSelector) has
+ * `flexShrink: 0` but no explicit width. The Slider uses `className="flex-1"`
+ * but the Slider component's root already has `w-full` (width: 100%).
+ * The Slider should use `style={{ flex: 1 }}` (inline) like the working
+ * SliderRow in controls.tsx, and the composite needs `minWidth: 0` so
+ * flex layout can constrain it.
  *
- * Fix: The ValueInput inside the composite must have `width: 0` (or equivalent)
- * so that `flex: 1` + `minWidth: 40` controls its sizing, rather than the browser's
- * intrinsic input width. This ensures the composite stays ~72px, leaving room for
- * the Slider.
+ * Without these, the row overflows the 300px panel.
  */
 
-const CONTROLS_PATH = join(__dirname, "..", "controls.tsx");
+const BORDERS_PATH = join(__dirname, "..", "BordersSection.tsx");
 
-describe("ValueInput must not rely on intrinsic input width in flex containers", () => {
-  it("ValueInput <input> sets width: 0 to prevent intrinsic sizing from dominating flex layout", () => {
-    const source = readFileSync(CONTROLS_PATH, "utf-8");
+describe("Radius row must not overflow the panel", () => {
+  it("Slider uses inline style flex:1 (not className flex-1) to avoid conflict with w-full", () => {
+    const source = readFileSync(BORDERS_PATH, "utf-8");
 
-    // Find the ValueInput's <input> style block.
-    // The style object must include `width: 0` to override the input element's
-    // default intrinsic width (~150-200px) which otherwise causes the parent
-    // flex container to bloat when auto-sized.
-    const inputStyleMatch = source.match(
-      /function ValueInput[\s\S]*?<input[\s\S]*?style\s*=\s*\{\{([\s\S]*?)\}\}/
-    );
+    // Find the Radius row Slider (between "Radius row" comment and the composite div).
+    // It must use style={{ flex: 1 }} like the working SliderRow, not className="flex-1"
+    // which conflicts with the Slider component's built-in w-full class.
+    const sliderMatch = source.match(/<Slider[\s\S]*?onPointerUp=\{[^}]*\}\s*\/>/);
+    expect(sliderMatch).not.toBeNull();
 
-    expect(inputStyleMatch).not.toBeNull();
-    const styleContent = inputStyleMatch![1];
+    const sliderJsx = sliderMatch![0];
 
-    // The input must have `width: 0` to collapse its intrinsic size
-    // so that `flex: 1` + `minWidth: 40` control the actual width.
-    expect(styleContent).toMatch(/\bwidth\s*:\s*0\b/);
+    // Must have inline flex: 1 style
+    expect(sliderJsx).toMatch(/style\s*=\s*\{\{[^}]*flex\s*:\s*1/);
+
+    // Must NOT use className flex-1 (conflicts with w-full in Slider component)
+    expect(sliderJsx).not.toMatch(/className\s*=\s*["'][^"']*flex-1/);
+  });
+
+  it("composite input group container has minWidth: 0 to allow flex shrinking", () => {
+    const source = readFileSync(BORDERS_PATH, "utf-8");
+
+    // The div wrapping ValueInput + UnitSelector in the Radius row
+    // needs minWidth: 0 so the flex algorithm can constrain it properly.
+    // Find the composite container (the div right after the Slider).
+    const radiusSection = source.match(/Radius row[\s\S]*?Expanded corner/);
+    expect(radiusSection).not.toBeNull();
+
+    const section = radiusSection![0];
+
+    // The composite container should not overflow — it needs minWidth: 0
+    // to override the default min-width: auto on flex items.
+    expect(section).toMatch(/minWidth\s*:\s*0/);
   });
 });

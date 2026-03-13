@@ -219,7 +219,8 @@ export const BordersSection = memo(function BordersSection({
         <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
         <Slider
-          className="tuner-focusable flex-1"
+          className="tuner-focusable"
+          style={{ flex: 1 }}
           aria-label={`Radius: ${radiusTL}${radiusUnit}`}
           min={0}
           max={200}
@@ -229,7 +230,7 @@ export const BordersSection = memo(function BordersSection({
           onPointerDown={() => beginBatch()}
           onPointerUp={() => endBatch()}
         />
-        <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, minWidth: 0 }}>
           <ValueInput value={radiusTL} onChange={handleRadiusAllChange} embedded />
           <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
             <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} embedded />
