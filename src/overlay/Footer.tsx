@@ -267,7 +267,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
             }}
           >
-            {copied ? "\u2713 Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, opacity: 0.6 }} /></>}
+            {copied ? "\u2713 Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, color: text.disabled }} /></>}
           </button>
           {copyOpen && (
             <div style={{
