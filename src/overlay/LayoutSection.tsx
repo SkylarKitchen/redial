@@ -378,7 +378,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               mode="grid"
               compact
             />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0, alignSelf: "stretch" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
                 <MiniDropdown
@@ -556,7 +556,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               mode="flex"
               compact
             />
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between", minWidth: 0, alignSelf: "stretch" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
                 <MiniDropdown
