@@ -145,7 +145,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setMessage(null);
 
     // Enrich changes with source file + class info for robust server-side search
-    const moduleInfo = getModuleClassInfo(element);
+    // Only resolve module class info when in class scope (avoids unnecessary regex in element scope)
+    const moduleInfo = scope === "class" ? getModuleClassInfo(element) : null;
     const enriched = changes.map((c) => {
       const source = resolveSource(element, c.prop);
       return {

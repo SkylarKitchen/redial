@@ -616,3 +616,176 @@ describe("handleCommit", () => {
     expect(content).toContain("font-size: 32px");
   });
 });
+
+// --- Pseudo-class (state) commit ---
+
+describe("handleCommit — pseudo-class state", () => {
+  it("finds and writes inside an existing .className:hover { } block", async () => {
+    const filePath = "src/Button.module.css";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  color: blue;",
+      "  font-size: 16px;",
+      "}",
+      "",
+      ".btn:hover {",
+      "  color: red;",
+      "  font-size: 18px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "font-size",
+        from: "18px",
+        to: "20px",
+        sourceFile: filePath,
+        className: "btn",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Hover block updated
+    expect(content).toContain(".btn:hover {");
+    // The base block should NOT be modified
+    expect(content).toMatch(/\.btn\s*\{[^}]*font-size:\s*16px/);
+    // The hover block should have the new value
+    expect(content).toMatch(/\.btn:hover\s*\{[^}]*font-size:\s*20px/);
+  });
+
+  it("creates a new .className:hover { } block when none exists", async () => {
+    const filePath = "src/Card.module.css";
+    await writeFixture(filePath, [
+      ".card {",
+      "  color: blue;",
+      "  font-size: 16px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "blue",
+        to: "red",
+        sourceFile: filePath,
+        className: "card",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Base block untouched
+    expect(content).toMatch(/\.card\s*\{[^}]*color:\s*blue/);
+    // New hover block appended
+    expect(content).toContain(".card:hover {");
+    expect(content).toContain("color: red;");
+  });
+
+  it("does not confuse base class block with pseudo-class block", async () => {
+    const filePath = "src/Link.module.css";
+    await writeFixture(filePath, [
+      ".link {",
+      "  color: blue;",
+      "}",
+      "",
+      ".link:hover {",
+      "  color: red;",
+      "}",
+    ].join("\n"));
+
+    // Change hover color — should NOT touch the base block's color
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "red",
+        to: "green",
+        sourceFile: filePath,
+        className: "link",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Base .link has "color: blue" — must be untouched
+    expect(content).toMatch(/\.link\s*\{[^}]*color:\s*blue/);
+    // Hover .link:hover updated to green
+    expect(content).toMatch(/\.link:hover\s*\{[^}]*color:\s*green/);
+  });
+
+  it("appends new hover block after base class, preserving other blocks", async () => {
+    const filePath = "src/Nav.module.css";
+    await writeFixture(filePath, [
+      ".navItem {",
+      "  color: gray;",
+      "}",
+      "",
+      ".navBrand {",
+      "  font-weight: bold;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "gray",
+        to: "blue",
+        sourceFile: filePath,
+        className: "navItem",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Base block untouched
+    expect(content).toMatch(/\.navItem\s*\{[^}]*color:\s*gray/);
+    // New hover block exists
+    expect(content).toContain(".navItem:hover {");
+    expect(content).toContain("color: blue;");
+    // Other blocks preserved
+    expect(content).toContain(".navBrand {");
+    expect(content).toContain("font-weight: bold;");
+  });
+
+  it("handles :focus state the same way as :hover", async () => {
+    const filePath = "src/Input.module.css";
+    await writeFixture(filePath, [
+      ".input {",
+      "  border-color: gray;",
+      "}",
+      "",
+      ".input:focus {",
+      "  border-color: blue;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "border-color",
+        from: "blue",
+        to: "green",
+        sourceFile: filePath,
+        className: "input",
+        state: "focus",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toMatch(/\.input:focus\s*\{[^}]*border-color:\s*green/);
+    expect(content).toMatch(/\.input\s*\{[^}]*border-color:\s*gray/);
+  });
+});
