@@ -1546,11 +1546,10 @@ export function Overlay() {
             onStateChange={handleStateChange}
           />
           {focusMode && (
-            <div className="flex justify-center py-0.5 border-b" style={{ borderColor: border.subtle }}>
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
               <span
                 onClick={() => setFocusMode(false)}
-                className="text-[9px] font-semibold px-2 py-px rounded-full cursor-pointer select-none tracking-[0.04em] uppercase"
-                style={{ color: color.primary, background: primaryAlpha(0.15) }}
+                style={{ fontSize: 9, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
               >
                 Focus Mode
               </span>
@@ -1689,7 +1688,7 @@ export function Overlay() {
         className="fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root"
         style={(selecting || selectedEl)
           ? { borderColor: primaryAlpha(0.4), boxShadow: `0 0 0 1px ${primaryAlpha(0.4)}, 0 4px 20px ${blackAlpha(0.12)}` }
-          : { boxShadow: `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px rgba(255,255,255,0.06)` }
+          : { boxShadow: `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}` }
         }
         onClick={() => {
           if (selectedEl) {

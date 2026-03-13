@@ -21,7 +21,6 @@ import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ms } from "./timing";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, presets } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -901,8 +900,15 @@ export const EditableValue = memo(
           setEditing(true);
         }}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-        className="text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none hover:bg-[rgba(0,0,0,0.05)]"
         style={{
+          fontSize: 10,
+          fontFamily: font.mono,
+          cursor: "text",
+          padding: "1px 3px",
+          borderRadius: 2,
+          minWidth: 16,
+          textAlign: "center" as const,
+          outline: "none",
           color: value !== 0 ? color.foreground : color.mutedForeground,
           transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
         }}
