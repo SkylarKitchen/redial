@@ -38,7 +38,7 @@ import { DragHandle } from "./DragHandle";
 import { useDragReorder } from "./useDragReorder";
 import { useFocusTrap } from "./useFocusTrap";
 import { ROW, MINI_ACTION_BUTTON } from "./panelStyles";
-import { text, border, surface, font, color, shadow, labelIndicator, labelHighlight } from "./theme";
+import { text, border, surface, font, color, shadow, labelIndicator, labelHighlight, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./theme";
 
@@ -268,7 +268,7 @@ function VariableContextMenu({
       data-tuner-portal
       style={{
         position: "fixed",
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
         minWidth: 170,
         background: color.popover,
         color: text.primary,

@@ -10,12 +10,11 @@
  */
 
 import { useEffect, useRef } from "react";
+import { zIndex } from "./theme";
 
 const MARGIN_COLOR = "rgba(255, 155, 0, 0.15)";
 const PADDING_COLOR = "rgba(99, 196, 99, 0.15)";
 const CONTENT_COLOR = "rgba(99, 148, 237, 0.15)";
-
-const Z_INDEX = 2147483645;
 
 interface BoxModelOverlayProps {
   element: Element;
@@ -40,7 +39,7 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
     const baseStyle: Partial<CSSStyleDeclaration> = {
       position: "fixed",
       pointerEvents: "none",
-      zIndex: String(Z_INDEX),
+      zIndex: String(zIndex.guide),
       transition: "none",
     };
 
@@ -138,7 +137,7 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
         top: 0,
         left: 0,
         pointerEvents: "none",
-        zIndex: Z_INDEX,
+        zIndex: zIndex.guide,
       }}
     />
   );

@@ -46,7 +46,7 @@ import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
-import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "./theme";
 
 // --- Panel State Type ---
 
@@ -1466,27 +1466,27 @@ export function Overlay() {
           <div
             ref={selectedOutlineRef}
             className="__tuner-selected-outline"
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: `all ${ms("normal")} ease-out` }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: `all ${ms("normal")} ease-out` }}
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483645, border: `1.5px dashed ${primaryAlpha(0.5)}`, borderRadius: 2, background: primaryAlpha(0.04) }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.guide, border: `1.5px dashed ${primaryAlpha(0.5)}`, borderRadius: 2, background: primaryAlpha(0.04) }}
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Hover highlight: subtle preview when hovering a different element */}
           <div
             ref={hoverHighlightRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483644, borderRadius: 2, transition: `all ${ms("fast")} ease-out`, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.backdrop, borderRadius: 2, transition: `all ${ms("fast")} ease-out`, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
           />
         </>
       )}
@@ -1524,7 +1524,7 @@ export function Overlay() {
           className="__tuner-root"
           style={{
             position: "fixed",
-            zIndex: 2147483647,
+            zIndex: zIndex.max,
             width: 300,
             height: "89vh",
             maxHeight: "89vh",
@@ -1750,7 +1750,7 @@ export function Overlay() {
           bottom: 16,
           left: "50%",
           transform: "translateX(-50%)",
-          zIndex: 2147483647,
+          zIndex: zIndex.max,
           background: color.background,
           color: text.primary,
           paddingLeft: 16,

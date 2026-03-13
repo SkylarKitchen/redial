@@ -11,7 +11,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { createPortal } from "react-dom";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
-import { color, text, border, surface, font, shadow, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
 import { ms } from "./timing";
 
 export interface SpecialOption {
@@ -249,7 +249,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
             position: "fixed",
             top: dropdownPos.top,
             left: dropdownPos.left,
-            zIndex: 2147483647,
+            zIndex: zIndex.max,
           }}
         >
           <div
@@ -407,7 +407,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
               color: text.secondary,
               whiteSpace: "nowrap",
               boxShadow: shadow.dropdown,
-              zIndex: 2147483647,
+              zIndex: zIndex.max,
               pointerEvents: "none",
               transition: `all ${ms("slow")}`,
               opacity: tooltipPhase === "in" ? 1 : 0,

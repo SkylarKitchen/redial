@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Undo2 } from "lucide-react";
-import { color, text, surface, border, shadow, font } from "./theme";
+import { color, text, surface, border, shadow, font, zIndex } from "./theme";
 import { ms } from "./timing";
 
 export interface ResetPopoverProps {
@@ -67,7 +67,7 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
       data-tuner-portal
       style={{
         position: "fixed",
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
         top: pos?.top ?? 0,
         left: pos?.left ?? 0,
         visibility: pos ? "visible" : "hidden",

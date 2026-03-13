@@ -25,7 +25,7 @@ import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight, Link2, Unlink } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight } from "./theme";
+import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight, zIndex } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -961,7 +961,7 @@ export function ColorRow({
           : rect.bottom + gap;
         const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
         return createPortal(
-          <div style={{ position: "fixed", top, left, zIndex: 2147483647 }}>
+          <div style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
             <ColorPickerEnhanced
               color={pickerColor}
               onChange={(hex, opacity) => {

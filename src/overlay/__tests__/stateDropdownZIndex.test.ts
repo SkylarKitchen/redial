@@ -36,10 +36,12 @@ function tsxFiles(dir: string) {
     .map((f) => join(dir, f));
 }
 
-/** Check if file has at least one panel-level z-index (inline or Tailwind). */
+/** Check if file has at least one panel-level z-index (inline, token, or Tailwind). */
 function hasPanelLevelZ(src: string): boolean {
-  // Inline: zIndex: 2147483647
+  // Inline literal: zIndex: 2147483647
   if (src.includes(`zIndex: ${PANEL_Z}`)) return true;
+  // Theme token: zIndex: zIndex.max
+  if (src.includes("zIndex: zIndex.max")) return true;
   // Tailwind arbitrary value: z-[2147483647]
   if (src.includes(`z-[${PANEL_Z}]`)) return true;
   return false;

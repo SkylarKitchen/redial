@@ -8,7 +8,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { color, border, surface, shadow, text, font } from "./theme";
+import { color, border, surface, shadow, text, font, zIndex } from "./theme";
 import { ms } from "./timing";
 
 export interface ContextMenuProps {
@@ -112,7 +112,7 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
       data-tuner-portal
       style={{
         position: "fixed",
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
         minWidth: 180,
         background: color.popover,
         color: text.primary,

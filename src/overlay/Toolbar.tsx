@@ -12,7 +12,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
 import { ms, springConfig } from "./timing";
-import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font } from "./theme";
+import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font, zIndex } from "./theme";
 import type { ActivePanel } from "./Overlay";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ export function Toolbar({
         position: "fixed",
         bottom: 24,
         right: 24,
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
       }}
     >
       <motion.div

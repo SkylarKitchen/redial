@@ -11,7 +11,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { getHoverGroup, getScrubGroup } from "./scrubState";
-import { spacingZone } from "./theme";
+import { spacingZone, zIndex } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Constants — derived from theme tokens
@@ -27,7 +27,6 @@ const PADDING_FILL_HOVER = spacingZone.paddingHover;
 const PADDING_BORDER_BASE = spacingZone.paddingBorderBase;
 const PADDING_BORDER_HOVER = spacingZone.paddingBorderHover;
 
-const Z_INDEX = 2147483644; // Below the active spacing guides (2147483645)
 
 // ---------------------------------------------------------------------------
 // Types
@@ -131,7 +130,7 @@ function buildPaddingZones(m: SpacingMetrics): ZoneRect[] {
 const BASE: React.CSSProperties = {
   position: "fixed",
   pointerEvents: "none",
-  zIndex: Z_INDEX,
+  zIndex: zIndex.backdrop,
 };
 
 // ---------------------------------------------------------------------------

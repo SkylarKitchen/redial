@@ -12,7 +12,7 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { ms } from "./timing";
-import { color, font, border } from "./theme";
+import { color, font, border, zIndex } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -224,7 +224,7 @@ function ShadowRow({
             }}
           />
           {pickerOpen && (
-            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: 2147483647, marginTop: "4px" }}>
+            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
               <ColorPickerEnhanced
                 color={cssColorToHex(shadow.color)}
                 onChange={(hex, opacity) => {

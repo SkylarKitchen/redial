@@ -13,7 +13,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, font } from "./theme";
+import { text, blackAlpha, color, border as borderTokens, shadow, font, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { TextStyle } from "./textStyleScanner";
 
@@ -85,7 +85,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
         bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined,
         left: pos.left,
         width: pos.width,
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
       }}
     >
       <Command

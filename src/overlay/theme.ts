@@ -209,6 +209,20 @@ export const layout = {
   pillRadius: 4,
 } as const;
 
+// ─── Z-Index Layers ─────────────────────────────────────────────
+// All overlay z-indices anchored at max-int to stay above host page.
+
+export const zIndex = {
+  /** Panels, popovers, toolbar, dropdowns — topmost layer */
+  max: 2147483647,
+  /** Selector overlays, hover labels — above guides, below panels */
+  overlay: 2147483646,
+  /** Visual guides: grid, flex-gap, spacing, box-model overlays */
+  guide: 2147483645,
+  /** Preview backdrops — behind all other overlay layers */
+  backdrop: 2147483644,
+} as const;
+
 // ─── Shadows ────────────────────────────────────────────────────
 
 export const shadow = {

@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, overlay } from "./theme";
+import { font, overlay, zIndex } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -257,7 +257,7 @@ export function GridOverlay({
         width: "100vw",
         height: "100vh",
         pointerEvents: "none",
-        zIndex: 2147483645,
+        zIndex: zIndex.guide,
         overflow: "hidden",
       }}
     >

@@ -11,7 +11,7 @@ import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { resetProp } from "./apply";
 import { useFocusTrap } from "./useFocusTrap";
-import { color, border, surface, shadow, text, font } from "./theme";
+import { color, border, surface, shadow, text, font, zIndex } from "./theme";
 import { ms } from "./timing";
 
 export interface ContextMenuState {
@@ -117,7 +117,7 @@ export function PropertyContextMenu({
       data-tuner-portal
       style={{
         position: "fixed",
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
         minWidth: 160,
         background: color.popover,
         color: text.primary,

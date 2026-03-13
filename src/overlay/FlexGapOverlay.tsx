@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, overlay } from "./theme";
+import { font, overlay, zIndex } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -20,7 +20,6 @@ const GAP_COLOR = overlay.flexGap.solid;
 const GAP_HATCH = overlay.flexGap.hatch;
 const GAP_BORDER = overlay.flexGap.border;
 const HATCH_SPACING = 5;
-const Z_INDEX = 2147483645;
 const LABEL_FONT = font.mono;
 
 // ---------------------------------------------------------------------------
@@ -136,7 +135,7 @@ const hatchBg = `repeating-linear-gradient(45deg, ${GAP_HATCH} 0px, ${GAP_HATCH}
 const BADGE_STYLE: React.CSSProperties = {
   position: "fixed",
   pointerEvents: "none",
-  zIndex: Z_INDEX,
+  zIndex: zIndex.guide,
   color: "#fff",
   fontSize: 10,
   fontFamily: LABEL_FONT,
@@ -205,7 +204,7 @@ export function FlexGapOverlay({
         width: "100vw",
         height: "100vh",
         pointerEvents: "none",
-        zIndex: Z_INDEX,
+        zIndex: zIndex.guide,
         overflow: "hidden",
       }}
     >
@@ -218,7 +217,7 @@ export function FlexGapOverlay({
               style={{
                 position: "fixed",
                 pointerEvents: "none",
-                zIndex: Z_INDEX,
+                zIndex: zIndex.guide,
                 left: gap.x,
                 top: gap.y,
                 width: gap.w,

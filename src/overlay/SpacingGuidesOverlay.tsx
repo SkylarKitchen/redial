@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font } from "./theme";
+import { font, zIndex } from "./theme";
 import { getScrubGroup } from "./scrubState";
 
 // ---------------------------------------------------------------------------
@@ -24,7 +24,6 @@ const MARGIN_COLOR = "#57A8FF";
 const MARGIN_FILL = "rgba(87,168,255,0.30)";
 const PADDING_COLOR = "#4CAF50";
 const PADDING_FILL = "rgba(76,175,80,0.30)";
-const Z_INDEX = 2147483645;
 const LABEL_FONT = font.mono;
 
 // ---------------------------------------------------------------------------
@@ -156,7 +155,7 @@ function buildZones(snap: Snapshot): ZoneRect[] {
 const BASE: React.CSSProperties = {
   position: "fixed",
   pointerEvents: "none",
-  zIndex: Z_INDEX,
+  zIndex: zIndex.guide,
 };
 
 const BOX_LINE: React.CSSProperties = {

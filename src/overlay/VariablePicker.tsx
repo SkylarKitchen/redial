@@ -10,7 +10,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { discoverVariables, discoverAllVariables, type CSSVariable, type VarType } from "./discoverVariables";
 import { useTokenCollections } from "./tokenCollections";
-import { color, text, border, surface, font, shadow, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
 import { ms } from "./timing";
 
 export interface VariablePickerProps {
@@ -254,7 +254,7 @@ export function VariablePicker({
       data-tuner-portal
       style={{
         position: "fixed",
-        zIndex: 2147483647,
+        zIndex: zIndex.max,
         top: pos?.top ?? 0,
         left: pos?.left ?? 0,
         visibility: pos ? "visible" : "hidden",

@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ms } from "./timing";
 import { isNavigableElement, getDisplayClass } from "./util";
-import { color, primaryAlpha, font } from "./theme";
+import { color, primaryAlpha, font, zIndex } from "./theme";
 
 interface SelectorProps {
   active: boolean;
@@ -173,7 +173,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           position: "fixed",
           display: "none",
           pointerEvents: "none",
-          zIndex: 2147483646,
+          zIndex: zIndex.overlay,
           border: `1.5px solid ${color.primary}`,
           borderRadius: "2px",
           boxShadow: `0 0 0 1px ${primaryAlpha(0.3)}`,
@@ -186,7 +186,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
           position: "fixed",
           display: "none",
           pointerEvents: "none",
-          zIndex: 2147483647,
+          zIndex: zIndex.max,
           background: color.primary,
           color: color.primaryForeground,
           fontSize: "10px",

@@ -31,7 +31,7 @@ import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
 import type { IndicatorType } from "./theme";
-import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing } from "./theme";
+import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing , zIndex } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -533,7 +533,7 @@ export function SpacingBoxModel({
               borderRadius: "4px",
               whiteSpace: "nowrap",
               pointerEvents: "none",
-              zIndex: 2147483647,
+              zIndex: zIndex.max,
               boxShadow: shadow.dropdown,
               border: `1px solid ${border.subtle}`,
             }}
