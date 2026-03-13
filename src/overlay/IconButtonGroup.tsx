@@ -9,7 +9,7 @@
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { color, focusRing } from "./theme";
+import { color } from "./theme";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;

@@ -338,7 +338,7 @@ export function SpacingValuePopover({
                     fontSize: "10px",
                     fontFamily: "ui-monospace, 'SF Mono', monospace",
                     color: u === unit ? "#fff" : "#525252",
-                    background: u === unit ? "#3B82F6" : "transparent",
+                    background: u === unit ? color.primary : "transparent",
                     cursor: "pointer",
                     textTransform: "uppercase",
                     textAlign: "left",

@@ -340,7 +340,7 @@ export function BackgroundLayerList({
                       className="w-8 h-6 rounded"
                       style={{ background: layer.color ?? "#ffffff", border: `1px solid ${blackAlpha(0.12)}` }}
                     />
-                    <span className="text-[11px] font-mono text-[rgba(0,0,0,0.5)]">
+                    <span className="text-[11px] font-mono" style={{ color: blackAlpha(0.5) }}>
                       {layer.color}
                     </span>
                   </div>
@@ -373,7 +373,12 @@ export function BackgroundLayerList({
                       placeholder="Image URL"
                       value={layer.image.url}
                       onChange={(e) => updateImage(layer.id, { url: e.target.value })}
-                      className="w-full h-6 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.7)] text-[11px] font-mono px-1.5 box-border"
+                      className="w-full h-6 rounded-[3px] text-[11px] font-mono px-1.5 box-border"
+                      style={{
+                        background: color.input,
+                        border: `1px solid ${color.border}`,
+                        color: blackAlpha(0.7),
+                      }}
                     />
                     <div className="flex gap-1">
                       <div className="flex-1 flex flex-col gap-0.5">

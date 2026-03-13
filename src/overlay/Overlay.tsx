@@ -1564,11 +1564,9 @@ export function Overlay() {
                   onClick={() => setActiveTab(tab)}
                   className={cn(
                     "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
-                    isActive
-                      ? "border-b-[#3B82F6] font-semibold"
-                      : "border-b-transparent font-normal",
+                    isActive ? "font-semibold" : "border-b-transparent font-normal",
                   )}
-                  style={{ color: isActive ? text.primary : text.label }}
+                  style={{ color: isActive ? text.primary : text.label, borderBottomColor: isActive ? color.primary : undefined }}
                 >
                   {label}
                 </button>

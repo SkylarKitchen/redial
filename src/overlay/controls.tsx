@@ -334,7 +334,7 @@ export function SliderRow({
         onPointerDown={() => beginBatch()}
         onPointerUp={() => endBatch()}
       />
-      <div style={{ display: "flex", alignItems: "center", height: 26, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, overflow: "hidden" }}>
         <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded />
         {units && onUnitChange ? (
           <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
