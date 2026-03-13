@@ -354,7 +354,7 @@ function GlobalVariableRow({
     : { color: text.label };
 
   const hoverActions = hovered && !renaming ? (
-    <div style={{ display: "flex", gap: 2, flexShrink: 0, marginLeft: 4 }}>
+    <div style={{ ...VAR_LABEL_STYLE, justifyContent: "flex-end", gap: 2 }}>
       <button
         onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
         title="Duplicate"
@@ -425,9 +425,8 @@ function GlobalVariableRow({
       {showDragHandle && dragHandleProps && (
         <DragHandle isDragging={isDragging} onPointerDown={dragHandleProps.onPointerDown} />
       )}
-      {labelNode}
+      {hoverActions || labelNode}
       {controlNode}
-      {hoverActions}
     </div>
   );
 
@@ -453,7 +452,7 @@ function GlobalVariableRow({
           labelWidth={120}
         />
         {hoverActions && (
-          <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)" }}>
+          <div style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: color.background, paddingRight: 4 }}>
             {hoverActions}
           </div>
         )}
