@@ -14,6 +14,7 @@ export const timing = {
   layout: 200, // drag displacement, focus ring transitions
   slow: 300, // scrollbar fade, complex animations
   toolbar: 400, // toolbar expand/collapse
+  dismissal: 1700, // auto-dismiss for hints, tooltips, success messages
 } as const;
 
 export type TimingKey = keyof typeof timing;

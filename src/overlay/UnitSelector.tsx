@@ -12,7 +12,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react"
 import { createPortal } from "react-dom";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
-import { ms } from "./timing";
+import { ms, timing } from "./timing";
 
 export interface SpecialOption {
   value: string;
@@ -93,14 +93,14 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       setTooltipText(formatHint(conversionHint));
       setTooltipPhase("in");
 
-      // Auto-dismiss: start fade-out after 1.7s, remove after 2s
+      // Auto-dismiss: start fade-out after dismissal delay, remove after slow fade
       tooltipTimer.current = setTimeout(() => {
         setTooltipPhase("out");
         fadeTimer.current = setTimeout(() => {
           setTooltipText(null);
           setTooltipPhase(null);
-        }, 300);
-      }, 1700);
+        }, timing.slow);
+      }, timing.dismissal);
     }
     prevHintRef.current = conversionHint;
   }, [conversionHint]);
