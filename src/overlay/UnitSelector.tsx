@@ -332,7 +332,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                       fontFamily: font.mono,
                       cursor: "pointer",
                       lineHeight: "16px",
-                      transition: "background-color 150ms",
+                      transition: `background-color ${ms("expand")}`,
                       color: text.label,
                       background: isHl ? surface.hover : "transparent",
                     }}
