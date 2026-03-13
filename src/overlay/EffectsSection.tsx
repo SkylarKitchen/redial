@@ -214,7 +214,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SelectRow label="Blending" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} onReset={() => resetCssStr("mix-blend-mode", setMixBlendMode)} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
       {/* 2. Opacity */}
-      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
+      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element}  />
 
       {/* 3. Outline */}
       <div style={ROW}>

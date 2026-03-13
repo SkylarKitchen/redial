@@ -253,8 +253,6 @@ export function SliderRow({
   conversionHint,
   snapPoints,
   snapThreshold,
-  property,
-  onPreset,
 }: {
   label: string;
   value: number;
@@ -280,10 +278,6 @@ export function SliderRow({
   snapPoints?: number[];
   /** Pixel distance for snap activation (default 3) */
   snapThreshold?: number;
-  /** CSS property name — enables preset chips when VALUE_PRESETS has entries */
-  property?: string;
-  /** Called when a preset chip is clicked (for string values like "auto"/"none") */
-  onPreset?: (value: string) => void;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
