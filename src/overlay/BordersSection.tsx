@@ -218,23 +218,19 @@ export const BordersSection = memo(function BordersSection({
       <div style={ROW}>
         <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
-        {radiusMode !== "individual" && (
-          <>
-            <Slider
-              className="tuner-focusable flex-1"
-              aria-label={`Radius: ${radiusTL}${radiusUnit}`}
-              min={0}
-              max={200}
-              step={1}
-              value={[radiusTL]}
-              onValueChange={([v]) => handleRadiusAllChange(v)}
-              onPointerDown={() => beginBatch()}
-              onPointerUp={() => endBatch()}
-            />
-            <ValueInput value={radiusTL} onChange={handleRadiusAllChange} />
-            <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} />
-          </>
-        )}
+        <Slider
+          className="tuner-focusable flex-1"
+          aria-label={`Radius: ${radiusTL}${radiusUnit}`}
+          min={0}
+          max={200}
+          step={1}
+          value={[radiusTL]}
+          onValueChange={([v]) => handleRadiusAllChange(v)}
+          onPointerDown={() => beginBatch()}
+          onPointerUp={() => endBatch()}
+        />
+        <ValueInput value={radiusTL} onChange={handleRadiusAllChange} />
+        <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} />
       </div>
 
       {/* ── Expanded corner editor (individual mode) ── */}
@@ -244,9 +240,7 @@ export const BordersSection = memo(function BordersSection({
           topRight={radiusTR}
           bottomRight={radiusBR}
           bottomLeft={radiusBL}
-          linked={false}
           onChange={handleCornerChange}
-          onLinkedChange={() => {}}
           unit={radiusUnit}
           units={BORDER_UNITS}
           onUnitChange={handleRadiusUnitChange}
