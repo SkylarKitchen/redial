@@ -48,6 +48,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
+  /** Tailwind-aware step for spacing-scale px properties */
+  const twStep = (unit: string) => ctx.isTailwind && unit === "px" ? 4 : 1;
+
   // ─── CSS variable discovery (length-type only) ─────────────────────
 
   const varOptions = useMemo(() =>
@@ -248,6 +251,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           supportsAuto
           min={0}
           max={1920}
+          step={twStep(widthUnit)}
           conversionHint={wHint}
 
           cssVar={widthVar}
@@ -269,6 +273,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           supportsAuto
           min={0}
           max={1200}
+          step={twStep(heightUnit)}
           conversionHint={hHint}
           cssVar={heightVar}
           cssVarResolved={resolveVar(heightVar)}
@@ -290,6 +295,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           isModified={isDirty(element, "min-width")}
           min={0}
           max={1920}
+          step={twStep(minWidthUnit)}
           conversionHint={minWHint}
           cssVar={minWidthVar}
           cssVarResolved={resolveVar(minWidthVar)}
@@ -308,6 +314,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           isModified={isDirty(element, "min-height")}
           min={0}
           max={1200}
+          step={twStep(minHeightUnit)}
           conversionHint={minHHint}
           cssVar={minHeightVar}
           cssVarResolved={resolveVar(minHeightVar)}
@@ -331,6 +338,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           supportsNone
           min={0}
           max={1920}
+          step={twStep(maxWidthUnit)}
           conversionHint={maxWHint}
           cssVar={maxWidthVar}
           cssVarResolved={resolveVar(maxWidthVar)}
@@ -351,6 +359,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           supportsNone
           min={0}
           max={1200}
+          step={twStep(maxHeightUnit)}
           conversionHint={maxHHint}
           cssVar={maxHeightVar}
           cssVarResolved={resolveVar(maxHeightVar)}

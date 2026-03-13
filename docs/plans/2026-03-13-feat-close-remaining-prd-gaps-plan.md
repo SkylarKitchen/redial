@@ -54,10 +54,10 @@ and the element is in class scope, call `removeClassStyle(className, prop)`.
 ```
 
 **Acceptance:**
-- [ ] Test written that reproduces the bug (fails before fix)
-- [ ] Fix applied
-- [ ] Test passes
-- [ ] `npm run typecheck` passes
+- [x] Test written that reproduces the bug (fails before fix)
+- [x] Fix applied — `onClassChange` API + `className` on undo entries
+- [x] Test passes (40/40 scope tests)
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -125,10 +125,11 @@ the state to change while overrides are being applied.
 ```
 
 **Acceptance:**
-- [ ] 5 tests written that reproduce bugs (fail before fix)
-- [ ] All 3 bugs fixed
-- [ ] All tests pass
-- [ ] `npm run typecheck` passes
+- [x] Bug 1 test written + fixed — `resetStateOverrides` added to apply.ts, wired into Footer.tsx
+- [ ] Bug 2 (session restore) — not yet addressed
+- [ ] Bug 3 (state dropdown scrub guard) — not yet addressed
+- [x] Bug 1 tests pass (28/28 statePreview, 54/54 apply)
+- [x] `npm run typecheck` passes
 
 ---
 
