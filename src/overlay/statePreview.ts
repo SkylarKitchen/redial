@@ -16,6 +16,7 @@
  */
 
 import type { DiffEntry } from "./apply";
+import { onStateChange } from "./apply";
 
 // --- Valid pseudo-class states (allowlist) ---
 
@@ -274,4 +275,20 @@ export function destroyStateStyles(): void {
   // Clear tracking
   overrides.clear();
   overrideMeta.clear();
+}
+
+// --- Sync with apply.ts undo/redo ---
+
+/**
+ * Register a listener on apply.ts so that undo/redo of state-keyed entries
+ * updates the <style> tag. Returns an unsubscribe function.
+ */
+export function syncWithApplyUndoRedo(): () => void {
+  return onStateChange(({ el, state, prop, value }) => {
+    if (value !== null) {
+      applyStateStyle(el, state, prop, value);
+    } else {
+      removeStateStyle(el, state, prop);
+    }
+  });
 }

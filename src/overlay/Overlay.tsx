@@ -28,7 +28,7 @@ import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavig
 
 import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, getReadableName, type Scope } from "./scope";
-import { applyStateStyle, diffState, destroyStateStyles } from "./statePreview";
+import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./statePreview";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
 import { Plus } from "lucide-react";
 import { ms, setReducedMotion, springConfig } from "./timing";
@@ -213,6 +213,9 @@ export function Overlay() {
       }
     };
   }, []);
+
+  // Sync statePreview.ts <style> tag with apply.ts undo/redo
+  useEffect(() => syncWithApplyUndoRedo(), []);
 
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);

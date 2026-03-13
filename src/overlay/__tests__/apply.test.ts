@@ -25,6 +25,7 @@ import {
   clearRedundantOverrides,
   stateKey,
   parseStateKey,
+  onStateChange,
 } from "../apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -578,5 +579,113 @@ describe("undo/redo — state-keyed entries", () => {
     const changes = diff(el);
     expect(changes).toHaveLength(1);
     expect(changes[0].state).toBe("hover");
+  });
+});
+
+// ─── onStateChange callback fires on state-keyed undo/redo ────────────
+
+describe("onStateChange callback", () => {
+  it("fires callback on undo of state-keyed entry (remove)", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    undo();
+
+    // Undoing should fire callback with value=null (removed back to initial)
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+    const undoCall = calls[calls.length - 1];
+    expect(undoCall.el).toBe(el);
+    expect(undoCall.state).toBe("hover");
+    expect(undoCall.prop).toBe("color");
+    expect(undoCall.value).toBeNull(); // removed — back to initial
+
+    unsub();
+  });
+
+  it("fires callback on redo of state-keyed entry (re-apply)", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    undo();
+    calls.length = 0; // clear
+    redo();
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].el).toBe(el);
+    expect(calls[0].state).toBe("hover");
+    expect(calls[0].prop).toBe("color");
+    expect(calls[0].value).toBe("red");
+
+    unsub();
+  });
+
+  it("fires callback on undo of state-keyed entry (revert to prev, not initial)", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    // Apply "red", then a different prop to break undo coalescing, then "blue"
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    applyInlineStyle(el, stateKey("hover", "font-size"), "20px");
+    applyInlineStyle(el, stateKey("hover", "color"), "blue");
+    calls.length = 0;
+    undo(); // revert blue → red (not removing, just changing)
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].value).toBe("red"); // reverted to previous, not removed
+
+    unsub();
+  });
+
+  it("fires callback for each entry in a batch undo", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    beginBatch();
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    applyInlineStyle(el, stateKey("hover", "font-size"), "20px");
+    endBatch();
+
+    calls.length = 0;
+    undo(); // batch undo
+
+    // Should fire for both state-keyed properties
+    expect(calls).toHaveLength(2);
+    const props = calls.map(c => c.prop).sort();
+    expect(props).toEqual(["color", "font-size"]);
+    // Both should be null (reverted back to initial)
+    expect(calls.every(c => c.value === null)).toBe(true);
+
+    unsub();
+  });
+
+  it("does NOT fire callback for non-state undo/redo", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    applyInlineStyle(el, "color", "red");
+    undo();
+    redo();
+
+    expect(calls).toHaveLength(0);
+    unsub();
+  });
+
+  it("unsubscribes correctly", () => {
+    const el = makeEl();
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+    unsub();
+
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    undo();
+
+    expect(calls).toHaveLength(0);
   });
 });

@@ -84,6 +84,26 @@ function notifyChange(el: Element, prop: string, from: string, to: string) {
   changeListeners.forEach(fn => fn(info));
 }
 
+// --- State change listener API (for statePreview.ts sync) ---
+
+export type StateChangeInfo = { el: Element; state: string; prop: string; value: string | null };
+const stateChangeListeners = new Set<(info: StateChangeInfo) => void>();
+
+/**
+ * Register a callback that fires when undo/redo processes a state-keyed entry.
+ * `value` is the new value to apply, or `null` if the property was removed.
+ * Returns an unsubscribe function.
+ */
+export function onStateChange(callback: (info: StateChangeInfo) => void): () => void {
+  stateChangeListeners.add(callback);
+  return () => { stateChangeListeners.delete(callback); };
+}
+
+function notifyStateChange(el: Element, state: string, prop: string, value: string | null) {
+  const info: StateChangeInfo = { el, state, prop, value };
+  stateChangeListeners.forEach(fn => fn(info));
+}
+
 // --- State ---
 
 const overrides = new Map<Element, Map<string, Override>>();
@@ -251,9 +271,11 @@ export function undo(): { el: Element; prop: string } | null {
         if (!isState) (el as HTMLElement).style.removeProperty(prop);
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
+        if (isState) notifyStateChange(el, state, cssProp, null);
       } else {
         if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
+        if (isState) notifyStateChange(el, state, cssProp, prev);
       }
       result = { el, prop };
     }
@@ -290,9 +312,11 @@ export function undo(): { el: Element; prop: string } | null {
     if (!isState) (el as HTMLElement).style.removeProperty(prop);
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
+    if (isState) notifyStateChange(el, state, cssProp, null);
   } else {
     if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
+    if (isState) notifyStateChange(el, state, cssProp, prev);
   }
 
   schedulePersist();
@@ -324,7 +348,11 @@ export function redo(): { el: Element; prop: string } | null {
         const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
         elOverrides.set(prop, { initial, current: redoValue });
       }
-      if (!isState) (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+      if (!isState) {
+        (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+      } else {
+        notifyStateChange(el, state, cssProp, redoValue);
+      }
       result = { el, prop };
     }
     if (undoEntries.length > 0) {
@@ -352,7 +380,11 @@ export function redo(): { el: Element; prop: string } | null {
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: redoValue });
   }
-  if (!isState) (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+  if (!isState) {
+    (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+  } else {
+    notifyStateChange(el, state, cssProp, redoValue);
+  }
 
   schedulePersist();
   notifyListeners();
