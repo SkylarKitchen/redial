@@ -47,38 +47,6 @@ export function useValueFlash(value: number) {
   return flash ? { backgroundColor: primaryAlpha(0.12), transition: "background-color 200ms" } : { transition: "background-color 200ms" };
 }
 
-// ─── Value Presets ───────────────────────────────────────────────────
-
-export const VALUE_PRESETS: Record<string, string[]> = {
-  "width": ["auto", "100%", "fit-content"],
-  "height": ["auto", "100%", "fit-content"],
-  "max-width": ["none", "100%"],
-  "max-height": ["none", "100%"],
-  "min-width": ["0", "auto"],
-  "min-height": ["0", "auto"],
-  "border-radius": ["0", "4", "8", "9999"],
-  "gap": ["0", "4", "8", "12", "16"],
-  "font-weight": ["400", "500", "600", "700"],
-  "opacity": ["0", "0.5", "1"],
-};
-
-export function PresetChips({ property, onSelect }: { property: string; onSelect: (v: string) => void }) {
-  const presets = VALUE_PRESETS[property];
-  if (!presets) return null;
-  return (
-    <div className="flex gap-0.5 mt-0.5 flex-wrap px-3">
-      {presets.map(v => (
-        <span
-          key={v}
-          onClick={() => onSelect(v)}
-          className="text-[9px] font-mono text-[var(--muted-foreground)] bg-[var(--input)] px-1.5 py-px rounded cursor-pointer select-none hover:bg-[rgba(0,0,0,0.08)]"
-        >
-          {v}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
@@ -343,45 +311,33 @@ export function SliderRow({
       {label}
     </span>
   );
-  const handlePresetSelect = useCallback((v: string) => {
-    if (onPreset) {
-      onPreset(v);
-    } else {
-      const parsed = parseFloat(v);
-      if (!isNaN(parsed)) onChange(parsed);
-    }
-  }, [onPreset, onChange]);
-
   return (
-    <>
-      <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
-        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
-          {computedProp && computedElement ? (
-            <ComputedTooltip property={computedProp} element={computedElement}>
-              {labelContent}
-            </ComputedTooltip>
-          ) : labelContent}
-        </LabelScrub>
-        <Slider
-          className="tuner-focusable flex-1"
-          aria-label={`${label}: ${value}${unit}`}
-          min={min}
-          max={max}
-          step={step}
-          value={[value]}
-          onValueChange={([v]) => onChange(snapValue(v))}
-          onPointerDown={() => beginBatch()}
-          onPointerUp={() => endBatch()}
-        />
-        <ValueInput value={value} onChange={onChange} onAltClick={onReset} />
-        {units && onUnitChange ? (
-          <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
-        ) : unit ? (
-          <span className="text-[9px] text-[var(--muted-foreground)] w-4">{unit}</span>
-        ) : null}
-      </div>
-      {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
-    </>
+    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
+        {computedProp && computedElement ? (
+          <ComputedTooltip property={computedProp} element={computedElement}>
+            {labelContent}
+          </ComputedTooltip>
+        ) : labelContent}
+      </LabelScrub>
+      <Slider
+        className="tuner-focusable flex-1"
+        aria-label={`${label}: ${value}${unit}`}
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={([v]) => onChange(snapValue(v))}
+        onPointerDown={() => beginBatch()}
+        onPointerUp={() => endBatch()}
+      />
+      <ValueInput value={value} onChange={onChange} onAltClick={onReset} />
+      {units && onUnitChange ? (
+        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
+      ) : unit ? (
+        <span className="text-[9px] text-[var(--muted-foreground)] w-4">{unit}</span>
+      ) : null}
+    </div>
   );
 }
 
