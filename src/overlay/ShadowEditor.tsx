@@ -14,7 +14,7 @@ import { cssColorToHex } from "./colorUtils";
 import { shadowToCSS } from "./cssParsers";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { ms } from "./timing";
-import { color, font, border, surface, zIndex } from "./theme";
+import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -97,7 +97,7 @@ function NumericInput({
           fontSize: "8px",
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          color: "#737373",
+          color: text.disabled,
           fontFamily: font.sans,
         }}
       >
@@ -113,10 +113,10 @@ function NumericInput({
           autoFocus
           style={{
             width: "36px",
-            background: "rgba(0,0,0,0.07)",
-            border: "1px solid rgba(59,130,246,0.5)",
+            background: blackAlpha(0.07),
+            border: `1px solid ${primaryAlpha(0.5)}`,
             borderRadius: "2px",
-            color: "#171717",
+            color: text.primary,
             fontSize: "10px",
             fontFamily: font.mono,
             textAlign: "center",
@@ -136,12 +136,12 @@ function NumericInput({
             width: "36px",
             fontSize: "10px",
             fontFamily: font.mono,
-            color: value !== 0 ? "#525252" : "#A3A3A3",
+            color: value !== 0 ? text.secondary : text.hint,
             cursor: "text",
             padding: "2px",
             borderRadius: "2px",
             textAlign: "center",
-            background: "rgba(0,0,0,0.03)",
+            background: blackAlpha(0.03),
             transition: `background ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
@@ -235,7 +235,7 @@ function ShadowRow({
               width: "16px",
               height: "16px",
               borderRadius: "2px",
-              border: "1px solid rgba(0,0,0,0.15)",
+              border: `1px solid ${blackAlpha(0.15)}`,
               background: resolveVarColor(shadow.color) ?? shadow.color,
               cursor: "pointer",
               padding: 0,
@@ -270,11 +270,11 @@ function ShadowRow({
           style={{
             fontSize: "9px",
             fontFamily: font.mono,
-            color: shadow.inset ? color.primary : "#737373",
-            background: shadow.inset ? "rgba(59,130,246,0.15)" : "rgba(0,0,0,0.03)",
+            color: shadow.inset ? color.primary : text.disabled,
+            background: shadow.inset ? primaryAlpha(0.15) : blackAlpha(0.03),
             border: shadow.inset
-              ? "1px solid rgba(59,130,246,0.3)"
-              : "1px solid rgba(0,0,0,0.07)",
+              ? `1px solid ${primaryAlpha(0.3)}`
+              : `1px solid ${blackAlpha(0.07)}`,
             borderRadius: "2px",
             padding: "1px 4px",
             cursor: "pointer",
@@ -294,7 +294,7 @@ function ShadowRow({
             border: "none",
             cursor: "pointer",
             padding: "2px",
-            color: shadow.visible !== false ? "#525252" : "#A3A3A3",
+            color: shadow.visible !== false ? text.secondary : text.hint,
             pointerEvents: isDragging ? "none" : "auto",
           }}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}
@@ -308,7 +308,7 @@ function ShadowRow({
           title="Remove shadow"
           style={{
             fontSize: "12px",
-            color: "#737373",
+            color: text.disabled,
             background: "none",
             border: "none",
             cursor: "pointer",
@@ -317,10 +317,10 @@ function ShadowRow({
             transition: `color ${ms("normal")}`,
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "#525252";
+            (e.currentTarget as HTMLElement).style.color = text.secondary;
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = "#737373";
+            (e.currentTarget as HTMLElement).style.color = text.disabled;
           }}
         >
           <X size={12} strokeWidth={2} />
@@ -373,18 +373,18 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           fontSize: "10px",
           fontFamily: font.sans,
           color: color.primary,
-          background: "rgba(59,130,246,0.08)",
-          border: "1px dashed rgba(59,130,246,0.3)",
+          background: primaryAlpha(0.08),
+          border: `1px dashed ${primaryAlpha(0.3)}`,
           borderRadius: "3px",
           cursor: "pointer",
           marginBottom: "4px",
           transition: `background ${ms("normal")}`,
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(59,130,246,0.15)";
+          (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.15);
         }}
         onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "rgba(59,130,246,0.08)";
+          (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.08);
         }}
       >
         + Add shadow
@@ -419,7 +419,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           style={{
             padding: "8px 0",
             fontSize: "10px",
-            color: "#A3A3A3",
+            color: text.hint,
             textAlign: "center",
             fontFamily: font.sans,
           }}
