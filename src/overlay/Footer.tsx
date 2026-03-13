@@ -54,7 +54,7 @@ function formatCSSVars(changes: DiffEntry[]): string {
 
 interface SaveResult {
   written?: string[];
-  failed?: Array<{ reason?: string } | string>;
+  failed?: Array<{ reason: string }>;
 }
 
 interface FooterProps {
@@ -176,10 +176,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         const failedList = result.failed ?? [];
         const failed = failedList.length;
         if (failed > 0) {
-          const firstReason = failedList[0] && typeof failedList[0] === "object"
-            ? (failedList[0] as { reason?: string }).reason
-            : undefined;
-          const detail = firstReason ? `: ${firstReason}` : "";
+          const detail = failedList[0]?.reason ? `: ${failedList[0].reason}` : "";
           showMessage(`Saved ${written}, ${failed} failed${detail}`, 3000);
         } else {
           showMessage(`Saved ${written} change${written === 1 ? "" : "s"}`, 2000);

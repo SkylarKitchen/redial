@@ -1,0 +1,204 @@
+// @vitest-environment happy-dom
+import { describe, it, expect, beforeEach } from "vitest";
+import {
+  applyStateStyle,
+  removeStateStyle,
+  resetStateStyles,
+  diffState,
+  destroyStateStyles,
+  getStateStyleTag,
+} from "../statePreview";
+
+// ─── Setup ────────────────────────────────────────────────────────────
+
+function makeEl(tag = "div"): HTMLElement {
+  const el = document.createElement(tag);
+  el.className = "Card_wrapper__f3k2m";
+  document.body.appendChild(el);
+  return el;
+}
+
+beforeEach(() => {
+  destroyStateStyles();
+  document.body.innerHTML = "";
+});
+
+// ─── Style tag injection ──────────────────────────────────────────────
+
+describe("applyStateStyle — style tag injection", () => {
+  it("creates a <style> tag with data-tuner-scope='state' attribute", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    const tag = getStateStyleTag();
+    expect(tag).not.toBeNull();
+    expect(tag!.getAttribute("data-tuner-scope")).toBe("state");
+  });
+
+  it("injects CSS rule targeting the temporary class + pseudo-class", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain(":hover");
+    expect(tag!.textContent).toContain("font-size: 20px !important");
+  });
+
+  it("adds the __tuner-state-preview class to the element", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    expect(el.classList.contains("__tuner-state-preview")).toBe(true);
+  });
+
+  it("does NOT set inline styles on the element", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    // Inline styles should remain untouched — pseudo-class styles go in the <style> tag
+    expect(el.style.getPropertyValue("font-size")).toBe("");
+  });
+
+  it("handles multiple properties on the same element+state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    applyStateStyle(el, "hover", "color", "red");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain("font-size: 20px !important");
+    expect(tag!.textContent).toContain("color: red !important");
+  });
+
+  it("updates an existing property value", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    applyStateStyle(el, "hover", "font-size", "24px");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain("font-size: 24px !important");
+    expect(tag!.textContent).not.toContain("font-size: 20px");
+  });
+
+  it("keeps different states separate", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "focus", "color", "blue");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain(":hover");
+    expect(tag!.textContent).toContain("color: red !important");
+    expect(tag!.textContent).toContain(":focus");
+    expect(tag!.textContent).toContain("color: blue !important");
+  });
+
+  it("reuses the same <style> tag across calls", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "focus", "font-size", "20px");
+    const tags = document.querySelectorAll('style[data-tuner-scope="state"]');
+    expect(tags.length).toBe(1);
+  });
+});
+
+// ─── removeStateStyle ─────────────────────────────────────────────────
+
+describe("removeStateStyle", () => {
+  it("removes a single property from a state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "hover", "font-size", "20px");
+    removeStateStyle(el, "hover", "color");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).not.toContain("color");
+    expect(tag!.textContent).toContain("font-size: 20px !important");
+  });
+
+  it("removes the __tuner-state-preview class when no properties remain for any state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    removeStateStyle(el, "hover", "color");
+    expect(el.classList.contains("__tuner-state-preview")).toBe(false);
+  });
+
+  it("keeps __tuner-state-preview class when other state properties remain", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "focus", "color", "blue");
+    removeStateStyle(el, "hover", "color");
+    expect(el.classList.contains("__tuner-state-preview")).toBe(true);
+  });
+});
+
+// ─── resetStateStyles ─────────────────────────────────────────────────
+
+describe("resetStateStyles", () => {
+  it("removes all overrides for an element+state", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "hover", "font-size", "20px");
+    resetStateStyles(el, "hover");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).not.toContain(":hover");
+  });
+
+  it("does not affect other states on the same element", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "focus", "color", "blue");
+    resetStateStyles(el, "hover");
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).not.toContain(":hover");
+    expect(tag!.textContent).toContain(":focus");
+    expect(tag!.textContent).toContain("color: blue !important");
+  });
+});
+
+// ─── diffState ────────────────────────────────────────────────────────
+
+describe("diffState", () => {
+  it("returns empty array when no state overrides exist", () => {
+    const el = makeEl();
+    expect(diffState(el, "hover")).toEqual([]);
+  });
+
+  it("returns state-specific changes as DiffEntry[]", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    applyStateStyle(el, "hover", "color", "red");
+    const changes = diffState(el, "hover");
+    expect(changes).toHaveLength(2);
+    const props = changes.map((c) => c.prop);
+    expect(props).toContain("font-size");
+    expect(props).toContain("color");
+  });
+
+  it("does not include changes from other states", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "focus", "color", "blue");
+    const hoverChanges = diffState(el, "hover");
+    expect(hoverChanges).toHaveLength(1);
+    expect(hoverChanges[0].to).toBe("red");
+  });
+});
+
+// ─── destroyStateStyles ───────────────────────────────────────────────
+
+describe("destroyStateStyles", () => {
+  it("removes the <style> tag from the DOM", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    expect(getStateStyleTag()).not.toBeNull();
+    destroyStateStyles();
+    expect(getStateStyleTag()).toBeNull();
+  });
+
+  it("removes __tuner-state-preview class from all elements", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    expect(el.classList.contains("__tuner-state-preview")).toBe(true);
+    destroyStateStyles();
+    expect(el.classList.contains("__tuner-state-preview")).toBe(false);
+  });
+
+  it("is idempotent", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    destroyStateStyles();
+    destroyStateStyles(); // should not throw
+    expect(getStateStyleTag()).toBeNull();
+  });
+});
