@@ -188,7 +188,7 @@ export const indicatorColor: Record<string, string> = {
 
 export type IndicatorType = "modified" | "none";
 
-export const labelIndicator: Record<string, { bg: string; text: string }> = {
+export const labelIndicator: Record<IndicatorType, { bg: string; text: string }> = {
   modified: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
   none: { bg: "transparent", text: "#404040" },
 };
@@ -198,6 +198,18 @@ export const labelHighlight = {
   borderRadius: 3,
   padding: "1px 4px",
 } as const;
+
+/** Returns inline style object for a label indicator highlight (or empty object for "none"). */
+export function indicatorStyle(type: IndicatorType | undefined): Record<string, unknown> {
+  if (!type || type === "none") return {};
+  const c = labelIndicator[type];
+  return { background: c.bg, color: c.text, ...labelHighlight };
+}
+
+/** Alt+click handler for reset — attach as onClick on label spans. */
+export function altClickReset(onReset?: () => void) {
+  return (e: { altKey: boolean; stopPropagation(): void }) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } };
+}
 
 // ─── Value Presets ──────────────────────────────────────────────
 

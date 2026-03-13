@@ -13,7 +13,7 @@ import { Slider } from "@/components/ui/slider";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import type { IndicatorType } from "./theme";
+import { type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
@@ -161,15 +161,9 @@ export function Section({
         >
           <span
             style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}
-            onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+            onClick={altClickReset(onReset)}
           >
-            <span style={{
-              ...(indicator && indicator !== "none" ? {
-                background: labelIndicator.modified.bg,
-                color: labelIndicator.modified.text,
-                ...labelHighlight,
-              } : {}),
-            }}>
+            <span style={indicatorStyle(indicator)}>
               {title}
             </span>
           </span>

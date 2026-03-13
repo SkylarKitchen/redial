@@ -39,7 +39,7 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { text, labelIndicator, labelHighlight, type IndicatorType } from "./theme";
+import { text, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
@@ -52,16 +52,13 @@ function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
   indicator?: IndicatorType;
   onReset?: () => void;
 }) {
-  const m = indicator != null && indicator !== "none";
   return (
     <div style={SUB_HEADER_ROW}>
       <span
         style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px" }}
-        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+        onClick={altClickReset(onReset)}
       >
-        <span style={{
-          ...(m ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
-        }}>
+        <span style={indicatorStyle(indicator)}>
           {label}
         </span>
       </span>
