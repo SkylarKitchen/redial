@@ -8,7 +8,7 @@
  */
 
 import { readFileSync, existsSync } from "fs";
-import { resolve, join } from "path";
+import { resolve, join, dirname, relative } from "path";
 import { TraceMap, originalPositionFor } from "@jridgewell/trace-mapping";
 
 // --- LRU Cache ---
@@ -115,13 +115,17 @@ export function trySourceMapResolution(
     const pos = originalPositionFor(map, { line, column });
     if (pos.source == null || pos.line == null) return null;
 
-    // pos.source is relative to the sourceRoot in the map.
-    // Resolve it to a project-relative path.
-    let file = pos.source;
+    let source = pos.source;
 
     // Strip webpack:/// or similar protocol prefixes
-    file = file.replace(/^webpack:\/\/\//, "");
-    file = file.replace(/^\.\/(\.\/)*/, "");
+    source = source.replace(/^webpack:\/\/\//, "");
+    source = source.replace(/^\.\/(\.\/)*/, "");
+
+    // Resolve source relative to the .map file's directory, then make
+    // it relative to projectRoot so the caller can resolve(projectRoot, file).
+    const mapDir = dirname(compiledCssPath);
+    const absoluteSource = resolve(mapDir, source);
+    const file = relative(projectRoot, absoluteSource);
 
     return { file, line: pos.line };
   } catch {

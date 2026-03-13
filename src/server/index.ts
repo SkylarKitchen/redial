@@ -9,6 +9,7 @@
  */
 
 import { handleCommit, type CommitChange } from "./commit";
+import { handleTailwindCommit, type TailwindChange } from "./commitTailwind";
 
 export async function POST(request: Request) {
   // Dev-mode guard
@@ -18,6 +19,21 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+
+    // Route Tailwind commits to dedicated handler
+    if (body.mode === "tailwind") {
+      const changes: TailwindChange[] = body.changes;
+      if (!Array.isArray(changes)) {
+        return Response.json(
+          { error: "expected { changes: [...] }" },
+          { status: 400 }
+        );
+      }
+      const result = await handleTailwindCommit(changes);
+      return Response.json(result);
+    }
+
+    // Default: CSS commit
     const changes: CommitChange[] = body.changes;
 
     if (!Array.isArray(changes)) {

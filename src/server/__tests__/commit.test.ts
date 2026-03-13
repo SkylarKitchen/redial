@@ -1361,3 +1361,79 @@ describe("handleCommit — var() preservation", () => {
     expect(content).toContain("background: var(--accent);");
   });
 });
+
+// --- Source map resolution in resolveSourceFile ---
+
+describe("resolveSourceFile — source map integration", () => {
+  it("still works without cssHref (existing behavior preserved)", async () => {
+    await writeFixture("src/components/Button.module.scss", ".btn { color: red; }");
+    const result = await resolveSourceFile(tempDir, "Button.module.scss");
+    expect(result).toBe(join(tempDir, "src/components/Button.module.scss"));
+  });
+
+  it("falls through to existing logic when cssHref map does not exist", async () => {
+    await writeFixture("src/Card.module.scss", ".card { padding: 16px; }");
+    const result = await resolveSourceFile(
+      tempDir,
+      "Card.module.scss",
+      "Card",
+      "/_next/static/css/nonexistent.css",
+    );
+    // Should still find the file via recursive search
+    expect(result).toBe(join(tempDir, "src/Card.module.scss"));
+  });
+
+  it("resolves via source map when cssHref has a valid .map file", async () => {
+    // Create the actual source file
+    await writeFixture("src/app/globals.css", "body { color: red; }");
+
+    // Create the compiled CSS + source map
+    await writeFixture(".next/static/css/app.css", "body { color: red; }");
+    await writeFixture(".next/static/css/app.css.map", JSON.stringify({
+      version: 3,
+      sources: ["../../../src/app/globals.css"],
+      names: [],
+      mappings: "AAAA",
+    }));
+
+    const result = await resolveSourceFile(
+      tempDir,
+      "some-wrong-name.css",   // would fail without source map
+      undefined,
+      "/_next/static/css/app.css",
+    );
+
+    expect(result).toBe(join(tempDir, "src/app/globals.css"));
+  });
+});
+
+// --- CommitChange type with cssHref ---
+
+describe("CommitChange — cssHref field", () => {
+  it("accepts and passes cssHref through handleCommit", async () => {
+    const filePath = "src/Button.module.scss";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  font-size: 16px;",
+      "}",
+    ].join("\n"));
+
+    // cssHref provided but no valid map — should fall through and still work
+    const result = await handleCommit(
+      [{
+        prop: "font-size",
+        from: "16px",
+        to: "18px",
+        sourceFile: filePath,
+        cssHref: "/_next/static/css/no-map.css",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("font-size: 18px");
+  });
+});

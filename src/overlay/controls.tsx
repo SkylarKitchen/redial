@@ -253,6 +253,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       className="tuner-focusable"
       style={{
         ...flashStyle,
+        width: 0,
         minWidth: 40,
         flex: 1,
         height: 28,
@@ -566,6 +567,7 @@ export function SelectRow({
           ))}
         </SelectContent>
       </Select>
+      {resetPopover.node}
     </div>
   );
 }
@@ -599,6 +601,7 @@ function SelectRowCustom({
   const [btnHovered, setBtnHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
+  const resetPopover = useResetPopover(indicator, onReset);
 
   // Click-outside to close
   useEffect(() => {
@@ -616,7 +619,8 @@ function SelectRowCustom({
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
-      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      ref={resetPopover.anchorRef}
+      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={selectLabelTitle}
       style={labelStyle(selectLabelColor)}
     >
@@ -729,6 +733,7 @@ function SelectRowCustom({
           </Command>
         )}
       </div>
+      {resetPopover.node}
     </div>
   );
 }
@@ -759,6 +764,7 @@ export function ColorRow({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
+  const resetPopover = useResetPopover(indicator, onReset);
 
   // Resolve var() references for display
   const varName = parseVarRef(value);
@@ -771,7 +777,8 @@ export function ColorRow({
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
-      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      ref={resetPopover.anchorRef}
+      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={colorLabelTitle}
       style={labelStyle(colorLabelColor)}
     >
@@ -846,6 +853,7 @@ export function ColorRow({
           />
         </div>
       )}
+      {resetPopover.node}
     </div>
   );
 }
@@ -917,10 +925,11 @@ export function NumberRow({
   computedProp?: string;
   computedElement?: Element;
 }) {
+  const resetPopover = useResetPopover(indicator, onReset);
   const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
-    <span title={labelTitle} style={labelStyle(labelColor)}>
+    <span ref={resetPopover.anchorRef} title={labelTitle} style={labelStyle(labelColor)}>
       {indicator && <StyleIndicator type={indicator} />}
       {label}
     </span>
@@ -928,7 +937,7 @@ export function NumberRow({
 
   return (
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
-      <LabelScrub value={value} onChange={onChange} step={10} min={0} max={2000} onAltClick={onReset}>
+      <LabelScrub value={value} onChange={onChange} step={10} min={0} max={2000} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
         {computedProp && computedElement ? (
           <ComputedTooltip property={computedProp} element={computedElement}>
             {labelContent}
@@ -941,6 +950,7 @@ export function NumberRow({
           <span style={{ fontSize: 9, color: text.label }}>{unit}</span>
         </div>
       </div>
+      {resetPopover.node}
     </div>
   );
 }
