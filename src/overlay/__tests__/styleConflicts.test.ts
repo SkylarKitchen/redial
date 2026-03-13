@@ -168,6 +168,7 @@ describe("no shorthand/non-shorthand CSS conflicts in inline styles", () => {
     "Footer.tsx",
     "Panel.tsx",
     "SizeSection.tsx",
+    "controls.tsx",
   ];
 
   for (const file of tsxFiles) {

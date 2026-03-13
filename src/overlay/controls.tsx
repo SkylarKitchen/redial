@@ -262,7 +262,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
         textAlign: "right" as const,
         flexShrink: 0,
         color: color.foreground,
-        ...(embedded ? { background: "transparent", border: "none" } : {
+        ...(embedded ? { backgroundColor: "transparent", border: "none" } : {
           backgroundColor: color.input,
           border: `1px solid ${color.border}`,
         }),
