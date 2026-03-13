@@ -22,7 +22,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -790,7 +790,7 @@ export function ColorRow({
           flexShrink: 0,
           background:
             displayColor === "transparent"
-              ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
+              ? checkerboard
               : displayColor,
           border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
         }}

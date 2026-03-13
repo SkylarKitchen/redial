@@ -12,7 +12,7 @@ import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
-import { color, blackAlpha, border, surface, shadow, font } from "./theme";
+import { color, blackAlpha, border, surface, shadow, font, checkerboard } from "./theme";
 import { ms } from "./timing";
 
 export interface BackgroundLayer {
@@ -93,7 +93,7 @@ function layerPreviewBg(layer: BackgroundLayer): string {
     const g = layer.gradient;
     return buildGradientCSS(g.type as "linear" | "radial" | "conic", g.angle, g.stops);
   }
-  return "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px";
+  return checkerboard;
 }
 
 // Small inline dropdown
