@@ -39,12 +39,12 @@ The docs promise: "If class scope: the class definition in the CSS/Tailwind file
 
 ### Acceptance criteria
 
-- [ ] Selecting `.className` scope pill → editing a property → saving writes to the correct `.className { }` block in the CSS module
-- [ ] The same property edited in `element` scope writes as an inline style / JSX-level change (existing behavior)
-- [ ] New test: `commit.test.ts` — class-scoped change finds and replaces inside `.className { }` block
-- [ ] New test: `commit.test.ts` — element-scoped change does NOT modify the class block
-- [ ] `npm run typecheck` passes
-- [ ] `npm test` passes
+- [x] Selecting `.className` scope pill → editing a property → saving writes to the correct `.className { }` block in the CSS module
+- [x] The same property edited in `element` scope writes as an inline style / JSX-level change (existing behavior)
+- [x] New test: `commit.test.ts` — class-scoped change finds and replaces inside `.className { }` block
+- [x] New test: `commit.test.ts` — element-scoped change does NOT modify the class block
+- [x] `npm run typecheck` passes
+- [x] `npm test` passes
 
 ---
 

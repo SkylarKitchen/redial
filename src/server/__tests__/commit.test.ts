@@ -403,6 +403,62 @@ describe("handleCommit", () => {
     expect(content).toContain("color: rgb(255, 0, 0)");
   });
 
+  it("class-scoped change writes to the correct class block, not other blocks with same property", async () => {
+    const filePath = "src/Page.module.scss";
+    await writeFixture(filePath, [
+      ".title {",
+      "  font-size: 32px;",
+      "  color: navy;",
+      "}",
+      "",
+      ".subtitle {",
+      "  font-size: 18px;",
+      "  color: gray;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{ prop: "font-size", from: "18px", to: "20px", sourceFile: filePath, className: "subtitle" }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // subtitle block updated
+    expect(content).toContain("font-size: 20px");
+    // title block preserved
+    expect(content).toContain("font-size: 32px");
+    // other properties in both blocks untouched
+    expect(content).toContain("color: navy");
+    expect(content).toContain("color: gray");
+  });
+
+  it("element-scoped change (no className) uses sourceLine, not class block", async () => {
+    const filePath = "src/Component.module.scss";
+    await writeFixture(filePath, [
+      ".wrapper {",
+      "  padding: 16px;",
+      "}",
+      "",
+      ".inner {",
+      "  padding: 8px;",
+      "}",
+    ].join("\n"));
+
+    // Element scope: no className provided, sourceLine points to .wrapper block
+    const result = await handleCommit(
+      [{ prop: "padding", from: "16px", to: "24px", sourceFile: filePath, sourceLine: 1 }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // .wrapper updated (via window search at sourceLine)
+    expect(content).toContain("padding: 24px");
+    // .inner preserved
+    expect(content).toContain("padding: 8px");
+  });
+
   it("uses className for class-scoped search to find correct block", async () => {
     const filePath = "src/Page.module.scss";
     await writeFixture(filePath, [

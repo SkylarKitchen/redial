@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { diff, reset, overrideCount } from "./apply";
 import { resolveSource, getModuleClassInfo } from "./sourcemap";
-import { resetClassStyles } from "./scope";
+import { resetClassStyles, getReadableName } from "./scope";
 import type { Scope } from "./scope";
 import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
@@ -152,7 +152,11 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         ...c,
         sourceFile: source?.file,
         sourceLine: source?.line,
-        className: moduleInfo?.className,
+        // Class scope → use the user-selected class (readable name) for Tier 2 search
+        // Element scope → omit className so commit.ts skips Tier 2
+        className: scope === "class" && activeClassName
+          ? (getReadableName(activeClassName) ?? moduleInfo?.className)
+          : undefined,
         componentName: moduleInfo?.componentName,
       };
     });
@@ -183,7 +187,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       setSaving(false);
       savingRef.current = false;
     }
-  }, [element, onSaved, showMessage]);
+  }, [element, onSaved, showMessage, scope, activeClassName]);
 
   const handleReset = useCallback(() => {
     reset(element);
