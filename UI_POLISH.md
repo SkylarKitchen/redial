@@ -30,7 +30,7 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [x] **Move `#d4956a` to theme.ts**: Added `color.primaryActive` token, replaced 2 hardcoded values in Overlay.tsx injected CSS.
 - [x] **Transition timing audit**: Replaced 7 hardcoded ms values across 5 files with timing tokens (normal, expand, slow, fast).
 - [x] **Monospace font audit**: Audited — all 90+ `fontFamily` usages already use `font.mono`. Two `ui-monospace` references in controls.tsx are intentional font-family preview styles. No violations.
-- [ ] **Border radius consistency**: Audit pill-shaped buttons (scope pills, keyword pills) for inconsistent border-radius values. Standardize on `4px` or add a `layout.pillRadius` token.
+- [x] **Border radius consistency**: Added `layout.pillRadius` (4px) token. Updated ScopePill (was 4, now token) and PILL_BUTTON (was 3, now 4 via token).
 - [ ] **Separator consistency**: Grep for any hardcoded `rgba` separator colors. All separators should use `border.subtle` from theme.ts.
 - [ ] **Icon opacity audit**: Check all lucide-react icon usages. Labels should use `text.label`, secondary icons `text.secondary`. Normalize any using raw opacity or hardcoded colors.
 
@@ -74,6 +74,9 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Border radius consistency
+Added `layout.pillRadius: 4` token to theme.ts. Updated `ScopePill` in Header.tsx (was hardcoded `4`) and `PILL_BUTTON` in panelStyles.ts (was `3`) to use the token. Both now consistently use `layout.pillRadius`.
 
 ### 2026-03-13 — Monospace font audit
 Audited all `fontFamily` usages across overlay files. All 90+ instances already use `font.mono` from theme.ts. Two `ui-monospace` strings in controls.tsx are intentional (font-family preview for selected font). No changes needed.
