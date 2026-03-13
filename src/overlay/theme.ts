@@ -119,6 +119,27 @@ export const bgAlpha = (a: number) => `rgba(255,255,255,${a})`;
 export const checkerboard =
   "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/8px 8px";
 
+// ─── Segmented Control Tokens ────────────────────────────────────
+// Canonical values for SegmentedControl, WebflowSegmentedControl,
+// ReverseButton, and all toggle-style button groups.
+
+export const segment = {
+  /** Container background */
+  bg: "#F0F0F0",
+  /** Active segment / toggle background */
+  activeBg: "#E5E5E5",
+  /** Hover background */
+  hoverBg: "#EBEBEB",
+  /** Container border radius */
+  radius: 4,
+  /** Segment inner border radius */
+  segmentRadius: 3,
+  /** Container padding (creates border effect) */
+  padding: 1,
+  /** Standard segment height */
+  height: 22,
+} as const;
+
 // ─── Layout Dimensions ──────────────────────────────────────────
 
 export const layout = {

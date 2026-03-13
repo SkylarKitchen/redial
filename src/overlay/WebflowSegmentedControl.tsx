@@ -6,7 +6,7 @@
  */
 
 import { useCallback } from "react";
-import { text } from "./theme";
+import { text, font, segment } from "./theme";
 
 export interface SegmentOption {
   value: string;
@@ -44,9 +44,9 @@ export function WebflowSegmentedControl({
         flex: 1,
         minWidth: 0,
         height: 24,
-        background: "#F0F0F0",
-        borderRadius: 4,
-        padding: 1,
+        background: segment.bg,
+        borderRadius: segment.radius,
+        padding: segment.padding,
         overflow: "hidden",
       }}
     >
@@ -65,12 +65,12 @@ export function WebflowSegmentedControl({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              height: 22,
-              borderRadius: 3,
+              height: segment.height,
+              borderRadius: segment.segmentRadius,
               border: "none",
               cursor: "pointer",
               padding: "0 8px",
-              background: isActive ? "#E5E5E5" : "transparent",
+              background: isActive ? segment.activeBg : "transparent",
               color: isActive ? text.primary : text.label,
               transition: "background 75ms, color 75ms",
               outline: "none",
@@ -91,8 +91,8 @@ export function WebflowSegmentedControl({
               <span
                 style={{
                   fontSize: 11.5,
-                  fontFamily: "Inter, system-ui, sans-serif",
-                  letterSpacing: "-0.115px",
+                  fontFamily: font.sans,
+                  letterSpacing: -0.115,
                   lineHeight: "16px",
                 }}
               >

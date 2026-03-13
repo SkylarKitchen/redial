@@ -7,33 +7,7 @@
  */
 
 import { useCallback } from "react";
-
-// ─── Tokens (matching Figma: Webflow ButtonGroup) ───────────────────
-
-const tokens = {
-  /** Container background */
-  bg: "#F0F0F0",
-  /** Active segment background */
-  activeBg: "#E5E5E5",
-  /** Default hover background */
-  hoverBg: "#EBEBEB",
-  /** Container border radius */
-  radius: 4,
-  /** Segment border radius (inside container) */
-  segmentRadius: 3,
-  /** Container padding — creates the border effect */
-  padding: 1,
-  /** Segment height */
-  segmentHeight: 22,
-  /** Text color for active segment */
-  activeText: "#131313",
-  /** Text color for inactive segment */
-  inactiveText: "#404040",
-  /** Font */
-  fontFamily: "Inter, system-ui, sans-serif",
-  fontSize: 11.5,
-  letterSpacing: -0.115,
-} as const;
+import { segment, text, font } from "./theme";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -79,9 +53,9 @@ export function SegmentedControl({
         alignItems: "flex-start",
         flex: 1,
         minWidth: 0,
-        background: tokens.bg,
-        borderRadius: tokens.radius,
-        padding: tokens.padding,
+        background: segment.bg,
+        borderRadius: segment.radius,
+        padding: segment.padding,
         overflow: "hidden",
       }}
     >
@@ -117,20 +91,20 @@ export function SegmentedControl({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              height: tokens.segmentHeight,
+              height: segment.height,
               width: segmentWidth,
               flex: segmentWidth ? undefined : 1,
               padding: "3px 8px",
-              borderRadius: tokens.segmentRadius,
+              borderRadius: segment.segmentRadius,
               border: "none",
               outline: "none",
               cursor: "pointer",
               overflow: "hidden",
-              background: isActive ? tokens.activeBg : "transparent",
-              color: isActive ? tokens.activeText : tokens.inactiveText,
-              fontFamily: tokens.fontFamily,
-              fontSize: tokens.fontSize,
-              letterSpacing: tokens.letterSpacing,
+              background: isActive ? segment.activeBg : "transparent",
+              color: isActive ? text.primary : text.secondary,
+              fontFamily: font.sans,
+              fontSize: 11.5,
+              letterSpacing: -0.115,
               fontWeight: 400,
               lineHeight: "16px",
               transition: "background 75ms ease",
