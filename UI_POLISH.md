@@ -218,7 +218,7 @@ Deeper sweep of section-specific editors that were missed by the Phase 1 top-lev
 - [x] **Internal z-index values outside token system** — Phase 1 cleaned up `2147483647` (max-int), but 14 components still use lower hardcoded z-index values (`100`, `200`, `10`, `1`, `2`) for internal stacking. Add `zIndex.internal` tiers to theme.ts (e.g. `zIndex.stickyHeader: 2`, `zIndex.dropdown: 100`, `zIndex.popover: 200`) to eliminate magic numbers. Target: `TransformEditor.tsx:148`, `layoutControls.tsx:225/384/586`, `BackgroundLayerList.tsx:235`, `FilterSliders.tsx:360`, `Footer.tsx:282`, `SpacingValuePopover.tsx:325`.
 - [x] **TransformEditor hover uses `primaryAlpha` instead of `surface.*`** — `TransformEditor.tsx:165` uses `primaryAlpha(0.2)` for dropdown item hover, violating the hover convention (`surface.hover` for light backgrounds). Also uses `surface.track` for border (line 145) instead of `border.input`. Target: lines 145, 165.
 - [x] **TextStyleRow dark-on-primary text** — `TextStyleRow.tsx:163` uses `rgba(255,255,255,0.6)` for active text color on primary background. This should use a token — add `color.primaryTextMuted` or use `darkToolbar.textMuted` if the semantic fits. Target: line 163.
-- [ ] **layoutControls dark dropdown hardcoded color** — `layoutControls.tsx:433` uses `#e8e8e8` for dark dropdown text. This doesn't match any theme token. Should use `darkToolbar.textMuted` or add an appropriate token. Target: line 433.
+- [x] **layoutControls dark dropdown hardcoded color** — `layoutControls.tsx:433` uses `#e8e8e8` for dark dropdown text. This doesn't match any theme token. Should use `darkToolbar.textMuted` or add an appropriate token. Target: line 433.
 - [ ] **BezierEditor/TransitionEditor canvas hardcoded values** — `BezierEditor.tsx:271` uses `rgba(0,0,0,0.04)` and `TransitionEditor.tsx:814/821` uses `rgba(0,0,0,0.03)` and `rgba(0,0,0,0.07)` for canvas fills and grid lines. These subtle background values should use `blackAlpha()` for consistency, even if the raw values are kept — it makes the intent clear and keeps the convention uniform. Target: `BezierEditor.tsx:271`, `TransitionEditor.tsx:814/821`.
 
 ---
@@ -261,3 +261,6 @@ Replaced `primaryAlpha(0.2)` dropdown hover with `surface.hover` (follows light-
 
 ### 2026-03-13 — TextStyleRow dark-on-primary text
 Added `color.primaryForegroundMuted: "rgba(255,255,255,0.6)"` token to theme.ts — pairs with existing `color.primaryForeground` for secondary text on blue primary backgrounds. Replaced hardcoded `rgba(255,255,255,0.6)` in TextStyleRow.tsx active item font-size display. Chose this over `darkToolbar.textMuted` (0.7 opacity, wrong semantic context).
+
+### 2026-03-13 — layoutControls dark dropdown hardcoded color
+Replaced `#e8e8e8` in `DarkMenuOption` with `darkToolbar.text` — these are primary menu labels on a `surface.darkMenu` (#363636) background. Used `darkToolbar.text` (full white) over `darkToolbar.textMuted` (0.7 opacity, too dim) since menu labels should be clearly legible. The visual difference from #e8e8e8 to full white on dark gray is negligible.
