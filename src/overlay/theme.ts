@@ -166,6 +166,8 @@ export const layout = {
   sliderHeight: 3,
   pickerCanvasWidth: 216,
   pickerCanvasHeight: 150,
+  /** Pill-shaped buttons (scope pills, keyword pills, toggle pills) */
+  pillRadius: 4,
 } as const;
 
 // ─── Shadows ────────────────────────────────────────────────────
