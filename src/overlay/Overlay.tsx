@@ -106,7 +106,7 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, [getScrollViewport]);
 
-  // Tab state: "common" (flat simplified view), "custom" (full WebflowPanel), or "prompt" (AI context copy)
+  // Tab state: "common" (Quick — flat simplified view), "custom" (Full — WebflowPanel), or "prompt" (AI — context copy)
   const [activeTab, setActiveTab] = useState<"common" | "custom" | "prompt">("common");
 
   // Session-wide state
