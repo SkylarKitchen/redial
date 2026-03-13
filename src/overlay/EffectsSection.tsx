@@ -268,19 +268,20 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   }, [transitions, handleTransitionsChange]);
 
   // ── Transition options menu items ────────────────────────────────────
-  const allTransitionsHidden = transitions.every(t => !t.visible);
+  const allTransitionsHidden = transitions.length > 0 && transitions.every(t => !t.visible);
   const transMenuItems: TransMenuItemDef[] = [
-    {
+    // Only show enable/disable toggle when there are transitions to toggle
+    ...(transitions.length > 0 ? [{
       label: allTransitionsHidden ? "Enable All" : "Disable All",
       action: () => {
         handleTransitionsChange(transitions.map(t => ({ ...t, visible: allTransitionsHidden })));
         setTransMenuAnchor(null);
       },
-    },
+    }] : []),
     {
       label: "Copy CSS",
       action: () => {
-        navigator.clipboard.writeText(`transition: ${transitionsToCSS(transitions)};`);
+        navigator.clipboard.writeText(`transition: ${transitionsToCSS(transitions)};`).catch(() => {});
         setTransMenuAnchor(null);
       },
     },
