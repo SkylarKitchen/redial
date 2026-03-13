@@ -561,17 +561,18 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
 // ─── ChildrenRow ────────────────────────────────────────────────────
 
 /** Children row: Don't wrap / Wrap segmented control + reverse button */
-export function ChildrenRow({ wrap, onWrapChange, indicator }: {
+export function ChildrenRow({ wrap, onWrapChange, indicator, onReset }: {
   wrap: string;
   onWrapChange: (v: string) => void;
   indicator?: IndicatorType;
+  onReset?: () => void;
 }) {
   const isWrap = wrap === "wrap" || wrap === "wrap-reverse";
   const isReverse = wrap === "wrap-reverse";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
-      <RowLabel label="Children" indicator={indicator} isSet={isWrap} />
+      <RowLabel label="Children" indicator={indicator} isSet={isWrap} onReset={onReset} />
       <SegmentedControl
         options={[
           { value: "nowrap", label: "Don\u2019t wrap" },

@@ -327,7 +327,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Children: Don't wrap / Wrap + reverse */}
-          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} indicator={ind("flex-wrap")} />
+          <ChildrenRow wrap={flexWrap} onWrapChange={handleFlexWrapChange} indicator={ind("flex-wrap")} onReset={() => resetCssStr("flex-wrap", setFlexWrap)} />
         </>
       )}
 
