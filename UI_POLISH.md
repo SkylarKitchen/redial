@@ -69,7 +69,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 - [x] **Hover state standardization** — 4 different hover patterns across components: `surface.hover`, `surface.active`, custom `rgba(255,255,255,...)` (dark theme), and no hover. Document the rules: `surface.hover` for light backgrounds, dark-theme tokens for dark backgrounds, no custom rgba.
 - [x] **Toolbar expanded animation timing** — `Toolbar.tsx:192` uses `duration: 0.15` (hardcoded seconds) for AnimatePresence exit. Should use timing token.
-- [ ] **SessionDrawer hardcoded timeout** — `SessionDrawer.tsx:47` uses `setTimeout(() => ..., 1500)` for "Copied!" message. Should use timing-based constant.
+- [x] **SessionDrawer hardcoded timeout** — `SessionDrawer.tsx:47` uses `setTimeout(() => ..., 1500)` for "Copied!" message. Should use timing-based constant.
 
 ---
 
@@ -217,3 +217,6 @@ Replaced 9 raw `rgba()` hover values in 6 files with semantic `surface.hover`/`s
 
 ### 2026-03-13 — Toolbar expanded animation timing
 Replaced hardcoded `duration: 0.15` in Toolbar.tsx AnimatePresence exit transition with `timing.expand / 1000` (150ms → same value, now governed by token system). Motion uses seconds, timing tokens use milliseconds.
+
+### 2026-03-13 — SessionDrawer hardcoded timeout
+Replaced 3 hardcoded values in SessionDrawer.tsx: copy auto-dismiss `1500` → `timing.dismissal` (1700ms), save auto-dismiss `2000` → `timing.dismissal`, and message animation `duration: 0.15` → `timing.expand / 1000`. All timing now governed by tokens.
