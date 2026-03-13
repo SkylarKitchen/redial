@@ -24,7 +24,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight } from "./theme";
+import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -72,7 +72,7 @@ const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
   const li = isModified ? labelIndicator.modified : labelIndicator.none;
   return {
     fontSize: 11,
-    width: 70,
+    width: layout.labelWidth,
     flexShrink: 0,
     textTransform: "capitalize",
     display: "inline-flex",
@@ -90,7 +90,7 @@ const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
 const rowStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 8,
+  gap: layout.controlGap,
   padding: "2px 12px",
 };
 
@@ -752,6 +752,7 @@ export function ColorRow({
   onContextMenu,
   computedProp,
   computedElement,
+  compact,
 }: {
   label: string;
   value: string;
@@ -764,6 +765,8 @@ export function ColorRow({
   computedProp?: string;
   /** Target element for computed tooltip */
   computedElement?: Element;
+  /** Compact mode: no horizontal padding, narrower label — for sub-layouts */
+  compact?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
@@ -777,22 +780,24 @@ export function ColorRow({
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
 
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const compactLabelOverrides: React.CSSProperties = compact ? { width: 44, padding: 0, paddingLeft: 1 } : {};
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={colorLabelTitle}
-      style={labelStyle(indicator)}
+      style={{ ...labelStyle(indicator), ...compactLabelOverrides }}
     >
       {label}
     </span>
   );
 
+  const compactRowOverrides: React.CSSProperties = compact ? { padding: "2px 0", gap: 4 } : {};
   return (
     <div
       onContextMenu={onContextMenu}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
-      style={{ ...rowStyle, position: "relative" }}
+      style={{ ...rowStyle, position: "relative", ...compactRowOverrides }}
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
