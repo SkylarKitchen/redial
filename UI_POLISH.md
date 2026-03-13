@@ -27,7 +27,7 @@ These items fix existing test failures and TypeScript errors. No polish work sho
 These are grep-and-fix passes that enforce the token system uniformly.
 
 ### Hardcoded Values
-- [ ] **Move `#d4956a` to theme.ts**: `Overlay.tsx:1420` and `:1446` hardcode `#d4956a` for slider thumb active state. Add `color.primaryActive` (or similar) to theme.ts and reference it in the injected CSS.
+- [x] **Move `#d4956a` to theme.ts**: Added `color.primaryActive` token, replaced 2 hardcoded values in Overlay.tsx injected CSS.
 - [ ] **Transition timing audit**: Grep for `transition:.*\d+ms` across all `.tsx` files outside `timing.ts`. Replace hardcoded ms values with timing tokens from `timing.ts`. Expected hotspots: Overlay.tsx injected CSS, some inline styles.
 - [ ] **Monospace font audit**: Verify all numeric value displays use `font.mono` from theme.ts. Grep for bare `monospace` or `ui-monospace` strings that aren't going through the token.
 - [ ] **Border radius consistency**: Audit pill-shaped buttons (scope pills, keyword pills) for inconsistent border-radius values. Standardize on `4px` or add a `layout.pillRadius` token.
@@ -74,6 +74,9 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Move #d4956a to theme.ts
+Added `color.primaryActive: "#d4956a"` token to theme.ts. Replaced 2 hardcoded hex values in Overlay.tsx injected CSS for webkit and moz slider thumb `:active` states.
 
 ### 2026-03-13 — Fix spacing zone base colors
 Changed `marginBase` and `paddingBase` in theme.ts from `primaryAlpha(0.06)` / `greenAlpha(0.06)` to `"transparent"`. Zones are invisible at rest, colored only on hover.
