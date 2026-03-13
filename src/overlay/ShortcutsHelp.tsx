@@ -19,6 +19,7 @@ const SHORTCUTS = [
       { keys: "\u2318Z", desc: "Undo" },
       { keys: "\u2318\u21e7Z", desc: "Redo" },
       { keys: "R", desc: "Reset element" },
+      { keys: "\u21e7R", desc: "Reset all elements" },
       { keys: "D (hold)", desc: "Diff peek" },
       { keys: "S", desc: "Cycle scope" },
     ],
@@ -41,6 +42,15 @@ const SHORTCUTS = [
       { keys: "/", desc: "Search properties" },
       { keys: "H", desc: "Toggle history drawer" },
       { keys: "M", desc: "Toggle box model overlay" },
+      { keys: "G", desc: "Toggle grid overlay" },
+    ],
+  },
+  {
+    category: "Navigation",
+    items: [
+      { keys: "1–8", desc: "Jump to section" },
+      { keys: "[ ]", desc: "Cycle sections" },
+      { keys: "T", desc: "Toggle Style / AI tab" },
     ],
   },
 ];

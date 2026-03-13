@@ -82,16 +82,44 @@ describe("keyboard shortcut key mapping", () => {
     r: "reset",
     d: "diff-peek",
     m: "toggle-box-model",
+    g: "toggle-grid-overlay",
+    t: "toggle-tab",
     "/": "open-search",
     "?": "shortcuts-help",
+    "[": "cycle-section-prev",
+    "]": "cycle-section-next",
     "`": "toggle-selecting",
     Escape: "close-or-deselect",
+  };
+
+  /** Shifted plain keys (no meta/ctrl) */
+  const SHIFTED_KEY_MAP: Record<string, string> = {
+    "Shift+R": "reset-all",
+  };
+
+  /** Number keys for section jumping */
+  const NUMBER_KEY_MAP: Record<string, string> = {
+    "1": "jump-to-Layout",
   };
 
   it.each(Object.entries(PLAIN_KEY_MAP))(
     "maps '%s' to %s",
     (key, action) => {
       expect(PLAIN_KEY_MAP[key]).toBe(action);
+    },
+  );
+
+  it.each(Object.entries(SHIFTED_KEY_MAP))(
+    "maps '%s' to %s",
+    (combo, action) => {
+      expect(SHIFTED_KEY_MAP[combo]).toBe(action);
+    },
+  );
+
+  it.each(Object.entries(NUMBER_KEY_MAP))(
+    "maps '%s' to %s",
+    (key, action) => {
+      expect(NUMBER_KEY_MAP[key]).toBe(action);
     },
   );
 
@@ -182,7 +210,7 @@ describe("shortcut priority", () => {
    * 8. Meta+K (command palette)
    * 9. Meta+F (search)
    * 10. Input focus guard (blocks remaining plain keys)
-   * 11. Plain keys: /, ?, Alt+Shift+S, s, r, m, `, Escape, d, arrows
+   * 11. Plain keys: /, ?, Alt+Shift+S, s, Shift+R, r, h, m, g, t, 1-8, [, ], `, Escape, d, arrows
    *
    * This test verifies that redo comes before undo in the priority list
    * and that Meta+Alt+C comes before Meta+C.

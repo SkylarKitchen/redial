@@ -329,6 +329,17 @@ export function Overlay() {
     });
   }, [selectedEl, announce]);
 
+  // --- Session-wide reset (must be before hotkey useEffect that references it) ---
+  const handleResetAll = useCallback(() => {
+    resetAll();
+    destroyClassStyles();
+    destroyStateStyles();
+    if (selectedEl) {
+      setInferResult(infer(selectedEl));
+      setPanelKey((k) => k + 1);
+    }
+  }, [selectedEl]);
+
   // --- Hotkey: backtick toggles selection ---
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
   useEffect(() => {
@@ -666,7 +677,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activeTab, expandedSection, handleResetAll]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -751,16 +762,6 @@ export function Overlay() {
     }
   }, [selectedEl]);
 
-  // --- Session-wide reset ---
-  const handleResetAll = useCallback(() => {
-    resetAll();
-    destroyClassStyles();
-    destroyStateStyles();
-    if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-    }
-  }, [selectedEl]);
 
   const handleToggleSession = useCallback(() => {
     setSessionOpen((s) => !s);
@@ -1606,6 +1607,8 @@ export function Overlay() {
                     scope={scope}
                     activeClassName={activeClassName}
                     activeState={activeState}
+                    expandedSection={expandedSection}
+                    onExpandSection={setExpandedSection}
                   />
                 ) : (
                   <PromptPanel
