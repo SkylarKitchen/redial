@@ -240,7 +240,7 @@ export const TypographySection = memo(function TypographySection({
           step={1}
           conversionHint={fontSizeHint}
         />
-        <span className="text-[11px] text-[var(--muted-foreground)] shrink-0 inline-flex items-center gap-[3px]">
+        <span style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}>
           {ind("line-height") !== "none" && <StyleIndicator type={ind("line-height")} />}
           Height
         </span>
@@ -259,31 +259,33 @@ export const TypographySection = memo(function TypographySection({
       <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} onReset={() => { resetProp(element, "color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
 
       {/* Align */}
-      <div className="flex items-center gap-1.5 px-3 py-1">
-        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Align</span>
+      <div style={ROW}>
+        <span style={LABEL}>Align</span>
         <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
       </div>
 
       {/* Style — Italicize + Decoration side by side with sub-labels */}
-      <div className="flex items-start gap-1.5 px-3 py-1">
-        <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Style</span>
-        <div className="flex flex-col items-center gap-[3px]">
+      <div style={{ ...ROW, alignItems: "flex-start" }}>
+        <span style={{ ...LABEL, paddingTop: 3 }}>Style</span>
+        <div className="flex flex-col items-center" style={{ gap: 3 }}>
           <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
-          <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Italicize</span>
+          <span style={HINT}>Italicize</span>
         </div>
-        <div className="flex flex-col items-center gap-[3px] flex-1">
+        <div className="flex flex-col items-center flex-1" style={{ gap: 3 }}>
           <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
-          <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Decoration</span>
+          <span style={HINT}>Decoration</span>
         </div>
       </div>
 
       {/* More type options toggle */}
-      <div className="px-3 py-1">
+      <div style={{ padding: "4px 12px" }}>
         <button
           onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
-          className="w-full flex items-center justify-center gap-1.5 py-1.5 cursor-pointer bg-[var(--accent)] border border-[var(--border)] rounded text-[var(--muted-foreground)] text-[11px] font-[system-ui,sans-serif] outline-none transition-colors hover:bg-[var(--muted)]"
+          style={EXPAND_BUTTON}
+          onMouseEnter={(e) => { e.currentTarget.style.background = surface.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = surface.subtle; }}
         >
-          <ChevronRight size={10} strokeWidth={2} className="transition-transform" style={{ transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
+          <ChevronRight size={10} strokeWidth={2} style={{ transition: `transform ${ms("fast")} ease`, transform: showTypoAdvanced ? "rotate(90deg)" : "rotate(0deg)" }} />
           More type options
         </button>
       </div>
@@ -291,7 +293,7 @@ export const TypographySection = memo(function TypographySection({
       {showTypoAdvanced && (
         <>
           {/* Letter spacing + Text indent — compact row */}
-          <div className="flex gap-1 px-3 py-1">
+          <div style={{ ...ROW, gap: 4 }}>
             <div className="flex-1">
               <TypoValueCell
                 value={letterSpacing}
@@ -303,7 +305,7 @@ export const TypographySection = memo(function TypographySection({
                 keyword={letterSpacing === 0 ? "Normal" : null}
                 conversionHint={letterSpacingHint}
               />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Letter spacing</div>
+              <div style={HINT}>Letter spacing</div>
             </div>
             <div className="flex-1">
               <TypoValueCell
@@ -315,12 +317,12 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 conversionHint={textIndentHint}
               />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Text indent</div>
+              <div style={HINT}>Text indent</div>
             </div>
           </div>
 
           {/* Columns + Column gap — compact row */}
-          <div className="flex gap-1 px-3 py-1">
+          <div style={{ ...ROW, gap: 4 }}>
             <div className="flex-1">
               <TypoValueCell
                 value={columnCount}
@@ -329,7 +331,7 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 keyword={columnCount <= 1 ? "Auto" : null}
               />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Columns</div>
+              <div style={HINT}>Columns</div>
             </div>
             {columnCount > 1 && (
               <div className="flex-1">
@@ -343,13 +345,13 @@ export const TypographySection = memo(function TypographySection({
                   keyword={columnGap === 0 ? "Normal" : null}
                   conversionHint={typoColGapHint}
                 />
-                <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Column gap</div>
+                <div style={HINT}>Column gap</div>
               </div>
             )}
           </div>
 
           {/* Word spacing + Hyphens — compact row */}
-          <div className="flex items-start gap-1 px-3 py-1">
+          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
             <div className="flex-1">
               <TypoValueCell
                 value={wordSpacing}
@@ -358,36 +360,36 @@ export const TypographySection = memo(function TypographySection({
                 step={0.5}
                 keyword={wordSpacing === 0 ? "Normal" : null}
               />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Word spacing</div>
+              <div style={HINT}>Word spacing</div>
             </div>
             <div className="flex-1">
               <MiniDropdown value={hyphens} options={HYPHENS_OPTIONS} onChange={handleHyphensChange} />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Hyphens</div>
+              <div style={HINT}>Hyphens</div>
             </div>
           </div>
 
           {/* Capitalize + Direction — toggle groups with labels below */}
-          <div className="flex gap-1.5 px-3 py-1.5 items-start">
-            <div className="flex flex-col items-center gap-[3px] flex-1">
+          <div style={{ ...ROW, alignItems: "flex-start" }}>
+            <div className="flex flex-col items-center flex-1" style={{ gap: 3 }}>
               <IconButtonGroup options={CAPITALIZE_OPTIONS} value={textTransform} onChange={handleTextTransformChange} />
-              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Case</span>
+              <span style={HINT}>Case</span>
             </div>
-            <div className="flex flex-col items-center gap-[3px]">
+            <div className="flex flex-col items-center" style={{ gap: 3 }}>
               <IconButtonGroup options={DIRECTION_OPTIONS} value={direction} onChange={handleDirectionIconChange} />
-              <span className="text-[9px] text-[rgba(0,0,0,0.25)]">Direction</span>
+              <span style={HINT}>Direction</span>
             </div>
           </div>
 
           {/* Breaking — Word + Line side by side */}
-          <div className="flex items-start gap-1 px-3 py-1">
-            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Breaking</span>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+            <span style={{ ...LABEL, paddingTop: 3 }}>Breaking</span>
             <div className="flex-1">
               <MiniDropdown value={wordBreak} options={WORD_BREAK_OPTIONS} onChange={handleWordBreakChange} />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Word</div>
+              <div style={HINT}>Word</div>
             </div>
             <div className="flex-1">
               <MiniDropdown value={lineBreak} options={LINE_BREAK_OPTIONS} onChange={handleLineBreakChange} />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Line</div>
+              <div style={HINT}>Line</div>
             </div>
           </div>
 
@@ -395,20 +397,18 @@ export const TypographySection = memo(function TypographySection({
           <SelectRow label="Wrap" value={whiteSpace} options={WHITE_SPACE_OPTIONS} onChange={handleWhiteSpaceChange} onContextMenu={ctxMenu("white-space", whiteSpace)} computedProp="white-space" computedElement={element} onReset={() => resetCssStr("white-space", setWhiteSpace)} />
 
           {/* Truncate — Clip / Ellipsis segmented toggle */}
-          <div className="flex items-center gap-1.5 px-3 py-1">
-            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Truncate</span>
-            <div className="flex flex-1 rounded overflow-hidden border border-[rgba(0,0,0,0.12)]">
-              {(["clip", "ellipsis"] as const).map((opt) => (
+          <div style={ROW}>
+            <span style={LABEL}>Truncate</span>
+            <div style={SEGMENT_GROUP}>
+              {(["clip", "ellipsis"] as const).map((opt, i) => (
                 <button
                   key={opt}
                   onClick={() => handleTextOverflowChange(opt)}
-                  className={cn(
-                    "flex-1 h-7 cursor-pointer border-none text-[11px] font-[system-ui,sans-serif] outline-none transition-colors capitalize",
-                    textOverflow === opt
-                      ? "bg-[rgba(0,0,0,0.08)] text-[rgba(0,0,0,0.8)] font-medium"
-                      : "bg-transparent text-[rgba(0,0,0,0.35)] font-normal",
-                  )}
-                  style={opt === "clip" ? { borderRight: "1px solid rgba(0,0,0,0.12)" } : undefined}
+                  style={{
+                    ...segmentButton(textOverflow === opt),
+                    textTransform: "capitalize",
+                    ...(i === 0 ? { borderRight: `1px solid ${border.default}` } : {}),
+                  }}
                 >
                   {opt === "clip" ? "Clip" : "Ellipsis"}
                 </button>

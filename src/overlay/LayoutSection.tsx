@@ -21,7 +21,6 @@ import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow, GridTrackRow,
 import { LAYOUT_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS } from "./panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
 import { Link, Grid3x3 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "./theme";
 import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "./panelStyles";
 
@@ -457,7 +456,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             />
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif", flexShrink: 0 }}>X</span>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
                 <MiniDropdown
                   value={justifyItems}
                   options={GRID_ALIGN_OPTIONS}
@@ -465,7 +464,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif", flexShrink: 0 }}>Y</span>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>Y</span>
                 <MiniDropdown
                   value={gridAlignItems}
                   options={GRID_ALIGN_OPTIONS}
@@ -477,8 +476,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
           {/* Gap: slider + lock */}
           {gapLocked ? (
-            <div className="flex items-center">
-              <div className="flex-1">
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ flex: 1 }}>
                 <SliderRow
                   label="Gap"
                   value={gap}
@@ -508,16 +507,29 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               <button
                 onClick={handleGapLockToggle}
                 title="Unlock row/column gap"
-                className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
-                style={{ color: text.disabled }}
+                style={{
+                  width: 20,
+                  height: 20,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 10,
+                  marginRight: 8,
+                  borderRadius: 3,
+                  flexShrink: 0,
+                  color: text.disabled,
+                }}
               >
                 <Link size={12} strokeWidth={1.5} />
               </button>
             </div>
           ) : (
             <>
-              <div className="flex items-center">
-                <div className="flex-1">
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ flex: 1 }}>
                   <SliderRow
                     label="Row Gap"
                     value={rowGap}
@@ -546,8 +558,21 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 <button
                   onClick={handleGapLockToggle}
                   title="Lock gap"
-                  className="w-5 h-5 flex items-center justify-center bg-transparent border-none cursor-pointer text-[10px] mr-2 rounded-[3px] shrink-0"
-                  style={{ color: text.disabled }}
+                  style={{
+                    width: 20,
+                    height: 20,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 10,
+                    marginRight: 8,
+                    borderRadius: 3,
+                    flexShrink: 0,
+                    color: text.disabled,
+                  }}
                 >
                   <Link size={12} strokeWidth={1.5} />
                 </button>
@@ -590,18 +615,18 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           {/* Grow / Shrink / Basis — compact inline inputs, flex children only */}
           {parentIsFlex && (
             <>
-              <div className="flex gap-1.5 py-0.5 px-3">
-                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+              <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
+                <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexGrow} onChange={handleFlexGrowChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-grow", setFlexGrow)}>
-                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                    <span style={COMPACT_INPUT_LABEL}>
                       {ind("flex-grow") !== "none" && <StyleIndicator type={ind("flex-grow")} />}Grow
                     </span>
                   </LabelScrub>
                   <ValueInput embedded value={flexGrow} onChange={handleFlexGrowChange} onAltClick={() => resetCss("flex-grow", setFlexGrow)} />
                 </div>
-                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexShrink} onChange={handleFlexShrinkChange} step={1} min={0} max={10} onAltClick={() => resetCss("flex-shrink", setFlexShrink)}>
-                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                    <span style={COMPACT_INPUT_LABEL}>
                       {ind("flex-shrink") !== "none" && <StyleIndicator type={ind("flex-shrink")} />}Shrink
                     </span>
                   </LabelScrub>
@@ -609,15 +634,15 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 </div>
               </div>
 
-              <div className="flex gap-1.5 py-0.5 px-3">
-                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+              <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
+                <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
-                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                    <span style={COMPACT_INPUT_LABEL}>
                       {ind("flex-basis") !== "none" && <StyleIndicator type={ind("flex-basis")} />}Basis
                     </span>
                   </LabelScrub>
                   <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />
-                  <div className="shrink-0 pr-[3px]">
+                  <div style={{ flexShrink: 0, paddingRight: 3 }}>
                     <UnitSelector
                       value={flexBasisUnit}
                       options={LAYOUT_UNITS}
@@ -633,9 +658,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     />
                   </div>
                 </div>
-                <div className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded">
+                <div style={COMPACT_INPUT}>
                   <LabelScrub value={flexOrder} onChange={handleFlexOrderChange} step={1} min={-99} max={99} onAltClick={() => resetCss("order", setFlexOrder)}>
-                    <span className="px-1.5 text-[10px] text-[var(--muted-foreground)] shrink-0 whitespace-nowrap inline-flex items-center gap-[3px]">
+                    <span style={COMPACT_INPUT_LABEL}>
                       {ind("order") !== "none" && <StyleIndicator type={ind("order")} />}Order
                     </span>
                   </LabelScrub>
