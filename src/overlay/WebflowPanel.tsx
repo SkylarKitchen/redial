@@ -17,6 +17,7 @@ import { parseNum } from "./cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "./panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";
 import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
+import { SectionMemoryProvider } from "./controls";
 
 import { LayoutSection } from "./LayoutSection";
 import { SpacingSection } from "./SpacingSection";
@@ -162,14 +163,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     onToggle: handleSectionToggle,
   } : {};
 
-  /** Section memory props — remembers open/closed across element selections */
-  const memoryProps = (name: string) => sectionMemory && onSectionMemoryChange ? {
-    memoryOpen: sectionMemory[name],
-    onMemoryToggle: (open: boolean) => onSectionMemoryChange(prev => ({ ...prev, [name]: open })),
-  } : {};
-
   // ── Render ──
   return (
+    <SectionMemoryProvider
+      memory={sectionMemory ?? {}}
+      onUpdate={(name, open) => onSectionMemoryChange?.(prev => ({ ...prev, [name]: open }))}
+    >
     <div className="font-sans">
       {noResults && (
         <div className="text-center text-[rgba(0,0,0,0.25)] px-5 py-10 text-xs">
@@ -270,5 +269,6 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
         />
       )}
     </div>
+    </SectionMemoryProvider>
   );
 }
