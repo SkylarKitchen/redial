@@ -262,6 +262,7 @@ describe("state validation — VALID_STATES allowlist", () => {
   it("removeStateStyle silently rejects an invalid state", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
+    flushScheduledRebuild();
     // Attempt to remove with invalid state — should be a no-op
     removeStateStyle(el, "} .evil { color: red", "color");
     const tag = getStateStyleTag();
@@ -271,6 +272,7 @@ describe("state validation — VALID_STATES allowlist", () => {
   it("valid states like focus-within and last-child are accepted", () => {
     const el = makeEl();
     applyStateStyle(el, "focus-within", "outline", "2px solid blue");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag!.textContent).toContain(":focus-within");
     expect(tag!.textContent).toContain("outline: 2px solid blue !important");
