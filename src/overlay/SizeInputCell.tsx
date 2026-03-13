@@ -9,15 +9,15 @@
  *
  * Modified values get blue highlighting (label + cell background).
  * LabelScrub wraps the label for drag-to-scrub in numeric mode.
+ *
+ * All styles use inline React styles referencing theme.ts tokens.
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { cn } from "@/lib/utils";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash } from "./controls";
-import { ms } from "./timing";
-import { color, text, border, surface, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";
 import { evaluateMathExpr } from "./inputMath";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -160,15 +160,16 @@ export function SizeInputCell({
   const isKeyword = keyword !== null;
 
   return (
-    <div className="flex flex-1 flex-col gap-0.5">
+    <div style={{ display: "flex", flex: 1, flexDirection: "column", gap: 2 }}>
     <div
       ref={cellRef}
-      className="flex items-center"
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       style={{
+        display: "flex",
+        alignItems: "center",
         height: 28,
         borderRadius: 4,
-        border: `1px solid ${blackAlpha(0.07)}`,
+        border: `1px solid ${border.default}`,
         background: surface.subtle,
       }}
     >
@@ -176,13 +177,18 @@ export function SizeInputCell({
       {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4 }} title="Modified — Option+Click to reset" />}
       {/* Label */}
       <div
-        className="px-1.5 text-[10px] font-[system-ui,sans-serif] shrink-0 whitespace-nowrap leading-[28px]"
         style={{
+          padding: "0 6px",
+          fontSize: 10,
+          fontFamily: font.sans,
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+          lineHeight: "28px",
           color: text.disabled,
         }}
       >
         {isKeyword || isVariable ? (
-          <span className="cursor-default">{label}</span>
+          <span style={{ cursor: "default" }}>{label}</span>
         ) : (
           <LabelScrub
             value={value}
@@ -197,14 +203,13 @@ export function SizeInputCell({
       </div>
 
       {/* Value area */}
-      <div className="flex flex-1 items-center justify-end pr-0.5 min-w-0 rounded-sm" style={flashStyle}>
+      <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "flex-end", paddingRight: 2, minWidth: 0, borderRadius: 2, ...flashStyle }}>
         {isKeyword ? (
           <span
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onKeywordChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
-            className="text-[10px] font-mono capitalize pr-1 cursor-text outline-none"
-            style={{ color: text.label }}
+            style={{ fontSize: 10, fontFamily: font.mono, textTransform: "capitalize", paddingRight: 4, cursor: "text", outline: "none", color: text.label }}
           >
             {keyword}
           </span>
@@ -214,13 +219,13 @@ export function SizeInputCell({
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onCssVarChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
             title={`${cssVar}: ${cssVarResolved ?? ""}`}
-            className="flex items-center gap-1 text-[10px] font-mono pr-1 cursor-text outline-none overflow-hidden min-w-0"
+            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontFamily: font.mono, paddingRight: 4, cursor: "text", outline: "none", overflow: "hidden", minWidth: 0 }}
           >
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: color.primary }}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: color.primary }}>
               {cssVar!.replace(/^--/, "")}
             </span>
             {cssVarResolved && (
-              <span className="shrink-0" style={{ color: text.hint }}>
+              <span style={{ flexShrink: 0, color: text.hint }}>
                 {parseFloat(cssVarResolved) || cssVarResolved}
               </span>
             )}
@@ -235,16 +240,25 @@ export function SizeInputCell({
             onKeyDown={handleKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
-            className="w-9 border rounded-sm text-[10px] font-mono text-right px-[3px] py-px outline-none"
-            style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5), color: text.secondary }}
+            style={{
+              width: 36,
+              border: `1px solid ${primaryAlpha(0.5)}`,
+              borderRadius: 2,
+              fontSize: 10,
+              fontFamily: font.mono,
+              textAlign: "right",
+              padding: "1px 3px",
+              outline: "none",
+              background: surface.active,
+              color: text.secondary,
+            }}
           />
         ) : (
           <span
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-            className="text-[10px] font-mono cursor-text pr-1 outline-none min-w-[16px] text-right"
-            style={{ color: value !== 0 ? text.label : text.disabled }}
+            style={{ fontSize: 10, fontFamily: font.mono, cursor: "text", paddingRight: 4, outline: "none", minWidth: 16, textAlign: "right", color: value !== 0 ? text.label : text.disabled }}
           >
             {value}
           </span>
@@ -252,7 +266,7 @@ export function SizeInputCell({
       </div>
 
       {/* Unit / keyword toggle */}
-      <div style={{ borderLeft: `1px solid ${blackAlpha(0.07)}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
+      <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
         <UnitSelector
           value={isVariable ? "VAR" : isKeyword ? "–" : unit}
           options={units}

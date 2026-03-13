@@ -35,12 +35,23 @@ const SPACING_OPTIONS = [
   { value: "space-evenly", label: "Evenly" },
 ] as const;
 
-/** Map a justify/align value to its 0/1/2 column/row index */
-function toIndex(value: string): number {
-  if (value === "flex-start" || value === "start") return 0;
-  if (value === "center") return 1;
-  if (value === "flex-end" || value === "end") return 2;
-  return -1; // spacing value — no cell selected
+/** Map a justify value to its active column indices */
+export function toColIndices(value: string): number[] {
+  if (value === "flex-start" || value === "start") return [0];
+  if (value === "center") return [1];
+  if (value === "flex-end" || value === "end") return [2];
+  if (value === "space-between" || value === "space-around" || value === "space-evenly")
+    return [0, 1, 2];
+  return [];
+}
+
+/** Map an align value to its active row indices */
+export function toRowIndices(value: string): number[] {
+  if (value === "flex-start" || value === "start") return [0];
+  if (value === "center") return [1];
+  if (value === "flex-end" || value === "end") return [2];
+  if (value === "stretch") return [0, 1, 2];
+  return []; // baseline, unknown — no grid representation
 }
 
 /** SVG arrow pointing in one of 8 directions */
@@ -78,9 +89,8 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
 
   const stretchX = justify === "stretch";
   const stretchY = align === "stretch";
-  const activeCol = toIndex(justify);
-  const activeRow = toIndex(align);
-  const isSpacingActive = SPACING_OPTIONS.some((o) => o.value === justify);
+  const activeCols = toColIndices(justify);
+  const activeRows = toRowIndices(align);
 
   const handleCellClick = useCallback(
     (col: number, row: number) => {
@@ -109,15 +119,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
         {DIRECTIONS.flatMap((row, r) =>
           row.map((dir, c) => {
             const key = `${r}-${c}`;
-            const isActive =
-              !isSpacingActive &&
-              (stretchX && stretchY
-                ? true
-                : stretchX
-                  ? r === activeRow
-                  : stretchY
-                    ? c === activeCol
-                    : c === activeCol && r === activeRow);
+            const isActive = activeCols.includes(c) && activeRows.includes(r);
             const isHovered = hoveredCell === key;
             const isCenter = r === 1 && c === 1;
             const hasStretch = stretchX || stretchY;

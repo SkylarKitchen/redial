@@ -7,14 +7,17 @@
  * The toIndex() function returns -1 and the isSpacingActive guard blanks
  * the entire grid for spacing values.
  *
- * Expected behaviour:
- * | X value     | Y value     | Highlighted cells |
- * |-------------|-------------|-------------------|
- * | positional  | positional  | 1 cell            |
- * | spacing     | positional  | 3 cells (full row)|
- * | positional  | stretch     | 3 cells (full col)|
- * | spacing     | stretch     | 9 cells (all)     |
- * | any         | baseline    | 0 cells           |
+ * Expected behaviour (grid arrows only, not counting center indicator):
+ * | X value     | Y value     | Active arrows |
+ * |-------------|-------------|---------------|
+ * | positional  | positional  | 1 cell        |
+ * | spacing     | positional  | 3 cells (row) |
+ * | positional  | stretch     | 3 cells (col) |
+ * | spacing     | stretch     | 9 cells (all) |
+ * | any         | baseline    | 0 cells       |
+ *
+ * Note: The center cell renders a stretch bar (color.primary) when
+ * align="stretch", adding +1 to the raw primary-color count.
  */
 import { describe, it, expect, vi } from "vitest";
 import { createElement } from "react";
@@ -31,9 +34,7 @@ function render(justify: string, align: string) {
 }
 
 /** Count how many times the primary colour appears as an active highlight */
-function countActive(html: string): number {
-  // The primary colour is applied as `color:<hex>` on arrow cells
-  // and as `background:<hex>` on the center dot.
+function countPrimary(html: string): number {
   const re = new RegExp(color.primary.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
   return (html.match(re) || []).length;
 }
@@ -69,57 +70,52 @@ describe("toRowIndices", () => {
 
 describe("AlignBox grid highlights", () => {
   it("positional × positional → 1 active cell", () => {
-    const html = render("flex-start", "flex-start");
-    // 1 arrow + possibly the center dot if it matches, but only 1 arrow should be primary
-    // The top-left arrow gets primary color. Center dot also gets primary if (0,0) intersects center (1,1) — it doesn't.
-    // So exactly 1 occurrence of primary on the arrow.
-    expect(countActive(html)).toBe(1);
+    // flex-start × flex-start: only top-left arrow is primary
+    expect(countPrimary(render("flex-start", "flex-start"))).toBe(1);
   });
 
-  it("center × center → center dot is primary", () => {
-    const html = render("center", "center");
-    // The center cell (1,1) renders a dot with background: primary
-    expect(html).toContain(color.primary);
+  it("center × center → center dot is primary (1 cell)", () => {
+    // Center cell renders dot with primary background when active
+    expect(countPrimary(render("center", "center"))).toBe(1);
   });
 
   it("BUG REPRO: space-between × center → 3 active cells (full row)", () => {
-    const html = render("space-between", "center");
-    expect(countActive(html)).toBe(3);
+    // activeCols=[0,1,2], activeRows=[1] → left arrow + center dot + right arrow
+    expect(countPrimary(render("space-between", "center"))).toBe(3);
   });
 
-  it("space-around × flex-start → 3 active cells (full row)", () => {
-    const html = render("space-around", "flex-start");
-    expect(countActive(html)).toBe(3);
+  it("space-around × flex-start → 3 active cells (top row)", () => {
+    // activeCols=[0,1,2], activeRows=[0] → 3 arrows in top row
+    expect(countPrimary(render("space-around", "flex-start"))).toBe(3);
   });
 
-  it("space-evenly × flex-end → 3 active cells (full row)", () => {
-    const html = render("space-evenly", "flex-end");
-    expect(countActive(html)).toBe(3);
+  it("space-evenly × flex-end → 3 active cells (bottom row)", () => {
+    expect(countPrimary(render("space-evenly", "flex-end"))).toBe(3);
   });
 
-  it("flex-start × stretch → 3 active cells (full column)", () => {
-    const html = render("flex-start", "stretch");
-    expect(countActive(html)).toBe(3);
+  it("flex-start × stretch → 3 arrows + 1 stretch bar = 4 primary occurrences", () => {
+    // activeCols=[0], activeRows=[0,1,2] → 3 arrows in left column
+    // + center renders stretch bar (color.primary) regardless of isActive
+    expect(countPrimary(render("flex-start", "stretch"))).toBe(4);
   });
 
-  it("center × stretch → 3 active cells (full column)", () => {
-    const html = render("center", "stretch");
-    expect(countActive(html)).toBe(3);
+  it("center × stretch → 2 arrows + 1 stretch bar = 3 primary occurrences", () => {
+    // activeCols=[1], activeRows=[0,1,2] → top-center & bottom-center arrows
+    // Center cell is handled as stretch bar, not arrow
+    expect(countPrimary(render("center", "stretch"))).toBe(3);
   });
 
-  it("space-between × stretch → 9 active cells (entire grid)", () => {
-    const html = render("space-between", "stretch");
-    expect(countActive(html)).toBe(9);
+  it("space-between × stretch → 8 arrows + 1 stretch bar = 9 primary occurrences", () => {
+    // activeCols=[0,1,2], activeRows=[0,1,2] → all 8 non-center arrows active
+    // + center stretch bar
+    expect(countPrimary(render("space-between", "stretch"))).toBe(9);
   });
 
-  it("center × baseline → 0 active cells", () => {
-    const html = render("center", "baseline");
-    // baseline has no grid representation — nothing should be primary
-    expect(countActive(html)).toBe(0);
+  it("center × baseline → 0 active cells (no grid representation)", () => {
+    expect(countPrimary(render("center", "baseline"))).toBe(0);
   });
 
   it("space-between × baseline → 0 active cells", () => {
-    const html = render("space-between", "baseline");
-    expect(countActive(html)).toBe(0);
+    expect(countPrimary(render("space-between", "baseline"))).toBe(0);
   });
 });

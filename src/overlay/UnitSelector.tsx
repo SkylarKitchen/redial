@@ -5,13 +5,12 @@
  * Closes on outside click. Keyboard navigation via useDropdownKeyboard.
  * Optional conversion tooltip shows "16px -> 1em (base: 16px)" after unit changes.
  *
- * Uses Tailwind classes instead of inline styles. Keeps custom dropdown
- * structure for special options, variable options, and dividers.
+ * All styles use inline React styles referencing theme.ts tokens.
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
-import { cn } from "@/lib/utils";
+import { color, text, border, surface, font, shadow, primaryAlpha } from "./theme";
 
 export interface SpecialOption {
   value: string;
@@ -62,6 +61,8 @@ function formatHint(h: ConversionHint): string {
 
 export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint, variableOptions, onVariableSelect, embedded }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [triggerHovered, setTriggerHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const id = useId();
 
@@ -101,6 +102,11 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
     };
   }, []);
+
+  // Reset hover when dropdown closes
+  useEffect(() => {
+    if (!open) setHoveredIdx(null);
+  }, [open]);
 
   // Build a flat list of all items for keyboard navigation
   const allItems = useMemo(() => {
@@ -163,11 +169,20 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
 
   const hasVariables = variableOptions && variableOptions.length > 0;
 
+  // Compute trigger styles from theme tokens
+  const triggerBg = open ? primaryAlpha(0.25) : embedded ? "transparent" : color.input;
+  const triggerColor = open ? color.primary : (embedded && triggerHovered) ? text.primary : text.label;
+  const triggerBorder = open
+    ? (embedded ? "none" : `1px solid ${primaryAlpha(0.4)}`)
+    : embedded
+      ? "none"
+      : `1px solid ${triggerHovered ? border.hover : border.default}`;
+
   // Track the running flat index for highlight across regular + special options
   let flatIndex = 0;
 
   return (
-    <div ref={containerRef} className="relative inline-block">
+    <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
       {/* Pill trigger */}
       <button
         role="combobox"
@@ -177,14 +192,25 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        className={cn(
-          "h-[20px] px-1.5 text-[10px] font-mono cursor-pointer transition-colors",
-          "flex items-center justify-center max-w-[36px] leading-none",
-          embedded
-            ? "bg-transparent border-none text-[var(--muted-foreground)] hover:text-[var(--foreground)] rounded-sm"
-            : "bg-[var(--input)] border border-[var(--border)] rounded text-[var(--muted-foreground)] hover:border-[rgba(0,0,0,0.15)]",
-          open && "bg-[rgba(59,130,246,0.25)] border-[rgba(59,130,246,0.4)] text-[#3B82F6]"
-        )}
+        onMouseEnter={() => setTriggerHovered(true)}
+        onMouseLeave={() => setTriggerHovered(false)}
+        style={{
+          height: 20,
+          padding: "0 6px",
+          fontSize: 10,
+          fontFamily: font.mono,
+          cursor: "pointer",
+          transition: "background-color 150ms, color 150ms, border-color 150ms",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          maxWidth: 36,
+          lineHeight: 1,
+          borderRadius: embedded ? 2 : 4,
+          background: triggerBg,
+          border: triggerBorder,
+          color: triggerColor,
+        }}
       >
         {value}
       </button>
@@ -195,15 +221,27 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className={cn(
-            "absolute z-50 top-full mt-0.5 left-0 bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg py-1",
-            hasVariables ? "min-w-[120px] max-h-[220px] overflow-y-auto" : "min-w-[42px] overflow-hidden"
-          )}
+          style={{
+            position: "absolute",
+            zIndex: 50,
+            top: "100%",
+            marginTop: 2,
+            left: 0,
+            background: color.popover,
+            border: `1px solid ${border.default}`,
+            borderRadius: 4,
+            boxShadow: shadow.dropdown,
+            padding: "4px 0",
+            ...(hasVariables
+              ? { minWidth: 120, maxHeight: 220, overflowY: "auto" as const }
+              : { minWidth: 42, overflow: "hidden" as const }
+            ),
+          }}
         >
           {options.map((unit) => {
             const isActive = unit === value;
             const idx = flatIndex++;
-            const isHighlighted = idx === highlightedIndex;
+            const isHl = idx === highlightedIndex || idx === hoveredIdx;
             return (
               <div
                 key={unit}
@@ -212,13 +250,18 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                 role="option"
                 aria-selected={isActive}
                 onClick={() => handleSelect(unit)}
-                className={cn(
-                  "px-2 py-1 text-[11px] font-mono cursor-pointer hover:bg-[var(--accent)]",
-                  "leading-4 transition-colors",
-                  isActive && "bg-[var(--primary)] text-white",
-                  !isActive && isHighlighted && "bg-[var(--accent)]",
-                  !isActive && "text-[var(--muted-foreground)]"
-                )}
+                onMouseEnter={() => setHoveredIdx(idx)}
+                onMouseLeave={() => setHoveredIdx(null)}
+                style={{
+                  padding: "4px 8px",
+                  fontSize: 11,
+                  fontFamily: font.mono,
+                  cursor: "pointer",
+                  lineHeight: "16px",
+                  transition: "background-color 150ms, color 150ms",
+                  background: isActive ? color.primary : isHl ? surface.hover : "transparent",
+                  color: isActive ? color.primaryForeground : text.label,
+                }}
               >
                 {unit}
               </div>
@@ -226,10 +269,10 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           })}
           {specialOptions && specialOptions.length > 0 && (
             <>
-              <div className="h-px bg-[var(--border)] my-1" />
+              <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
               {specialOptions.map((opt) => {
                 const idx = flatIndex++;
-                const isHighlighted = idx === highlightedIndex;
+                const isHl = idx === highlightedIndex || idx === hoveredIdx;
                 return (
                   <div
                     key={opt.value}
@@ -238,11 +281,20 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     role="option"
                     aria-selected={false}
                     onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
-                    className={cn(
-                      "px-2 py-1 text-[11px] font-mono text-[var(--muted-foreground)] cursor-pointer hover:bg-[var(--accent)]",
-                      "leading-4 transition-colors uppercase tracking-wide",
-                      isHighlighted && "bg-[var(--accent)]"
-                    )}
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: 11,
+                      fontFamily: font.mono,
+                      color: text.label,
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: "background-color 150ms",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.025em",
+                      background: isHl ? surface.hover : "transparent",
+                    }}
                   >
                     {opt.label}
                   </div>
@@ -252,13 +304,13 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
           )}
           {hasVariables && (
             <>
-              <div className="h-px bg-[var(--border)] my-1" />
-              <div className="px-2 py-0.5 text-[9px] text-[rgba(0,0,0,0.25)] uppercase tracking-wider">
+              <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
+              <div style={{ padding: "2px 8px", fontSize: 9, color: text.hint, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Variables
               </div>
               {variableOptions!.map((v) => {
                 const idx = flatIndex++;
-                const isHighlighted = idx === highlightedIndex;
+                const isHl = idx === highlightedIndex || idx === hoveredIdx;
                 return (
                   <div
                     key={v.name}
@@ -267,16 +319,27 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
                     role="option"
                     aria-selected={false}
                     onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
-                    className={cn(
-                      "flex items-center justify-between gap-1.5 px-2 py-1 text-[10px] font-mono cursor-pointer hover:bg-[var(--accent)]",
-                      "leading-4 transition-colors text-[var(--muted-foreground)]",
-                      isHighlighted && "bg-[var(--accent)]"
-                    )}
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 6,
+                      padding: "4px 8px",
+                      fontSize: 10,
+                      fontFamily: font.mono,
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      transition: "background-color 150ms",
+                      color: text.label,
+                      background: isHl ? surface.hover : "transparent",
+                    }}
                   >
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {v.name.replace(/^--/, "")}
                     </span>
-                    <span className="text-[rgba(0,0,0,0.25)] shrink-0 text-[9px]">
+                    <span style={{ color: text.hint, flexShrink: 0, fontSize: 9 }}>
                       {v.resolvedValue}
                     </span>
                   </div>
@@ -290,19 +353,40 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       {/* Conversion tooltip */}
       {tooltipText && tooltipPhase && (
         <div
-          className={cn(
-            "absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2",
-            "bg-[var(--popover)] border border-[var(--border)] rounded",
-            "px-2 py-0.5 text-[10px] font-mono text-[rgba(0,0,0,0.75)]",
-            "whitespace-nowrap shadow-md z-[200] pointer-events-none",
-            "transition-all duration-300",
-            tooltipPhase === "in" ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"
-          )}
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 6px)",
+            left: "50%",
+            transform: `translateX(-50%) translateY(${tooltipPhase === "in" ? 0 : 4}px)`,
+            background: color.popover,
+            border: `1px solid ${border.default}`,
+            borderRadius: 4,
+            padding: "2px 8px",
+            fontSize: 10,
+            fontFamily: font.mono,
+            color: text.secondary,
+            whiteSpace: "nowrap",
+            boxShadow: shadow.dropdown,
+            zIndex: 200,
+            pointerEvents: "none",
+            transition: "all 300ms",
+            opacity: tooltipPhase === "in" ? 1 : 0,
+          }}
         >
           {tooltipText}
           {/* Arrow pointing down */}
           <div
-            className="absolute -bottom-1 left-1/2 -translate-x-1/2 rotate-45 w-1.5 h-1.5 bg-[var(--popover)] border-r border-b border-[var(--border)]"
+            style={{
+              position: "absolute",
+              bottom: -4,
+              left: "50%",
+              transform: "translateX(-50%) rotate(45deg)",
+              width: 6,
+              height: 6,
+              background: color.popover,
+              borderRight: `1px solid ${border.default}`,
+              borderBottom: `1px solid ${border.default}`,
+            }}
           />
         </div>
       )}
