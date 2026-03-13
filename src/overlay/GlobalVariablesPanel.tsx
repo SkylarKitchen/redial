@@ -432,6 +432,39 @@ function GlobalVariableRow({
 
   // Color → ColorRow (wrapped for hover/context)
   if (variable.type === "color") {
+    const colorActions = hovered && !renaming ? (
+      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+          title="Duplicate"
+          style={{
+            width: 18, height: 18, border: "none", background: "transparent",
+            borderRadius: 3, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", color: text.hint,
+            opacity: 0.7, transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+        >
+          <Copy size={11} />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          title="Delete"
+          style={{
+            width: 18, height: 18, border: "none", background: "transparent",
+            borderRadius: 3, cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center", color: text.hint,
+            opacity: 0.7, transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+        >
+          <Trash2 size={11} />
+        </button>
+      </div>
+    ) : undefined;
+
     return (
       <div
         onMouseEnter={() => onHoverChange(true)}
@@ -450,12 +483,8 @@ function GlobalVariableRow({
           onChange={(c) => { setDraft(c); commit(c); }}
           indicator={indicator}
           labelWidth={120}
+          actions={colorActions}
         />
-        {hoverActions && (
-          <div style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: color.background, paddingRight: 4 }}>
-            {hoverActions}
-          </div>
-        )}
       </div>
     );
   }

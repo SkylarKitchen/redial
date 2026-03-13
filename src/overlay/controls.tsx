@@ -787,6 +787,8 @@ export function ColorRow({
   compact?: boolean;
   /** Override default label width (e.g. for wider variable names) */
   labelWidth?: number;
+  /** Optional action buttons rendered between label and swatch */
+  actions?: React.ReactNode;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
@@ -827,6 +829,7 @@ export function ColorRow({
           {labelContent}
         </ComputedTooltip>
       ) : labelContent}
+      {actions}
       <div
         ref={swatchRef}
         className="tuner-focusable"
