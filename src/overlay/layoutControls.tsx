@@ -11,7 +11,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator, segment } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, labelIndicator, segment } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
@@ -181,7 +181,7 @@ export function MiniDropdown({ value, options, onChange }: {
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          style={{ position: "absolute", zIndex: 200, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: 80, background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", padding: "2px 0" }}
+          style={{ position: "absolute", zIndex: 200, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: 80, background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4, boxShadow: shadow.dropdown, padding: "2px 0" }}
         >
           {options.map((opt, i) => {
             const active = opt.value === value;

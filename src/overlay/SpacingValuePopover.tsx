@@ -12,7 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "./controls";
 import { ms } from "./timing";
-import { text, color, font, border, surface, blackAlpha, primaryAlpha } from "./theme";
+import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha } from "./theme";
 
 // 8px grid spacing presets
 const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];
@@ -316,7 +316,7 @@ export function SpacingValuePopover({
                 background: color.popover,
                 border: `1px solid ${border.default}`,
                 borderRadius: "4px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                boxShadow: shadow.dropdown,
                 zIndex: 10,
                 padding: "2px 0",
               }}

@@ -5,6 +5,7 @@
  */
 
 import { useState, useCallback, memo } from "react";
+import { ms } from "./timing";
 import { Section, SliderRow, SelectRow, TextRow, ValueInput } from "./controls";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
@@ -356,7 +357,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   padding: 4,
                   background: showGridOverlay ? primaryAlpha(0.2) : "transparent",
                   color: showGridOverlay ? primaryAlpha(0.9) : text.label,
-                  transition: "background 75ms ease",
+                  transition: `background ${ms("fast")} ease`,
                 }}
               >
                 <Grid3x3 size={14} strokeWidth={1.5} />

@@ -1556,7 +1556,7 @@ export function Overlay() {
             </div>
           )}
           {/* -- Style / AI tab bar -- */}
-          <div className="flex border-b px-3 shrink-0" style={{ borderColor: border.subtle }}>
+          <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, paddingLeft: 12, paddingRight: 12, flexShrink: 0 }}>
             {(["custom", "prompt"] as const).map((tab) => {
               const isActive = activeTab === tab;
               const label = tab === "custom" ? "Style" : "AI";
@@ -1564,22 +1564,31 @@ export function Overlay() {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "bg-transparent border-0 border-b-2 px-2.5 pt-[7px] pb-[5px] text-[11px] cursor-pointer transition-colors duration-100 font-sans",
-                    isActive ? "font-semibold" : "border-b-transparent font-normal",
-                  )}
-                  style={{ color: isActive ? text.primary : text.label, borderBottomColor: isActive ? color.primary : undefined }}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    paddingTop: 7,
+                    paddingBottom: 5,
+                    fontSize: 11,
+                    fontFamily: font.sans,
+                    fontWeight: isActive ? 600 : 400,
+                    cursor: "pointer",
+                    color: isActive ? text.primary : text.label,
+                    transition: `color ${ms("normal")}, border-color ${ms("normal")}`,
+                  }}
                 >
                   {label}
                 </button>
               );
             })}
           </div>
-          <ScrollArea
-            ref={panelScrollRef as React.RefObject<HTMLDivElement>}
-            className="__tuner-root flex-1 min-h-0"
-            type="scroll"
-            scrollHideDelay={800}
+          <div
+            ref={panelScrollRef}
+            className="__tuner-root"
+            style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
           >
             {showSearch && (
               <PropertySearch
@@ -1589,10 +1598,13 @@ export function Overlay() {
               />
             )}
             <div
-              className={cn(
-                "py-1 transition-opacity",
-                diffMode ? "pointer-events-none opacity-60" : "pointer-events-auto opacity-100",
-              )}
+              style={{
+                paddingTop: 4,
+                paddingBottom: 4,
+                transition: `opacity ${ms("normal")}`,
+                pointerEvents: diffMode ? "none" : "auto",
+                opacity: diffMode ? 0.6 : 1,
+              }}
             >
               <PanelErrorBoundary onError={handleClose}>
                 {activeTab === "custom" ? (
@@ -1630,7 +1642,7 @@ export function Overlay() {
                 onClose={() => setShowHistory(false)}
               />
             )}
-          </ScrollArea>
+          </div>
           <Footer
             element={selectedEl}
             onReset={handleReset}
@@ -1678,18 +1690,50 @@ export function Overlay() {
 
       {/* Selection mode indicator */}
       {selecting && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[2147483647] bg-white text-[#1e1e1e] px-4 py-1.5 rounded-lg text-[13px] font-sans shadow-[0_2px_8px_rgba(0,0,0,0.08)] pointer-events-none">
+        <div style={{
+          position: "fixed",
+          bottom: 16,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 2147483647,
+          background: color.background,
+          color: text.primary,
+          paddingLeft: 16,
+          paddingRight: 16,
+          paddingTop: 6,
+          paddingBottom: 6,
+          borderRadius: 8,
+          fontSize: 13,
+          fontFamily: font.sans,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          pointerEvents: "none",
+        }}>
           Click an element to inspect • Esc to cancel
         </div>
       )}
 
       {/* Floating action button -- bottom-right activation trigger */}
       <div
-        className="fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root"
-        style={(selecting || selectedEl)
-          ? { borderColor: primaryAlpha(0.4), boxShadow: `0 0 0 1px ${primaryAlpha(0.4)}, 0 4px 20px ${blackAlpha(0.12)}` }
-          : { boxShadow: `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}` }
-        }
+        className="__tuner-root"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 2147483647,
+          width: 48,
+          height: 48,
+          borderRadius: "50%",
+          background: "#1e1e1e",
+          border: `1px solid ${(selecting || selectedEl) ? primaryAlpha(0.4) : "rgba(255,255,255,0.08)"}`,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          transition: `box-shadow ${ms("layout")}, border-color ${ms("layout")}`,
+          boxShadow: (selecting || selectedEl)
+            ? `0 0 0 1px ${primaryAlpha(0.4)}, 0 4px 20px ${blackAlpha(0.12)}`
+            : `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}`,
+        }}
         onClick={() => {
           if (selectedEl) {
             handleClose();
@@ -1703,10 +1747,10 @@ export function Overlay() {
           size={20}
           strokeWidth={1.5}
           color="rgba(255,255,255,0.9)"
-          className={cn(
-            "transition-transform duration-200 ease",
-            (selecting || selectedEl) ? "rotate-45" : "rotate-0",
-          )}
+          style={{
+            transition: `transform ${ms("layout")}`,
+            transform: (selecting || selectedEl) ? "rotate(45deg)" : "rotate(0deg)",
+          }}
         />
       </div>
     </>

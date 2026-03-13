@@ -22,7 +22,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, presets } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -503,7 +503,7 @@ export function SelectRow({
         <SelectContent
           style={{
             borderRadius: 6,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            boxShadow: shadow.dropdown,
             maxHeight: 180,
             backgroundColor: color.popover,
             border: `1px solid ${color.border}`,
@@ -622,7 +622,7 @@ function SelectRowCustom({
 
         {open && (
           <Command
-            style={{ position: "absolute" as const, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "100%", borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 200, backgroundColor: color.popover, border: `1px solid ${color.border}` }}
+            style={{ position: "absolute" as const, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "100%", borderRadius: 6, boxShadow: shadow.dropdown, zIndex: 200, backgroundColor: color.popover, border: `1px solid ${color.border}` }}
             filter={(value, search) => {
               const opt = options.find((o) => o.value === value);
               if (!opt) return 0;
