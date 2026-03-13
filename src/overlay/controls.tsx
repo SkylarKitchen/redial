@@ -517,6 +517,7 @@ export function SelectRow({
   indicator,
   searchable,
   fontPreview,
+  weightPreview,
   onContextMenu,
   computedProp,
   computedElement,
@@ -532,6 +533,8 @@ export function SelectRow({
   searchable?: boolean;
   /** Render each option label in its own font-face (for font-family dropdowns) */
   fontPreview?: boolean;
+  /** Render each option at its actual CSS font-weight (for font-weight dropdowns) */
+  weightPreview?: boolean;
   onContextMenu?: (e: React.MouseEvent) => void;
   /** CSS property name for computed tooltip (e.g. "font-weight") */
   computedProp?: string;
@@ -604,6 +607,7 @@ export function SelectRow({
               style={{
                 fontSize: 11,
                 fontFamily: font.mono,
+                fontWeight: weightPreview ? opt.value : undefined,
                 cursor: "pointer",
               }}
             >

@@ -226,7 +226,7 @@ export const TypographySection = memo(function TypographySection({
       <SelectRow label="Font" value={fontFamily} options={fontOptions} onChange={handleFontFamilyChange} indicator={ind("font-family")} searchable fontPreview onContextMenu={ctxMenu("font-family", fontFamily)} computedProp="font-family" computedElement={element} onReset={() => resetCssStr("font-family", (v) => setFontFamily(v.replace(/['"]/g, "")))} />
 
       {/* Weight dropdown */}
-      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
+      <SelectRow label="Weight" value={fontWeight} options={FONT_WEIGHT_OPTIONS} onChange={handleFontWeightChange} indicator={ind("font-weight")} weightPreview onContextMenu={ctxMenu("font-weight", fontWeight)} computedProp="font-weight" computedElement={element} onReset={() => resetCssStr("font-weight", setFontWeight)} />
 
       {/* Size + Height side-by-side compact cells */}
       <div style={{ ...ROW, gap: layout.compactGap }}>
