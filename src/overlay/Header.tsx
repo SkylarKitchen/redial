@@ -302,7 +302,7 @@ function ScopePill({
         paddingRight: 8,
         fontSize: 10,
         fontFamily: font.mono,
-        borderRadius: 4,
+        borderRadius: layout.pillRadius,
         cursor: "pointer",
         lineHeight: "16px",
         whiteSpace: "nowrap",
