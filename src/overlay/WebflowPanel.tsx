@@ -47,11 +47,15 @@ export interface WebflowPanelProps {
   expandedSection?: string | null;
   /** Callback when section is toggled (for controlled mode) */
   onExpandSection?: (section: string | null) => void;
+  /** Persisted section open/closed state (survives element re-selection) */
+  sectionMemory?: Record<string, boolean>;
+  /** Callback to update section memory */
+  onSectionMemoryChange?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection, sectionMemory, onSectionMemoryChange }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -156,6 +160,12 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   const focusProps = (name: string) => focusMode && !isSearching ? {
     focusOpen: expandedSection === name,
     onToggle: handleSectionToggle,
+  } : {};
+
+  /** Section memory props — remembers open/closed across element selections */
+  const memoryProps = (name: string) => sectionMemory && onSectionMemoryChange ? {
+    memoryOpen: sectionMemory[name],
+    onMemoryToggle: (open: boolean) => onSectionMemoryChange(prev => ({ ...prev, [name]: open })),
   } : {};
 
   // ── Render ──

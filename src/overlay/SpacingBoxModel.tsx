@@ -31,7 +31,7 @@ import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
 import type { IndicatorType } from "./theme";
-import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing , zIndex } from "./theme";
+import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing, zIndex } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };

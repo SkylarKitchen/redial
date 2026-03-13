@@ -182,6 +182,8 @@ function ShadowRow({
     [index, shadow, onUpdate]
   );
 
+  const shadowCSS = shadowToCSS([shadow]);
+
   return (
     <div
       style={{
@@ -202,14 +204,14 @@ function ShadowRow({
         )}
         {/* Shadow preview swatch */}
         <div
-          title={shadowToCSS([shadow])}
+          title={shadowCSS}
           style={{
             width: 20,
             height: 20,
             borderRadius: 3,
             background: color.background,
             border: `1px solid ${border.default}`,
-            boxShadow: shadowToCSS([shadow]),
+            boxShadow: shadowCSS,
             flexShrink: 0,
             alignSelf: "center",
             overflow: "hidden",

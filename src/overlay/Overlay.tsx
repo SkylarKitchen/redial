@@ -99,6 +99,7 @@ export function Overlay() {
   useEffect(() => { selectedElRef.current = selectedEl; }, [selectedEl]);
   const [inferResult, setInferResult] = useState<InferResult | null>(null);
   const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
+  const [sectionMemory, setSectionMemory] = useState<Record<string, boolean>>({}); // collapse memory across re-mounts
   const panelScrollRef = useRef<HTMLDivElement>(null);
   const savedScrollRef = useRef(0);
   /** Helper to get the scrollable viewport element */
@@ -1669,6 +1670,8 @@ export function Overlay() {
                         activeState={activeState}
                         expandedSection={expandedSection}
                         onExpandSection={setExpandedSection}
+                        sectionMemory={sectionMemory}
+                        onSectionMemoryChange={setSectionMemory}
                       />
                     ) : (
                       <PromptPanel

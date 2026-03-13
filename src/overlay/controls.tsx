@@ -5,7 +5,7 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import React, { useState, useCallback, useRef, useEffect, memo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -111,6 +111,26 @@ const actionsOverlayStyle: React.CSSProperties = {
   background: color.background,
 };
 
+// ─── Section Memory Context ──────────────────────────────────────────
+// Remembers section open/closed state across element re-selections.
+// Provided by WebflowPanel, consumed by Section.
+
+interface SectionMemoryCtx {
+  memory: Record<string, boolean>;
+  update: (name: string, open: boolean) => void;
+}
+
+const SectionMemoryContext = createContext<SectionMemoryCtx | null>(null);
+
+export function SectionMemoryProvider({ memory, onUpdate, children }: {
+  memory: Record<string, boolean>;
+  onUpdate: (name: string, open: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const ctx = React.useMemo(() => ({ memory, update: onUpdate }), [memory, onUpdate]);
+  return <SectionMemoryContext.Provider value={ctx}>{children}</SectionMemoryContext.Provider>;
+}
+
 // ─── Section ────────────────────────────────────────────────────────
 
 export function Section({
@@ -140,7 +160,10 @@ export function Section({
   /** Alt+click on title resets the section */
   onReset?: () => void;
 }) {
-  const [ownOpen, setOwnOpen] = useState(!collapsed);
+  const sectionMemory = useContext(SectionMemoryContext);
+  const titleStr = typeof title === "string" ? title : "";
+  const memoryOpen = titleStr && sectionMemory ? sectionMemory.memory[titleStr] : undefined;
+  const [ownOpen, setOwnOpen] = useState(memoryOpen !== undefined ? memoryOpen : !collapsed);
   const [headerHovered, setHeaderHovered] = useState(false);
   const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
 
@@ -149,8 +172,11 @@ export function Section({
     <Collapsible
       open={open}
       onOpenChange={(isOpen) => {
-        if (onToggle) onToggle(typeof title === "string" ? title : "");
-        else setOwnOpen(isOpen);
+        if (onToggle) onToggle(titleStr);
+        else {
+          setOwnOpen(isOpen);
+          if (titleStr && sectionMemory) sectionMemory.update(titleStr, isOpen);
+        }
       }}
       style={{ borderBottom: open ? "1px solid transparent" : `1px solid ${color.border}` }}
     >
@@ -164,8 +190,12 @@ export function Section({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              if (onToggle) onToggle(typeof title === "string" ? title : "");
-              else setOwnOpen(!open);
+              if (onToggle) onToggle(titleStr);
+              else {
+                const next = !open;
+                setOwnOpen(next);
+                if (titleStr && sectionMemory) sectionMemory.update(titleStr, next);
+              }
             }
           }}
           style={{
