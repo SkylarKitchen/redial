@@ -68,7 +68,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 ## Phase 5 — Hover & Interaction Consistency
 
 - [x] **Hover state standardization** — 4 different hover patterns across components: `surface.hover`, `surface.active`, custom `rgba(255,255,255,...)` (dark theme), and no hover. Document the rules: `surface.hover` for light backgrounds, dark-theme tokens for dark backgrounds, no custom rgba.
-- [ ] **Toolbar expanded animation timing** — `Toolbar.tsx:192` uses `duration: 0.15` (hardcoded seconds) for AnimatePresence exit. Should use timing token.
+- [x] **Toolbar expanded animation timing** — `Toolbar.tsx:192` uses `duration: 0.15` (hardcoded seconds) for AnimatePresence exit. Should use timing token.
 - [ ] **SessionDrawer hardcoded timeout** — `SessionDrawer.tsx:47` uses `setTimeout(() => ..., 1500)` for "Copied!" message. Should use timing-based constant.
 
 ---
@@ -214,3 +214,6 @@ Items removed because they were already fixed, became outdated as the codebase e
 
 ### 2026-03-13 — Hover state standardization
 Replaced 9 raw `rgba()` hover values in 6 files with semantic `surface.hover`/`surface.active` tokens: PositionOffsetDiagram (×2), ShadowEditor (×1), SideSelector (×3 — active bg, hover bg, restore bg), HistoryDrawer (Tailwind class → inline style), BackgroundLayerList (×2 — `color.muted` → `surface.hover`), TextStyleRow (`blackAlpha(0.07)` → `surface.active`). Added hover convention doc comment to theme.ts: light bg → `surface.*`, dark bg → `darkToolbar.*`, no raw rgba.
+
+### 2026-03-13 — Toolbar expanded animation timing
+Replaced hardcoded `duration: 0.15` in Toolbar.tsx AnimatePresence exit transition with `timing.expand / 1000` (150ms → same value, now governed by token system). Motion uses seconds, timing tokens use milliseconds.
