@@ -28,6 +28,7 @@ import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";
 import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight, zIndex } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
+import { usePortalDropdown } from "./usePortalDropdown";
 import { SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -682,23 +683,15 @@ function SelectRowCustom({
   const [btnHovered, setBtnHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
+    open,
+    setOpen,
+    triggerRef,
+    containerRef,
+    estimatedHeight: 220,
+  });
   const current = options.find((o) => o.value === value);
   const resetPopover = useResetPopover(indicator, onReset);
-
-  // Click-outside to close (check both container and portal element)
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (containerRef.current?.contains(target)) return;
-      const portal = document.querySelector("[data-select-custom-portal]");
-      if (portal?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
 
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
@@ -726,13 +719,7 @@ function SelectRowCustom({
           tabIndex={0}
           aria-expanded={open}
           onClick={() => {
-            if (!open && triggerRef.current) {
-              const rect = triggerRef.current.getBoundingClientRect();
-              const DROPDOWN_HEIGHT = 220;
-              const spaceBelow = window.innerHeight - rect.bottom;
-              const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
-              setDropdownPos({ top, left: rect.left, width: rect.width });
-            }
+            if (!open) updateDropdownPos();
             setOpen((o) => !o);
           }}
           onMouseEnter={() => setBtnHovered(true)}
@@ -740,13 +727,7 @@ function SelectRowCustom({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
-              if (!open && triggerRef.current) {
-                const rect = triggerRef.current.getBoundingClientRect();
-                const DROPDOWN_HEIGHT = 220;
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
-                setDropdownPos({ top, left: rect.left, width: rect.width });
-              }
+              if (!open) updateDropdownPos();
               setOpen(true);
             }
           }}
@@ -775,6 +756,7 @@ function SelectRowCustom({
 
         {open && dropdownPos && createPortal(
           <div
+            ref={portalRef}
             data-tuner-portal
             data-select-custom-portal
             style={{

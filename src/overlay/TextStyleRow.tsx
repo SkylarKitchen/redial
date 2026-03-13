@@ -24,49 +24,23 @@ export interface TextStyleRowProps {
   onApply: (style: TextStyle) => void;
 }
 
-/** Estimated dropdown height: search (28px) + 9 items × 24px + padding */
-const DROPDOWN_HEIGHT = 250;
-
 export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProps) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Calculate position from trigger rect
-  const updatePos = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const up = spaceBelow < DROPDOWN_HEIGHT;
-    setPos({
-      top: up ? rect.top : rect.bottom + 2,
-      left: rect.left,
-      width: rect.width,
-      up,
-    });
-  }, []);
-
-  // Click-outside to close (check both container and portal)
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      // Allow clicks inside the trigger row
-      if (containerRef.current?.contains(target)) return;
-      // Allow clicks inside the portal dropdown (identified by data attribute)
-      const portal = document.querySelector("[data-textstyle-portal]");
-      if (portal?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
+  const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
+    open,
+    setOpen,
+    triggerRef,
+    containerRef,
+    estimatedHeight: 250,
+  });
 
   const handleOpen = () => {
-    if (!open) updatePos();
+    if (!open) updateDropdownPos();
     setOpen((o) => !o);
   };
 
@@ -77,15 +51,15 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
     ? `${matchedStyle.name} · ${formatSize(matchedStyle.fontSize)}`
     : "—";
 
-  const dropdown = open && pos && createPortal(
+  const dropdown = open && dropdownPos && createPortal(
     <div
+      ref={portalRef}
       data-textstyle-portal
       style={{
         position: "fixed",
-        top: pos.up ? undefined : pos.top,
-        bottom: pos.up ? window.innerHeight - pos.top + 2 : undefined,
-        left: pos.left,
-        width: pos.width,
+        top: dropdownPos.top,
+        left: dropdownPos.left,
+        width: dropdownPos.width,
         zIndex: zIndex.max,
       }}
     >
@@ -202,7 +176,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
-              if (!open) updatePos();
+              if (!open) updateDropdownPos();
               setOpen(true);
             }
           }}

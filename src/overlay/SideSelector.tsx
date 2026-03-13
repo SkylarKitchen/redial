@@ -13,7 +13,7 @@
 
 import React, { useCallback } from "react";
 import { ms } from "./timing";
-import { surface, border as borderToken, text, color, blackAlpha } from "./theme";
+import { surface, border as borderToken, text, color, blackAlpha, focusRing } from "./theme";
 
 export type Side = "all" | "top" | "right" | "bottom" | "left";
 
@@ -160,6 +160,12 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
         tabIndex={active ? 0 : -1}
         onClick={() => onChange(side)}
         onKeyDown={(e) => handleKeyDown(e, side)}
+        onFocus={(e) => {
+          e.currentTarget.style.boxShadow = focusRing;
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.boxShadow = "none";
+        }}
         title={side.charAt(0).toUpperCase() + side.slice(1)}
         style={{
           gridArea,
@@ -259,6 +265,12 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
               tabIndex={active ? 0 : -1}
               onClick={handleClick(side)}
               onKeyDown={(e) => handleLinearKeyDown(e, side)}
+              onFocus={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
+              }}
+              onBlur={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = "none";
+              }}
               title={side.charAt(0).toUpperCase() + side.slice(1)}
               style={{
                 width: 20,
@@ -315,6 +327,12 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
             tabIndex={active ? 0 : -1}
             onClick={handleClick(side)}
             onKeyDown={(e) => handleLinearKeyDown(e, side)}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
+            }}
+            onBlur={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = "none";
+            }}
             title={side.charAt(0).toUpperCase() + side.slice(1)}
             style={{
               flex: 1,

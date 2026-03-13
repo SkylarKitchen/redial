@@ -787,6 +787,43 @@ export function resetProp(el: Element, prop: string): void {
       undoStack.splice(i, 1);
     }
   }
+
+  // Cascade-reset: when display is reset to a non-flex/non-grid value,
+  // clear stale flex/grid layout overrides that are no longer visible.
+  if (prop === "display") {
+    const computed = getComputedStyle(el).getPropertyValue("display").trim();
+    const isFlexOrGrid = computed === "flex" || computed === "inline-flex" ||
+      computed === "grid" || computed === "inline-grid";
+    if (!isFlexOrGrid) {
+      const cascadeProps = [
+        "flex-direction", "justify-content", "align-items", "justify-items",
+        "align-content", "flex-wrap", "gap", "row-gap", "column-gap",
+      ];
+      const currentOverrides = overrides.get(el);
+      if (currentOverrides) {
+        for (const cp of cascadeProps) {
+          if (currentOverrides.has(cp)) {
+            const cpEntry = currentOverrides.get(cp)!;
+            if (cpEntry.initial !== cpEntry.current) dirtyCount--;
+            (el as HTMLElement).style.removeProperty(cp);
+            currentOverrides.delete(cp);
+            // Remove undo entries for cascaded prop
+            for (let i = undoStack.length - 1; i >= 0; i--) {
+              const ue = undoStack[i];
+              if (isBatch(ue)) {
+                ue.entries = ue.entries.filter((e) => !(e.el === el && e.prop === cp));
+                if (ue.entries.length === 0) undoStack.splice(i, 1);
+              } else if (!isBatch(ue) && ue.el === el && ue.prop === cp) {
+                undoStack.splice(i, 1);
+              }
+            }
+          }
+        }
+        if (currentOverrides.size === 0) overrides.delete(el);
+      }
+    }
+  }
+
   schedulePersist();
   notifyListeners();
 }

@@ -9,7 +9,7 @@
  * Full keyboard navigation via useDropdownKeyboard hook.
  */
 
-import { useState, useRef, useEffect, useCallback, useId, useMemo } from "react";
+import { useState, useRef, useCallback, useId, useMemo } from "react";
 import { createPortal } from "react-dom";
 import type { IndicatorType } from "./theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
@@ -17,6 +17,7 @@ import { ms } from "./timing";
 import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndicator, labelHighlight, shadow, zIndex } from "./theme";
 import { useResetPopover } from "./controls";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
+import { usePortalDropdown } from "./usePortalDropdown";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -85,10 +86,17 @@ export function PositionSelector({
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const id = useId();
   const resetPopover = useResetPopover(indicator, onReset);
   const current = POSITION_ITEMS.find((o) => o.value === value) ?? POSITION_ITEMS[0];
+
+  const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
+    open,
+    setOpen,
+    triggerRef,
+    containerRef,
+    estimatedHeight: 280,
+  });
 
   // Keyboard navigation
   const labels = useMemo(() => POSITION_ITEMS.map((o) => o.label), []);
@@ -110,30 +118,6 @@ export function PositionSelector({
   const descriptionItem = hoveredValue
     ? POSITION_ITEMS.find((o) => o.value === hoveredValue) ?? current
     : highlightedItem ?? current;
-
-  // Compute dropdown position from trigger rect with flip-above logic
-  const DROPDOWN_HEIGHT = 280;
-  const updateDropdownPos = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
-    setDropdownPos({ top, left: rect.left, width: rect.width });
-  }, []);
-
-  // Close on outside click (check both container and portal element)
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (containerRef.current?.contains(target)) return;
-      const portal = document.querySelector("[data-position-selector-portal]");
-      if (portal?.contains(target)) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler, true);
-    return () => document.removeEventListener("mousedown", handler, true);
-  }, [open]);
 
   const handleSelect = useCallback(
     (v: string) => {
@@ -227,6 +211,7 @@ export function PositionSelector({
         {/* Dropdown — portaled to document.body to escape scroll overflow */}
         {open && dropdownPos && createPortal(
           <div
+            ref={portalRef}
             data-tuner-portal
             data-position-selector-portal
             style={{
