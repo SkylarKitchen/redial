@@ -57,10 +57,14 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── Size state ─────────────────────────────────────────────────────
 
   const [width, setWidth] = useState(() => {
-    return isAutoSize(element, "width") ? 0 : parseNum(cs.width);
+    if (isAutoSize(element, "width")) return 0;
+    const authored = getAuthoredValue(element, "width");
+    return authored ? parseNum(authored) : parseNum(cs.width);
   });
   const [height, setHeight] = useState(() => {
-    return isAutoSize(element, "height") ? 0 : parseNum(cs.height);
+    if (isAutoSize(element, "height")) return 0;
+    const authored = getAuthoredValue(element, "height");
+    return authored ? parseNum(authored) : parseNum(cs.height);
   });
   const [minWidth, setMinWidth] = useState(() => {
     const authored = getAuthoredValue(element, "min-width");

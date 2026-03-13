@@ -469,7 +469,7 @@ export function SelectRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent
-          className="bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200] max-h-[180px]"
+          className="bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg max-h-[180px]"
         >
           {options.map((opt) => (
             <SelectItem

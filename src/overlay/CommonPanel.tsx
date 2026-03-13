@@ -14,7 +14,7 @@ import { applyInlineStyle, beginBatch, endBatch, isDirty, resetAndReadStr } from
 import { applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle } from "./statePreview";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { isAutoSize } from "./getAuthoredValue";
+import { isAutoSize, getAuthoredValue } from "./getAuthoredValue";
 import { detectUnit, isTextBearing, getIndicatorType } from "./panelUtils";
 import { parseNum } from "./cssParsers";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
@@ -101,8 +101,16 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
     spacing.padding.bottom !== 0 || spacing.padding.left !== 0;
 
   // --- Size group state ---
-  const [width, setWidth] = useState(() => isAutoSize(element, "width") ? 0 : parseNum(cs.width));
-  const [height, setHeight] = useState(() => isAutoSize(element, "height") ? 0 : parseNum(cs.height));
+  const [width, setWidth] = useState(() => {
+    if (isAutoSize(element, "width")) return 0;
+    const authored = getAuthoredValue(element, "width");
+    return authored ? parseNum(authored) : parseNum(cs.width);
+  });
+  const [height, setHeight] = useState(() => {
+    if (isAutoSize(element, "height")) return 0;
+    const authored = getAuthoredValue(element, "height");
+    return authored ? parseNum(authored) : parseNum(cs.height);
+  });
   const [widthAuto, setWidthAuto] = useState(() => isAutoSize(element, "width"));
   const [heightAuto, setHeightAuto] = useState(() => isAutoSize(element, "height"));
   const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));

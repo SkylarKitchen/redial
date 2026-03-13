@@ -38,5 +38,9 @@ const AUTO_KEYWORDS = new Set([
 export function isAutoSize(el: Element, prop: string): boolean {
   const authored = getAuthoredValue(el, prop);
   if (!authored) return true;
-  return AUTO_KEYWORDS.has(authored.trim().toLowerCase());
+  const trimmed = authored.trim().toLowerCase();
+  if (AUTO_KEYWORDS.has(trimmed)) return true;
+  // width: 100% is the block default — treat as auto
+  if (prop === "width" && trimmed === "100%") return true;
+  return false;
 }
