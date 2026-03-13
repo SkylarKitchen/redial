@@ -193,7 +193,7 @@ export function SpacingBoxModel({
     const isMargin = group === "margin";
     const value = displayVal(prop, propValue);
     const indicator = ind(prop);
-    const isEdited = indicator === "modified";
+    const isEdited = indicator === "element" || indicator === "direct";
     const defaultColor = isEdited ? color.primary : (isMargin ? blackAlpha(0.55) : blackAlpha(0.8));
     const hoverColor = isEdited ? color.primaryHover : color.primary;
 
