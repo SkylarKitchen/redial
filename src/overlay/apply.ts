@@ -108,6 +108,10 @@ function notifyStateChange(el: Element, state: string, prop: string, value: stri
 
 const overrides = new Map<Element, Map<string, Override>>();
 
+// O(1) running counter of dirty overrides (initial !== current).
+// Maintained by all mutation paths so totalOverrideCount() avoids iteration.
+let dirtyCount = 0;
+
 // Overrides cleared by clearRedundantOverrides — kept so undo/redo can
 // recover the "current" value that was removed when HMR made it redundant.
 const clearedOverrides = new Map<Element, Map<string, Override>>();
@@ -199,6 +203,9 @@ export function applyInlineStyle(
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: value });
 
+    // New override: dirty if initial !== value
+    if (initial !== value) dirtyCount++;
+
     if (batchDepth > 0) {
       // In batch mode: collect undo entries, only first touch per (el, prop)
       if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
@@ -209,6 +216,7 @@ export function applyInlineStyle(
     }
   } else {
     const existing = elOverrides.get(prop)!;
+    const wasDirty = existing.initial !== existing.current;
 
     if (batchDepth > 0) {
       // In batch mode: only record first touch per (el, prop)
@@ -224,6 +232,11 @@ export function applyInlineStyle(
       }
     }
     existing.current = value;
+
+    // Update dirtyCount based on transition
+    const isDirtyNow = existing.initial !== value;
+    if (!wasDirty && isDirtyNow) dirtyCount++;
+    else if (wasDirty && !isDirtyNow) dirtyCount--;
   }
 
   // Prevent unbounded undo stack growth in long sessions (only outside batch)
@@ -267,15 +280,29 @@ export function undo(): { el: Element; prop: string } | null {
 
       redoEntries.push({ el, prop, prev: entry.current, state });
 
+      const wasDirty = entry.initial !== entry.current;
+
       if (prev === entry.initial) {
         if (!isState) (el as HTMLElement).style.removeProperty(prop);
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
+<<<<<<< HEAD
         if (isState) notifyStateChange(el, state, cssProp, null);
+||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
+=======
+        if (wasDirty) dirtyCount--;
+>>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
       } else {
         if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
+<<<<<<< HEAD
         if (isState) notifyStateChange(el, state, cssProp, prev);
+||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
+=======
+        const isDirtyNow = entry.initial !== prev;
+        if (!wasDirty && isDirtyNow) dirtyCount++;
+        else if (wasDirty && !isDirtyNow) dirtyCount--;
+>>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
       }
       result = { el, prop };
     }
@@ -307,16 +334,30 @@ export function undo(): { el: Element; prop: string } | null {
   // Capture forward state for redo before restoring
   redoStack.push({ el, prop, prev: entry.current, state });
 
+  const wasDirty = entry.initial !== entry.current;
+
   if (prev === entry.initial) {
     // Undoing back to original — remove override entirely
     if (!isState) (el as HTMLElement).style.removeProperty(prop);
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
+<<<<<<< HEAD
     if (isState) notifyStateChange(el, state, cssProp, null);
+||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
+=======
+    if (wasDirty) dirtyCount--;
+>>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
   } else {
     if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
+<<<<<<< HEAD
     if (isState) notifyStateChange(el, state, cssProp, prev);
+||||||| parent of a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
+=======
+    const isDirtyNow = entry.initial !== prev;
+    if (!wasDirty && isDirtyNow) dirtyCount++;
+    else if (wasDirty && !isDirtyNow) dirtyCount--;
+>>>>>>> a6ddd5a (perf: replace O(E*P) totalOverrideCount() iteration with O(1) counter)
   }
 
   schedulePersist();
@@ -343,10 +384,15 @@ export function redo(): { el: Element; prop: string } | null {
       undoEntries.push({ el, prop, prev: currentValue, state });
 
       if (entry) {
+        const wasDirty = entry.initial !== entry.current;
         entry.current = redoValue;
+        const isDirtyNow = entry.initial !== redoValue;
+        if (!wasDirty && isDirtyNow) dirtyCount++;
+        else if (wasDirty && !isDirtyNow) dirtyCount--;
       } else {
         const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
         elOverrides.set(prop, { initial, current: redoValue });
+        if (initial !== redoValue) dirtyCount++;
       }
       if (!isState) {
         (el as HTMLElement).style.setProperty(prop, redoValue, "important");
@@ -375,10 +421,15 @@ export function redo(): { el: Element; prop: string } | null {
   undoStack.push({ el, prop, prev: currentValue, state });
 
   if (entry) {
+    const wasDirty = entry.initial !== entry.current;
     entry.current = redoValue;
+    const isDirtyNow = entry.initial !== redoValue;
+    if (!wasDirty && isDirtyNow) dirtyCount++;
+    else if (wasDirty && !isDirtyNow) dirtyCount--;
   } else {
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: redoValue });
+    if (initial !== redoValue) dirtyCount++;
   }
   if (!isState) {
     (el as HTMLElement).style.setProperty(prop, redoValue, "important");
@@ -395,7 +446,8 @@ export function reset(el: Element): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
 
-  for (const [prop] of elOverrides) {
+  for (const [prop, { initial, current }] of elOverrides) {
+    if (initial !== current) dirtyCount--;
     // Only remove inline style for non-state-keyed properties
     if (!prop.includes("::")) {
       (el as HTMLElement).style.removeProperty(prop);
@@ -429,6 +481,7 @@ export function resetAll(): void {
   }
   overrides.clear();
   clearedOverrides.clear();
+  dirtyCount = 0;
   // Clear entire undo/redo stack
   undoStack.length = 0;
   redoStack.length = 0;
@@ -542,6 +595,7 @@ export function clearRedundantOverrides(): number {
       // Stash it in clearedOverrides so undo/redo can recover the value.
       const removed = overrides.get(el)?.get(prop);
       if (removed) {
+        if (removed.initial !== removed.current) dirtyCount--;
         if (!clearedOverrides.has(el)) clearedOverrides.set(el, new Map());
         clearedOverrides.get(el)!.set(prop, { ...removed });
       }
@@ -612,13 +666,7 @@ export function hasOverrides(): boolean {
  * Total number of property overrides across all elements.
  */
 export function totalOverrideCount(): number {
-  let total = 0;
-  for (const [, props] of overrides) {
-    for (const [, { initial, current }] of props) {
-      if (initial !== current) total++;
-    }
-  }
-  return total;
+  return dirtyCount;
 }
 
 /**
@@ -643,6 +691,8 @@ export function touchedElementCount(): number {
 export function resetProp(el: Element, prop: string): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
+  const entry = elOverrides.get(prop);
+  if (entry && entry.initial !== entry.current) dirtyCount--;
   if (!prop.includes("::")) {
     (el as HTMLElement).style.removeProperty(prop);
   }
@@ -727,9 +777,16 @@ export function applyCustomProperty(
   if (!overrides.has(scope)) overrides.set(scope, new Map());
   const scopeOverrides = overrides.get(scope)!;
   if (!scopeOverrides.has(name)) {
-    scopeOverrides.set(name, { initial: initial || value, current: value });
+    const effectiveInitial = initial || value;
+    scopeOverrides.set(name, { initial: effectiveInitial, current: value });
+    if (effectiveInitial !== value) dirtyCount++;
   } else {
-    scopeOverrides.get(name)!.current = value;
+    const existing = scopeOverrides.get(name)!;
+    const wasDirty = existing.initial !== existing.current;
+    existing.current = value;
+    const isDirtyNow = existing.initial !== value;
+    if (!wasDirty && isDirtyNow) dirtyCount++;
+    else if (wasDirty && !isDirtyNow) dirtyCount--;
   }
 
   schedulePersist();
@@ -827,6 +884,7 @@ export function restoreSession(): number {
 
       for (const [prop, override] of Object.entries(props)) {
         elOverrides.set(prop, { initial: override.initial, current: override.current });
+        if (override.initial !== override.current) dirtyCount++;
         (el as HTMLElement).style.setProperty(prop, override.current, "important");
         restored++;
       }
