@@ -308,7 +308,7 @@ function ScopePill({
         whiteSpace: "nowrap",
         transition: `color ${ms("normal")}, background ${ms("normal")}`,
         background: active
-          ? (hovered ? surface.active : surface.active)
+          ? (hovered ? blackAlpha(0.1) : surface.active)
           : (hovered ? surface.subtle : "transparent"),
         color: active
           ? text.primary
