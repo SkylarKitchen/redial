@@ -197,7 +197,7 @@ export function Toolbar({
             >
               <ToolButton
                 label="Select"
-                active={selecting}
+                active={selecting || (hasSelectedEl && activePanel.type === "inspector")}
                 onClick={onToggleSelecting}
               />
               <ToolButton

@@ -22,7 +22,8 @@ import { hexToRgba } from "./colorUtils";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Link2, Unlink } from "lucide-react";
+import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";
 import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -791,7 +792,9 @@ export function ColorRow({
   actions?: React.ReactNode;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
+  const linkBtnRef = useRef<HTMLButtonElement>(null);
   const resetPopover = useResetPopover(indicator, onReset);
 
   // Resolve var() references for display
@@ -870,6 +873,64 @@ export function ColorRow({
       >
         {displayLabel}
       </span>
+      {/* Link/Unlink variable button */}
+      {varName ? (
+        <button
+          type="button"
+          title="Unlink variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (resolvedColor) onChange(resolvedColor);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: primaryAlpha(0.6),
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Unlink size={11} strokeWidth={2} />
+        </button>
+      ) : (
+        <button
+          ref={linkBtnRef}
+          type="button"
+          title="Link to variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            setVarPickerOpen(!varPickerOpen);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.6,
+            transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
+        >
+          <Link2 size={11} strokeWidth={2} />
+        </button>
+      )}
+      {varPickerOpen && linkBtnRef.current && (
+        <VariablePicker
+          anchor={linkBtnRef.current}
+          type="color"
+          onSelect={(varExpr) => onChange(varExpr)}
+          onClose={() => setVarPickerOpen(false)}
+          activeVariable={varName}
+        />
+      )}
       {pickerOpen && swatchRef.current && (() => {
         const pickerWidth = 240 + 24; // width + padding
         const pickerHeight = 300;

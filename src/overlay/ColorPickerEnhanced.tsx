@@ -14,6 +14,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
 import { discoverColorVariables, type ColorVariable } from "./colorVariables";
+import { useTokenCollections } from "./tokenCollections";
 import { color as themeColor, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
@@ -152,6 +153,7 @@ export function ColorPickerEnhanced({
   const [isCreatingVar, setIsCreatingVar] = useState(false);
   const [newVarName, setNewVarName] = useState("");
   const newVarInputRef = useRef<HTMLInputElement>(null);
+  const { collections, getCollectionForVariable } = useTokenCollections();
 
   // Focus the name input when the create form opens
   useEffect(() => {
@@ -769,43 +771,98 @@ export function ColorPickerEnhanced({
             </div>
           )}
 
-          {colorVars.length > 0 ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-              {colorVars.map((cv) => {
-                const isActive = activeVariable === cv.name;
-                return (
-                  <button
-                    type="button"
-                    key={cv.name}
-                    onClick={() => onSelectVariable?.(`var(${cv.name})`)}
-                    title={`${cv.name}\n${cv.resolvedValue}`}
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 3,
-                      border: isActive
-                        ? `2px solid ${primaryAlpha(0.8)}`
-                        : `1px solid ${border.hover}`,
-                      background: cv.resolvedValue,
-                      cursor: "pointer",
-                      padding: 0,
-                      flexShrink: 0,
-                      transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
-                      position: "relative",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
-                      (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
-                      (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                    }}
-                  />
-                );
-              })}
-            </div>
-          ) : (
+          {colorVars.length > 0 ? (() => {
+            const swatchBtn = (cv: ColorVariable) => {
+              const isActive = activeVariable === cv.name;
+              return (
+                <button
+                  type="button"
+                  key={cv.name}
+                  onClick={() => onSelectVariable?.(`var(${cv.name})`)}
+                  title={`${cv.name}\n${cv.resolvedValue}`}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 3,
+                    border: isActive
+                      ? `2px solid ${primaryAlpha(0.8)}`
+                      : `1px solid ${border.hover}`,
+                    background: cv.resolvedValue,
+                    cursor: "pointer",
+                    padding: 0,
+                    flexShrink: 0,
+                    transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
+                    position: "relative",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                  }}
+                />
+              );
+            };
+
+            // Group by token collection
+            const grouped = new Map<string, { label: string; vars: ColorVariable[] }>();
+            const uncategorized: ColorVariable[] = [];
+            for (const cv of colorVars) {
+              const coll = getCollectionForVariable(cv.name);
+              if (coll) {
+                let g = grouped.get(coll.id);
+                if (!g) { g = { label: coll.name, vars: [] }; grouped.set(coll.id, g); }
+                g.vars.push(cv);
+              } else {
+                uncategorized.push(cv);
+              }
+            }
+
+            // Order groups by collection order
+            const orderedGroups: { label: string; vars: ColorVariable[] }[] = [];
+            for (const c of collections) {
+              const g = grouped.get(c.id);
+              if (g && g.vars.length > 0) orderedGroups.push(g);
+            }
+
+            if (orderedGroups.length === 0) {
+              // No collections — show flat grid as before
+              return (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {colorVars.map(swatchBtn)}
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {orderedGroups.map((g) => (
+                  <div key={g.label}>
+                    <div style={{ fontSize: 8, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
+                      {g.label}
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {g.vars.map(swatchBtn)}
+                    </div>
+                  </div>
+                ))}
+                {uncategorized.length > 0 && (
+                  <div>
+                    {orderedGroups.length > 0 && (
+                      <div style={{ fontSize: 8, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
+                        Uncategorized
+                      </div>
+                    )}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                      {uncategorized.map(swatchBtn)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })() : (
             <div style={{ fontSize: 10, color: text.hint, fontStyle: "italic" }}>
               Click + to create a variable
             </div>
