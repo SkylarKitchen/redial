@@ -594,7 +594,7 @@ function TrackCountInput({ value, onChange }: {
       borderRadius: 4,
       border: `1px solid ${border.default}`,
       overflow: "hidden",
-      background: surface.input,
+      background: "#EBEBEB",
       alignItems: "center",
     }}>
       {editing ? (

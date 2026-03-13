@@ -17,11 +17,30 @@ import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
-import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow } from "./layoutControls";
-import { LAYOUT_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS, ALIGN_SELF_OPTIONS } from "./panelConstants";
+import { RowLabel, DirectionRow, GapRow, DisplayTabs, ChildrenRow, GridTrackRow, MiniDropdown } from "./layoutControls";
+import { LAYOUT_UNITS, ALIGN_SEGMENT_OPTIONS, JUSTIFY_SEGMENT_OPTIONS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS } from "./panelConstants";
+import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
 import { Link, Grid3x3 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "./theme";
+import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "./panelStyles";
+
+// ─── Grid helpers ─────────────────────────────────────────────────────
+
+/** Parse a grid template string into a track count (e.g. "1fr 1fr" → 2, "repeat(3, 1fr)" → 3) */
+function parseTrackCount(template: string): number {
+  if (!template || template === "none") return 1;
+  const repeatMatch = template.match(/repeat\(\s*(\d+)/);
+  if (repeatMatch) return parseInt(repeatMatch[1], 10);
+  // Count space-separated tokens (rough — works for simple templates)
+  return template.trim().split(/\s+/).length;
+}
+
+/** Convert a track count to a grid template string */
+function countToTemplate(count: number): string {
+  if (count <= 1) return "1fr";
+  return `repeat(${count}, 1fr)`;
+}
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -83,6 +102,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   // Grid
   const [justifyItems, setJustifyItems] = useState(() => cs.getPropertyValue("justify-items") || "stretch");
   const [alignContent, setAlignContent] = useState(() => cs.getPropertyValue("align-content") || "stretch");
+  const [gridAlignItems, setGridAlignItems] = useState(() => cs.getPropertyValue("align-items") || "stretch");
+  const [gridAutoFlow, setGridAutoFlow] = useState(() => cs.getPropertyValue("grid-auto-flow") || "row");
 
   // Gap
   const [gap, setGap] = useState(() => parseNum(cs.gap));
@@ -92,6 +113,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   // Grid tracks
   const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
   const [gridRows, setGridRows] = useState(() => cs.gridTemplateRows === "none" ? "" : cs.gridTemplateRows);
+  const [gridColCount, setGridColCount] = useState(() => parseTrackCount(cs.gridTemplateColumns));
+  const [gridRowCount, setGridRowCount] = useState(() => parseTrackCount(cs.gridTemplateRows));
+  const [gridTrackLinked, setGridTrackLinked] = useState(false);
 
   // Flex child
   const [flexGrow, setFlexGrow] = useState(() => parseNum(cs.flexGrow));
@@ -148,9 +172,37 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const handleGridAlignChange = useCallback(
     (justify: string, align: string) => {
       setJustifyItems(justify);
-      setAlignContent(align);
+      setGridAlignItems(align);
       apply("justify-items", justify);
-      apply("align-content", align);
+      apply("align-items", align);
+    },
+    [apply],
+  );
+
+  const handleGridAutoFlowChange = useCallback(
+    (v: string) => {
+      setGridAutoFlow(v);
+      apply("grid-auto-flow", v);
+    },
+    [apply],
+  );
+
+  const handleGridColCountChange = useCallback(
+    (count: number) => {
+      setGridColCount(count);
+      const template = countToTemplate(count);
+      setGridCols(template);
+      apply("grid-template-columns", template);
+    },
+    [apply],
+  );
+
+  const handleGridRowCountChange = useCallback(
+    (count: number) => {
+      setGridRowCount(count);
+      const template = countToTemplate(count);
+      setGridRows(template);
+      apply("grid-template-rows", template);
     },
     [apply],
   );
@@ -251,7 +303,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       focusOpen={focusOpen}
       onToggle={onToggle}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: layout.controlGap }}>
       <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} indicator={ind("display")} />
 
       {(isFlex || isBlockContainer) && (
@@ -265,7 +317,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           />
 
           {/* Align: 5 icon segments for align-items */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+          <div style={ROW}>
             <RowLabel label="Align" indicator={ind("align-items")} isSet={alignItems !== "stretch"} onReset={() => resetCssStr("align-items", setAlignItems)} />
             <SegmentedControl
               options={ALIGN_SEGMENT_OPTIONS}
@@ -276,7 +328,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
           </div>
 
           {/* Justify: 5 icon segments for justify-content */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+          <div style={ROW}>
             <RowLabel label="Justify" indicator={ind("justify-content")} isSet={justifyContent !== "flex-start"} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
             <SegmentedControl
               options={JUSTIFY_SEGMENT_OPTIONS}
@@ -333,36 +385,97 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
       {isGrid && (
         <>
-          {/* Grid overlay toggle */}
-          {onToggleGridOverlay && (
-            <div className="flex items-center gap-1.5 py-0.5 px-3">
-              <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0">Overlay</span>
+          {/* Grid track count: Columns / Rows numeric inputs */}
+          <GridTrackRow
+            columns={gridColCount}
+            rows={gridRowCount}
+            onColumnsChange={handleGridColCountChange}
+            onRowsChange={handleGridRowCountChange}
+            linked={gridTrackLinked}
+            onLinkedChange={setGridTrackLinked}
+            onReset={() => {
+              const cols = resetAndReadStr(element, "grid-template-columns");
+              const rows = resetAndReadStr(element, "grid-template-rows");
+              setGridCols(cols);
+              setGridRows(rows);
+              setGridColCount(parseTrackCount(cols));
+              setGridRowCount(parseTrackCount(rows));
+            }}
+            indicator={sectionInd(["grid-template-columns", "grid-template-rows"])}
+          />
+
+          {/* Direction: Row / Column toggle + grid overlay */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+            <RowLabel label="Direction" indicator={ind("grid-auto-flow")} onReset={() => resetCssStr("grid-auto-flow", setGridAutoFlow)} />
+            <SegmentedControl
+              options={[
+                { value: "row", icon: <GridRowDirectionIcon size={16} />, title: "Row" },
+                { value: "column", icon: <GridColumnDirectionIcon size={16} />, title: "Column" },
+              ]}
+              value={gridAutoFlow.startsWith("column") ? "column" : "row"}
+              onChange={handleGridAutoFlowChange}
+              aria-label="Grid auto-flow direction"
+            />
+            {onToggleGridOverlay && (
               <button
                 onClick={onToggleGridOverlay}
                 title={showGridOverlay ? "Hide grid overlay" : "Show grid overlay"}
-                className={cn(
-                  "flex items-center gap-1 py-[3px] px-2 text-[10px] font-mono rounded-[3px] cursor-pointer outline-none",
-                  showGridOverlay
-                    ? "border"
-                    : "bg-[var(--input)] border border-[var(--border)] text-[var(--muted-foreground)]",
-                )}
-                style={showGridOverlay ? { background: primaryAlpha(0.2), borderColor: primaryAlpha(0.4), color: primaryAlpha(0.9) } : undefined}
+                style={{
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 4,
+                  border: "none",
+                  outline: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  padding: 4,
+                  background: showGridOverlay ? primaryAlpha(0.2) : "transparent",
+                  color: showGridOverlay ? primaryAlpha(0.9) : text.label,
+                  transition: "background 75ms ease",
+                }}
               >
-                <Grid3x3 size={12} strokeWidth={1.5} />
-                {showGridOverlay ? "Hide" : "Show"}
+                <Grid3x3 size={14} strokeWidth={1.5} />
               </button>
-            </div>
-          )}
-          <TextRow label="Columns" value={gridCols} placeholder="1fr 1fr 1fr" onChange={handleGridColsChange} onContextMenu={ctxMenu("grid-template-columns", gridCols)} />
-          <TextRow label="Rows" value={gridRows} placeholder="auto" onChange={handleGridRowsChange} onContextMenu={ctxMenu("grid-template-rows", gridRows)} />
-          <div className="py-1.5 px-3">
+            )}
+          </div>
+
+          {/* Align: AlignBox + X/Y dropdowns */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "0 8px" }}>
+            <RowLabel label="Align" indicator={sectionInd(["justify-items", "align-items"])} onReset={() => {
+              resetCssStr("justify-items", setJustifyItems);
+              resetCssStr("align-items", setGridAlignItems);
+            }} />
             <AlignBox
               justify={justifyItems}
-              align={alignContent}
+              align={gridAlignItems}
               onChange={handleGridAlignChange}
               mode="grid"
+              compact
             />
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif", flexShrink: 0 }}>X</span>
+                <MiniDropdown
+                  value={justifyItems}
+                  options={GRID_ALIGN_OPTIONS}
+                  onChange={(v) => { setJustifyItems(v); apply("justify-items", v); }}
+                />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif", flexShrink: 0 }}>Y</span>
+                <MiniDropdown
+                  value={gridAlignItems}
+                  options={GRID_ALIGN_OPTIONS}
+                  onChange={(v) => { setGridAlignItems(v); apply("align-items", v); }}
+                />
+              </div>
+            </div>
           </div>
+
+          {/* Gap: slider + lock */}
           {gapLocked ? (
             <div className="flex items-center">
               <div className="flex-1">
