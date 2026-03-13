@@ -89,12 +89,17 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [resetHovered, setResetHovered] = useState(false);
   const [saveHovered, setSaveHovered] = useState(false);
 
+  // Reset shake on no-op
+  const [shaking, setShaking] = useState(false);
+  const shakingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   // Clear timers on unmount to prevent stale setState calls
   useEffect(() => {
     return () => {
       if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
       if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
       if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      if (shakingTimerRef.current) clearTimeout(shakingTimerRef.current);
     };
   }, []);
 
