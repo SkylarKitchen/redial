@@ -40,7 +40,7 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { text } from "./theme";
+import { text, labelIndicator } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
@@ -221,9 +221,19 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
 
       {/* 3. Outline */}
       <div style={ROW}>
-        <span style={{ ...LABEL, cursor: "default", display: "flex", alignItems: "center", gap: "4px" }}>
-          {ind("outline-style") !== "none" && <StyleIndicator type={ind("outline-style")} />}
-          Outline
+        <span
+          style={{ ...LABEL, cursor: "default" }}
+          title={ind("outline-style") !== "none" ? "Option+Click to reset" : undefined}
+          onClick={(e) => { if (e.altKey) { resetCssStr("outline-style", setOutlineStyle); } }}
+        >
+          <span style={{
+            background: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).bg,
+            color: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).text,
+            borderRadius: 2,
+            padding: "0 2px",
+          }}>
+            Outline
+          </span>
         </span>
         <IconButtonGroup options={OUTLINE_STYLE_OPTIONS} value={outlineStyle} onChange={handleOutlineStyleChange} aria-label="Outline style" />
       </div>
