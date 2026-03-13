@@ -175,7 +175,7 @@ export function SpacingValuePopover({
         background: color.popover,
         border: `1px solid ${border.default}`,
         borderRadius: "6px",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+        boxShadow: shadow.dropdown,
         zIndex: zIndex.max,
         padding: "8px",
         fontFamily: font.sans,

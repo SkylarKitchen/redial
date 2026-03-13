@@ -11,7 +11,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { EditorRemoveButton, VisibilityToggle } from "./controls";
-import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
+import { color, text, border, surface, font, shadow, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
 import { ms } from "./timing";
 
 export interface FilterValues {
@@ -320,7 +320,7 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
               padding: "2px 0",
               zIndex: 100,
               minWidth: "120px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              boxShadow: shadow.dropdown,
             }}
           >
             {availableFilters.map((key) => (

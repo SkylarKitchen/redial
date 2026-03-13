@@ -286,3 +286,152 @@ describe("All sections import reset functions", () => {
     });
   }
 });
+
+// ── SubSectionHeader audit: ALL section files must use shared component ──
+
+describe("SubSectionHeader is shared — no local definitions", () => {
+  const sectionFiles = [
+    "EffectsSection.tsx",
+    "BackgroundsSection.tsx",
+    "TypographySection.tsx",
+  ];
+
+  for (const file of sectionFiles) {
+    it(`${file} does not define a local SubSectionHeader`, () => {
+      const src = readSection(file);
+      const hasLocalDef = /^function SubSectionHeader/m.test(src);
+      expect(
+        hasLocalDef,
+        `${file} still has a local SubSectionHeader — must import from ./controls`
+      ).toBe(false);
+    });
+  }
+
+  it("controls.tsx exports SubSectionHeader", () => {
+    const src = readSection("controls.tsx");
+    expect(src).toContain("export function SubSectionHeader");
+  });
+});
+
+describe("SubSectionHeader with indicator must have onReset (all section files)", () => {
+  const sectionFilesWithSubSectionHeader = [
+    "EffectsSection.tsx",
+    "BackgroundsSection.tsx",
+    "TypographySection.tsx",
+  ];
+
+  for (const file of sectionFilesWithSubSectionHeader) {
+    it(`${file}: all SubSectionHeaders with indicator have onReset`, () => {
+      const src = readSection(file);
+      const missing = findMissingSubSectionResets(src);
+      expect(missing, `SubSectionHeaders missing onReset in ${file}: ${missing.join(", ")}`).toEqual([]);
+    });
+  }
+});
+
+// ── LayoutSection coverage ──
+
+describe("LayoutSection", () => {
+  let src: string;
+  beforeAll(() => { src = readSection("LayoutSection.tsx"); });
+
+  it("all SelectRows with computedProp have onReset", () => {
+    const missing = findMissingResets(src, "SelectRow");
+    expect(missing, `SelectRows missing onReset: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  it("all SliderRows with computedProp have onReset", () => {
+    const missing = findMissingResets(src, "SliderRow");
+    expect(missing, `SliderRows missing onReset: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  it("all NumberRows with computedProp have onReset", () => {
+    const missing = findMissingResets(src, "NumberRow");
+    expect(missing, `NumberRows missing onReset: ${missing.join(", ")}`).toEqual([]);
+  });
+});
+
+// ── SizeSection TextRow coverage ──
+
+describe("SizeSection TextRows", () => {
+  let src: string;
+  beforeAll(() => { src = readSection("SizeSection.tsx"); });
+
+  it("Aspect TextRow has computedProp and onReset", () => {
+    const missing = findMissingResets(src, "TextRow");
+    expect(missing, `TextRows missing onReset: ${missing.join(", ")}`).toEqual([]);
+  });
+});
+
+// ── EditorRemoveButton and VisibilityToggle: shared component usage audit ──
+
+describe("Editor files use shared EditorRemoveButton (no inline X buttons)", () => {
+  const editorFiles = [
+    "TransformEditor.tsx",
+    "ShadowEditor.tsx",
+    "FilterSliders.tsx",
+    "TransitionEditor.tsx",
+  ];
+
+  for (const file of editorFiles) {
+    it(`${file} imports EditorRemoveButton from ./controls`, () => {
+      const src = readSection(file);
+      expect(src).toContain("EditorRemoveButton");
+    });
+
+    it(`${file} does not have inline <X size= buttons`, () => {
+      const src = readSection(file);
+      // Should not have direct X icon usage for remove buttons
+      const hasInlineX = /<X\s+size=/.test(src);
+      expect(
+        hasInlineX,
+        `${file} still has inline <X size=...> — must use EditorRemoveButton`
+      ).toBe(false);
+    });
+  }
+
+  it("controls.tsx exports EditorRemoveButton", () => {
+    const src = readSection("controls.tsx");
+    expect(src).toContain("export function EditorRemoveButton");
+  });
+});
+
+describe("Editor files use shared VisibilityToggle (no inline Eye imports)", () => {
+  const editorFiles = [
+    "ShadowEditor.tsx",
+    "FilterSliders.tsx",
+    "TransitionEditor.tsx",
+    "BackgroundLayerList.tsx",
+  ];
+
+  for (const file of editorFiles) {
+    it(`${file} imports VisibilityToggle from ./controls`, () => {
+      const src = readSection(file);
+      expect(src).toContain("VisibilityToggle");
+    });
+
+    it(`${file} does not import Eye/EyeOff from lucide-react`, () => {
+      const src = readSection(file);
+      const importsEye = /import\s*\{[^}]*\bEye\b[^}]*\}\s*from\s*["']lucide-react["']/.test(src);
+      expect(
+        importsEye,
+        `${file} still imports Eye from lucide-react — must use VisibilityToggle`
+      ).toBe(false);
+    });
+  }
+
+  it("controls.tsx exports VisibilityToggle", () => {
+    const src = readSection("controls.tsx");
+    expect(src).toContain("export function VisibilityToggle");
+  });
+});
+
+// ── BackgroundLayerList intentionally keeps its custom delete button ──
+
+describe("BackgroundLayerList keeps custom delete button", () => {
+  it("still uses X from lucide-react (intentional 20×20 destructive variant)", () => {
+    const src = readSection("BackgroundLayerList.tsx");
+    const hasX = /import\s*\{[^}]*\bX\b[^}]*\}\s*from\s*["']lucide-react["']/.test(src);
+    expect(hasX, "BackgroundLayerList should keep X for its 20×20 destructive delete button").toBe(true);
+  });
+});

@@ -15,7 +15,7 @@ import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
 import { discoverColorVariables, type ColorVariable } from "./colorVariables";
 import { useTokenCollections } from "./tokenCollections";
-import { color as themeColor, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
+import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "./theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
