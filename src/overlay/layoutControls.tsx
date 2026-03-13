@@ -173,16 +173,15 @@ export function MiniDropdown({ value, options, onChange }: {
         onKeyDown={onTriggerKeyDown}
         style={{ width: "100%", height: 22, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 6px", background: color.input, border: `1px solid ${color.border}`, borderRadius: 3, fontSize: 10, fontFamily: font.mono, cursor: "pointer", outline: "none", color: text.label }}
       >
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
-        <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0" style={{ color: text.disabled }} />
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{current?.label ?? value}</span>
+        <ChevronDown size={12} strokeWidth={2} style={{ color: text.disabled, marginLeft: 4, flexShrink: 0 }} />
       </button>
       {open && (
         <div
           id={`${id}-listbox`}
           role="listbox"
           onKeyDown={onListKeyDown}
-          className="absolute z-[200] top-[calc(100%+2px)] left-0 right-0 min-w-[80px] bg-[#F5F5F5] border rounded shadow-[0_4px_12px_rgba(0,0,0,0.1)] py-0.5"
-          style={{ borderColor: surface.track }}
+          style={{ position: "absolute", zIndex: 200, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: 80, background: color.popover, border: `1px solid ${surface.track}`, borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", padding: "2px 0" }}
         >
           {options.map((opt, i) => {
             const active = opt.value === value;
@@ -195,16 +194,15 @@ export function MiniDropdown({ value, options, onChange }: {
                 role="option"
                 aria-selected={active}
                 onClick={() => { onChange(opt.value); setOpen(false); }}
-                className={cn(
-                  "px-2 py-[3px] text-[10px] font-mono cursor-pointer",
-                  active
-                    ? "bg-[var(--primary)] text-white"
-                    : "hover:bg-[rgba(0,0,0,0.05)]",
-                )}
-                style={!active ? {
-                  color: text.label,
-                  ...(isHighlighted ? { background: surface.hover } : {}),
-                } : undefined}
+                style={{
+                  padding: "3px 8px",
+                  fontSize: 10,
+                  fontFamily: font.mono,
+                  cursor: "pointer",
+                  ...(active
+                    ? { background: color.primary, color: "#fff" }
+                    : { color: text.label, ...(isHighlighted ? { background: surface.hover } : {}) }),
+                }}
               >
                 {opt.label}
               </div>
@@ -897,7 +895,7 @@ export function ChildrenRow({ wrap, onWrapChange, indicator, onReset }: {
   const isReverse = wrap === "wrap-reverse";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 12px" }}>
       <RowLabel label="Children" indicator={indicator} isSet={isWrap} onReset={onReset} />
       <SegmentedControl
         options={[
@@ -980,10 +978,14 @@ export function TypoValueCell({
   return (
     <div
       ref={cellRef}
-      className="flex flex-1 items-center rounded min-w-0"
       style={{
+        display: "flex",
+        flex: 1,
+        alignItems: "center",
+        borderRadius: 4,
+        minWidth: 0,
         height: 28,
-        border: `1px solid ${blackAlpha(0.07)}`,
+        border: `1px solid ${border.default}`,
         background: surface.subtle,
         ...flashStyle,
       }}
@@ -993,8 +995,7 @@ export function TypoValueCell({
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
-          style={{ color: text.label }}
+          style={{ flex: 1, fontSize: 11, fontFamily: font.mono, padding: "0 6px", cursor: "text", outline: "none", color: text.label }}
         >
           {keyword}
         </span>
@@ -1006,25 +1007,23 @@ export function TypoValueCell({
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="flex-1 w-0 bg-transparent border-none text-[11px] font-mono px-1.5 outline-none"
-          style={{ color: color.foreground }}
+          style={{ flex: 1, width: 0, background: "transparent", border: "none", fontSize: 11, fontFamily: font.mono, padding: "0 6px", outline: "none", color: color.foreground }}
         />
       ) : (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
           onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
-          className="flex-1 text-[11px] font-mono px-1.5 cursor-text outline-none"
-          style={{ color: text.label }}
+          style={{ flex: 1, fontSize: 11, fontFamily: font.mono, padding: "0 6px", cursor: "text", outline: "none", color: text.label }}
         >
           {value}
         </span>
       )}
-      <div className="shrink-0 pr-[3px]" style={{ borderLeft: `1px solid ${blackAlpha(0.07)}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+      <div style={{ flexShrink: 0, paddingRight: 3, borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
         {units && onUnitChange ? (
           <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />
         ) : (
-          <span className="text-[9px] uppercase pr-1 shrink-0 font-mono" style={{ color: text.disabled }}>
+          <span style={{ fontSize: 9, textTransform: "uppercase" as const, paddingRight: 4, flexShrink: 0, fontFamily: font.mono, color: text.disabled }}>
             {unit}
           </span>
         )}

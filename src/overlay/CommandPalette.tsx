@@ -3,11 +3,9 @@
  *
  * Searches across CSS properties/sections, actions, and DOM elements.
  * Fuzzy substring matching with keyboard navigation and debounced element search.
- * Built on Shadcn Command (cmdk) + Tailwind CSS.
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -19,7 +17,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
-import { color } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, shadow } from "./theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -48,10 +46,10 @@ const ACTIONS = [
   "Toggle Diff",
 ] as const;
 
-const CATEGORY_BADGE_CLASSES: Record<SearchResult["category"], string> = {
-  Property: `text-[${color.primary}] bg-[${color.primary}]/15`,
-  Action: "text-emerald-400 bg-emerald-500/15",
-  Element: "text-amber-400 bg-amber-500/15",
+const CATEGORY_BADGE_STYLES: Record<SearchResult["category"], React.CSSProperties> = {
+  Property: { color: color.primary, background: primaryAlpha(0.15) },
+  Action: { color: "#34d399", background: "rgba(16,185,129,0.15)" },
+  Element: { color: "#fbbf24", background: "rgba(245,158,11,0.15)" },
 };
 
 const MAX_RESULTS = 30;
@@ -240,7 +238,15 @@ export function CommandPalette({
   return (
     <div className="__tuner-root">
       <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DialogContent className="overflow-hidden p-0 max-w-[500px] bg-[var(--background)] border-[var(--border)]">
+        <DialogContent
+          style={{
+            overflow: "hidden",
+            padding: 0,
+            maxWidth: 500,
+            background: color.background,
+            border: `1px solid ${border.default}`,
+          }}
+        >
           <Command
             shouldFilter={false}
             className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-1.5 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
@@ -250,7 +256,7 @@ export function CommandPalette({
               value={query}
               onValueChange={(value) => setQuery(value)}
             />
-            <CommandList className="max-h-[360px]">
+            <CommandList style={{ maxHeight: 360 }}>
               {query && results.length === 0 && (
                 <CommandEmpty>
                   No results for &ldquo;{query}&rdquo;
@@ -258,7 +264,12 @@ export function CommandPalette({
               )}
 
               {!query && (
-                <div className="py-6 text-center text-sm text-muted-foreground">
+                <div style={{
+                  padding: "24px 0",
+                  textAlign: "center",
+                  fontSize: 13,
+                  color: text.label,
+                }}>
                   Type to search properties, actions, or elements
                 </div>
               )}
@@ -273,31 +284,57 @@ export function CommandPalette({
                         key={`${r.category}-${r.label}-${i}`}
                         value={`${r.category}-${r.label}-${i}`}
                         onSelect={() => executeResult(r)}
-                        className="flex items-center gap-2 cursor-pointer"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          cursor: "pointer",
+                        }}
                       >
                         {/* Category badge */}
                         <span
-                          className={cn(
-                            "text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-sm shrink-0 leading-tight",
-                            CATEGORY_BADGE_CLASSES[r.category],
-                          )}
+                          style={{
+                            fontSize: 9,
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            padding: "2px 6px",
+                            borderRadius: 2,
+                            flexShrink: 0,
+                            lineHeight: 1.2,
+                            ...CATEGORY_BADGE_STYLES[r.category],
+                          }}
                         >
                           {r.category}
                         </span>
 
                         {/* Label */}
                         <span
-                          className={cn(
-                            "text-[13px] text-foreground/90 whitespace-nowrap overflow-hidden text-ellipsis shrink-0",
-                            r.category === "Property" && "font-mono",
-                          )}
+                          style={{
+                            fontSize: 13,
+                            color: "rgba(0,0,0,0.9)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            flexShrink: 0,
+                            fontFamily: r.category === "Property" ? font.mono : undefined,
+                          }}
                         >
                           {r.label}
                         </span>
 
                         {/* Detail */}
                         {r.detail && (
-                          <span className="text-[11px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis ml-auto shrink min-w-0">
+                          <span style={{
+                            fontSize: 11,
+                            color: text.label,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            marginLeft: "auto",
+                            flexShrink: 1,
+                            minWidth: 0,
+                          }}>
                             {r.detail}
                           </span>
                         )}

@@ -47,7 +47,7 @@ import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { color, text, border, surface, blackAlpha, bgAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout } from "./theme";
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -67,15 +67,14 @@ class PanelErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="p-3 text-[11px]" style={{ color: text.disabled }}>
-          <div className="mb-1.5">Panel crashed — try selecting a different element.</div>
+        <div style={{ padding: 12, fontSize: 11, color: text.disabled }}>
+          <div style={{ marginBottom: 6 }}>Panel crashed — try selecting a different element.</div>
           <button
             onClick={() => {
               this.setState({ error: null });
               this.props.onError?.();
             }}
-            className="px-2.5 py-1 text-[11px] rounded cursor-pointer"
-            style={{ border: `1px solid ${blackAlpha(0.07)}`, background: surface.hover, color: text.label }}
+            style={{ paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 4, fontSize: 11, borderRadius: 4, cursor: "pointer", border: `1px solid ${blackAlpha(0.07)}`, background: surface.hover, color: text.label }}
           >
             Retry
           </button>
@@ -1429,32 +1428,28 @@ export function Overlay() {
         <>
           <div
             ref={selectedOutlineRef}
-            className="__tuner-selected-outline fixed pointer-events-none z-[2147483646] border-[1.5px] border-solid rounded-sm transition-all duration-100 ease-out"
-            style={{ display: 'none', borderColor: color.primary }}
+            className="__tuner-selected-outline"
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: `all ${ms("normal")} ease-out` }}
           />
           {/* Breadcrumb ancestor hover outline */}
           <div
             ref={ancestorOutlineRef}
-            className="fixed pointer-events-none z-[2147483645] border-[1.5px] border-dashed rounded-sm"
-            style={{ display: 'none', borderColor: primaryAlpha(0.5), background: primaryAlpha(0.04) }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483645, border: `1.5px dashed ${primaryAlpha(0.5)}`, borderRadius: 2, background: primaryAlpha(0.04) }}
           />
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap"
-            style={{ display: 'none', background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            className="fixed pointer-events-none z-[2147483646] backdrop-blur-[8px] text-[10px] font-mono px-1.5 py-0.5 rounded-[3px] whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
-            style={{ display: 'none', background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483646, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: bgAlpha(0.9), color: text.secondary }}
           />
           {/* Hover highlight: subtle preview when hovering a different element */}
           <div
             ref={hoverHighlightRef}
-            className="fixed pointer-events-none z-[2147483644] rounded-sm transition-all duration-75 ease-out"
-            style={{ display: 'none', background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: 2147483644, borderRadius: 2, transition: "all 75ms ease-out", background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
           />
         </>
       )}
@@ -1489,18 +1484,26 @@ export function Overlay() {
       {selectedEl && inferResult && (
         <motion.div
           key="tuner-panel"
-          className={cn(
-            "fixed z-[2147483647] w-[300px] h-[85vh] max-h-[85vh] bg-white rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.12),0_0_0_0.5px_rgba(0,0,0,0.04)] backdrop-blur-[20px] flex flex-col overflow-hidden __tuner-root",
-            diffMode ? "border border-yellow-400/30" : "border",
-            selecting ? "pointer-events-none" : "pointer-events-auto",
-          )}
+          className="__tuner-root"
           style={{
+            position: "fixed",
+            zIndex: 2147483647,
+            width: 300,
+            height: "85vh",
+            maxHeight: "85vh",
+            background: color.background,
+            borderRadius: layout.panelRadius,
+            boxShadow: shadow.panel,
+            backdropFilter: "blur(20px)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            border: diffMode ? "1px solid rgba(250,204,21,0.3)" : `1px solid ${blackAlpha(0.07)}`,
+            pointerEvents: selecting ? "none" : (selectedEl ? undefined : "none"),
             top: pos.y,
             left: pos.x,
             transformOrigin: "bottom right",
-            pointerEvents: selectedEl ? undefined : "none",
             ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
-            ...(!diffMode ? { borderColor: blackAlpha(0.07) } : {}),
           }}
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0, transition: springConfig("panelOpen") }}
@@ -1521,7 +1524,7 @@ export function Overlay() {
             role="status"
             aria-live="assertive"
             aria-atomic="true"
-            className="sr-only"
+            style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", borderWidth: 0 }}
           >
             {announcement}
           </div>

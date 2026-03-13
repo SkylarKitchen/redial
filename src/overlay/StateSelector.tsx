@@ -8,7 +8,6 @@
  * click-outside or open state management needed.
  */
 
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -16,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { text } from "./theme";
 
 export interface StateSelectorProps {
   value: string;
@@ -46,21 +46,32 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
-        className={cn(
-          "h-6 text-[11px] bg-transparent border-none px-1.5 w-auto gap-1 shadow-none focus:ring-0",
-          isBase ? "text-muted-foreground" : "text-emerald-400"
-        )}
+        style={{
+          height: 24,
+          fontSize: 11,
+          background: "transparent",
+          border: "none",
+          paddingLeft: 6,
+          paddingRight: 6,
+          width: "auto",
+          gap: 4,
+          boxShadow: "none",
+          color: isBase ? text.label : "#34d399",
+        }}
       >
         <SelectValue>
           {isBase ? "State" : current.label}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="__tuner-root min-w-[180px]">
+      <SelectContent className="__tuner-root" style={{ minWidth: 180 }}>
         {STATES.map((state) => (
           <SelectItem
             key={state.value}
             value={state.value}
-            className="text-[11px] py-1.5 pl-2 pr-8"
+            style={{
+              fontSize: 11,
+              padding: "6px 32px 6px 8px",
+            }}
           >
             {state.label}
           </SelectItem>

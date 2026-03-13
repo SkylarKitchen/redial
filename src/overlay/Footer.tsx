@@ -14,7 +14,7 @@ import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
-import { color, text, border, surface, font, shadow, primaryAlpha, destructiveAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, destructiveAlpha } from "./theme";
 import { getConfig } from "./config";
 
 // --- Clean CSS format (no "was" comments) ---

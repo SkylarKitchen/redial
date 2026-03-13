@@ -478,7 +478,7 @@ export function SelectRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -486,8 +486,14 @@ export function SelectRow({
       ) : labelContent}
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          className="tuner-focusable flex-1 h-6 rounded-sm text-[11px] font-mono px-1.5 hover:bg-[rgba(0,0,0,0.07)]"
+          className="tuner-focusable"
           style={{
+            flex: 1,
+            height: 24,
+            borderRadius: 2,
+            fontSize: 11,
+            fontFamily: font.mono,
+            padding: "0 6px",
             backgroundColor: color.input,
             border: `1px solid ${color.border}`,
             color: color.foreground,
@@ -496,8 +502,10 @@ export function SelectRow({
           <SelectValue />
         </SelectTrigger>
         <SelectContent
-          className="rounded shadow-lg max-h-[180px]"
           style={{
+            borderRadius: 6,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+            maxHeight: 180,
             backgroundColor: color.popover,
             border: `1px solid ${color.border}`,
           }}
@@ -506,10 +514,7 @@ export function SelectRow({
             <SelectItem
               key={opt.value}
               value={opt.value}
-              className={cn(
-                "text-[11px] font-mono cursor-pointer",
-                "focus:bg-[rgba(0,0,0,0.05)] focus:text-[#171717]"
-              )}
+              className="text-[11px] font-mono cursor-pointer focus:bg-[rgba(0,0,0,0.05)] focus:text-[#171717]"
             >
               {opt.label}
             </SelectItem>
@@ -567,8 +572,7 @@ function SelectRowCustom({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={selectLabelTitle}
-      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
-      style={{ color: selectLabelColor }}
+      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: selectLabelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -576,15 +580,15 @@ function SelectRowCustom({
   );
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
         </ComputedTooltip>
       ) : labelContent}
-      <div ref={containerRef} className="relative flex-1">
+      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
-          className="tuner-focusable w-full h-6 flex items-center justify-between rounded-sm text-[11px] font-mono px-1.5 cursor-pointer outline-none hover:bg-[rgba(0,0,0,0.07)]"
+          className="tuner-focusable"
           tabIndex={0}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
@@ -595,22 +599,31 @@ function SelectRowCustom({
             }
           }}
           style={{
+            width: "100%",
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderRadius: 2,
+            fontSize: 11,
+            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
+            padding: "0 6px",
+            cursor: "pointer",
+            outline: "none",
             backgroundColor: open ? blackAlpha(0.07) : color.input,
             border: `1px solid ${color.border}`,
             color: color.foreground,
-            fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : undefined,
           }}
         >
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {current?.label ?? value}
           </span>
-          <ChevronDown size={12} strokeWidth={2} className="shrink-0 ml-1" style={{ color: color.mutedForeground }} />
+          <ChevronDown size={12} strokeWidth={2} style={{ color: color.mutedForeground, flexShrink: 0, marginLeft: 4 }} />
         </button>
 
         {open && (
           <Command
-            className="absolute top-[calc(100%+2px)] left-0 right-0 min-w-full rounded shadow-lg z-[200]"
-            style={{ backgroundColor: color.popover, border: `1px solid ${color.border}` }}
+            style={{ position: "absolute" as const, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "100%", borderRadius: 6, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 200, backgroundColor: color.popover, border: `1px solid ${color.border}` }}
             filter={(value, search) => {
               const opt = options.find((o) => o.value === value);
               if (!opt) return 0;
@@ -697,8 +710,7 @@ export function ColorRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={colorLabelTitle}
-      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
-      style={{ color: colorLabelColor }}
+      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: colorLabelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -709,7 +721,7 @@ export function ColorRow({
     <div
       onContextMenu={onContextMenu}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
-      className="flex items-center gap-2 px-3 py-0.5 relative"
+      style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px", position: "relative" }}
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
@@ -718,7 +730,7 @@ export function ColorRow({
       ) : labelContent}
       <div
         ref={swatchRef}
-        className="tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0"
+        className="tuner-focusable"
         tabIndex={0}
         role="button"
         onClick={() => setPickerOpen(!pickerOpen)}
@@ -729,6 +741,11 @@ export function ColorRow({
           }
         }}
         style={{
+          width: 20,
+          height: 20,
+          borderRadius: 2,
+          cursor: "pointer",
+          flexShrink: 0,
           background:
             displayColor === "transparent"
               ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
@@ -738,15 +755,12 @@ export function ColorRow({
       />
       <span
         title={varName ? value : undefined}
-        className={cn(
-          "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0"
-        )}
-        style={{ color: varName ? primaryAlpha(0.8) : color.mutedForeground }}
+        style={{ fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0, color: varName ? primaryAlpha(0.8) : color.mutedForeground }}
       >
         {displayLabel}
       </span>
       {pickerOpen && swatchRef.current && (
-        <div className="absolute top-full left-3 z-[99999] mt-1">
+        <div style={{ position: "absolute", top: "100%", left: 12, zIndex: 99999, marginTop: 4 }}>
           <ColorPickerEnhanced
             color={pickerColor}
             onChange={(hex, opacity) => {
@@ -775,18 +789,24 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
   computedElement?: Element;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-        className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
-        style={{ color: text.label }}
+        style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: text.label }}
       >
         {label}
       </span>
       <input
         type="text"
-        className="tuner-focusable flex-1 h-6 rounded-sm text-[10px] font-mono px-1.5 outline-none"
+        className="tuner-focusable"
         style={{
+          flex: 1,
+          height: 24,
+          borderRadius: 2,
+          fontSize: 10,
+          fontFamily: font.mono,
+          padding: "0 6px",
+          outline: "none",
           backgroundColor: color.input,
           border: `1px solid ${color.border}`,
           color: color.foreground,
@@ -862,8 +882,7 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 rounded-sm text-[10px] font-mono text-center py-px px-0.5 outline-none"
-          style={{ background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`, color: color.foreground }}
+          style={{ width: 28, borderRadius: 2, fontSize: 10, fontFamily: font.mono, textAlign: "center" as const, padding: "1px 2px", outline: "none", background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`, color: color.foreground }}
           onClick={(e) => e.stopPropagation()}
         />
       );
