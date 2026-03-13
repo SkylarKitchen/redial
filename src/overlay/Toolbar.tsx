@@ -45,6 +45,8 @@ function ToolButton({
 
   return (
     <button
+      aria-label={label}
+      aria-pressed={!!active}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
