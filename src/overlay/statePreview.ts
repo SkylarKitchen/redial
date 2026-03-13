@@ -1,0 +1,244 @@
+/**
+ * statePreview.ts — Pseudo-class style preview via <style> tag injection
+ *
+ * Inline styles can't target pseudo-classes (:hover, :focus, etc.).
+ * This module manages a <style> tag that injects rules like:
+ *
+ *   .__tuner-state-preview:hover {
+ *     font-size: 20px !important;
+ *   }
+ *
+ * The temporary class `__tuner-state-preview` is added to the target
+ * element so the injected rules take effect.
+ *
+ * Each (element, state) pair gets a unique data attribute for targeting,
+ * since multiple elements may have state previews simultaneously.
+ */
+
+import type { DiffEntry } from "./apply";
+
+// --- State ---
+
+// Key: serialized (elId, state) → Map<prop, value>
+type StateKey = string;
+const overrides = new Map<StateKey, Map<string, { initial: string; current: string }>>();
+
+// Track which elements have been tagged
+const taggedElements = new Set<Element>();
+
+// Monotonic ID counter for element targeting
+let nextElId = 0;
+const elIdMap = new WeakMap<Element, number>();
+
+function getElId(el: Element): number {
+  let id = elIdMap.get(el);
+  if (id == null) {
+    id = nextElId++;
+    elIdMap.set(el, id);
+  }
+  return id;
+}
+
+function stateKey(el: Element, state: string): StateKey {
+  return `${getElId(el)}:${state}`;
+}
+
+/** CSS attribute selector for a specific element */
+function elAttrSelector(el: Element): string {
+  const id = getElId(el);
+  return `[data-tuner-state-id="${id}"]`;
+}
+
+/** Validate CSS property name */
+function isValidCSSProp(prop: string): boolean {
+  return /^--[\w-]+$/.test(prop) || /^[a-z][a-z-]*$/.test(prop);
+}
+
+/** Strip dangerous characters from CSS values */
+function sanitizeCSSValue(value: string): string {
+  return value.replace(/[{}]/g, "").replace(/<\/style>/gi, "");
+}
+
+// --- Managed <style> tag ---
+
+let stateStyleTag: HTMLStyleElement | null = null;
+
+function getOrCreateStyleTag(): HTMLStyleElement {
+  if (!stateStyleTag) {
+    stateStyleTag = document.createElement("style");
+    stateStyleTag.setAttribute("data-tuner-scope", "state");
+    document.head.appendChild(stateStyleTag);
+  }
+  return stateStyleTag;
+}
+
+/** Exposed for tests */
+export function getStateStyleTag(): HTMLStyleElement | null {
+  return stateStyleTag;
+}
+
+// --- Rebuild ---
+
+function rebuildStyleTag(): void {
+  const tag = getOrCreateStyleTag();
+  const rules: string[] = [];
+
+  // Group by (element, state)
+  const grouped = new Map<string, { el: Element; state: string; props: Map<string, { initial: string; current: string }> }>();
+
+  for (const [key, props] of overrides) {
+    // Parse back the element and state from overrides
+    // We need the element reference — store it alongside
+    const meta = overrideMeta.get(key);
+    if (!meta) continue;
+    grouped.set(key, { el: meta.el, state: meta.state, props });
+  }
+
+  for (const [, { el, state, props }] of grouped) {
+    const selector = `${elAttrSelector(el)}.__tuner-state-preview:${state}`;
+    const declarations = Array.from(props.entries())
+      .filter(([prop]) => isValidCSSProp(prop))
+      .map(([prop, { current }]) => `  ${prop}: ${sanitizeCSSValue(current)} !important;`)
+      .join("\n");
+    if (!declarations) continue;
+    rules.push(`${selector} {\n${declarations}\n}`);
+  }
+
+  tag.textContent = rules.join("\n\n");
+}
+
+// Track element + state metadata for each override key
+const overrideMeta = new Map<StateKey, { el: Element; state: string }>();
+
+// --- Public API ---
+
+/**
+ * Apply a pseudo-class style preview. Injects a CSS rule into a managed
+ * <style> tag and adds the preview class to the element.
+ */
+export function applyStateStyle(
+  el: Element,
+  state: string,
+  prop: string,
+  value: string
+): void {
+  const key = stateKey(el, state);
+
+  // Ensure element has the targeting attribute + preview class
+  if (!taggedElements.has(el)) {
+    (el as HTMLElement).setAttribute("data-tuner-state-id", String(getElId(el)));
+    taggedElements.add(el);
+  }
+  el.classList.add("__tuner-state-preview");
+
+  // Track override
+  if (!overrides.has(key)) {
+    overrides.set(key, new Map());
+    overrideMeta.set(key, { el, state });
+  }
+  const props = overrides.get(key)!;
+  if (!props.has(prop)) {
+    // Capture initial (we can't read the pseudo-class computed value, so use "")
+    props.set(prop, { initial: "", current: value });
+  } else {
+    props.get(prop)!.current = value;
+  }
+
+  rebuildStyleTag();
+}
+
+/**
+ * Remove a single property from a state preview.
+ */
+export function removeStateStyle(
+  el: Element,
+  state: string,
+  prop: string
+): void {
+  const key = stateKey(el, state);
+  const props = overrides.get(key);
+  if (!props) return;
+
+  props.delete(prop);
+  if (props.size === 0) {
+    overrides.delete(key);
+    overrideMeta.delete(key);
+  }
+
+  // Check if this element has ANY remaining state overrides
+  const elId = getElId(el);
+  let hasAny = false;
+  for (const k of overrides.keys()) {
+    if (k.startsWith(`${elId}:`)) {
+      hasAny = true;
+      break;
+    }
+  }
+  if (!hasAny) {
+    el.classList.remove("__tuner-state-preview");
+  }
+
+  rebuildStyleTag();
+}
+
+/**
+ * Reset all overrides for an element + state.
+ */
+export function resetStateStyles(el: Element, state: string): void {
+  const key = stateKey(el, state);
+  overrides.delete(key);
+  overrideMeta.delete(key);
+
+  // Check if this element has ANY remaining state overrides
+  const elId = getElId(el);
+  let hasAny = false;
+  for (const k of overrides.keys()) {
+    if (k.startsWith(`${elId}:`)) {
+      hasAny = true;
+      break;
+    }
+  }
+  if (!hasAny) {
+    el.classList.remove("__tuner-state-preview");
+  }
+
+  rebuildStyleTag();
+}
+
+/**
+ * Get the diff for state-specific overrides on an element.
+ * Returns DiffEntry[] compatible with the commit pipeline.
+ */
+export function diffState(el: Element, state: string): DiffEntry[] {
+  const key = stateKey(el, state);
+  const props = overrides.get(key);
+  if (!props) return [];
+
+  const entries: DiffEntry[] = [];
+  for (const [prop, { initial, current }] of props) {
+    entries.push({ prop, from: initial, to: current });
+  }
+  return entries;
+}
+
+/**
+ * Clean up everything — remove the <style> tag, preview classes, and tracking data.
+ */
+export function destroyStateStyles(): void {
+  // Remove preview class and data attribute from all tagged elements
+  for (const el of taggedElements) {
+    el.classList.remove("__tuner-state-preview");
+    (el as HTMLElement).removeAttribute("data-tuner-state-id");
+  }
+  taggedElements.clear();
+
+  // Remove style tag
+  if (stateStyleTag) {
+    stateStyleTag.remove();
+    stateStyleTag = null;
+  }
+
+  // Clear tracking
+  overrides.clear();
+  overrideMeta.clear();
+}
