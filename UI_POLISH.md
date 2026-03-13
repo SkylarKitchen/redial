@@ -6,33 +6,17 @@ Autonomous improvement queue. Each item is a self-contained, verifiable enhancem
 
 ---
 
-## Phase 0 — Fix Broken State (do these FIRST)
-
-These items fix existing test failures and TypeScript errors. No polish work should start until Phase 0 is clear.
-
-### TypeScript Errors
-- [x] **Fix `annotation` not destructured in SliderRow**: `controls.tsx:377` — the `annotation` prop is in the type definition (line 408) but missing from the destructuring (line 377). Add `annotation,` to the destructured params. This fixes 2 TS errors and 2 section render test failures.
-
-### Failing Tests — Behavioral Bugs
-- [x] **Fix class-scope undo/redo** (`scope.test.ts`): Already fixed — all 40 scope tests pass including undo/redo class sync tests. `onClassChange` listener pattern is implemented.
-- [x] **Fix state reset leaving apply.ts overrides** (`statePreview.test.ts`): Already fixed — all 28 statePreview tests pass. `resetStateOverrides` is now called from Footer.tsx handleReset.
-- [x] **Fix IconButtonGroup active state** (`iconButtonActiveState.test.ts`): Active state uses inline `backgroundColor`/`color` which gets overridden by Tailwind `!important`. Switch to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className approach.
-- [x] **Fix spacing zone base colors** (`spacingZoneColors.test.ts`): Changed marginBase/paddingBase to `"transparent"` — zones only show color on hover.
-- [x] **Fix UnitSelector overflow clip** (`unitDropdownClip.test.ts`): Already fixed — `overflow: "hidden"` removed from annotation span. All 7 tests pass.
-
----
-
 ## Phase 1 — Token & Consistency Audits (quick, high-impact)
 
-These are grep-and-fix passes that enforce the token system uniformly.
+Grep-and-fix passes that enforce the token system uniformly.
 
-### Hardcoded Values
-- [x] **Move `#d4956a` to theme.ts**: Added `color.primaryActive` token, replaced 2 hardcoded values in Overlay.tsx injected CSS.
-- [x] **Transition timing audit**: Replaced 7 hardcoded ms values across 5 files with timing tokens (normal, expand, slow, fast).
-- [x] **Monospace font audit**: Audited — all 90+ `fontFamily` usages already use `font.mono`. Two `ui-monospace` references in controls.tsx are intentional font-family preview styles. No violations.
-- [x] **Border radius consistency**: Added `layout.pillRadius` (4px) token. Updated ScopePill (was 4, now token) and PILL_BUTTON (was 3, now 4 via token).
-- [x] **Separator consistency**: Fixed 2 hardcoded rgba separators (ShadowEditor, SideSelector) → `border.subtle`. Remaining rgba values are grid lines, hover states, or non-separator borders — intentional.
-- [x] **Icon opacity audit**: Normalized 3 icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (`opacity: 0.6`), Header.tsx ChevronRight ×2 (`opacity: 0.4`). Remaining icon colors already use theme tokens.
+- [ ] **GridOverlay hardcoded colors** — `GridOverlay.tsx:103-107` has 5 hardcoded `rgba(217,119,87,...)` values for `LINE_COLOR`, `GAP_COLOR`, `LABEL_COLOR`, `LABEL_BG`, `OUTLINE_COLOR`. Extract to `theme.ts` as `overlay.grid.*` token family.
+- [ ] **FlexGapOverlay hardcoded colors** — `FlexGapOverlay.tsx:19-21` has `#FF44CC`, `rgba(255,68,204,...)` magenta colors. Extract to `theme.ts` as `overlay.flexGap.*` tokens.
+- [ ] **Toolbar dark theme colors** — `Toolbar.tsx:138` has `#1e1e1e` hardcoded. Extract to `theme.ts` as `surface.darkToolbar` or reuse `surface.darkMenu`.
+- [ ] **CommandPalette badge colors** — `CommandPalette.tsx:51-52` has hardcoded `#34d399` (green), `#fbbf24` (amber). Extract to `theme.ts` as `badge.action`, `badge.element` tokens.
+- [ ] **SpacingBoxModel hardcoded colors** — `SpacingBoxModel.tsx:528,537-538` has `rgba(250,249,245,0.97)`, `rgba(0,0,0,0.07)`, inline shadow. Replace with `bgAlpha()`, `border.subtle`, `shadow.dropdown`.
+- [ ] **TextToggle wrong border token** — `layoutControls.tsx:80,120,231` uses `surface.track` for borders (3 occurrences). Should use `border.default` or `border.input`.
+- [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx:371` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `color.ring` token.
 
 ---
 
@@ -45,6 +29,10 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") should truncate with ellipsis and show full name via `title` attribute. Target: all `labelStyle` usages.
 - [ ] **Dropdown scroll-to-selected**: When a `SelectRow` dropdown opens, auto-scroll the selected item into view. Target: `SelectRow` in `controls.tsx`.
 - [ ] **Slider value tooltip**: Show a floating tooltip above the slider thumb during drag, displaying the current value. Target: `SliderRow` in `controls.tsx`.
+- [ ] **SizeInputCell width clips large values** — Fixed at 36px, clips "9999". Consider dynamic width or expand-on-focus.
+- [ ] **GapInput/TrackCountInput missing value flash** — `layoutControls.tsx` controls don't use `useValueFlash` like other inputs. Add for consistency.
+- [ ] **UnitSelector dismissal timeout** — Uses hardcoded `1.7s` for hint auto-dismiss. Add `timing.dismissal` token or use existing `timing.slow`.
+- [ ] **MiniDropdown keyboard navigation** — Smaller dropdowns in `layoutControls.tsx` may lack keyboard support that `UnitSelector` already has. Verify and add if missing.
 
 ### Section-Specific Polish
 - [ ] **Spacing side hover highlight**: Hovering a margin/padding value in `SpacingBoxModel` should highlight that side of the diagram using `spacingZone.marginHover` / `spacingZone.paddingHover`. Target: `SpacingBoxModel.tsx`.
@@ -60,6 +48,7 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage). Target: `WebflowPanel.tsx`.
 - [ ] **Panel resize handle**: Subtle resize handle on the left edge, draggable between 260–400px. Persist to localStorage. Target: `Overlay.tsx`.
 - [ ] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant). Revert on drop. Target: `Overlay.tsx` drag handlers.
+- [ ] **ResetPopover z-index too aggressive** — Uses `2147483647` (max int). Lower to `100000` or use a z-index token.
 
 ### Visual Feedback
 - [ ] **Changed property left-border accent**: Properties with overrides should show a 2px `color.primary` left border that fades in on first change. Target: all control row containers.
@@ -70,6 +59,26 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [ ] **Property search autocomplete**: Typing in Cmd+F search shows autocomplete from `SECTION_PROPERTIES`. Arrow keys navigate, Enter jumps. Target: `PropertySearch.tsx`.
 - [ ] **Transition easing curve mini-preview**: Tiny 20×20 bezier curve icon next to easing dropdown. Target: `TransitionEditor.tsx`.
 - [ ] **Filter before/after thumbnail**: Small before/after preview for each active filter. Target: `FilterSliders.tsx`.
+
+---
+
+## Phase 4 — Accessibility (NEW)
+
+- [ ] **Standardize focus ring approach** — Components use 3 different patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
+- [ ] **UnitSelector missing ARIA** — Dropdown lacks `aria-expanded`, `aria-haspopup` attributes.
+- [ ] **MiniDropdown missing ARIA** — No `aria-label` for screen readers.
+- [ ] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button.
+- [ ] **Footer button focus** — No `:focus-visible` styling beyond browser default.
+- [ ] **Hint text contrast** — `text.hint` (#A3A3A3) on white may not meet WCAG AA (4.5:1 ratio). Verify and darken if needed.
+- [ ] **`text.disabled` contrast** — #737373 on white — verify WCAG AA compliance for normal text.
+
+---
+
+## Phase 5 — Visual Feedback Refinements (NEW)
+
+- [ ] **Copy button checkmark animation** — Current "Copied" state is basic text swap. Add a Motion.js checkmark scale-in animation.
+- [ ] **Hover state standardization** — 4 different hover patterns found across components (surface.hover, surface.active, custom rgba, none). Document and standardize.
+- [ ] **Footer reset button hover** — Uses `surface.active` when count > 0, which is also the pressed color. Use `surface.hover` for hover, `surface.active` only for pressed.
 
 ---
 
