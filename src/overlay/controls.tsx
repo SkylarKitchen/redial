@@ -49,7 +49,7 @@ export function useValueFlash(value: number) {
     return () => clearTimeout(timer.current);
   }, [value]);
 
-  return flash ? { backgroundColor: primaryAlpha(0.12), transition: `background-color ${ms("layout")}` } : { transition: `background-color ${ms("layout")}` };
+  return flash ? { background: primaryAlpha(0.12), transition: `background-color ${ms("layout")}` } : { transition: `background-color ${ms("layout")}` };
 }
 
 
