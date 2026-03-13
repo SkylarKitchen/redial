@@ -138,6 +138,7 @@ export function Section({
   onReset?: () => void;
 }) {
   const [ownOpen, setOwnOpen] = useState(!collapsed);
+  const [headerHovered, setHeaderHovered] = useState(false);
   const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
 
   if (hidden) return null;
@@ -155,6 +156,8 @@ export function Section({
           tabIndex={0}
           role="button"
           aria-expanded={open}
+          onMouseEnter={() => setHeaderHovered(true)}
+          onMouseLeave={() => setHeaderHovered(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
@@ -170,7 +173,10 @@ export function Section({
             borderRadius: 2,
             outline: "none",
             padding: "10px 12px 6px",
-            ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background } : {}),
+            transition: `background ${ms("fast")}`,
+            ...(open
+              ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background }
+              : { background: headerHovered ? surface.hover : "transparent" }),
           }}
         >
           <span
