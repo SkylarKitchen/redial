@@ -215,8 +215,12 @@ describe("filterToCSS", () => {
   });
 
   it("serializes multiple filters", () => {
+    // brightness=100 is the default, so only blur should appear
     const css = filterToCSS({ blur: 2, brightness: 100 });
-    expect(css).toBe("blur(2px) brightness(1)");
+    expect(css).toBe("blur(2px)");
+    // Both non-default → both appear
+    const css2 = filterToCSS({ blur: 2, brightness: 80 });
+    expect(css2).toBe("blur(2px) brightness(0.8)");
   });
 });
 

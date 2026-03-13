@@ -190,6 +190,12 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
   none: { bg: "transparent", text: "#404040" },
 };
 
+/** Shared highlight pill style for modified labels — use with labelIndicator colors. */
+export const labelHighlight = {
+  borderRadius: 3,
+  padding: "1px 4px",
+} as const;
+
 // ─── Value Presets ──────────────────────────────────────────────
 
 export const presets: Record<string, (string | number)[]> = {
