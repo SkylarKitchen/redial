@@ -11,7 +11,7 @@
  * All colors use theme tokens — no hardcoded rgba strings.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { ms } from "./timing";
 import { surface, border as borderToken, text, color, blackAlpha, focusRing } from "./theme";
 
@@ -131,6 +131,7 @@ const CROSS_ICONS: Record<Side, () => React.ReactElement> = {
 // ─── Cross-pattern side selector (Webflow style) ─────────────────────
 
 function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: Side) => void }) {
+  const [focusedSide, setFocusedSide] = useState<Side | null>(null);
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, currentSide: Side) => {
       const nextSide = CROSS_NAV[currentSide]?.[e.key];
@@ -160,12 +161,8 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
         tabIndex={active ? 0 : -1}
         onClick={() => onChange(side)}
         onKeyDown={(e) => handleKeyDown(e, side)}
-        onFocus={(e) => {
-          e.currentTarget.style.boxShadow = focusRing;
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.boxShadow = "none";
-        }}
+        onFocus={() => setFocusedSide(side)}
+        onBlur={() => setFocusedSide(null)}
         title={side.charAt(0).toUpperCase() + side.slice(1)}
         style={{
           gridArea,
@@ -179,6 +176,7 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
           borderRadius: 4,
           cursor: "pointer",
           outline: "none",
+          boxShadow: focusedSide === side ? focusRing : "none",
           color: active ? color.foreground : text.disabled,
           background: active ? surface.active : "transparent",
           transition: `background ${ms("fast")}, color ${ms("fast")}`,
@@ -225,6 +223,7 @@ function CrossSideSelector({ value, onChange }: { value: Side; onChange: (side: 
 // ─── Main export ──────────────────────────────────────────────────────
 
 export function SideSelector({ value, onChange, compact, cross }: SideSelectorProps) {
+  const [focusedSide, setFocusedSide] = useState<Side | null>(null);
   const handleClick = useCallback(
     (side: Side) => () => onChange(side),
     [onChange]
@@ -265,16 +264,13 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
               tabIndex={active ? 0 : -1}
               onClick={handleClick(side)}
               onKeyDown={(e) => handleLinearKeyDown(e, side)}
-              onFocus={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
-              }}
-              onBlur={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = "none";
-              }}
+              onFocus={() => setFocusedSide(side)}
+              onBlur={() => setFocusedSide(null)}
               title={side.charAt(0).toUpperCase() + side.slice(1)}
               style={{
                 width: 20,
                 height: 20,
+                boxShadow: focusedSide === side ? focusRing : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -327,15 +323,12 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
             tabIndex={active ? 0 : -1}
             onClick={handleClick(side)}
             onKeyDown={(e) => handleLinearKeyDown(e, side)}
-            onFocus={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
-            }}
-            onBlur={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = "none";
-            }}
+            onFocus={() => setFocusedSide(side)}
+            onBlur={() => setFocusedSide(null)}
             title={side.charAt(0).toUpperCase() + side.slice(1)}
             style={{
               flex: 1,
+              boxShadow: focusedSide === side ? focusRing : "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

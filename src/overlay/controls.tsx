@@ -597,7 +597,6 @@ export function SelectRow({
         onChange={onChange}
         onReset={onReset}
         indicator={indicator}
-        searchable={searchable}
         fontPreview={fontPreview}
         onContextMenu={onContextMenu}
         computedProp={computedProp}
@@ -673,7 +672,6 @@ function SelectRowCustom({
   onChange: (value: string) => void;
   onReset?: () => void;
   indicator?: IndicatorType;
-  searchable?: boolean;
   fontPreview?: boolean;
   onContextMenu?: (e: React.MouseEvent) => void;
   computedProp?: string;

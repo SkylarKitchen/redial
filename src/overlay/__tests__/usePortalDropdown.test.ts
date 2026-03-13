@@ -127,7 +127,8 @@ describe("data attributes preserved on portal divs", () => {
     expect(fnBody).toContain("data-select-custom-portal");
   });
 
-  it("TextStyleRow still has data-textstyle-portal", () => {
+  it("TextStyleRow still has data-tuner-portal and data-textstyle-portal", () => {
+    expect(textStyleSrc).toContain("data-tuner-portal");
     expect(textStyleSrc).toContain("data-textstyle-portal");
   });
 });

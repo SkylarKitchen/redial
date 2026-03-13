@@ -54,6 +54,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
   const dropdown = open && dropdownPos && createPortal(
     <div
       ref={portalRef}
+      data-tuner-portal
       data-textstyle-portal
       style={{
         position: "fixed",

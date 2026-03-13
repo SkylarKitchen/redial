@@ -84,6 +84,7 @@ export function PositionSelector({
 }) {
   const [open, setOpen] = useState(false);
   const [hoveredValue, setHoveredValue] = useState<string | null>(null);
+  const [focused, setFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const id = useId();
@@ -171,12 +172,8 @@ export function PositionSelector({
             }
             onTriggerKeyDown(e);
           }}
-          onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
-          }}
-          onBlur={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = "none";
-          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           style={{
             width: "100%",
             height: "24px",
@@ -192,6 +189,7 @@ export function PositionSelector({
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
+            boxShadow: focused ? focusRing : "none",
             transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
           }}
           onMouseEnter={(e) => {
