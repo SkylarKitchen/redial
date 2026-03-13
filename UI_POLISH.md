@@ -28,7 +28,7 @@ These are grep-and-fix passes that enforce the token system uniformly.
 
 ### Hardcoded Values
 - [x] **Move `#d4956a` to theme.ts**: Added `color.primaryActive` token, replaced 2 hardcoded values in Overlay.tsx injected CSS.
-- [ ] **Transition timing audit**: Grep for `transition:.*\d+ms` across all `.tsx` files outside `timing.ts`. Replace hardcoded ms values with timing tokens from `timing.ts`. Expected hotspots: Overlay.tsx injected CSS, some inline styles.
+- [x] **Transition timing audit**: Replaced 7 hardcoded ms values across 5 files with timing tokens (normal, expand, slow, fast).
 - [ ] **Monospace font audit**: Verify all numeric value displays use `font.mono` from theme.ts. Grep for bare `monospace` or `ui-monospace` strings that aren't going through the token.
 - [ ] **Border radius consistency**: Audit pill-shaped buttons (scope pills, keyword pills) for inconsistent border-radius values. Standardize on `4px` or add a `layout.pillRadius` token.
 - [ ] **Separator consistency**: Grep for any hardcoded `rgba` separator colors. All separators should use `border.subtle` from theme.ts.
@@ -74,6 +74,9 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Transition timing audit
+Replaced 7 hardcoded `ms` values in 5 files: FilterSliders (100ms→normal), TransitionEditor (100ms→normal), ShadowEditor (100ms→normal), UnitSelector (300ms→slow), Overlay.tsx (150ms→expand ×2, 75ms→fast). Added `ms` import to FilterSliders and TransitionEditor.
 
 ### 2026-03-13 — Move #d4956a to theme.ts
 Added `color.primaryActive: "#d4956a"` token to theme.ts. Replaced 2 hardcoded hex values in Overlay.tsx injected CSS for webkit and moz slider thumb `:active` states.
