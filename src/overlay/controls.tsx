@@ -833,7 +833,21 @@ export function ColorRow({
           {labelContent}
         </ComputedTooltip>
       ) : labelContent}
-      {actions}
+      {actions && (
+        <div style={{
+          position: "absolute",
+          left: 12,
+          top: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          zIndex: 1,
+          background: color.background,
+        }}>
+          {actions}
+        </div>
+      )}
       <div
         ref={swatchRef}
         className="tuner-focusable"
