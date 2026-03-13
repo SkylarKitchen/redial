@@ -268,7 +268,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             borderRadius: "4px",
             border: `1px solid ${border.input}`,
             cursor: "crosshair",
-            background: "rgba(0,0,0,0.2)",
+            background: "rgba(0,0,0,0.04)",
           }}
         />
       </div>
