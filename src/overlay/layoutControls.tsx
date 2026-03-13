@@ -13,7 +13,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, darkToolbar, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { useResetPopover } from "./controls";
 import { ms } from "./timing";
 import { SegmentedControl } from "./SegmentedControl";
@@ -430,7 +430,7 @@ function DarkMenuOption({ label, icon, isActive, onClick }: {
         border: "none",
         outline: "none",
         cursor: "pointer",
-        color: "#e8e8e8",
+        color: darkToolbar.text,
         fontSize: 13,
         fontFamily: font.sans,
         letterSpacing: -0.1,
