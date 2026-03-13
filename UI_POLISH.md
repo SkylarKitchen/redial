@@ -18,7 +18,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
 - [x] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
 - [x] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
-- [ ] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
+- [x] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
 - [ ] **StateSelector hardcoded green** — `StateSelector.tsx:57` uses `#34d399` for active state color. Should use `badge.action` token (same value, but via theme).
 - [ ] **Footer hardcoded success greens** — `Footer.tsx:264` has `#16a34a` and `Footer.tsx:357` has `#22c55e` for copied/saved states. Add `color.success` + `color.successMuted` tokens.
 - [ ] **ScopePill duplicate hover** — `Header.tsx:311` has `hovered ? surface.active : surface.active` — both branches identical. Active+hovered should use a slightly stronger background (e.g. `blackAlpha(0.1)`).
@@ -74,6 +74,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Toolbar wrong fontFamily
+Replaced hardcoded `"system-ui, -apple-system, sans-serif"` with `font.sans` token in Toolbar.tsx ToolButton. Now uses `"Inter, system-ui, sans-serif"` consistent with the rest of the panel.
 
 ### 2026-03-13 — Toolbar hardcoded rgba whites
 Added `darkToolbar` token family to theme.ts with 6 tokens (text, textMuted, icon, active, hover, border). Replaced all 6 hardcoded `rgba(255,255,255,...)` values in Toolbar.tsx with corresponding tokens.
