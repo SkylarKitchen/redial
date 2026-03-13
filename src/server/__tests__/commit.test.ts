@@ -789,3 +789,402 @@ describe("handleCommit — pseudo-class state", () => {
     expect(content).toMatch(/\.input\s*\{[^}]*border-color:\s*gray/);
   });
 });
+
+// --- SCSS nested pseudo-class ---
+
+describe("handleCommit — SCSS nested pseudo-class", () => {
+  it("finds and updates property inside nested &:hover block", async () => {
+    const filePath = "src/Button.module.scss";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  color: blue;",
+      "  &:hover {",
+      "    color: red;",
+      "  }",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "red",
+        to: "green",
+        sourceFile: filePath,
+        className: "btn",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("color: green");
+    // Base block untouched
+    expect(content).toMatch(/\.btn\s*\{[^&]*color:\s*blue/);
+  });
+
+  it("finds and updates property inside nested &:focus block", async () => {
+    const filePath = "src/Input.module.scss";
+    await writeFixture(filePath, [
+      ".input {",
+      "  border: 1px solid gray;",
+      "  &:focus {",
+      "    border: 2px solid blue;",
+      "  }",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "border",
+        from: "2px solid blue",
+        to: "2px solid green",
+        sourceFile: filePath,
+        className: "input",
+        state: "focus",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("border: 2px solid green");
+    expect(content).toContain("border: 1px solid gray");
+  });
+
+  it("creates nested &:hover block inside parent when file uses SCSS nesting", async () => {
+    const filePath = "src/Nav.module.scss";
+    await writeFixture(filePath, [
+      ".other {",
+      "  &:focus { outline: none; }",
+      "}",
+      "",
+      ".btn {",
+      "  color: blue;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "blue",
+        to: "red",
+        sourceFile: filePath,
+        className: "btn",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Nested block should be inside .btn { ... }
+    expect(content).toContain("&:hover {");
+    expect(content).toContain("color: red;");
+    // Base block preserved
+    expect(content).toMatch(/\.btn\s*\{[^}]*color:\s*blue/);
+  });
+
+  it("flat pseudo-class search still works (regression)", async () => {
+    const filePath = "src/Link.module.css";
+    await writeFixture(filePath, [
+      ".link {",
+      "  color: blue;",
+      "}",
+      "",
+      ".link:hover {",
+      "  color: red;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "red",
+        to: "green",
+        sourceFile: filePath,
+        className: "link",
+        state: "hover",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toMatch(/\.link:hover\s*\{[^}]*color:\s*green/);
+    expect(content).toMatch(/\.link\s*\{[^}]*color:\s*blue/);
+  });
+});
+
+// --- Shorthand property fallback ---
+
+describe("handleCommit — shorthand fallback", () => {
+  it("rewrites 2-value padding shorthand when changing padding-top", async () => {
+    const filePath = "src/Card.module.scss";
+    await writeFixture(filePath, [
+      ".card {",
+      "  padding: 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-top",
+        from: "16px",
+        to: "12px",
+        sourceFile: filePath,
+        className: "card",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("padding: 12px 24px");
+  });
+
+  it("expands uniform padding when changing one side", async () => {
+    const filePath = "src/Box.module.scss";
+    await writeFixture(filePath, [
+      ".box {",
+      "  padding: 16px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-left",
+        from: "16px",
+        to: "24px",
+        sourceFile: filePath,
+        className: "box",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("padding: 16px 16px 16px 24px");
+  });
+
+  it("rewrites 3-value margin shorthand", async () => {
+    const filePath = "src/Section.module.scss";
+    await writeFixture(filePath, [
+      ".section {",
+      "  margin: 8px 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "margin-bottom",
+        from: "24px",
+        to: "32px",
+        sourceFile: filePath,
+        className: "section",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("margin: 8px 16px 32px");
+  });
+
+  it("rewrites 4-value margin shorthand", async () => {
+    const filePath = "src/Widget.module.scss";
+    await writeFixture(filePath, [
+      ".widget {",
+      "  margin: 8px 16px 24px 32px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "margin-right",
+        from: "16px",
+        to: "20px",
+        sourceFile: filePath,
+        className: "widget",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("margin: 8px 20px 24px 32px");
+  });
+
+  it("rewrites border-radius shorthand", async () => {
+    const filePath = "src/Chip.module.scss";
+    await writeFixture(filePath, [
+      ".chip {",
+      "  border-radius: 8px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "border-top-left-radius",
+        from: "8px",
+        to: "12px",
+        sourceFile: filePath,
+        className: "chip",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // TL=12, TR=8, BR=8, BL=8 → right=left so 3-value form
+    expect(content).toContain("border-radius: 12px 8px 8px");
+  });
+
+  it("rewrites gap shorthand", async () => {
+    const filePath = "src/Grid.module.scss";
+    await writeFixture(filePath, [
+      ".grid {",
+      "  gap: 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "row-gap",
+        from: "16px",
+        to: "20px",
+        sourceFile: filePath,
+        className: "grid",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("gap: 20px 24px");
+  });
+
+  it("bails gracefully when shorthand uses SCSS variable", async () => {
+    const filePath = "src/Spaced.module.scss";
+    await writeFixture(filePath, [
+      ".spaced {",
+      "  padding: $spacing-md;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-top",
+        from: "16px",
+        to: "24px",
+        sourceFile: filePath,
+        className: "spaced",
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toContain("not found");
+  });
+
+  it("bails when sub-value does not match from value", async () => {
+    const filePath = "src/Mismatch.module.scss";
+    await writeFixture(filePath, [
+      ".mismatch {",
+      "  padding: 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-top",
+        from: "99px",
+        to: "12px",
+        sourceFile: filePath,
+        className: "mismatch",
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(1);
+  });
+
+  it("targets correct class block when multiple blocks have same shorthand", async () => {
+    const filePath = "src/Multi.module.scss";
+    await writeFixture(filePath, [
+      ".header {",
+      "  padding: 8px 12px;",
+      "}",
+      "",
+      ".footer {",
+      "  padding: 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-top",
+        from: "16px",
+        to: "12px",
+        sourceFile: filePath,
+        className: "footer",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // .footer updated
+    expect(content).toContain("padding: 12px 24px");
+    // .header untouched
+    expect(content).toContain("padding: 8px 12px");
+  });
+
+  it("collapses to single value when all sides become equal", async () => {
+    const filePath = "src/Collapse.module.scss";
+    await writeFixture(filePath, [
+      ".collapse {",
+      "  padding: 16px 16px 16px 24px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "padding-left",
+        from: "24px",
+        to: "16px",
+        sourceFile: filePath,
+        className: "collapse",
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("padding: 16px;");
+  });
+});

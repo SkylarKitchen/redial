@@ -265,6 +265,67 @@ function searchPseudoClassBlock(
 }
 
 /**
+ * Search for a CSS property inside a nested SCSS pseudo-class block.
+ * Matches `&:hover {` inside `.className { }`.
+ */
+function searchNestedPseudoBlock(
+  lines: string[],
+  className: string,
+  state: string,
+  prop: string,
+  value: string
+): number | null {
+  const classPattern = new RegExp(
+    `\\.${escapeRegex(className)}\\s*\\{`
+  );
+  const nestedPattern = new RegExp(
+    `&:${escapeRegex(state)}\\s*\\{`
+  );
+
+  for (let i = 0; i < lines.length; i++) {
+    // Skip flat pseudo-class lines (e.g. .btn:hover)
+    if (lines[i].includes(":")) {
+      const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
+      if (pseudoCheck.test(lines[i])) continue;
+    }
+
+    if (!classPattern.test(lines[i])) continue;
+
+    // Found parent class — scan within the block for &:state
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      if (j > i && depth >= 1 && nestedPattern.test(lines[j])) {
+        // Found &:state sub-block — search within it
+        let subDepth = 0;
+        for (let k = j; k < lines.length; k++) {
+          for (const ch of lines[k]) {
+            if (ch === "{") subDepth++;
+            if (ch === "}") subDepth--;
+          }
+
+          if (k > j && subDepth >= 0) {
+            if (lines[k].includes(prop) && (lines[k].includes(value) || /\$[\w-]+/.test(lines[k]))) {
+              return k;
+            }
+          }
+
+          if (subDepth <= 0 && k > j) break;
+        }
+      }
+
+      if (depth <= 0 && j > i) break;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Find the end of a CSS class block (closing `}`) for `.className { ... }`.
  * Used to know where to insert a new pseudo-class block after the base class.
  */
@@ -367,6 +428,160 @@ function searchRootBlock(
   return null;
 }
 
+// --- Shorthand property fallback ---
+
+/** Maps CSS longhands to their shorthand parent + clockwise index. */
+const LONGHAND_TO_SHORTHAND: Record<string, { shorthand: string; index: number }> = {
+  "padding-top":    { shorthand: "padding", index: 0 },
+  "padding-right":  { shorthand: "padding", index: 1 },
+  "padding-bottom": { shorthand: "padding", index: 2 },
+  "padding-left":   { shorthand: "padding", index: 3 },
+  "margin-top":     { shorthand: "margin", index: 0 },
+  "margin-right":   { shorthand: "margin", index: 1 },
+  "margin-bottom":  { shorthand: "margin", index: 2 },
+  "margin-left":    { shorthand: "margin", index: 3 },
+  "border-top-left-radius":     { shorthand: "border-radius", index: 0 },
+  "border-top-right-radius":    { shorthand: "border-radius", index: 1 },
+  "border-bottom-right-radius": { shorthand: "border-radius", index: 2 },
+  "border-bottom-left-radius":  { shorthand: "border-radius", index: 3 },
+  "row-gap":    { shorthand: "gap", index: 0 },
+  "column-gap": { shorthand: "gap", index: 1 },
+};
+
+/**
+ * Expand a CSS shorthand value into individual sub-values per the CSS spec.
+ * count=4: padding/margin/border-radius (1→4, 2→4, 3→4, 4→4)
+ * count=2: gap (1→2, 2→2)
+ */
+function expandShorthandValues(rawValue: string, count: 2 | 4): string[] | null {
+  const parts = rawValue.trim().split(/\s+/);
+
+  if (count === 2) {
+    if (parts.length === 1) return [parts[0], parts[0]];
+    if (parts.length === 2) return [parts[0], parts[1]];
+    return null;
+  }
+
+  // count === 4
+  if (parts.length === 1) return [parts[0], parts[0], parts[0], parts[0]];
+  if (parts.length === 2) return [parts[0], parts[1], parts[0], parts[1]];
+  if (parts.length === 3) return [parts[0], parts[1], parts[2], parts[1]];
+  if (parts.length === 4) return [parts[0], parts[1], parts[2], parts[3]];
+  return null;
+}
+
+/**
+ * Collapse expanded sub-values back to the shortest valid CSS shorthand form.
+ */
+function collapseShorthand(expanded: string[], count: 2 | 4): string {
+  if (count === 2) {
+    if (expanded[0] === expanded[1]) return expanded[0];
+    return `${expanded[0]} ${expanded[1]}`;
+  }
+
+  const [top, right, bottom, left] = expanded;
+  if (top === right && right === bottom && bottom === left) return top;
+  if (top === bottom && right === left) return `${top} ${right}`;
+  if (right === left) return `${top} ${right} ${bottom}`;
+  return `${top} ${right} ${bottom} ${left}`;
+}
+
+/**
+ * Like searchClassBlock but matches property name only (no value check).
+ * Uses exact-match regex to avoid matching longhand variants.
+ */
+function searchClassBlockFuzzy(
+  lines: string[],
+  className: string,
+  prop: string
+): number | null {
+  const classPattern = new RegExp(
+    `\\.${escapeRegex(className)}\\s*[{,]`
+  );
+  const propPattern = new RegExp(`${escapeRegex(prop)}\\s*:`);
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!classPattern.test(lines[i])) continue;
+
+    let depth = 0;
+    let blockStart = i;
+    for (let j = i; j < lines.length && j < i + 3; j++) {
+      if (lines[j].includes("{")) { blockStart = j; break; }
+    }
+
+    for (let j = blockStart; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      if (j > blockStart && depth >= 0) {
+        if (propPattern.test(lines[j])) return j;
+      }
+
+      if (depth <= 0 && j > blockStart) break;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Try to find and rewrite a CSS shorthand property when the longhand isn't found directly.
+ * e.g., `padding-top` → finds `padding: 16px 24px`, expands, replaces sub-value, collapses.
+ */
+function tryShorthandFallback(
+  lines: string[],
+  prop: string,
+  from: string,
+  to: string,
+  _sourceLine?: number,
+  className?: string
+): { lineIdx: number; replacementLine: string } | null {
+  const mapping = LONGHAND_TO_SHORTHAND[prop];
+  if (!mapping) return null;
+
+  // Find the shorthand line (class-scoped first, then file-wide)
+  let lineIdx: number | null = null;
+  if (className) {
+    lineIdx = searchClassBlockFuzzy(lines, className, mapping.shorthand);
+  }
+  if (lineIdx == null) {
+    lineIdx = searchFuzzy(lines, mapping.shorthand);
+  }
+  if (lineIdx == null) return null;
+
+  const line = lines[lineIdx];
+
+  // Guard: bail if line contains SCSS variable
+  if (/\$[\w-]/.test(line)) return null;
+
+  // Extract the value portion
+  const valueMatch = line.match(
+    new RegExp(`${escapeRegex(mapping.shorthand)}\\s*:\\s*([^;!}]+)`)
+  );
+  if (!valueMatch) return null;
+
+  const rawValue = valueMatch[1].trim();
+  const count = mapping.shorthand === "gap" ? 2 : 4;
+  const expanded = expandShorthandValues(rawValue, count);
+  if (!expanded) return null;
+
+  // Validate: the sub-value at the index must match the `from` value
+  if (expanded[mapping.index] !== from) return null;
+
+  // Reconstruct
+  expanded[mapping.index] = to;
+  const collapsed = collapseShorthand(expanded, count);
+
+  const replacementLine = line.replace(
+    new RegExp(`(${escapeRegex(mapping.shorthand)}\\s*:\\s*)[^;!}]+`),
+    `$1${collapsed}`
+  );
+
+  return { lineIdx, replacementLine };
+}
+
 /**
  * Tiered search for a CSS property in a file.
  * Tries increasingly broad strategies until a match is found.
@@ -463,6 +678,12 @@ export async function handleCommit(
             change.state,
             change.prop,
             change.from
+          ) ?? searchNestedPseudoBlock(
+            lines,
+            change.className,
+            change.state,
+            change.prop,
+            change.from
           );
 
           if (pseudoIdx != null) {
@@ -493,20 +714,34 @@ export async function handleCommit(
             continue;
           }
 
-          // No existing pseudo-class block — create one after the base class block
+          // No existing pseudo-class block — create one
           const baseEnd = findClassBlockEnd(lines, change.className);
           if (baseEnd != null) {
-            // Detect indentation from the base block
-            const baseLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
-            const indent = baseLine.match(/^(\s*)/)?.[1] ?? "  ";
+            const isNestedSCSS = lines.some(line => /&\s*[:.[]/.test(line));
 
-            const newBlock = [
-              "",
-              `.${change.className}:${change.state} {`,
-              `${indent}${change.prop}: ${change.to};`,
-              "}",
-            ];
-            lines.splice(baseEnd + 1, 0, ...newBlock);
+            if (isNestedSCSS) {
+              // Insert nested &:state block inside parent (before closing })
+              const innerLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
+              const indent = innerLine.match(/^(\s*)/)?.[1] ?? "  ";
+              const newLines = [
+                "",
+                `${indent}&:${change.state} {`,
+                `${indent}  ${change.prop}: ${change.to};`,
+                `${indent}}`,
+              ];
+              lines.splice(baseEnd, 0, ...newLines);
+            } else {
+              // Insert flat block after base class
+              const baseLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
+              const indent = baseLine.match(/^(\s*)/)?.[1] ?? "  ";
+              const newBlock = [
+                "",
+                `.${change.className}:${change.state} {`,
+                `${indent}${change.prop}: ${change.to};`,
+                "}",
+              ];
+              lines.splice(baseEnd + 1, 0, ...newBlock);
+            }
             modified = true;
             continue;
           }
@@ -530,6 +765,15 @@ export async function handleCommit(
         );
 
         if (!found) {
+          // Try shorthand fallback: e.g. padding-top → padding: 16px 24px
+          const shorthand = tryShorthandFallback(
+            lines, change.prop, change.from, change.to, change.sourceLine, change.className
+          );
+          if (shorthand) {
+            lines[shorthand.lineIdx] = shorthand.replacementLine;
+            modified = true;
+            continue;
+          }
           result.failed.push({
             ...change,
             reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
@@ -593,7 +837,9 @@ export async function handleCommit(
 
       if (modified) {
         await writeFile(filePath, lines.join("\n"), "utf-8");
-        result.written.push(sourceFile);
+        if (!result.written.includes(sourceFile)) {
+          result.written.push(sourceFile);
+        }
       }
     } catch (err: any) {
       for (const change of fileChanges) {
