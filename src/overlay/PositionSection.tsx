@@ -369,19 +369,19 @@ export const PositionSection = memo(function PositionSection({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: 2,
+          gap: 4,
           width: "calc(100% - 16px)",
           margin: "4px 8px",
           padding: "4px 0",
           height: 24,
           background: "transparent",
-          border: "none",
+          border: `1px solid ${border.default}`,
           cursor: "pointer",
-          borderRadius: 3,
-          transition: `background ${ms("fast")}`,
+          borderRadius: 4,
+          transition: `background ${ms("fast")}, border-color ${ms("fast")}`,
         }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = surface.hover; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = surface.hover; (e.currentTarget as HTMLElement).style.borderColor = border.hover; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.borderColor = border.default; }}
       >
         <ChevronDown
           size={14}
