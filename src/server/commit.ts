@@ -841,11 +841,12 @@ export async function handleCommit(
           result.written.push(sourceFile);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       for (const change of fileChanges) {
         result.failed.push({
           ...change,
-          reason: `file error: ${err.message}`,
+          reason: `file error: ${message}`,
         });
       }
     }
