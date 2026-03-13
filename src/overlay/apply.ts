@@ -945,12 +945,12 @@ export function removeCustomProperty(scope: Element, name: string): void {
  * Optionally accepts a `replaceRefs` callback to update var() references.
  * Returns the number of references updated (0 if no callback provided).
  */
-export async function renameCustomProperty(
+export function renameCustomProperty(
   scope: Element,
   oldName: string,
   newName: string,
   replaceRefs?: (oldName: string, newName: string) => number
-): Promise<number> {
+): number {
   // Read current value before any mutations
   const tracked = customPropertyOverrides.get(oldName);
   const value = tracked?.current ?? getComputedStyle(scope).getPropertyValue(oldName).trim();
