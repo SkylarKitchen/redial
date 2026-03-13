@@ -1486,7 +1486,7 @@ export function Overlay() {
           style={{
             position: "fixed",
             zIndex: 2147483647,
-            width: layout.panelWidth,
+            width: 300,
             height: "85vh",
             maxHeight: "85vh",
             background: color.background,
