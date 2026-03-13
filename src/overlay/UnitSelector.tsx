@@ -85,6 +85,11 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
       if (tooltipTimer.current) clearTimeout(tooltipTimer.current);
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
 
+      // Compute tooltip position from trigger rect
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setTooltipPos({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+      }
       setTooltipText(formatHint(conversionHint));
       setTooltipPhase("in");
 
