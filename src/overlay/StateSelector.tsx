@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { text } from "./theme";
+import { text, color } from "./theme";
 
 export interface StateSelectorProps {
   value: string;
@@ -61,7 +61,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
           {isBase ? "State" : current.label}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="__tuner-root" style={{ minWidth: 180 }}>
+      <SelectContent className="__tuner-root" style={{ minWidth: 180, backgroundColor: color.popover }}>
         {STATES.map((state) => (
           <SelectItem
             key={state.value}
