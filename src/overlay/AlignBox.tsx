@@ -76,6 +76,8 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
   const justifyCols = mode === "flex" ? JUSTIFY_COLS_FLEX : JUSTIFY_COLS_GRID;
   const alignRows = mode === "flex" ? ALIGN_ROWS_FLEX : ALIGN_ROWS_GRID;
 
+  const stretchX = justify === "stretch";
+  const stretchY = align === "stretch";
   const activeCol = toIndex(justify);
   const activeRow = toIndex(align);
   const isSpacingActive = SPACING_OPTIONS.some((o) => o.value === justify);
@@ -88,7 +90,11 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+    <div
+      {...(stretchX ? { "data-stretch-x": true } : {})}
+      {...(stretchY ? { "data-stretch-y": true } : {})}
+      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
+    >
       {/* Arrow grid: 8 directional arrows around a center indicator */}
       <div
         style={{
@@ -103,12 +109,62 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
         {DIRECTIONS.flatMap((row, r) =>
           row.map((dir, c) => {
             const key = `${r}-${c}`;
-            const isActive = c === activeCol && r === activeRow && !isSpacingActive;
+            const isActive =
+              !isSpacingActive &&
+              (stretchX && stretchY
+                ? true
+                : stretchX
+                  ? r === activeRow
+                  : stretchY
+                    ? c === activeCol
+                    : c === activeCol && r === activeRow);
             const isHovered = hoveredCell === key;
             const isCenter = r === 1 && c === 1;
+            const hasStretch = stretchX || stretchY;
 
             if (isCenter) {
-              // Center indicator box with dot
+              // Center indicator box — dot normally, bar(s) when stretch
+              const centerIndicator = hasStretch ? (
+                <div style={{ position: "relative", width: 24, height: 24 }}>
+                  {stretchX && (
+                    <div style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: 24,
+                      height: 4,
+                      borderRadius: 2,
+                      background: color.primary,
+                    }} />
+                  )}
+                  {stretchY && (
+                    <div style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: 4,
+                      height: 24,
+                      borderRadius: 2,
+                      background: color.primary,
+                    }} />
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: isActive
+                    ? color.primary
+                    : isHovered
+                      ? primaryAlpha(0.5)
+                      : blackAlpha(0.2),
+                  transition: `background ${ms("fast")}`,
+                }} />
+              );
+
               return (
                 <div
                   key={key}
@@ -134,17 +190,7 @@ export function AlignBox({ justify, align, onChange, mode = "flex", compact = fa
                     borderColor: isHovered ? blackAlpha(0.2) : border.hover,
                   }}
                 >
-                  <div style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    background: isActive
-                      ? color.primary
-                      : isHovered
-                        ? primaryAlpha(0.5)
-                        : blackAlpha(0.2),
-                    transition: `background ${ms("fast")}`,
-                  }} />
+                  {centerIndicator}
                 </div>
               );
             }
