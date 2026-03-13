@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { color, text, border, surface, font, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
 
 export interface BezierEditorProps {
   value: [number, number, number, number]; // [x1, y1, x2, y2]
@@ -268,7 +268,7 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
             borderRadius: "4px",
             border: `1px solid ${border.input}`,
             cursor: "crosshair",
-            background: "rgba(0,0,0,0.04)",
+            background: blackAlpha(0.04),
           }}
         />
       </div>

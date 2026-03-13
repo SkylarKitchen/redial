@@ -772,14 +772,14 @@ function BezierPreview({ points }: { points: [number, number, number, number] | 
     ctx.clearRect(0, 0, size, size);
 
     // Background
-    ctx.fillStyle = "rgba(0,0,0,0.03)";
+    ctx.fillStyle = blackAlpha(0.03);
     ctx.fillRect(0, 0, size, size);
 
     // Grid line (diagonal baseline)
     ctx.beginPath();
     ctx.moveTo(toX(0), toY(0));
     ctx.lineTo(toX(1), toY(1));
-    ctx.strokeStyle = "rgba(0,0,0,0.07)";
+    ctx.strokeStyle = blackAlpha(0.07);
     ctx.lineWidth = 0.5;
     ctx.stroke();
 
