@@ -127,10 +127,10 @@ The workflow doc says "maybe Tailwind" and there's a `tailwind.ts` with tests. B
 
 ### Acceptance criteria (Option B)
 
-- [ ] Docs updated to clarify CSS Modules focus
-- [ ] README updated if needed
-- [ ] No false promises about Tailwind save in any user-facing text
-- [ ] Copy as Tailwind still works in Footer
+- [x] Docs updated to clarify CSS Modules focus
+- [x] README updated if needed
+- [x] No false promises about Tailwind save in any user-facing text
+- [x] Copy as Tailwind still works in Footer
 
 ---
 
@@ -198,12 +198,12 @@ The Effects section (264 lines) has opacity, shadows, transforms, filters, and t
 
 ### Acceptance criteria
 
-- [ ] `mix-blend-mode` dropdown appears in Effects section
-- [ ] `user-select` dropdown appears in Effects section
-- [ ] `backface-visibility` dropdown appears in Effects section
-- [ ] Backdrop filter controls are distinct from regular filter controls
-- [ ] All new controls read computed values and apply changes live
-- [ ] `npm run typecheck` passes
+- [x] `mix-blend-mode` dropdown appears in Effects section
+- [x] `user-select` dropdown appears in Effects section
+- [x] `backface-visibility` dropdown appears in Effects section
+- [x] Backdrop filter controls are distinct from regular filter controls
+- [x] All new controls read computed values and apply changes live
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -225,11 +225,11 @@ The spec (Section 3) calls for editable `grid-template-columns` and `grid-templa
 
 ### Acceptance criteria
 
-- [ ] Grid template inputs appear only when display is grid/inline-grid
-- [ ] Inputs pre-populate with computed values
-- [ ] Free-form text input accepted (e.g., `1fr 1fr 1fr`, `repeat(3, minmax(0, 1fr))`)
-- [ ] Changes apply live
-- [ ] `npm run typecheck` passes
+- [x] Grid template inputs appear only when display is grid/inline-grid
+- [x] Inputs pre-populate with computed values
+- [x] Free-form text input accepted (e.g., `1fr 1fr 1fr`, `repeat(3, minmax(0, 1fr))`)
+- [x] Changes apply live
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -255,11 +255,11 @@ The spec (Section 5) calls for `aspect-ratio` and `object-position` controls.
 
 ### Acceptance criteria
 
-- [ ] `aspect-ratio` control appears in Size section for all elements
-- [ ] Common ratio presets available in dropdown
-- [ ] `object-position` appears alongside `object-fit` for media elements
-- [ ] Both read computed values and apply changes live
-- [ ] `npm run typecheck` passes
+- [x] `aspect-ratio` control appears in Size section for all elements
+- [x] Common ratio presets available in dropdown
+- [x] `object-position` appears alongside `object-fit` for media elements
+- [x] Both read computed values and apply changes live
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -291,9 +291,9 @@ When hovering over a value in the box model, highlight the corresponding side of
 - [ ] Alt+click on a side value applies to complementary side
 - [ ] Alt+click on a corner applies to all 4 sides of that type (margin or padding)
 - [ ] Hovering a value highlights the corresponding zone in the diagram
-- [ ] Margin and padding zones have distinct warm/cool tint colors
-- [ ] Existing interactions (click-to-edit, arrow keys, tab navigation) still work
-- [ ] `npm run typecheck` passes
+- [x] Margin and padding zones have distinct warm/cool tint colors
+- [x] Existing interactions (click-to-edit, arrow keys, tab navigation) still work
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -325,12 +325,12 @@ The spec (Section 7) wants a searchable dropdown with system fonts. Currently fo
 
 ### Acceptance criteria
 
-- [ ] Font family control is a searchable dropdown (not plain text input)
-- [ ] Typing filters the font list
-- [ ] Free-form text still accepted (user can type any font stack)
-- [ ] Font name preview renders in the actual font
-- [ ] Current font highlighted/selected
-- [ ] `npm run typecheck` passes
+- [x] Font family control is a searchable dropdown (not plain text input)
+- [x] Typing filters the font list
+- [x] Free-form text still accepted (user can type any font stack)
+- [x] Font name preview renders in the actual font
+- [x] Current font highlighted/selected
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -350,12 +350,12 @@ The spec (Section 13) calls for Tab/Shift+Tab to move between controls within a 
 
 ### Acceptance criteria
 
-- [ ] Pressing Tab moves focus to the next control within the panel
-- [ ] Shift+Tab moves backward
-- [ ] Focus ring visible on each control (already injected via `tuner-focusable` class)
-- [ ] Tab order matches visual order (top-to-bottom, left-to-right within rows)
-- [ ] Focus does not get trapped in a section (moves between sections)
-- [ ] `npm run typecheck` passes
+- [x] Pressing Tab moves focus to the next control within the panel
+- [x] Shift+Tab moves backward
+- [x] Focus ring visible on each control (already injected via `tuner-focusable` class)
+- [x] Tab order matches visual order (top-to-bottom, left-to-right within rows)
+- [x] Focus does not get trapped in a section (moves between sections)
+- [x] `npm run typecheck` passes
 
 ---
 
@@ -440,11 +440,11 @@ Five items from the pre-publish checklist.
 
 ### Acceptance criteria
 
-- [ ] Integration tests cover the inline style round-trip
-- [ ] Integration tests cover commit tiered search (at minimum Tier 2: class block)
-- [ ] Integration tests cover undo/redo across multiple operations
-- [ ] All new tests pass in `npm test`
-- [ ] No mocking of `getComputedStyle` where a real DOM (happy-dom) can be used
+- [x] Integration tests cover the inline style round-trip
+- [x] Integration tests cover commit tiered search (at minimum Tier 2: class block)
+- [x] Integration tests cover undo/redo across multiple operations
+- [x] All new tests pass in `npm test`
+- [x] No mocking of `getComputedStyle` where a real DOM (happy-dom) can be used
 
 ---
 
@@ -465,11 +465,11 @@ The docs describe `infer.ts` as the "intelligence layer" but the 8 section compo
 
 ### Acceptance criteria (Option A)
 
-- [ ] `Panel.tsx` removed (or deprecated with a clear comment)
-- [ ] `infer.ts` slimmed to just utility exports + `SpacingValues` extraction
-- [ ] All imports of `infer.ts` still resolve
-- [ ] `npm run typecheck` passes
-- [ ] `npm test` passes
+- [x] `Panel.tsx` removed (or deprecated with a clear comment)
+- [x] `infer.ts` slimmed to just utility exports + `SpacingValues` extraction
+- [x] All imports of `infer.ts` still resolve
+- [x] `npm run typecheck` passes
+- [x] `npm test` passes
 
 ---
 

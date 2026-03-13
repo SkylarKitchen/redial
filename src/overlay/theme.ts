@@ -183,8 +183,8 @@ export const labelIndicator = {
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: "rgba(0,0,0,0.03)",
-  marginHover: "rgba(0,0,0,0.06)",
-  paddingBase: "rgba(0,0,0,0.02)",
-  paddingHover: "rgba(0,0,0,0.05)",
+  marginBase: "rgba(255, 149, 0, 0.08)",
+  marginHover: "rgba(255, 149, 0, 0.14)",
+  paddingBase: "rgba(59, 130, 246, 0.08)",
+  paddingHover: "rgba(59, 130, 246, 0.14)",
 } as const;
