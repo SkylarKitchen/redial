@@ -1096,20 +1096,21 @@ export function ColorRow({
 
 // ─── TextRow ────────────────────────────────────────────────────────
 
-export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu, computedProp, computedElement }: {
+export function TextRow({ label, value, placeholder, onChange, onReset, onContextMenu, computedProp, computedElement, indicator }: {
   label: string; value: string; placeholder?: string; onChange: (value: string) => void;
   /** Called on alt+click label to reset property */
   onReset?: () => void;
   onContextMenu?: (e: React.MouseEvent) => void;
   computedProp?: string;
   computedElement?: Element;
+  indicator?: IndicatorType;
 }) {
   return (
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
         title={label}
-        style={labelStyle()}
+        style={labelStyle(indicator)}
       >
         {label}
       </span>

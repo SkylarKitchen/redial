@@ -163,6 +163,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const { element, apply, ind, sectionInd, cs, ctxMenu } = ctx;
 
   // ── State ──────────────────────────────────────────────────────────
+  const [transMenuAnchor, setTransMenuAnchor] = useState<HTMLElement | null>(null);
   const [opacity, setOpacity] = useState(() => parseFloat(cs.opacity) || 1);
   const [mixBlendMode, setMixBlendMode] = useState(() => cs.mixBlendMode);
   const [outlineStyle, setOutlineStyle] = useState(() => cs.outlineStyle || "none");
@@ -266,6 +267,33 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
     handleTransitionsChange([...transitions, { property: "all", duration: 300, easing: "ease", delay: 0, visible: true }]);
   }, [transitions, handleTransitionsChange]);
 
+  // ── Transition options menu items ────────────────────────────────────
+  const allTransitionsHidden = transitions.every(t => !t.visible);
+  const transMenuItems: TransMenuItemDef[] = [
+    {
+      label: allTransitionsHidden ? "Enable All" : "Disable All",
+      action: () => {
+        handleTransitionsChange(transitions.map(t => ({ ...t, visible: allTransitionsHidden })));
+        setTransMenuAnchor(null);
+      },
+    },
+    {
+      label: "Copy CSS",
+      action: () => {
+        navigator.clipboard.writeText(`transition: ${transitionsToCSS(transitions)};`);
+        setTransMenuAnchor(null);
+      },
+    },
+    {
+      label: "Remove All",
+      action: () => {
+        handleTransitionsChange([]);
+        setTransMenuAnchor(null);
+      },
+      destructive: true,
+    },
+  ];
+
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
@@ -313,7 +341,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 6. Transitions */}
-      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} indicator={ind("transition")} onReset={() => { resetProp(element, "transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />
+      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={(e) => setTransMenuAnchor(e.currentTarget)} indicator={ind("transition")} onReset={() => { resetProp(element, "transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />
       {transitions.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
