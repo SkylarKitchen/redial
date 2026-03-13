@@ -62,7 +62,14 @@ export function subscribeOverrides(callback: () => void): () => void {
 }
 
 export function getOverrideSnapshot(): number {
-  return totalOverrideCount();
+  let count = 0;
+  for (const [el, props] of overrides) {
+    if (!document.contains(el)) continue;
+    for (const [, { initial, current }] of props) {
+      if (initial !== current) count++;
+    }
+  }
+  return count;
 }
 
 function notifyListeners() {
