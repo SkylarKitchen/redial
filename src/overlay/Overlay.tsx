@@ -132,6 +132,12 @@ export function Overlay() {
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
 
+  // Box model overlay toggle
+  const [showBoxModel, setShowBoxModel] = useState(false);
+
+  // Lifted section expansion state (for keyboard navigation)
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
   const isGridContainer = useMemo(() => {
     if (!selectedEl) return false;
     const d = getComputedStyle(selectedEl).display;
@@ -508,6 +514,14 @@ export function Overlay() {
         return;
       }
 
+      // Shift+R to reset ALL elements
+      if (e.key === "R" && e.shiftKey && !e.metaKey && !e.ctrlKey && selectedEl && !selecting && !diffMode) {
+        e.preventDefault();
+        handleResetAll();
+        announce("Reset all");
+        return;
+      }
+
       // R to reset
       if (e.key === "r" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting && !diffMode) {
         e.preventDefault();
@@ -634,6 +648,8 @@ export function Overlay() {
     setActiveClassName(null);
     setActiveTab("custom");
     setShowGridOverlay(false);
+    setShowBoxModel(false);
+    setExpandedSection(null);
     setShowHistory(false);
     setShowSearch(false);
     setSearchQuery("");
