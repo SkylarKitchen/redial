@@ -171,7 +171,7 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
 
 export const spacingZone = {
   marginBase: "transparent",
-  marginHover: "rgba(255, 149, 0, 0.14)",
+  marginHover: blackAlpha(0.08),
   marginBorderBase: blackAlpha(0.15),
   marginBorderHover: blackAlpha(0.30),
   paddingBase: "transparent",

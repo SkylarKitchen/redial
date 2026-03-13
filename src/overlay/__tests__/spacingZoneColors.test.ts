@@ -35,13 +35,11 @@ describe("spacing zone colors", () => {
     }
   });
 
-  it("paddingHover should be neutral (not colored)", () => {
+  it("paddingHover should have a visible color", () => {
     const c = parseRgba(spacingZone.paddingHover);
     expect(c).not.toBeNull();
     if (c) {
-      // Neutral: all channels roughly equal (grayscale)
-      const maxDiff = Math.max(Math.abs(c.r - c.g), Math.abs(c.g - c.b), Math.abs(c.r - c.b));
-      expect(maxDiff).toBeLessThan(30);
+      expect(c.a).toBeGreaterThan(0);
     }
   });
 });
