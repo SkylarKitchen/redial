@@ -84,7 +84,26 @@ export function getStateStyleTag(): HTMLStyleElement | null {
   return stateStyleTag;
 }
 
-// --- Rebuild ---
+// --- Rebuild (with rAF debounce for hot-path calls) ---
+
+let rebuildScheduled = false;
+
+function scheduleRebuild(): void {
+  if (rebuildScheduled) return;
+  rebuildScheduled = true;
+  requestAnimationFrame(() => {
+    rebuildScheduled = false;
+    rebuildStyleTag();
+  });
+}
+
+/** Flush any pending rAF-scheduled rebuild synchronously. Exposed for tests. */
+export function flushScheduledRebuild(): void {
+  if (rebuildScheduled) {
+    rebuildScheduled = false;
+    rebuildStyleTag();
+  }
+}
 
 function rebuildStyleTag(): void {
   const tag = getOrCreateStyleTag();
@@ -153,7 +172,7 @@ export function applyStateStyle(
     props.get(prop)!.current = value;
   }
 
-  rebuildStyleTag();
+  scheduleRebuild();
 }
 
 /**
@@ -236,6 +255,9 @@ export function diffState(el: Element, state: string): DiffEntry[] {
  * Clean up everything — remove the <style> tag, preview classes, and tracking data.
  */
 export function destroyStateStyles(): void {
+  // Cancel any pending debounced rebuild
+  rebuildScheduled = false;
+
   // Remove preview class and data attribute from all tagged elements
   for (const el of taggedElements) {
     el.classList.remove("__tuner-state-preview");

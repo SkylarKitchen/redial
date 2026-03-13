@@ -8,6 +8,7 @@ import {
   destroyStateStyles,
   getStateStyleTag,
   VALID_STATES,
+  flushScheduledRebuild,
 } from "../statePreview";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -30,6 +31,7 @@ describe("applyStateStyle — style tag injection", () => {
   it("creates a <style> tag with data-tuner-scope='state' attribute", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag).not.toBeNull();
     expect(tag!.getAttribute("data-tuner-scope")).toBe("state");
@@ -38,6 +40,7 @@ describe("applyStateStyle — style tag injection", () => {
   it("injects CSS rule targeting the temporary class + pseudo-class", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag!.textContent).toContain(":hover");
     expect(tag!.textContent).toContain("font-size: 20px !important");
@@ -60,6 +63,7 @@ describe("applyStateStyle — style tag injection", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
     applyStateStyle(el, "hover", "color", "red");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag!.textContent).toContain("font-size: 20px !important");
     expect(tag!.textContent).toContain("color: red !important");
@@ -69,6 +73,7 @@ describe("applyStateStyle — style tag injection", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
     applyStateStyle(el, "hover", "font-size", "24px");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag!.textContent).toContain("font-size: 24px !important");
     expect(tag!.textContent).not.toContain("font-size: 20px");
@@ -78,6 +83,7 @@ describe("applyStateStyle — style tag injection", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "focus", "color", "blue");
+    flushScheduledRebuild();
     const tag = getStateStyleTag();
     expect(tag!.textContent).toContain(":hover");
     expect(tag!.textContent).toContain("color: red !important");
@@ -89,8 +95,37 @@ describe("applyStateStyle — style tag injection", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "focus", "font-size", "20px");
+    flushScheduledRebuild();
     const tags = document.querySelectorAll('style[data-tuner-scope="state"]');
     expect(tags.length).toBe(1);
+  });
+});
+
+// ─── Debounced rebuild ───────────────────────────────────────────────
+
+describe("applyStateStyle — debounced rebuild", () => {
+  it("does not update style tag synchronously (deferred to rAF)", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    const tag = getStateStyleTag();
+    // Style tag is created but content not yet written (pending rAF)
+    expect(tag == null || tag.textContent === "").toBe(true);
+  });
+
+  it("coalesces multiple calls into a single rebuild on flush", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "font-size", "20px");
+    applyStateStyle(el, "hover", "color", "red");
+    applyStateStyle(el, "hover", "font-size", "24px");
+    flushScheduledRebuild();
+    const tag = getStateStyleTag();
+    expect(tag!.textContent).toContain("font-size: 24px !important");
+    expect(tag!.textContent).toContain("color: red !important");
+  });
+
+  it("flush is a no-op when nothing is scheduled", () => {
+    // Should not throw
+    flushScheduledRebuild();
   });
 });
 
@@ -182,6 +217,7 @@ describe("destroyStateStyles", () => {
   it("removes the <style> tag from the DOM", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
+    flushScheduledRebuild();
     expect(getStateStyleTag()).not.toBeNull();
     destroyStateStyles();
     expect(getStateStyleTag()).toBeNull();
