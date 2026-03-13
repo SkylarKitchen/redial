@@ -780,6 +780,7 @@ export function Overlay() {
 
 
   const handleToggleSession = useCallback(() => {
+    setSelecting(false);
     setActivePanel((prev) =>
       prev.type === "session" ? { type: "none" } : { type: "session" }
     );
