@@ -13,7 +13,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, labelIndicator, segment, shadow, layout } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, labelIndicator, labelHighlight, segment, shadow, layout } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
@@ -61,8 +61,7 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
       <span style={{
         background: colors.bg,
         color: colors.text,
-        borderRadius: 2,
-        padding: "0 2px",
+        ...(hasHighlight ? labelHighlight : {}),
       }}>
         {label}
       </span>

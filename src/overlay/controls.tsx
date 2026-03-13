@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect, memo } from "react";
+import { createPortal } from "react-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -23,7 +24,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -81,8 +82,7 @@ const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
     color: li.text,
     ...(isModified ? {
       background: li.bg,
-      borderRadius: 3,
-      padding: "1px 4px",
+      ...labelHighlight,
     } : {}),
   };
 };
@@ -848,7 +848,7 @@ export function ColorRow({
         const top = placeAbove
           ? rect.top - pickerHeight - gap
           : rect.bottom + gap;
-        return (
+        return createPortal(
           <div style={{ position: "fixed", top, left: rect.left, zIndex: 2147483647 }}>
             <ColorPickerEnhanced
               color={pickerColor}
@@ -861,7 +861,8 @@ export function ColorRow({
               }}
               activeVariable={varName}
             />
-          </div>
+          </div>,
+          document.body
         );
       })()}
       {resetPopover.node}

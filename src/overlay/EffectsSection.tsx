@@ -40,7 +40,7 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { text, labelIndicator } from "./theme";
+import { text, labelIndicator, labelHighlight } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
@@ -229,8 +229,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
           <span style={{
             background: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).bg,
             color: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).text,
-            borderRadius: 2,
-            padding: "0 2px",
+            ...(ind("outline-style") !== "none" ? labelHighlight : {}),
           }}>
             Outline
           </span>

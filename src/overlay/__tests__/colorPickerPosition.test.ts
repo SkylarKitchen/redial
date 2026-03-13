@@ -1,22 +1,16 @@
 // @vitest-environment happy-dom
 /**
- * Test: ColorPickerEnhanced must position itself within the visible viewport.
+ * Test: ColorPickerEnhanced must render outside the panel DOM tree via a portal.
  *
- * Bug: The ColorPickerEnhanced uses `position: fixed` but never computes
- * explicit `top`/`left` values. It relies on its "static position" inherited
- * from a wrapper (`position: absolute; top: 100%`). When the ColorRow is near
- * the bottom of the viewport, the picker (≈290px tall) renders entirely below
- * the visible area — invisible to the user.
+ * Bug history:
+ * 1. Picker used static top:"100%" — went off-screen near bottom of viewport.
+ * 2. Picker used position:fixed inside the panel — but the panel has
+ *    `backdropFilter: "blur(20px)"` and Motion transforms which create a
+ *    new containing block. This makes position:fixed behave like position:absolute
+ *    relative to the panel, and the panel's `overflow: hidden` clips the picker.
  *
- * The wrapper in ColorRow (controls.tsx ~line 814) sets:
- *   { position: "absolute", top: "100%", left: 12, zIndex: 99999 }
- *
- * ColorPickerEnhanced (~line 446) sets:
- *   { position: "fixed" }   ← but NO top/left!
- *
- * Fix requirement: the picker must measure the swatch's viewport position and
- * compute a safe top/left, flipping above the swatch when there isn't enough
- * room below.
+ * Fix: ColorRow must use createPortal to render the picker outside the panel,
+ * directly into document.body, so it escapes the containing block + overflow clip.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
@@ -29,14 +23,6 @@ describe("ColorPicker viewport positioning", () => {
   );
 
   it("ColorRow picker wrapper must NOT use static top:'100%' positioning", () => {
-    // The bug: the wrapper uses { top: "100%" } which doesn't account for
-    // viewport bounds. When the row is near the bottom, the picker goes off-screen.
-    //
-    // The fix should remove the static top:"100%" and instead compute position
-    // dynamically based on the swatch's getBoundingClientRect() and window.innerHeight.
-
-    // The picker wrapper style has top:"100%" and zIndex:99999.
-    // In the source these appear in either order within the same style object.
     const hasStaticTopPercent =
       /top:\s*["']100%["'][\s\S]{0,200}zIndex:\s*99999/.test(controlsSrc) ||
       /zIndex:\s*99999[\s\S]{0,200}top:\s*["']100%["']/.test(controlsSrc);
@@ -49,9 +35,6 @@ describe("ColorPicker viewport positioning", () => {
   });
 
   it("ColorRow must use viewport-aware positioning for the picker", () => {
-    // The fix should involve measuring the swatch position and computing
-    // where the picker should appear. This requires getBoundingClientRect
-    // on the swatch ref and checking against window.innerHeight.
     const usesSwatchRect =
       controlsSrc.includes("getBoundingClientRect") &&
       controlsSrc.includes("innerHeight");
@@ -59,6 +42,20 @@ describe("ColorPicker viewport positioning", () => {
     expect(
       usesSwatchRect,
       "ColorRow must use getBoundingClientRect + window.innerHeight to position the picker within the viewport"
+    ).toBe(true);
+  });
+
+  it("ColorRow must use createPortal to escape the panel's overflow:hidden + backdropFilter containing block", () => {
+    // The panel container has backdropFilter and Motion transforms which create
+    // a new containing block for position:fixed elements. Combined with
+    // overflow:hidden, any fixed-position picker rendered inside the panel DOM
+    // tree will be clipped. The fix is to portal the picker out to document.body.
+    const usesPortal = controlsSrc.includes("createPortal");
+
+    expect(
+      usesPortal,
+      "ColorRow must use createPortal to render the picker outside the panel DOM — " +
+      "backdropFilter + overflow:hidden on the panel clips position:fixed children"
     ).toBe(true);
   });
 });
