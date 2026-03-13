@@ -9,7 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { UnitSelector } from "./UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { useWheelAdjust } from "./useWheelAdjust";
-import { color, text, border, surface, font, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, type IndicatorType, indicatorStyle } from "./theme";
 
 export interface CornerRadiusEditorProps {
   topLeft: number;
@@ -20,6 +20,10 @@ export interface CornerRadiusEditorProps {
   unit: string;
   units: string[];
   onUnitChange: (unit: string) => void;
+  /** Per-corner indicator: key = CSS property name, value = IndicatorType */
+  indicators?: Record<string, IndicatorType>;
+  /** Per-corner reset: key = CSS property name */
+  onCornerReset?: (corner: string) => void;
 }
 
 // ─── Corner bracket SVGs ─────────────────────────────────────────────
@@ -57,6 +61,8 @@ function CornerCell({
   unit,
   units,
   onUnitChange,
+  indicator,
+  onReset,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -65,6 +71,8 @@ function CornerCell({
   unit: string;
   units: string[];
   onUnitChange: (u: string) => void;
+  indicator?: IndicatorType;
+  onReset?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -120,8 +128,12 @@ function CornerCell({
         background: surface.subtle,
       }}
     >
-      {/* Corner icon */}
-      <div style={{ padding: "0 4px 0 6px", color: text.disabled, display: "flex", alignItems: "center" }}>
+      {/* Corner icon — tinted when modified, alt-click to reset */}
+      <div
+        style={{ padding: "0 4px 0 6px", color: indicator === "modified" ? "#3b82f6" : text.disabled, display: "flex", alignItems: "center", cursor: onReset ? "default" : undefined }}
+        title={indicator === "modified" ? "Modified — Option+Click to reset" : label}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+      >
         <CornerIcon corner={corner} />
       </div>
 
@@ -196,6 +208,8 @@ export function CornerRadiusEditor({
   unit,
   units,
   onUnitChange,
+  indicators,
+  onCornerReset,
 }: CornerRadiusEditorProps) {
   const values = { topLeft, topRight, bottomRight, bottomLeft };
 
@@ -211,6 +225,8 @@ export function CornerRadiusEditor({
           unit={unit}
           units={units}
           onUnitChange={onUnitChange}
+          indicator={indicators?.[c.key]}
+          onReset={onCornerReset ? () => onCornerReset(c.key) : undefined}
         />
       ))}
     </div>

@@ -345,8 +345,14 @@ export const BordersSection = memo(function BordersSection({
           {/* ── Width (value input + unit) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
             <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
-              <span style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}>Width</span>
+              <span
+                ref={widthPopover.anchorRef}
+                style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}
+              >
+                <span style={indicatorStyle(widthInd)}>Width</span>
+              </span>
             </LabelScrub>
+            {widthPopover.node}
             <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flex: 1, minWidth: 0 }}>
               <ValueInput value={borderWidth} onChange={handleBorderWidthChange} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)} embedded />
               <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
