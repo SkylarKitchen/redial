@@ -235,181 +235,198 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         {value}
       </button>
 
-      {/* Dropdown */}
-      {open && (
+      {/* Dropdown — portaled to document.body to escape scroll overflow */}
+      {open && dropdownPos && createPortal(
         <div
-          id={`${id}-listbox`}
-          role="listbox"
-          onKeyDown={onListKeyDown}
+          data-tuner-portal
+          data-unit-selector-portal
           style={{
-            position: "absolute",
-            zIndex: 50,
-            top: "100%",
-            marginTop: 2,
-            left: 0,
-            background: color.popover,
-            border: `1px solid ${border.default}`,
-            borderRadius: 4,
-            boxShadow: shadow.dropdown,
-            padding: "4px 0",
-            ...(hasVariables
-              ? { minWidth: 120, maxHeight: 220, overflowY: "auto" as const }
-              : { minWidth: 42, overflow: "hidden" as const }
-            ),
+            position: "fixed",
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            zIndex: 2147483647,
           }}
         >
-          {options.map((unit) => {
-            const isActive = unit === value;
-            const idx = flatIndex++;
-            const isHl = idx === highlightedIndex || idx === hoveredIdx;
-            return (
-              <div
-                key={unit}
-                id={`${id}-opt-${idx}`}
-                ref={idx === highlightedIndex ? optionRefCallback : undefined}
-                role="option"
-                aria-selected={isActive}
-                onClick={() => handleSelect(unit)}
-                onMouseEnter={() => setHoveredIdx(idx)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                style={{
-                  padding: "4px 8px",
-                  fontSize: 11,
-                  fontFamily: font.mono,
-                  cursor: "pointer",
-                  lineHeight: "16px",
-                  transition: `background-color ${ms("expand")}, color ${ms("expand")}`,
-                  background: isActive ? color.primary : isHl ? surface.hover : "transparent",
-                  color: isActive ? color.primaryForeground : text.label,
-                }}
-              >
-                {unit}
-              </div>
-            );
-          })}
-          {specialOptions && specialOptions.length > 0 && (
-            <>
-              <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
-              {specialOptions.map((opt) => {
-                const idx = flatIndex++;
-                const isHl = idx === highlightedIndex || idx === hoveredIdx;
-                return (
-                  <div
-                    key={opt.value}
-                    id={`${id}-opt-${idx}`}
-                    ref={idx === highlightedIndex ? optionRefCallback : undefined}
-                    role="option"
-                    aria-selected={false}
-                    onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
-                    onMouseEnter={() => setHoveredIdx(idx)}
-                    onMouseLeave={() => setHoveredIdx(null)}
-                    style={{
-                      padding: "4px 8px",
-                      fontSize: 11,
-                      fontFamily: font.mono,
-                      color: text.label,
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      transition: `background-color ${ms("expand")}`,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.025em",
-                      background: isHl ? surface.hover : "transparent",
-                    }}
-                  >
-                    {opt.label}
-                  </div>
-                );
-              })}
-            </>
-          )}
-          {hasVariables && (
-            <>
-              <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
-              <div style={{ padding: "2px 8px", fontSize: 9, color: text.hint, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Variables
-              </div>
-              {variableOptions!.map((v) => {
-                const idx = flatIndex++;
-                const isHl = idx === highlightedIndex || idx === hoveredIdx;
-                return (
-                  <div
-                    key={v.name}
-                    id={`${id}-opt-${idx}`}
-                    ref={idx === highlightedIndex ? optionRefCallback : undefined}
-                    role="option"
-                    aria-selected={false}
-                    onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
-                    onMouseEnter={() => setHoveredIdx(idx)}
-                    onMouseLeave={() => setHoveredIdx(null)}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 6,
-                      padding: "4px 8px",
-                      fontSize: 10,
-                      fontFamily: font.mono,
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      transition: `background-color ${ms("expand")}`,
-                      color: text.label,
-                      background: isHl ? surface.hover : "transparent",
-                    }}
-                  >
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {v.name.replace(/^--/, "")}
-                    </span>
-                    <span style={{ color: text.hint, flexShrink: 0, fontSize: 9 }}>
-                      {v.resolvedValue}
-                    </span>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
+          <div
+            id={`${id}-listbox`}
+            role="listbox"
+            onKeyDown={onListKeyDown}
+            style={{
+              background: color.popover,
+              border: `1px solid ${border.default}`,
+              borderRadius: 4,
+              boxShadow: shadow.dropdown,
+              padding: "4px 0",
+              ...(hasVariables
+                ? { minWidth: 120, maxHeight: 220, overflowY: "auto" as const }
+                : { minWidth: 42, overflow: "hidden" as const }
+              ),
+            }}
+          >
+            {options.map((unit) => {
+              const isActive = unit === value;
+              const idx = flatIndex++;
+              const isHl = idx === highlightedIndex || idx === hoveredIdx;
+              return (
+                <div
+                  key={unit}
+                  id={`${id}-opt-${idx}`}
+                  ref={idx === highlightedIndex ? optionRefCallback : undefined}
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => handleSelect(unit)}
+                  onMouseEnter={() => setHoveredIdx(idx)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: 11,
+                    fontFamily: font.mono,
+                    cursor: "pointer",
+                    lineHeight: "16px",
+                    transition: `background-color ${ms("expand")}, color ${ms("expand")}`,
+                    background: isActive ? color.primary : isHl ? surface.hover : "transparent",
+                    color: isActive ? color.primaryForeground : text.label,
+                  }}
+                >
+                  {unit}
+                </div>
+              );
+            })}
+            {specialOptions && specialOptions.length > 0 && (
+              <>
+                <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
+                {specialOptions.map((opt) => {
+                  const idx = flatIndex++;
+                  const isHl = idx === highlightedIndex || idx === hoveredIdx;
+                  return (
+                    <div
+                      key={opt.value}
+                      id={`${id}-opt-${idx}`}
+                      ref={idx === highlightedIndex ? optionRefCallback : undefined}
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => { onSpecialSelect?.(opt.value); setOpen(false); }}
+                      onMouseEnter={() => setHoveredIdx(idx)}
+                      onMouseLeave={() => setHoveredIdx(null)}
+                      style={{
+                        padding: "4px 8px",
+                        fontSize: 11,
+                        fontFamily: font.mono,
+                        color: text.label,
+                        cursor: "pointer",
+                        lineHeight: "16px",
+                        transition: `background-color ${ms("expand")}`,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.025em",
+                        background: isHl ? surface.hover : "transparent",
+                      }}
+                    >
+                      {opt.label}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+            {hasVariables && (
+              <>
+                <div style={{ height: 1, background: border.default, margin: "4px 0" }} />
+                <div style={{ padding: "2px 8px", fontSize: 9, color: text.hint, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Variables
+                </div>
+                {variableOptions!.map((v) => {
+                  const idx = flatIndex++;
+                  const isHl = idx === highlightedIndex || idx === hoveredIdx;
+                  return (
+                    <div
+                      key={v.name}
+                      id={`${id}-opt-${idx}`}
+                      ref={idx === highlightedIndex ? optionRefCallback : undefined}
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => { onVariableSelect?.(v.name); setOpen(false); }}
+                      onMouseEnter={() => setHoveredIdx(idx)}
+                      onMouseLeave={() => setHoveredIdx(null)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 6,
+                        padding: "4px 8px",
+                        fontSize: 10,
+                        fontFamily: font.mono,
+                        cursor: "pointer",
+                        lineHeight: "16px",
+                        transition: `background-color ${ms("expand")}`,
+                        color: text.label,
+                        background: isHl ? surface.hover : "transparent",
+                      }}
+                    >
+                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {v.name.replace(/^--/, "")}
+                      </span>
+                      <span style={{ color: text.hint, flexShrink: 0, fontSize: 9 }}>
+                        {v.resolvedValue}
+                      </span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
 
-      {/* Conversion tooltip */}
-      {tooltipText && tooltipPhase && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: "calc(100% + 6px)",
-            left: "50%",
-            transform: `translateX(-50%) translateY(${tooltipPhase === "in" ? 0 : 4}px)`,
-            background: color.popover,
-            border: `1px solid ${border.default}`,
-            borderRadius: 4,
-            padding: "2px 8px",
-            fontSize: 10,
-            fontFamily: font.mono,
-            color: text.secondary,
-            whiteSpace: "nowrap",
-            boxShadow: shadow.dropdown,
-            zIndex: 200,
-            pointerEvents: "none",
-            transition: "all 300ms",
-            opacity: tooltipPhase === "in" ? 1 : 0,
-          }}
-        >
-          {tooltipText}
-          {/* Arrow pointing down */}
+      {/* Conversion tooltip — portaled to document.body to escape scroll overflow */}
+      {tooltipText && tooltipPhase && (() => {
+        // Compute tooltip position from trigger rect (or use cached tooltipPos)
+        const tp = tooltipPos ?? (() => {
+          if (!triggerRef.current) return { top: 0, left: 0 };
+          const rect = triggerRef.current.getBoundingClientRect();
+          return { top: rect.top - 6, left: rect.left + rect.width / 2 };
+        })();
+        return createPortal(
           <div
+            data-tuner-portal
             style={{
-              position: "absolute",
-              bottom: -4,
-              left: "50%",
-              transform: "translateX(-50%) rotate(45deg)",
-              width: 6,
-              height: 6,
+              position: "fixed",
+              top: tp.top,
+              left: tp.left,
+              transform: `translateX(-50%) translateY(-100%) translateY(${tooltipPhase === "in" ? 0 : 4}px)`,
               background: color.popover,
-              borderRight: `1px solid ${border.default}`,
-              borderBottom: `1px solid ${border.default}`,
+              border: `1px solid ${border.default}`,
+              borderRadius: 4,
+              padding: "2px 8px",
+              fontSize: 10,
+              fontFamily: font.mono,
+              color: text.secondary,
+              whiteSpace: "nowrap",
+              boxShadow: shadow.dropdown,
+              zIndex: 2147483647,
+              pointerEvents: "none",
+              transition: "all 300ms",
+              opacity: tooltipPhase === "in" ? 1 : 0,
             }}
-          />
-        </div>
-      )}
+          >
+            {tooltipText}
+            {/* Arrow pointing down */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: -4,
+                left: "50%",
+                transform: "translateX(-50%) rotate(45deg)",
+                width: 6,
+                height: 6,
+                background: color.popover,
+                borderRight: `1px solid ${border.default}`,
+                borderBottom: `1px solid ${border.default}`,
+              }}
+            />
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }
