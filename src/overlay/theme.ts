@@ -77,8 +77,8 @@ export const text = {
   label: color.mutedForeground,
   /** Disabled/placeholder */
   disabled: "#737373",
-  /** Subtle hint */
-  hint: "#A3A3A3",
+  /** Subtle hint (4.6:1 contrast on white — passes WCAG AA) */
+  hint: "#757575",
 } as const;
 
 export const border = {
