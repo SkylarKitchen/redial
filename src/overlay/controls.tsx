@@ -1303,3 +1303,124 @@ export const EditableValue = memo(
     );
   },
 );
+
+// ─── SubSectionHeader ─────────────────────────────────────────────────
+// Shared sub-section header with optional indicator, reset, add, and menu buttons.
+
+export function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
+  label: string;
+  onAdd?: () => void;
+  onMenu?: () => void;
+  indicator?: IndicatorType;
+  onReset?: () => void;
+}) {
+  const resetPopover = useResetPopover(indicator, onReset);
+  return (
+    <div style={SUB_HEADER_ROW}>
+      <span
+        ref={resetPopover.anchorRef}
+        style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px", cursor: indicator === "modified" && onReset ? "pointer" : undefined }}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
+      >
+        <span style={indicatorStyle(indicator)}>
+          {label}
+        </span>
+      </span>
+      <div style={{ display: "flex", alignItems: "center", gap: "2px" }}
+        onClick={(e) => e.stopPropagation()}>
+        {onMenu && (
+          <button
+            onClick={onMenu}
+            style={{
+              background: "none", border: "none", cursor: "pointer", padding: "2px",
+              color: text.disabled, display: "flex", alignItems: "center",
+              borderRadius: "3px", transition: `color ${ms("fast")} ease`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = text.label; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = text.disabled; }}
+          >
+            <MoreHorizontal size={14} strokeWidth={1.5} />
+          </button>
+        )}
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            style={{
+              background: "none", border: "none", cursor: "pointer", padding: "2px",
+              color: text.disabled, display: "flex", alignItems: "center",
+              borderRadius: "3px", transition: `color ${ms("fast")} ease`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = text.label; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = text.disabled; }}
+          >
+            <Plus size={14} strokeWidth={1.5} />
+          </button>
+        )}
+      </div>
+      {resetPopover.node}
+    </div>
+  );
+}
+
+// ─── EditorRemoveButton ───────────────────────────────────────────────
+// Standardized 14×14 remove button for editor rows (transforms, shadows, filters, transitions).
+
+export function EditorRemoveButton({ onClick, title }: { onClick: () => void; title?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        width: "14px",
+        height: "14px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "transparent",
+        border: "none",
+        color: text.disabled,
+        cursor: "pointer",
+        padding: 0,
+        borderRadius: "2px",
+        flexShrink: 0,
+        lineHeight: 1,
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.background = surface.hover;
+        (e.currentTarget as HTMLElement).style.color = text.label;
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.background = "transparent";
+        (e.currentTarget as HTMLElement).style.color = text.disabled;
+      }}
+    >
+      <X size={11} strokeWidth={2} />
+    </button>
+  );
+}
+
+// ─── VisibilityToggle ─────────────────────────────────────────────────
+// Standardized Eye/EyeOff toggle for editor rows.
+
+export function VisibilityToggle({ visible, onToggle, title }: {
+  visible: boolean;
+  onToggle: () => void;
+  title?: string;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      style={{
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: "2px",
+        color: visible ? text.label : text.hint,
+        flexShrink: 0,
+      }}
+      title={title ?? (visible ? "Hide layer" : "Show layer")}
+    >
+      {visible ? <Eye size={12} /> : <EyeOff size={12} />}
+    </button>
+  );
+}
