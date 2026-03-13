@@ -51,7 +51,7 @@ describe("SizeInputCell Option+Click reset in keyword/variable mode", () => {
     // It must check e.altKey before clearing variable and entering edit mode.
 
     // Match the span with onCssVarChange in its onClick (the value area, not the label)
-    const variableBranch = src.match(/onClick=\{[^}]*onCssVarChange[\s\S]*?<\/span>\s*\)/);
+    const variableBranch = src.match(/onClick=\{[\s\S]*?onCssVarChange[\s\S]*?<\/span>\s*\)/);
     expect(variableBranch, "Could not find variable value-area branch in SizeInputCell").toBeTruthy();
 
     const variableBlock = variableBranch![0];

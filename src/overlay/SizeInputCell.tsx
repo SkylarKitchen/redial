@@ -164,6 +164,7 @@ export function SizeInputCell({
     <div
       ref={cellRef}
       className="flex items-center h-[28px] rounded border"
+      onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       style={{
         background: surface.subtle,
         borderColor: blackAlpha(0.07),
@@ -198,7 +199,7 @@ export function SizeInputCell({
         {isKeyword ? (
           <span
             tabIndex={0}
-            onClick={() => { onKeywordChange?.(null); setEditing(true); }}
+            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onKeywordChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
             className="text-[10px] font-mono capitalize pr-1 cursor-text outline-none"
             style={{ color: text.label }}
@@ -208,7 +209,7 @@ export function SizeInputCell({
         ) : isVariable ? (
           <span
             tabIndex={0}
-            onClick={() => { onCssVarChange?.(null); setEditing(true); }}
+            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onCssVarChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
             title={`${cssVar}: ${cssVarResolved ?? ""}`}
             className="flex items-center gap-1 text-[10px] font-mono pr-1 cursor-text outline-none overflow-hidden min-w-0"
