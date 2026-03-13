@@ -298,6 +298,12 @@ export const gridAlpha = (a: number) => `rgba(217,119,87,${a})`;
 /** Flex gap overlay magenta at a given alpha. rgb(255,68,204) = #FF44CC */
 export const flexGapAlpha = (a: number) => `rgba(255,68,204,${a})`;
 
+/** Spacing margin overlay blue at a given alpha. rgb(87,168,255) = #57A8FF */
+export const spacingMarginAlpha = (a: number) => `rgba(87,168,255,${a})`;
+
+/** Spacing padding overlay green at a given alpha. rgb(76,175,80) = #4CAF50 */
+export const spacingPaddingAlpha = (a: number) => `rgba(76,175,80,${a})`;
+
 export const overlay = {
   grid: {
     /** Dashed grid lines between tracks */
@@ -318,6 +324,16 @@ export const overlay = {
     hatch: flexGapAlpha(0.15),
     /** Dashed border around gap region */
     border: flexGapAlpha(0.5),
+  },
+  spacing: {
+    /** Margin solid color — blue */
+    margin: "#57A8FF",
+    /** Margin zone fill — 30% alpha */
+    marginFill: spacingMarginAlpha(0.30),
+    /** Padding solid color — green */
+    padding: "#4CAF50",
+    /** Padding zone fill — 30% alpha */
+    paddingFill: spacingPaddingAlpha(0.30),
   },
 } as const;
 

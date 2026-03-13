@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useCallback, useMemo, memo } from "react";
-import { Section, SliderRow, SelectRow, TextRow } from "./controls";
+import { Section, SliderRow, SelectRow, TextRow, useResetPopover } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { WebflowSegmentedControl } from "./WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
@@ -19,7 +19,7 @@ import { isAutoSize } from "./getAuthoredValue";
 import { ChevronRight } from "lucide-react";
 import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
 import { ms } from "./timing";
-import { text, border, surface, font, layout } from "./theme";
+import { text, border, surface, font, layout, indicatorStyle } from "./theme";
 import { ROW, LABEL } from "./panelStyles";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
@@ -235,7 +235,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── JSX ────────────────────────────────────────────────────────────
 
   return (
-    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "align-items", "aspect-ratio", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
+    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "align-items", "aspect-ratio", "box-sizing", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
       <div style={{ ...ROW, gap: layout.compactGap }}>
         <SizeInputCell
@@ -461,9 +461,11 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {showMoreSize && (
         <>
-          <TextRow label="Aspect" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
+          <TextRow label="Aspect" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} computedProp="aspect-ratio" computedElement={element} indicator={ind("aspect-ratio")} onReset={() => resetCssStr("aspect-ratio", setAspectRatio)} />
           <div style={ROW}>
-            <span style={{ ...LABEL, color: text.disabled }}>Box Size</span>
+            <span style={{ ...LABEL }}>
+              <span style={indicatorStyle(ind("box-sizing"))}>Box Size</span>
+            </span>
             <IconButtonGroup
               options={BOX_SIZING_OPTIONS}
               value={boxSizing}

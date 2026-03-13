@@ -9,7 +9,8 @@
  * Transitions, Filters), then Cursor + secondary controls.
  */
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useEffect, useRef, memo } from "react";
+import { createPortal } from "react-dom";
 import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "./controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
@@ -38,9 +39,114 @@ import {
   BACKFACE_OPTIONS,
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
-import { text, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
+import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL } from "./panelStyles";
+
+// ─── Transition Options Menu (portal) ─────────────────────────────────
+
+interface TransMenuItemDef {
+  label: string;
+  action: () => void;
+  destructive?: boolean;
+}
+
+function TransitionOptionsMenu({ anchor, items, onClose }: {
+  anchor: HTMLElement;
+  items: TransMenuItemDef[];
+  onClose: () => void;
+}) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Position below anchor
+  const rect = anchor.getBoundingClientRect();
+
+  // Clamp to viewport after mount
+  useEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const menuRect = el.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.bottom + 4;
+    if (menuRect.right > window.innerWidth - 8) left = window.innerWidth - menuRect.width - 8;
+    if (menuRect.bottom > window.innerHeight - 8) top = rect.top - menuRect.height - 4;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+  }, [rect.left, rect.bottom, rect.top]);
+
+  // Close on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [onClose]);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={menuRef}
+      data-tuner-portal
+      style={{
+        position: "fixed",
+        zIndex: zIndex.max,
+        minWidth: 140,
+        background: color.popover,
+        color: text.primary,
+        border: `1px solid ${border.default}`,
+        borderRadius: 6,
+        boxShadow: shadow.dropdown,
+        padding: "4px 0",
+        overflow: "hidden",
+        left: rect.left,
+        top: rect.bottom + 4,
+      }}
+    >
+      {items.map((item) => (
+        <TransMenuItem key={item.label} label={item.label} onClick={item.action} destructive={item.destructive} />
+      ))}
+    </div>
+  );
+}
+
+function TransMenuItem({ label, onClick, destructive }: { label: string; onClick: () => void; destructive?: boolean }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      role="menuitem"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        padding: "6px 12px",
+        fontSize: 12,
+        cursor: "pointer",
+        background: hovered ? surface.hover : "transparent",
+        color: destructive ? color.destructive : text.primary,
+        outline: "none",
+        userSelect: "none",
+        transition: `background ${ms("fast")}`,
+      }}
+    >
+      {label}
+    </div>
+  );
+}
 
 // ─── Props ───────────────────────────────────────────────────────────
 

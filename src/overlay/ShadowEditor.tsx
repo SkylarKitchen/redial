@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X, Eye, EyeOff } from "lucide-react";
+
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
@@ -15,6 +15,7 @@ import { shadowToCSS } from "./cssParsers";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { ms } from "./timing";
 import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "./theme";
+import { EditorRemoveButton, VisibilityToggle } from "./controls";
 
 export interface ShadowValue {
   x: number;
@@ -287,44 +288,14 @@ function ShadowRow({
         <div style={{ flex: 1 }} />
 
         {/* Eye visibility toggle */}
-        <button
-          onClick={() => onToggleVisible(index)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "2px",
-            color: shadow.visible !== false ? text.secondary : text.hint,
-            pointerEvents: isDragging ? "none" : "auto",
-          }}
+        <VisibilityToggle
+          visible={shadow.visible !== false}
+          onToggle={() => onToggleVisible(index)}
           title={shadow.visible !== false ? "Hide layer" : "Show layer"}
-        >
-          {shadow.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
-        </button>
+        />
 
         {/* Delete */}
-        <button
-          onClick={() => onDelete(index)}
-          title="Remove shadow"
-          style={{
-            fontSize: "12px",
-            color: text.disabled,
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "0 4px",
-            lineHeight: 1,
-            transition: `color ${ms("normal")}`,
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = text.secondary;
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = text.disabled;
-          }}
-        >
-          <X size={12} strokeWidth={2} />
-        </button>
+        <EditorRemoveButton onClick={() => onDelete(index)} title="Remove shadow" />
       </div>
     </div>
   );

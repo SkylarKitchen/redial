@@ -6,8 +6,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { X } from "lucide-react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
+import { EditorRemoveButton } from "./controls";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, focusBorder } from "./theme";
 
 export interface TransformValue {
@@ -289,36 +289,7 @@ function TransformCard({
       <div style={{ flex: 1 }} />
 
       {/* Remove */}
-      <button
-        onClick={onRemove}
-        style={{
-          width: "14px",
-          height: "14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "transparent",
-          border: "none",
-          color: text.disabled,
-          cursor: "pointer",
-          fontSize: "11px",
-          fontFamily: font.sans,
-          padding: 0,
-          borderRadius: "2px",
-          flexShrink: 0,
-          lineHeight: 1,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = surface.hover;
-          (e.currentTarget as HTMLElement).style.color = text.label;
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = text.disabled;
-        }}
-      >
-        <X size={11} strokeWidth={2} />
-      </button>
+      <EditorRemoveButton onClick={onRemove} />
     </div>
   );
 }

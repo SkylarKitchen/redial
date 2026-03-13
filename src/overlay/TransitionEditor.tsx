@@ -6,10 +6,10 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { EditorRemoveButton, VisibilityToggle } from "./controls";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
 import { ms } from "./timing";
 
@@ -245,7 +245,7 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
         onClick={handleAdd}
         style={{
           background: "transparent",
-          border: `1px solid ${color.border}`,
+          border: `1px solid ${surface.active}`,
           borderRadius: "3px",
           color: text.label,
           fontSize: "10px",
@@ -427,23 +427,13 @@ function TransitionCard({
       )}
 
       {/* Eye visibility toggle */}
-      <button
-        onClick={onToggleVisible}
-        style={{
-          position: "absolute",
-          top: "4px",
-          right: "40px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: "2px",
-          color: transition.visible !== false ? text.label : border.strong,
-          pointerEvents: isDragging ? "none" : "auto",
-        }}
-        title={transition.visible !== false ? "Hide transition" : "Show transition"}
-      >
-        {transition.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
-      </button>
+      <div style={{ position: "absolute", top: "4px", right: "40px", pointerEvents: isDragging ? "none" : "auto" }}>
+        <VisibilityToggle
+          visible={transition.visible !== false}
+          onToggle={onToggleVisible}
+          title={transition.visible !== false ? "Hide transition" : "Show transition"}
+        />
+      </div>
 
       {/* Play preview button */}
       {element && (
@@ -487,38 +477,9 @@ function TransitionCard({
       )}
 
       {/* Remove button */}
-      <button
-        onClick={onRemove}
-        style={{
-          position: "absolute",
-          top: "4px",
-          right: "4px",
-          width: "14px",
-          height: "14px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "transparent",
-          border: "none",
-          color: text.disabled,
-          cursor: "pointer",
-          fontSize: "11px",
-          fontFamily: font.sans,
-          padding: 0,
-          borderRadius: "2px",
-          lineHeight: 1,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = surface.hover;
-          (e.currentTarget as HTMLElement).style.color = text.label;
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "transparent";
-          (e.currentTarget as HTMLElement).style.color = text.disabled;
-        }}
-      >
-        ×
-      </button>
+      <div style={{ position: "absolute", top: "4px", right: "4px" }}>
+        <EditorRemoveButton onClick={onRemove} />
+      </div>
 
       {/* Property */}
       <Row label="Property">

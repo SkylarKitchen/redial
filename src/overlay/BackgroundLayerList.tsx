@@ -9,9 +9,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
 import { BLEND_MODE_OPTIONS } from "./panelConstants";
-import { X, Eye, EyeOff } from "lucide-react";
+import { X } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { VisibilityToggle } from "./controls";
 import { color, blackAlpha, border, surface, shadow, font, checkerboard } from "./theme";
 import { ms } from "./timing";
 
@@ -339,23 +340,12 @@ export function BackgroundLayerList({
               />
 
               {/* Eye visibility toggle */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleVisible(layer.id);
-                }}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 2,
-                  color: layer.visible !== false ? color.mutedForeground : blackAlpha(0.15),
-                  pointerEvents: isDragging ? "none" : "auto",
-                }}
-                title={layer.visible !== false ? "Hide layer" : "Show layer"}
-              >
-                {layer.visible !== false ? <Eye size={12} /> : <EyeOff size={12} />}
-              </button>
+              <span onClick={(e) => e.stopPropagation()} style={{ pointerEvents: isDragging ? "none" : "auto" }}>
+                <VisibilityToggle
+                  visible={layer.visible !== false}
+                  onToggle={() => toggleVisible(layer.id)}
+                />
+              </span>
 
               {/* Delete */}
               <button

@@ -13,17 +13,17 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, zIndex } from "./theme";
+import { font, zIndex, overlay, blackAlpha } from "./theme";
 import { getScrubGroup } from "./scrubState";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const MARGIN_COLOR = "#57A8FF";
-const MARGIN_FILL = "rgba(87,168,255,0.30)";
-const PADDING_COLOR = "#4CAF50";
-const PADDING_FILL = "rgba(76,175,80,0.30)";
+const MARGIN_COLOR = overlay.spacing.margin;
+const MARGIN_FILL = overlay.spacing.marginFill;
+const PADDING_COLOR = overlay.spacing.padding;
+const PADDING_FILL = overlay.spacing.paddingFill;
 const LABEL_FONT = font.mono;
 
 // ---------------------------------------------------------------------------
@@ -283,7 +283,7 @@ export function SpacingGuidesOverlay({
             ...BOX_LINE,
             top: contentBox.top, left: contentBox.left,
             width: contentBox.width, height: contentBox.height,
-            border: "1px dashed rgba(0,0,0,0.25)",
+            border: `1px dashed ${blackAlpha(0.25)}`,
           }} />
         </>
       )}

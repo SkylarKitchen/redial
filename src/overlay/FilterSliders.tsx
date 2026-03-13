@@ -8,9 +8,9 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { EditorRemoveButton, VisibilityToggle } from "./controls";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
 import { ms } from "./timing";
 
@@ -262,52 +262,13 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
             </span>
 
             {/* Eye visibility toggle */}
-            <button
-              onClick={() => toggleFilterVisible(key)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: "2px",
-                color: !isHidden ? text.label : text.hint,
-                flexShrink: 0,
-              }}
+            <VisibilityToggle
+              visible={!isHidden}
+              onToggle={() => toggleFilterVisible(key)}
               title={!isHidden ? "Hide filter" : "Show filter"}
-            >
-              {!isHidden ? <Eye size={12} /> : <EyeOff size={12} />}
-            </button>
+            />
 
-            {/* Remove button */}
-            <button
-              onClick={() => handleRemove(key)}
-              style={{
-                width: "14px",
-                height: "14px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                color: text.disabled,
-                cursor: "pointer",
-                fontSize: "11px",
-                fontFamily: font.sans,
-                padding: 0,
-                borderRadius: "2px",
-                flexShrink: 0,
-                lineHeight: 1,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = surface.hover;
-                (e.currentTarget as HTMLElement).style.color = text.label;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "transparent";
-                (e.currentTarget as HTMLElement).style.color = text.disabled;
-              }}
-            >
-              {"\u00D7"}
-            </button>
+            <EditorRemoveButton onClick={() => handleRemove(key)} />
           </div>
         );
       })}

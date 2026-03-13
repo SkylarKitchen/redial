@@ -1310,7 +1310,7 @@ export const EditableValue = memo(
 export function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
   label: string;
   onAdd?: () => void;
-  onMenu?: () => void;
+  onMenu?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   indicator?: IndicatorType;
   onReset?: () => void;
 }) {
@@ -1330,7 +1330,7 @@ export function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
         onClick={(e) => e.stopPropagation()}>
         {onMenu && (
           <button
-            onClick={onMenu}
+            onClick={(e) => onMenu?.(e)}
             style={{
               background: "none", border: "none", cursor: "pointer", padding: "2px",
               color: text.disabled, display: "flex", alignItems: "center",

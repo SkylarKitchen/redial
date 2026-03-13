@@ -458,17 +458,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Text shadows */}
-          <div style={SUB_HEADER_ROW}>
-            <span style={SUB_HEADER}>Text shadows</span>
-            <button
-              onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])}
-              style={MINI_ACTION_BUTTON}
-              onMouseEnter={(e) => { e.currentTarget.style.background = surface.hover; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-            >
-              +
-            </button>
-          </div>
+          <SubSectionHeader label="Text shadows" onAdd={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])} />
           {textShadows.length > 0 && <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />}
         </>
       )}
