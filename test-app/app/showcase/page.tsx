@@ -1637,7 +1637,7 @@ export default function ShowcasePage() {
               </ToggleSection>
 
               <ToggleSection title="Spacing" defaultOpen>
-                <div style={{ padding: "0 12px 8px" }}><InteractiveSpacingBox /></div>
+                <InteractiveSpacingBox />
               </ToggleSection>
 
               <ToggleSection title="Size" hasIndicator defaultOpen>
