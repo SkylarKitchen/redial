@@ -24,6 +24,8 @@ export const color = {
   /** Slider thumb active/pressed */
   primaryActive: "#d4956a",
   primaryForeground: "#ffffff",
+  /** Secondary text on primary background — 60% white */
+  primaryForegroundMuted: "rgba(255,255,255,0.6)",
 
   /** Popover/dropdown surface — --bg-secondary */
   popover: "#F5F5F5",

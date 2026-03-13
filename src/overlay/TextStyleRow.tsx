@@ -9,12 +9,13 @@
  * upward when there isn't enough space below.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
 import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, zIndex } from "./theme";
 import { ms } from "./timing";
+import { usePortalDropdown } from "./usePortalDropdown";
 import type { TextStyle } from "./textStyleScanner";
 
 export interface TextStyleRowProps {
@@ -160,7 +161,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
                     fontSize: 10,
                     marginLeft: 8,
                     flexShrink: 0,
-                    color: isActive ? "rgba(255,255,255,0.6)" : text.label,
+                    color: isActive ? color.primaryForegroundMuted : text.label,
                   }}
                 >
                   {formatSize(style.fontSize)}
