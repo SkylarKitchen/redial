@@ -308,11 +308,12 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
         {/* Right: Reset + Save */}
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <button
-            onClick={handleReset}
+          <motion.button
+            onClick={handleResetClick}
             onMouseEnter={() => setResetHovered(true)}
             onMouseLeave={() => setResetHovered(false)}
-            disabled={count === 0}
+            animate={shaking ? { x: [0, -2, 2, -2, 2, -2, 2, 0] } : { x: 0 }}
+            transition={shaking ? { duration: timing.slow / 1000 } : { duration: 0 }}
             title="Reset (R)"
             style={{
               display: "inline-flex",
@@ -333,7 +334,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             }}
           >
             Reset
-          </button>
+          </motion.button>
           <button
             onClick={handleSave}
             onMouseEnter={() => setSaveHovered(true)}
