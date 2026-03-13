@@ -13,7 +13,7 @@ import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
-import { getIndicatorColor, getIndicatorTitle } from "./panelUtils";
+import { getIndicatorColor, getIndicatorTitle, convertPresets } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
@@ -22,7 +22,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, presets, presetBaseUnit } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -273,12 +273,17 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
 
 // ─── PresetChips ─────────────────────────────────────────────────────
 
-function PresetChips({ property, onSelect }: {
+function PresetChips({ property, onSelect, unit }: {
   property: string;
   onSelect: (value: string | number) => void;
+  unit?: string;
 }) {
-  const values = presets[property];
-  if (!values || values.length === 0) return null;
+  const raw = presets[property];
+  if (!raw || raw.length === 0) return null;
+  const base = presetBaseUnit[property];
+  const values = (raw && base && unit && unit !== base)
+    ? convertPresets(raw, base, unit)
+    : raw;
 
   return (
     <div style={{ display: "flex", gap: 4, padding: "1px 12px 2px 82px" }}>
@@ -429,7 +434,7 @@ export function SliderRow({
         ) : null}
       </div>
     </div>
-    {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
+    {property && <PresetChips property={property} onSelect={handlePresetSelect} unit={unit} />}
     </>
   );
 }

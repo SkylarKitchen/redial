@@ -197,6 +197,11 @@ export const presets: Record<string, (string | number)[]> = {
   gap: [0, 4, 8, 16],
 };
 
+/** Declares the base unit for preset values — used by convertPresets() to scale chips on unit change. */
+export const presetBaseUnit: Record<string, string> = {
+  gap: "px",
+};
+
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {

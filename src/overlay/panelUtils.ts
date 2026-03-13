@@ -102,6 +102,19 @@ export function stepForUnit(unit: string): number {
   }
 }
 
+/** Convert preset values from one CSS unit to another using the stepForUnit ratio. */
+export function convertPresets(
+  values: (string | number)[],
+  fromUnit: string,
+  toUnit: string,
+): (string | number)[] {
+  if (fromUnit === toUnit) return values;
+  const ratio = stepForUnit(toUnit) / stepForUnit(fromUnit);
+  return values.map((v) =>
+    typeof v === "number" ? Math.round(v * ratio * 100) / 100 : v
+  );
+}
+
 /** Decimal places needed to display the step cleanly */
 export function precisionForStep(step: number): number {
   if (step >= 1) return 0;
