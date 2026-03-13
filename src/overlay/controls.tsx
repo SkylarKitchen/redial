@@ -880,6 +880,7 @@ export function ColorRow({
               ? checkerboard
               : displayColor,
           border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
+          boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
         }}
       />
       <span
