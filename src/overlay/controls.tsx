@@ -196,7 +196,7 @@ export function Section({
 
 // ─── ValueInput ─────────────────────────────────────────────────────
 
-export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit, embedded }: {
+export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit, embedded, step: stepProp }: {
   value: number;
   onChange: (v: number) => void;
   /** Called when alt+click is detected (resets value to default) */
@@ -207,6 +207,8 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
   onKeywordCommit?: (keyword: string) => void;
   /** When true, renders without own bg/border (for use inside styled containers) */
   embedded?: boolean;
+  /** Base step for arrow key increments (default 1). Shift multiplies ×10, Alt ×0.1 */
+  step?: number;
 }) {
   const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
@@ -243,16 +245,18 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         e.stopPropagation();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        onChange(Math.round((value + step) * 10) / 10);
+        const base = stepProp ?? 1;
+        const inc = e.altKey ? base * 0.1 : e.shiftKey ? base * 10 : base;
+        onChange(Math.round((value + inc) * 10) / 10);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         e.stopPropagation();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
-        onChange(Math.round((value - step) * 10) / 10);
+        const base = stepProp ?? 1;
+        const inc = e.altKey ? base * 0.1 : e.shiftKey ? base * 10 : base;
+        onChange(Math.round((value - inc) * 10) / 10);
       }
     },
-    [commit, value, onChange]
+    [commit, value, onChange, stepProp]
   );
 
   return (
@@ -400,6 +404,8 @@ export function SliderRow({
   property?: string;
   /** Called when a string preset is selected (numeric presets use onChange) */
   onPreset?: (value: string | number) => void;
+  /** Small hint label shown next to the value input (e.g. Tailwind class name) */
+  annotation?: string;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
@@ -454,8 +460,11 @@ export function SliderRow({
         onPointerDown={() => beginBatch()}
         onPointerUp={() => endBatch()}
       />
+      {annotation && (
+        <span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, flexShrink: 0, maxWidth: 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{annotation}</span>
+      )}
       <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
-        <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded />
+        <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded step={step} />
         {units && onUnitChange ? (
           <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
             <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />

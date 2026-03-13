@@ -243,8 +243,8 @@ describe("destroyStateStyles", () => {
 // ─── State reset + apply.ts sync (A2 Bug 1) ─────────────────────────
 
 describe("state reset clears apply.ts overrides", () => {
-  it("resetStateStyles also clears composite-keyed overrides in apply.ts", async () => {
-    const { applyInlineStyle, stateKey, resetAll, overrideCount } = await import("../apply");
+  it("resetStateStyles + resetStateOverrides clears composite-keyed overrides in apply.ts", async () => {
+    const { applyInlineStyle, stateKey, resetAll, overrideCount, resetStateOverrides } = await import("../apply");
 
     const el = makeEl();
 
@@ -258,17 +258,15 @@ describe("state reset clears apply.ts overrides", () => {
 
     // Reset state styles (this is what Footer.tsx handleReset does)
     resetStateStyles(el, "hover");
+    resetStateOverrides(el, "hover");  // sync apply.ts — the fix
 
-    // BUG: apply.ts overrides should ALSO be cleared
-    // Currently resetStateStyles only clears statePreview.ts — the composite
-    // key "hover::color" remains in apply.ts, causing wrong dirty count.
     expect(overrideCount(el)).toBe(0);
 
     resetAll();
   });
 
   it("totalOverrideCount returns 0 after state reset", async () => {
-    const { applyInlineStyle, stateKey, resetAll, totalOverrideCount } = await import("../apply");
+    const { applyInlineStyle, stateKey, resetAll, totalOverrideCount, resetStateOverrides } = await import("../apply");
 
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
@@ -278,6 +276,7 @@ describe("state reset clears apply.ts overrides", () => {
     expect(totalOverrideCount()).toBeGreaterThan(0);
 
     resetStateStyles(el, "hover");
+    resetStateOverrides(el, "hover");  // sync apply.ts — the fix
 
     // After reset, total dirty count should be 0
     expect(totalOverrideCount()).toBe(0);

@@ -49,6 +49,8 @@ interface SpacingBoxModelProps {
   ind: (prop: string) => IndicatorType;
   /** Reset callback — updates parent state without re-applying inline style */
   onReset?: (prop: string, value: number) => void;
+  /** True when the element uses Tailwind utility classes */
+  isTailwind?: boolean;
 }
 
 // Zone base/highlight colors — neutral grays from theme tokens
@@ -83,6 +85,7 @@ export function SpacingBoxModel({
   element,
   ind,
   onReset,
+  isTailwind = false,
 }: SpacingBoxModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marginZoneRef = useRef<HTMLDivElement>(null);
@@ -552,6 +555,7 @@ export function SpacingBoxModel({
           isMargin={popoverState.prop.startsWith("margin")}
           anchorRect={popoverState.rect}
           onClose={() => setPopoverState(null)}
+          isTailwind={isTailwind}
         />
       )}
     </div>

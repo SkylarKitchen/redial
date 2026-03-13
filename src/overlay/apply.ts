@@ -44,7 +44,7 @@ export function parseStateKey(key: string): { state: string; prop: string } {
   return idx < 0 ? { state: "none", prop: key } : { state: key.slice(0, idx), prop: key.slice(idx + 2) };
 }
 
-type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string };
+type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string; className?: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
 type UndoEntry = SingleUndoEntry | BatchUndoEntry;
 
@@ -109,6 +109,25 @@ export function onStateChange(callback: (info: StateChangeInfo) => void): () => 
 function notifyStateChange(el: Element, state: string, prop: string, value: string | null) {
   const info: StateChangeInfo = { el, state, prop, value };
   stateChangeListeners.forEach(fn => fn(info));
+}
+
+// --- Class change listener API (for class-scope undo sync) ---
+
+export type ClassChangeInfo = { className: string; prop: string; value: string | null };
+const classChangeListeners = new Set<(info: ClassChangeInfo) => void>();
+
+/**
+ * Register a callback that fires when undo/redo processes a class-scoped entry.
+ * `value` is the new value to apply, or `null` if the property was removed.
+ * Returns an unsubscribe function.
+ */
+export function onClassChange(callback: (info: ClassChangeInfo) => void): () => void {
+  classChangeListeners.add(callback);
+  return () => { classChangeListeners.delete(callback); };
+}
+
+function notifyClassChange(className: string, prop: string, value: string | null) {
+  classChangeListeners.forEach(fn => fn({ className, prop, value }));
 }
 
 // --- State ---
@@ -190,7 +209,8 @@ export function endBatch(): void {
 export function applyInlineStyle(
   el: Element,
   prop: string,
-  value: string
+  value: string,
+  className?: string
 ): void {
   if (!(el as HTMLElement).isConnected) return;
 
@@ -216,10 +236,10 @@ export function applyInlineStyle(
     if (batchDepth > 0) {
       // In batch mode: collect undo entries, only first touch per (el, prop)
       if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
-        batchEntries.push({ el, prop, prev: initial, state: parsed.state });
+        batchEntries.push({ el, prop, prev: initial, state: parsed.state, className });
       }
     } else {
-      undoStack.push({ el, prop, prev: initial, state: parsed.state });
+      undoStack.push({ el, prop, prev: initial, state: parsed.state, className });
     }
   } else {
     const existing = elOverrides.get(prop)!;
@@ -228,14 +248,14 @@ export function applyInlineStyle(
     if (batchDepth > 0) {
       // In batch mode: only record first touch per (el, prop)
       if (!batchEntries.some((e) => e.el === el && e.prop === prop)) {
-        batchEntries.push({ el, prop, prev: existing.current, state: parsed.state });
+        batchEntries.push({ el, prop, prev: existing.current, state: parsed.state, className });
       }
     } else {
       // Coalesce: if the last undo entry is for the same (el, prop), don't push
       // another entry — keeps the original `prev` so undo reverts the entire drag
       const lastUndo = undoStack[undoStack.length - 1];
       if (!(lastUndo && !isBatch(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
-        undoStack.push({ el, prop, prev: existing.current, state: parsed.state });
+        undoStack.push({ el, prop, prev: existing.current, state: parsed.state, className });
       }
     }
     existing.current = value;
@@ -270,7 +290,7 @@ export function undo(): { el: Element; prop: string } | null {
     const redoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
-      const { el, prop, prev, state } = last.entries[i];
+      const { el, prop, prev, state, className } = last.entries[i];
       const isState = state !== "none";
       const cssProp = isState ? parseStateKey(prop).prop : prop;
       if (!overrides.has(el)) overrides.set(el, new Map());
@@ -285,7 +305,7 @@ export function undo(): { el: Element; prop: string } | null {
         elOverrides.set(prop, entry);
       }
 
-      redoEntries.push({ el, prop, prev: entry.current, state });
+      redoEntries.push({ el, prop, prev: entry.current, state, className });
 
       const wasDirty = entry.initial !== entry.current;
 
@@ -294,11 +314,13 @@ export function undo(): { el: Element; prop: string } | null {
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
         if (isState) notifyStateChange(el, state, cssProp, null);
+        if (className) notifyClassChange(className, prop, null);
         if (wasDirty) dirtyCount--;
       } else {
         if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
         if (isState) notifyStateChange(el, state, cssProp, prev);
+        if (className) notifyClassChange(className, prop, prev);
         const isDirtyNow = entry.initial !== prev;
         if (!wasDirty && isDirtyNow) dirtyCount++;
         else if (wasDirty && !isDirtyNow) dirtyCount--;
@@ -314,7 +336,7 @@ export function undo(): { el: Element; prop: string } | null {
   }
 
   const single = last as SingleUndoEntry;
-  const { el, prop, prev, state } = single;
+  const { el, prop, prev, state, className } = single;
   const isState = state !== "none";
   const cssProp = isState ? parseStateKey(prop).prop : prop;
   if (!overrides.has(el)) overrides.set(el, new Map());
@@ -331,7 +353,7 @@ export function undo(): { el: Element; prop: string } | null {
   }
 
   // Capture forward state for redo before restoring
-  redoStack.push({ el, prop, prev: entry.current, state });
+  redoStack.push({ el, prop, prev: entry.current, state, className });
 
   const wasDirty = entry.initial !== entry.current;
 
@@ -341,11 +363,13 @@ export function undo(): { el: Element; prop: string } | null {
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
     if (isState) notifyStateChange(el, state, cssProp, null);
+    if (className) notifyClassChange(className, prop, null);
     if (wasDirty) dirtyCount--;
   } else {
     if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
     if (isState) notifyStateChange(el, state, cssProp, prev);
+    if (className) notifyClassChange(className, prop, prev);
     const isDirtyNow = entry.initial !== prev;
     if (!wasDirty && isDirtyNow) dirtyCount++;
     else if (wasDirty && !isDirtyNow) dirtyCount--;
@@ -364,7 +388,7 @@ export function redo(): { el: Element; prop: string } | null {
     // Re-apply batch entries and push an undo batch
     const undoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
-    for (const { el, prop, prev: redoValue, state } of last.entries) {
+    for (const { el, prop, prev: redoValue, state, className } of last.entries) {
       const isState = state !== "none";
       const cssProp = isState ? parseStateKey(prop).prop : prop;
       if (!overrides.has(el)) overrides.set(el, new Map());
@@ -372,7 +396,7 @@ export function redo(): { el: Element; prop: string } | null {
       const entry = elOverrides.get(prop);
       const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
 
-      undoEntries.push({ el, prop, prev: currentValue, state });
+      undoEntries.push({ el, prop, prev: currentValue, state, className });
 
       if (entry) {
         const wasDirty = entry.initial !== entry.current;
@@ -390,6 +414,7 @@ export function redo(): { el: Element; prop: string } | null {
       } else {
         notifyStateChange(el, state, cssProp, redoValue);
       }
+      if (className) notifyClassChange(className, prop, redoValue);
       result = { el, prop };
     }
     if (undoEntries.length > 0) {
@@ -400,7 +425,7 @@ export function redo(): { el: Element; prop: string } | null {
     return result;
   }
 
-  const { el, prop, prev: redoValue, state } = last as SingleUndoEntry;
+  const { el, prop, prev: redoValue, state, className } = last as SingleUndoEntry;
   const isState = state !== "none";
   const cssProp = isState ? parseStateKey(prop).prop : prop;
   if (!overrides.has(el)) overrides.set(el, new Map());
@@ -409,7 +434,7 @@ export function redo(): { el: Element; prop: string } | null {
   const currentValue = entry?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
 
   // Push undo entry for this redo
-  undoStack.push({ el, prop, prev: currentValue, state });
+  undoStack.push({ el, prop, prev: currentValue, state, className });
 
   if (entry) {
     const wasDirty = entry.initial !== entry.current;
@@ -427,10 +452,48 @@ export function redo(): { el: Element; prop: string } | null {
   } else {
     notifyStateChange(el, state, cssProp, redoValue);
   }
+  if (className) notifyClassChange(className, prop, redoValue);
 
   schedulePersist();
   notifyListeners();
   return { el, prop };
+}
+
+/**
+ * Clear all composite-keyed overrides for a specific state on an element.
+ * Called by Footer.tsx handleReset to keep apply.ts in sync with statePreview.ts.
+ */
+export function resetStateOverrides(el: Element, state: string): void {
+  const elOverrides = overrides.get(el);
+  if (!elOverrides) return;
+
+  const keysToRemove: string[] = [];
+  for (const [key, override] of elOverrides) {
+    const parsed = parseStateKey(key);
+    if (parsed.state === state) {
+      keysToRemove.push(key);
+      if (override.initial !== override.current) dirtyCount--;
+    }
+  }
+  for (const key of keysToRemove) {
+    elOverrides.delete(key);
+  }
+  if (elOverrides.size === 0) overrides.delete(el);
+
+  // Also remove undo/redo entries for this element+state
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const entry = stack[i];
+      if (isBatch(entry)) {
+        entry.entries = entry.entries.filter(e => !(e.el === el && e.state === state));
+        if (entry.entries.length === 0) stack.splice(i, 1);
+      } else if (entry.el === el && entry.state === state) {
+        stack.splice(i, 1);
+      }
+    }
+  }
+
+  notifyListeners();
 }
 
 export function reset(el: Element): void {

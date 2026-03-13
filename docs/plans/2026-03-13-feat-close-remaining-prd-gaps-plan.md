@@ -132,36 +132,21 @@ the state to change while overrides are being applied.
 
 ---
 
-## Phase B: Polish + New Controls (Parallel, independent of Phase A)
+## Phase B: Polish + New Controls — ALL VERIFIED DONE
 
-### B1. Tailwind Save Scope-Out (Iteration 3) — 5-minute doc edit
+### B1. Tailwind Save Scope-Out (Iteration 3) — ✓ ALREADY DONE
+`docs/how-redial-works.md:64` already says: "Save writes to CSS Modules. For Tailwind, use Copy as Tailwind."
+README doesn't mention Tailwind save. No changes needed.
 
-Update `docs/how-redial-works.md`: "Save writes to CSS Modules. For Tailwind, use Copy as Tailwind."
-Verify `README.md` doesn't promise Tailwind save.
+### B2. Spacing Zone Colors (Iteration 8) — ✓ ALREADY DONE
+`theme.ts:228-237` already uses `primaryAlpha` (blue) for margin and `greenAlpha` (green) for padding.
+Distinct warm/cool zone colors are in place.
 
-- [ ] Docs updated
-- [ ] README accurate
+### B3. Background Image Controls (Iteration 4) — ✓ ALREADY DONE
+`BackgroundsSection.tsx:234-281` already has all 4 controls (Size, Position, Repeat, Attachment)
+with `hasBgImage` detection at line 180.
 
-### B2. Background Image Controls (Iteration 4)
-
-Add 4 `SelectRow` controls to `BackgroundsSection.tsx`, shown only when
-`cs.backgroundImage` contains `url()`:
-
-| Property | Options |
-|---|---|
-| `background-size` | `auto`, `cover`, `contain` |
-| `background-position` | 9 positions (center, top, etc.) |
-| `background-repeat` | `repeat`, `repeat-x`, `repeat-y`, `no-repeat` |
-| `background-attachment` | `scroll`, `fixed` |
-
-Follow existing SelectRow pattern exactly (useState + useCallback + indicator).
-
-- [ ] Controls appear when element has `background-image: url(...)`
-- [ ] Each reads computed value and allows editing
-- [ ] Changes apply live and save via commit pipeline
-- [ ] `npm run typecheck` passes
-
-### B3. NPM Publish — Automatable Items (Iteration 11)
+### B4. NPM Publish — Automatable Items (Iteration 11)
 
 - [ ] `package.json` author set
 - [ ] LICENSE copyright verified

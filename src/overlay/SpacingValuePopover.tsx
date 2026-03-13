@@ -40,6 +40,8 @@ export interface SpacingValuePopoverProps {
   /** Rect of the clicked value element, for positioning */
   anchorRect: DOMRect;
   onClose: () => void;
+  /** True when the element uses Tailwind utility classes */
+  isTailwind?: boolean;
 }
 
 export function SpacingValuePopover({
@@ -52,6 +54,7 @@ export function SpacingValuePopover({
   isMargin,
   anchorRect,
   onClose,
+  isTailwind = false,
 }: SpacingValuePopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -125,12 +128,14 @@ export function SpacingValuePopover({
         commitInput();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+        const base = isTailwind ? 4 : 1;
+        const step = e.shiftKey ? base * 10 : e.altKey ? base * 0.1 : base;
         const next = Math.round((value + step) * 10) / 10;
         onChange(next);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        const step = e.shiftKey ? 10 : e.altKey ? 0.1 : 1;
+        const base = isTailwind ? 4 : 1;
+        const step = e.shiftKey ? base * 10 : e.altKey ? base * 0.1 : base;
         const next = Math.round((value - step) * 10) / 10;
         const clamped = isMargin ? next : Math.max(0, next);
         onChange(clamped);

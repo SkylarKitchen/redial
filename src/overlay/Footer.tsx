@@ -5,7 +5,7 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { diff, reset, overrideCount } from "./apply";
+import { diff, reset, overrideCount, resetStateOverrides } from "./apply";
 import { diffState, resetStateStyles } from "./statePreview";
 import { resetClassStyles } from "./scope";
 import { enrichChangesForCommit } from "./commitUtils";
@@ -208,6 +208,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const handleReset = useCallback(() => {
     if (activeState !== "none") {
       resetStateStyles(element, activeState);
+      resetStateOverrides(element, activeState);  // sync apply.ts
     } else {
       reset(element);
       if (scope === "class" && activeClassName) {

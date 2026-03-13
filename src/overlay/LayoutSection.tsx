@@ -749,7 +749,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
               <div style={{ display: "flex", gap: 6, padding: "2px 12px" }}>
                 <div style={COMPACT_INPUT}>
-                  <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
+                  <LabelScrub value={flexBasis} onChange={handleFlexBasisChange} step={ctx.isTailwind ? 4 : 1} min={0} max={500} onAltClick={() => resetCss("flex-basis", setFlexBasis)}>
                     <CompactLabel label="Basis" indicator={ind("flex-basis")} />
                   </LabelScrub>
                   <ValueInput embedded value={flexBasis} onChange={handleFlexBasisChange} onAltClick={() => resetCss("flex-basis", setFlexBasis)} />

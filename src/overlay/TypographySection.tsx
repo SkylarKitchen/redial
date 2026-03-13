@@ -238,7 +238,7 @@ export const TypographySection = memo(function TypographySection({
           unit={fontSizeUnit}
           units={TYPO_SIZE_UNITS}
           onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(fontSize, fontSizeUnit, u, ctx); fireFontSizeHint(fontSize, fontSizeUnit, c, u, ctx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
-          step={1}
+          step={ctx.isTailwind && fontSizeUnit === "px" ? 4 : 1}
           conversionHint={fontSizeHint}
         />
         <span
@@ -253,7 +253,7 @@ export const TypographySection = memo(function TypographySection({
           unit={lineHeightUnit === "\u2014" ? "\u2013" : lineHeightUnit}
           units={LINE_HEIGHT_UNITS}
           onUnitChange={(u) => { if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const ctx = getConversionCtx(); const c = convertUnit(lineHeight, lineHeightUnit, u, ctx); fireLineHeightHint(lineHeight, lineHeightUnit, c, u, ctx); setLineHeight(c); } setLineHeightUnit(u); }}
-          step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? 1 : 0.05}
+          step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? (ctx.isTailwind ? 4 : 1) : 0.05}
           conversionHint={lineHeightHint}
         />
       </div>

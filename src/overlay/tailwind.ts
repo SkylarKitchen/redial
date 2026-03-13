@@ -183,6 +183,20 @@ const CONVERTERS: Record<string, Converter> = {
   visibility: (v) => (v === "hidden" ? "invisible" : v === "visible" ? "visible" : null),
 };
 
+/**
+ * Convert a CSS property + value to a clean Tailwind class, or null if it would
+ * produce bracket (arbitrary) syntax. Used for panel annotations.
+ */
+export function cssToTwClass(prop: string, value: string): string | null {
+  const converter = CONVERTERS[prop];
+  if (!converter) return null;
+  const cls = converter(value);
+  if (!cls) return null;
+  // If the result contains brackets, it's arbitrary — not a "clean" class
+  if (cls.includes("[")) return null;
+  return cls;
+}
+
 // ─── Arbitrary Value Fallback Prefix Map ─────────────────────────────
 
 const PROP_PREFIX: Record<string, string> = {

@@ -51,6 +51,7 @@ export const SpacingSection = memo(function SpacingSection({
         element={element}
         ind={ctx.ind}
         onReset={onSpacingReset}
+        isTailwind={ctx.isTailwind}
         onMarginUnitChange={(u) => {
           const ctx = buildConversionContext(element);
           const sides = ["top", "right", "bottom", "left"] as const;
