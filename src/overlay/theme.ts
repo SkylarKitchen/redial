@@ -99,6 +99,22 @@ export const surface = {
   darkToolbar: "#1e1e1e",
 } as const;
 
+/** Dark toolbar token family — white-alpha values for dark-on-dark UI */
+export const darkToolbar = {
+  /** Full white — active/selected text */
+  text: "rgba(255,255,255,1)",
+  /** 70% white — default/idle text */
+  textMuted: "rgba(255,255,255,0.7)",
+  /** 90% white — icon fill */
+  icon: "rgba(255,255,255,0.9)",
+  /** 18% white — active/pressed background */
+  active: "rgba(255,255,255,0.18)",
+  /** 10% white — hover background */
+  hover: "rgba(255,255,255,0.1)",
+  /** 8% white — subtle border */
+  border: "rgba(255,255,255,0.08)",
+} as const;
+
 // ─── Typography ──────────────────────────────────────────────────
 
 export const font = {

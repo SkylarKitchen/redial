@@ -12,7 +12,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
 import { ms, springConfig } from "./timing";
-import { primaryAlpha, blackAlpha, bgAlpha, surface } from "./theme";
+import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar } from "./theme";
 import type { ActivePanel } from "./Overlay";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -56,9 +56,9 @@ function ToolButton({
         borderRadius: 6,
         border: "none",
         background: active
-          ? "rgba(255,255,255,0.18)"
+          ? darkToolbar.active
           : hovered
-          ? "rgba(255,255,255,0.1)"
+          ? darkToolbar.hover
           : "transparent",
         cursor: "pointer",
         display: "flex",
@@ -69,7 +69,7 @@ function ToolButton({
         fontSize: 12,
         fontWeight: active ? 500 : 400,
         fontFamily: "system-ui, -apple-system, sans-serif",
-        color: active ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.7)",
+        color: active ? darkToolbar.text : darkToolbar.textMuted,
         whiteSpace: "nowrap" as const,
         transition: `background ${ms("fast")}, color ${ms("fast")}`,
       }}
@@ -138,7 +138,7 @@ export function Toolbar({
           height: 48,
           borderRadius: 24,
           background: surface.darkToolbar,
-          border: `1px solid ${isActive ? primaryAlpha(0.4) : "rgba(255,255,255,0.08)"}`,
+          border: `1px solid ${isActive ? primaryAlpha(0.4) : darkToolbar.border}`,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
@@ -173,7 +173,7 @@ export function Toolbar({
           <Plus
             size={20}
             strokeWidth={1.5}
-            color="rgba(255,255,255,0.9)"
+            color={darkToolbar.icon}
             style={{
               transition: `transform ${ms("layout")}`,
               transform: (isActive || expanded) ? "rotate(45deg)" : "rotate(0deg)",
