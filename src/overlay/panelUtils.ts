@@ -7,6 +7,7 @@
  */
 
 import type React from "react";
+import { isDirty } from "./apply";
 import { extractUnit } from "./cssParsers";
 import type { IndicatorType } from "./StyleIndicator";
 import { indicatorColor } from "./theme";
@@ -44,7 +45,7 @@ export function getIndicatorType(
   _cs?: CSSStyleDeclaration,
   _parentCs?: CSSStyleDeclaration | null,
 ): IndicatorType {
-  if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "modified";
+  if (isDirty(el, prop)) return "modified";
   return "none";
 }
 

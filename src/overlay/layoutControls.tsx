@@ -973,8 +973,13 @@ export function TypoValueCell({
   return (
     <div
       ref={cellRef}
-      className="flex-1 flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded min-w-0"
-      style={flashStyle}
+      className="flex flex-1 items-center rounded min-w-0"
+      style={{
+        height: 28,
+        border: `1px solid ${blackAlpha(0.07)}`,
+        background: surface.subtle,
+        ...flashStyle,
+      }}
     >
       {isKeyword ? (
         <span
@@ -1008,13 +1013,15 @@ export function TypoValueCell({
           {value}
         </span>
       )}
-      {units && onUnitChange ? (
-        <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} />
-      ) : (
-        <span className="text-[9px] uppercase pr-1.5 shrink-0 font-mono" style={{ color: text.disabled }}>
-          {unit}
-        </span>
-      )}
+      <div className="shrink-0 pr-[3px]" style={{ borderLeft: `1px solid ${blackAlpha(0.07)}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+        {units && onUnitChange ? (
+          <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />
+        ) : (
+          <span className="text-[9px] uppercase pr-1 shrink-0 font-mono" style={{ color: text.disabled }}>
+            {unit}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
