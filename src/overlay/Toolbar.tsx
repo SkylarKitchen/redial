@@ -11,7 +11,7 @@ import { useState, useRef, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
-import { ms, springConfig } from "./timing";
+import { timing, ms, springConfig } from "./timing";
 import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font, zIndex } from "./theme";
 import type { ActivePanel } from "./Overlay";
 
@@ -190,7 +190,7 @@ export function Toolbar({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: timing.expand / 1000 }}
               style={{
                 display: "flex",
                 alignItems: "center",
