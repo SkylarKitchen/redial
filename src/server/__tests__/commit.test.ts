@@ -1223,3 +1223,141 @@ describe("handleCommit — shorthand fallback", () => {
     expect(content).toContain("padding: 16px;");
   });
 });
+
+// --- var() preservation ---
+
+describe("handleCommit — var() preservation", () => {
+  it("updates a custom property definition in :root block", async () => {
+    const filePath = "app/globals.css";
+    await writeFixture(filePath, [
+      ":root {",
+      "  --accent: #6366f1;",
+      "  --bg: #ffffff;",
+      "}",
+      "",
+      ".badge {",
+      "  color: var(--accent);",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "--accent",
+        from: "#6366f1",
+        to: "#ff0000",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Variable definition updated
+    expect(content).toContain("--accent: #ff0000;");
+    // Usage site preserved — var(--accent) is NOT replaced
+    expect(content).toContain("color: var(--accent);");
+  });
+
+  it("updates a custom property in a [data-theme] block", async () => {
+    const filePath = "app/globals.css";
+    await writeFixture(filePath, [
+      '[data-theme="dark"] {',
+      "  --accent: #818cf8;",
+      "  --bg: #1e1e2e;",
+      "}",
+      "",
+      ".badge {",
+      "  color: var(--accent);",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "--accent",
+        from: "#818cf8",
+        to: "#a5b4fc",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("--accent: #a5b4fc;");
+    expect(content).toContain("color: var(--accent);");
+  });
+
+  it("updates a custom property inside @layer base { :root { } }", async () => {
+    const filePath = "app/globals.css";
+    await writeFixture(filePath, [
+      "@layer base {",
+      "  :root {",
+      "    --accent: #6366f1;",
+      "    --bg: #ffffff;",
+      "  }",
+      "}",
+      "",
+      ".badge {",
+      "  color: var(--accent);",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "--accent",
+        from: "#6366f1",
+        to: "#ff0000",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Variable definition inside @layer base > :root updated
+    expect(content).toContain("--accent: #ff0000;");
+    // Usage site preserved
+    expect(content).toContain("color: var(--accent);");
+  });
+
+  it("does NOT modify the var(--accent) usage site when --accent is updated", async () => {
+    const filePath = "app/globals.css";
+    const original = [
+      ":root {",
+      "  --accent: #6366f1;",
+      "}",
+      "",
+      ".card {",
+      "  color: var(--accent);",
+      "  background: var(--accent);",
+      "}",
+    ].join("\n");
+    await writeFixture(filePath, original);
+
+    const result = await handleCommit(
+      [{
+        prop: "--accent",
+        from: "#6366f1",
+        to: "#ff0000",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Variable definition updated
+    expect(content).toContain("--accent: #ff0000;");
+    // Both usage sites are preserved with var() intact
+    expect(content).toContain("color: var(--accent);");
+    expect(content).toContain("background: var(--accent);");
+  });
+});

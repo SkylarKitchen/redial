@@ -401,36 +401,70 @@ function searchFuzzy(
 
 /**
  * Search for a custom property definition within a :root or [data-theme] block.
+ * Also handles :root blocks nested inside @layer blocks.
  */
 function searchRootBlock(
   lines: string[],
   prop: string,
   value: string
 ): number | null {
-  // Look for :root { or [data-theme] { blocks
+  // Look for :root { or [data-theme] { blocks (possibly nested inside @layer)
   const rootPattern = /^\s*(:root|\[data-theme[^\]]*\])\s*\{/;
+  const layerPattern = /^\s*@layer\b[^{]*\{/;
 
   for (let i = 0; i < lines.length; i++) {
-    if (!rootPattern.test(lines[i])) continue;
+    // Direct :root / [data-theme] block
+    if (rootPattern.test(lines[i])) {
+      const result = searchWithinRootBlock(lines, i, prop);
+      if (result != null) return result;
+      continue;
+    }
 
-    // Found the block — search within it
-    let depth = 0;
-    for (let j = i; j < lines.length; j++) {
-      for (const ch of lines[j]) {
-        if (ch === "{") depth++;
-        if (ch === "}") depth--;
-      }
-
-      if (j > i && depth >= 0) {
-        if (lines[j].includes(prop)) {
-          return j;
+    // @layer block — scan inside for :root blocks
+    if (layerPattern.test(lines[i])) {
+      let layerDepth = 0;
+      for (let j = i; j < lines.length; j++) {
+        for (const ch of lines[j]) {
+          if (ch === "{") layerDepth++;
+          if (ch === "}") layerDepth--;
         }
-      }
 
-      if (depth <= 0 && j > i) break;
+        if (j > i && layerDepth >= 1 && rootPattern.test(lines[j])) {
+          const result = searchWithinRootBlock(lines, j, prop);
+          if (result != null) return result;
+        }
+
+        if (layerDepth <= 0 && j > i) break;
+      }
     }
   }
 
+  return null;
+}
+
+/**
+ * Search within a :root or [data-theme] block starting at line `start` for a custom property.
+ */
+function searchWithinRootBlock(
+  lines: string[],
+  start: number,
+  prop: string
+): number | null {
+  let depth = 0;
+  for (let j = start; j < lines.length; j++) {
+    for (const ch of lines[j]) {
+      if (ch === "{") depth++;
+      if (ch === "}") depth--;
+    }
+
+    if (j > start && depth >= 0) {
+      if (lines[j].includes(prop)) {
+        return j;
+      }
+    }
+
+    if (depth <= 0 && j > start) break;
+  }
   return null;
 }
 
