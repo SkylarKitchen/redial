@@ -339,7 +339,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
       {/* ── Spacing (only if any margin/padding is non-zero) ── */}
       {hasSpacing && (
         <FlatGroup title="Spacing">
-          <div className="px-3">
           <SpacingBoxModel
             margin={spacing.margin}
             padding={spacing.padding}
@@ -353,7 +352,6 @@ export function CommonPanel({ element, spacing, onSpacingChange, onDirtyChange, 
             element={element}
             ind={ind}
           />
-          </div>
         </FlatGroup>
       )}
 
