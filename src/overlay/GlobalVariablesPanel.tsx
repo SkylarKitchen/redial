@@ -738,6 +738,114 @@ function PrefixGroupSection({
   );
 }
 
+// ─── Collection Section ───────────────────────────────────────────────
+
+function CollectionSection({
+  collection,
+  variables,
+  allFilteredVars,
+  searching,
+  order,
+  onOrderChange,
+  onContextMenu,
+  onRename,
+  onDelete,
+  onAssignVariable,
+  renamingCollectionId,
+  setRenamingCollectionId,
+}: {
+  collection: TokenCollection;
+  variables: CSSVariable[];
+  allFilteredVars: CSSVariable[];
+  searching: boolean;
+  order: Map<string, number>;
+  onOrderChange: (order: Map<string, number>) => void;
+  onContextMenu: (e: React.MouseEvent, v: CSSVariable) => void;
+  onRename: (name: string) => void;
+  onDelete: () => void;
+  onAssignVariable: (varName: string) => void;
+  renamingCollectionId: string | null;
+  setRenamingCollectionId: (id: string | null) => void;
+}) {
+  const [renameValue, setRenameValue] = useState(collection.name);
+  const renameRef = useRef<HTMLInputElement>(null);
+  const isRenaming = renamingCollectionId === collection.id;
+
+  useEffect(() => {
+    if (isRenaming) {
+      setRenameValue(collection.name);
+      renameRef.current?.focus();
+      renameRef.current?.select();
+    }
+  }, [isRenaming, collection.name]);
+
+  const commitRename = useCallback(() => {
+    const name = renameValue.trim();
+    if (name && name !== collection.name) onRename(name);
+    setRenamingCollectionId(null);
+  }, [renameValue, collection.name, onRename, setRenamingCollectionId]);
+
+  const headerContent = isRenaming ? (
+    <input
+      ref={renameRef}
+      type="text"
+      value={renameValue}
+      onChange={(e) => setRenameValue(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commitRename();
+        if (e.key === "Escape") setRenamingCollectionId(null);
+      }}
+      onBlur={commitRename}
+      style={{
+        fontSize: 11, fontWeight: 600, fontFamily: font.sans,
+        background: surface.subtle, border: `1px solid ${border.default}`,
+        borderRadius: 3, padding: "1px 4px", color: text.primary,
+        outline: "none", width: "100%",
+      }}
+    />
+  ) : (
+    <span
+      onDoubleClick={() => setRenamingCollectionId(collection.id)}
+      style={{ cursor: "default" }}
+      title="Double-click to rename"
+    >
+      {collection.name} ({variables.length})
+    </span>
+  );
+
+  const headerAction = (
+    <button
+      onClick={(e) => { e.stopPropagation(); onDelete(); }}
+      style={MINI_ACTION_BUTTON}
+      title="Delete collection"
+    >
+      <X size={10} strokeWidth={2} />
+    </button>
+  );
+
+  return (
+    <Section title={headerContent} headerAction={headerAction}>
+      {variables.length === 0 ? (
+        <div style={{
+          padding: "8px 12px", fontSize: 10, color: text.hint,
+          fontStyle: "italic", textAlign: "center",
+        }}>
+          No variables in this collection
+        </div>
+      ) : (
+        <VariableGroup
+          title=""
+          variables={variables}
+          searching={searching}
+          order={order}
+          onOrderChange={onOrderChange}
+          onContextMenu={onContextMenu}
+        />
+      )}
+    </Section>
+  );
+}
+
 // ─── Main Panel ───────────────────────────────────────────────────────
 
 export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
