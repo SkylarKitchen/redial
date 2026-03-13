@@ -9,6 +9,7 @@ interface SpacingSectionProps {
   ctx: SectionCtx;
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
+  onSpacingReset?: (prop: string, value: number) => void;
   forceOpen?: boolean;
   focusOpen?: boolean;
   onToggle?: (title: string) => void;
@@ -18,6 +19,7 @@ export const SpacingSection = memo(function SpacingSection({
   ctx,
   spacing,
   onSpacingChange,
+  onSpacingReset,
   forceOpen,
   focusOpen,
   onToggle,
@@ -48,6 +50,7 @@ export const SpacingSection = memo(function SpacingSection({
         paddingUnits={SPACING_UNITS}
         element={element}
         ind={ctx.ind}
+        onReset={onSpacingReset}
         onMarginUnitChange={(u) => {
           const ctx = buildConversionContext(element);
           const sides = ["top", "right", "bottom", "left"] as const;

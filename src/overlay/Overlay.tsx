@@ -812,6 +812,26 @@ export function Overlay() {
     });
   }, [selectedEl, scope, activeClassName, activeState]);
 
+  // --- Spacing reset handler (alt+click) ---
+  // Only updates inferResult state without re-applying inline styles.
+  // The actual DOM reset was already done by resetAndReadNum in SpacingBoxModel.
+  const handleSpacingReset = useCallback((prop: string, value: number) => {
+    setInferResult((prev) => {
+      if (!prev) return prev;
+      const [group, side] = prop.split("-") as [string, string];
+      if ((group === "margin" || group === "padding") && side) {
+        return {
+          ...prev,
+          spacing: {
+            ...prev.spacing,
+            [group]: { ...prev.spacing[group], [side]: value },
+          },
+        };
+      }
+      return prev;
+    });
+  }, []);
+
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
   const SNAP_MARGIN = 16;
@@ -1613,6 +1633,7 @@ export function Overlay() {
                     element={selectedEl}
                     spacing={inferResult.spacing}
                     onSpacingChange={handleSpacingChange}
+                    onSpacingReset={handleSpacingReset}
                     showGridOverlay={showGridOverlay}
                     onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
                     searchQuery={searchQuery}

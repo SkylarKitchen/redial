@@ -34,6 +34,7 @@ export interface WebflowPanelProps {
   element: Element;
   spacing: SpacingValues;
   onSpacingChange: (prop: string, value: number, unit: string) => void;
+  onSpacingReset?: (prop: string, value: number) => void;
   showGridOverlay?: boolean;
   onToggleGridOverlay?: () => void;
   searchQuery?: string;
@@ -50,7 +51,7 @@ export interface WebflowPanelProps {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -191,6 +192,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           ctx={ctx}
           spacing={spacing}
           onSpacingChange={onSpacingChange}
+          onSpacingReset={onSpacingReset}
           forceOpen={forceOpen}
           {...focusProps("Spacing")}
         />

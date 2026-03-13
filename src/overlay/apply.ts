@@ -509,12 +509,22 @@ export function diffAll(): Array<{ el: Element; changes: DiffEntry[] }> {
  * Check if a specific property on an element has been modified.
  * Used for amber "dirty" highlighting on slider fills.
  */
+/** Check if a CSS value string is numerically zero (e.g. "0px", "0em", "0%", "0"). */
+function isZeroValue(v: string): boolean {
+  const n = parseFloat(v);
+  return n === 0 && !isNaN(n);
+}
+
 export function isDirty(el: Element, prop: string): boolean {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return false;
   const entry = elOverrides.get(prop);
   if (!entry) return false;
-  return entry.initial !== entry.current;
+  // Fast path: identical strings
+  if (entry.initial === entry.current) return false;
+  // Defense in depth: "0px" vs "0em" etc. are semantically equal
+  if (isZeroValue(entry.initial) && isZeroValue(entry.current)) return false;
+  return true;
 }
 
 /**

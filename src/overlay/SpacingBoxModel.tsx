@@ -47,6 +47,8 @@ interface SpacingBoxModelProps {
   element: Element;
   /** Indicator function — returns whether a property has been edited */
   ind: (prop: string) => IndicatorType;
+  /** Reset callback — updates parent state without re-applying inline style */
+  onReset?: (prop: string, value: number) => void;
 }
 
 // Zone base/highlight colors — neutral grays from theme tokens
@@ -80,6 +82,7 @@ export function SpacingBoxModel({
   onPaddingUnitChange,
   element,
   ind,
+  onReset,
 }: SpacingBoxModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marginZoneRef = useRef<HTMLDivElement>(null);
@@ -332,8 +335,14 @@ export function SpacingBoxModel({
               if (pev.altKey) {
                 // Alt(Option)+click: reset this property to default
                 const newValue = resetAndReadNum(element, prop);
-                const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
-                onChangeRef.current(prop, newValue, unit);
+                if (onReset) {
+                  // Use onReset to update parent state without re-applying inline style
+                  onReset(prop, newValue);
+                } else {
+                  // Fallback: re-apply via onChange (legacy path)
+                  const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+                  onChangeRef.current(prop, newValue, unit);
+                }
               } else {
                 // Regular click: open popover
                 const rect = el.getBoundingClientRect();
