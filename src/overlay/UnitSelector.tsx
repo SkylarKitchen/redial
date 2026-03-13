@@ -60,7 +60,7 @@ function formatHint(h: ConversionHint): string {
   return h.basis ? `${from} \u2192 ${to} (${h.basis})` : `${from} \u2192 ${to}`;
 }
 
-export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint, variableOptions, onVariableSelect }: UnitSelectorProps) {
+export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, specialOptions, onSpecialSelect, conversionHint, variableOptions, onVariableSelect, embedded }: UnitSelectorProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -178,8 +178,11 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
         className={cn(
-          "h-[20px] px-1.5 text-[10px] font-mono bg-[var(--input)] border border-[var(--border)] rounded cursor-pointer text-[var(--muted-foreground)] hover:border-[rgba(0,0,0,0.15)] transition-colors",
+          "h-[20px] px-1.5 text-[10px] font-mono cursor-pointer transition-colors",
           "flex items-center justify-center max-w-[36px] leading-none",
+          embedded
+            ? "bg-transparent border-none text-[var(--muted-foreground)] hover:text-[var(--foreground)] rounded-sm"
+            : "bg-[var(--input)] border border-[var(--border)] rounded text-[var(--muted-foreground)] hover:border-[rgba(0,0,0,0.15)]",
           open && "bg-[rgba(59,130,246,0.25)] border-[rgba(59,130,246,0.4)] text-[#3B82F6]"
         )}
       >

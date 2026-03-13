@@ -401,15 +401,7 @@ export const PositionSection = memo(function PositionSection({
         <div style={{ padding: "2px 7px 6px" }}>
           {/* Float row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
-            <span style={{
-              width: 49,
-              fontSize: 11,
-              color: text.label,
-              flexShrink: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 3,
-            }}>
+            <span style={{ ...LABEL, width: 49, cursor: "default", display: "inline-flex", gap: 3 }}>
               {ind("float") !== "none" && <StyleIndicator type={ind("float")} />}
               Float
             </span>
@@ -419,15 +411,7 @@ export const PositionSection = memo(function PositionSection({
           </div>
           {/* Clear row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 0" }}>
-            <span style={{
-              width: 49,
-              fontSize: 11,
-              color: text.label,
-              flexShrink: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 3,
-            }}>
+            <span style={{ ...LABEL, width: 49, cursor: "default", display: "inline-flex", gap: 3 }}>
               {ind("clear") !== "none" && <StyleIndicator type={ind("clear")} />}
               Clear
             </span>

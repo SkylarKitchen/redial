@@ -14,7 +14,8 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "./panelConstants";
 import { ms } from "./timing";
-import { text, color, surface } from "./theme";
+import { text, color, surface, font } from "./theme";
+import { ROW, LABEL } from "./panelStyles";
 
 // ─── Radius mode ──────────────────────────────────────────────────────
 
@@ -214,8 +215,8 @@ export const BordersSection = memo(function BordersSection({
     <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
 
       {/* ── Radius row (compact) ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 12px" }}>
-        <span style={{ width: 44, fontSize: 11, color: text.label, flexShrink: 0 }}>Radius</span>
+      <div style={ROW}>
+        <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
         {radiusMode !== "individual" && (
           <>
@@ -254,11 +255,11 @@ export const BordersSection = memo(function BordersSection({
 
       {/* ── "Borders" sub-label ── */}
       <div style={{ display: "flex", alignItems: "center", padding: "4px 8px", height: 32 }}>
-        <span style={{ width: 52, fontSize: 11.5, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Borders</span>
+        <span style={{ fontSize: 11, fontFamily: font.sans, color: text.secondary, fontWeight: 500, flexShrink: 0, paddingLeft: 4 }}>Borders</span>
       </div>
 
       {/* ── Two-column: cross side selector (left) + controls (right) ── */}
-      <div style={{ display: "flex", gap: 10, padding: "0 8px 4px" }}>
+      <div style={{ display: "flex", gap: 10, padding: "0 12px 4px" }}>
 
         {/* Left: cross-pattern side selector */}
         <SideSelector value={borderSide} onChange={setBorderSide} cross />

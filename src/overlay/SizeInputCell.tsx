@@ -260,6 +260,7 @@ export function SizeInputCell({
           conversionHint={conversionHint}
           variableOptions={variableOptions}
           onVariableSelect={(name) => onCssVarChange?.(name)}
+          embedded
         />
       </div>
     </div>

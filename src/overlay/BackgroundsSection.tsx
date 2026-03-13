@@ -15,8 +15,9 @@ import { resetProp, resetAndReadStr } from "./apply";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS, BG_SIZE_OPTIONS, BG_POSITION_OPTIONS, BG_REPEAT_OPTIONS, BG_ATTACHMENT_OPTIONS } from "./panelConstants";
 import { Plus } from "lucide-react";
-import { color, text, font } from "./theme";
+import { text } from "./theme";
 import { ms } from "./timing";
+import { SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Sub-section header (matches EffectsSection pattern) ──────────────
 
@@ -25,12 +26,8 @@ function SubSectionHeader({ label, onAdd }: {
   onAdd?: () => void;
 }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "8px 12px 4px",
-      background: color.background,
-    }}>
-      <span style={{ fontSize: "11px", fontFamily: font.sans, color: text.secondary, fontWeight: 500 }}>
+    <div style={SUB_HEADER_ROW}>
+      <span style={SUB_HEADER}>
         {label}
       </span>
       {onAdd && (
@@ -200,7 +197,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
       {/* 1. Image & gradient sub-section */}
       <SubSectionHeader label="Image & gradient" onAdd={handleAddLayer} />
       {bgLayers.length > 0 && (
-        <div className="px-3">
+        <div style={{ padding: "0 12px" }}>
           <BackgroundLayerList layers={bgLayers} onChange={handleBgLayersChange} />
         </div>
       )}

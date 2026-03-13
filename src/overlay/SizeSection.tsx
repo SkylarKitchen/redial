@@ -19,8 +19,8 @@ import { isAutoSize } from "./getAuthoredValue";
 import { ChevronRight } from "lucide-react";
 import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
 import { ms } from "./timing";
-import { text, border, surface, font } from "./theme";
-import { ROW, LABEL, SUB_LABEL } from "./panelStyles";
+import { text, border, surface } from "./theme";
+import { ROW, LABEL } from "./panelStyles";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
   CHILDREN_MODE_OPTIONS,
@@ -384,18 +384,24 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           </span>
           {/* Webflow-style select dropdown */}
           <div
-            className="flex-1 relative"
             style={{
+              flex: 1,
+              position: "relative",
               height: 24,
-              background: "#F0F0F0",
+              background: surface.subtle,
               borderRadius: 4,
-                          }}
+            }}
           >
             <select
               value={childrenMode}
               onChange={(e) => handleChildrenModeChange(e.target.value)}
-              className="w-full h-full appearance-none cursor-pointer outline-none bg-transparent border-none focus:outline-none focus:ring-0 focus:border-none"
               style={{
+                width: "100%",
+                height: "100%",
+                WebkitAppearance: "none" as any,
+                appearance: "none" as any,
+                cursor: "pointer",
+                background: "transparent",
                 fontSize: 11.5,
                 letterSpacing: "-0.115px",
                 color: text.primary,
@@ -412,8 +418,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
               ))}
             </select>
             <span
-              className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: text.label }}
+              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", color: text.label }}
             >
               <ChevronSmallDownIcon size={16} />
             </span>
@@ -422,29 +427,34 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           <button
             onClick={() => setShowMoreSize(!showMoreSize)}
             title="More size options"
-            className="flex items-center justify-center cursor-pointer shrink-0 outline-none"
             style={{
               width: 24,
               height: 24,
-              background: "#F0F0F0",
+              background: surface.subtle,
               borderRadius: 4,
-                            border: "none",
+              border: "none",
               color: text.primary,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+              outline: "none",
             }}
           >
             <MoreDotsIcon size={16} />
           </button>
         </div>
       )}
-      <div onClick={() => setShowMoreSize(!showMoreSize)} className="px-3 py-1.5 cursor-pointer flex items-center gap-1 border-t" style={{ borderColor: border.subtle }}>
+      <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderTop: `1px solid ${border.subtle}` }}>
         <ChevronRight size={9} strokeWidth={2} style={{ color: "#737373", transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
-        <span className="text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>More size options</span>
+        <span style={{ fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: text.label }}>More size options</span>
       </div>
       {showMoreSize && (
         <>
           <TextRow label="Aspect" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} />
-          <div className="flex items-center gap-1.5 py-1 px-3">
-            <span className="w-16 text-[11px] shrink-0" style={{ color: text.disabled }}>Box Size</span>
+          <div style={ROW}>
+            <span style={{ ...LABEL, color: text.disabled }}>Box Size</span>
             <IconButtonGroup
               options={BOX_SIZING_OPTIONS}
               value={boxSizing}

@@ -39,8 +39,9 @@ import {
   OUTLINE_STYLE_OPTIONS,
 } from "./panelConstants";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { color, text, font } from "./theme";
+import { text } from "./theme";
 import { ms } from "./timing";
+import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Sub-section header ───────────────────────────────────────────────
 
@@ -50,12 +51,8 @@ function SubSectionHeader({ label, onAdd, onMenu }: {
   onMenu?: () => void;
 }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "8px 12px 4px",
-      background: color.background,
-    }}>
-      <span style={{ fontSize: "11px", fontFamily: font.sans, color: text.secondary, fontWeight: 500 }}>
+    <div style={SUB_HEADER_ROW}>
+      <span style={SUB_HEADER}>
         {label}
       </span>
       <div style={{ display: "flex", alignItems: "center", gap: "2px" }}
@@ -220,8 +217,8 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = parseFloat(v); if (!isNaN(n)) handleOpacityChange(n); }} />
 
       {/* 3. Outline */}
-      <div style={{ display: "flex", alignItems: "center", padding: "2px 12px" }}>
-        <span style={{ width: 64, fontSize: "11px", fontFamily: font.sans, color: text.label, flexShrink: 0 }}>
+      <div style={ROW}>
+        <span style={{ ...LABEL, cursor: "default" }}>
           Outline
         </span>
         <IconButtonGroup options={OUTLINE_STYLE_OPTIONS} value={outlineStyle} onChange={handleOutlineStyleChange} aria-label="Outline style" />
@@ -236,7 +233,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 5. 2D & 3D transforms */}
       <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} />
       {transforms.length > 0 && (
-        <div className="px-3 py-1">
+        <div style={{ padding: "4px 12px" }}>
           <TransformEditor
             transforms={transforms}
             onChange={handleTransformsChange}
@@ -249,7 +246,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 6. Transitions */}
       <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} />
       {transitions.length > 0 && (
-        <div className="px-3 py-1">
+        <div style={{ padding: "4px 12px" }}>
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
         </div>
       )}
@@ -257,7 +254,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 7. Filters */}
       <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} />
       {filtersExpanded && (
-        <div className="px-3 py-1">
+        <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
         </div>
       )}
@@ -265,7 +262,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 8. Backdrop filters */}
       <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} />
       {backdropFiltersExpanded && (
-        <div className="px-3 py-1">
+        <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
         </div>
       )}

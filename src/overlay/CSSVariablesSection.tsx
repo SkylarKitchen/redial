@@ -8,15 +8,16 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { cn } from "@/lib/utils";
 import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { Section, ColorRow, SliderRow } from "./controls";
 import { discoverVariables, type CSSVariable } from "./discoverVariables";
+import { ROW, SUB_LABEL } from "./panelStyles";
+import { text, border, surface, font, color } from "./theme";
 
 // ─── Variable Row ────────────────────────────────────────────────────
 
-// MONO constant removed — using Tailwind font-mono class instead
+// MONO constant removed — using theme.font.mono token instead
 
 /** Trim "--" prefix and truncate for display as a label. */
 function varLabel(name: string): string {
@@ -164,11 +165,23 @@ function VariableRow({
 
   // ── String / fallback → plain text input ──────────────────────────
   return (
-    <div className="flex items-center gap-1.5 px-3 py-0.5">
+    <div style={ROW}>
       {/* Variable name */}
       <span
         title={variable.name}
-        className="w-[100px] text-[11px] font-mono text-[var(--muted-foreground)] shrink-0 truncate inline-flex items-center gap-1"
+        style={{
+          width: 100,
+          fontSize: 11,
+          fontFamily: font.mono,
+          color: text.label,
+          flexShrink: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
+        }}
       >
         <StyleIndicator type={indicator} />
         {variable.name}
@@ -178,10 +191,20 @@ function VariableRow({
       <input
         ref={inputRef}
         type="text"
-        className={cn(
-          "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded px-1.5 text-[10px] font-mono text-[var(--foreground)] outline-none",
-          focused && "border-[var(--ring)] ring-2 ring-[var(--ring)]"
-        )}
+        className="tuner-focusable"
+        style={{
+          flex: 1,
+          height: 24,
+          background: surface.subtle,
+          border: focused ? `1px solid ${color.primary}` : `1px solid ${border.default}`,
+          borderRadius: 4,
+          padding: "0 6px",
+          fontSize: 10,
+          fontFamily: font.mono,
+          color: text.primary,
+          outline: "none",
+          boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
+        }}
         tabIndex={0}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
@@ -198,7 +221,14 @@ function VariableRow({
 
 function GroupHeader({ label, count }: { label: string; count: number }) {
   return (
-    <div className="px-3 pt-2 pb-1 text-[10px] text-[var(--muted-foreground)] uppercase tracking-wider font-medium">
+    <div style={{
+      padding: "8px 12px 4px",
+      fontSize: 10,
+      color: text.label,
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.05em",
+      fontWeight: 500,
+    }}>
       {label} ({count})
     </div>
   );
@@ -232,7 +262,7 @@ export function CSSVariablesSection({
   if (variables.length === 0) {
     return (
       <Section title="CSS Variables" collapsed>
-        <div className="px-3 py-2 text-[11px] text-[var(--muted-foreground)] italic">
+        <div style={{ padding: "8px 12px", fontSize: 11, color: text.label, fontStyle: "italic" }}>
           No custom properties
         </div>
       </Section>
