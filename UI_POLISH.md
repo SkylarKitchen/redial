@@ -1,66 +1,75 @@
 # UI Polish Backlog
 
-Autonomous improvement queue. Each item is a self-contained, visually verifiable UI/UX enhancement. Agent picks the next unchecked `[ ]` item, implements it, verifies visually in Chrome, runs typecheck + tests, commits, and checks it off.
+Autonomous improvement queue. Each item is a self-contained, verifiable enhancement. Agent picks the next unchecked `[ ]` item in priority order, implements it, runs typecheck + tests, verifies visually if Chrome is available, commits, and checks it off.
 
-**Important**: All colors/tokens must come from `src/overlay/theme.ts`. Never hardcode hex values in components.
+**Important**: All colors/tokens must come from `src/overlay/theme.ts`. Never hardcode hex values in components. Use timing tokens from `timing.ts` for all transitions.
 
 ---
 
-## Tier 1 — Quick Wins (< 10 min each)
+## Phase 0 — Fix Broken State (do these FIRST)
 
-### Visual Micro-interactions
-- [x] **Value change flash**: When a slider/input value changes, briefly flash the value text with a subtle `primaryAlpha(0.15)` background (200ms). Helps users confirm their change registered. Target: `ValueInput`, `SizeInputCell`, `TypoValueCell`.
-- [x] **Copy button checkmark**: After a successful copy (CSS/TW/Vars), briefly replace the button text with a ✓ checkmark for 1.5s before reverting. Target: `Footer.tsx` copy dropdown items.
-- [x] **Save button success state**: After save completes, briefly turn Save button green (#22c55e) with checkmark for 1.5s, then animate back to `color.primary`. Target: `Footer.tsx` ActionButton.
-- [x] **Reset shake on no-op**: If user clicks Reset when there are no overrides, apply a brief horizontal shake animation (3 cycles, 2px amplitude, 300ms). Target: `Footer.tsx` Reset button.
-- [ ] **Section header hover**: Add subtle background highlight (`surface.hover`) on section header row hover, with timing token transition. Target: `Section` component in `controls.tsx`.
+These items fix existing test failures and TypeScript errors. No polish work should start until Phase 0 is clear.
 
-### Input Polish
-- [ ] **Slider value tooltip**: Show a floating tooltip above the slider thumb displaying the current value while dragging. Use `onInput` event on the range input. Target: `SliderRow` in `controls.tsx`.
-- [ ] **Dropdown scroll-to-selected**: When a SelectRow dropdown opens, auto-scroll the selected item into view (centered). Target: `SelectRow` in `controls.tsx`.
-- [ ] **Input placeholder styling**: Numeric inputs that show "auto" or "none" keywords should display them in italic at `text.disabled` opacity to distinguish from real values. Target: `ValueInput`, `SizeInputCell`.
-- [ ] **Color swatch border**: Add a subtle 1px inset border (`border.default`) on color swatches so light colors (white, near-white) don't disappear against the `color.background` panel. Target: `ColorRow` swatch in `controls.tsx`.
-- [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") should truncate with ellipsis and show the full name on hover via `title` attr. Target: all label elements in control rows.
+### TypeScript Errors
+- [ ] **Fix `annotation` not destructured in SliderRow**: `controls.tsx:377` — the `annotation` prop is in the type definition (line 408) but missing from the destructuring (line 377). Add `annotation,` to the destructured params. This fixes 2 TS errors and 2 section render test failures.
 
-### Visual Consistency
-- [ ] **Icon opacity consistency**: Audit all lucide-react icons and normalize to `text.label` default / `text.secondary` on hover. Some icons may be using inconsistent opacity values. Target: all icon usage across overlay components.
-- [ ] **Separator consistency**: Ensure all section separators use exactly `border.subtle`. Grep for any hardcoded rgba separator colors. Target: global audit.
-- [ ] **Monospace consistency**: Verify all numeric value displays use `font.mono` from theme.ts. Some may have fallen back to bare `monospace`. Target: global audit.
-- [ ] **Border radius consistency**: All pill-shaped buttons (scope pills, keyword pills, auto pills) should use consistent `border-radius: 4px`. Audit for any using 3px or 6px inconsistently. Target: all pill/chip elements.
-- [ ] **Transition timing consistency**: Ensure all hover transitions use timing tokens from `timing.ts` instead of hardcoded ms values. Target: grep for `transition:.*\d+ms` outside timing.ts.
+### Failing Tests — Behavioral Bugs
+- [ ] **Fix class-scope undo/redo** (`scope.test.ts`): Undo of a class-scoped edit should remove the property from the injected `<style>` tag. Redo should re-apply it. The `apply.ts` undo/redo needs to call back into `scope.ts` so the `<style>` tag stays in sync. Add an `onClassChange` listener pattern (like the existing `onStateChange`).
+- [ ] **Fix state reset leaving apply.ts overrides** (`statePreview.test.ts`): `resetStateStyles` in `statePreview.ts` clears its own state but leaves composite-keyed overrides (e.g., `"hover::color"`) in `apply.ts`. Make `resetStateStyles` also call `apply.ts`'s reset for state-keyed properties.
+- [ ] **Fix IconButtonGroup active state** (`iconButtonActiveState.test.ts`): Active state uses inline `backgroundColor`/`color` which gets overridden by Tailwind `!important`. Switch to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className approach.
+- [ ] **Fix spacing zone base colors** (`spacingZoneColors.test.ts`): Tests expect `transparent` at rest but theme.ts defines `marginBase: primaryAlpha(0.06)` and `paddingBase: greenAlpha(0.06)`. Either update tests to match the design intent (subtle color at rest) or change theme tokens to `transparent` if that's the desired UX.
+- [ ] **Fix UnitSelector overflow clip** (`unitDropdownClip.test.ts`): The annotation `<span>` at `controls.tsx:464` has `overflow: "hidden"` which the test flags as a clip risk for UnitSelector. Either move UnitSelector outside the overflow container or use a portal.
 
-## Tier 2 — Medium Polish (10–20 min each)
+---
 
-### Spacing & Box Model
-- [ ] **Spacing side hover highlight**: When hovering over a margin/padding value in SpacingBoxModel, highlight that side of the box diagram with `spacingZone.marginHover` or `spacingZone.paddingHover`. Target: `SpacingBoxModel.tsx`.
-- [ ] **Spacing drag-to-scrub on values**: The inline editable values in SpacingBoxModel should support click-drag to scrub (like LabelScrub). Target: `SpacingBoxModel.tsx` / `SpacingValuePopover.tsx`.
+## Phase 1 — Token & Consistency Audits (quick, high-impact)
 
-### Typography
-- [ ] **Font weight preview**: In the font-weight dropdown, show each weight option rendered at its actual weight (100=thin text, 900=heavy text). Target: `SelectRow` font-weight in `WebflowPanel.tsx`.
-- [ ] **Line-height visual indicator**: Show a small visual indicator next to line-height value: two horizontal lines with the gap representing the current line-height value. Target: Typography section.
+These are grep-and-fix passes that enforce the token system uniformly.
 
-### Effects
-- [ ] **Shadow preview thumbnail**: Show a small 24×24 preview square with the current shadow applied next to the shadow editor row. Target: `ShadowEditor.tsx`.
-- [ ] **Filter live preview chip**: Show a small "before/after" thumbnail (original vs filtered) for each active filter. Target: `FilterSliders.tsx`.
-- [ ] **Transition easing curve mini-preview**: Show a tiny 20×20 bezier curve icon next to the easing dropdown showing the current curve shape. Target: `TransitionEditor.tsx`.
+### Hardcoded Values
+- [ ] **Move `#d4956a` to theme.ts**: `Overlay.tsx:1420` and `:1446` hardcode `#d4956a` for slider thumb active state. Add `color.primaryActive` (or similar) to theme.ts and reference it in the injected CSS.
+- [ ] **Transition timing audit**: Grep for `transition:.*\d+ms` across all `.tsx` files outside `timing.ts`. Replace hardcoded ms values with timing tokens from `timing.ts`. Expected hotspots: Overlay.tsx injected CSS, some inline styles.
+- [ ] **Monospace font audit**: Verify all numeric value displays use `font.mono` from theme.ts. Grep for bare `monospace` or `ui-monospace` strings that aren't going through the token.
+- [ ] **Border radius consistency**: Audit pill-shaped buttons (scope pills, keyword pills) for inconsistent border-radius values. Standardize on `4px` or add a `layout.pillRadius` token.
+- [ ] **Separator consistency**: Grep for any hardcoded `rgba` separator colors. All separators should use `border.subtle` from theme.ts.
+- [ ] **Icon opacity audit**: Check all lucide-react icon usages. Labels should use `text.label`, secondary icons `text.secondary`. Normalize any using raw opacity or hardcoded colors.
 
-### Panel Chrome
-- [ ] **Panel resize handle**: Add a subtle resize handle on the left edge of the panel that allows horizontal resizing between 260px–400px. Persist width to localStorage. Target: `Overlay.tsx` panel container.
-- [ ] **Section collapse memory**: Remember which sections are collapsed across element selections. Store in session state (not localStorage). Target: `WebflowPanel.tsx` section state.
-- [ ] **Smooth section height transitions**: When sections expand/collapse, animate content height smoothly (currently using CSS Grid 0fr→1fr — verify it's actually animating and not popping). Target: `Section` component.
+---
 
-## Tier 3 — Larger Polish (20–30 min each)
+## Phase 2 — Input & Control Polish (medium effort, high UX value)
 
-### Interaction Patterns
-- [ ] **Multi-select with Shift+click**: Allow selecting multiple elements (Shift+click adds to selection). Panel shows "N elements selected" with only shared properties editable. Changes apply to all selected. Target: `Overlay.tsx` + `Selector.tsx`.
-- [ ] **Undo/redo visual timeline**: Add a small visual indicator showing undo stack depth. Clicking it opens the HistoryDrawer. Show as a subtle "3 changes" badge near the undo shortcut area. Target: `Footer.tsx` or `Header.tsx`.
-- [ ] **Property search autocomplete**: When typing in the Cmd+F property search, show autocomplete suggestions from the `SECTION_PROPERTIES` mapping. Arrow keys to navigate, Enter to jump to that section. Target: `PropertySearch.tsx`.
-- [ ] **Drag-and-drop section reorder**: Allow reordering panel sections by dragging section headers. Persist order to localStorage. Target: `WebflowPanel.tsx` section rendering.
+### Input Improvements
+- [ ] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition.
+- [ ] **Color swatch inset border**: Add `1px inset border` (`border.default`) on color swatches so white/near-white swatches don't disappear against the panel background. Target: `ColorRow` in `controls.tsx`.
+- [ ] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `ValueInput`, `SizeInputCell`.
+- [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") should truncate with ellipsis and show full name via `title` attribute. Target: all `labelStyle` usages.
+- [ ] **Dropdown scroll-to-selected**: When a `SelectRow` dropdown opens, auto-scroll the selected item into view. Target: `SelectRow` in `controls.tsx`.
+- [ ] **Slider value tooltip**: Show a floating tooltip above the slider thumb during drag, displaying the current value. Target: `SliderRow` in `controls.tsx`.
+
+### Section-Specific Polish
+- [ ] **Spacing side hover highlight**: Hovering a margin/padding value in `SpacingBoxModel` should highlight that side of the diagram using `spacingZone.marginHover` / `spacingZone.paddingHover`. Target: `SpacingBoxModel.tsx`.
+- [ ] **Font weight preview**: In the font-weight dropdown, render each option at its actual weight (100=thin, 900=heavy). Target: Typography section `SelectRow`.
+- [ ] **Shadow preview thumbnail**: Show a 24×24 preview square with the current shadow applied next to the shadow editor. Target: `ShadowEditor.tsx`.
+
+---
+
+## Phase 3 — Panel Chrome & Interaction (larger effort)
+
+### Panel Behavior
+- [ ] **Smooth section collapse animation**: Verify the CSS Grid `0fr→1fr` collapse animation is actually smooth (not popping). If not, add explicit height animation. Target: `Section` component.
+- [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage). Target: `WebflowPanel.tsx`.
+- [ ] **Panel resize handle**: Subtle resize handle on the left edge, draggable between 260–400px. Persist to localStorage. Target: `Overlay.tsx`.
+- [ ] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant). Revert on drop. Target: `Overlay.tsx` drag handlers.
 
 ### Visual Feedback
-- [ ] **Changed property highlight**: Properties with overrides (dirty) should have a subtle left-border accent (2px `color.primary`) that fades in when the value first changes. Target: all control row containers.
-- [ ] **Element outline pulse on select**: When a new element is selected, pulse the selection outline once (scale 1→1.02→1, opacity 1→0.5→1, 400ms). Target: `Overlay.tsx` selection outline.
-- [ ] **Panel shadow depth on drag**: While dragging the panel, increase box-shadow depth (use a deeper variant of `shadow.panel`) to create a "lifted" feel. Revert on drop. Target: `Overlay.tsx` drag handlers.
+- [ ] **Changed property left-border accent**: Properties with overrides should show a 2px `color.primary` left border that fades in on first change. Target: all control row containers.
+- [ ] **Element outline pulse on select**: Brief scale+opacity pulse on the selection outline when selecting a new element (400ms). Target: `Overlay.tsx` selection outline.
+- [ ] **Undo/redo depth indicator**: Small "N changes" badge showing undo stack depth. Clicking opens HistoryDrawer. Target: `Footer.tsx` or `Header.tsx`.
+
+### Advanced Interactions
+- [ ] **Property search autocomplete**: Typing in Cmd+F search shows autocomplete from `SECTION_PROPERTIES`. Arrow keys navigate, Enter jumps. Target: `PropertySearch.tsx`.
+- [ ] **Transition easing curve mini-preview**: Tiny 20×20 bezier curve icon next to easing dropdown. Target: `TransitionEditor.tsx`.
+- [ ] **Filter before/after thumbnail**: Small before/after preview for each active filter. Target: `FilterSliders.tsx`.
 
 ---
 

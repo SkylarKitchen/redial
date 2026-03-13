@@ -187,6 +187,7 @@ export const PositionSection = memo(function PositionSection({
             right={right}
             bottom={bottom}
             left={left}
+            isTailwind={ctx.isTailwind}
             autoStates={{ top: topAuto, right: rightAuto, bottom: bottomAuto, left: leftAuto }}
             onAutoDisable={handleAutoDisable}
             onChange={(prop, v) => {

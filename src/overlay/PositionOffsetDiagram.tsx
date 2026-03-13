@@ -61,7 +61,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           {auto.top ? (
             <AutoLabel onClick={() => onAutoDisable?.("top")} />
           ) : (
-            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} onReset={() => onReset?.("top")} />
+            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} onReset={() => onReset?.("top")} step={stepFor("top")} />
           )}
         </div>
 
@@ -71,7 +71,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             {auto.left ? (
               <AutoLabel onClick={() => onAutoDisable?.("left")} />
             ) : (
-              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} onReset={() => onReset?.("left")} />
+              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} onReset={() => onReset?.("left")} step={stepFor("left")} />
             )}
           </div>
           {/* Element placeholder */}
@@ -96,7 +96,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
             {auto.right ? (
               <AutoLabel onClick={() => onAutoDisable?.("right")} />
             ) : (
-              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} onReset={() => onReset?.("right")} />
+              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} onReset={() => onReset?.("right")} step={stepFor("right")} />
             )}
           </div>
         </div>
@@ -106,7 +106,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           {auto.bottom ? (
             <AutoLabel onClick={() => onAutoDisable?.("bottom")} />
           ) : (
-            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} onReset={() => onReset?.("bottom")} />
+            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} onReset={() => onReset?.("bottom")} step={stepFor("bottom")} />
           )}
         </div>
       </div>
