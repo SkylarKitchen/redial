@@ -190,7 +190,7 @@ export function Header({
                 <span key={i} style={{ display: "flex", alignItems: "center", gap: 2 }}>
                   {isEllipsis && (
                     <>
-                      <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />
+                      <ChevronRight size={10} strokeWidth={2} style={{ color: text.disabled }} />
                       <span
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
                         onMouseEnter={() => setEllipsisHovered(true)}
@@ -210,7 +210,7 @@ export function Header({
                       </span>
                     </>
                   )}
-                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ opacity: 0.4 }} />}
+                  {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ color: text.disabled }} />}
                   <span
                     onClick={(e) => { e.stopPropagation(); if (!isLast) onBreadcrumbClick?.(seg.el); }}
                     onMouseEnter={() => { if (!isLast) { setHoveredBreadcrumbIdx(i); onBreadcrumbHover?.(seg.el); } }}
