@@ -52,6 +52,7 @@ export const destructiveAlpha = (a: number) => `rgba(239,68,68,${a})`;
 
 /** Black at a given alpha. e.g. blackAlpha(0.12) → "rgba(0,0,0,0.12)" */
 export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;
+export const greenAlpha = (a: number) => `rgba(99,196,99,${a})`;
 
 // ─── Semantic Aliases ────────────────────────────────────────────
 
@@ -212,12 +213,12 @@ export const presetBaseUnit: Record<string, string> = {
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: "transparent",
-  marginHover: blackAlpha(0.08),
-  marginBorderBase: blackAlpha(0.15),
-  marginBorderHover: blackAlpha(0.30),
-  paddingBase: "transparent",
-  paddingHover: primaryAlpha(0.14),
-  paddingBorderBase: primaryAlpha(0.25),
-  paddingBorderHover: primaryAlpha(0.5),
+  marginBase: primaryAlpha(0.06),
+  marginHover: primaryAlpha(0.14),
+  marginBorderBase: primaryAlpha(0.25),
+  marginBorderHover: primaryAlpha(0.5),
+  paddingBase: greenAlpha(0.06),
+  paddingHover: greenAlpha(0.14),
+  paddingBorderBase: greenAlpha(0.25),
+  paddingBorderHover: greenAlpha(0.5),
 } as const;
