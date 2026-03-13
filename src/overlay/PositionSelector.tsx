@@ -11,6 +11,7 @@ import type { IndicatorType } from "./theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 import { ms } from "./timing";
 import { color, text, border, surface, blackAlpha, primaryAlpha, font, labelIndicator, labelHighlight } from "./theme";
+import { useResetPopover } from "./controls";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
