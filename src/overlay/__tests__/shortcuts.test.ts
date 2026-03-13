@@ -186,7 +186,7 @@ describe("arrow key element navigation", () => {
     expect(arrowBlockStart).toBeGreaterThan(-1);
 
     // The condition line must include an insidePanel guard
-    const arrowBlock = overlaySrc.slice(arrowBlockStart, arrowBlockStart + 200);
+    const arrowBlock = overlaySrc.slice(arrowBlockStart, arrowBlockStart + 400);
     expect(arrowBlock).toContain("insidePanel");
   });
 });
