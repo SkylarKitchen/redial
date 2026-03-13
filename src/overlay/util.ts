@@ -6,9 +6,10 @@
 
 /**
  * Extract the readable class name from a CSS modules class.
- * Supports both webpack and Turbopack naming patterns:
+ * Supports webpack, Turbopack, and Vite naming patterns:
  *   webpack:   "Button_btn__a8f2k"       → "btn"
  *   Turbopack: "page-module__IiFEKa__btnPrimary" → "btnPrimary"
+ *   Vite:      "_btn_1a2b3_5"            → "btn"
  */
 function extractModuleName(cls: string): string | null {
   // webpack: ComponentName_className__hash
@@ -17,6 +18,9 @@ function extractModuleName(cls: string): string | null {
   // Turbopack: file-module__hash__className (requires -module segment)
   const turbo = cls.match(/^[\w-]+-module__\w+__(\w+)$/);
   if (turbo) return turbo[1];
+  // Vite: _className_hash_digits
+  const vite = cls.match(/^_(\w+)_\w+_\d+$/);
+  if (vite) return vite[1];
   return null;
 }
 
