@@ -9,7 +9,7 @@
 import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { color, surface, text, border as borderTokens, primaryAlpha, font } from "./theme";
+import { color, surface, text, border as borderTokens, primaryAlpha } from "./theme";
 import { ms } from "./timing";
 
 export interface IconButtonGroupProps {
@@ -79,6 +79,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
         onValueChange={() => { /* handled via onClick */ }}
         aria-label={ariaLabel}
         className="inline-flex gap-0"
+        style={{ flex: 1 }}
       >
         {items}
       </ToggleGroup>
@@ -92,6 +93,7 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
       onValueChange={() => { /* handled via onClick */ }}
       aria-label={ariaLabel}
       className="inline-flex gap-0"
+      style={{ flex: 1 }}
     >
       {items}
     </ToggleGroup>
@@ -145,12 +147,12 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
       onBlur={() => setFocused(false)}
       className={cn(
         "h-7 min-w-7 px-1.5 text-[13px] leading-none rounded-none",
-        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
         isFirst && !isLast && "rounded-l",
         isLast && !isFirst && "rounded-r",
         isFirst && isLast && "rounded",
       )}
       style={{
+        flex: 1,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -159,10 +161,11 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         outline: "none",
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
         borderLeftWidth: isFirst ? 1 : 0,
-        ...(!isActive && {
-          backgroundColor: hovered ? surface.hover : "transparent",
-          color: color.mutedForeground,
-        }),
+        backgroundColor: isActive
+          ? surface.active
+          : hovered ? surface.hover : "transparent",
+        color: isActive ? text.primary : color.mutedForeground,
+        fontWeight: isActive ? 500 : 400,
         boxShadow: focused ? `0 0 0 2px ${primaryAlpha(0.3)}` : "none",
       }}
     >
