@@ -326,7 +326,14 @@ export const BordersSection = memo(function BordersSection({
 
           {/* ── Style (icon toggle) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
-            <span style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1 }}>Style</span>
+            <span
+              ref={stylePopover.anchorRef}
+              style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1, cursor: styleInd === "modified" ? "pointer" : "default" }}
+              onClick={(e) => { if (e.altKey) { handleStyleReset(); return; } stylePopover.triggerOpen(); }}
+            >
+              <span style={indicatorStyle(styleInd)}>Style</span>
+            </span>
+            {stylePopover.node}
             <IconButtonGroup
               options={BORDER_STYLE_ICON_OPTIONS}
               value={borderStyle}
