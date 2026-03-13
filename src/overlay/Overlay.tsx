@@ -1705,7 +1705,7 @@ export function Overlay() {
           borderRadius: 8,
           fontSize: 13,
           fontFamily: font.sans,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: `0 2px 8px ${blackAlpha(0.08)}`,
           pointerEvents: "none",
         }}>
           Click an element to inspect • Esc to cancel

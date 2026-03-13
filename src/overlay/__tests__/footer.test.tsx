@@ -3,15 +3,14 @@ import { describe, it, expect } from "vitest";
 
 /**
  * Footer button regression:
- * The Copy button's dropdown arrow (▾) was wrapping to a second line.
+ * The Copy button's dropdown arrow was wrapping to a second line.
  *
- * After Shadcn migration, buttons use <Button> which renders as
- * inline-flex (preventing wrap). We verify the Footer uses Shadcn
- * Button components and that they have compact sizing.
+ * Buttons use native <button> with inline style `display: "inline-flex"`
+ * (preventing wrap). We verify the Footer uses inline-flex on its buttons.
  */
 
 describe("ActionButton style contract", () => {
-  it("buttons use Shadcn Button with inline-flex to prevent content wrapping", async () => {
+  it("buttons use inline-flex to prevent content wrapping", async () => {
     const { readFileSync } = await import("fs");
     const { join } = await import("path");
     const src = readFileSync(
@@ -19,12 +18,11 @@ describe("ActionButton style contract", () => {
       "utf-8"
     );
 
-    // Footer must import Shadcn Button
-    expect(src).toContain('from "@/components/ui/button"');
+    // Footer must use inline-flex display on buttons
+    expect(src).toContain('display: "inline-flex"');
 
-    // All action buttons must use <Button> component (not raw <button>)
-    // which provides inline-flex layout preventing text wrapping
-    const buttonUsages = src.match(/<Button\b/g);
+    // All action buttons must use native <button> with inline styles
+    const buttonUsages = src.match(/<button\b/g);
     expect(buttonUsages).toBeTruthy();
     expect(buttonUsages!.length).toBeGreaterThanOrEqual(3);
   });
