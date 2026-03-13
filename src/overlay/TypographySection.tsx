@@ -278,11 +278,11 @@ export const TypographySection = memo(function TypographySection({
       {/* Style — Italicize + Decoration side by side with sub-labels */}
       <div style={{ ...ROW, alignItems: "flex-start" }}>
         <span style={{ ...LABEL, paddingTop: 3 }}>Style</span>
-        <div className="flex flex-col items-center" style={{ gap: 3 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 3 }}>
           <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
           <span style={HINT}>Italicize</span>
         </div>
-        <div className="flex flex-col items-center flex-1" style={{ gap: 3 }}>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, gap: 3 }}>
           <IconButtonGroup options={TEXT_DECORATION_OPTIONS} value={textDecoration} onChange={handleTextDecorationChange} multi />
           <span style={HINT}>Decoration</span>
         </div>
