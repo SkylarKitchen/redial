@@ -756,6 +756,7 @@ export function Overlay() {
     setActiveState("none");
     setShowSearch(false);
     setSearchQuery("");
+    setActivePanel({ type: "none" });
     setActiveModal({ type: "none" });
     announce("Element deselected");
   }, [announce]);
@@ -1509,9 +1510,9 @@ export function Overlay() {
         <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
       )}
 
-      {/* Panel (only when an element is selected) */}
+      {/* Panel (inspector or global variables) */}
       <AnimatePresence>
-      {selectedEl && inferResult && (
+      {((selectedEl && inferResult && activePanel.type === "inspector") || activePanel.type === "variables") && (
         <motion.div
           key="tuner-panel"
           className="__tuner-root"
@@ -1529,7 +1530,7 @@ export function Overlay() {
             flexDirection: "column",
             overflow: "hidden",
             border: diffMode ? "1px solid rgba(250,204,21,0.3)" : `1px solid ${blackAlpha(0.07)}`,
-            pointerEvents: selecting ? "none" : (selectedEl ? undefined : "none"),
+            pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables") ? undefined : "none"),
             top: pos.y,
             left: pos.x,
             transformOrigin: "bottom right",
@@ -1549,145 +1550,153 @@ export function Overlay() {
             `}} />
           )}
 
-          {/* Screen reader live region for announcements */}
-          <div
-            role="status"
-            aria-live="assertive"
-            aria-atomic="true"
-            style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", borderWidth: 0 }}
-          >
-            {announcement}
-          </div>
-
-          <Header
-            element={selectedEl}
-            onClose={handleClose}
-            onDragStart={handleDragStart}
-            totalChanges={totalChanges}
-            sessionOpen={sessionOpen}
-            onShowSession={handleToggleSession}
-            breadcrumb={breadcrumb}
-            onBreadcrumbClick={handleBreadcrumbClick}
-            onBreadcrumbHover={setHoveredAncestor}
-            scope={scope}
-            onScopeChange={handleScopeChange}
-            cssClasses={cssClasses}
-            activeClassName={activeClassName}
-            state={activeState}
-            onStateChange={handleStateChange}
-          />
-          {focusMode && (
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
-              <span
-                onClick={() => setFocusMode(false)}
-                style={{ fontSize: 9, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
+          {activePanel.type === "inspector" && selectedEl && inferResult && (
+            <>
+              {/* Screen reader live region for announcements */}
+              <div
+                role="status"
+                aria-live="assertive"
+                aria-atomic="true"
+                style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", borderWidth: 0 }}
               >
-                Focus Mode
-              </span>
-            </div>
-          )}
-          {/* -- Style / AI tab bar -- */}
-          <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, paddingLeft: 12, paddingRight: 12, flexShrink: 0 }}>
-            {(["custom", "prompt"] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              const label = tab === "custom" ? "Style" : "AI";
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    background: "transparent",
-                    borderTop: "none",
-                    borderLeft: "none",
-                    borderRight: "none",
-                    borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
-                    paddingLeft: 10,
-                    paddingRight: 10,
-                    paddingTop: 7,
-                    paddingBottom: 5,
-                    fontSize: 11,
-                    fontFamily: font.sans,
-                    fontWeight: isActive ? 600 : 400,
-                    cursor: "pointer",
-                    color: isActive ? text.primary : text.label,
-                    transition: `color ${ms("normal")}, border-color ${ms("normal")}`,
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          <div
-            ref={panelScrollRef}
-            className="__tuner-root"
-            style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
-          >
-            {showSearch && (
-              <PropertySearch
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onClose={() => { setSearchQuery(""); setShowSearch(false); }}
+                {announcement}
+              </div>
+
+              <Header
+                element={selectedEl}
+                onClose={handleClose}
+                onDragStart={handleDragStart}
+                totalChanges={totalChanges}
+                sessionOpen={false}
+                onShowSession={handleToggleSession}
+                breadcrumb={breadcrumb}
+                onBreadcrumbClick={handleBreadcrumbClick}
+                onBreadcrumbHover={setHoveredAncestor}
+                scope={scope}
+                onScopeChange={handleScopeChange}
+                cssClasses={cssClasses}
+                activeClassName={activeClassName}
+                state={activeState}
+                onStateChange={handleStateChange}
               />
-            )}
-            <div
-              style={{
-                paddingTop: 4,
-                paddingBottom: 4,
-                transition: `opacity ${ms("normal")}`,
-                pointerEvents: diffMode ? "none" : "auto",
-                opacity: diffMode ? 0.6 : 1,
-              }}
-            >
-              <PanelErrorBoundary onError={handleClose}>
-                {activeTab === "custom" ? (
-                  <WebflowPanel
-                    key={panelKey}
-                    element={selectedEl}
-                    spacing={inferResult.spacing}
-                    onSpacingChange={handleSpacingChange}
-                    onSpacingReset={handleSpacingReset}
-                    showGridOverlay={showGridOverlay}
-                    onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
-                    searchQuery={searchQuery}
-                    focusMode={focusMode}
-                    scope={scope}
-                    activeClassName={activeClassName}
-                    activeState={activeState}
-                    expandedSection={expandedSection}
-                    onExpandSection={setExpandedSection}
-                  />
-                ) : (
-                  <PromptPanel
-                    key={panelKey}
-                    element={selectedEl}
+              {focusMode && (
+                <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
+                  <span
+                    onClick={() => setFocusMode(false)}
+                    style={{ fontSize: 9, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
+                  >
+                    Focus Mode
+                  </span>
+                </div>
+              )}
+              {/* -- Style / AI tab bar -- */}
+              <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, paddingLeft: 12, paddingRight: 12, flexShrink: 0 }}>
+                {(["custom", "prompt"] as const).map((tab) => {
+                  const isActive = activePanel.type === "inspector" && activePanel.tab === tab;
+                  const label = tab === "custom" ? "Style" : "AI";
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActivePanel({ type: "inspector", tab })}
+                      style={{
+                        background: "transparent",
+                        borderTop: "none",
+                        borderLeft: "none",
+                        borderRight: "none",
+                        borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
+                        paddingLeft: 10,
+                        paddingRight: 10,
+                        paddingTop: 7,
+                        paddingBottom: 5,
+                        fontSize: 11,
+                        fontFamily: font.sans,
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: "pointer",
+                        color: isActive ? text.primary : text.label,
+                        transition: `color ${ms("normal")}, border-color ${ms("normal")}`,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div
+                ref={panelScrollRef}
+                className="__tuner-root"
+                style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+              >
+                {showSearch && (
+                  <PropertySearch
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    onClose={() => { setSearchQuery(""); setShowSearch(false); }}
                   />
                 )}
-              </PanelErrorBoundary>
-            </div>
-          </div>
-          <SessionDrawer
-            open={sessionOpen}
-            onResetAll={handleResetAll}
-          />
-          {showHistory && (
-            <HistoryDrawer
-              entries={historyEntries}
-              onUndoToIndex={handleUndoToIndex}
-              onClose={() => setShowHistory(false)}
-            />
+                <div
+                  style={{
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    transition: `opacity ${ms("normal")}`,
+                    pointerEvents: diffMode ? "none" : "auto",
+                    opacity: diffMode ? 0.6 : 1,
+                  }}
+                >
+                  <PanelErrorBoundary onError={handleClose}>
+                    {activePanel.tab === "custom" ? (
+                      <WebflowPanel
+                        key={panelKey}
+                        element={selectedEl}
+                        spacing={inferResult.spacing}
+                        onSpacingChange={handleSpacingChange}
+                        onSpacingReset={handleSpacingReset}
+                        showGridOverlay={showGridOverlay}
+                        onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
+                        searchQuery={searchQuery}
+                        focusMode={focusMode}
+                        scope={scope}
+                        activeClassName={activeClassName}
+                        activeState={activeState}
+                        expandedSection={expandedSection}
+                        onExpandSection={setExpandedSection}
+                      />
+                    ) : (
+                      <PromptPanel
+                        key={panelKey}
+                        element={selectedEl}
+                      />
+                    )}
+                  </PanelErrorBoundary>
+                </div>
+              </div>
+              <SessionDrawer
+                open={false}
+                onResetAll={handleResetAll}
+              />
+              {showHistory && (
+                <HistoryDrawer
+                  entries={historyEntries}
+                  onUndoToIndex={handleUndoToIndex}
+                  onClose={() => setShowHistory(false)}
+                />
+              )}
+              <Footer
+                element={selectedEl}
+                onReset={handleReset}
+                onCSSImport={handleCSSImport}
+                scope={scope}
+                activeClassName={activeClassName}
+                activeState={activeState}
+                clipboardMessage={clipboardMessage}
+                hasClipboard={hasClipboardStyles()}
+                onPasteStyles={handlePasteStyles}
+              />
+            </>
           )}
-          <Footer
-            element={selectedEl}
-            onReset={handleReset}
-            onCSSImport={handleCSSImport}
-            scope={scope}
-            activeClassName={activeClassName}
-            activeState={activeState}
-            clipboardMessage={clipboardMessage}
-            hasClipboard={hasClipboardStyles()}
-            onPasteStyles={handlePasteStyles}
-          />
+
+          {activePanel.type === "variables" && (
+            <GlobalVariablesPanel onClose={() => setActivePanel({ type: "none" })} />
+          )}
         </motion.div>
       )}
       </AnimatePresence>
@@ -1746,47 +1755,21 @@ export function Overlay() {
         </div>
       )}
 
-      {/* Floating action button -- bottom-right activation trigger */}
-      <div
-        className="__tuner-root"
-        style={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 2147483647,
-          width: 48,
-          height: 48,
-          borderRadius: "50%",
-          background: "#1e1e1e",
-          border: `1px solid ${(selecting || selectedEl) ? primaryAlpha(0.4) : "rgba(255,255,255,0.08)"}`,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: `box-shadow ${ms("layout")}, border-color ${ms("layout")}`,
-          boxShadow: (selecting || selectedEl)
-            ? `0 0 0 1px ${primaryAlpha(0.4)}, 0 4px 20px ${blackAlpha(0.12)}`
-            : `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}`,
-        }}
-        onClick={() => {
+      {/* Expandable toolbar — replaces single-purpose FAB */}
+      <Toolbar
+        selecting={selecting}
+        hasSelectedEl={!!selectedEl}
+        activePanel={activePanel}
+        onToggleSelecting={() => setSelecting((s) => !s)}
+        onOpenVariables={() => setActivePanel({ type: "variables" })}
+        onOpenPrompt={() => {
           if (selectedEl) {
-            handleClose();
-          } else {
-            setSelecting((s) => !s);
+            setActivePanel({ type: "inspector", tab: "prompt" });
           }
         }}
-        title={selectedEl ? "Close panel" : selecting ? "Cancel selection" : "Select an element"}
-      >
-        <Plus
-          size={20}
-          strokeWidth={1.5}
-          color="rgba(255,255,255,0.9)"
-          style={{
-            transition: `transform ${ms("layout")}`,
-            transform: (selecting || selectedEl) ? "rotate(45deg)" : "rotate(0deg)",
-          }}
-        />
-      </div>
+        onToggleSession={handleToggleSession}
+        onClose={handleClose}
+      />
     </>
   );
 }
