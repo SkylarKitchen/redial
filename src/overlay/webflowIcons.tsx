@@ -416,3 +416,23 @@ export function ClearBothIcon({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+/** Grid row direction — horizontal zig-zag flow (matches Webflow) */
+export function GridRowDirectionIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M3 5H13M3 5L5 3M13 5L11 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13 11H3M13 11L11 9M3 11L5 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/** Grid column direction — vertical flow (matches Webflow) */
+export function GridColumnDirectionIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+      <path d="M5 3V13M5 3L3 5M5 13L7 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M11 13V3M11 13L9 11M11 3L13 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

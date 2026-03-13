@@ -292,6 +292,15 @@ export const VISIBILITY_OPTIONS = [
   { value: "collapse", label: "Collapse" },
 ];
 
+// ─── Grid Alignment Options ─────────────────────────────────────────
+
+export const GRID_ALIGN_OPTIONS = [
+  { value: "stretch", label: "Stretch" },
+  { value: "start", label: "Start" },
+  { value: "center", label: "Center" },
+  { value: "end", label: "End" },
+];
+
 // ─── Flex Options ────────────────────────────────────────────────────
 
 export const ALIGN_SELF_OPTIONS = [

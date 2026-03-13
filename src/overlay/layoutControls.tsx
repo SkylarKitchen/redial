@@ -558,6 +558,188 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
   );
 }
 
+// ─── GridTrackRow ───────────────────────────────────────────────────
+
+/** Numeric stepper input for grid column/row count (Webflow-style dark bg) */
+function TrackCountInput({ value, onChange }: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(String(value));
+
+  useEffect(() => {
+    if (!editing) setDraft(String(value));
+  }, [value, editing]);
+
+  const commit = () => {
+    setEditing(false);
+    const n = parseInt(draft, 10);
+    if (!isNaN(n) && n >= 1 && n !== value) onChange(n);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") commit();
+    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); onChange(value + 1); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(1, value - 1)); }
+  };
+
+  return (
+    <div style={{
+      display: "flex",
+      flex: 1,
+      minWidth: 0,
+      height: 28,
+      borderRadius: 4,
+      border: `1px solid ${border.default}`,
+      overflow: "hidden",
+      background: surface.input,
+      alignItems: "center",
+    }}>
+      {editing ? (
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          style={{
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: 13,
+            fontFamily: "Inter, system-ui, sans-serif",
+            color: color.foreground,
+            textAlign: "center",
+            padding: "0 8px",
+          }}
+        />
+      ) : (
+        <span
+          tabIndex={0}
+          onClick={() => setEditing(true)}
+          onKeyDown={(e) => { if (e.key === "Enter") setEditing(true); }}
+          style={{
+            flex: 1,
+            fontSize: 13,
+            fontFamily: "Inter, system-ui, sans-serif",
+            color: color.foreground,
+            textAlign: "center",
+            cursor: "text",
+            outline: "none",
+            lineHeight: "28px",
+          }}
+        >
+          {value}
+        </span>
+      )}
+      {/* Stepper arrows */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        width: 14,
+        flexShrink: 0,
+        marginRight: 2,
+      }}>
+        <button
+          tabIndex={-1}
+          onClick={() => onChange(value + 1)}
+          style={{
+            height: 13,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            color: text.label,
+            fontSize: 8,
+          }}
+        >▲</button>
+        <button
+          tabIndex={-1}
+          onClick={() => onChange(Math.max(1, value - 1))}
+          style={{
+            height: 13,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+            color: text.label,
+            fontSize: 8,
+          }}
+        >▼</button>
+      </div>
+    </div>
+  );
+}
+
+/** Grid track row: dual count inputs for Columns/Rows + link toggle (Webflow-style) */
+export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
+                               linked, onLinkedChange, onReset, indicator }: {
+  columns: number;
+  rows: number;
+  onColumnsChange: (v: number) => void;
+  onRowsChange: (v: number) => void;
+  linked: boolean;
+  onLinkedChange: (v: boolean) => void;
+  onReset?: () => void;
+  indicator?: IndicatorType;
+}) {
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+        <RowLabel label="Grid" indicator={indicator} onReset={onReset} />
+        <TrackCountInput value={columns} onChange={(v) => {
+          onColumnsChange(v);
+          if (linked) onRowsChange(v);
+        }} />
+        <TrackCountInput value={rows} onChange={(v) => {
+          onRowsChange(v);
+          if (linked) onColumnsChange(v);
+        }} />
+        <button
+          onClick={() => onLinkedChange(!linked)}
+          title={linked ? "Columns/rows linked" : "Columns/rows independent"}
+          style={{
+            width: 24,
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            padding: 4,
+            flexShrink: 0,
+            borderRadius: 4,
+            color: "#404040",
+          }}
+        >
+          {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}
+        </button>
+      </div>
+      {/* Sub-labels: Columns / Rows */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 2 }}>
+        <span style={{ width: 49, flexShrink: 0 }} />
+        <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif" }}>Columns</span>
+        </span>
+        <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          <span style={{ fontSize: 10, color: text.label, fontFamily: "Inter, system-ui, sans-serif" }}>Rows</span>
+        </span>
+        <span style={{ width: 24, flexShrink: 0 }} />
+      </div>
+    </div>
+  );
+}
+
 // ─── ChildrenRow ────────────────────────────────────────────────────
 
 /** Children row: Don't wrap / Wrap segmented control + reverse button */
