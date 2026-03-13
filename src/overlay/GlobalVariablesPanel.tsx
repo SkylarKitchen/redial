@@ -8,9 +8,10 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { X } from "lucide-react";
-import { discoverAllVariables, groupByCategory, type CSSVariable, type VarCategory } from "./discoverVariables";
+import { discoverAllVariables, groupByCategory, parseLength, type CSSVariable, type VarCategory } from "./discoverVariables";
 import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
 import { Section, ColorRow } from "./controls";
+import { UnitSelector } from "./UnitSelector";
 import { ROW } from "./panelStyles";
 import { text, border, surface, font, color, labelIndicator, labelHighlight } from "./theme";
 import { ms } from "./timing";
@@ -22,11 +23,25 @@ function varLabel(name: string): string {
   return name.replace(/^--/, "");
 }
 
+const UNIT_OPTIONS = ["px", "%", "em", "rem", "vw", "vh"];
+
 const CATEGORY_LABELS: Record<VarCategory, string> = {
   colors: "Colors",
   spacing: "Spacing",
   typography: "Typography",
   other: "Other",
+};
+
+const VAR_LABEL_STYLE: React.CSSProperties = {
+  width: 140,
+  fontSize: 11,
+  fontFamily: font.mono,
+  flexShrink: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  display: "inline-flex",
+  alignItems: "center",
 };
 
 // ─── Variable Row (global scope) ─────────────────────────────────────
@@ -72,6 +87,9 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
 
   const indicator: IndicatorType = dirty ? "modified" : "none";
   const label = varLabel(variable.name);
+  const indicatorStyle = indicator !== "none"
+    ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
+    : { color: text.label };
 
   // Color → ColorRow
   if (variable.type === "color") {
@@ -86,30 +104,97 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
     );
   }
 
-  // Non-color → text input
+  // Length → composite input with unit selector (matches inspector pattern)
+  const parsed = parseLength(draft);
+  if (parsed) {
+    const { num, unit } = parsed;
+    return (
+      <div style={ROW}>
+        <span title={variable.name} style={VAR_LABEL_STYLE}>
+          <span style={indicatorStyle}>{label}</span>
+        </span>
+        <div style={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          height: 24,
+          borderRadius: 4,
+          border: focused ? `1px solid ${color.primary}` : `1px solid ${border.default}`,
+          background: surface.subtle,
+          boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
+        }}>
+          <input
+            ref={inputRef}
+            type="text"
+            className="tuner-focusable"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              height: "100%",
+              background: "transparent",
+              border: "none",
+              padding: "0 6px",
+              fontSize: 10,
+              fontFamily: font.mono,
+              color: text.primary,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+            tabIndex={0}
+            value={String(num)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setDraft(`${raw}${unit}`);
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => {
+              setFocused(false);
+              commit(draft);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                commit(draft);
+                (e.target as HTMLInputElement).blur();
+              } else if (e.key === "Escape") {
+                e.stopPropagation();
+                setDraft(variable.value);
+                setFocused(false);
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
+            onDoubleClick={(e) => e.currentTarget.select()}
+          />
+          <div style={{
+            borderLeft: `1px solid ${border.default}`,
+            alignSelf: "stretch",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 32,
+            flexShrink: 0,
+          }}>
+            <UnitSelector
+              value={unit}
+              options={UNIT_OPTIONS}
+              onChange={(newUnit) => {
+                const val = `${num}${newUnit}`;
+                setDraft(val);
+                commit(val);
+              }}
+              embedded
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // String / number fallback → plain text input
   return (
     <div style={ROW}>
-      <span
-        title={variable.name}
-        style={{
-          width: 140,
-          fontSize: 11,
-          fontFamily: font.mono,
-          flexShrink: 0,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-          display: "inline-flex",
-          alignItems: "center",
-        }}
-      >
-        <span style={{
-          ...(indicator !== "none"
-            ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
-            : { color: text.label }),
-        }}>
-          {label}
-        </span>
+      <span title={variable.name} style={VAR_LABEL_STYLE}>
+        <span style={indicatorStyle}>{label}</span>
       </span>
       <input
         ref={inputRef}
