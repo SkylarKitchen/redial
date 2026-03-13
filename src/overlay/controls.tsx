@@ -838,21 +838,31 @@ export function ColorRow({
       >
         {displayLabel}
       </span>
-      {pickerOpen && swatchRef.current && (
-        <div style={{ position: "absolute", top: "100%", left: 12, zIndex: 99999, marginTop: 4 }}>
-          <ColorPickerEnhanced
-            color={pickerColor}
-            onChange={(hex, opacity) => {
-              onChange(opacity < 1 ? hexToRgba(hex, opacity) : hex);
-            }}
-            onClose={() => setPickerOpen(false)}
-            onSelectVariable={(varExpr) => {
-              onChange(varExpr);
-            }}
-            activeVariable={varName}
-          />
-        </div>
-      )}
+      {pickerOpen && swatchRef.current && (() => {
+        const pickerHeight = 300;
+        const gap = 4;
+        const rect = swatchRef.current!.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const placeAbove = spaceBelow < pickerHeight + gap;
+        const top = placeAbove
+          ? rect.top - pickerHeight - gap
+          : rect.bottom + gap;
+        return (
+          <div style={{ position: "fixed", top, left: rect.left, zIndex: 99999 }}>
+            <ColorPickerEnhanced
+              color={pickerColor}
+              onChange={(hex, opacity) => {
+                onChange(opacity < 1 ? hexToRgba(hex, opacity) : hex);
+              }}
+              onClose={() => setPickerOpen(false)}
+              onSelectVariable={(varExpr) => {
+                onChange(varExpr);
+              }}
+              activeVariable={varName}
+            />
+          </div>
+        );
+      })()}
       {resetPopover.node}
     </div>
   );
