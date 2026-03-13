@@ -386,10 +386,10 @@ Five items from the pre-publish checklist.
 - [ ] `package.json` name is the final decided name
 - [ ] `package.json` author is set
 - [ ] `package.json` repository/homepage/bugs URLs point to real GitHub repo
-- [ ] `LICENSE` file exists at project root
-- [ ] `npm pack --dry-run` output contains only expected files
-- [ ] `npm run build` succeeds
-- [ ] `README.md` accurately reflects current feature set
+- [x] `LICENSE` file exists at project root
+- [x] `npm pack --dry-run` output contains only expected files
+- [x] `npm run build` succeeds
+- [x] `README.md` accurately reflects current feature set
 
 ---
 

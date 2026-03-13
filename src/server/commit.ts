@@ -32,6 +32,9 @@ export type CommitChange = {
   sourceLine?: number;
   className?: string;
   componentName?: string;
+  /** CSS pseudo-class state (e.g. "hover", "focus"). When set, targets
+   *  the `.className:state { }` block instead of the base class block. */
+  state?: string;
 };
 
 export type CommitResult = {
@@ -217,6 +220,81 @@ function searchClassBlock(
       }
 
       if (depth <= 0 && j > blockStart) break;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within it.
+ */
+function searchPseudoClassBlock(
+  lines: string[],
+  className: string,
+  state: string,
+  prop: string,
+  value: string
+): number | null {
+  const pseudoPattern = new RegExp(
+    `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`
+  );
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!pseudoPattern.test(lines[i])) continue;
+
+    // Found the pseudo-class block — track braces to find extent
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      if (j > i && depth >= 0) {
+        if (lines[j].includes(prop) && (lines[j].includes(value) || /\$[\w-]+/.test(lines[j]))) {
+          return j;
+        }
+      }
+
+      if (depth <= 0 && j > i) break;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Find the end of a CSS class block (closing `}`) for `.className { ... }`.
+ * Used to know where to insert a new pseudo-class block after the base class.
+ */
+function findClassBlockEnd(
+  lines: string[],
+  className: string
+): number | null {
+  const classPattern = new RegExp(
+    `\\.${escapeRegex(className)}\\s*\\{`
+  );
+
+  for (let i = 0; i < lines.length; i++) {
+    // Skip pseudo-class blocks — we want the base class
+    if (lines[i].includes(":")) {
+      const pseudoCheck = new RegExp(
+        `\\.${escapeRegex(className)}:\\w`
+      );
+      if (pseudoCheck.test(lines[i])) continue;
+    }
+
+    if (!classPattern.test(lines[i])) continue;
+
+    // Found the base class — track braces to find the closing `}`
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+      if (depth <= 0 && j >= i) return j;
     }
   }
 

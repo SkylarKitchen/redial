@@ -23,7 +23,26 @@ export type DiffEntry = {
   prop: string;
   from: string;
   to: string;
+  state?: string;
 };
+
+// --- Composite state key helpers ---
+
+/**
+ * Build a composite key encoding pseudo-class state + CSS property.
+ * "none" state (default) returns just the bare property name.
+ */
+export function stateKey(state: string, prop: string): string {
+  return state === "none" ? prop : `${state}::${prop}`;
+}
+
+/**
+ * Parse a composite key back into { state, prop }.
+ */
+export function parseStateKey(key: string): { state: string; prop: string } {
+  const idx = key.indexOf("::");
+  return idx < 0 ? { state: "none", prop: key } : { state: key.slice(0, idx), prop: key.slice(idx + 2) };
+}
 
 type SingleUndoEntry = { el: Element; prop: string; prev: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
