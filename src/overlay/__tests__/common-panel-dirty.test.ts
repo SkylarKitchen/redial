@@ -42,7 +42,7 @@ describe("SliderRow dirty indicator", () => {
         computedElement: el,
       }),
     );
-    expect(html).toContain("Modified");
+    expect(html).toContain("Element");
 
     // Cleanup
     document.body.removeChild(el);
@@ -73,7 +73,7 @@ describe("SliderRow dirty indicator", () => {
         // Note: no computedProp or computedElement passed!
       }),
     );
-    expect(html).not.toContain("Modified");
+    expect(html).not.toContain("Element:");
 
     // Cleanup
     document.body.removeChild(el);
@@ -113,7 +113,7 @@ describe("CommonPanel dirty indicator wiring", () => {
 
     // The dirty indicator should appear in the rendered HTML
     // (the 5px dot has title="Modified — Option+Click to reset")
-    expect(html).toContain("Modified");
+    expect(html).toContain("Element");
 
     // Cleanup
     document.body.removeChild(el);

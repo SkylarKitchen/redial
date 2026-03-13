@@ -29,22 +29,16 @@ import { LAYOUT_UNITS } from "./panelConstants";
 // ─── RowLabel ───────────────────────────────────────────────────────
 
 /**
- * Shared label pattern with Webflow-style indicator coloring.
- * - Blue: property actively set on this element (element/direct)
- * - Orange: property inherited or set via state (inherited/state)
- * - Gray: default value (none)
- * Alt+click resets the property.
+ * Shared label with blue highlight when modified. Alt+click resets.
  */
 export function RowLabel({ label, isSet, indicator, onReset }: {
   label: string;
-  /** @deprecated Use `indicator` instead for Webflow-style coloring */
+  /** @deprecated Use `indicator` instead */
   isSet?: boolean;
-  /** Indicator type drives Webflow-style label highlighting */
   indicator?: IndicatorType;
   onReset?: () => void;
 }) {
-  // Derive effective indicator from either prop
-  const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "element" : "none");
+  const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "modified" : "none");
   const colors = labelIndicator[effectiveIndicator] ?? labelIndicator.none;
   const hasHighlight = effectiveIndicator !== "none";
 

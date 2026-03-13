@@ -94,9 +94,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
   // ── Apply helper (scope-aware + state-aware) ──
   const apply = useCallback(
     (prop: string, value: string) => {
-      if (activeState !== "none") {
-        // Pseudo-class state: inject via <style> tag (inline styles can't target :hover etc.)
+      if (activeState && activeState !== "none") {
+        // Pseudo-class state: inject via <style> tag for immediate preview
         applyStateStyle(element, activeState, prop, value);
+        // Also track in apply.ts overrides map using composite key (for undo/diff)
+        applyInlineStyle(element, stateKey(activeState, prop), value);
         return;
       }
       if (scope === "class" && activeClassName) {

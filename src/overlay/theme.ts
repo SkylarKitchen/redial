@@ -166,10 +166,6 @@ export const indicatorColor: Record<IndicatorColorType, string> = {
 };
 
 // ─── Label Indicator Colors (Webflow-style) ────────────────────
-// Labels are highlighted to show where a property value comes from:
-// - Blue: actively set on this element ("element" / "direct")
-// - Orange: inherited from parent or set via state ("inherited" / "state")
-// - No highlight: default value ("none")
 
 export const labelIndicator = {
   element: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
