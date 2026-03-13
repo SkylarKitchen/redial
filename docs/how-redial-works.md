@@ -61,7 +61,7 @@ Since this runs during `next dev`, the file change triggers Hot Module Replaceme
 ## Key Constraints
 
 - **Dev-only** — The save route is completely disabled in production builds
-- **CSS Modules focus** — Source file resolution works best with `.module.scss` and `.module.css` files. Global stylesheets without module patterns may not resolve correctly (changes will show as "failed" rather than writing to the wrong place)
+- **CSS Modules focus** — Save writes to CSS Modules (`.module.css`, `.module.scss`). For Tailwind projects, use Copy as Tailwind to export changes. Global stylesheets without module patterns may not resolve correctly (changes will show as "failed" rather than writing to the wrong place)
 - **No destructive failures** — If Redial can't confidently locate the right line in the right file, it reports the failure explicitly. It won't silently write to an incorrect location.
 
 ---
@@ -159,7 +159,7 @@ Press Cmd+S (or click Save in footer)
 
 → commit.ts writes the changes to the actual source file
 → If element scope: inline style or CSS module update
-→ If class scope: the class definition in the CSS/Tailwind file is updated
+→ If class scope: the class definition in the CSS module file is updated
 → HMR picks up the change → page re-renders from real code
 → The changes ARE the code now — not floating overrides
 ```
