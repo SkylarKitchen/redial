@@ -197,10 +197,10 @@ export const badge = {
 export const layout = {
   panelWidth: 340,
   panelRadius: 10,
-  sectionPadding: "10px 12px 6px",
+  sectionPadding: "10px 8px 6px",
   sectionBodyPadding: 8,
-  rowPadding: "2px 12px",
-  footerPadding: "8px 12px",
+  rowPadding: "2px 8px",
+  footerPadding: "8px 8px",
   labelWidth: 64,
   controlGap: 6,
   compactGap: 4,

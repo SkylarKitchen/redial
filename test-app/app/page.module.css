@@ -1,17 +1,16 @@
-.page {
-  /* ── Map local vars to design system tokens ── */
-  --background: var(--surface-secondary);
-  --foreground: var(--surface-primary);
-  --text-primary: var(--color-neutral-900);
-  --text-secondary: var(--color-neutral-500);
-  --accent: var(--color-brand-500);
-  --border: var(--color-neutral-200);
+/*
+ * page.module.css — Component styles for demo pages
+ *
+ * Uses ONLY semantic tokens from tokens/semantic.css.
+ * Dark mode is handled entirely at the token layer — no overrides needed here.
+ */
 
+.page {
   display: flex;
   min-height: 100vh;
   justify-content: center;
   font-family: var(--font-geist-sans);
-  background-color: var(--background);
+  background-color: var(--surface-page);
   padding: var(--space-10) var(--space-5);
 }
 
@@ -21,10 +20,10 @@
   max-width: var(--container-lg);
   flex-direction: column;
   gap: var(--space-12);
-  background-color: var(--foreground);
+  background-color: var(--surface-primary);
   padding: var(--space-12) var(--space-12);
   border-radius: var(--radius-2xl);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 /* ── Section wrapper ── */
@@ -48,13 +47,13 @@
   align-items: center;
   gap: var(--space-6);
   padding-bottom: var(--space-6);
-  border-bottom: var(--border-width-thin) solid var(--border);
+  border-bottom: var(--border-width-thin) solid var(--border-default);
 }
 
 .logo {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--accent);
+  color: var(--interactive-default);
   margin-right: auto;
 }
 
@@ -79,8 +78,8 @@
   align-items: center;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
-  background-color: var(--color-brand-50);
-  color: var(--accent);
+  background-color: var(--interactive-subtle);
+  color: var(--interactive-default);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   width: fit-content;
@@ -122,8 +121,8 @@
   height: var(--space-10);
   padding: 0 var(--space-5);
   border-radius: var(--radius-lg);
-  background-color: var(--accent);
-  color: white;
+  background-color: var(--interactive-default);
+  color: var(--text-on-accent);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   border: none;
@@ -141,7 +140,7 @@
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  border: var(--border-width-thin) solid var(--border);
+  border: var(--border-width-thin) solid var(--border-default);
   cursor: pointer;
 }
 
@@ -171,8 +170,8 @@
   flex: 1;
   padding: var(--space-6);
   border-radius: var(--radius-xl);
-  background-color: var(--surface-secondary);
-  border: var(--border-width-thin) solid var(--border);
+  background-color: var(--surface-inset);
+  border: var(--border-width-thin) solid var(--border-default);
 }
 
 .card h3 {
@@ -216,8 +215,8 @@
 .testimonial {
   padding: var(--space-8);
   border-radius: var(--radius-2xl);
-  background-color: var(--color-brand-50);
-  border-left: var(--border-width-thick) solid var(--accent);
+  background-color: var(--surface-accent-subtle);
+  border-left: var(--border-width-thick) solid var(--interactive-default);
   margin: 0;
 }
 
@@ -250,7 +249,7 @@
   width: var(--space-10);
   height: var(--space-10);
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--accent), var(--color-brand-300));
+  background: linear-gradient(135deg, var(--interactive-default), var(--interactive-light));
 }
 
 /* ── Stats ── */
@@ -267,7 +266,7 @@
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-6) var(--space-4);
-  border-right: var(--border-width-thin) solid var(--border);
+  border-right: var(--border-width-thin) solid var(--border-default);
 }
 
 .stat:last-child {
@@ -298,7 +297,7 @@
   align-items: center;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
-  background-color: var(--color-neutral-100);
+  background-color: var(--surface-muted);
   color: var(--text-secondary);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
@@ -309,8 +308,8 @@
   align-items: center;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-md);
-  background-color: var(--color-brand-50);
-  color: var(--accent);
+  background-color: var(--interactive-subtle);
+  color: var(--interactive-default);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
 }
@@ -339,7 +338,7 @@
 .inputGroup textarea {
   padding: var(--space-3) var(--space-3);
   border-radius: var(--radius-lg);
-  border: var(--border-width-thin) solid var(--border);
+  border: var(--border-width-thin) solid var(--border-default);
   font-size: var(--font-size-sm);
   color: var(--text-primary);
   background-color: var(--surface-primary);
@@ -370,39 +369,39 @@
   padding: var(--space-3) var(--space-4);
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
-  border-bottom: var(--border-width-medium) solid var(--border);
+  border-bottom: var(--border-width-medium) solid var(--border-default);
   font-size: var(--font-size-xs);
 }
 
 .table td {
   padding: var(--space-3) var(--space-4);
   color: var(--text-secondary);
-  border-bottom: var(--border-width-thin) solid var(--border);
+  border-bottom: var(--border-width-thin) solid var(--border-default);
 }
 
 .table tbody tr:hover {
-  background-color: var(--surface-secondary);
+  background-color: var(--surface-inset);
 }
 
 /* ── Callout / Alert ── */
 .callout {
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-lg);
-  background-color: var(--color-success-light);
-  border: var(--border-width-thin) solid var(--color-success);
+  background-color: var(--surface-success-subtle);
+  border: var(--border-width-thin) solid var(--border-success);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
-  color: #166534;
+  color: var(--text-on-success);
 }
 
 .calloutWarning {
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-lg);
-  background-color: var(--color-warning-light);
-  border: var(--border-width-thin) solid var(--color-warning);
+  background-color: var(--surface-warning-subtle);
+  border: var(--border-width-thin) solid var(--border-warning);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
-  color: #92400e;
+  color: var(--text-on-warning);
   margin-top: var(--space-3);
 }
 
@@ -418,7 +417,7 @@
   flex-direction: column;
   padding: var(--space-8) var(--space-6);
   border-radius: var(--radius-2xl);
-  border: var(--border-width-thin) solid var(--border);
+  border: var(--border-width-thin) solid var(--border-default);
   background-color: var(--surface-primary);
 }
 
@@ -447,16 +446,16 @@
 }
 
 .pricingCard li::before {
-  content: "✓";
+  content: "\2713";
   position: absolute;
   left: 0;
-  color: var(--color-success);
+  color: var(--status-success);
   font-weight: var(--font-weight-semibold);
 }
 
 .pricingFeatured {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 4px 24px rgba(99, 102, 241, 0.15);
+  border-color: var(--interactive-default);
+  box-shadow: 0 0 0 1px var(--interactive-default), 0 4px 24px rgba(99, 102, 241, 0.15);
 }
 
 .price {
@@ -489,14 +488,14 @@
 .progressTrack {
   flex: 1;
   height: var(--space-2);
-  background-color: var(--color-neutral-100);
+  background-color: var(--surface-muted);
   border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background-color: var(--accent);
+  background-color: var(--interactive-default);
   border-radius: var(--radius-sm);
   transition: width 0.3s ease;
 }
@@ -506,7 +505,7 @@
   display: flex;
   gap: var(--space-12);
   padding-top: var(--space-8);
-  border-top: var(--border-width-thin) solid var(--border);
+  border-top: var(--border-width-thin) solid var(--border-default);
 }
 
 .footerCol {
@@ -530,65 +529,4 @@
 
 .footerCol a:hover {
   color: var(--text-primary);
-}
-
-/* ── Dark mode ── */
-@media (prefers-color-scheme: dark) {
-  .page {
-    --background: var(--color-neutral-900);
-    --foreground: var(--color-neutral-800);
-    --text-primary: var(--color-neutral-50);
-    --text-secondary: var(--color-neutral-400);
-    --accent: var(--color-brand-400);
-    --border: var(--color-neutral-700);
-  }
-
-  .card {
-    background-color: var(--color-neutral-800);
-  }
-
-  .inputGroup input,
-  .inputGroup textarea {
-    background-color: var(--color-neutral-800);
-  }
-
-  .badge {
-    background-color: var(--color-brand-900);
-  }
-
-  .testimonial {
-    background-color: var(--color-brand-900);
-  }
-
-  .callout {
-    background-color: #052e16;
-    border-color: var(--color-success);
-    color: #86efac;
-  }
-
-  .calloutWarning {
-    background-color: #451a03;
-    border-color: var(--color-warning);
-    color: #fcd34d;
-  }
-
-  .tag {
-    background-color: var(--color-neutral-700);
-  }
-
-  .tagAccent {
-    background-color: var(--color-brand-900);
-  }
-
-  .table tbody tr:hover {
-    background-color: var(--color-neutral-800);
-  }
-
-  .pricingCard {
-    background-color: var(--color-neutral-800);
-  }
-
-  .progressTrack {
-    background-color: var(--color-neutral-700);
-  }
 }

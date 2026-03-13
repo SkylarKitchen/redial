@@ -357,6 +357,10 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
               setGridRowCount(parseTrackCount(rows));
             }}
             indicator={sectionInd(["grid-template-columns", "grid-template-rows"])}
+            gridCols={gridCols}
+            gridRows={gridRows}
+            onGridColsChange={handleGridColsChange}
+            onGridRowsChange={handleGridRowsChange}
           />
 
           {/* Direction: Row / Column toggle + grid overlay */}
