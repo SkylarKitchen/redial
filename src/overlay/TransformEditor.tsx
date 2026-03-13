@@ -8,7 +8,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
 import { EditorRemoveButton } from "./controls";
-import { color, text, surface, font, shadow, zIndex, primaryAlpha, blackAlpha, focusBorder } from "./theme";
+import { color, text, border, surface, font, shadow, zIndex, blackAlpha, focusBorder } from "./theme";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
@@ -142,7 +142,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
               left: 0,
               marginTop: "2px",
               background: color.popover,
-              border: `1px solid ${surface.track}`,
+              border: `1px solid ${border.input}`,
               borderRadius: "4px",
               padding: "2px 0",
               zIndex: zIndex.dropdown,
@@ -162,7 +162,7 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
                   cursor: "pointer",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.2);
+                  (e.currentTarget as HTMLElement).style.background = surface.hover;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
