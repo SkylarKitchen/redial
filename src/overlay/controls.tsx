@@ -132,7 +132,7 @@ export function Section({
     <Collapsible
       open={open}
       onOpenChange={(isOpen) => {
-        if (onToggle) onToggle(title);
+        if (onToggle) onToggle(typeof title === "string" ? title : "");
         else setOwnOpen(isOpen);
       }}
       style={{ borderBottom: open ? "1px solid transparent" : `1px solid ${color.border}` }}
@@ -145,7 +145,7 @@ export function Section({
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              if (onToggle) onToggle(title);
+              if (onToggle) onToggle(typeof title === "string" ? title : "");
               else setOwnOpen(!open);
             }
           }}
