@@ -305,53 +305,99 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
       <div style={{ display: "flex", flexDirection: "column", gap: layout.controlGap }}>
       <DisplayTabs value={display} onChange={handleDisplayChange} onReset={() => resetCssStr("display", onDisplayChange)} indicator={ind("display")} />
 
-      {(isFlex || isBlockContainer) && (
+      {isGrid && (
         <>
-          {/* Direction: row/column icons + wrap toggle + reverse dropdown */}
-          <FlexDirectionRow
-            direction={flexDirection}
-            onDirectionChange={handleFlexDirectionChange}
-            wrap={flexWrap}
-            onWrapChange={handleFlexWrapChange}
-            onReset={() => { resetCssStr("flex-direction", setFlexDirection); resetCssStr("flex-wrap", setFlexWrap); }}
-            indicator={ind("flex-direction")}
-            wrapIndicator={ind("flex-wrap")}
+          {/* Grid track count: Columns / Rows numeric inputs */}
+          <GridTrackRow
+            columns={gridColCount}
+            rows={gridRowCount}
+            onColumnsChange={handleGridColCountChange}
+            onRowsChange={handleGridRowCountChange}
+            linked={gridTrackLinked}
+            onLinkedChange={setGridTrackLinked}
+            onReset={() => {
+              const cols = resetAndReadStr(element, "grid-template-columns");
+              const rows = resetAndReadStr(element, "grid-template-rows");
+              setGridCols(cols);
+              setGridRows(rows);
+              setGridColCount(parseTrackCount(cols));
+              setGridRowCount(parseTrackCount(rows));
+            }}
+            indicator={sectionInd(["grid-template-columns", "grid-template-rows"])}
           />
 
-          {/* Align: AlignBox + X/Y dropdowns (matches grid pattern) */}
+          {/* Direction: Row / Column toggle + grid overlay */}
+          <div style={{ ...ROW, gap: 4 }}>
+            <RowLabel label="Direction" indicator={ind("grid-auto-flow")} onReset={() => resetCssStr("grid-auto-flow", setGridAutoFlow)} />
+            <SegmentedControl
+              options={[
+                { value: "row", icon: <GridRowDirectionIcon size={16} />, title: "Row" },
+                { value: "column", icon: <GridColumnDirectionIcon size={16} />, title: "Column" },
+              ]}
+              value={gridAutoFlow.startsWith("column") ? "column" : "row"}
+              onChange={handleGridAutoFlowChange}
+              aria-label="Grid auto-flow direction"
+            />
+            {onToggleGridOverlay && (
+              <button
+                onClick={onToggleGridOverlay}
+                title={showGridOverlay ? "Hide grid overlay" : "Show grid overlay"}
+                style={{
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 4,
+                  border: "none",
+                  outline: "none",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  padding: 4,
+                  background: showGridOverlay ? primaryAlpha(0.2) : "transparent",
+                  color: showGridOverlay ? primaryAlpha(0.9) : text.label,
+                  transition: "background 75ms ease",
+                }}
+              >
+                <Grid3x3 size={14} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+
+          {/* Align: AlignBox + X/Y dropdowns */}
           <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
-            <RowLabel label="Align" indicator={sectionInd(["justify-content", "align-items"])} onReset={() => {
-              resetCssStr("justify-content", setJustifyContent);
-              resetCssStr("align-items", setAlignItems);
+            <RowLabel label="Align" indicator={sectionInd(["justify-items", "align-items"])} onReset={() => {
+              resetCssStr("justify-items", setJustifyItems);
+              resetCssStr("align-items", setGridAlignItems);
             }} />
             <AlignBox
-              justify={justifyContent}
-              align={alignItems}
-              onChange={(j, a) => { setJustifyContent(j); setAlignItems(a); apply("justify-content", j); apply("align-items", a); }}
-              mode="flex"
+              justify={justifyItems}
+              align={gridAlignItems}
+              onChange={handleGridAlignChange}
+              mode="grid"
               compact
             />
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
                 <MiniDropdown
-                  value={justifyContent}
-                  options={JUSTIFY_OPTIONS}
-                  onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+                  value={justifyItems}
+                  options={GRID_ALIGN_OPTIONS}
+                  onChange={(v) => { setJustifyItems(v); apply("justify-items", v); }}
                 />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>Y</span>
                 <MiniDropdown
-                  value={alignItems}
-                  options={ALIGN_ITEMS_OPTIONS}
-                  onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
+                  value={gridAlignItems}
+                  options={GRID_ALIGN_OPTIONS}
+                  onChange={(v) => { setGridAlignItems(v); apply("align-items", v); }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Gap: slider + lock (matches grid pattern) */}
+          {/* Gap: slider + lock */}
           {gapLocked ? (
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ flex: 1 }}>
@@ -483,99 +529,53 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
         </>
       )}
 
-      {isGrid && (
+      {(isFlex || (isBlockContainer && !isGrid)) && (
         <>
-          {/* Grid track count: Columns / Rows numeric inputs */}
-          <GridTrackRow
-            columns={gridColCount}
-            rows={gridRowCount}
-            onColumnsChange={handleGridColCountChange}
-            onRowsChange={handleGridRowCountChange}
-            linked={gridTrackLinked}
-            onLinkedChange={setGridTrackLinked}
-            onReset={() => {
-              const cols = resetAndReadStr(element, "grid-template-columns");
-              const rows = resetAndReadStr(element, "grid-template-rows");
-              setGridCols(cols);
-              setGridRows(rows);
-              setGridColCount(parseTrackCount(cols));
-              setGridRowCount(parseTrackCount(rows));
-            }}
-            indicator={sectionInd(["grid-template-columns", "grid-template-rows"])}
+          {/* Direction: row/column icons + wrap toggle + reverse dropdown */}
+          <FlexDirectionRow
+            direction={flexDirection}
+            onDirectionChange={handleFlexDirectionChange}
+            wrap={flexWrap}
+            onWrapChange={handleFlexWrapChange}
+            onReset={() => { resetCssStr("flex-direction", setFlexDirection); resetCssStr("flex-wrap", setFlexWrap); }}
+            indicator={ind("flex-direction")}
+            wrapIndicator={ind("flex-wrap")}
           />
 
-          {/* Direction: Row / Column toggle + grid overlay */}
-          <div style={{ ...ROW, gap: 4 }}>
-            <RowLabel label="Direction" indicator={ind("grid-auto-flow")} onReset={() => resetCssStr("grid-auto-flow", setGridAutoFlow)} />
-            <SegmentedControl
-              options={[
-                { value: "row", icon: <GridRowDirectionIcon size={16} />, title: "Row" },
-                { value: "column", icon: <GridColumnDirectionIcon size={16} />, title: "Column" },
-              ]}
-              value={gridAutoFlow.startsWith("column") ? "column" : "row"}
-              onChange={handleGridAutoFlowChange}
-              aria-label="Grid auto-flow direction"
-            />
-            {onToggleGridOverlay && (
-              <button
-                onClick={onToggleGridOverlay}
-                title={showGridOverlay ? "Hide grid overlay" : "Show grid overlay"}
-                style={{
-                  width: 24,
-                  height: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 4,
-                  border: "none",
-                  outline: "none",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  padding: 4,
-                  background: showGridOverlay ? primaryAlpha(0.2) : "transparent",
-                  color: showGridOverlay ? primaryAlpha(0.9) : text.label,
-                  transition: "background 75ms ease",
-                }}
-              >
-                <Grid3x3 size={14} strokeWidth={1.5} />
-              </button>
-            )}
-          </div>
-
-          {/* Align: AlignBox + X/Y dropdowns */}
+          {/* Align: AlignBox + X/Y dropdowns (matches grid pattern) */}
           <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
-            <RowLabel label="Align" indicator={sectionInd(["justify-items", "align-items"])} onReset={() => {
-              resetCssStr("justify-items", setJustifyItems);
-              resetCssStr("align-items", setGridAlignItems);
+            <RowLabel label="Align" indicator={sectionInd(["justify-content", "align-items"])} onReset={() => {
+              resetCssStr("justify-content", setJustifyContent);
+              resetCssStr("align-items", setAlignItems);
             }} />
             <AlignBox
-              justify={justifyItems}
-              align={gridAlignItems}
-              onChange={handleGridAlignChange}
-              mode="grid"
+              justify={justifyContent}
+              align={alignItems}
+              onChange={(j, a) => { setJustifyContent(j); setAlignItems(a); apply("justify-content", j); apply("align-items", a); }}
+              mode="flex"
               compact
             />
             <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>X</span>
                 <MiniDropdown
-                  value={justifyItems}
-                  options={GRID_ALIGN_OPTIONS}
-                  onChange={(v) => { setJustifyItems(v); apply("justify-items", v); }}
+                  value={justifyContent}
+                  options={JUSTIFY_OPTIONS}
+                  onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
                 />
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans, flexShrink: 0 }}>Y</span>
                 <MiniDropdown
-                  value={gridAlignItems}
-                  options={GRID_ALIGN_OPTIONS}
-                  onChange={(v) => { setGridAlignItems(v); apply("align-items", v); }}
+                  value={alignItems}
+                  options={ALIGN_ITEMS_OPTIONS}
+                  onChange={(v) => { setAlignItems(v); apply("align-items", v); }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Gap: slider + lock */}
+          {/* Gap: slider + lock (matches grid pattern) */}
           {gapLocked ? (
             <div style={{ display: "flex", alignItems: "center" }}>
               <div style={{ flex: 1 }}>

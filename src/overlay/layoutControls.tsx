@@ -844,21 +844,22 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
           onClick={() => onLinkedChange(!linked)}
           title={linked ? "Columns/rows linked" : "Columns/rows independent"}
           style={{
-            width: 24,
-            height: 24,
+            width: 20,
+            height: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             background: "transparent",
             border: "none",
             cursor: "pointer",
-            padding: 4,
+            fontSize: 10,
+            marginRight: 8,
+            borderRadius: 3,
             flexShrink: 0,
-            borderRadius: 4,
-            color: text.secondary,
+            color: text.disabled,
           }}
         >
-          {linked ? <LockIcon size={16} /> : <UnlockIcon size={16} />}
+          {linked ? <Link size={12} strokeWidth={1.5} /> : <Link size={12} strokeWidth={1.5} style={{ opacity: 0.4 }} />}
         </button>
       </div>
       {/* Sub-labels: Columns / Rows */}
