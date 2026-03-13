@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
+import { createPortal } from "react-dom";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { color, text, border, surface, font, shadow, primaryAlpha } from "./theme";
 import { ms } from "./timing";
@@ -65,6 +66,9 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [triggerHovered, setTriggerHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const id = useId();
 
   // ─── Conversion tooltip state ──────────────────────────────────────
@@ -146,14 +150,28 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     labels,
   });
 
-  // Close on outside click
+  // Compute dropdown position from trigger rect
+  const DROPDOWN_HEIGHT = 150;
+  const updateDropdownPos = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow < DROPDOWN_HEIGHT ? rect.top - DROPDOWN_HEIGHT - 2 : rect.bottom + 2;
+    setDropdownPos({ top, left: rect.left });
+    // Tooltip sits above the trigger
+    setTooltipPos({ top: rect.top - 6, left: rect.left + rect.width / 2 });
+  }, []);
+
+  // Close on outside click (works with portal — check both container and portal element)
   useEffect(() => {
     if (!open) return;
 
     function handleDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      const portal = document.querySelector("[data-unit-selector-portal]");
+      if (portal?.contains(target)) return;
+      setOpen(false);
     }
 
     document.addEventListener("mousedown", handleDown, true);
@@ -186,12 +204,13 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
     <div ref={containerRef} style={{ position: "relative", display: "inline-block" }}>
       {/* Pill trigger */}
       <button
+        ref={triggerRef}
         role="combobox"
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={`${id}-listbox`}
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => { if (!open) updateDropdownPos(); setOpen((o) => !o); }}
         onKeyDown={onTriggerKeyDown}
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}

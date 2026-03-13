@@ -335,7 +335,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
   const isOverflowActive = !PRIMARY_VALUES.has(value);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
       <RowLabel label="Display" indicator={indicator} isSet={value !== "block"} onReset={onReset} />
       <SegmentedControl
         options={DISPLAY_PRIMARY}
@@ -463,7 +463,7 @@ export function DirectionRow({ direction, onDirectionChange, onReset, indicator 
   const isSet = direction !== "row";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
       <RowLabel label="Direction" indicator={indicator} isSet={isSet} onReset={onReset} />
       <SegmentedControl
         options={[
@@ -512,7 +512,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
   const base = direction.replace("-reverse", "") as "row" | "column";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
       <RowLabel label="Direction" indicator={indicator} isSet={direction !== "row"} onReset={onReset} />
       {/* Row / Column icon segments */}
       <SegmentedControl
@@ -734,7 +734,7 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
   const isSet = columnGap !== 0 || rowGap !== 0;
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
         <RowLabel label="Gap" indicator={indicator} isSet={isSet} onReset={onReset} />
         {/* Column gap input */}
         <GapInput value={columnGap} unit={columnUnit} onChange={(v) => {
@@ -769,7 +769,7 @@ export function GapRow({ columnGap, rowGap, columnUnit, rowUnit, onColumnChange,
         }} />
       </div>
       {/* Sub-labels: Columns / Rows — positioned under their respective inputs */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding, marginTop: 4 }}>
         <span style={{ width: 49, flexShrink: 0 }} />
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <RowLabel label="Columns" indicator={isSet ? "modified" : "none"} />
@@ -838,7 +838,7 @@ function TrackCountInput({ value, onChange }: {
             fontFamily: font.sans,
             color: color.foreground,
             textAlign: "center",
-            padding: "0 8px",
+            padding: layout.rowPadding,
           }}
         />
       ) : (
@@ -919,7 +919,7 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
 }) {
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding }}>
         <RowLabel label="Grid" indicator={indicator} onReset={onReset} />
         <TrackCountInput value={columns} onChange={(v) => {
           onColumnsChange(v);
@@ -952,7 +952,7 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
         </button>
       </div>
       {/* Sub-labels: Columns / Rows */}
-      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "0 8px", marginTop: 2 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, padding: layout.rowPadding, marginTop: 2 }}>
         <span style={{ width: 49, flexShrink: 0 }} />
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Columns</span>
