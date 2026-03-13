@@ -9,10 +9,12 @@ import {
   isTextBearing,
   TEXT_TAGS,
 } from "../panelUtils";
+import { applyInlineStyle, resetAll } from "../apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(() => {
+  resetAll();
   document.body.innerHTML = "";
 });
 
@@ -41,9 +43,9 @@ describe("TEXT_TAGS", () => {
 // ─── getIndicatorType ─────────────────────────────────────────────────────
 
 describe("getIndicatorType", () => {
-  it('returns "modified" when property is set inline', () => {
+  it('returns "modified" when property is dirty via applyInlineStyle', () => {
     const el = makeEl();
-    el.style.setProperty("color", "red");
+    applyInlineStyle(el, "color", "red");
     const cs = getComputedStyle(el);
     expect(getIndicatorType(el, "color", cs)).toBe("modified");
   });
@@ -60,11 +62,12 @@ describe("getIndicatorType", () => {
     expect(getIndicatorType(el, "font-size", cs, null)).toBe("none");
   });
 
-  it('returns "modified" for inline styles regardless of inheritance', () => {
+  it('returns "modified" for dirty property regardless of inheritance', () => {
     const parent = makeEl();
     const child = document.createElement("span");
     parent.appendChild(child);
-    child.style.setProperty("color", "blue");
+    document.body.appendChild(child);
+    applyInlineStyle(child, "color", "blue");
     const cs = getComputedStyle(child);
     const parentCs = getComputedStyle(parent);
     expect(getIndicatorType(child, "color", cs, parentCs)).toBe("modified");

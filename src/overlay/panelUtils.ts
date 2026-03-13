@@ -38,7 +38,7 @@ export interface SectionCtx {
 
 // ─── Indicator Helpers ───────────────────────────────────────────────────
 
-/** Binary indicator: "modified" if inline style is set, "none" otherwise. */
+/** Binary indicator: "modified" if property is dirty (initial !== current), "none" otherwise. */
 export function getIndicatorType(
   el: Element,
   prop: string,
