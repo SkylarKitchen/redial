@@ -131,6 +131,17 @@ export async function resolveSourceFile(
     }
   }
 
+  // Try bare .css and .scss extensions (for global stylesheets)
+  const baseName = target.replace(/\.\w+$/, "");
+  if (baseName !== target) {
+    for (const ext of [".css", ".scss"]) {
+      const globalTarget = `${baseName}${ext}`;
+      if (globalTarget === target) continue; // already tried
+      const globalMatches = await findFileRecursive(projectRoot, globalTarget);
+      if (globalMatches.length > 0) return globalMatches[0];
+    }
+  }
+
   return null;
 }
 
@@ -399,26 +410,39 @@ export async function handleCommit(
           // Fuzzy match found the property by name but the exact from-value
           // isn't on this line. Source likely uses a different representation
           // (hex vs rgb, var() vs computed, etc.). Replace the full CSS value.
-          const broadPattern = new RegExp(
-            `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
-          );
-          if (broadPattern.test(lines[found.lineIdx])) {
-            const safeValue = change.to.replace(/\$/g, "$$$$");
-            lines[found.lineIdx] = lines[found.lineIdx].replace(
-              broadPattern,
-              `$1${safeValue}`
-            );
-            modified = true;
-          } else {
+
+          // Guard: don't overwrite SCSS variables — they require manual editing
+          const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
+          if (scssVarMatch) {
             result.failed.push({
               ...change,
-              reason: `value "${change.from}" not found literally (may be a variable)`,
+              reason: `uses SCSS variable ${scssVarMatch[0]} — manual edit required`,
             });
+          } else {
+            const broadPattern = new RegExp(
+              `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
+            );
+            if (broadPattern.test(lines[found.lineIdx])) {
+              const safeValue = change.to.replace(/\$/g, "$$$$");
+              lines[found.lineIdx] = lines[found.lineIdx].replace(
+                broadPattern,
+                `$1${safeValue}`
+              );
+              modified = true;
+            } else {
+              result.failed.push({
+                ...change,
+                reason: `value "${change.from}" not found literally (may be a variable)`,
+              });
+            }
           }
         } else {
+          const lineVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
           result.failed.push({
             ...change,
-            reason: `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
+            reason: lineVarMatch
+              ? `uses SCSS variable ${lineVarMatch[0]} — manual edit required`
+              : `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
           });
         }
       }

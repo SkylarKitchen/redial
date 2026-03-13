@@ -266,7 +266,7 @@ describe("handleCommit", () => {
     expect(content).toContain("padding: 24px");
   });
 
-  it("reports SCSS variable changes as failed gracefully", async () => {
+  it("reports SCSS variable changes as failed with variable name", async () => {
     const filePath = "src/Button.module.scss";
     await writeFixture(filePath, [
       ".btn {",
@@ -285,9 +285,38 @@ describe("handleCommit", () => {
     );
 
     // full-file search finds the line (SCSS $variable matches),
-    // but the literal replacement fails since "14px" isn't in the source
+    // fuzzy guard detects $font-sm and refuses to overwrite
     expect(result.failed).toHaveLength(1);
-    expect(result.failed[0].reason).toContain("not found literally");
+    expect(result.failed[0].reason).toContain("$font-sm");
+    expect(result.failed[0].reason).toContain("manual edit");
+  });
+
+  it("does not overwrite SCSS variable when found via fuzzy search", async () => {
+    const filePath = "src/Card.module.scss";
+    const original = [
+      ".card {",
+      "  padding: $spacing-md;",
+      "  color: blue;",
+      "}",
+    ].join("\n");
+    await writeFixture(filePath, original);
+
+    const result = await handleCommit(
+      [{
+        prop: "padding",
+        from: "16px",
+        to: "24px",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toContain("$spacing-md");
+
+    // Verify the file was NOT modified
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toBe(original);
   });
 
   it("batches multiple changes to the same file into a single write", async () => {
@@ -457,6 +486,44 @@ describe("handleCommit", () => {
     expect(content).toContain("padding: 24px");
     // .inner preserved
     expect(content).toContain("padding: 8px");
+  });
+
+  it("resolves a global CSS file by bare filename", async () => {
+    await writeFixture("app/globals.css", [
+      "body {",
+      "  font-family: sans-serif;",
+      "  margin: 0;",
+      "}",
+    ].join("\n"));
+
+    const result = await resolveSourceFile(tempDir, "globals.css");
+    expect(result).toBe(join(tempDir, "app/globals.css"));
+  });
+
+  it("handleCommit writes to global CSS files", async () => {
+    const filePath = "app/globals.css";
+    await writeFixture(filePath, [
+      "body {",
+      "  font-size: 16px;",
+      "  color: #333;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "font-size",
+        from: "16px",
+        to: "18px",
+        sourceFile: filePath,
+      }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("font-size: 18px");
   });
 
   it("uses className for class-scoped search to find correct block", async () => {

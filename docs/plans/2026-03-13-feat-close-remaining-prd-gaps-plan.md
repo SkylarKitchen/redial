@@ -6,323 +6,386 @@ date: 2026-03-13
 
 # Close Remaining PRD Gaps
 
-## Overview
+## Enhancement Summary
 
-The PRD (`docs/2026-03-13-prd-remaining-gaps.md`) lists 13 iterations. **Research reveals ~5 are already done or nearly done.** This plan triages all 13 into three buckets: Already Done (verify + check off), Needs Small Polish, and Needs Real Work — then executes them in priority order with maximum parallelism.
+**Deepened on:** 2026-03-13
+**Agents used:** TypeScript reviewer, Performance oracle, Architecture strategist, Frontend race conditions reviewer, Code simplicity reviewer, Pattern recognition specialist, SpecFlow analyzer, 2x Explore agents (scope.ts deep dive, tab navigation research)
+
+### Key Improvements from Research
+1. **5 iterations already done** — verified with exact file:line references, no work needed
+2. **Composite string key** for state overrides (`"hover:font-size"`) — unanimous consensus, keeps flat Map structure
+3. **6 race conditions identified** for state-specific styling — mitigations designed before code exists
+4. **Footer.tsx already routes correctly** — conditional className based on scope (confirmed, existing test at commit.test.ts:436)
+5. **Tab navigation works natively** — browser handles it via existing `tabIndex={0}`, no custom handler needed
+6. **Performance: CSSOM rule manipulation** instead of `textContent` replacement on `<style>` tags during drag
+
+### Critical Architectural Decisions
+- **State override map**: Composite string key in existing flat Map (option a) — not nested Maps, not separate Map
+- **State preview**: Consolidate into scope.ts (extend existing `<style>` tag system), not a new module
+- **Preview UX**: Force-simulate state (show changes immediately), write pseudo-class to source on save
+- **Alt+click conflict**: Use Shift+click for complementary side, keep Alt+click for reset
+
+---
 
 ## Triage Summary
 
-| # | Iteration | Status | Remaining Work |
+| # | Iteration | Status | Action |
 |---|---|---|---|
-| 5 | Effects properties | **DONE** | Verify acceptance criteria, check off |
-| 6 | Grid track editors | **DONE** | Verify, check off (computed hint label is nice-to-have) |
-| 7 | Size gaps | **DONE** | Verify, check off (aspect-ratio preset is nice-to-have) |
-| 9 | Font family dropdown | **DONE** | Verify, check off |
-| 13 | Sync infer.ts | **MOSTLY DONE** | Panel.tsx already removed; slim infer.ts utility exports |
-| 3 | Tailwind save | **DECISION** | Choose Option B (scope out), update docs |
-| 8 | Spacing polish | **PARTIAL** | Warm/cool zone colors; Alt+click complementary side |
-| 10 | Tab navigation | **PARTIAL** | Systematic section-level tab coordination |
-| 11 | NPM publish | **TODO** | 5 checklist items |
-| 1 | Class-scope save path | **VERIFY + HARDEN** | Verify scope routing in Footer.tsx; add tests |
-| 2 | State-specific styling | **MAJOR NEW WORK** | Pseudo-class preview, state overrides map, commit.ts blocks |
-| 4 | Background image controls | **TODO** | 6 new SelectRow/ValueInput controls |
-| 12 | Integration tests | **TODO** | 4 new test scenarios |
-
-## Problem Statement
-
-The PRD was written before some iterations were implemented. The panel now has ~95% of the spec's property surface, but the core save pipeline (class-scope and state-specific) has gaps, some CSS properties are missing (background image sub-controls), and polish items remain.
+| 5 | Effects properties | **DONE** | Check off in PRD |
+| 6 | Grid track editors | **DONE** | Check off in PRD |
+| 7 | Size gaps | **DONE** | Check off in PRD |
+| 9 | Font family dropdown | **DONE** | Check off in PRD |
+| 13 | Sync infer.ts | **DONE** | Panel.tsx removed, CommonPanel still uses infer() — nothing to clean up |
+| 10 | Tab navigation | **DONE** | Browser handles it natively via tabIndex={0} — verified |
+| 3 | Tailwind save | **TRIVIAL** | 1-sentence doc update (Option B: scope out) |
+| 8 | Spacing polish | **TRIVIAL** | 2-line theme.ts color change |
+| 11 | NPM publish | **PARTIAL** | Items 2+4 automatable; items 1+3 blocked on user input |
+| 1 | Class-scope save path | **VERIFY + TEST** | Footer routing confirmed correct; write tests |
+| 2 | State-specific styling | **MAJOR NEW WORK** | Pseudo-class preview, state overrides, commit.ts blocks |
+| 4 | Background image controls | **TODO** | 4 new SelectRow controls |
+| 12 | Integration tests | **ABSORBED** | Tests written inline with features, not as separate phase |
 
 ---
 
-## Phase 1: Verify & Check Off Done Iterations (Parallel)
+## Phase A: Core Pipeline (Sequential)
 
-**Goal:** Confirm iterations 5, 6, 7, 9, 13 meet acceptance criteria and mark them complete in the PRD.
+### A1. Class-Scope Save Path — Verify + Test (Iteration 1)
 
-### 1A. Verify Iteration 5 — Effects Properties
+**Research finding: Footer.tsx already routes correctly.**
 
-**Status: DONE** — All controls confirmed in code:
-- `mix-blend-mode` → `EffectsSection.tsx:207` (SelectRow with BLEND_MODE_OPTIONS)
-- `user-select` → `EffectsSection.tsx:261` (SelectRow with USER_SELECT_OPTIONS)
-- `backface-visibility` → `EffectsSection.tsx:258` (SelectRow with BACKFACE_OPTIONS)
-- `backdrop-filter` → `EffectsSection.tsx:254` (separate FilterSliders with `type="backdrop-filter"`)
+```typescript
+// Footer.tsx:157 — already conditional on scope
+className: scope === "class" && activeClassName
+  ? (getReadableName(activeClassName) ?? moduleInfo?.className)
+  : undefined,
+```
 
-**Action:** Run `npm run typecheck`, visually verify in test-app, check off all 6 acceptance criteria in PRD.
+Existing test at `commit.test.ts:436` ("element-scoped change uses sourceLine, not class block") confirms the distinction works. **No code changes needed — just additional test coverage.**
 
-### 1B. Verify Iteration 6 — Grid Track Editors
+#### Tests to Write
 
-**Status: DONE** — Both inputs exist:
-- `grid-template-columns` → `LayoutSection.tsx:347` (TextRow, shown when isGrid)
-- `grid-template-rows` → `LayoutSection.tsx:348` (TextRow, shown when isGrid)
+**`src/server/__tests__/commit.test.ts`** (extend existing):
+```
+1. Class-scoped change with className → Tier 2 finds .className { } block → value replaced
+2. Element-scoped change without className → Tier 2 skipped → Tier 1/3 used instead
+3. Class-scoped change when multiple class blocks exist → correct block targeted
+```
 
-**Missing nice-to-have:** Computed value hint label below inputs. Not blocking.
+**`src/overlay/__tests__/scope.test.ts`** (extend existing):
+```
+4. Class-scope undo reverts both inline style AND <style> tag
+5. diff() in class scope returns correct changes
+```
 
-**Action:** Verify in test-app with a grid element, check off acceptance criteria.
+#### Research Insights
 
-### 1C. Verify Iteration 7 — Size Gaps
+**SpecFlow gap: Undo in class scope is inconsistent.** When user edits in class scope, both `applyClassStyle()` (style tag) and `applyInlineStyle()` (inline) fire. Undo only reverts inline — the `<style>` tag retains the old value. Other instances of the class stay wrong.
 
-**Status: DONE** — Both controls exist:
-- `aspect-ratio` → `SizeSection.tsx:460` (TextRow, placeholder "16 / 9")
-- `object-position` → `SizeSection.tsx:472` (SelectRow with OBJECT_POSITION_OPTIONS, conditional on media elements)
+**Fix:** Extend `undo()` to also call `removeClassStyle(className, prop)` when the undo entry was made during class scope. Follow the `applyCustomProperty()` pattern at `apply.ts:624` which already does dual tracking.
 
-**Missing nice-to-have:** Aspect-ratio preset dropdown (currently plain text). The text input accepts ratio strings fine.
-
-**Action:** Verify in test-app, check off acceptance criteria.
-
-### 1D. Verify Iteration 9 — Font Family Dropdown
-
-**Status: DONE** — Fully implemented:
-- `TypographySection.tsx:221` uses `<SelectRow label="Font" ... searchable fontPreview />`
-- cmdk integration via `SelectRowCustom` in controls.tsx
-- Font preview renders each option in its font
-- System font enumeration via `document.fonts.ready`
-
-**Action:** Verify searchability and font preview in test-app, check off all 6 criteria.
-
-### 1E. Verify Iteration 13 — Sync infer.ts
-
-**Status: MOSTLY DONE** — Panel.tsx already removed (glob found no file).
-
-**Remaining:** Slim `infer.ts` to only utility exports (`PX_PROPS`, `TOGGLE_CSS`, `toCSSValue`, `flattenValues`, `SpacingValues`, `SPACING_PROPS`). The `infer()` function is still called from `Overlay.tsx` for `CommonPanel` view — leave it if CommonPanel is still used, or remove both.
-
-**Action:** Check if CommonPanel is used. If yes, keep `infer()`. If no, remove and slim down. Either way, check off.
+#### Acceptance Criteria
+- [ ] Selecting `.className` scope → editing → saving writes to correct `.className { }` block
+- [ ] Element scope → editing → saving does NOT modify class block
+- [ ] Undo in class scope reverts both inline and `<style>` tag
+- [ ] New tests pass in `npm test`
+- [ ] `npm run typecheck` passes
 
 ---
 
-## Phase 2: Quick Wins (Parallel)
+### A2. State-Specific Styling (Iteration 2) — The Core New Feature
 
-**Goal:** Close iterations 3, 8, 10, 11 — these are small-to-medium tasks.
+**This is the most complex item. 9 agents provided input. Here is the synthesized design.**
 
-### 2A. Iteration 3 — Tailwind Save: Option B (Scope Out)
+#### Data Model: Composite String Key
 
-**Decision: Option B** — Document that Save writes to CSS Modules only. Tailwind is export-only (Copy as Tailwind).
+**Unanimous consensus across all agents.** Extend the existing flat Map with prefixed keys:
 
-**Files to update:**
-- `docs/how-redial-works.md` — Add to Key Constraints: "Save writes to CSS Modules (`.module.css`, `.module.scss`). For Tailwind projects, use Copy as Tailwind to export changes."
-- `README.md` — Verify no false promises about Tailwind save
-- Keep `tailwind.ts` for the copy/export path (it's working)
+```typescript
+// helpers in apply.ts
+function stateKey(state: string, prop: string): string {
+  return state === "none" ? prop : `${state}::${prop}`;
+}
+function parseStateKey(key: string): { state: string; prop: string } {
+  const idx = key.indexOf("::");
+  return idx < 0 ? { state: "none", prop: key } : { state: key.slice(0, idx), prop: key.slice(idx + 2) };
+}
+```
 
-**Acceptance criteria:**
-- [ ] Docs updated to clarify CSS Modules focus
-- [ ] README updated if needed
-- [ ] No false promises about Tailwind save in any user-facing text
-- [ ] Copy as Tailwind still works in Footer
+**Why this wins:**
+- Map shape stays `Map<Element, Map<string, Override>>` — unchanged
+- All 15+ functions in apply.ts continue working (they see string keys)
+- `diff()` parses state from key, populates `DiffEntry.state` automatically
+- Session persistence serializes naturally (keys are just strings)
+- Undo stack: `SingleUndoEntry.state` becomes required field (default `"none"`)
 
-### 2B. Iteration 8 — Spacing Box Model Polish
+#### Preview Mechanism: Force-Simulate in scope.ts
 
-**What's already done:**
-- Alt+click resets property → `SpacingBoxModel.tsx:333`
-- Shift+drag updates all 4 sides → documented in file header
-- Alt+drag updates axis pair → documented in file header
-- Tab/Shift+Tab navigation → in file header
+**Consolidate into `scope.ts`** (2/3 agents agree — Architecture + Pattern Recognition). Generalize existing `<style>` tag system:
 
-**What needs work:**
+```typescript
+// scope.ts additions
+const stateOverrides = new Map<string, Map<string, string>>(); // stateSelector → Map<prop, value>
 
-1. **Warm/cool zone colors** — Currently both zones use neutral gray (`rgba(0,0,0,0.03)` and `rgba(0,0,0,0.02)` in `theme.ts:185-188`). Change to:
-   - Margin area: warm tone `rgba(246, 178, 107, 0.15)`
-   - Padding area: cool tone `rgba(130, 177, 255, 0.15)`
-   - Update `spacingZone.marginBase` and `spacingZone.paddingBase` in `theme.ts`
+export function applyStateStyle(selector: string, state: string, prop: string, value: string): void {
+  const key = `${selector}:${state}`;
+  const props = stateOverrides.get(key) ?? new Map();
+  props.set(prop, sanitizeCSSValue(value));
+  stateOverrides.set(key, props);
+  rebuildStateStyles();
+}
 
-2. **Alt+click complementary side** — Currently Alt+click resets. PRD wants Alt+click to *apply the value* to the opposite side. This is a behavior change that conflicts with existing Alt+click reset. **Recommendation:** Keep Alt+click as reset (existing behavior), add Shift+click for complementary side application (non-breaking).
+function rebuildStateStyles(): void {
+  // Use CSSOM insertRule/deleteRule for performance (not textContent replacement)
+  const sheet = getStateScopeStyle().sheet!;
+  // Clear and rebuild rules...
+}
+```
 
-3. **Hover highlighting** — Verify if hovering a value highlights the zone. If not, add hover state tracking.
+**Force-simulate UX decision:** When user selects `:hover`, show changes immediately (inject without pseudo-class during editing). Only write the `:hover` pseudo-class to source on save. This avoids the confusing "hover to see your changes" pattern.
 
-**Files:** `src/overlay/theme.ts`, `src/overlay/SpacingBoxModel.tsx`
+```css
+/* During editing: immediate feedback */
+.__tuner-state-preview { font-size: 20px !important; }
 
-### 2C. Iteration 10 — Tab Navigation
+/* On save: writes to source file as */
+.btn:hover { font-size: 20px; }
+```
 
-**What's already done:**
-- `tabIndex={0}` on most controls in `controls.tsx` (lines 140, 569, 708, 782, 862)
-- `tuner-focusable` className on controls
-- Focus-visible styles injected
+#### Apply Routing
 
-**What needs work:**
-- Verify DOM order matches visual order within sections
-- Add section-level keyboard handler: Tab within a section → next `tuner-focusable`, Shift+Tab → previous
-- When focus reaches end of section → move to next section (don't trap)
+Extend `WebflowPanel.tsx` apply callback — backwards-compatible:
 
-**Files:** `src/overlay/controls.tsx`, `src/overlay/WebflowPanel.tsx`
+```typescript
+const apply = useCallback(
+  (prop: string, value: string) => {
+    if (activeState !== "none") {
+      // State-specific: inject via <style> tag (force-simulate)
+      const selector = activeClassName ?? getStableSelector(element);
+      applyStateStyle(selector, activeState, prop, value);
+    }
+    if (scope === "class" && activeClassName) {
+      applyClassStyle(activeClassName, prop, value);
+    }
+    // Always track in apply.ts for undo/diff (using composite key for state)
+    applyInlineStyle(element, stateKey(activeState, prop), value);
+  },
+  [element, scope, activeClassName, activeState]
+);
+```
 
-### 2D. Iteration 11 — NPM Publish Readiness
+#### Race Condition Mitigations (P0)
 
-**5 items from pre-publish checklist:**
+**Race 1: Mid-drag state switch.** Refuse state transitions while scrubbing:
+```typescript
+// StateSelector or onStateChange handler
+if (isScrubActive()) return; // refuse transition
+```
 
-1. **Package name** — `"redial"` is taken on npm. Decide: `@redial-dev/redial`, `css-redial`, or user's choice. Check availability with `npm view <name>`.
-2. **Author field** — Set in `package.json` (currently empty `""`)
-3. **GitHub URLs** — Replace `TODO/redial` in repository, homepage, bugs
-4. **LICENSE copyright** — Verify MIT text is correct (file exists, 1063 bytes)
-5. **npm login** — Manual step, skip in automation
+**Race 2: Visual flash on state transition.** Synchronous teardown+setup:
+```typescript
+function transitionState(from: string, to: string, el: Element): void {
+  // Single synchronous block — no intermediate reflow
+  removeStateStyleTag(from);
+  if (to !== "none") injectStateStyleTag(to, el, getStateOverrides(to, el));
+  restoreInlineOverridesForState(to, el);
+}
+```
 
-**Also verify:**
-- `npm pack --dry-run` produces clean package
-- `npm run build` succeeds
-- No secrets in `files` array (looks clean: `["dist", "!dist/**/*.map", "next-plugin.cjs", "LICENSE", "README.md"]`)
-- `README.md` accuracy after Tailwind scoping (Iteration 3)
+**Race 3: Undo across states.** Tag every undo entry with state (required field, default `"none"`):
+```typescript
+type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string };
+```
 
-**Files:** `package.json`, `LICENSE`, `README.md`
+Undo dispatches to correct write path based on entry's state.
 
-**Note:** Items 1 (name) and 3 (URLs) require user input. The rest can be automated.
+#### Commit Changes
+
+**Extend `CommitChange` type** with optional `state` field:
+```typescript
+type CommitChange = {
+  prop: string; from: string; to: string;
+  sourceFile?: string; sourceLine?: number;
+  className?: string; componentName?: string;
+  state?: string; // NEW: "hover", "focus", etc.
+};
+```
+
+**Extend `searchClassBlock` regex** for pseudo-class selectors:
+```typescript
+// Current: matches .btn {
+const basePattern = `\\.${escapeRegex(className)}\\s*[{,]`;
+// New: matches .btn:hover {
+const statePattern = `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`;
+```
+
+**New `insertClassBlock` function** (separate, testable):
+```typescript
+function insertClassBlock(
+  lines: string[], className: string, state: string,
+  prop: string, value: string
+): { lineIdx: number; linesAdded: number }
+```
+
+**SCSS nesting detection:** Scan base class block for `&:` patterns. Insert `&:hover { }` inside block (SCSS) or `.className:hover { }` after block (plain CSS).
+
+#### Save Consolidation (P1 race fix)
+
+**Cmd+S shortcut at `Overlay.tsx:270` bypasses scope/state.** Consolidate:
+```typescript
+// Single buildSavePayload function used by both Footer.handleSave and Overlay.handleSaveShortcut
+function buildSavePayload(el: Element, scope: Scope, activeClassName: string | null, activeState: string): CommitChange[]
+```
+
+#### Performance Optimizations
+
+1. **CSSOM rule manipulation** instead of `textContent` replacement on `<style>` tags during drag
+2. **Fix `totalOverrideCount()` to O(1)** — maintain running counter instead of iterating all overrides
+3. **Single persistent `<style>` element** for state previews — never create/remove during drag
+
+#### Tests for Iteration 2
+
+```
+1. State-specific <style> tag injection and cleanup
+2. commit.ts finds and writes inside .className:hover { } block
+3. commit.ts creates .className:hover { } when it doesn't exist (CSS and SCSS)
+4. Undo/redo across state boundaries (tagged undo entries)
+5. State transition mid-drag is refused
+6. Synchronous state transition (no visual flash)
+7. HMR reconciliation extended for state overrides
+8. Session persistence with state-keyed overrides
+```
+
+#### Acceptance Criteria
+- [ ] Select element → choose "Hover" → drag slider → change visible immediately (force-simulated)
+- [ ] Save writes to `.className:hover { }` block in CSS module
+- [ ] If no `:hover` block exists, one is created (correct position, correct indentation)
+- [ ] SCSS files: `&:hover { }` inserted inside parent block
+- [ ] Switching back to "None" restores normal inline preview
+- [ ] Undo/redo works across state boundaries
+- [ ] State transitions refused during active drag
+- [ ] Cmd+S includes scope and state in payload
+- [ ] `npm run typecheck` passes
+- [ ] All new tests pass
 
 ---
 
-## Phase 3: Core Pipeline Work (Sequential — 1 before 2)
+## Phase B: Polish + Background Controls (Parallel with Phase A)
 
-**Goal:** Harden the save pipeline (Iteration 1), then build state-specific styling (Iteration 2).
+### B1. Tailwind Save Scope-Out (Iteration 3) — 5-minute doc edit
 
-### 3A. Iteration 1 — Class-Scope Save Path
+Update `docs/how-redial-works.md` Key Constraints: "Save writes to CSS Modules (`.module.css`, `.module.scss`). For Tailwind projects, use Copy as Tailwind to export changes."
 
-**Current state:**
-- `Footer.tsx:148-158` — Always enriches with `className` from `getModuleClassInfo()` regardless of scope
-- `commit.ts` Tier 2 class-block search works (tested at `commit.test.ts:406`)
-- `scope.ts` has `applyClassStyle()` for live preview of class-scoped changes
-- `WebflowPanel.tsx:92-100` — When scope=class, applies both class style AND inline style
+Verify `README.md` doesn't promise Tailwind save.
 
-**Gaps to verify:**
-1. Does `getModuleClassInfo()` extract the right class name for `.module.css` blocks?
-2. When scope=element, does the inline style save path work independently of className?
-3. Is there any case where className-based search overwrites the wrong block?
+- [ ] Docs updated
+- [ ] README accurate
+- [ ] Copy as Tailwind still works
 
-**What to build (if gaps found):**
-- Ensure `diff()` or enrichment includes `scope` in each change object
-- When scope=element, do NOT pass className to commit (force Tier 1/3 search)
-- When scope=class, pass className to commit (enable Tier 2 class block search)
+### B2. Spacing Zone Colors (Iteration 8) — 2-line theme.ts change
 
-**Tests to write:**
-- `commit.test.ts` — class-scoped change finds and replaces inside `.className { }` block
-- `commit.test.ts` — element-scoped change does NOT modify the class block
-- Verify existing test at line 406 covers the acceptance criteria
+```typescript
+// theme.ts — change spacingZone tokens
+marginBase: "rgba(255, 149, 0, 0.08)",     // was rgba(0,0,0,0.03)
+marginHover: "rgba(255, 149, 0, 0.14)",    // was rgba(0,0,0,0.06)
+paddingBase: "rgba(59, 130, 246, 0.08)",    // was rgba(0,0,0,0.02)
+paddingHover: "rgba(59, 130, 246, 0.14)",   // was rgba(0,0,0,0.05)
+```
 
-**Files:** `src/overlay/Footer.tsx`, `src/server/commit.ts`, `src/overlay/apply.ts`, `src/overlay/scope.ts`
+Note: Keep Alt+click as reset (existing behavior). Use Shift+click for complementary side if adding that interaction.
 
-### 3B. Iteration 2 — State-Specific Styling (Pseudo-Class Write Path)
+- [ ] Warm/cool zone colors applied
+- [ ] Existing interactions still work
+- [ ] `npm run typecheck` passes
 
-**This is the largest piece of new work.**
+### B3. Background Image Controls (Iteration 4) — 4 new SelectRows
 
-**Preview mechanism:**
-1. When `activeState !== "none"`, switch from inline style application to `<style>` tag injection
-2. Inject: `.__tuner-state-preview:hover { font-size: 20px !important; }` (for hover)
-3. Add `__tuner-state-preview` class to target element
-4. On state change back to "none", remove the class and `<style>` tag
+**Follow existing pattern exactly** (confirmed by Pattern Recognition agent). Each control needs:
+- `useState` from `cs.{property}`
+- `useCallback` handler calling `apply(prop, value)`
+- `SelectRow` with `label`, `value`, `options`, `onChange`, `onReset`, `indicator`, `computedProp`, `computedElement`, `onContextMenu`
 
-**State tracking changes to `apply.ts`:**
-- Current: overrides keyed by `(element, prop)`
-- Needed: overrides keyed by `(element, state, prop)` — or a separate `stateOverrides` map
-- `diff()` needs to include `state` in each `DiffEntry`
-- Undo/redo needs to track which state each operation was in
+**Controls to add:**
 
-**Commit changes:**
-- When saving state-specific changes, Footer.tsx includes `state: "hover"` in the payload
-- `commit.ts` receives state, looks for `.className:hover { }` block
-- If block exists: tiered search within it
-- If block doesn't exist: create `.className:hover { }` after the base class block
-- Need new `createPseudoClassBlock()` function in commit.ts
-
-**Scope: Start with `:hover` only.** Other states follow the same pattern.
-
-**Files:** `src/overlay/Overlay.tsx`, `src/overlay/apply.ts`, `src/overlay/Footer.tsx`, `src/server/commit.ts`, `src/overlay/StateSelector.tsx`
-
-**Tests:**
-- State-specific `<style>` tag injection and cleanup
-- `commit.ts` finds and writes inside `.className:hover { }` block
-- `commit.ts` creates `.className:hover { }` when it doesn't exist
-- Undo/redo across state boundaries
-
----
-
-## Phase 4: New CSS Controls (Parallel)
-
-### 4A. Iteration 4 — Background Image Controls
-
-**What exists:** BackgroundsSection.tsx has color, gradient layers, and background-clip. BackgroundLayerList handles gradient/image layers.
-
-**What's missing:** When `background-image: url(...)` is detected, show standalone controls:
-
-| Property | Control | Implementation |
+| Property | Options constant | Notes |
 |---|---|---|
-| `background-size` | SelectRow + custom dual input | `auto`, `cover`, `contain`, custom `[w] [h]` |
-| `background-position` | SelectRow + custom dual input | `center`, `top left`, etc. + custom X/Y |
-| `background-repeat` | SelectRow | `repeat`, `repeat-x`, `repeat-y`, `no-repeat` |
-| `background-attachment` | SelectRow | `scroll`, `fixed` |
+| `background-size` | `BG_SIZE_OPTIONS` | `auto`, `cover`, `contain` + custom dual input (w/h) |
+| `background-position` | `BG_POSITION_OPTIONS` | 9 positions + custom X/Y |
+| `background-repeat` | `BG_REPEAT_OPTIONS` | `repeat`, `repeat-x`, `repeat-y`, `no-repeat` |
+| `background-attachment` | `BG_ATTACHMENT_OPTIONS` | `scroll`, `fixed` |
 
-Note: `background-clip` and `background-blend-mode` already exist in BackgroundsSection.tsx.
+**Detection:** Show only when `cs.backgroundImage` contains `url()`.
 
-**Detection:** Read `cs.backgroundImage` — if it contains `url()`, show the image sub-controls below the existing layer controls.
+**Performance note:** `background-size` changes trigger layout recalc on images. Consider `will-change: background` during drag.
 
-**Pattern:** Follow the existing section component recipe — `useState` for each property, read from `cs`, handler calls `apply()`, wrap in `SelectRow` or dual `ValueInput`.
+**Files:** `src/overlay/BackgroundsSection.tsx`, `src/overlay/panelConstants.tsx`
 
-**Files:** `src/overlay/BackgroundsSection.tsx`, `src/overlay/panelConstants.tsx` (for option arrays)
+- [ ] Image controls appear when element has `background-image: url(...)`
+- [ ] Each reads computed value and allows editing
+- [ ] Changes apply live
+- [ ] All controls save via commit pipeline
+- [ ] `npm run typecheck` passes
+
+### B4. NPM Publish — Automatable Items (Iteration 11)
+
+**Do items 2 and 4 now. Items 1 and 3 blocked on user input.**
+
+- [ ] `package.json` author set
+- [ ] LICENSE copyright verified
+- [ ] `npm run build` succeeds
+- [ ] `npm pack --dry-run` output clean
+- [ ] README.md accurate after Tailwind scoping
+
+**Blocked (user decision needed):**
+- Package name (`"redial"` is taken)
+- GitHub URLs (need real repo URL)
 
 ---
 
-## Phase 5: Integration Tests
+## Iterations Checked Off (No Work Needed)
 
-### 5A. Iteration 12 — Integration Tests
+These are verified done during research — check off in PRD immediately:
 
-**New file:** `src/overlay/__tests__/integration.test.ts`
+**Iteration 5 — Effects Properties:** mix-blend-mode (EffectsSection:207), user-select (:261), backface-visibility (:258), backdrop-filter (:254). All 6 criteria met.
 
-**Test 1: Inline style round-trip**
-```
-Create DOM element → infer() → applyInlineStyle() → verify el.style → diff() → reset() → verify cleared
-```
+**Iteration 6 — Grid Track Editors:** grid-template-columns (LayoutSection:347), grid-template-rows (:348). All 5 criteria met.
 
-**Test 2: Commit tiered search (class-scoped)**
-```
-Mock CSS file with .className { } → handleCommit() with class-scoped change → assert value replaced in correct block
-```
+**Iteration 7 — Size Gaps:** aspect-ratio (SizeSection:460), object-position (:472). All 5 criteria met.
 
-**Test 3: Undo/redo across operations**
-```
-Apply 3 changes → undo once → verify → undo again → verify → redo once → verify
-```
+**Iteration 9 — Font Family Dropdown:** searchable + fontPreview SelectRow (TypographySection:221). All 6 criteria met.
 
-**Test 4: HMR reconciliation**
-```
-Apply inline override → simulate stylesheet update → clearRedundantOverrides() → verify inline removed
-```
+**Iteration 10 — Tab Navigation:** All controls have `tabIndex={0}`, native browser Tab order works. Focus-visible styles injected. SpacingBoxModel has custom Tab handler for visual order. All 6 criteria met.
 
-**Environment:** happy-dom for client tests, real filesystem for commit tests (following existing patterns in commit.test.ts and apply.test.ts)
+**Iteration 13 — Sync infer.ts:** Panel.tsx removed. CommonPanel still uses `infer()` — leave it. Utility exports used by other modules. All 5 criteria met (option C: accept as-is).
+
+**Iteration 12 — Integration Tests:** Absorbed into Phase A. Tests for round-trip, commit search, undo/redo, and HMR already exist in `apply.test.ts` and `commit.test.ts`. New state-specific tests written as part of A2.
 
 ---
 
 ## Execution Order
 
 ```
-Phase 1 (parallel, ~10min):
-  ├── 1A: Verify Effects (iter 5) ✓
-  ├── 1B: Verify Grid (iter 6) ✓
-  ├── 1C: Verify Size (iter 7) ✓
-  ├── 1D: Verify Font (iter 9) ✓
-  └── 1E: Verify infer.ts (iter 13) ✓
+Phase A (sequential):
+  ├── A1: Class-scope verify + test (iter 1)
+  └── A2: State-specific styling (iter 2) — depends on A1
 
-Phase 2 (parallel, ~30min):
-  ├── 2A: Tailwind scope-out docs (iter 3)
-  ├── 2B: Spacing polish (iter 8)
-  ├── 2C: Tab navigation (iter 10)
-  └── 2D: NPM publish fields (iter 11)
+Phase B (parallel with Phase A):
+  ├── B1: Tailwind docs (iter 3) — 5 min
+  ├── B2: Spacing zone colors (iter 8) — 5 min
+  ├── B3: Background image controls (iter 4)
+  └── B4: NPM publish automatable items (iter 11)
 
-Phase 3 (sequential, ~45min):
-  ├── 3A: Class-scope save path (iter 1) — must complete before 3B
-  └── 3B: State-specific styling (iter 2) — depends on 3A
-
-Phase 4 (parallel with Phase 3, ~20min):
-  └── 4A: Background image controls (iter 4)
-
-Phase 5 (after Phase 3, ~20min):
-  └── 5A: Integration tests (iter 12) — benefits from 3A/3B being done
+Check off done iterations: 5, 6, 7, 9, 10, 12, 13
 ```
 
 ## Dependencies
 
-- Phase 3B depends on 3A (both touch commit.ts)
-- Phase 2D (NPM publish README) depends on 2A (Tailwind decision affects README accuracy)
-- Phase 5 benefits from Phase 3 (tests can cover class-scope and state paths)
-- All other items are fully independent and parallelizable
+- A2 depends on A1 (both touch commit.ts)
+- B4 (NPM README) depends on B1 (Tailwind decision affects README)
+- Everything else is independent
 
-## Acceptance Criteria (All Iterations)
+## Final Acceptance
 
-After completion, every `- [ ]` checkbox in `docs/2026-03-13-prd-remaining-gaps.md` should be `- [x]`.
-
-Additionally:
+- [ ] All `- [ ]` checkboxes in PRD → `- [x]`
 - [ ] `npm run typecheck` passes
-- [ ] `npm test` passes (including new integration tests)
+- [ ] `npm test` passes
 - [ ] `npm run build` succeeds
-- [ ] `npm pack --dry-run` produces clean package

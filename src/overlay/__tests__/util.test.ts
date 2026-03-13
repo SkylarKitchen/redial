@@ -88,19 +88,40 @@ describe("buildBreadcrumb", () => {
 // ─── getStableSelector ────────────────────────────────────────────────
 
 describe("getStableSelector", () => {
-  it("starts with body", () => {
+  it("prefers id when element has one", () => {
+    const el = makeEl("div");
+    el.id = "hero";
+    expect(getStableSelector(el)).toBe("#hero");
+  });
+
+  it("prefers data-testid over nth-child", () => {
+    const el = makeEl("div");
+    el.setAttribute("data-testid", "submit-btn");
+    expect(getStableSelector(el)).toBe('[data-testid="submit-btn"]');
+  });
+
+  it("prefers CSS module class over nth-child", () => {
+    const el = makeEl("div");
+    el.className = "Button_btn__a8f2k";
+    const selector = getStableSelector(el);
+    expect(selector).toBe(".Button_btn__a8f2k");
+  });
+
+  it("recognizes Vite CSS module class", () => {
+    const el = makeEl("div");
+    el.className = "_card_x9f2k_3";
+    const selector = getStableSelector(el);
+    expect(selector).toBe("._card_x9f2k_3");
+  });
+
+  it("falls back to nth-child when no id, testid, or module class", () => {
     const el = makeEl("div");
     const selector = getStableSelector(el);
     expect(selector.startsWith("body")).toBe(true);
-  });
-
-  it("uses nth-child notation", () => {
-    const el = makeEl("div");
-    const selector = getStableSelector(el);
     expect(selector).toMatch(/nth-child\(\d+\)/);
   });
 
-  it("works for deeply nested elements", () => {
+  it("nth-child fallback works for deeply nested elements", () => {
     const el = buildTree("div", "main", "section", "p");
     const selector = getStableSelector(el);
     const parts = selector.split(" > ");
@@ -111,7 +132,7 @@ describe("getStableSelector", () => {
     expect(parts[4]).toMatch(/^p:nth-child\(\d+\)$/);
   });
 
-  it("correctly indexes among siblings", () => {
+  it("correctly indexes among siblings in nth-child fallback", () => {
     const parent = makeEl("div");
     const first = document.createElement("span");
     const second = document.createElement("span");
@@ -123,6 +144,21 @@ describe("getStableSelector", () => {
     const selector = getStableSelector(third);
     // p is the 3rd child
     expect(selector).toContain("p:nth-child(3)");
+  });
+
+  it("id takes priority over data-testid and CSS module class", () => {
+    const el = makeEl("div");
+    el.id = "main-hero";
+    el.setAttribute("data-testid", "hero-section");
+    el.className = "Hero_wrapper__abc12";
+    expect(getStableSelector(el)).toBe("#main-hero");
+  });
+
+  it("data-testid takes priority over CSS module class", () => {
+    const el = makeEl("div");
+    el.setAttribute("data-testid", "card");
+    el.className = "Card_root__x1y2z";
+    expect(getStableSelector(el)).toBe('[data-testid="card"]');
   });
 });
 
@@ -238,6 +274,12 @@ describe("getSelector", () => {
     expect(getSelector(el)).toBe(".btnPrimary");
   });
 
+  it("extracts CSS module name for Vite patterns", () => {
+    const el = makeEl("div");
+    el.className = "_btn_1a2b3_5";
+    expect(getSelector(el)).toBe(".btn");
+  });
+
   it("uses first class when multiple non-module classes", () => {
     const el = makeEl("div");
     el.className = "primary large bold";
@@ -275,6 +317,12 @@ describe("getDisplayClass", () => {
     const el = makeEl("div");
     el.className = "page-module__IiFEKa__btnPrimary";
     expect(getDisplayClass(el)).toBe("btnPrimary");
+  });
+
+  it("extracts Vite CSS module name", () => {
+    const el = makeEl("div");
+    el.className = "_btn_1a2b3_5";
+    expect(getDisplayClass(el)).toBe("btn");
   });
 
   it("returns first class when no module pattern matches", () => {

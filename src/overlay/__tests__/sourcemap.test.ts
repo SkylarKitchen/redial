@@ -114,6 +114,24 @@ describe("getModuleClassInfo", () => {
       componentName: "my-component",
     });
   });
+
+  it("parses a Vite CSS module class", () => {
+    const el = makeEl();
+    el.className = "_btn_1a2b3_5";
+    expect(getModuleClassInfo(el)).toEqual({
+      className: "btn",
+      componentName: undefined,
+    });
+  });
+
+  it("parses Vite class with multi-word name", () => {
+    const el = makeEl();
+    el.className = "_cardWrapper_x9f2k_12";
+    expect(getModuleClassInfo(el)).toEqual({
+      className: "cardWrapper",
+      componentName: undefined,
+    });
+  });
 });
 
 // ─── getReactSource ───────────────────────────────────────────────────
@@ -252,6 +270,17 @@ describe("getCSSSource", () => {
       file: "page.module.css",
       line: undefined,
       displayPath: "page.module.css",
+    });
+  });
+
+  it("derives source file from Vite CSS module class", () => {
+    const el = makeEl();
+    el.className = "_btn_1a2b3_5";
+    const result = getCSSSource(el, "color");
+    expect(result).toEqual({
+      file: "*.module.css",
+      line: undefined,
+      displayPath: "module.css (Vite)",
     });
   });
 

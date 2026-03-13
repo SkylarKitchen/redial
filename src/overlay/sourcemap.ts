@@ -141,14 +141,79 @@ function deriveSourceFromClassName(
       displayPath: `${fileName}.module.css`,
     };
   }
+  // Vite: _className_hash_digits — class name doesn't embed the filename
+  const vite = moduleClass.match(/^_(\w+)_\w+_\d+$/);
+  if (vite) {
+    return {
+      file: "*.module.css",
+      line: undefined,
+      displayPath: "module.css (Vite)",
+    };
+  }
   return null;
 }
 
 /**
- * Best-effort source resolution: try CSS source first, fall back to React fiber.
+ * Try to find the source file for an element styled by global CSS (not modules).
+ * Walks loaded stylesheets, finds rules matching `el` that set `prop`,
+ * and derives the source file from the stylesheet href.
+ */
+export function getGlobalCSSSource(
+  el: Element,
+  prop: string
+): SourceInfo | null {
+  try {
+    for (const sheet of document.styleSheets) {
+      try {
+        const href = sheet.href;
+        if (!href) continue;
+
+        const rules = sheet.cssRules;
+        for (let i = 0; i < rules.length; i++) {
+          const rule = rules[i];
+          if (!(rule instanceof CSSStyleRule)) continue;
+          // Check if the rule sets the property we care about
+          if (!rule.style.getPropertyValue(prop)) continue;
+          // Check if the rule matches the element
+          try {
+            if (!el.matches(rule.selectorText)) continue;
+          } catch {
+            continue; // Invalid selector
+          }
+
+          // Strip build prefixes to get the original file path
+          let file = href;
+          try {
+            file = new URL(href).pathname;
+          } catch {
+            // Not a valid URL — use as-is
+          }
+          // Strip common build prefixes
+          file = file
+            .replace(/^\/_next\/static\/css\//, "")
+            .replace(/^\/assets\//, "")
+            .replace(/^\//, "");
+          // Remove content hash suffixes (e.g., globals.abc123.css → globals.css)
+          file = file.replace(/\.\w{8,}\.css$/, ".css");
+
+          const displayPath = file.replace(/^.*\/src\//, "src/");
+          return { file, line: undefined, displayPath };
+        }
+      } catch {
+        // CORS or security error — skip
+      }
+    }
+  } catch {
+    // Stylesheet access failed
+  }
+  return null;
+}
+
+/**
+ * Best-effort source resolution: try CSS module source first, then global CSS, fall back to React fiber.
  */
 export function resolveSource(el: Element, prop: string): SourceInfo | null {
-  return getCSSSource(el, prop) ?? getReactSource(el);
+  return getCSSSource(el, prop) ?? getGlobalCSSSource(el, prop) ?? getReactSource(el);
 }
 
 /**
@@ -157,7 +222,7 @@ export function resolveSource(el: Element, prop: string): SourceInfo | null {
  */
 export function getModuleClassInfo(
   el: Element
-): { className: string; componentName: string } | null {
+): { className: string; componentName: string | undefined } | null {
   const classes = el.className;
   if (typeof classes !== "string") return null;
 
@@ -171,6 +236,11 @@ export function getModuleClassInfo(
     const turbo = cls.match(/^([\w-]+)-module__\w+__(\w+)$/);
     if (turbo) {
       return { className: turbo[2], componentName: turbo[1] };
+    }
+    // Vite: _className_hash_digits — no filename embedded
+    const vite = cls.match(/^_(\w+)_\w+_\d+$/);
+    if (vite) {
+      return { className: vite[1], componentName: undefined };
     }
   }
 
