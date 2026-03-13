@@ -23,8 +23,7 @@ Every control that accepts a value should support modifying AND resetting (Alt+c
 ### Size Section
 - [ ] SizeInputCell (Width) — type "200px", Alt+click → resets to auto
 - [ ] SizeInputCell (Height) — type "100px", Alt+click → resets
-- [ ] SizeInputCell (Min W / Max W) — type values, Alt+click → resets
-- [ ] SizeInputCell (Min H / Max H) — type values, Alt+click → resets
+- [ ] SizeInputCell (Min/Max) — type values in all 4 min/max cells, Alt+click → resets
 - [ ] WebflowSegmentedControl (Overflow) — select "hidden", verify change applies
 
 ### Position Section
@@ -111,7 +110,6 @@ Hover states, transitions, indicators, and alignment consistency.
 
 ### Alignment
 - [ ] Labels align vertically across all sections
-- [ ] SliderRow: label, track, value input baseline-aligned
 - [ ] Section padding consistent between all 8 sections
 - [ ] Footer buttons evenly spaced
 
@@ -137,14 +135,12 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 ### Escape Key
 - [ ] SelectRow dropdown → Escape → closes
 - [ ] ColorPicker → Escape → closes
-- [ ] ResetPopover → Escape → closes
 - [ ] UnitSelector dropdown → Escape → closes
 - [ ] Clipboard dropdown (Footer) → Escape → closes
 - [ ] TransitionOptionsMenu → Escape → closes
 
 ### Focus Management
 - [ ] Focus rings visible on all interactive elements (tuner-focusable class)
-- [ ] No focus trap inside dropdowns (can Tab out)
 - [ ] After dropdown closes, focus returns to trigger element
 
 ### ARIA
