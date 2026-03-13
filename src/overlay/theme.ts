@@ -228,6 +228,27 @@ export const presetBaseUnit: Record<string, string> = {
   gap: "px",
 };
 
+// ─── Grid Overlay Colors ────────────────────────────────────────
+// Warm orange base: rgb(217,119,87) = #D97757
+
+/** Grid overlay orange at a given alpha. rgb(217,119,87) */
+export const gridAlpha = (a: number) => `rgba(217,119,87,${a})`;
+
+export const overlay = {
+  grid: {
+    /** Dashed grid lines between tracks */
+    line: gridAlpha(0.4),
+    /** Gap band fill */
+    gap: gridAlpha(0.08),
+    /** Track number labels */
+    label: gridAlpha(0.8),
+    /** Label pill background */
+    labelBg: "rgba(250,249,245,0.85)",
+    /** Container outline border */
+    outline: gridAlpha(0.25),
+  },
+} as const;
+
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {

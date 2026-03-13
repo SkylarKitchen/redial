@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font } from "./theme";
+import { font, overlay } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,11 +100,11 @@ function computeMetrics(el: Element): GridMetrics | null {
 // Styles (constants)
 // ---------------------------------------------------------------------------
 
-const LINE_COLOR = "rgba(217, 119, 87, 0.4)";
-const GAP_COLOR = "rgba(217, 119, 87, 0.08)";
-const LABEL_COLOR = "rgba(217, 119, 87, 0.8)";
-const LABEL_BG = "rgba(250, 249, 245, 0.85)";
-const OUTLINE_COLOR = "rgba(217, 119, 87, 0.25)";
+const LINE_COLOR = overlay.grid.line;
+const GAP_COLOR = overlay.grid.gap;
+const LABEL_COLOR = overlay.grid.label;
+const LABEL_BG = overlay.grid.labelBg;
+const OUTLINE_COLOR = overlay.grid.outline;
 
 const LABEL_STYLE: React.CSSProperties = {
   position: "absolute",
