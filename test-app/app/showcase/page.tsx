@@ -379,6 +379,9 @@ const footerBtnStandard: React.CSSProperties = {
   color: blackAlpha(0.8),
   cursor: "pointer",
   userSelect: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const footerBtnPrimary: React.CSSProperties = {
@@ -393,6 +396,9 @@ const footerBtnPrimary: React.CSSProperties = {
   boxShadow: `0 1px 3px ${primaryAlpha(0.4)}`,
   cursor: "pointer",
   userSelect: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 // ─── Interactive Sub-components ─────────────────────────────────────────────
@@ -1514,7 +1520,7 @@ export default function ShowcasePage() {
           <div className="card" style={{ width: 380 }} data-component="FooterButtons">
             <div className="card-label">Footer Buttons — Hover &amp; click</div>
             <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-              <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
+              <div className="variant-col"><div className="variant-label">Standard</div><HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 11, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton></div>
               <div className="variant-col"><div className="variant-label">Primary (Save)</div><HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton></div>
               <div className="variant-col"><div className="variant-label">Destructive</div><HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" }}>Reset</HoverButton></div>
               <div className="variant-col"><div className="variant-label">Disabled</div><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
@@ -1691,7 +1697,7 @@ export default function ShowcasePage() {
 
               {/* Footer — matches real panel: Clipboard ▾ | Reset | Save */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
-                <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
+                <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 11, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
                   <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
@@ -1712,7 +1718,7 @@ export default function ShowcasePage() {
                 </ToggleSection>
               ))}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
-                <HoverButton style={footerBtnStandard} disabled>Clipboard <span style={{ fontSize: 9, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
+                <HoverButton style={footerBtnStandard} disabled>Clipboard <span style={{ fontSize: 11, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
                 <div style={{ display: "flex", gap: 6 }}><HoverButton style={footerBtnPrimary} disabled>Save</HoverButton></div>
               </div>
             </div>
