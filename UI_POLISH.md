@@ -21,7 +21,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
 - [x] **StateSelector hardcoded green** — `StateSelector.tsx:57` uses `#34d399` for active state color. Should use `badge.action` token (same value, but via theme).
 - [x] **Footer hardcoded success greens** — `Footer.tsx:264` has `#16a34a` and `Footer.tsx:357` has `#22c55e` for copied/saved states. Add `color.success` + `color.successMuted` tokens.
-- [ ] **ScopePill duplicate hover** — `Header.tsx:311` has `hovered ? surface.active : surface.active` — both branches identical. Active+hovered should use a slightly stronger background (e.g. `blackAlpha(0.1)`).
+- [x] **ScopePill duplicate hover** — `Header.tsx:311` has `hovered ? surface.active : surface.active` — both branches identical. Active+hovered should use a slightly stronger background (e.g. `blackAlpha(0.1)`).
 - [ ] **z-index sprawl** — 16+ components use `2147483647` (max int). Add `zIndex` tokens to theme.ts (e.g. `zIndex.overlay`, `zIndex.popover`, `zIndex.max`) and replace all occurrences.
 - [ ] **GapInput missing value flash** — `GapInput` in `layoutControls.tsx:610` doesn't use `useValueFlash`. `TrackCountInput` at line 790 also lacks it. Add for consistency with `ValueInput`/`SizeInputCell`.
 
@@ -80,6 +80,9 @@ Replaced hardcoded `"system-ui, -apple-system, sans-serif"` with `font.sans` tok
 
 ### 2026-03-13 — StateSelector hardcoded green
 Replaced hardcoded `#34d399` in StateSelector.tsx with `badge.action` token. Same emerald green value, now governed by the token system.
+
+### 2026-03-13 — ScopePill duplicate hover
+Fixed no-op ternary in Header.tsx ScopePill where active+hovered and active-only both resolved to `surface.active`. Active+hovered now uses `blackAlpha(0.1)` (10% vs 8%) for perceptible hover feedback.
 
 ### 2026-03-13 — Footer hardcoded success greens
 Added `color.success` (#22c55e), `color.successMuted` (#16a34a), `successAlpha()`, and `successMutedAlpha()` to theme.ts. Replaced 5 hardcoded green values in Footer.tsx (copied text, copied bg/border, saved bg, saved shadow).
