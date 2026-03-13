@@ -17,7 +17,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **SpacingBoxModel hardcoded colors** — Replaced tooltip background with `bgAlpha(0.97)`, shadow with `shadow.dropdown`, border with `border.subtle`.
 - [x] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
 - [x] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
-- [ ] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
+- [x] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
 - [ ] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
 - [ ] **StateSelector hardcoded green** — `StateSelector.tsx:57` uses `#34d399` for active state color. Should use `badge.action` token (same value, but via theme).
 - [ ] **Footer hardcoded success greens** — `Footer.tsx:264` has `#16a34a` and `Footer.tsx:357` has `#22c55e` for copied/saved states. Add `color.success` + `color.successMuted` tokens.
@@ -74,6 +74,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Toolbar hardcoded rgba whites
+Added `darkToolbar` token family to theme.ts with 6 tokens (text, textMuted, icon, active, hover, border). Replaced all 6 hardcoded `rgba(255,255,255,...)` values in Toolbar.tsx with corresponding tokens.
 
 ### 2026-03-13 — SpacingBoxModel inline focus ring
 Replaced hardcoded `rgba(59,130,246,0.3)` focus ring in SpacingBoxModel.tsx onFocus handler with `focusRing` token from theme.ts. Same visual result, now governed by the token system.
