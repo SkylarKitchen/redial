@@ -93,30 +93,52 @@ export function Toolbar({
 }: ToolbarProps) {
   const [expanded, setExpanded] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didLongPress = useRef(false);
 
   const collapse = useCallback(() => setExpanded(false), []);
   useClickOutside(toolbarRef, expanded, collapse);
 
   const isActive = selecting || hasSelectedEl;
 
+  // Long-press (300ms) opens the expanded toolbar for secondary tools
+  const handleFabPointerDown = () => {
+    didLongPress.current = false;
+    if (!isActive && !expanded) {
+      longPressTimer.current = setTimeout(() => {
+        didLongPress.current = true;
+        setExpanded(true);
+      }, 300);
+    }
+  };
+
+  const handleFabPointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   const handleFabClick = () => {
+    // If long-press already handled it, skip
+    if (didLongPress.current) {
+      didLongPress.current = false;
+      return;
+    }
     if (expanded) {
-      // Collapse toolbar
       setExpanded(false);
       return;
     }
     if (hasSelectedEl) {
-      // If a panel is open, close it
       onClose();
       return;
     }
     if (selecting) {
-      // If selecting, cancel
       onToggleSelecting();
       return;
     }
-    // Expand toolbar
-    setExpanded(true);
+    // Default action: go straight into element selection
+    onToggleSelecting();
   };
 
   return (
@@ -166,6 +188,9 @@ export function Toolbar({
             alignItems: "center",
             justifyContent: "center",
           }}
+          onPointerDown={handleFabPointerDown}
+          onPointerUp={handleFabPointerUp}
+          onPointerLeave={handleFabPointerUp}
           onClick={handleFabClick}
         >
           <Plus
