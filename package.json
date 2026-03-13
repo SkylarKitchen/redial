@@ -22,7 +22,10 @@
       "types": "./dist/server/index.d.ts",
       "default": "./dist/server/index.js"
     },
-    "./next-plugin": "./next-plugin.cjs",
+    "./next-plugin": {
+      "types": "./next-plugin.d.cts",
+      "default": "./next-plugin.cjs"
+    },
     "./styles.css": "./dist/index.css"
   },
   "sideEffects": [
@@ -48,6 +51,7 @@
     "dist",
     "!dist/**/*.map",
     "next-plugin.cjs",
+    "next-plugin.d.cts",
     "LICENSE",
     "README.md"
   ],
