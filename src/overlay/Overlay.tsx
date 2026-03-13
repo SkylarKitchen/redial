@@ -130,8 +130,6 @@ export function Overlay() {
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
 
-  // Box model overlay toggle
-  const [showBoxModel, setShowBoxModel] = useState(false);
   const isGridContainer = useMemo(() => {
     if (!selectedEl) return false;
     const d = getComputedStyle(selectedEl).display;
@@ -520,13 +518,6 @@ export function Overlay() {
         return;
       }
 
-      // M to toggle box model overlay
-      if (e.key === "m" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
-        e.preventDefault();
-        setShowBoxModel((v) => !v);
-        return;
-      }
-
       // H to toggle history drawer
       if (e.key === "h" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
@@ -641,7 +632,6 @@ export function Overlay() {
     setActiveClassName(null);
     setActiveTab("common");
     setShowGridOverlay(false);
-    setShowBoxModel(false);
     setShowHistory(false);
     setShowSearch(false);
     setSearchQuery("");
@@ -1548,8 +1538,6 @@ export function Overlay() {
                     onSpacingChange={handleSpacingChange}
                     showGridOverlay={showGridOverlay}
                     onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
-                    showBoxModel={showBoxModel}
-                    onToggleBoxModel={() => setShowBoxModel((v) => !v)}
                     searchQuery={searchQuery}
                     focusMode={focusMode}
                     scope={scope}

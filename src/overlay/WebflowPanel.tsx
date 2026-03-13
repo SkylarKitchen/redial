@@ -36,8 +36,6 @@ export interface WebflowPanelProps {
   onSpacingChange: (prop: string, value: number, unit: string) => void;
   showGridOverlay?: boolean;
   onToggleGridOverlay?: () => void;
-  showBoxModel?: boolean;
-  onToggleBoxModel?: () => void;
   searchQuery?: string;
   focusMode?: boolean;
   scope?: Scope;
@@ -48,7 +46,7 @@ export interface WebflowPanelProps {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, showBoxModel, onToggleBoxModel, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none" }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none" }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -186,8 +184,6 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
           ctx={ctx}
           spacing={spacing}
           onSpacingChange={onSpacingChange}
-          showBoxModel={showBoxModel}
-          onToggleBoxModel={onToggleBoxModel}
           forceOpen={forceOpen}
           {...focusProps("Spacing")}
         />
