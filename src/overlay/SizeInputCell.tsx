@@ -163,11 +163,13 @@ export function SizeInputCell({
     <div className="flex flex-1 flex-col gap-0.5">
     <div
       ref={cellRef}
-      className="flex items-center h-[28px] rounded border"
+      className="flex items-center"
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       style={{
+        height: 28,
+        borderRadius: 4,
+        border: `1px solid ${blackAlpha(0.07)}`,
         background: surface.subtle,
-        borderColor: blackAlpha(0.07),
       }}
     >
       {/* Modified dot */}
