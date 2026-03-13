@@ -36,7 +36,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") can clip. Add `overflow: hidden`, `textOverflow: ellipsis`, and `title` attribute to `labelStyle` in `controls.tsx`.
 - [x] **SizeInputCell width clips large values** — Still fixed at `36px` width (`SizeInputCell.tsx:249`). Consider `minWidth: 36` with `flex: 1` or expand-on-focus.
 - [x] **UnitSelector dismissal timeout** — Uses hardcoded `1700ms` for hint auto-dismiss. Replace with `timing.slow * 5` or a new `timing.dismissal` token.
-- [ ] **Footer reset button hover** — Uses `surface.active` for hover when count > 0, but `surface.active` is also the pressed state token. Use `surface.hover` for hover, `surface.active` only for pressed/active.
+- [x] **Footer reset button hover** — Uses `surface.active` for hover when count > 0, but `surface.active` is also the pressed state token. Use `surface.hover` for hover, `surface.active` only for pressed/active.
 
 ### Section-Specific Polish
 - [ ] **Font weight preview**: In the font-weight dropdown, render each option at its actual weight (100=thin, 900=heavy). Target: Typography section `SelectRow`.
