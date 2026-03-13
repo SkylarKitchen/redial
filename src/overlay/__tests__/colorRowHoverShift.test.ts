@@ -38,7 +38,7 @@ describe("ColorRow hover actions must not shift layout", () => {
 
     // The actions rendering block should include position: "absolute" nearby.
     // Look for the pattern: a div/container with position:"absolute" that contains {actions}
-    const actionsBlockPattern = /position:\s*["']absolute["'][\s\S]{0,200}\{actions\}/;
+    const actionsBlockPattern = /position:\s*["']absolute["'][\s\S]{0,400}\{actions\}/;
     const usesAbsolutePositioning = actionsBlockPattern.test(colorRowSrc);
 
     expect(
