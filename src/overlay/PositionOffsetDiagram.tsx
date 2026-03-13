@@ -25,6 +25,8 @@ interface PositionOffsetDiagramProps {
   onAutoDisable?: (prop: string) => void;
   /** Called on Option+Click (Alt+Click) to reset a property to its default */
   onReset?: (prop: string) => void;
+  /** True when the element uses Tailwind utility classes */
+  isTailwind?: boolean;
 }
 
 /** Diagonal crosshatch pattern matching Webflow's offset diagram background */
@@ -38,8 +40,10 @@ const HATCHED_BG = [
   `)`,
 ].join(" ");
 
-export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint, autoStates, onAutoDisable, onReset }: PositionOffsetDiagramProps) {
+export function PositionOffsetDiagram({ top, right, bottom, left, onChange, units, availableUnits, onUnitChange, conversionHint, autoStates, onAutoDisable, onReset, isTailwind = false }: PositionOffsetDiagramProps) {
   const auto = autoStates ?? { top: false, right: false, bottom: false, left: false };
+  const stepFor = (side: "top" | "right" | "bottom" | "left") =>
+    isTailwind && units[side] === "px" ? 4 : 1;
 
   return (
     <div style={{ padding: "8px 12px 4px" }}>
@@ -142,11 +146,13 @@ function EditableValue({
   onChange,
   suffix,
   onReset,
+  step: stepProp = 1,
 }: {
   value: number;
   onChange: (value: number) => void;
   suffix?: string;
   onReset?: () => void;
+  step?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
@@ -172,7 +178,7 @@ function EditableValue({
         setEditing(false);
       } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
-        const step = e.altKey ? 0.1 : e.shiftKey ? 10 : 1;
+        const step = e.altKey ? stepProp * 0.1 : e.shiftKey ? stepProp * 10 : stepProp;
         const direction = e.key === "ArrowUp" ? 1 : -1;
         const next = Math.round((value + step * direction) * 10) / 10;
         setDraft(String(next));

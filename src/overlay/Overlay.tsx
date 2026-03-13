@@ -273,6 +273,9 @@ export function Overlay() {
   // Save-in-flight guard to prevent double-save
   const savingRef = useRef(false);
 
+  // Queued tab to open after selector picks an element (e.g. AI button clicked with no selection)
+  const pendingTabRef = useRef<"prompt" | null>(null);
+
   // Panel position (draggable)
   // anchor tracks which horizontal edge the panel is snapped to so resize keeps it pinned
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
@@ -714,7 +717,9 @@ export function Overlay() {
     // Reset scope, tab, overlays, search, and modals on new selection
     setScope("element");
     setActiveClassName(null);
-    setActivePanel({ type: "inspector", tab: "custom" });
+    const queuedTab = pendingTabRef.current;
+    pendingTabRef.current = null;
+    setActivePanel({ type: "inspector", tab: queuedTab ?? "custom" });
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setExpandedSection(null);
@@ -745,6 +750,7 @@ export function Overlay() {
 
   const handleCancel = useCallback(() => {
     setSelecting(false);
+    pendingTabRef.current = null;
   }, []);
 
   const handleClose = useCallback(() => {
@@ -1765,6 +1771,9 @@ export function Overlay() {
         onOpenPrompt={() => {
           if (selectedEl) {
             setActivePanel({ type: "inspector", tab: "prompt" });
+          } else {
+            pendingTabRef.current = "prompt";
+            setSelecting(true);
           }
         }}
         onToggleSession={handleToggleSession}

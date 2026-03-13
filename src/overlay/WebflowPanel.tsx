@@ -106,7 +106,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
       if (scope === "class" && activeClassName) {
         applyClassStyle(activeClassName, prop, value);
       }
-      applyInlineStyle(element, prop, value);
+      applyInlineStyle(element, prop, value, scope === "class" ? activeClassName ?? undefined : undefined);
     },
     [element, scope, activeClassName, activeState]
   );
