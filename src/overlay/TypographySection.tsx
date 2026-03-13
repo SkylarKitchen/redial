@@ -227,7 +227,7 @@ export const TypographySection = memo(function TypographySection({
 
       {/* Size + Height side-by-side compact cells */}
       <div style={{ ...ROW, gap: 4 }}>
-        <span style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}>
+        <span style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}>
           {ind("font-size") !== "none" && <StyleIndicator type={ind("font-size")} />}
           Size
         </span>
