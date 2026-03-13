@@ -14,7 +14,7 @@ import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "./theme";
 import { getConfig } from "./config";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -279,7 +279,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               paddingTop: 4,
               paddingBottom: 4,
               minWidth: 160,
-              zIndex: 100,
+              zIndex: zIndex.dropdown,
               background: color.popover,
               boxShadow: shadow.dropdown,
             }}>

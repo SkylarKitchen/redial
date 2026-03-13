@@ -13,7 +13,7 @@ import { X } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { VisibilityToggle } from "./controls";
-import { color, blackAlpha, border, surface, shadow, font, checkerboard } from "./theme";
+import { color, blackAlpha, border, surface, shadow, font, zIndex, checkerboard } from "./theme";
 import { ms } from "./timing";
 
 export interface BackgroundLayer {
@@ -233,7 +233,7 @@ export function BackgroundLayerList({
               left: 0,
               right: 0,
               borderRadius: 4,
-              zIndex: 100,
+              zIndex: zIndex.dropdown,
               paddingTop: 2,
               paddingBottom: 2,
               overflow: "hidden",

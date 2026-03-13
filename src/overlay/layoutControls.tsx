@@ -13,7 +13,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, layout, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { useResetPopover } from "./controls";
 import { ms } from "./timing";
 import { SegmentedControl } from "./SegmentedControl";
@@ -222,7 +222,7 @@ export function MiniDropdown({ value, options, onChange }: {
           onKeyDown={onListKeyDown}
           style={{
             position: "absolute",
-            zIndex: 200,
+            zIndex: zIndex.popover,
             top: "calc(100% + 2px)",
             left: 0,
             right: 0,
@@ -381,7 +381,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
               borderRadius: 8,
               boxShadow: `0 8px 24px ${blackAlpha(0.35)}, 0 2px 8px ${blackAlpha(0.2)}`,
               padding: "6px 0",
-              zIndex: 200,
+              zIndex: zIndex.popover,
             }}
           >
             {DISPLAY_OVERFLOW.map((opt) => {
@@ -583,7 +583,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
               borderRadius: 8,
               boxShadow: `0 8px 24px ${blackAlpha(0.35)}, 0 2px 8px ${blackAlpha(0.2)}`,
               padding: "6px 0",
-              zIndex: 200,
+              zIndex: zIndex.popover,
             }}
           >
             {DIRECTION_MORE_OPTIONS.map((opt) => {
