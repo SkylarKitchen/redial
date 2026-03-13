@@ -329,7 +329,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               cursor: count === 0 ? "default" : "pointer",
               color: destructiveAlpha(0.8),
               border: `1px solid ${destructiveAlpha(0.15)}`,
-              background: resetHovered && count > 0 ? surface.active : surface.hover,
+              background: resetHovered && count > 0 ? surface.hover : surface.subtle,
               opacity: count === 0 ? 0.5 : 1,
               transition: `background ${timing.normal}ms`,
             }}
