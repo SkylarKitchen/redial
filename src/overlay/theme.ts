@@ -154,33 +154,24 @@ export const shadow = {
 
 // ─── Indicator Colors ───────────────────────────────────────────
 
-export type IndicatorColorType = "element" | "inherited" | "state" | "variable" | "direct" | "none";
-
-export const indicatorColor: Record<IndicatorColorType, string> = {
-  element: "#60a5fa",
-  inherited: "#f59e0b",
-  state: "#34d399",
-  variable: "#a78bfa",
-  direct: "#60a5fa",
+export const indicatorColor: Record<string, string> = {
+  modified: "#3b82f6",
   none: "#525252",
 };
 
-// ─── Label Indicator Colors (Webflow-style) ────────────────────
+// ─── Label Indicator Colors ─────────────────────────────────────
+// Blue highlight when a property has been modified, plain otherwise.
 
-export const labelIndicator = {
-  element: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
-  direct: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
-  inherited: { bg: "#f9dca4", text: "#734500" },
-  state: { bg: "#f9dca4", text: "#734500" },
-  variable: { bg: "rgba(167,139,250,0.2)", text: "#5b21b6" },
+export const labelIndicator: Record<string, { bg: string; text: string }> = {
+  modified: { bg: "rgba(0,125,240,0.2)", text: "#184f95" },
   none: { bg: "transparent", text: "#404040" },
-} as const;
+};
 
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: "rgba(255, 149, 0, 0.08)",
-  marginHover: "rgba(255, 149, 0, 0.14)",
+  marginBase: blackAlpha(0.05),
+  marginHover: blackAlpha(0.10),
   paddingBase: primaryAlpha(0.08),
   paddingHover: primaryAlpha(0.14),
 } as const;

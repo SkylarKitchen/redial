@@ -82,11 +82,9 @@ export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverla
 
   const sectionInd = useCallback(
     (props: string[]): IndicatorType => {
-      const PRIORITY: IndicatorType[] = ["element", "direct", "state", "inherited"];
-      for (const p of PRIORITY) {
-        if (props.some(prop => ind(prop) === p)) return p;
-      }
-      return "none";
+      return props.some((prop) => ind(prop) === "modified")
+        ? "modified"
+        : "none";
     },
     [ind],
   );
