@@ -94,18 +94,22 @@ export function Toolbar({
   const [expanded, setExpanded] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
-  const collapse = useCallback(() => setExpanded(false), []);
-  useClickOutside(toolbarRef, expanded, collapse);
-
   const isActive = selecting || hasSelectedEl;
 
+  // Only allow click-outside collapse when nothing is active
+  const collapse = useCallback(() => {
+    if (!selecting && !hasSelectedEl) setExpanded(false);
+  }, [selecting, hasSelectedEl]);
+  useClickOutside(toolbarRef, expanded, collapse);
+
   const handleFabClick = () => {
-    if (expanded) {
+    if (expanded && !isActive) {
       setExpanded(false);
       return;
     }
     if (hasSelectedEl) {
       onClose();
+      setExpanded(false);
       return;
     }
     if (selecting) {
