@@ -126,9 +126,9 @@ the state to change while overrides are being applied.
 
 **Acceptance:**
 - [x] Bug 1 test written + fixed — `resetStateOverrides` added to apply.ts, wired into Footer.tsx
-- [ ] Bug 2 (session restore) — not yet addressed
-- [ ] Bug 3 (state dropdown scrub guard) — not yet addressed
-- [x] Bug 1 tests pass (28/28 statePreview, 54/54 apply)
+- [x] Bug 2 fixed — `restoreSession` now calls `notifyStateChange` for state-keyed entries
+- [x] Bug 3 already fixed — `handleStateChange` in Overlay.tsx already checks `isScrubActive()`
+- [x] All tests pass (28/28 statePreview, 55/55 apply)
 - [x] `npm run typecheck` passes
 
 ---
