@@ -375,6 +375,7 @@ export function SliderRow({
   snapThreshold,
   property,
   onPreset,
+  annotation,
 }: {
   label: string;
   value: number;
