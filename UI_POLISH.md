@@ -10,7 +10,7 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 
 ### Visual Micro-interactions
 - [x] **Value change flash**: When a slider/input value changes, briefly flash the value text with a subtle `primaryAlpha(0.15)` background (200ms). Helps users confirm their change registered. Target: `ValueInput`, `SizeInputCell`, `TypoValueCell`.
-- [ ] **Copy button checkmark**: After a successful copy (CSS/TW/Vars), briefly replace the button text with a ✓ checkmark for 1.5s before reverting. Target: `Footer.tsx` copy dropdown items.
+- [x] **Copy button checkmark**: After a successful copy (CSS/TW/Vars), briefly replace the button text with a ✓ checkmark for 1.5s before reverting. Target: `Footer.tsx` copy dropdown items.
 - [ ] **Save button success state**: After save completes, briefly turn Save button green (#22c55e) with checkmark for 1.5s, then animate back to `color.primary`. Target: `Footer.tsx` ActionButton.
 - [ ] **Reset shake on no-op**: If user clicks Reset when there are no overrides, apply a brief horizontal shake animation (3 cycles, 2px amplitude, 300ms). Target: `Footer.tsx` Reset button.
 - [ ] **Section header hover**: Add subtle background highlight (`surface.hover`) on section header row hover, with timing token transition. Target: `Section` component in `controls.tsx`.
@@ -65,6 +65,9 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 ---
 
 ## Completed
+
+### 2026-03-13 — Copy button checkmark
+Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
 
 ### 2026-03-12 — Value change flash
 Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`. Brief `primaryAlpha(0.12)` background flash on value change (200ms fade).
