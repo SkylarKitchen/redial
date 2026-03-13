@@ -16,6 +16,7 @@ import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { IconButtonGroup } from "./IconButtonGroup";
+import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
 import {
   parseNum,
@@ -45,14 +46,16 @@ import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Sub-section header ───────────────────────────────────────────────
 
-function SubSectionHeader({ label, onAdd, onMenu }: {
+function SubSectionHeader({ label, onAdd, onMenu, indicator }: {
   label: string;
   onAdd?: () => void;
   onMenu?: () => void;
+  indicator?: IndicatorType;
 }) {
   return (
     <div style={SUB_HEADER_ROW}>
-      <span style={SUB_HEADER}>
+      <span style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px" }}>
+        {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
         {label}
       </span>
       <div style={{ display: "flex", alignItems: "center", gap: "2px" }}
@@ -208,7 +211,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
-    <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor", "outline-style"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
+    <Section title="Effects" indicator={sectionInd(["opacity", "box-shadow", "filter", "backdrop-filter", "mix-blend-mode", "transform", "transition", "cursor", "outline-style", "perspective", "backface-visibility", "pointer-events", "visibility", "user-select"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
 
       {/* 1. Blending (mix-blend-mode) */}
       <SelectRow label="Blending" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} onReset={() => resetCssStr("mix-blend-mode", setMixBlendMode)} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
@@ -218,20 +221,21 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
 
       {/* 3. Outline */}
       <div style={ROW}>
-        <span style={{ ...LABEL, cursor: "default" }}>
+        <span style={{ ...LABEL, cursor: "default", display: "flex", alignItems: "center", gap: "4px" }}>
+          {ind("outline-style") !== "none" && <StyleIndicator type={ind("outline-style")} />}
           Outline
         </span>
         <IconButtonGroup options={OUTLINE_STYLE_OPTIONS} value={outlineStyle} onChange={handleOutlineStyleChange} aria-label="Outline style" />
       </div>
 
       {/* 4. Box shadows */}
-      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} />
+      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} indicator={ind("box-shadow")} />
       {shadows.length > 0 && (
         <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
       )}
 
       {/* 5. 2D & 3D transforms */}
-      <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} />
+      <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} indicator={ind("transform")} />
       {transforms.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransformEditor
@@ -244,7 +248,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 6. Transitions */}
-      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} />
+      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} indicator={ind("transition")} />
       {transitions.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
@@ -252,7 +256,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 7. Filters */}
-      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} />
+      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} indicator={ind("filter")} />
       {filtersExpanded && (
         <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
@@ -260,7 +264,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 8. Backdrop filters */}
-      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} />
+      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} indicator={ind("backdrop-filter")} />
       {backdropFiltersExpanded && (
         <div style={{ padding: "4px 12px" }}>
           <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
