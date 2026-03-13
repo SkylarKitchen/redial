@@ -539,9 +539,9 @@ function InteractiveSlider({
     <div style={rowStyle} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
       {label && (
         <span style={modified ? {
-          ...labelStyle, color: indicatorColor.direct, display: "inline-flex", alignItems: "center", gap: 4,
+          ...labelStyle, color: indicatorColor.modified, display: "inline-flex", alignItems: "center", gap: 4,
         } : labelStyle}>
-          {modified && <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor.direct, boxShadow: `0 0 3px ${indicatorColor.direct}` }} />}
+          {modified && <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor.modified, boxShadow: `0 0 3px ${indicatorColor.modified}` }} />}
           {label}
         </span>
       )}
@@ -709,7 +709,7 @@ function ToggleSection({ title, hasIndicator, defaultOpen = false, children }: {
           {hasIndicator && (
             <span style={{
               display: "inline-block", width: 4, height: 4, borderRadius: "50%",
-              background: indicatorColor.direct, boxShadow: `0 0 3px ${indicatorColor.direct}`,
+              background: indicatorColor.modified, boxShadow: `0 0 3px ${indicatorColor.modified}`,
             }} />
           )}
         </span>
@@ -1214,7 +1214,7 @@ function InteractiveColorPicker() {
           }}>+</div>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {[color.destructive, "#22c55e", color.primary, indicatorColor.inherited, "#06b6d4"].map((c, i) => (
+          {[color.destructive, "#22c55e", color.primary, indicatorColor.modified, "#06b6d4"].map((c, i) => (
             <div key={i} style={{
               width: layout.swatchSizeSaved, height: layout.swatchSizeSaved, borderRadius: 3,
               border: `1px solid ${surface.track}`, background: c, cursor: "pointer",
@@ -1291,7 +1291,7 @@ export default function ShowcasePage() {
 
           <div className="card-label" style={{ marginTop: 12 }}>Indicator Colors</div>
           <div className="swatch-grid">
-            {(["direct", "inherited", "state", "element", "variable"] as const).map((type) => (
+            {(["modified", "none"] as const).map((type) => (
               <div key={type} className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor[type] }} /><div className="swatch-name">{type}</div><div className="swatch-value">{indicatorColor[type]}</div></div>
             ))}
           </div>
@@ -1417,7 +1417,7 @@ export default function ShowcasePage() {
               <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>&ndash;</span></div></div>
             </div>
             <div className="variant-col"><div className="variant-label">CSS Variable</div>
-              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2, gap: 4, overflow: "hidden", minWidth: 0 }}><span style={{ color: indicatorColor.variable, fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span><span style={{ color: blackAlpha(0.55), fontSize: 10, fontFamily: font.mono, flexShrink: 0 }}>768</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>VAR</span></div></div>
+              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2, gap: 4, overflow: "hidden", minWidth: 0 }}><span style={{ color: indicatorColor.modified, fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span><span style={{ color: blackAlpha(0.55), fontSize: 10, fontFamily: font.mono, flexShrink: 0 }}>768</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>VAR</span></div></div>
             </div>
             <div className="variant-col"><div className="variant-label">Modified (blue highlight)</div>
               <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}><div style={{ ...sizeInputLabel, color: color.primary }}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>320</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>px</span></div></div>
@@ -1570,7 +1570,7 @@ export default function ShowcasePage() {
           <div className="card" style={{ width: 340 }} data-component="LabelIndicator">
             <div className="card-label">Label Indicator — Webflow-style</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {(["direct", "inherited", "state", "variable", "none"] as const).map((type) => (
+              {(["modified", "none"] as const).map((type) => (
                 <div key={type} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{
                     fontSize: 11, fontFamily: font.sans,
@@ -1579,7 +1579,7 @@ export default function ShowcasePage() {
                     padding: "1px 6px", borderRadius: 3,
                     minWidth: layout.labelWidth,
                   }}>
-                    {type === "direct" ? "Width" : type === "inherited" ? "Color" : type === "state" ? "Opacity" : type === "variable" ? "Gap" : "Height"}
+                    {type === "modified" ? "Width" : "Height"}
                   </span>
                   <span style={{ fontSize: 9, fontFamily: font.mono, color: blackAlpha(0.55), textTransform: "uppercase" }}>{type}</span>
                 </div>

@@ -231,8 +231,8 @@ function DragHandle() {
   );
 }
 
-function Indicator({ type = "direct" }: { type?: string }) {
-  const c = indicatorColor[type as keyof typeof indicatorColor] ?? indicatorColor.direct;
+function Indicator({ type = "modified" }: { type?: string }) {
+  const c = indicatorColor[type as keyof typeof indicatorColor] ?? indicatorColor.modified;
   return <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: c, boxShadow: `0 0 3px ${c}` }} />;
 }
 
@@ -243,7 +243,7 @@ function SectionDivider() {
 function SliderTrack({ pct, label, unit = "px", value, modified }: { pct: number; label: string; unit?: string; value: number; modified?: boolean }) {
   return (
     <div style={rowBase}>
-      <span style={modified ? { ...labelBase, background: labelIndicator.direct.bg, color: labelIndicator.direct.text, padding: "1px 4px", borderRadius: 3 } : labelBase}>
+      <span style={modified ? { ...labelBase, background: labelIndicator.modified.bg, color: labelIndicator.modified.text, padding: "1px 4px", borderRadius: 3 } : labelBase}>
         {label}
       </span>
       <div style={{ flex: 1, height: layout.sliderHeight, background: filledTrackBg(pct), borderRadius: 2, position: "relative" }}>
@@ -783,7 +783,7 @@ function ColorPickerPopover() {
           <div style={{ background: "none", border: `1px solid ${surface.active}`, borderRadius: 3, color: blackAlpha(0.7), width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, lineHeight: 1 }}>+</div>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-          {[color.destructive, "#22c55e", color.primary, indicatorColor.inherited, "#06b6d4"].map((c, i) => (
+          {[color.destructive, "#22c55e", color.primary, indicatorColor.modified, "#06b6d4"].map((c, i) => (
             <div key={i} style={{ width: layout.swatchSizeSaved, height: layout.swatchSizeSaved, borderRadius: 3, border: `1px solid ${surface.track}`, background: c }} />
           ))}
         </div>
@@ -1250,14 +1250,14 @@ export default function FigmaPage() {
       <div className="row">
         <div data-component="LabelIndicators" style={{ ...panelShell, width: layout.panelWidth, padding: "12px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {(["direct", "inherited", "state", "variable", "none"] as const).map((type) => (
+            {(["modified", "none"] as const).map((type) => (
               <div key={type} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{
                   fontSize: 11, fontFamily: font.sans, minWidth: layout.labelWidth,
                   background: labelIndicator[type].bg, color: labelIndicator[type].text,
                   padding: "1px 6px", borderRadius: 3,
                 }}>
-                  {type === "direct" ? "Width" : type === "inherited" ? "Color" : type === "state" ? "Opacity" : type === "variable" ? "Gap" : "Height"}
+                  {type === "modified" ? "Width" : "Height"}
                 </span>
                 <span className="mono" style={{ fontSize: 9, color: blackAlpha(0.55), textTransform: "uppercase" }}>{type}</span>
                 {type !== "none" && <Indicator type={type} />}
