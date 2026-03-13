@@ -23,6 +23,8 @@ import {
   pasteStyles,
   hasClipboardStyles,
   clearRedundantOverrides,
+  stateKey,
+  parseStateKey,
 } from "../apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -476,5 +478,105 @@ describe("undo after save / HMR reconciliation", () => {
     const result = redo();
     expect(result).not.toBeNull();
     expect(el.style.getPropertyValue("color")).toBe("red");
+  });
+});
+
+// ─── stateKey / parseStateKey ─────────────────────────────────────────
+
+describe("stateKey / parseStateKey", () => {
+  it("returns bare prop for 'none' state", () => {
+    expect(stateKey("none", "color")).toBe("color");
+  });
+
+  it("returns composite key for non-none state", () => {
+    expect(stateKey("hover", "color")).toBe("hover::color");
+  });
+
+  it("parseStateKey roundtrips with stateKey for non-none state", () => {
+    const key = stateKey("hover", "font-size");
+    const { state, prop } = parseStateKey(key);
+    expect(state).toBe("hover");
+    expect(prop).toBe("font-size");
+  });
+
+  it("parseStateKey handles bare prop (no state)", () => {
+    const { state, prop } = parseStateKey("color");
+    expect(state).toBe("none");
+    expect(prop).toBe("color");
+  });
+
+  it("parseStateKey handles focus state", () => {
+    const { state, prop } = parseStateKey("focus::border-color");
+    expect(state).toBe("focus");
+    expect(prop).toBe("border-color");
+  });
+});
+
+// ─── diff with state-keyed entries ────────────────────────────────────
+
+describe("diff — state field", () => {
+  it("returns state field for composite-keyed overrides", () => {
+    const el = makeEl();
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    const changes = diff(el);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].prop).toBe("color");
+    expect(changes[0].state).toBe("hover");
+    expect(changes[0].to).toBe("red");
+  });
+
+  it("returns no state field for non-state overrides", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "blue");
+    const changes = diff(el);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].prop).toBe("color");
+    expect(changes[0].state).toBeUndefined();
+  });
+
+  it("handles mixed state and non-state overrides on same element", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "blue");
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    const changes = diff(el);
+    expect(changes).toHaveLength(2);
+    const baseChange = changes.find(c => !c.state);
+    const stateChange = changes.find(c => c.state === "hover");
+    expect(baseChange).toBeDefined();
+    expect(baseChange!.to).toBe("blue");
+    expect(stateChange).toBeDefined();
+    expect(stateChange!.to).toBe("red");
+  });
+});
+
+// ─── undo/redo with state-keyed entries ───────────────────────────────
+
+describe("undo/redo — state-keyed entries", () => {
+  it("state-keyed applyInlineStyle does NOT set inline style", () => {
+    const el = makeEl();
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    // Inline style should not be set for state-keyed props
+    expect(el.style.getPropertyValue("color")).toBe("");
+    expect(el.style.getPropertyValue("hover::color")).toBe("");
+  });
+
+  it("undo of state-keyed entry does NOT touch inline style", () => {
+    const el = makeEl();
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    undo();
+    // Should not crash and inline style should remain untouched
+    expect(el.style.getPropertyValue("color")).toBe("");
+  });
+
+  it("redo of state-keyed entry does NOT set inline style", () => {
+    const el = makeEl();
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    undo();
+    redo();
+    // Override is tracked but no inline style
+    expect(el.style.getPropertyValue("color")).toBe("");
+    const changes = diff(el);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].state).toBe("hover");
   });
 });
