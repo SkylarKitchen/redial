@@ -191,6 +191,23 @@ Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInpu
 
 ---
 
+## Phase 6 — Sub-Editor Token Debt & Shadow Consistency
+
+Deeper sweep of section-specific editors that were missed by the Phase 1 top-level audit.
+
+- [ ] **ShadowEditor hardcoded text colors** — `ShadowEditor.tsx` has 10+ hardcoded hex values (`#737373`, `#171717`, `#525252`, `#A3A3A3`) that map directly to existing `text.*` tokens (`text.disabled`, `text.primary`, `text.secondary`, `text.hint`). Also has hardcoded `rgba(59,130,246,...)` that should use `primaryAlpha()` and `rgba(0,0,0,...)` that should use `blackAlpha()`. Target: lines 100, 117, 119, 139, 238, 273–277, 376–387, 422.
+- [ ] **GradientEditor hardcoded text colors** — `GradientEditor.tsx` has `#171717`, `#737373`, `#C4C4C4`, `#525252` for labels and controls. Replace with `text.primary`, `text.disabled`, `text.hint`, `text.secondary`. Also has 5+ `rgba(0,0,0,...)` border/background values that should use `blackAlpha()`. Target: lines 209, 231, 250, 289–303, 323, 339.
+- [ ] **PositionOffsetDiagram hardcoded text colors** — `PositionOffsetDiagram.tsx` uses `#A3A3A3`, `#171717`, `#525252` for diagram labels. Replace with `text.hint`, `text.primary`, `text.secondary`. Target: lines 126, 204, 226, 243.
+- [ ] **SpacingGuidesOverlay hardcoded colors** — `SpacingGuidesOverlay.tsx` defines 4 top-level color constants (`#57A8FF`, `rgba(87,168,255,0.30)`, `#4CAF50`, `rgba(76,175,80,0.30)`) outside the token system. Add `overlay.spacing.*` token family to theme.ts (matching the pattern used for `overlay.grid.*` and `overlay.flexGap.*`). Target: lines 23–26.
+- [ ] **Dropdown shadow token adoption** — 4 components use inline `boxShadow: "0 4px 12px rgba(0,0,0,0.1)"` which is identical to `shadow.dropdown`. Replace with the token. Similarly, `ColorPickerEnhanced.tsx:452` uses `"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)"` which matches `shadow.picker`. Target: `TransformEditor.tsx:150`, `FilterSliders.tsx:362`, `SpacingValuePopover.tsx:178`, `ColorPickerEnhanced.tsx:452`.
+- [ ] **Internal z-index values outside token system** — Phase 1 cleaned up `2147483647` (max-int), but 14 components still use lower hardcoded z-index values (`100`, `200`, `10`, `1`, `2`) for internal stacking. Add `zIndex.internal` tiers to theme.ts (e.g. `zIndex.stickyHeader: 2`, `zIndex.dropdown: 100`, `zIndex.popover: 200`) to eliminate magic numbers. Target: `TransformEditor.tsx:148`, `layoutControls.tsx:225/384/586`, `BackgroundLayerList.tsx:235`, `FilterSliders.tsx:360`, `Footer.tsx:282`, `SpacingValuePopover.tsx:325`.
+- [ ] **TransformEditor hover uses `primaryAlpha` instead of `surface.*`** — `TransformEditor.tsx:165` uses `primaryAlpha(0.2)` for dropdown item hover, violating the hover convention (`surface.hover` for light backgrounds). Also uses `surface.track` for border (line 145) instead of `border.input`. Target: lines 145, 165.
+- [ ] **TextStyleRow dark-on-primary text** — `TextStyleRow.tsx:163` uses `rgba(255,255,255,0.6)` for active text color on primary background. This should use a token — add `color.primaryTextMuted` or use `darkToolbar.textMuted` if the semantic fits. Target: line 163.
+- [ ] **layoutControls dark dropdown hardcoded color** — `layoutControls.tsx:433` uses `#e8e8e8` for dark dropdown text. This doesn't match any theme token. Should use `darkToolbar.textMuted` or add an appropriate token. Target: line 433.
+- [ ] **BezierEditor/TransitionEditor canvas hardcoded values** — `BezierEditor.tsx:271` uses `rgba(0,0,0,0.04)` and `TransitionEditor.tsx:814/821` uses `rgba(0,0,0,0.03)` and `rgba(0,0,0,0.07)` for canvas fills and grid lines. These subtle background values should use `blackAlpha()` for consistency, even if the raw values are kept — it makes the intent clear and keeps the convention uniform. Target: `BezierEditor.tsx:271`, `TransitionEditor.tsx:814/821`.
+
+---
+
 ## Removed (audited 2026-03-13)
 
 Items removed because they were already fixed, became outdated as the codebase evolved, or were too speculative for low-risk polish:
