@@ -13,7 +13,7 @@ import type { IndicatorType } from "./theme";
 import { Section, ColorRow, SliderRow } from "./controls";
 import { discoverVariables, type CSSVariable } from "./discoverVariables";
 import { ROW, SUB_LABEL } from "./panelStyles";
-import { text, border, surface, font, color, labelIndicator, labelHighlight } from "./theme";
+import { text, border, surface, font, color, focusRing, labelIndicator, labelHighlight } from "./theme";
 
 // ─── Variable Row ────────────────────────────────────────────────────
 
@@ -214,7 +214,7 @@ function VariableRow({
           fontFamily: font.mono,
           color: text.primary,
           outline: "none",
-          boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
+          boxShadow: focused ? focusRing : "none",
         }}
         tabIndex={0}
         value={draft}

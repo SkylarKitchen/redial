@@ -6,7 +6,7 @@
  */
 
 import { useCallback } from "react";
-import { text, font, segment } from "./theme";
+import { text, font, segment, focusRing } from "./theme";
 import { ms } from "./timing";
 
 export interface SegmentOption {
@@ -77,7 +77,7 @@ export function WebflowSegmentedControl({
               outline: "none",
             }}
             onFocus={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px rgba(59,130,246,0.3)`;
+              (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
             }}
             onBlur={(e) => {
               (e.currentTarget as HTMLElement).style.boxShadow = "none";

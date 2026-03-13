@@ -13,7 +13,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, font, zIndex } from "./theme";
+import { text, blackAlpha, color, border as borderTokens, shadow, focusRing, font, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { TextStyle } from "./textStyleScanner";
 
@@ -222,7 +222,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
             cursor: "pointer",
             outline: "none",
             transition: `background-color ${ms("fast")}`,
-            boxShadow: focused ? `0 0 0 2px ${color.ring}` : "none",
+            boxShadow: focused ? focusRing : "none",
           }}
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

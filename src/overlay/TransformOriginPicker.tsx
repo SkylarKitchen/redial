@@ -15,7 +15,7 @@
 
 import { useState, useCallback } from "react";
 import { ms } from "./timing";
-import { color } from "./theme";
+import { color, focusRing } from "./theme";
 
 export interface TransformOriginPickerProps {
   value: string;
@@ -156,8 +156,7 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
                 }
               }}
               onFocus={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow =
-                  "0 0 0 2px rgba(59,130,246,0.3)";
+                (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
               }}
               onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.boxShadow = "none";

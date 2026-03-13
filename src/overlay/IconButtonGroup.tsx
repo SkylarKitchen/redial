@@ -9,7 +9,7 @@
 import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { color, surface, text, border as borderTokens, primaryAlpha } from "./theme";
+import { color, surface, text, border as borderTokens, focusRing, primaryAlpha } from "./theme";
 import { ms } from "./timing";
 
 export interface IconButtonGroupProps {
@@ -165,7 +165,7 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         backgroundColor: !isActive && hovered ? surface.hover : undefined,
         color: !isActive ? color.mutedForeground : undefined,
         fontWeight: isActive ? 500 : 400,
-        boxShadow: focused ? `0 0 0 2px ${primaryAlpha(0.3)}` : "none",
+        boxShadow: focused ? focusRing : "none",
       }}
     >
       {opt.icon}

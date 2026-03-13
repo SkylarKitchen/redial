@@ -79,7 +79,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     if (!document.getElementById(id)) {
       const style = document.createElement('style');
       style.id = id;
-      style.textContent = `.tuner-focusable:focus-visible { outline: 1px solid rgba(59,130,246,0.5); outline-offset: 1px; }`;
+      style.textContent = `.tuner-focusable:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); }`;
       document.head.appendChild(style);
     }
     return () => { document.getElementById(id)?.remove(); };

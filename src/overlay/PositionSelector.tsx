@@ -10,7 +10,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import type { IndicatorType } from "./theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, blackAlpha, primaryAlpha, font, labelIndicator, labelHighlight } from "./theme";
+import { color, text, border, surface, blackAlpha, primaryAlpha, focusRing, font, labelIndicator, labelHighlight } from "./theme";
 import { useResetPopover } from "./controls";
 
 // ─── Icons ──────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ export function PositionSelector({
             setOpen((o) => !o);
           }}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 2px ${color.ring}`;
+            (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
           }}
           onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.boxShadow = "none";

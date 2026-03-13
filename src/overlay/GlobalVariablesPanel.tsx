@@ -38,7 +38,7 @@ import { DragHandle } from "./DragHandle";
 import { useDragReorder } from "./useDragReorder";
 import { useFocusTrap } from "./useFocusTrap";
 import { ROW, MINI_ACTION_BUTTON } from "./panelStyles";
-import { text, border, surface, font, color, shadow, labelIndicator, labelHighlight, layout, zIndex } from "./theme";
+import { text, border, surface, font, color, focusRing, shadow, labelIndicator, labelHighlight, layout, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./theme";
 
@@ -534,7 +534,7 @@ function GlobalVariableRow({
         borderRadius: 4,
         border: focused ? `1px solid ${color.primary}` : `1px solid ${border.default}`,
         background: surface.subtle,
-        boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
+        boxShadow: focused ? focusRing : "none",
       }}>
         <input
           ref={inputRef}
@@ -586,7 +586,7 @@ function GlobalVariableRow({
         border: focused ? `1px solid ${color.primary}` : `1px solid ${border.default}`,
         borderRadius: 4, padding: "0 6px", fontSize: 10, fontFamily: font.mono,
         color: text.primary, outline: "none", boxSizing: "border-box",
-        boxShadow: focused ? `0 0 0 2px ${color.primary}33` : "none",
+        boxShadow: focused ? focusRing : "none",
       }}
       tabIndex={0}
       value={draft}
