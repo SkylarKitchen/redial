@@ -96,7 +96,7 @@ export const surface = {
 
 export const font = {
   mono: "ui-monospace, 'SF Mono', monospace",
-  sans: "system-ui, sans-serif",
+  sans: "Inter, system-ui, sans-serif",
 } as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────

@@ -19,7 +19,7 @@ import { isAutoSize } from "./getAuthoredValue";
 import { ChevronRight } from "lucide-react";
 import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
 import { ms } from "./timing";
-import { text, border, surface } from "./theme";
+import { text, border, surface, font } from "./theme";
 import { ROW, LABEL } from "./panelStyles";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
@@ -405,7 +405,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
                 fontSize: 11.5,
                 letterSpacing: "-0.115px",
                 color: text.primary,
-                fontFamily: "Inter, system-ui, sans-serif",
+                fontFamily: font.sans,
                 paddingLeft: 8,
                 paddingRight: 24,
                 border: "none",
