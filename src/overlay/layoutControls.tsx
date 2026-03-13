@@ -53,7 +53,7 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
         borderRadius: 2,
         padding: "0 1px",
         lineHeight: "16px",
-        width: hasHighlight ? undefined : 49,
+        width: 49,
         background: colors.bg,
         color: colors.text,
         fontFamily: font.sans,
