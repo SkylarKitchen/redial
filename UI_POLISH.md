@@ -47,7 +47,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 ## Phase 3 — Panel Chrome & Interaction (larger effort)
 
 ### Panel Behavior
-- [ ] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant like `shadow.panelDrag`). Revert on drop. Target: `Overlay.tsx` drag handlers.
+- [x] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant like `shadow.panelDrag`). Revert on drop. Target: `Overlay.tsx` drag handlers.
 - [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage, just React state). Target: `WebflowPanel.tsx`.
 
 ### Visual Feedback
