@@ -52,8 +52,9 @@ describe("Fix 1: PositionSelector uses portal for dropdown", () => {
     expect(positionSrc).not.toContain("0 4px 16px rgba(0,0,0,0.1)");
   });
 
-  it("click-outside handler checks both container and portal", () => {
-    expect(positionSrc).toContain('querySelector("[data-position-selector-portal]")');
+  it("click-outside uses ref-based detection via usePortalDropdown hook", () => {
+    expect(positionSrc).toContain("usePortalDropdown");
+    expect(positionSrc).toContain("portalRef");
   });
 });
 
@@ -86,13 +87,15 @@ describe("Fix 2: SelectRowCustom uses portal for dropdown", () => {
     expect(fnBody).not.toMatch(/zIndex:\s*200/);
   });
 
-  it("click-outside handler checks both container and portal", () => {
-    expect(fnBody).toContain('querySelector("[data-select-custom-portal]")');
+  it("click-outside uses ref-based detection via usePortalDropdown hook", () => {
+    expect(fnBody).toContain("usePortalDropdown");
+    expect(fnBody).toContain("portalRef");
   });
 
   it("has triggerRef for position computation", () => {
     expect(fnBody).toContain("triggerRef");
-    expect(fnBody).toContain("getBoundingClientRect");
+    // Position computation is now in the usePortalDropdown hook
+    expect(fnBody).toContain("updateDropdownPos");
   });
 });
 

@@ -154,6 +154,3 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 ## Issues Found & Fixed
 
 (Entries added by /qa as it runs)
-
-| Date | Scope | Issue | Fix | Commit |
-|------|-------|-------|-----|--------|

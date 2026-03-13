@@ -771,6 +771,10 @@ export function resetProp(el: Element, prop: string): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
   const entry = elOverrides.get(prop);
+
+  // Save the initial value before deleting — needed for cascade logic below.
+  const revertValue = entry?.initial;
+
   if (entry && entry.initial !== entry.current) dirtyCount--;
   if (!prop.includes("::")) {
     (el as HTMLElement).style.removeProperty(prop);
@@ -788,13 +792,11 @@ export function resetProp(el: Element, prop: string): void {
     }
   }
 
-  // Cascade-reset: when display is reset to a non-flex/non-grid value,
-  // clear stale flex/grid layout overrides that are no longer visible.
-  if (prop === "display") {
-    const computed = getComputedStyle(el).getPropertyValue("display").trim();
-    const isFlexOrGrid = computed === "flex" || computed === "inline-flex" ||
-      computed === "grid" || computed === "inline-grid";
-    if (!isFlexOrGrid) {
+  // Cascade-reset: when display reverts to a non-flex/non-grid value,
+  // clear stale flex/grid layout overrides whose controls are no longer visible.
+  if (prop === "display" && revertValue !== undefined) {
+    const flexGridValues = new Set(["flex", "inline-flex", "grid", "inline-grid"]);
+    if (!flexGridValues.has(revertValue)) {
       const cascadeProps = [
         "flex-direction", "justify-content", "align-items", "justify-items",
         "align-content", "flex-wrap", "gap", "row-gap", "column-gap",

@@ -1,0 +1,112 @@
+/*
+ * semantic.css — Meaningful token aliases
+ *
+ * These tokens describe WHERE/WHY a value is used, not what it is.
+ * They reference primitives from primitives.css.
+ *
+ * Rule: Component CSS should ONLY use these tokens.
+ *       Dark mode is handled entirely here — no per-component overrides needed.
+ */
+
+:root {
+  /* ── Text ───────────────────────────────────── */
+  --text-primary:   var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-500);
+  --text-tertiary:  var(--color-neutral-400);
+  --text-disabled:  var(--color-neutral-300);
+  --text-accent:    var(--color-brand-500);
+  --text-on-accent: #ffffff;
+  --text-inverse:   var(--color-neutral-50);
+  --text-on-success: var(--color-green-800);
+  --text-on-warning: var(--color-amber-800);
+  --text-on-error:   var(--color-red-800);
+
+  /* ── Surfaces ───────────────────────────────── */
+  --surface-page:           var(--color-neutral-50);
+  --surface-primary:        #ffffff;
+  --surface-inset:          var(--color-neutral-50);
+  --surface-muted:          var(--color-neutral-100);
+  --surface-elevated:       #ffffff;
+  --surface-inverse:        var(--color-neutral-900);
+  --surface-overlay:        rgba(0, 0, 0, 0.5);
+  --surface-accent-subtle:  var(--color-brand-50);
+  --surface-success-subtle: var(--color-green-100);
+  --surface-warning-subtle: var(--color-amber-100);
+  --surface-error-subtle:   var(--color-red-100);
+
+  /* ── Borders ────────────────────────────────── */
+  --border-default: var(--color-neutral-200);
+  --border-subtle:  var(--color-neutral-100);
+  --border-strong:  var(--color-neutral-400);
+  --border-accent:  var(--color-brand-500);
+  --border-success: var(--color-green-500);
+  --border-warning: var(--color-amber-500);
+  --border-error:   var(--color-red-500);
+
+  /* ── Interactive ────────────────────────────── */
+  --interactive-default:      var(--color-brand-500);
+  --interactive-hover:        var(--color-brand-600);
+  --interactive-active:       var(--color-brand-700);
+  --interactive-subtle:       var(--color-brand-50);
+  --interactive-subtle-hover: var(--color-brand-100);
+  --interactive-light:        var(--color-brand-300);
+
+  /* ── Status ─────────────────────────────────── */
+  --status-success: var(--color-green-500);
+  --status-warning: var(--color-amber-500);
+  --status-error:   var(--color-red-500);
+  --status-info:    var(--color-brand-500);
+
+  /* ── Shadows ────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Dark Mode — remap semantics, not components ── */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Text */
+    --text-primary:    var(--color-neutral-50);
+    --text-secondary:  var(--color-neutral-400);
+    --text-tertiary:   var(--color-neutral-500);
+    --text-disabled:   var(--color-neutral-600);
+    --text-accent:     var(--color-brand-400);
+    --text-inverse:    var(--color-neutral-900);
+    --text-on-success: #86efac;
+    --text-on-warning: var(--color-amber-300);
+    --text-on-error:   var(--color-red-300);
+
+    /* Surfaces */
+    --surface-page:           var(--color-neutral-900);
+    --surface-primary:        var(--color-neutral-800);
+    --surface-inset:          var(--color-neutral-800);
+    --surface-muted:          var(--color-neutral-700);
+    --surface-elevated:       var(--color-neutral-700);
+    --surface-inverse:        var(--color-neutral-50);
+    --surface-accent-subtle:  var(--color-brand-900);
+    --surface-success-subtle: var(--color-green-900);
+    --surface-warning-subtle: var(--color-amber-900);
+    --surface-error-subtle:   var(--color-red-900);
+
+    /* Borders */
+    --border-default: var(--color-neutral-700);
+    --border-subtle:  var(--color-neutral-800);
+    --border-strong:  var(--color-neutral-500);
+    --border-accent:  var(--color-brand-400);
+
+    /* Interactive */
+    --interactive-default:      var(--color-brand-400);
+    --interactive-hover:        var(--color-brand-300);
+    --interactive-active:       var(--color-brand-200);
+    --interactive-subtle:       var(--color-brand-900);
+    --interactive-subtle-hover: var(--color-brand-800);
+    --interactive-light:        var(--color-brand-600);
+
+    /* Shadows — deeper in dark mode */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+}

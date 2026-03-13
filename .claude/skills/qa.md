@@ -20,12 +20,12 @@ Chrome browser tools (Claude-in-Chrome MCP) are **REQUIRED**. If `computer`, `ja
 2. Run `npm test` — capture baseline pass count (note the number)
 3. Use `tabs_context_mcp` to get tab context
 4. Use `navigate` to open `http://localhost:3000/demo`
-5. Wait 2s, then use `javascript_tool` to check: `!!document.querySelector('.__tuner-root')`
+5. Use `javascript_tool` to check: `!!document.querySelector('.__tuner-root')`
 6. If not found, dispatch `tuner:select` manually via `javascript_tool`:
    ```javascript
    document.dispatchEvent(new CustomEvent('tuner:select', { detail: document.querySelector('[data-tuner-demo]') }));
    ```
-7. Wait 2s, check again. If still not found after 3 attempts: abort with "Panel did not open. Start dev server with `cd test-app && npm run dev`"
+7. Check again with `javascript_tool`. If still not found after 3 attempts: abort with "Panel did not open. Start dev server with `cd test-app && npm run dev`"
 
 ### Step 1: Read the Checklist
 
@@ -62,7 +62,7 @@ For each unchecked item:
 ### Step 3: Fix Workflow (for each issue found)
 
 **3a. Write a failing test**
-- Create test in `src/overlay/__tests__/qa-{scope}.test.ts`
+- Create test in `src/overlay/__tests__/<descriptive-bug-name>.test.ts` (e.g., `segmented-control-deselect.test.ts`)
 - Use existing patterns: `reset-audit.test.ts` for source-level audits, happy-dom for behavioral tests
 - The test MUST fail before your fix
 - Use `// @vitest-environment happy-dom` header when DOM APIs are needed
@@ -79,7 +79,7 @@ For each unchecked item:
 2. `npm test` — new test must pass, existing tests must not break
 3. Compare test count against baseline — if a previously-passing test now fails:
    - Attempt to fix the regression (2 tries max)
-   - If that fails: `git checkout -- <changed files>`, mark item as `[SKIPPED: fix caused regression]`
+   - If that fails: `git checkout -- <changed source files>` (preserve the test file), mark item as `[SKIPPED: fix caused regression]`
 4. Re-test in Chrome — the original interaction should now work
 
 **3d. Commit**
@@ -152,9 +152,13 @@ document.activeElement; // Check after Tab
 
 ### How to verify portal rendering
 ```javascript
-// Portals render to document.body, not inside .__tuner-root
-const portals = document.querySelectorAll('body > [data-radix-portal], body > [style*="position: fixed"]');
-portals.length; // Should be > 0 when dropdown is open
+// Portals via createPortal render as direct children of document.body
+// Check for fixed-position elements outside the panel when a dropdown is open
+const panelRoot = document.querySelector('.__tuner-root');
+const bodyFixedEls = [...document.body.children].filter(el =>
+  el !== panelRoot && getComputedStyle(el).position === 'fixed'
+);
+bodyFixedEls.length; // Should be > 0 when a dropdown/picker is open
 ```
 
 ## Rules
