@@ -252,7 +252,7 @@ export function SizeInputCell({
       </div>
 
       {/* Unit / keyword toggle */}
-      <div className="shrink-0 pr-[3px]" style={{ borderLeft: `1px solid ${blackAlpha(0.07)}`, alignSelf: "stretch", display: "flex", alignItems: "center" }}>
+      <div style={{ borderLeft: `1px solid ${blackAlpha(0.07)}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
         <UnitSelector
           value={isVariable ? "VAR" : isKeyword ? "–" : unit}
           options={units}
