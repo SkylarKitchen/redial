@@ -32,7 +32,7 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [x] **Monospace font audit**: Audited — all 90+ `fontFamily` usages already use `font.mono`. Two `ui-monospace` references in controls.tsx are intentional font-family preview styles. No violations.
 - [x] **Border radius consistency**: Added `layout.pillRadius` (4px) token. Updated ScopePill (was 4, now token) and PILL_BUTTON (was 3, now 4 via token).
 - [x] **Separator consistency**: Fixed 2 hardcoded rgba separators (ShadowEditor, SideSelector) → `border.subtle`. Remaining rgba values are grid lines, hover states, or non-separator borders — intentional.
-- [ ] **Icon opacity audit**: Check all lucide-react icon usages. Labels should use `text.label`, secondary icons `text.secondary`. Normalize any using raw opacity or hardcoded colors.
+- [x] **Icon opacity audit**: Normalized 3 icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (`opacity: 0.6`), Header.tsx ChevronRight ×2 (`opacity: 0.4`). Remaining icon colors already use theme tokens.
 
 ---
 
@@ -113,6 +113,9 @@ Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. Aft
 
 ### 2026-03-13 — Copy button checkmark
 Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
+
+### 2026-03-13 — Icon opacity audit
+Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (was `opacity: 0.6`), Header.tsx ChevronRight ×2 (were `opacity: 0.4`). All other icon usages already use theme tokens.
 
 ### 2026-03-12 — Value change flash
 Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`. Brief `primaryAlpha(0.12)` background flash on value change (200ms fade).
