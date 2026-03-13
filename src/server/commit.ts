@@ -94,6 +94,7 @@ async function findFileRecursive(
 
 /**
  * Resolve a source file path. Handles:
+ * - Source map resolution (if cssHref is provided) → accurate file + line
  * - Full/relative paths that exist → return directly
  * - Bare filenames → recursive search from projectRoot
  * - Component name hint → try ComponentName.module.scss / .module.css
@@ -101,8 +102,23 @@ async function findFileRecursive(
 export async function resolveSourceFile(
   projectRoot: string,
   sourceFile: string,
-  componentName?: string
+  componentName?: string,
+  cssHref?: string
 ): Promise<string | null> {
+  // Try source map resolution first (best accuracy)
+  if (cssHref) {
+    const mapped = trySourceMapResolution(cssHref, 1, 0, projectRoot);
+    if (mapped) {
+      const mappedPath = resolve(projectRoot, mapped.file);
+      try {
+        await stat(mappedPath);
+        return mappedPath;
+      } catch {
+        // Mapped file doesn't exist on disk — fall through to existing logic
+      }
+    }
+  }
+
   // Reject path traversal attempts early
   const segments = sourceFile.split(/[/\\]/);
   if (segments.includes("..")) {
