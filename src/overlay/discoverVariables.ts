@@ -223,3 +223,184 @@ export function groupByCategory(vars: CSSVariable[]): Record<VarCategory, CSSVar
 
   return groups;
 }
+
+// ─── Prefix-Based Grouping ──────────────────────────────────────────
+
+export interface PrefixGroup {
+  prefix: string;
+  label: string;
+  variables: CSSVariable[];
+  subgroups: Map<string, { label: string; variables: CSSVariable[] }>;
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * Group variables by their dash-separated prefix segments.
+ * - 1 segment (e.g. `--foo`): ungrouped
+ * - 2 segments (e.g. `--cards-gap`): group = first segment
+ * - 3+ segments (e.g. `--cards-header-bg`): group = first, subgroup = second
+ *
+ * Max 2 nesting levels. Groups and variables sorted alphabetically.
+ */
+export function groupByPrefix(vars: CSSVariable[]): {
+  groups: PrefixGroup[];
+  ungrouped: CSSVariable[];
+} {
+  const ungrouped: CSSVariable[] = [];
+  const groupMap = new Map<string, PrefixGroup>();
+
+  for (const v of vars) {
+    // Strip leading "--" and split on "-"
+    const segments = v.name.slice(2).split("-");
+
+    if (segments.length === 1) {
+      ungrouped.push(v);
+      continue;
+    }
+
+    const prefix = segments[0];
+    let group = groupMap.get(prefix);
+    if (!group) {
+      group = {
+        prefix,
+        label: capitalize(prefix),
+        variables: [],
+        subgroups: new Map(),
+      };
+      groupMap.set(prefix, group);
+    }
+
+    if (segments.length === 2) {
+      // 2-segment var goes directly into the group's variables
+      group.variables.push(v);
+    } else {
+      // 3+ segments: second segment is the subgroup
+      const subKey = segments[1];
+      let sub = group.subgroups.get(subKey);
+      if (!sub) {
+        sub = { label: capitalize(subKey), variables: [] };
+        group.subgroups.set(subKey, sub);
+      }
+      sub.variables.push(v);
+    }
+  }
+
+  // Sort everything
+  ungrouped.sort((a, b) => a.name.localeCompare(b.name));
+
+  const groups = Array.from(groupMap.values()).sort((a, b) =>
+    a.prefix.localeCompare(b.prefix),
+  );
+
+  for (const g of groups) {
+    g.variables.sort((a, b) => a.name.localeCompare(b.name));
+    for (const sub of g.subgroups.values()) {
+      sub.variables.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  }
+
+  return { groups, ungrouped };
+}
+
+// ─── Reference Scanner ──────────────────────────────────────────────
+
+/**
+ * Scan all stylesheets and inline styles for references to a given
+ * CSS variable, returning each match with its rule/element context.
+ */
+export function scanVarReferences(
+  varName: string,
+): Array<{ rule: CSSStyleRule; prop: string; value: string }> {
+  const escaped = varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`var\\(\\s*${escaped}\\s*(?:,|\\))`, "g");
+  const results: Array<{ rule: CSSStyleRule; prop: string; value: string }> = [];
+
+  // Scan stylesheets
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      walkRules(sheet.cssRules, (rule) => {
+        for (let i = 0; i < rule.style.length; i++) {
+          const prop = rule.style[i];
+          const value = rule.style.getPropertyValue(prop);
+          if (re.test(value)) {
+            results.push({ rule, prop, value });
+          }
+          re.lastIndex = 0;
+        }
+      });
+    } catch {
+      // Cross-origin stylesheets — skip
+    }
+  }
+
+  // Scan inline styles
+  const inlineEls = document.querySelectorAll("[style]");
+  for (const el of Array.from(inlineEls)) {
+    const htmlEl = el as HTMLElement;
+    for (let i = 0; i < htmlEl.style.length; i++) {
+      const prop = htmlEl.style[i];
+      const value = htmlEl.style.getPropertyValue(prop);
+      if (re.test(value)) {
+        // Represent inline style matches as synthetic CSSStyleRule-like entries
+        results.push({ rule: null as unknown as CSSStyleRule, prop, value });
+      }
+      re.lastIndex = 0;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Replace all references to `oldName` with `newName` across stylesheets
+ * and inline styles. Returns the count of properties updated.
+ */
+export function replaceVarReferences(oldName: string, newName: string): number {
+  const escaped = oldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match var(oldName) and var(oldName, ...) — capture the delimiter after the name
+  const re = new RegExp(`var\\(\\s*${escaped}\\s*(,|\\))`, "g");
+  let count = 0;
+
+  // Replace in stylesheets
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      walkRules(sheet.cssRules, (rule) => {
+        for (let i = 0; i < rule.style.length; i++) {
+          const prop = rule.style[i];
+          const value = rule.style.getPropertyValue(prop);
+          re.lastIndex = 0;
+          if (re.test(value)) {
+            re.lastIndex = 0;
+            const newValue = value.replace(re, `var(${newName}$1`);
+            rule.style.setProperty(prop, newValue);
+            count++;
+          }
+        }
+      });
+    } catch {
+      // Cross-origin stylesheets — skip
+    }
+  }
+
+  // Replace in inline styles
+  const inlineEls = document.querySelectorAll("[style]");
+  for (const el of Array.from(inlineEls)) {
+    const htmlEl = el as HTMLElement;
+    for (let i = 0; i < htmlEl.style.length; i++) {
+      const prop = htmlEl.style[i];
+      const value = htmlEl.style.getPropertyValue(prop);
+      re.lastIndex = 0;
+      if (re.test(value)) {
+        re.lastIndex = 0;
+        const newValue = value.replace(re, `var(${newName}$1`);
+        htmlEl.style.setProperty(prop, newValue);
+        count++;
+      }
+    }
+  }
+
+  return count;
+}

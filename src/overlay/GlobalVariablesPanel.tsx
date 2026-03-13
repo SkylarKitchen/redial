@@ -251,7 +251,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "10px 12px 8px",
+          padding: "6px 12px 8px",
           borderBottom: `1px solid ${border.subtle}`,
           flexShrink: 0,
         }}

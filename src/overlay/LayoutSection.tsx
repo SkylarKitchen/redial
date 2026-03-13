@@ -6,7 +6,7 @@
 
 import { useState, useCallback, memo } from "react";
 import { ms } from "./timing";
-import { Section, SliderRow, SelectRow, TextRow, ValueInput } from "./controls";
+import { Section, SliderRow, SelectRow, TextRow, ValueInput, useResetPopover } from "./controls";
 import { AlignBox } from "./AlignBox";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { SegmentedControl } from "./SegmentedControl";
@@ -28,16 +28,22 @@ import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON 
 
 // ─── Compact label with highlight ─────────────────────────────────────
 
-function CompactLabel({ label, indicator }: { label: string; indicator: IndicatorType }) {
+function CompactLabel({ label, indicator, onReset }: { label: string; indicator: IndicatorType; onReset?: () => void }) {
   const m = indicator !== "none";
+  const resetPopover = useResetPopover(indicator, onReset);
   return (
-    <span style={COMPACT_INPUT_LABEL}>
-      <span style={{
-        background: m ? labelIndicator.modified.bg : "transparent",
-        color: m ? labelIndicator.modified.text : text.label,
-        ...(m ? labelHighlight : {}),
-      }}>{label}</span>
-    </span>
+    <>
+      <span ref={resetPopover.anchorRef} style={{ ...COMPACT_INPUT_LABEL, cursor: m && onReset ? "pointer" : undefined }}
+        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
+      >
+        <span style={{
+          background: m ? labelIndicator.modified.bg : "transparent",
+          color: m ? labelIndicator.modified.text : text.label,
+          ...(m ? labelHighlight : {}),
+        }}>{label}</span>
+      </span>
+      {resetPopover.node}
+    </>
   );
 }
 

@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
-import { Section, SelectRow, ColorRow } from "./controls";
+import { Section, SelectRow, ColorRow, useResetPopover } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "./unitConversion";
@@ -129,6 +129,10 @@ export const TypographySection = memo(function TypographySection({
   const { conversionHint: textIndentHint, fireConversionHint: fireTextIndentHint } = useConversionHint();
   const { conversionHint: typoColGapHint, fireConversionHint: fireTypoColGapHint } = useConversionHint();
 
+  // ── Reset popovers for custom labels ──
+  const fontSizeResetPopover = useResetPopover(ind("font-size"), () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); });
+  const lineHeightResetPopover = useResetPopover(ind("line-height"), () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); });
+
   // ── Text style scanning ──
   const textStyles = useMemo(() => scanTextStyles(), []);
   const matchedTextStyle = useMemo(
@@ -227,11 +231,13 @@ export const TypographySection = memo(function TypographySection({
       {/* Size + Height side-by-side compact cells */}
       <div style={{ ...ROW, gap: layout.compactGap }}>
         <span
-          style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); } }}
+          ref={fontSizeResetPopover.anchorRef}
+          style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3, cursor: ind("font-size") === "modified" ? "pointer" : "default" }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); return; } fontSizeResetPopover.triggerOpen(); }}
         >
           <span style={indicatorStyle(ind("font-size"))}>Size</span>
         </span>
+        {fontSizeResetPopover.node}
         <TypoValueCell
           value={fontSize}
           onChange={handleFontSizeChange}
@@ -242,11 +248,13 @@ export const TypographySection = memo(function TypographySection({
           conversionHint={fontSizeHint}
         />
         <span
-          style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height")); } }}
+          ref={lineHeightResetPopover.anchorRef}
+          style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3, cursor: ind("line-height") === "modified" ? "pointer" : "default" }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height")); return; } lineHeightResetPopover.triggerOpen(); }}
         >
           <span style={indicatorStyle(ind("line-height"))}>Height</span>
         </span>
+        {lineHeightResetPopover.node}
         <TypoValueCell
           value={lineHeight}
           onChange={handleLineHeightChange}

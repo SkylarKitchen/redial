@@ -873,6 +873,91 @@ export function applyCustomProperty(
 }
 
 /**
+ * Add a new CSS custom property with validation.
+ * Name must start with `--` and match /^--[\w-]+$/.
+ */
+export function addCustomProperty(
+  scope: Element,
+  name: string,
+  value: string
+): void {
+  if (!/^--[\w-]+$/.test(name)) {
+    throw new Error(`Invalid custom property name: "${name}". Must match /^--[\\w-]+$/.`);
+  }
+  applyCustomProperty(scope, name, value);
+}
+
+/**
+ * Remove a CSS custom property from its scope element.
+ * Pushes an undo entry so the removal can be reversed.
+ * Respects batchDepth so it works inside beginBatch/endBatch.
+ */
+export function removeCustomProperty(scope: Element, name: string): void {
+  // Read current value from tracking or computed style
+  const tracked = customPropertyOverrides.get(name);
+  const currentValue = tracked?.current ?? getComputedStyle(scope).getPropertyValue(name).trim();
+
+  // New action clears redo
+  if (redoStack.length > 0) redoStack.length = 0;
+
+  // Remove from DOM
+  (scope as HTMLElement).style.removeProperty(name);
+
+  // Remove from customPropertyOverrides
+  customPropertyOverrides.delete(name);
+
+  // Remove from overrides map and adjust dirtyCount
+  const scopeOverrides = overrides.get(scope);
+  if (scopeOverrides) {
+    const entry = scopeOverrides.get(name);
+    if (entry && entry.initial !== entry.current) dirtyCount--;
+    scopeOverrides.delete(name);
+    if (scopeOverrides.size === 0) overrides.delete(scope);
+  }
+
+  // Push undo entry — route to batchEntries when inside a batch
+  const undoEntry: SingleUndoEntry = { el: scope, prop: name, prev: currentValue, state: "none" };
+  if (batchDepth > 0) {
+    batchEntries.push(undoEntry);
+  } else {
+    undoStack.push(undoEntry);
+    if (undoStack.length > MAX_UNDO) {
+      undoStack.splice(0, undoStack.length - MAX_UNDO);
+    }
+  }
+
+  schedulePersist();
+  notifyListeners();
+}
+
+/**
+ * Rename a CSS custom property. Wraps remove + apply in a batch for single undo.
+ * Optionally accepts a `replaceRefs` callback to update var() references.
+ * Returns the number of references updated (0 if no callback provided).
+ */
+export async function renameCustomProperty(
+  scope: Element,
+  oldName: string,
+  newName: string,
+  replaceRefs?: (oldName: string, newName: string) => number
+): Promise<number> {
+  // Read current value before any mutations
+  const tracked = customPropertyOverrides.get(oldName);
+  const value = tracked?.current ?? getComputedStyle(scope).getPropertyValue(oldName).trim();
+
+  beginBatch();
+  removeCustomProperty(scope, oldName);
+  applyCustomProperty(scope, newName, value);
+  endBatch();
+
+  // Replace var() references if callback provided
+  if (replaceRefs) {
+    return replaceRefs(oldName, newName);
+  }
+  return 0;
+}
+
+/**
  * Check if a custom property has been modified.
  */
 export function isCustomPropertyDirty(name: string): boolean {

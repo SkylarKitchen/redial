@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, memo } from "react";
-import { Section, SliderRow, SelectRow, NumberRow } from "./controls";
+import { Section, SliderRow, SelectRow, NumberRow, useResetPopover } from "./controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
@@ -140,6 +140,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
     return !!f && f !== "none" && f !== "";
   });
 
+  // ── Reset popover for Outline label ──
+  const outlineResetPopover = useResetPopover(ind("outline-style"), () => resetCssStr("outline-style", setOutlineStyle));
+
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
@@ -226,15 +229,17 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 3. Outline */}
       <div style={ROW}>
         <span
-          style={{ ...LABEL, cursor: "default" }}
-          title={ind("outline-style") !== "none" ? "Option+Click to reset" : undefined}
-          onClick={(e) => { if (e.altKey) { resetCssStr("outline-style", setOutlineStyle); } }}
+          ref={outlineResetPopover.anchorRef}
+          style={{ ...LABEL, cursor: ind("outline-style") === "modified" ? "pointer" : "default" }}
+          title={ind("outline-style") !== "none" ? "Click to reset" : undefined}
+          onClick={(e) => { if (e.altKey) { resetCssStr("outline-style", setOutlineStyle); return; } outlineResetPopover.triggerOpen(); }}
         >
           <span style={indicatorStyle(ind("outline-style"))}>
             Outline
           </span>
         </span>
         <IconButtonGroup options={OUTLINE_STYLE_OPTIONS} value={outlineStyle} onChange={handleOutlineStyleChange} aria-label="Outline style" />
+        {outlineResetPopover.node}
       </div>
 
       {/* 4. Box shadows */}

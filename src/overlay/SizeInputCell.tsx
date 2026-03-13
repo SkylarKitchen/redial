@@ -16,8 +16,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "./UnitSelector";
-import { selectAllOnDoubleClick, useValueFlash } from "./controls";
+import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "./controls";
 import { color, text, border, surface, font, primaryAlpha } from "./theme";
+import type { IndicatorType } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";
 import { evaluateMathExpr } from "./inputMath";
 import { useWheelAdjust } from "./useWheelAdjust";
@@ -80,6 +81,8 @@ export function SizeInputCell({
   const isVariable = keyword === null && (cssVar ?? null) !== null;
   const flashStyle = useValueFlash(value);
   useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null || isVariable });
+  const indicator: IndicatorType = isModified ? "modified" : "none";
+  const resetPopover = useResetPopover(indicator, onReset);
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -173,10 +176,11 @@ export function SizeInputCell({
         background: surface.subtle,
       }}
     >
-      {/* Modified dot */}
-      {isModified && <span style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4 }} title="Modified — Option+Click to reset" />}
+      {/* Modified dot + Label — click opens reset popover */}
+      {isModified && <span ref={resetPopover.anchorRef} onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }} style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4, cursor: "pointer" }} title="Click to reset" />}
       {/* Label */}
       <div
+        onClick={(e) => { if (isModified && !e.altKey) { e.stopPropagation(); resetPopover.triggerOpen(); } }}
         style={{
           padding: "0 6px",
           fontSize: 10,
@@ -185,6 +189,7 @@ export function SizeInputCell({
           whiteSpace: "nowrap",
           lineHeight: "28px",
           color: text.disabled,
+          cursor: isModified ? "pointer" : undefined,
         }}
       >
         {isKeyword || isVariable ? (
@@ -280,6 +285,7 @@ export function SizeInputCell({
         />
       </div>
     </div>
+    {resetPopover.node}
     </div>
   );
 }
