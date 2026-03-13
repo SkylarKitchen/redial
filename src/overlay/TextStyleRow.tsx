@@ -11,10 +11,10 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow } from "./theme";
+import { text, blackAlpha, color, border as borderTokens, shadow, font } from "./theme";
+import { ms } from "./timing";
 import type { TextStyle } from "./textStyleScanner";
 
 export interface TextStyleRowProps {
@@ -28,6 +28,8 @@ const DROPDOWN_HEIGHT = 250;
 
 export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProps) {
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number; up: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -87,12 +89,11 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
       }}
     >
       <Command
-        className={cn(
-          "min-w-full rounded border",
-        )}
         style={{
+          minWidth: "100%",
+          borderRadius: 4,
+          border: `1px solid ${borderTokens.default}`,
           background: color.popover,
-          borderColor: borderTokens.default,
           boxShadow: shadow.dropdown,
         }}
         filter={(value, search) => {
@@ -113,7 +114,16 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
           autoFocus
         />
         <CommandList className="max-h-[180px]">
-          <CommandEmpty className="py-1.5 text-center text-[11px] italic" style={{ color: text.label }}>
+          <CommandEmpty
+            style={{
+              paddingTop: 6,
+              paddingBottom: 6,
+              textAlign: "center",
+              fontSize: 11,
+              fontStyle: "italic",
+              color: text.label,
+            }}
+          >
             No matches
           </CommandEmpty>
           {styles.map((style) => {
@@ -126,17 +136,31 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
                   onApply(style);
                   setOpen(false);
                 }}
-                className={cn(
-                  "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4 flex items-center justify-between",
-                )}
-                style={isActive ? { background: color.primary, color: "#fff" } : undefined}
+                style={{
+                  paddingLeft: 8,
+                  paddingRight: 8,
+                  paddingTop: 4,
+                  paddingBottom: 4,
+                  fontSize: 11,
+                  fontFamily: font.mono,
+                  cursor: "pointer",
+                  lineHeight: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  ...(isActive ? { background: color.primary, color: "#fff" } : {}),
+                }}
               >
                 <span style={{ fontWeight: style.fontWeight }}>
                   {style.name}
                 </span>
                 <span
-                  className="text-[10px] ml-2 shrink-0"
-                  style={{ color: isActive ? "rgba(255,255,255,0.6)" : text.label }}
+                  style={{
+                    fontSize: 10,
+                    marginLeft: 8,
+                    flexShrink: 0,
+                    color: isActive ? "rgba(255,255,255,0.6)" : text.label,
+                  }}
                 >
                   {formatSize(style.fontSize)}
                 </span>
@@ -150,26 +174,29 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
   );
 
   return (
-    <div className="flex items-center gap-2 px-3 py-0.5">
+    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 12, paddingRight: 12, paddingTop: 2, paddingBottom: 2 }}>
       <span
-        className="text-[11px] w-[70px] shrink-0 capitalize"
-        style={{ color: text.label }}
+        style={{
+          fontSize: 11,
+          width: 70,
+          flexShrink: 0,
+          textTransform: "capitalize",
+          color: text.label,
+        }}
       >
         Style
       </span>
-      <div ref={containerRef} className="relative flex-1">
+      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         <button
           ref={triggerRef}
-          className={cn(
-            "tuner-focusable w-full h-6 flex items-center justify-between",
-            "bg-[var(--input)] border border-[var(--border)] rounded-sm",
-            "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
-            "hover:bg-[rgba(0,0,0,0.07)]",
-            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          )}
+          className="tuner-focusable"
           tabIndex={0}
           aria-expanded={open}
           onClick={handleOpen}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
@@ -177,12 +204,34 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
               setOpen(true);
             }
           }}
-          style={open ? { background: blackAlpha(0.07) } : undefined}
+          style={{
+            width: "100%",
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: open || hovered ? blackAlpha(0.07) : color.input,
+            border: `1px solid ${borderTokens.default}`,
+            borderRadius: 2,
+            fontSize: 11,
+            fontFamily: font.mono,
+            color: text.primary,
+            paddingLeft: 6,
+            paddingRight: 6,
+            cursor: "pointer",
+            outline: "none",
+            transition: `background-color ${ms("fast")}`,
+            boxShadow: focused ? `0 0 0 2px ${color.ring}` : "none",
+          }}
         >
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {triggerLabel}
           </span>
-          <ChevronDown size={12} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
+          <ChevronDown
+            size={12}
+            strokeWidth={2}
+            style={{ color: text.label, flexShrink: 0, marginLeft: 4 }}
+          />
         </button>
         {dropdown}
       </div>

@@ -12,10 +12,9 @@ import { buildPromptContext } from "./elementContext";
 import { getDisplayClass } from "./util";
 import { getReactSource } from "./sourcemap";
 import { timing } from "./timing";
-import { cn } from "@/lib/utils";
 import { Copy, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { text, border, color, blackAlpha, primaryAlpha, bgAlpha } from "./theme";
+import { text, border, color, blackAlpha, primaryAlpha, bgAlpha, shadow, font } from "./theme";
+import { ms } from "./timing";
 
 interface PromptPanelProps {
   element: Element;
@@ -25,6 +24,7 @@ export function PromptPanel({ element }: PromptPanelProps) {
   const [feedback, setFeedback] = useState("");
   const [focused, setFocused] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [copyHovered, setCopyHovered] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -77,19 +77,37 @@ export function PromptPanel({ element }: PromptPanelProps) {
   const displayClass = getDisplayClass(element);
   const reactSource = getReactSource(element);
 
+  const disabled = !feedback.trim();
+
   return (
-    <div className="flex flex-col gap-2 px-3 py-3">
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      padding: "12px 12px",
+    }}>
       {/* Context preview */}
-      <div className="flex items-center gap-1.5 text-[10px]" style={{ color: text.disabled }}>
-        <Sparkles size={11} strokeWidth={2} className="shrink-0" style={{ color: primaryAlpha(0.6) }} />
-        <span className="font-mono">
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 10,
+        color: text.disabled,
+      }}>
+        <Sparkles size={11} strokeWidth={2} style={{ flexShrink: 0, color: primaryAlpha(0.6) }} />
+        <span style={{ fontFamily: font.mono }}>
           {"<"}{tag}{">"}
           {displayClass && <span style={{ color: text.label }}>.{displayClass}</span>}
         </span>
         {reactSource && (
           <>
             <span style={{ color: text.hint }}>|</span>
-            <span className="font-mono truncate">{reactSource.displayPath}</span>
+            <span style={{
+              fontFamily: font.mono,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>{reactSource.displayPath}</span>
           </>
         )}
       </div>
@@ -104,35 +122,60 @@ export function PromptPanel({ element }: PromptPanelProps) {
         onBlur={() => setFocused(false)}
         placeholder="Describe what you want to change..."
         rows={3}
-        className={cn(
-          "w-full resize-none rounded-md border px-2.5 py-2",
-          "text-[12px] font-sans placeholder:text-[var(--placeholder)]",
-          "outline-none",
-          "transition-colors duration-100",
-        )}
         style={{
-          borderColor: focused ? primaryAlpha(0.3) : border.default,
+          width: "100%",
+          resize: "none",
+          borderRadius: 6,
+          border: `1px solid ${focused ? primaryAlpha(0.3) : border.default}`,
+          padding: "8px 10px",
+          fontSize: 12,
+          fontFamily: font.sans,
+          outline: "none",
+          transition: `border-color ${ms("normal")}, background ${ms("normal")}`,
           background: focused ? bgAlpha(0.5) : blackAlpha(0.03),
           color: blackAlpha(0.8),
-          '--placeholder': blackAlpha(0.25),
-        } as React.CSSProperties}
+        }}
       />
 
       {/* Copy button + shortcut hint */}
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono" style={{ color: text.disabled }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        <span style={{
+          fontSize: 10,
+          fontFamily: font.mono,
+          color: text.disabled,
+        }}>
           {"\u2318"}+Enter to copy
         </span>
-        <Button
-          size="sm"
+        <button
           onClick={handleCopy}
-          disabled={!feedback.trim()}
-          className="h-7 text-[12px] font-semibold px-3 rounded-md border-none hover:opacity-90 disabled:shadow-none gap-1.5"
-          style={{ background: color.primary, color: color.primaryForeground, boxShadow: '0 1px 3px ' + primaryAlpha(0.4) }}
+          disabled={disabled}
+          onMouseEnter={() => setCopyHovered(true)}
+          onMouseLeave={() => setCopyHovered(false)}
+          style={{
+            height: 28,
+            fontSize: 12,
+            fontWeight: 600,
+            padding: "0 12px",
+            borderRadius: 6,
+            border: "none",
+            cursor: disabled ? "default" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: disabled ? color.primary : (copyHovered ? color.primaryHover : color.primary),
+            color: color.primaryForeground,
+            boxShadow: disabled ? "none" : `0 1px 3px ${primaryAlpha(0.4)}`,
+            opacity: disabled ? 0.5 : (copyHovered ? 0.9 : 1),
+            transition: `opacity ${ms("fast")}, background ${ms("fast")}`,
+          }}
         >
           <Copy size={11} strokeWidth={2.5} />
           Copy Context
-        </Button>
+        </button>
       </div>
 
       {/* Status message */}
@@ -144,8 +187,11 @@ export function PromptPanel({ element }: PromptPanelProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: timing.expand / 1000 }}
-            className="text-[11px] text-center"
-            style={{ color: text.disabled }}
+            style={{
+              fontSize: 11,
+              textAlign: "center",
+              color: text.disabled,
+            }}
             role="status"
             aria-live="polite"
           >

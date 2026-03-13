@@ -74,7 +74,7 @@ export function TextToggle({ options, value, onChange }: {
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="inline-flex rounded border" style={{ borderColor: surface.track }}>
+    <div style={{ display: "inline-flex", borderRadius: 4, border: `1px solid ${surface.track}` }}>
       {options.map((opt, i) => {
         const isActive = opt.value === value;
         const isFirst = i === 0;
@@ -82,16 +82,19 @@ export function TextToggle({ options, value, onChange }: {
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={cn(
-              "h-7 px-2.5 text-[10px] font-sans cursor-pointer border-none outline-none transition-colors",
-              !isFirst && "border-l",
-              isActive ? "font-medium" : "bg-transparent hover:bg-[var(--accent)]",
-            )}
             style={{
-              ...(!isFirst ? { borderLeftColor: surface.track } : {}),
+              height: 28,
+              padding: "0 10px",
+              fontSize: 10,
+              fontFamily: font.sans,
+              cursor: "pointer",
+              border: "none",
+              outline: "none",
+              transition: `color ${ms("fast")}, background ${ms("fast")}`,
+              ...(!isFirst ? { borderLeft: `1px solid ${surface.track}` } : {}),
               ...(isActive
-                ? { background: surface.active, color: color.foreground }
-                : { color: text.label }),
+                ? { background: surface.active, color: color.foreground, fontWeight: 500 }
+                : { background: "transparent", color: text.label }),
             }}
           >
             {opt.label}
@@ -159,7 +162,7 @@ export function MiniDropdown({ value, options, onChange }: {
   });
 
   return (
-    <div ref={ref} className="relative flex-1">
+    <div ref={ref} style={{ position: "relative", flex: 1 }}>
       <button
         role="combobox"
         aria-expanded={open}
@@ -168,8 +171,7 @@ export function MiniDropdown({ value, options, onChange }: {
         aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onTriggerKeyDown}
-        className="w-full h-[22px] flex items-center justify-between px-1.5 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[10px] font-mono cursor-pointer outline-none"
-        style={{ color: text.label }}
+        style={{ width: "100%", height: 22, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 6px", background: color.input, border: `1px solid ${color.border}`, borderRadius: 3, fontSize: 10, fontFamily: font.mono, cursor: "pointer", outline: "none", color: text.label }}
       >
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{current?.label ?? value}</span>
         <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0" style={{ color: text.disabled }} />

@@ -14,9 +14,7 @@ import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { color, text, border, surface, font, primaryAlpha, destructiveAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, primaryAlpha, destructiveAlpha } from "./theme";
 import { getConfig } from "./config";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -83,6 +81,11 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const messageCounterRef = useRef(0);
+
+  // Hover states
+  const [clipboardHovered, setClipboardHovered] = useState(false);
+  const [resetHovered, setResetHovered] = useState(false);
+  const [saveHovered, setSaveHovered] = useState(false);
 
   // Clear timers on unmount to prevent stale setState calls
   useEffect(() => {
@@ -184,7 +187,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         onSaved?.();
       }
     } catch {
-      showMessage("Save failed \u2014 no route?", 2000);
+      showMessage("Save failed — no route?", 2000);
     } finally {
       setSaving(false);
       savingRef.current = false;
@@ -204,35 +207,66 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onReset, scope, activeClassName, activeState]);
 
   return (
-    <div className="__tuner-footer flex flex-col px-3 py-2 border-t gap-1.5" style={{ borderColor: border.default }}>
-      <div className="flex items-center justify-between gap-1.5">
+    <div
+      className="__tuner-footer"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 8,
+        paddingBottom: 8,
+        borderTop: `1px solid ${border.default}`,
+        gap: 6,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
         {/* Left: Clipboard dropdown */}
-        <div ref={copyRef} className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
+        <div ref={copyRef} style={{ position: "relative" }}>
+          <button
             onClick={() => setCopyOpen((o) => !o)}
+            onMouseEnter={() => setClipboardHovered(true)}
+            onMouseLeave={() => setClipboardHovered(false)}
             title="Copy, paste, import styles"
-            className={cn(
-              "h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.05)] hover:text-[rgba(0,0,0,0.7)]",
-            )}
             style={{
-              color: copied ? "#16a34a" : text.label,
-              background: copied ? "rgba(22,163,74,0.08)" : copyOpen ? surface.active : surface.hover,
-              borderColor: copied ? "rgba(22,163,74,0.25)" : copyOpen ? border.hover : border.default,
+              display: "inline-flex",
+              alignItems: "center",
+              height: 28,
+              fontSize: 12,
+              fontWeight: 400,
+              fontFamily: font.sans,
+              paddingLeft: 8,
+              paddingRight: 8,
+              borderRadius: 6,
+              cursor: "pointer",
+              color: copied ? "#16a34a" : (clipboardHovered ? blackAlpha(0.7) : text.label),
+              background: copied ? "rgba(22,163,74,0.08)" : (copyOpen ? surface.active : (clipboardHovered ? surface.active : surface.hover)),
+              border: `1px solid ${copied ? "rgba(22,163,74,0.25)" : (copyOpen ? border.hover : border.default)}`,
               transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
             }}
           >
-            {copied ? "✓ Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} className="ml-1 shrink-0 opacity-60" /></>}
-          </Button>
+            {copied ? "✓ Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, opacity: 0.6 }} /></>}
+          </button>
           {copyOpen && (
-            <div className="absolute bottom-[calc(100%+4px)] left-0 border rounded-md py-1 min-w-[160px] z-[100]" style={{ background: color.popover, borderColor: surface.active, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+            <div style={{
+              position: "absolute",
+              bottom: "calc(100% + 4px)",
+              left: 0,
+              border: `1px solid ${surface.active}`,
+              borderRadius: 6,
+              paddingTop: 4,
+              paddingBottom: 4,
+              minWidth: 160,
+              zIndex: 100,
+              background: color.popover,
+              boxShadow: shadow.dropdown,
+            }}>
               <DropdownLabel>Copy as</DropdownLabel>
               <DropdownItem onClick={handleCopyCleanCSS} disabled={count === 0}>CSS</DropdownItem>
               <DropdownItem onClick={handleCopyTailwind} disabled={count === 0}>Tailwind</DropdownItem>
               <DropdownItem onClick={handleCopyVars} disabled={count === 0}>CSS Variables</DropdownItem>
               <DropdownItem onClick={handleCopy} disabled={count === 0}>SCSS (commented)</DropdownItem>
-              <div className="my-1 h-px" style={{ background: border.subtle }} />
+              <div style={{ marginTop: 4, marginBottom: 4, height: 1, background: border.subtle }} />
               <DropdownItem
                 onClick={() => { onPasteStyles?.(); setCopyOpen(false); }}
                 disabled={!hasClipboard}
@@ -252,28 +286,60 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </div>
 
         {/* Right: Reset + Save */}
-        <div className="flex gap-1.5 items-center">
-          <Button
-            variant="ghost"
-            size="sm"
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button
             onClick={handleReset}
+            onMouseEnter={() => setResetHovered(true)}
+            onMouseLeave={() => setResetHovered(false)}
             disabled={count === 0}
             title="Reset (R)"
-            className="h-7 text-[12px] font-normal px-2 rounded-md border hover:bg-[rgba(0,0,0,0.05)]"
-            style={{ color: destructiveAlpha(0.8), borderColor: destructiveAlpha(0.15), background: surface.hover }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              height: 28,
+              fontSize: 12,
+              fontWeight: 400,
+              fontFamily: font.sans,
+              paddingLeft: 8,
+              paddingRight: 8,
+              borderRadius: 6,
+              cursor: count === 0 ? "default" : "pointer",
+              color: destructiveAlpha(0.8),
+              border: `1px solid ${destructiveAlpha(0.15)}`,
+              background: resetHovered && count > 0 ? surface.active : surface.hover,
+              opacity: count === 0 ? 0.5 : 1,
+              transition: `background ${timing.normal}ms`,
+            }}
           >
             Reset
-          </Button>
-          <Button
-            size="sm"
+          </button>
+          <button
             onClick={handleSave}
+            onMouseEnter={() => setSaveHovered(true)}
+            onMouseLeave={() => setSaveHovered(false)}
             disabled={count === 0 || saving}
             title="Save to source"
-            className="h-7 text-[12px] font-semibold px-3 rounded-md border-none hover:opacity-90 disabled:shadow-none"
-            style={{ background: color.primary, color: color.primaryForeground, boxShadow: '0 1px 3px ' + primaryAlpha(0.4) }}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              height: 28,
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: font.sans,
+              paddingLeft: 12,
+              paddingRight: 12,
+              borderRadius: 6,
+              border: "none",
+              cursor: (count === 0 || saving) ? "default" : "pointer",
+              background: color.primary,
+              color: color.primaryForeground,
+              boxShadow: (count === 0 || saving) ? "none" : `0 1px 3px ${primaryAlpha(0.4)}`,
+              opacity: (count === 0 || saving) ? 0.5 : (saveHovered ? 0.9 : 1),
+              transition: `opacity ${timing.normal}ms`,
+            }}
           >
             {saving ? "..." : "Save"}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -287,8 +353,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: timing.expand / 1000 }}
-              className="text-[11px]"
-              style={{ color: text.disabled }}
+              style={{ fontSize: 11, color: text.disabled }}
             >
               {clipboardMessage || message}
             </motion.span>
@@ -303,7 +368,18 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
 function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-3 pt-1 pb-0.5 text-[9px] font-semibold uppercase tracking-wider select-none" style={{ color: text.label }}>
+    <div style={{
+      paddingLeft: 12,
+      paddingRight: 12,
+      paddingTop: 4,
+      paddingBottom: 2,
+      fontSize: 9,
+      fontWeight: 600,
+      textTransform: "uppercase" as const,
+      letterSpacing: "0.05em",
+      userSelect: "none",
+      color: text.label,
+    }}>
       {children}
     </div>
   );
@@ -315,21 +391,35 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
   disabled?: boolean;
   shortcut?: string;
 }) {
+  const [hovered, setHovered] = useState(false);
   return (
     <button
       onClick={disabled ? undefined : onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       disabled={disabled}
-      className={cn(
-        "flex w-full items-center justify-between px-3 py-1.5 text-[12px] font-sans border-none bg-transparent text-left transition-colors",
-        disabled
-          ? "cursor-default"
-          : "cursor-pointer hover:bg-[rgba(0,0,0,0.05)]",
-      )}
-      style={{ color: disabled ? text.disabled : color.foreground }}
+      style={{
+        display: "flex",
+        width: "100%",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 6,
+        paddingBottom: 6,
+        fontSize: 12,
+        fontFamily: font.sans,
+        border: "none",
+        background: !disabled && hovered ? surface.hover : "transparent",
+        textAlign: "left" as const,
+        cursor: disabled ? "default" : "pointer",
+        color: disabled ? text.disabled : color.foreground,
+        transition: `background ${timing.fast}ms`,
+      }}
     >
       <span>{children}</span>
       {shortcut && (
-        <span className="text-[10px] font-mono ml-3" style={{ color: text.disabled }}>{shortcut}</span>
+        <span style={{ fontSize: 10, fontFamily: font.mono, marginLeft: 12, color: text.disabled }}>{shortcut}</span>
       )}
     </button>
   );

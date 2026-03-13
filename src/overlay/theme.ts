@@ -190,8 +190,6 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
   none: { bg: "transparent", text: "#404040" },
 };
 
-// ─── Spacing Zone Colors ────────────────────────────────────────
-
 // ─── Value Presets ──────────────────────────────────────────────
 
 export const presets: Record<string, (string | number)[]> = {

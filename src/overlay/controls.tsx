@@ -376,7 +376,7 @@ export function SliderRow({
 
   return (
     <>
-    <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
         {computedProp && computedElement ? (
           <ComputedTooltip property={computedProp} element={computedElement}>
@@ -451,8 +451,7 @@ export function SelectRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={selectLabelTitle}
-      className="text-[11px] w-[70px] shrink-0 capitalize inline-flex items-center gap-1 cursor-default"
-      style={{ color: selectLabelColor }}
+      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: selectLabelColor }}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
