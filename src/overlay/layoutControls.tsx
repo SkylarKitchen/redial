@@ -614,6 +614,7 @@ function GapInput({ value, unit, onChange }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const flashStyle = useValueFlash(value);
 
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
@@ -654,6 +655,7 @@ function GapInput({ value, unit, onChange }: {
         gap: 2,
         background: segment.hoverBg,
         overflow: "hidden",
+        ...flashStyle,
       }}>
         {editing ? (
           <input
@@ -793,6 +795,7 @@ function TrackCountInput({ value, onChange }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const flashStyle = useValueFlash(value);
 
   useEffect(() => {
     if (!editing) setDraft(String(value));
@@ -822,6 +825,7 @@ function TrackCountInput({ value, onChange }: {
       overflow: "hidden",
       background: segment.hoverBg,
       alignItems: "center",
+      ...flashStyle,
     }}>
       {editing ? (
         <input
