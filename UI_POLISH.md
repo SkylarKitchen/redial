@@ -39,7 +39,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **Footer reset button hover** — Uses `surface.active` for hover when count > 0, but `surface.active` is also the pressed state token. Use `surface.hover` for hover, `surface.active` only for pressed/active.
 
 ### Section-Specific Polish
-- [ ] **Font weight preview**: In the font-weight dropdown, render each option at its actual weight (100=thin, 900=heavy). Target: Typography section `SelectRow`.
+- [x] **Font weight preview**: In the font-weight dropdown, render each option at its actual weight (100=thin, 900=heavy). Target: Typography section `SelectRow`.
 - [ ] **Shadow preview swatch**: Show a small 20×20 preview square with the current shadow applied, next to the shadow layer header. Target: `ShadowEditor.tsx`.
 
 ---
