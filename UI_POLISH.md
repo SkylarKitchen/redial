@@ -1,8 +1,8 @@
 # UI Polish Backlog
 
-Autonomous improvement queue. Each item is a self-contained, verifiable enhancement. Agent picks the next unchecked `[ ]` item in priority order, implements it, runs typecheck + tests, verifies visually if Chrome is available, commits, and checks it off.
+Autonomous improvement queue. Each item is self-contained and verifiable. Agent picks the next unchecked `[ ]` item, implements, tests, and checks it off.
 
-**Important**: All colors/tokens must come from `src/overlay/theme.ts`. Never hardcode hex values in components. Use timing tokens from `timing.ts` for all transitions.
+**Status: 43 done, 2 remaining** | All tokens from `theme.ts` / `timing.ts`, never hardcode hex.
 
 ---
 
@@ -73,7 +73,8 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 ---
 
-## Completed
+<details>
+<summary><strong>Completed (43 items)</strong></summary>
 
 ### 2026-03-13 — Toolbar wrong fontFamily
 Replaced hardcoded `"system-ui, -apple-system, sans-serif"` with `font.sans` token in Toolbar.tsx ToolButton. Now uses `"Inter, system-ui, sans-serif"` consistent with the rest of the panel.
@@ -252,6 +253,15 @@ Replaced hardcoded `duration: 0.15` in Toolbar.tsx AnimatePresence exit transiti
 
 ### 2026-03-13 — SessionDrawer hardcoded timeout
 Replaced 3 hardcoded values in SessionDrawer.tsx: copy auto-dismiss `1500` → `timing.dismissal` (1700ms), save auto-dismiss `2000` → `timing.dismissal`, and message animation `duration: 0.15` → `timing.expand / 1000`. All timing now governed by tokens.
+
+</details>
+
+---
+
+## Removed (audited 2026-03-13)
+
+<details>
+<summary>Items removed after audit (already fixed, outdated, or too speculative)</summary>
 
 ### 2026-03-13 — Internal z-index values outside token system
 Added 5 internal z-index tiers to theme.ts: `above: 1`, `sticky: 2`, `float: 10`, `dropdown: 100`, `popover: 200`. Replaced hardcoded magic numbers across 10 files: controls.tsx (1→above, 2→sticky), GlobalVariablesPanel.tsx (1→above ×3), SpacingBoxModel.tsx (1→above ×2), SpacingValuePopover.tsx (10→float), TransformEditor.tsx (100→dropdown), FilterSliders.tsx (100→dropdown), BackgroundLayerList.tsx (100→dropdown), Footer.tsx (100→dropdown), layoutControls.tsx (200→popover ×3). Zero internal z-index magic numbers remain.

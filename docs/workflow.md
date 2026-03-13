@@ -16,24 +16,11 @@ Your stack is modern — Next.js, React, TypeScript, maybe Tailwind — and you 
 
 ---
 
-## The Pain: Claude Code + CSS Modules
+## The Pain: CSS Tuning Is a Feedback Loop
 
-You're in your terminal. Claude Code is open. You're building a hero section.
+Every visual tweak follows the same loop: describe what you want → wait for AI/HMR → check the result → describe the delta → repeat. Each round takes 30–60 seconds. A full section takes 20–30 minutes.
 
-**Round 1** — You type: *"Make the hero padding larger and the heading font bigger."*
-Claude edits your CSS module. HMR rebuilds. You switch to Chrome. The padding is too much. The font size blew out the layout.
-
-**Round 2** — Back to the terminal: *"Actually, reduce the padding to 48px and make the heading 36px instead."*
-Claude edits again. You wait for the rebuild. Switch to Chrome. Better, but the line-height is off now.
-
-**Round 3** — *"Set line-height to 1.3 on the heading and add 8px bottom margin."*
-Edit. Rebuild. Switch. Check. Still not quite right.
-
-**Round 4, 5, 6...** — You're stuck in a loop: describe what you want in words → wait for an AI to translate that into CSS → wait for the build → check if it matches the picture in your head → describe the delta → repeat.
-
-Each round takes 30–60 seconds. A full section takes 20–30 minutes of this. The irony: **you could see exactly what you want if you could just drag a slider**, but instead you're playing telephone with a language model about pixel values.
-
-The same loop happens without AI too — manually editing CSS files, saving, waiting, checking — but Claude Code makes the text-in/visual-out mismatch even more obvious. You can ship features at AI speed, but **CSS tuning is still a manual feedback loop**.
+The irony: **you could see exactly what you want if you could just drag a slider**, but instead you're playing telephone with a language model about pixel values. You can ship features at AI speed, but CSS tuning is still a manual feedback loop.
 
 ---
 
