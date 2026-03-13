@@ -73,6 +73,7 @@ interface FooterProps {
 export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, activeState = "none", clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const [saved, setSaved] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [copyOpen, setCopyOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -80,6 +81,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const count = overrideCount(element);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const messageCounterRef = useRef(0);
 
   // Hover states for buttons
@@ -92,6 +94,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     return () => {
       if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
       if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
     };
   }, []);
 
@@ -183,6 +186,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           showMessage(`Saved ${written}, ${failed} failed${detail}`, 3000);
         } else {
           showMessage(`Saved ${written} change${written === 1 ? "" : "s"}`, 2000);
+          setSaved(true);
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+          savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
         }
         onSaved?.();
       }
@@ -331,14 +337,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               borderRadius: 6,
               border: "none",
               cursor: (count === 0 || saving) ? "default" : "pointer",
-              background: color.primary,
+              background: saved ? "#22c55e" : color.primary,
               color: color.primaryForeground,
-              boxShadow: (count === 0 || saving) ? "none" : `0 1px 3px ${primaryAlpha(0.4)}`,
-              opacity: (count === 0 || saving) ? 0.5 : (saveHovered ? 0.9 : 1),
-              transition: `opacity ${timing.normal}ms`,
+              boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px rgba(34,197,94,0.4)` : `0 1px 3px ${primaryAlpha(0.4)}`,
+              opacity: (count === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
+              transition: `opacity ${timing.normal}ms, background ${timing.normal}ms, box-shadow ${timing.normal}ms`,
             }}
           >
-            {saving ? "..." : "Save"}
+            {saving ? "..." : saved ? "\u2713 Saved" : "Save"}
           </button>
         </div>
       </div>

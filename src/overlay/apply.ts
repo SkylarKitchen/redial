@@ -511,6 +511,7 @@ export function diffAll(): Array<{ el: Element; changes: DiffEntry[] }> {
  */
 /** Check if a CSS value string is numerically zero (e.g. "0px", "0em", "0%", "0"). */
 function isZeroValue(v: string): boolean {
+  if (!v || v === "none" || v === "auto" || v === "normal") return false;
   const n = parseFloat(v);
   return n === 0 && !isNaN(n);
 }
