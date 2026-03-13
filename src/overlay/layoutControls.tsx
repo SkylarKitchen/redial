@@ -911,9 +911,10 @@ function TrackCountInput({ value, onChange }: {
   );
 }
 
-/** Grid track row: dual count inputs for Columns/Rows + link toggle (Webflow-style) */
+/** Grid track row: dual count inputs for Columns/Rows + link toggle + settings gear (Webflow-style) */
 export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
-                               linked, onLinkedChange, onReset, indicator }: {
+                               linked, onLinkedChange, onReset, indicator,
+                               gridCols, gridRows, onGridColsChange, onGridRowsChange }: {
   columns: number;
   rows: number;
   onColumnsChange: (v: number) => void;
@@ -922,7 +923,22 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
   onLinkedChange: (v: boolean) => void;
   onReset?: () => void;
   indicator?: IndicatorType;
+  gridCols?: string;
+  gridRows?: string;
+  onGridColsChange?: (css: string) => void;
+  onGridRowsChange?: (css: string) => void;
 }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsAnchor, setSettingsAnchor] = useState<DOMRect | null>(null);
+  const gearRef = useRef<HTMLButtonElement>(null);
+
+  const handleGearClick = () => {
+    if (gearRef.current) {
+      setSettingsAnchor(gearRef.current.getBoundingClientRect());
+    }
+    setSettingsOpen(o => !o);
+  };
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
@@ -948,7 +964,6 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
             border: "none",
             cursor: "pointer",
             fontSize: 10,
-            marginRight: 8,
             borderRadius: 3,
             flexShrink: 0,
             color: text.disabled,
@@ -956,6 +971,30 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
         >
           {linked ? <Link size={12} strokeWidth={1.5} /> : <Link size={12} strokeWidth={1.5} style={{ opacity: 0.4 }} />}
         </button>
+        {/* Grid settings gear icon */}
+        {onGridColsChange && onGridRowsChange && (
+          <button
+            ref={gearRef}
+            onClick={handleGearClick}
+            title="Grid settings"
+            style={{
+              width: 20,
+              height: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: settingsOpen ? primaryAlpha(0.12) : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: 3,
+              flexShrink: 0,
+              color: settingsOpen ? color.primary : text.disabled,
+              transition: `background ${ms("fast")}, color ${ms("fast")}`,
+            }}
+          >
+            <Settings size={14} strokeWidth={1.5} />
+          </button>
+        )}
       </div>
       {/* Sub-labels: Columns / Rows */}
       <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding, marginTop: 2 }}>
@@ -966,8 +1005,19 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Rows</span>
         </span>
-        <span style={{ width: 24, flexShrink: 0 }} />
+        <span style={{ width: 44, flexShrink: 0 }} />
       </div>
+      {/* Grid settings popup */}
+      {settingsOpen && settingsAnchor && gridCols != null && gridRows != null && onGridColsChange && onGridRowsChange && (
+        <GridSettingsPopup
+          gridCols={gridCols}
+          gridRows={gridRows}
+          onGridColsChange={onGridColsChange}
+          onGridRowsChange={onGridRowsChange}
+          anchorRect={settingsAnchor}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
     </div>
   );
 }

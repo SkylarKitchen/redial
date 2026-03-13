@@ -280,12 +280,20 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   }, [gap, apply, gapUnit, onColumnGapChange, onColumnGapUnitChange]);
 
   const handleGridColsChange = useCallback(
-    (v: string) => { setGridCols(v); if (v.trim()) apply("grid-template-columns", v); },
+    (v: string) => {
+      setGridCols(v);
+      if (v.trim()) apply("grid-template-columns", v);
+      setGridColCount(parseTrackCount(v));
+    },
     [apply],
   );
 
   const handleGridRowsChange = useCallback(
-    (v: string) => { setGridRows(v); if (v.trim()) apply("grid-template-rows", v); },
+    (v: string) => {
+      setGridRows(v);
+      if (v.trim()) apply("grid-template-rows", v);
+      setGridRowCount(parseTrackCount(v));
+    },
     [apply],
   );
 
