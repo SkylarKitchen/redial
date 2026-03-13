@@ -13,7 +13,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **GridOverlay hardcoded colors** — Extracted 5 hardcoded rgba values to `overlay.grid.*` token family + `gridAlpha()` helper in theme.ts.
 - [x] **FlexGapOverlay hardcoded colors** — Extracted 3 hardcoded magenta values to `overlay.flexGap.*` tokens + `flexGapAlpha()` helper in theme.ts.
 - [x] **Toolbar dark theme colors** — Added `surface.darkToolbar` (#1e1e1e) token, replaced hardcoded hex in Toolbar.tsx.
-- [ ] **CommandPalette badge colors** — `CommandPalette.tsx:51-52` has hardcoded `#34d399` (green), `#fbbf24` (amber). Extract to `theme.ts` as `badge.action`, `badge.element` tokens.
+- [x] **CommandPalette badge colors** — Added `badge.action/actionBg` (emerald) and `badge.element/elementBg` (amber) tokens, replaced hardcoded values.
 - [ ] **SpacingBoxModel hardcoded colors** — `SpacingBoxModel.tsx:528,537-538` has `rgba(250,249,245,0.97)`, `rgba(0,0,0,0.07)`, inline shadow. Replace with `bgAlpha()`, `border.subtle`, `shadow.dropdown`.
 - [ ] **TextToggle wrong border token** — `layoutControls.tsx:80,120,231` uses `surface.track` for borders (3 occurrences). Should use `border.default` or `border.input`.
 - [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx:371` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `color.ring` token.
@@ -83,6 +83,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — CommandPalette badge colors
+Added `badge.action` (#34d399, emerald), `badge.actionBg`, `badge.element` (#fbbf24, amber), `badge.elementBg` tokens to theme.ts. Replaced 4 hardcoded values in CommandPalette.tsx CATEGORY_BADGE_STYLES.
 
 ### 2026-03-13 — Toolbar dark theme colors
 Added `surface.darkToolbar: "#1e1e1e"` token to theme.ts. Replaced hardcoded hex in Toolbar.tsx line 138.
