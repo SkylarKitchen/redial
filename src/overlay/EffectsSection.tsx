@@ -126,6 +126,16 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [perspective, setPerspective] = useState(() => parseNum(cs.getPropertyValue("perspective")));
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
 
+  // Collapsed-by-default for filter sub-sections (auto-expand if element has values)
+  const [filtersExpanded, setFiltersExpanded] = useState(() => {
+    const f = cs.filter;
+    return !!f && f !== "none" && f !== "";
+  });
+  const [backdropFiltersExpanded, setBackdropFiltersExpanded] = useState(() => {
+    const f = cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "";
+    return !!f && f !== "none" && f !== "";
+  });
+
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
@@ -219,40 +229,51 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
 
       {/* 4. Box shadows */}
       <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} />
-      <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
+      {shadows.length > 0 && (
+        <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
+      )}
 
       {/* 5. 2D & 3D transforms */}
       <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} />
-      <div className="px-3 py-1">
-        <TransformEditor
-          transforms={transforms}
-          onChange={handleTransformsChange}
-          origin={transformOrigin}
-          onOriginChange={handleTransformOriginChange}
-        />
-      </div>
+      {transforms.length > 0 && (
+        <div className="px-3 py-1">
+          <TransformEditor
+            transforms={transforms}
+            onChange={handleTransformsChange}
+            origin={transformOrigin}
+            onOriginChange={handleTransformOriginChange}
+          />
+        </div>
+      )}
 
       {/* 6. Transitions */}
       <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={() => { /* TODO: transition options menu */ }} />
-      <div className="px-3 py-1">
-        <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
-      </div>
+      {transitions.length > 0 && (
+        <div className="px-3 py-1">
+          <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
+        </div>
+      )}
 
       {/* 7. Filters */}
-      <SubSectionHeader label="Filters" />
-      <div className="px-3 py-1">
-        <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
-      </div>
+      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} />
+      {filtersExpanded && (
+        <div className="px-3 py-1">
+          <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
+        </div>
+      )}
 
-      {/* 8. Cursor */}
+      {/* 8. Backdrop filters */}
+      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} />
+      {backdropFiltersExpanded && (
+        <div className="px-3 py-1">
+          <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
+        </div>
+      )}
+
+      {/* 9. Cursor */}
       <SelectRow label="Cursor" value={cursor} options={CURSOR_OPTIONS} onChange={handleCursorChange} onReset={() => resetCssStr("cursor", setCursor)} indicator={ind("cursor")} onContextMenu={ctxMenu("cursor", cursor)} computedProp="cursor" computedElement={element} />
 
-      {/* ── Secondary controls (below the fold) ── */}
-
-      <SubSectionHeader label="Backdrop filter" />
-      <div className="px-3 py-1">
-        <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
-      </div>
+      {/* ── Secondary controls ── */}
 
       <SliderRow label="Perspective" value={perspective} min={0} max={2000} step={10} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
       <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} onReset={() => resetCssStr("backface-visibility", setBackfaceVisibility)} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />

@@ -23,7 +23,7 @@ import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScann
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-import { text, border, surface, color, font } from "./theme";
+import { text, border, surface, font } from "./theme";
 import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
@@ -417,8 +417,8 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Stroke — width + color side by side */}
-          <div className="flex items-start gap-1 px-3 py-1">
-            <span className="w-16 text-[11px] text-[var(--muted-foreground)] shrink-0 pt-[3px]">Stroke</span>
+          <div style={{ ...ROW, alignItems: "flex-start", gap: 4 }}>
+            <span style={{ ...LABEL, paddingTop: 3 }}>Stroke</span>
             <div className="flex-1">
               <TypoValueCell
                 value={textStrokeWidth}
@@ -426,32 +426,34 @@ export const TypographySection = memo(function TypographySection({
                 unit="px"
                 step={1}
               />
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Width</div>
+              <div style={HINT}>Width</div>
             </div>
             <div className="flex-1">
-              <div className="flex items-center h-7 bg-[var(--input)] border border-[var(--border)] rounded overflow-hidden px-1.5 gap-1.5 relative">
-                <label className="w-4 h-4 rounded-sm border border-[rgba(0,0,0,0.15)] shrink-0 cursor-pointer block" style={{ background: textStrokeColor }}>
+              <div className="flex items-center relative" style={{ height: 28, background: surface.subtle, border: `1px solid ${border.default}`, borderRadius: 4, overflow: "hidden", padding: "0 6px", gap: 6 }}>
+                <label style={{ ...INLINE_SWATCH, background: textStrokeColor }}>
                   <input
                     type="color"
                     value={textStrokeColor}
                     onChange={(e) => handleTextStrokeColorChange(e.target.value)}
-                    className="absolute w-0 h-0 opacity-0 overflow-hidden"
+                    style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
                   />
                 </label>
-                <span className="text-[11px] font-mono text-[rgba(0,0,0,0.5)] overflow-hidden text-ellipsis whitespace-nowrap">
+                <span style={{ fontSize: 11, fontFamily: font.mono, color: text.label, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {textStrokeColor}
                 </span>
               </div>
-              <div className="text-[9px] text-[rgba(0,0,0,0.25)] text-center mt-[3px]">Color</div>
+              <div style={HINT}>Color</div>
             </div>
           </div>
 
           {/* Text shadows */}
-          <div className="flex items-center justify-between px-3 pt-2 pb-0.5">
-            <span className="text-[11px] font-medium text-[rgba(0,0,0,0.75)]">Text shadows</span>
+          <div style={SUB_HEADER_ROW}>
+            <span style={SUB_HEADER}>Text shadows</span>
             <button
               onClick={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])}
-              className="flex items-center justify-center w-[22px] h-[22px] cursor-pointer bg-transparent border border-[rgba(0,0,0,0.12)] rounded-[3px] text-[var(--muted-foreground)] text-sm leading-none outline-none transition-colors hover:bg-[var(--muted)]"
+              style={MINI_ACTION_BUTTON}
+              onMouseEnter={(e) => { e.currentTarget.style.background = surface.hover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               +
             </button>
