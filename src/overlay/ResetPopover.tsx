@@ -1,7 +1,7 @@
 /**
  * ResetPopover.tsx — Click-on-modified-label popover with Reset action
  *
- * Webflow-style dark popover that appears below a modified (blue) property label.
+ * Light-mode popover that appears below a modified (blue) property label.
  * Shows a clickable Reset row with the Option+Click shortcut hint.
  * Portal-rendered to document.body so it escapes panel overflow.
  */
@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Undo2 } from "lucide-react";
-import { surface, shadow, font } from "./theme";
+import { color, text, surface, border, shadow, font } from "./theme";
 import { ms } from "./timing";
 
 export interface ResetPopoverProps {
@@ -72,7 +72,8 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
         left: pos?.left ?? 0,
         visibility: pos ? "visible" : "hidden",
         minWidth: 200,
-        background: surface.darkMenu,
+        background: color.background,
+        border: `1px solid ${border.default}`,
         borderRadius: 6,
         boxShadow: shadow.dropdown,
         padding: 4,
@@ -95,15 +96,15 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
           borderRadius: 4,
           cursor: "pointer",
           outline: "none",
-          background: hovered ? "rgba(255,255,255,0.08)" : "transparent",
+          background: hovered ? surface.hover : "transparent",
           transition: `background ${ms("fast")}`,
         }}
       >
-        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#E5E5E5" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: text.primary }}>
           <Undo2 size={13} strokeWidth={2} />
           Reset
         </span>
-        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: font.sans }}>
+        <span style={{ fontSize: 11, color: text.hint, fontFamily: font.sans }}>
           Option + click
         </span>
       </div>
