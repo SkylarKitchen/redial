@@ -31,7 +31,7 @@ import { ms } from "./timing";
 import { setScrubGroup, setHoverGroup } from "./scrubState";
 import { stepForUnit, precisionForStep } from "./panelUtils";
 import type { IndicatorType } from "./theme";
-import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow } from "./theme";
+import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };
@@ -368,7 +368,7 @@ export function SpacingBoxModel({
           }
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 2px rgba(59,130,246,0.3)";
+          (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
         }}
         onBlur={(e) => {
           (e.currentTarget as HTMLElement).style.boxShadow = "none";
