@@ -22,7 +22,7 @@ import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScann
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-import { text, border, surface, font, labelIndicator, labelHighlight } from "./theme";
+import { text, border, surface, font, indicatorStyle } from "./theme";
 import { ms } from "./timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
@@ -230,9 +230,7 @@ export const TypographySection = memo(function TypographySection({
           style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
           onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); } }}
         >
-          <span style={{
-            ...(ind("font-size") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
-          }}>Size</span>
+          <span style={indicatorStyle(ind("font-size"))}>Size</span>
         </span>
         <TypoValueCell
           value={fontSize}
@@ -247,9 +245,7 @@ export const TypographySection = memo(function TypographySection({
           style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}
           onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height")); } }}
         >
-          <span style={{
-            ...(ind("line-height") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
-          }}>Height</span>
+          <span style={indicatorStyle(ind("line-height"))}>Height</span>
         </span>
         <TypoValueCell
           value={lineHeight}

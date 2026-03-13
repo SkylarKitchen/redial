@@ -11,7 +11,7 @@ import { parseNum } from "./cssParsers";
 import { isAutoSize } from "./getAuthoredValue";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { POSITION_UNITS, PIN_PRESETS } from "./panelConstants";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator, labelHighlight } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
 import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 import { ms } from "./timing";
 import { ChevronDown, LocateFixed, X } from "lucide-react";

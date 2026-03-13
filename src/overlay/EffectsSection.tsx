@@ -230,11 +230,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
           title={ind("outline-style") !== "none" ? "Option+Click to reset" : undefined}
           onClick={(e) => { if (e.altKey) { resetCssStr("outline-style", setOutlineStyle); } }}
         >
-          <span style={{
-            background: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).bg,
-            color: (labelIndicator[ind("outline-style")] ?? labelIndicator.none).text,
-            ...(ind("outline-style") !== "none" ? labelHighlight : {}),
-          }}>
+          <span style={indicatorStyle(ind("outline-style"))}>
             Outline
           </span>
         </span>

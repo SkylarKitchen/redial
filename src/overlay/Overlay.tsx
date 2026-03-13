@@ -32,7 +32,8 @@ import { onHmrUpdate } from "./hmr";
 import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./statePreview";
 import { enrichChangesForCommit } from "./commitUtils";
-import { Plus } from "lucide-react";
+import { Toolbar } from "./Toolbar";
+import { GlobalVariablesPanel } from "./GlobalVariablesPanel";
 import { ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "./scrubState";
@@ -46,6 +47,14 @@ import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout } from "./theme";
+
+// --- Panel State Type ---
+
+export type ActivePanel =
+  | { type: "none" }
+  | { type: "inspector"; tab: "custom" | "prompt" }
+  | { type: "variables" }
+  | { type: "session" };
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -105,11 +114,8 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, [getScrollViewport]);
 
-  // Tab state: "custom" (Style — WebflowPanel) or "prompt" (AI — context copy)
-  const [activeTab, setActiveTab] = useState<"custom" | "prompt">("custom");
-
-  // Session-wide state
-  const [sessionOpen, setSessionOpen] = useState(false);
+  // Unified panel state — discriminated union prevents impossible states
+  const [activePanel, setActivePanel] = useState<ActivePanel>({ type: "none" });
   const totalChanges = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
 
   // Scope toggle
@@ -566,7 +572,11 @@ export function Overlay() {
       // T to toggle Style / AI tab
       if (e.key === "t" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
-        setActiveTab((prev) => prev === "custom" ? "prompt" : "custom");
+        setActivePanel((prev) =>
+          prev.type === "inspector" && prev.tab === "custom"
+            ? { type: "inspector", tab: "prompt" }
+            : { type: "inspector", tab: "custom" }
+        );
         return;
       }
 
@@ -578,7 +588,7 @@ export function Overlay() {
           if (!focusMode) setFocusMode(true);
           setExpandedSection(SECTION_ORDER[idx]);
           // Ensure we're on the Style tab
-          if (activeTab !== "custom") setActiveTab("custom");
+          if (!(activePanel.type === "inspector" && activePanel.tab === "custom")) setActivePanel({ type: "inspector", tab: "custom" });
           return;
         }
       }

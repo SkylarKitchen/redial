@@ -145,3 +145,81 @@ export function discoverVariables(element: Element): CSSVariable[] {
 export function discoverLengthVariables(element: Element): CSSVariable[] {
   return discoverVariables(element).filter(v => v.type === "length");
 }
+
+// ─── Global Variable Discovery ──────────────────────────────────────
+
+/**
+ * Discover ALL CSS custom properties defined on :root / html across all
+ * stylesheets. Unlike discoverVariables() which is element-scoped, this
+ * returns every project-level variable for the global variables panel.
+ */
+export function discoverAllVariables(): CSSVariable[] {
+  const found = new Map<string, CSSVariable>();
+  const rootStyles = getComputedStyle(document.documentElement);
+
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      walkRules(sheet.cssRules, (rule) => {
+        if (rule.selectorText !== ":root" && rule.selectorText !== "html") return;
+        for (let i = 0; i < rule.style.length; i++) {
+          const prop = rule.style[i];
+          if (!prop.startsWith("--")) continue;
+          const value = rootStyles.getPropertyValue(prop).trim();
+          if (value) {
+            found.set(prop, { name: prop, value, source: "root", ...detectVarType(value) });
+          }
+        }
+      });
+    } catch {
+      // Cross-origin stylesheets — skip
+    }
+  }
+
+  // Also include any inline overrides on documentElement
+  const rootEl = document.documentElement;
+  for (let i = 0; i < rootEl.style.length; i++) {
+    const prop = rootEl.style[i];
+    if (prop.startsWith("--")) {
+      const value = rootEl.style.getPropertyValue(prop).trim();
+      if (value) {
+        found.set(prop, { name: prop, value, source: "root", ...detectVarType(value) });
+      }
+    }
+  }
+
+  return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// ─── Category Grouping ──────────────────────────────────────────────
+
+export type VarCategory = "colors" | "spacing" | "typography" | "other";
+
+const TYPOGRAPHY_RE = /font|text|line|letter|heading|title/i;
+
+/**
+ * Group variables into semantic categories based on detected type and
+ * name heuristics. No hardcoded presets — purely derived from the actual
+ * variable names and values.
+ */
+export function groupByCategory(vars: CSSVariable[]): Record<VarCategory, CSSVariable[]> {
+  const groups: Record<VarCategory, CSSVariable[]> = {
+    colors: [],
+    spacing: [],
+    typography: [],
+    other: [],
+  };
+
+  for (const v of vars) {
+    if (v.type === "color") {
+      groups.colors.push(v);
+    } else if (TYPOGRAPHY_RE.test(v.name)) {
+      groups.typography.push(v);
+    } else if (v.type === "length") {
+      groups.spacing.push(v);
+    } else {
+      groups.other.push(v);
+    }
+  }
+
+  return groups;
+}

@@ -13,9 +13,8 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, labelIndicator, labelHighlight, segment, shadow, layout } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, layout, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ms } from "./timing";
-import type { IndicatorType } from "./theme";
 import { SegmentedControl } from "./SegmentedControl";
 import {
   ArrowReverseIcon, UnlockIcon, LockIcon,
@@ -41,8 +40,6 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
   onReset?: () => void;
 }) {
   const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "modified" : "none");
-  const colors = labelIndicator[effectiveIndicator] ?? labelIndicator.none;
-  const hasHighlight = effectiveIndicator !== "none";
 
   return (
     <span
@@ -56,13 +53,9 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
         letterSpacing: -0.115,
         cursor: onReset ? "default" : undefined,
       }}
-      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      onClick={altClickReset(onReset)}
     >
-      <span style={{
-        background: colors.bg,
-        color: colors.text,
-        ...(hasHighlight ? labelHighlight : {}),
-      }}>
+      <span style={indicatorStyle(effectiveIndicator)}>
         {label}
       </span>
     </span>

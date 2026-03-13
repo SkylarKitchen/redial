@@ -13,6 +13,7 @@ export const timing = {
   expand: 150, // section collapse/expand, chevron rotate
   layout: 200, // drag displacement, focus ring transitions
   slow: 300, // scrollbar fade, complex animations
+  toolbar: 400, // toolbar expand/collapse
 } as const;
 
 export type TimingKey = keyof typeof timing;
@@ -39,6 +40,8 @@ export const spring = {
   panelOpen: { type: "spring" as const, stiffness: 400, damping: 30, mass: 0.8 },
   /** Panel close — fast, decisive, no overshoot */
   panelClose: { type: "tween" as const, duration: 0.15, ease: [0.2, 0, 0.5, 1] as const },
+  /** Toolbar expand — pill spring with natural feel */
+  toolbarExpand: { type: "spring" as const, stiffness: 300, damping: 28, mass: 0.9 },
   /** Reduced motion fallback — instant */
   instant: { type: "tween" as const, duration: 0 },
 } as const;
