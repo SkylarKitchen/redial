@@ -75,6 +75,12 @@ These are grep-and-fix passes that enforce the token system uniformly.
 
 ## Completed
 
+### 2026-03-13 — Fix IconButtonGroup active state
+Moved active state styling from inline `backgroundColor`/`color` (which were silently overridden by Tailwind `!important`) to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className. Non-active hover/muted styles remain inline with `undefined` fallback when active.
+
+### 2026-03-13 — Fix class-scope undo/redo & state reset overrides
+Already resolved — all scope and statePreview tests pass. `onClassChange` listener and `resetStateOverrides` are implemented.
+
 ### 2026-03-13 — Fix annotation not destructured in SliderRow
 Added missing `annotation` to destructured params in `SliderRow` (`controls.tsx:378`). The prop was defined in the type and used in JSX but never extracted from the props object, so the Tailwind class hint annotation was always `undefined`.
 
