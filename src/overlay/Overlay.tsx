@@ -281,6 +281,7 @@ export function Overlay() {
   const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
   const [anchor, setAnchor] = useState<"left" | "right" | null>("right");
   const [snapping, setSnapping] = useState(false);
+  const [panelDragging, setPanelDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -865,6 +866,7 @@ export function Overlay() {
         snapTimerRef.current = null;
       }
       setSnapping(false);
+      setPanelDragging(true);
 
       dragRef.current = {
         startX: e.clientX,
@@ -885,6 +887,7 @@ export function Overlay() {
 
       const handleMouseUp = () => {
         dragRef.current = null;
+        setPanelDragging(false);
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
 
@@ -1530,7 +1533,7 @@ export function Overlay() {
             maxHeight: "89vh",
             background: color.background,
             borderRadius: layout.panelRadius,
-            boxShadow: shadow.panel,
+            boxShadow: panelDragging ? shadow.panelDrag : shadow.panel,
             backdropFilter: "blur(20px)",
             display: "flex",
             flexDirection: "column",
@@ -1540,7 +1543,9 @@ export function Overlay() {
             top: pos.y,
             left: pos.x,
             transformOrigin: "bottom right",
-            ...(snapping ? { transition: `top ${ms("expand")} ease, left ${ms("expand")} ease` } : {}),
+            transition: snapping
+              ? `top ${ms("expand")} ease, left ${ms("expand")} ease, box-shadow ${ms("expand")}`
+              : `box-shadow ${ms("expand")}`,
           }}
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0, transition: springConfig("panelOpen") }}

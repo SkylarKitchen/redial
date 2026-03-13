@@ -228,6 +228,8 @@ export const zIndex = {
 export const shadow = {
   /** Main panel shadow */
   panel: "0 8px 32px rgba(0,0,0,0.12), 0 0 0 0.5px rgba(0,0,0,0.04)",
+  /** Elevated panel shadow while dragging */
+  panelDrag: "0 16px 48px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.06)",
   /** Dropdown/menu shadow */
   dropdown: "0 4px 12px rgba(0,0,0,0.1)",
   /** Color picker / large popover shadow */
