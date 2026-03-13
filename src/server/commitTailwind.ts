@@ -38,6 +38,56 @@ function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
 }
 
 /**
+ * Known single-segment Tailwind utility prefixes.
+ * These match "prefix-value" where value can contain hyphens (e.g. bg-blue-500).
+ */
+const SINGLE_SEGMENT_PREFIXES = new Set([
+  "w", "h", "p", "m", "bg", "text", "font", "border", "rounded", "shadow",
+  "opacity", "z", "gap", "top", "right", "bottom", "left", "inset",
+  "basis", "grow", "shrink", "order", "cursor", "select", "outline",
+  "ring", "divide", "space", "tracking", "leading", "decoration",
+  "underline", "overline", "accent", "caret", "fill", "stroke",
+  "from", "via", "to", "blur", "brightness", "contrast", "grayscale",
+  "saturate", "sepia", "backdrop", "transition", "duration", "ease", "delay",
+  "animate", "scale", "rotate", "translate", "skew", "origin", "object",
+  "aspect", "columns", "break", "list", "grid", "col", "row", "auto",
+  "place", "content", "items", "justify", "self", "overflow", "overscroll",
+  "scroll", "snap", "touch", "resize", "appearance", "will", "contain",
+]);
+
+/**
+ * Known multi-segment Tailwind utility prefixes.
+ * These match "prefix-x-value" patterns (e.g. min-w-4, max-h-screen).
+ */
+const MULTI_SEGMENT_PREFIXES = new Set([
+  "min-w", "max-w", "min-h", "max-h",
+  "pt", "pr", "pb", "pl", "px", "py",
+  "mt", "mr", "mb", "ml", "mx", "my",
+  "gap-x", "gap-y",
+  "flex-row", "flex-col", "flex-wrap", "flex-nowrap",
+  "grid-cols", "grid-rows", "grid-flow",
+  "col-span", "col-start", "col-end",
+  "row-span", "row-start", "row-end",
+  "border-t", "border-r", "border-b", "border-l", "border-x", "border-y",
+  "rounded-t", "rounded-r", "rounded-b", "rounded-l",
+  "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl",
+  "translate-x", "translate-y",
+  "scale-x", "scale-y",
+  "skew-x", "skew-y",
+  "scroll-m", "scroll-p",
+  "ring-offset",
+  "mix-blend", "bg-blend",
+  "place-content", "place-items", "place-self",
+  "text-decoration",
+]);
+
+/** Display-related standalone classes that conflict with each other */
+const DISPLAY_CLASSES = new Set([
+  "block", "inline-block", "inline", "flex", "inline-flex",
+  "grid", "inline-grid", "table", "hidden", "contents", "flow-root",
+]);
+
+/**
  * Extract the utility group from a Tailwind class.
  * Used to determine if two classes conflict (same group = conflict).
  *
@@ -54,17 +104,31 @@ export function getUtilityGroup(cls: string): string {
   const prefix = prefixMatch ? prefixMatch[1] : "";
   const bare = prefix ? cls.slice(prefix.length) : cls;
 
-  // Negative utilities: -mt-4 -> "-mt"
-  if (bare.startsWith("-")) {
-    const negMatch = bare.match(/^(-[a-z]+(?:-[a-z]+)?)-/);
-    if (negMatch) return prefix + negMatch[1];
-    return prefix + bare;
+  // Negative utilities: strip leading - and check the remaining prefix
+  const isNeg = bare.startsWith("-");
+  const unsigned = isNeg ? bare.slice(1) : bare;
+
+  // Display classes all conflict with each other
+  if (DISPLAY_CLASSES.has(unsigned)) return prefix + "__display";
+
+  // Check multi-segment prefixes first (longer match wins)
+  for (const mp of MULTI_SEGMENT_PREFIXES) {
+    if (unsigned.startsWith(mp + "-") || unsigned === mp) {
+      return prefix + (isNeg ? "-" : "") + mp;
+    }
   }
 
-  // Extract the utility prefix before the first value
-  const match = bare.match(/^([a-z]+(?:-[a-z]+)?)-/);
-  if (!match) return prefix + bare; // standalone like "flex", "hidden", "absolute"
-  return prefix + match[1];
+  // Check single-segment prefixes
+  const dashIdx = unsigned.indexOf("-");
+  if (dashIdx > 0) {
+    const first = unsigned.slice(0, dashIdx);
+    if (SINGLE_SEGMENT_PREFIXES.has(first)) {
+      return prefix + (isNeg ? "-" : "") + first;
+    }
+  }
+
+  // Fallback: use the full class as its own group (standalone classes)
+  return prefix + bare;
 }
 
 /**

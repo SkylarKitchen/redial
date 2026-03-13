@@ -46,8 +46,11 @@ describe("getUtilityGroup", () => {
   });
 
   it("returns standalone class name as its own group", () => {
-    expect(getUtilityGroup("flex")).toBe("flex");
-    expect(getUtilityGroup("hidden")).toBe("hidden");
+    // Display classes share a group since they all set the display property
+    expect(getUtilityGroup("flex")).toBe("__display");
+    expect(getUtilityGroup("hidden")).toBe("__display");
+    expect(getUtilityGroup("block")).toBe("__display");
+    // Non-display standalone classes are their own group
     expect(getUtilityGroup("absolute")).toBe("absolute");
   });
 
@@ -102,8 +105,13 @@ describe("mergeClasses", () => {
     expect(mergeClasses("w-4 sm:w-8", "w-6")).toBe("sm:w-8 w-6");
   });
 
-  it("preserves standalone classes without conflicts", () => {
-    expect(mergeClasses("flex hidden", "block")).toBe("flex block");
+  it("display classes conflict with each other", () => {
+    // flex, hidden, block are all display classes — block replaces both
+    expect(mergeClasses("flex hidden", "block")).toBe("block");
+  });
+
+  it("non-conflicting standalone classes are preserved", () => {
+    expect(mergeClasses("absolute italic", "underline")).toBe("absolute italic underline");
   });
 });
 
