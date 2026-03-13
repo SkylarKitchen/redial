@@ -10,7 +10,7 @@ import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExtern
 import { X } from "lucide-react";
 import { discoverAllVariables, groupByCategory, type CSSVariable, type VarCategory } from "./discoverVariables";
 import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
-import { Section, ColorRow, SliderRow } from "./controls";
+import { Section, ColorRow } from "./controls";
 import { ROW } from "./panelStyles";
 import { text, border, surface, font, color, labelIndicator, labelHighlight } from "./theme";
 import { ms } from "./timing";
@@ -20,18 +20,6 @@ import type { IndicatorType } from "./theme";
 
 function varLabel(name: string): string {
   return name.replace(/^--/, "");
-}
-
-function boundsForUnit(unit: string): { min: number; max: number; step: number } {
-  switch (unit) {
-    case "%": case "vw": case "vh": case "vmin": case "vmax":
-    case "svw": case "svh": case "lvw": case "lvh": case "dvw": case "dvh":
-      return { min: 0, max: 100, step: 1 };
-    case "em": case "rem": case "lh": case "ch": case "ex": case "cap": case "ic":
-      return { min: 0, max: 10, step: 0.1 };
-    default:
-      return { min: 0, max: 500, step: 1 };
-  }
 }
 
 const CATEGORY_LABELS: Record<VarCategory, string> = {
@@ -97,56 +85,13 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
     );
   }
 
-  // Length → SliderRow
-  if (variable.type === "length" && variable.numericValue != null && variable.unit) {
-    const bounds = boundsForUnit(variable.unit);
-    const draftNum = parseFloat(draft) ?? variable.numericValue;
-    return (
-      <SliderRow
-        label={label}
-        value={isNaN(draftNum) ? variable.numericValue : draftNum}
-        min={bounds.min}
-        max={bounds.max}
-        step={bounds.step}
-        unit={variable.unit}
-        onChange={(num) => {
-          const val = `${num}${variable.unit}`;
-          setDraft(val);
-          commit(val);
-        }}
-        indicator={indicator}
-      />
-    );
-  }
-
-  // Number → SliderRow unitless
-  if (variable.type === "number" && variable.numericValue != null) {
-    const draftNum = parseFloat(draft) ?? variable.numericValue;
-    return (
-      <SliderRow
-        label={label}
-        value={isNaN(draftNum) ? variable.numericValue : draftNum}
-        min={0}
-        max={100}
-        step={1}
-        unit=""
-        onChange={(num) => {
-          const val = String(num);
-          setDraft(val);
-          commit(val);
-        }}
-        indicator={indicator}
-      />
-    );
-  }
-
-  // String fallback → text input
+  // Non-color → text input
   return (
     <div style={ROW}>
       <span
         title={variable.name}
         style={{
-          width: 100,
+          width: 140,
           fontSize: 11,
           fontFamily: font.mono,
           flexShrink: 0,
@@ -162,7 +107,7 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
             ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
             : { color: text.label }),
         }}>
-          {variable.name}
+          {label}
         </span>
       </span>
       <input

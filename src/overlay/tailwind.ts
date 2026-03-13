@@ -194,6 +194,9 @@ export function cssToTwClass(prop: string, value: string): string | null {
   if (!cls) return null;
   // If the result contains brackets, it's arbitrary — not a "clean" class
   if (cls.includes("[")) return null;
+  // Reject fractional values not on the real TW scale (only .5 halves exist)
+  const num = cls.match(/-(\d+\.\d+)$/);
+  if (num && !num[1].endsWith(".5")) return null;
   return cls;
 }
 
