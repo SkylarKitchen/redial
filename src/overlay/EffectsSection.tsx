@@ -42,6 +42,7 @@ import {
 import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL } from "./panelStyles";
+import { useFocusTrap } from "./useFocusTrap";
 
 // ─── Transition Options Menu (portal) ─────────────────────────────────
 
@@ -57,6 +58,7 @@ function TransitionOptionsMenu({ anchor, items, onClose }: {
   onClose: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(menuRef, true);
 
   // Position below anchor
   const rect = anchor.getBoundingClientRect();
@@ -97,6 +99,7 @@ function TransitionOptionsMenu({ anchor, items, onClose }: {
   return (
     <div
       ref={menuRef}
+      role="menu"
       data-tuner-portal
       style={{
         position: "fixed",
