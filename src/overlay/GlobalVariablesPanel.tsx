@@ -389,7 +389,8 @@ function GlobalVariableRow({
     if (renaming) {
       cancelledRef.current = false;
       setRenameDraft(variable.name);
-      setTimeout(() => renameRef.current?.select(), 0);
+      const id = setTimeout(() => renameRef.current?.select(), 0);
+      return () => clearTimeout(id);
     }
   }, [renaming, variable.name]);
 
@@ -416,7 +417,7 @@ function GlobalVariableRow({
       value={renameDraft}
       onChange={(e) => setRenameDraft(e.target.value)}
       onKeyDown={(e) => {
-        if (e.key === "Enter") onRenameCommit(renameDraft.trim());
+        if (e.key === "Enter") { cancelledRef.current = true; onRenameCommit(renameDraft.trim()); }
         if (e.key === "Escape") { e.stopPropagation(); cancelledRef.current = true; onRenameCancel(); }
       }}
       onBlur={() => { if (!cancelledRef.current) onRenameCommit(renameDraft.trim()); }}
@@ -434,7 +435,7 @@ function GlobalVariableRow({
     </span>
   );
 
-  const rowContent = (labelNode: React.ReactNode, controlNode: React.ReactNode) => (
+  const rowContent = (labelEl: React.ReactNode, controlNode: React.ReactNode) => (
     <div
       style={{ ...ROW, position: "relative" }}
       onMouseEnter={() => onHoverChange(true)}
@@ -444,7 +445,7 @@ function GlobalVariableRow({
       {showDragHandle && dragHandleProps && (
         <DragHandle isDragging={isDragging} onPointerDown={dragHandleProps.onPointerDown} />
       )}
-      {labelNode}
+      {labelEl}
       {hovered && !renaming && (
         <div style={{
           position: "absolute",
@@ -552,7 +553,7 @@ function GlobalVariableRow({
             value={renameDraft}
             onChange={(e) => setRenameDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") onRenameCommit(renameDraft.trim());
+              if (e.key === "Enter") { cancelledRef.current = true; onRenameCommit(renameDraft.trim()); }
               if (e.key === "Escape") { e.stopPropagation(); cancelledRef.current = true; onRenameCancel(); }
             }}
             onBlur={() => { if (!cancelledRef.current) onRenameCommit(renameDraft.trim()); }}

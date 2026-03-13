@@ -27,7 +27,7 @@ import {
 import { useClickOutside } from "./useClickOutside";
 import { useDropdownKeyboard } from "./useDropdownKeyboard";
 import { useWheelAdjust } from "./useWheelAdjust";
-import { LAYOUT_UNITS } from "./panelConstants";
+import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "./panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
 
@@ -492,7 +492,6 @@ export function DirectionRow({ direction, onDirectionChange, onReset, indicator 
 
 // ─── FlexDirectionRow (Webflow-style: icons + wrap toggle + chevron) ─
 
-import { DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "./panelConstants";
 
 /** Webflow-style direction row: 2-icon SegmentedControl + wrap toggle + chevron dropdown */
 export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapChange, onReset, indicator, wrapIndicator }: {

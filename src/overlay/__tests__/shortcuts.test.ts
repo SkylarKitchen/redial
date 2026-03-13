@@ -172,6 +172,23 @@ describe("arrow key element navigation", () => {
       "ArrowRight",
     ]);
   });
+
+  it("arrow key handler skips element navigation when focus is inside the panel", () => {
+    // The arrow key handler in Overlay.tsx must check `insidePanel` so that
+    // ArrowDown/ArrowUp on dropdown comboboxes (UnitSelector, PositionSelector)
+    // reach the React onKeyDown handler instead of being stolen for element nav.
+    const { readFileSync } = require("fs");
+    const { join } = require("path");
+    const overlaySrc = readFileSync(join(__dirname, "..", "Overlay.tsx"), "utf-8");
+
+    // Find the arrow key handler block
+    const arrowBlockStart = overlaySrc.indexOf("Arrow key element navigation");
+    expect(arrowBlockStart).toBeGreaterThan(-1);
+
+    // The condition line must include an insidePanel guard
+    const arrowBlock = overlaySrc.slice(arrowBlockStart, arrowBlockStart + 200);
+    expect(arrowBlock).toContain("insidePanel");
+  });
 });
 
 // ─── Modifier key helpers ────────────────────────────────────────────

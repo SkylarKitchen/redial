@@ -645,7 +645,8 @@ export function Overlay() {
       }
 
       // Arrow key element navigation: ↑ parent, ↓ first visible child, ←/→ siblings
-      if (selectedEl && !selecting && !diffMode && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+      // Skip when focus is inside the panel (lets dropdown comboboxes handle arrow keys)
+      if (selectedEl && !selecting && !diffMode && !insidePanel && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
         let next: Element | null = null;
 
         if (e.key === "ArrowUp") {
