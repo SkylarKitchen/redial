@@ -219,7 +219,7 @@ export const BordersSection = memo(function BordersSection({
         <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
         <Slider
-          className="tuner-focusable flex-1 [&_[role=slider]]:opacity-0 [&_[role=slider]]:hover:opacity-100 [&_[role=slider]]:focus-visible:opacity-100"
+          className="tuner-focusable flex-1"
           aria-label={`Radius: ${radiusTL}${radiusUnit}`}
           min={0}
           max={200}
