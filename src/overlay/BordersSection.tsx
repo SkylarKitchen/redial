@@ -219,7 +219,7 @@ export const BordersSection = memo(function BordersSection({
         <span style={{ ...LABEL, cursor: "default" }}>Radius</span>
         <RadiusModeIcons mode={radiusMode} onChange={setRadiusMode} />
         <Slider
-          className="tuner-focusable flex-1"
+          className="tuner-focusable flex-1 [&_[role=slider]]:opacity-0 [&_[role=slider]]:hover:opacity-100 [&_[role=slider]]:focus-visible:opacity-100"
           aria-label={`Radius: ${radiusTL}${radiusUnit}`}
           min={0}
           max={200}
@@ -263,7 +263,7 @@ export const BordersSection = memo(function BordersSection({
         <SideSelector value={borderSide} onChange={setBorderSide} cross />
 
         {/* Right: Style / Width / Color controls */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
 
           {/* ── Style (icon toggle) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
