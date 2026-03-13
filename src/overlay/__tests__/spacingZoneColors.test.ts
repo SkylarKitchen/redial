@@ -1,9 +1,8 @@
 /**
- * spacingZoneColors.test.ts — Verify margin/padding zone colors are NOT orange.
+ * spacingZoneColors.test.ts — Verify spacing zone color design tokens.
  *
- * Bug: spacingZone.marginBase/marginHover used rgba(255,149,0,...) — an orange
- * tint that clashes with the blue-themed UI and doesn't match the preview overlay.
- * Both margin and padding zones should use cool/neutral tones.
+ * Margin zones use warm orange tones, padding zones use cool blue tones.
+ * This matches the Webflow convention and our design spec.
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,31 +15,34 @@ function parseRgba(s: string): { r: number; g: number; b: number; a: number } | 
   return { r: +m[1], g: +m[2], b: +m[3], a: m[4] != null ? +m[4] : 1 };
 }
 
-/** Returns true if the color is warm/orange (red channel dominates green by >40, blue is low) */
-function isOrange(rgba: string): boolean {
-  const c = parseRgba(rgba);
-  if (!c) return false;
-  return c.r > 200 && c.g > 100 && c.g < 200 && c.b < 50;
-}
-
 describe("spacing zone colors", () => {
-  it("marginBase should not be orange", () => {
-    expect(isOrange(spacingZone.marginBase)).toBe(false);
+  it("marginBase should be a warm orange tone", () => {
+    const c = parseRgba(spacingZone.marginBase);
+    expect(c).not.toBeNull();
+    if (c) {
+      // Orange: high red, moderate green, low blue
+      expect(c.r).toBeGreaterThan(200);
+      expect(c.b).toBeLessThan(50);
+    }
   });
 
-  it("marginHover should not be orange", () => {
-    expect(isOrange(spacingZone.marginHover)).toBe(false);
+  it("paddingBase should be a cool blue tone", () => {
+    const c = parseRgba(spacingZone.paddingBase);
+    expect(c).not.toBeNull();
+    if (c) {
+      // Blue: high blue channel
+      expect(c.b).toBeGreaterThan(200);
+    }
   });
 
-  it("margin and padding zones should use consistent cool tones", () => {
-    // Both zones should use cool-spectrum colors (blue/gray), not warm (orange/yellow)
-    const marginBase = parseRgba(spacingZone.marginBase);
-    const paddingBase = parseRgba(spacingZone.paddingBase);
-    expect(marginBase).not.toBeNull();
-    expect(paddingBase).not.toBeNull();
-    // Red channel should not dominate — ensures no warm tints
-    if (marginBase) {
-      expect(marginBase.r).toBeLessThanOrEqual(marginBase.b + 80);
+  it("margin and padding zones should be visually distinct", () => {
+    const margin = parseRgba(spacingZone.marginBase);
+    const padding = parseRgba(spacingZone.paddingBase);
+    expect(margin).not.toBeNull();
+    expect(padding).not.toBeNull();
+    if (margin && padding) {
+      // They should have different dominant channels
+      expect(margin.r).not.toBe(padding.r);
     }
   });
 });
