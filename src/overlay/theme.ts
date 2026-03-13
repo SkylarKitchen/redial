@@ -227,6 +227,18 @@ export const zIndex = {
   guide: 2147483645,
   /** Preview backdrops — behind all other overlay layers */
   backdrop: 2147483644,
+
+  // ── Internal stacking (within the panel, relative to siblings) ──
+  /** Simple above-sibling layering (absolute overlays, badge dots) */
+  above: 1,
+  /** Sticky section headers */
+  sticky: 2,
+  /** Tooltip/hint overlays within panel content */
+  float: 10,
+  /** Dropdown menus within the panel */
+  dropdown: 100,
+  /** Higher-priority popups/portals (e.g. MiniDropdown) */
+  popover: 200,
 } as const;
 
 // ─── Shadows ────────────────────────────────────────────────────

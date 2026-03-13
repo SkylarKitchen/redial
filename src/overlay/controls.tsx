@@ -109,7 +109,7 @@ const actionsOverlayStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 2,
-  zIndex: 1,
+  zIndex: zIndex.above,
   background: color.background,
 };
 
