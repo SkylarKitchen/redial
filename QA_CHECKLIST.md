@@ -30,8 +30,7 @@ Every control that accepts a value should support modifying AND resetting (Alt+c
 - [ ] PositionSelector — select "relative", Alt+click → resets to static
 - [ ] PositionOffsetDiagram (Top/Left) — type offsets, Alt+click → resets
 - [ ] Z-Index input — type value, Alt+click → resets to auto
-- [ ] IconButtonGroup (Float) — select "left", Alt+click → resets
-- [ ] IconButtonGroup (Clear) — select "both", Alt+click → resets
+- [ ] IconButtonGroup (Float/Clear) — select values, Alt+click → resets
 
 ### Typography Section
 - [ ] SelectRow (Font) — select font, Alt+click → resets
