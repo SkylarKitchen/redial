@@ -7,10 +7,10 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import type { IndicatorType } from "./theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, blackAlpha, primaryAlpha, font } from "./theme";
+import { color, text, border, surface, blackAlpha, primaryAlpha, font, labelIndicator, labelHighlight } from "./theme";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -108,15 +108,19 @@ export function PositionSelector({
         style={{
           width: "64px",
           fontSize: "11px",
-          color: text.label,
           flexShrink: 0,
           display: "inline-flex",
           alignItems: "center",
-          gap: "4px",
         }}
+        onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       >
-        {indicator && <StyleIndicator type={indicator} />}
-        Position
+        <span style={{
+          ...(indicator && indicator !== "none"
+            ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
+            : { color: text.label }),
+        }}>
+          Position
+        </span>
       </span>
       <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
         {/* Trigger button */}

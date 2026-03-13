@@ -228,7 +228,7 @@ export const TypographySection = memo(function TypographySection({
       <div style={{ ...ROW, gap: 4 }}>
         <span
           style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); const p = parseNum(v); setFontSize(p.value); setFontSizeUnit(p.unit || "px"); } }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); } }}
         >
           <span style={{
             ...(ind("font-size") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),
@@ -245,7 +245,7 @@ export const TypographySection = memo(function TypographySection({
         />
         <span
           style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); const p = parseNum(v); setLineHeight(p.value); setLineHeightUnit(p.unit || "px"); } }}
+          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height")); } }}
         >
           <span style={{
             ...(ind("line-height") !== "none" ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight } : {}),

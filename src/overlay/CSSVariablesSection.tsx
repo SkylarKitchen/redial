@@ -168,23 +168,34 @@ function VariableRow({
     <div style={ROW}>
       {/* Variable name */}
       <span
-        title={variable.name}
+        title={`${variable.name}${indicator !== "none" ? " — Option+Click to reset" : ""}`}
         style={{
           width: 100,
           fontSize: 11,
           fontFamily: font.mono,
-          color: text.label,
           flexShrink: 0,
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
           display: "inline-flex",
           alignItems: "center",
-          gap: 4,
+          cursor: indicator !== "none" ? "default" : undefined,
+        }}
+        onClick={(e) => {
+          if (e.altKey && indicator !== "none") {
+            const scope = variable.source === "element" ? element : document.documentElement;
+            (scope as HTMLElement).style.removeProperty(variable.name);
+            setDraft(variable.value);
+          }
         }}
       >
-        <StyleIndicator type={indicator} />
-        {variable.name}
+        <span style={{
+          ...(indicator !== "none"
+            ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
+            : { color: text.label }),
+        }}>
+          {variable.name}
+        </span>
       </span>
 
       {/* Value input */}
