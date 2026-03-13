@@ -231,7 +231,7 @@ export function SideSelector({ value, onChange, compact, cross }: SideSelectorPr
       style={{
         display: "flex",
         height: "24px",
-        borderBottom: "1px solid rgba(0,0,0,0.05)",
+        borderBottom: `1px solid ${borderToken.subtle}`,
       }}
     >
       {SIDES.map((side) => {

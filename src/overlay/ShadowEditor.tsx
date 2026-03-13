@@ -12,7 +12,7 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { ms } from "./timing";
-import { color, font } from "./theme";
+import { color, font, border } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -185,7 +185,7 @@ function ShadowRow({
     <div
       style={{
         padding: "6px 0",
-        borderBottom: "1px solid rgba(0,0,0,0.04)",
+        borderBottom: `1px solid ${border.subtle}`,
         opacity: shadow.visible === false ? 0.4 : 1,
         transition: `opacity ${ms("normal")}`,
       }}
