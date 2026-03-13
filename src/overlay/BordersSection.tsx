@@ -119,6 +119,29 @@ export const BordersSection = memo(function BordersSection({
   });
 
   const { conversionHint: bwHint, fireConversionHint: fireBwHint } = useConversionHint();
+  const { conversionHint: radiusHint, fireConversionHint: fireRadiusHint } = useConversionHint();
+
+  /** Convert all 4 corner values when the radius unit changes and apply them. */
+  const handleRadiusUnitChange = useCallback(
+    (u: string) => {
+      const convCtx = getConversionCtx();
+      const cTL = convertUnit(radiusTL, radiusUnit, u, convCtx);
+      const cTR = convertUnit(radiusTR, radiusUnit, u, convCtx);
+      const cBR = convertUnit(radiusBR, radiusUnit, u, convCtx);
+      const cBL = convertUnit(radiusBL, radiusUnit, u, convCtx);
+      fireRadiusHint(radiusTL, radiusUnit, cTL, u, convCtx);
+      setRadiusTL(cTL);
+      setRadiusTR(cTR);
+      setRadiusBR(cBR);
+      setRadiusBL(cBL);
+      setRadiusUnit(u);
+      apply("border-top-left-radius", `${cTL}${u}`);
+      apply("border-top-right-radius", `${cTR}${u}`);
+      apply("border-bottom-right-radius", `${cBR}${u}`);
+      apply("border-bottom-left-radius", `${cBL}${u}`);
+    },
+    [apply, getConversionCtx, radiusTL, radiusTR, radiusBR, radiusBL, radiusUnit, fireRadiusHint]
+  );
 
   // ── Sync controls when side tab changes ──
   useEffect(() => {
@@ -208,7 +231,7 @@ export const BordersSection = memo(function BordersSection({
               onPointerUp={() => endBatch()}
             />
             <ValueInput value={radiusTL} onChange={handleRadiusAllChange} />
-            <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={(u: string) => setRadiusUnit(u)} />
+            <UnitSelector value={radiusUnit} options={BORDER_UNITS} onChange={handleRadiusUnitChange} conversionHint={radiusHint} />
           </>
         )}
       </div>
@@ -225,7 +248,7 @@ export const BordersSection = memo(function BordersSection({
           onLinkedChange={() => {}}
           unit={radiusUnit}
           units={BORDER_UNITS}
-          onUnitChange={(u: string) => setRadiusUnit(u)}
+          onUnitChange={handleRadiusUnitChange}
         />
       )}
 
