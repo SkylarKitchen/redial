@@ -18,6 +18,7 @@ import {
   applyInlineStyle,
   isDirty,
   resetAll,
+  resetProp,
 } from "../apply";
 import { getIndicatorType } from "../panelUtils";
 
@@ -103,6 +104,27 @@ describe("Spacing indicator after alt+click reset", () => {
     expect(isDirty(el, "padding-left")).toBe(false);
 
     // Should NOT show as modified — it's the page's own style, not a user edit
+    expect(getIndicatorType(el, "padding-left")).toBe("none");
+  });
+
+  it("BUG: reset then re-apply with different unit stays dirty (unit mismatch)", () => {
+    const el = makeEl();
+
+    // 1. User edits padding-left to 20px via the panel
+    applyInlineStyle(el, "padding-left", "20px");
+    expect(isDirty(el, "padding-left")).toBe(true);
+
+    // 2. Alt+click: resetAndReadNum removes override + inline style, reads back "0px"
+    resetProp(el, "padding-left");
+    expect(isDirty(el, "padding-left")).toBe(false);
+
+    // 3. BUG: onChange re-applies the value with user's selected unit ("em")
+    //    getComputedStyle returns "0px" but we apply "0em" → string mismatch
+    applyInlineStyle(el, "padding-left", "0em");
+
+    // This SHOULD be false — the value is the computed default, just in a different unit.
+    // But because "0px" !== "0em", isDirty returns true.
+    expect(isDirty(el, "padding-left")).toBe(false);
     expect(getIndicatorType(el, "padding-left")).toBe("none");
   });
 });
