@@ -1488,11 +1488,11 @@ export function Overlay() {
               </span>
             </div>
           )}
-          {/* -- Common / Custom tab bar -- */}
+          {/* -- Quick / Full / AI tab bar -- */}
           <div className="flex border-b px-3 shrink-0" style={{ borderColor: border.subtle }}>
             {(["common", "custom", "prompt"] as const).map((tab) => {
               const isActive = activeTab === tab;
-              const label = tab === "common" ? "Common" : tab === "custom" ? "Custom" : "Prompt";
+              const label = tab === "common" ? "Quick" : tab === "custom" ? "Full" : "AI";
               return (
                 <button
                   key={tab}
