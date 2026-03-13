@@ -32,7 +32,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 ### Input Improvements
 - [x] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition. Gives visual feedback that sections are clickable.
 - [x] **Color swatch inset border**: The `1px solid color.border` on color swatches handles most cases, but pure-white or near-white swatches still blend into the panel background. Add an `inset` shadow or ensure border is always visible even for white swatches. Target: `ColorRow` in `controls.tsx:859`.
-- [ ] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `SizeInputCell` keyword mode.
+- [x] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `SizeInputCell` keyword mode.
 - [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") can clip. Add `overflow: hidden`, `textOverflow: ellipsis`, and `title` attribute to `labelStyle` in `controls.tsx`.
 - [ ] **SizeInputCell width clips large values** — Still fixed at `36px` width (`SizeInputCell.tsx:249`). Consider `minWidth: 36` with `flex: 1` or expand-on-focus.
 - [ ] **UnitSelector dismissal timeout** — Uses hardcoded `1700ms` for hint auto-dismiss. Replace with `timing.slow * 5` or a new `timing.dismissal` token.
