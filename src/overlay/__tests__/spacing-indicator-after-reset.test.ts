@@ -6,17 +6,16 @@
  * cell stays blue ("modified") and the section dot persists — even though
  * the value is back at its original computed value.
  *
- * Root cause: resetAndReadNum removes the override, then onChange re-applies
- * the same computed value via applyInlineStyle. The indicator function
- * (getIndicatorType) checks inline style presence rather than isDirty,
- * so it incorrectly reports "modified".
+ * Root cause: getIndicatorType checks inline style PRESENCE
+ * (el.style.getPropertyValue(prop) !== ""), but after a reset the onChange
+ * callback re-applies the original value via applyInlineStyle — which sets
+ * the inline style again. isDirty correctly returns false (initial === current),
+ * but getIndicatorType ignores isDirty and reports "modified".
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   applyInlineStyle,
-  resetProp,
-  resetAndReadNum,
   isDirty,
   resetAll,
 } from "../apply";
@@ -34,50 +33,46 @@ beforeEach(() => {
 });
 
 describe("Spacing indicator after alt+click reset", () => {
-  it("getIndicatorType returns 'none' after reset + re-apply of same value", () => {
+  it("getIndicatorType returns 'none' when isDirty is false (reset + re-apply scenario)", () => {
     const el = makeEl();
 
-    // 1. User edits padding-left to "20px"
+    // Pre-set the inline style to simulate a computed value already in place.
+    // In a real browser, the element would have padding-left: 20px from a
+    // stylesheet. Here we set it inline so getComputedStyle returns "20px".
+    el.style.setProperty("padding-left", "20px");
+
+    // Simulate applyInlineStyle AFTER a reset: the override's initial value
+    // matches the current value because the element's computed style is "20px"
+    // and we're re-applying "20px".
     applyInlineStyle(el, "padding-left", "20px");
-    expect(isDirty(el, "padding-left")).toBe(true);
-    expect(getIndicatorType(el, "padding-left")).toBe("modified");
 
-    // 2. User alt+clicks to reset — this is what SpacingBoxModel does:
-    //    const newValue = resetAndReadNum(element, prop);
-    //    onChange(prop, newValue, unit);
-    const newValue = resetAndReadNum(el, "padding-left");
-
-    // 3. onChange callback propagates to handleSpacingChange, which calls
-    //    applyInlineStyle with the computed value
-    applyInlineStyle(el, "padding-left", `${newValue}px`);
-
-    // 4. The value should NOT be dirty (initial === current)
+    // isDirty should be false: initial (captured from getComputedStyle) === current
     expect(isDirty(el, "padding-left")).toBe(false);
 
-    // 5. BUG: getIndicatorType still returns "modified" because the inline
-    //    style is physically set, even though isDirty is false
+    // BUG: getIndicatorType returns "modified" because the inline style is
+    // physically present — even though isDirty is false.
     expect(getIndicatorType(el, "padding-left")).toBe("none");
   });
 
-  it("section indicator returns 'none' when no spacing props are dirty", () => {
+  it("section indicator returns 'none' when no spacing props are dirty after reset", () => {
     const el = makeEl();
 
-    // Edit both padding sides
+    // Same setup: pre-set inline styles to give getComputedStyle real values
+    el.style.setProperty("padding-left", "20px");
+    el.style.setProperty("padding-right", "20px");
+
+    // Simulate reset + re-apply for both
     applyInlineStyle(el, "padding-left", "20px");
     applyInlineStyle(el, "padding-right", "20px");
 
-    // Reset both via the alt+click flow
-    const leftVal = resetAndReadNum(el, "padding-left");
-    applyInlineStyle(el, "padding-left", `${leftVal}px`);
+    expect(isDirty(el, "padding-left")).toBe(false);
+    expect(isDirty(el, "padding-right")).toBe(false);
 
-    const rightVal = resetAndReadNum(el, "padding-right");
-    applyInlineStyle(el, "padding-right", `${rightVal}px`);
-
-    // Neither should report as modified
+    // Both indicators should be "none"
     expect(getIndicatorType(el, "padding-left")).toBe("none");
     expect(getIndicatorType(el, "padding-right")).toBe("none");
 
-    // Section-level: check that sectionInd would return "none"
+    // Section-level: no spacing prop should show "modified"
     const spacingProps = [
       "margin-top", "margin-right", "margin-bottom", "margin-left",
       "padding-top", "padding-right", "padding-bottom", "padding-left",
@@ -91,10 +86,23 @@ describe("Spacing indicator after alt+click reset", () => {
   it("indicator stays 'modified' for a genuinely dirty property", () => {
     const el = makeEl();
 
-    // Edit padding-left to a non-default value
+    // Edit padding-left to a value that differs from computed
     applyInlineStyle(el, "padding-left", "42px");
 
     expect(isDirty(el, "padding-left")).toBe(true);
     expect(getIndicatorType(el, "padding-left")).toBe("modified");
+  });
+
+  it("indicator shows 'none' for property not tracked by apply.ts", () => {
+    const el = makeEl();
+
+    // Property set by external code (e.g. the page's own styles), NOT via panel
+    el.style.setProperty("padding-left", "20px");
+
+    // Not tracked in overrides → isDirty is false
+    expect(isDirty(el, "padding-left")).toBe(false);
+
+    // Should NOT show as modified — it's the page's own style, not a user edit
+    expect(getIndicatorType(el, "padding-left")).toBe("none");
   });
 });
