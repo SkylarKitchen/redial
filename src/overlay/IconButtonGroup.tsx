@@ -150,6 +150,7 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         isFirst && !isLast && "rounded-l",
         isLast && !isFirst && "rounded-r",
         isFirst && isLast && "rounded",
+        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
       )}
       style={{
         flex: 1,
@@ -161,10 +162,8 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         outline: "none",
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
         borderLeftWidth: isFirst ? 1 : 0,
-        backgroundColor: isActive
-          ? surface.active
-          : hovered ? surface.hover : "transparent",
-        color: isActive ? text.primary : color.mutedForeground,
+        backgroundColor: !isActive && hovered ? surface.hover : undefined,
+        color: !isActive ? color.mutedForeground : undefined,
         fontWeight: isActive ? 500 : 400,
         boxShadow: focused ? `0 0 0 2px ${primaryAlpha(0.3)}` : "none",
       }}

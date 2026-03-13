@@ -964,7 +964,14 @@ export function restoreSession(): number {
       for (const [prop, override] of Object.entries(props)) {
         elOverrides.set(prop, { initial: override.initial, current: override.current });
         if (override.initial !== override.current) dirtyCount++;
-        (el as HTMLElement).style.setProperty(prop, override.current, "important");
+
+        const parsed = parseStateKey(prop);
+        if (parsed.state !== "none") {
+          // State-keyed: notify listeners so statePreview.ts can rebuild <style> tag
+          notifyStateChange(el, parsed.state, parsed.prop, override.current);
+        } else {
+          (el as HTMLElement).style.setProperty(prop, override.current, "important");
+        }
         restored++;
       }
     }

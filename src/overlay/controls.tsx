@@ -462,7 +462,7 @@ export function SliderRow({
         onPointerUp={() => endBatch()}
       />
       {annotation && (
-        <span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, flexShrink: 0, maxWidth: 48, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{annotation}</span>
+        <span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, flexShrink: 0, whiteSpace: "nowrap" }}>{annotation}</span>
       )}
       <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
         <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded step={step} />

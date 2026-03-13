@@ -1518,7 +1518,7 @@ export function Overlay() {
 
       {/* Panel (inspector or global variables) */}
       <AnimatePresence>
-      {((selectedEl && inferResult && activePanel.type === "inspector") || activePanel.type === "variables") && (
+      {((selectedEl && inferResult && activePanel.type === "inspector") || activePanel.type === "variables" || activePanel.type === "session") && (
         <motion.div
           key="tuner-panel"
           className="__tuner-root"
@@ -1536,7 +1536,7 @@ export function Overlay() {
             flexDirection: "column",
             overflow: "hidden",
             border: diffMode ? "1px solid rgba(250,204,21,0.3)" : `1px solid ${blackAlpha(0.07)}`,
-            pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables") ? undefined : "none"),
+            pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables" || activePanel.type === "session") ? undefined : "none"),
             top: pos.y,
             left: pos.x,
             transformOrigin: "bottom right",
@@ -1702,6 +1702,13 @@ export function Overlay() {
 
           {activePanel.type === "variables" && (
             <GlobalVariablesPanel onClose={() => setActivePanel({ type: "none" })} />
+          )}
+
+          {activePanel.type === "session" && (
+            <SessionDrawer
+              open={true}
+              onResetAll={handleResetAll}
+            />
           )}
         </motion.div>
       )}

@@ -26,6 +26,7 @@ import {
   stateKey,
   parseStateKey,
   onStateChange,
+  restoreSession,
 } from "../apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -687,5 +688,41 @@ describe("onStateChange callback", () => {
     undo();
 
     expect(calls).toHaveLength(0);
+  });
+});
+
+// ─── restoreSession — state-keyed overrides notify statePreview ───────
+
+describe("restoreSession — state-keyed overrides", () => {
+  it("fires onStateChange for state-keyed entries during session restore", () => {
+    // Seed localStorage BEFORE restoring (simulates page refresh)
+    const key = `__tuner_session:${window.location.pathname}`;
+    const storageData = {
+      "#test-restore-el": {
+        "hover::color": { initial: "", current: "red" },
+      },
+    };
+    localStorage.setItem(key, JSON.stringify(storageData));
+
+    // Element must exist in DOM for querySelector to find it
+    const el = makeEl();
+    el.id = "test-restore-el";
+
+    // Subscribe to state change notifications
+    const calls: Array<{ el: Element; state: string; prop: string; value: string | null }> = [];
+    const unsub = onStateChange((info) => calls.push(info));
+
+    // Restore session — should fire onStateChange for state-keyed entries
+    restoreSession();
+
+    // The state-keyed entry should have triggered a notification
+    expect(calls.some(c => c.state === "hover" && c.prop === "color" && c.value === "red")).toBe(true);
+
+    // Also verify: state-keyed entries should NOT set inline style
+    expect(el.style.getPropertyValue("hover::color")).toBe("");
+
+    unsub();
+    resetAll();
+    localStorage.removeItem(key);
   });
 });

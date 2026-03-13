@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatTailwindDiff } from "../tailwind";
+import { formatTailwindDiff, cssToTwClass } from "../tailwind";
 import type { DiffEntry } from "../apply";
 
 /** Helper to test a single CSS property → Tailwind class conversion. */
@@ -570,5 +570,37 @@ describe("non-standard spacing values", () => {
 
   it("vw values get bracket syntax", () => {
     expect(tw("width", "100vw")).toBe("w-[100vw]");
+  });
+});
+
+// ─── cssToTwClass (panel annotation helper) ──────────────────────────
+
+describe("cssToTwClass", () => {
+  it("returns clean class for spacing-scale values", () => {
+    expect(cssToTwClass("padding-top", "16px")).toBe("pt-4");
+    expect(cssToTwClass("margin-left", "8px")).toBe("ml-2");
+    expect(cssToTwClass("width", "32px")).toBe("w-8");
+    expect(cssToTwClass("gap", "0px")).toBe("gap-0");
+  });
+
+  it("returns null for values that produce bracket syntax", () => {
+    expect(cssToTwClass("padding-top", "17px")).toBeNull();
+    expect(cssToTwClass("font-size", "14px")).toBeNull();
+    expect(cssToTwClass("width", "100vw")).toBeNull();
+  });
+
+  it("returns null for unknown properties", () => {
+    expect(cssToTwClass("unknown-prop", "16px")).toBeNull();
+  });
+
+  it("returns clean class for keyword values", () => {
+    expect(cssToTwClass("display", "flex")).toBe("flex");
+    expect(cssToTwClass("text-align", "center")).toBe("text-center");
+    expect(cssToTwClass("position", "absolute")).toBe("absolute");
+  });
+
+  it("returns null for keyword values mapped to bracket syntax", () => {
+    expect(cssToTwClass("color", "#ff0000")).toBeNull();
+    expect(cssToTwClass("background-color", "rgb(0,0,0)")).toBeNull();
   });
 });

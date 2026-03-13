@@ -104,6 +104,11 @@ export function Toolbar({
   const isActive = selecting || hasSelectedEl;
 
   const handleFabClick = () => {
+    if (expanded) {
+      // Collapse toolbar
+      setExpanded(false);
+      return;
+    }
     if (hasSelectedEl) {
       // If a panel is open, close it
       onClose();
@@ -114,8 +119,8 @@ export function Toolbar({
       onToggleSelecting();
       return;
     }
-    // Toggle expand/collapse
-    setExpanded((e) => !e);
+    // Expand toolbar
+    setExpanded(true);
   };
 
   return (
@@ -196,37 +201,25 @@ export function Toolbar({
                 icon={Crosshair}
                 label="Select element"
                 active={selecting}
-                onClick={() => {
-                  onToggleSelecting();
-                  setExpanded(false);
-                }}
+                onClick={onToggleSelecting}
               />
               <ToolButton
                 icon={Braces}
                 label="Design variables"
                 active={activePanel.type === "variables"}
-                onClick={() => {
-                  onOpenVariables();
-                  setExpanded(false);
-                }}
+                onClick={onOpenVariables}
               />
               <ToolButton
                 icon={Sparkles}
                 label="AI prompt"
                 active={activePanel.type === "inspector" && "tab" in activePanel && activePanel.tab === "prompt"}
-                onClick={() => {
-                  onOpenPrompt();
-                  setExpanded(false);
-                }}
+                onClick={onOpenPrompt}
               />
               <ToolButton
                 icon={Clock}
                 label="Session history"
                 active={activePanel.type === "session"}
-                onClick={() => {
-                  onToggleSession();
-                  setExpanded(false);
-                }}
+                onClick={onToggleSession}
               />
             </motion.div>
           )}
