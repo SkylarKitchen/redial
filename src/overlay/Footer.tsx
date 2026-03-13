@@ -217,6 +217,16 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     onReset();
   }, [element, onReset, scope, activeClassName, activeState]);
 
+  const handleResetClick = useCallback(() => {
+    if (count === 0) {
+      setShaking(true);
+      if (shakingTimerRef.current) clearTimeout(shakingTimerRef.current);
+      shakingTimerRef.current = setTimeout(() => setShaking(false), timing.slow);
+      return;
+    }
+    handleReset();
+  }, [count, handleReset]);
+
   return (
     <div
       className="__tuner-footer"
