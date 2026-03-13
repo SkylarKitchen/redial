@@ -12,7 +12,7 @@ import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useClickOutside } from "./useClickOutside";
 import { ms, springConfig } from "./timing";
-import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar } from "./theme";
+import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font } from "./theme";
 import type { ActivePanel } from "./Overlay";
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ function ToolButton({
         paddingRight: 10,
         fontSize: 12,
         fontWeight: active ? 500 : 400,
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: font.sans,
         color: active ? darkToolbar.text : darkToolbar.textMuted,
         whiteSpace: "nowrap" as const,
         transition: `background ${ms("fast")}, color ${ms("fast")}`,
