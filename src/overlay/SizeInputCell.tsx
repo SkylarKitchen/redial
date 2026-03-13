@@ -214,7 +214,7 @@ export function SizeInputCell({
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onKeywordChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
-            style={{ fontSize: 10, fontFamily: font.mono, textTransform: "capitalize", paddingRight: 4, cursor: "text", outline: "none", color: text.label }}
+            style={{ fontSize: 10, fontFamily: font.mono, fontStyle: "italic", textTransform: "capitalize", paddingRight: 4, cursor: "text", outline: "none", color: text.disabled }}
           >
             {keyword}
           </span>
