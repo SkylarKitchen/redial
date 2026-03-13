@@ -31,7 +31,7 @@ These are grep-and-fix passes that enforce the token system uniformly.
 - [x] **Transition timing audit**: Replaced 7 hardcoded ms values across 5 files with timing tokens (normal, expand, slow, fast).
 - [x] **Monospace font audit**: Audited — all 90+ `fontFamily` usages already use `font.mono`. Two `ui-monospace` references in controls.tsx are intentional font-family preview styles. No violations.
 - [x] **Border radius consistency**: Added `layout.pillRadius` (4px) token. Updated ScopePill (was 4, now token) and PILL_BUTTON (was 3, now 4 via token).
-- [ ] **Separator consistency**: Grep for any hardcoded `rgba` separator colors. All separators should use `border.subtle` from theme.ts.
+- [x] **Separator consistency**: Fixed 2 hardcoded rgba separators (ShadowEditor, SideSelector) → `border.subtle`. Remaining rgba values are grid lines, hover states, or non-separator borders — intentional.
 - [ ] **Icon opacity audit**: Check all lucide-react icon usages. Labels should use `text.label`, secondary icons `text.secondary`. Normalize any using raw opacity or hardcoded colors.
 
 ---
@@ -74,6 +74,9 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Separator consistency
+Replaced 2 hardcoded rgba separator borders with `border.subtle` token: ShadowEditor.tsx (rgba(0,0,0,0.04)) and SideSelector.tsx (rgba(0,0,0,0.05)). Other rgba values in the codebase are grid lines, hover states, or canvas fills — not separators.
 
 ### 2026-03-13 — Border radius consistency
 Added `layout.pillRadius: 4` token to theme.ts. Updated `ScopePill` in Header.tsx (was hardcoded `4`) and `PILL_BUTTON` in panelStyles.ts (was `3`) to use the token. Both now consistently use `layout.pillRadius`.
