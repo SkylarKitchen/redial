@@ -7,6 +7,8 @@ import {
   _assignVariable as assignVariable,
   _unassignVariable as unassignVariable,
   _getCollectionForVariable as getCollectionForVariable,
+  _getManuallyAssignedNames as getManuallyAssignedNames,
+  _bulkAssign as bulkAssign,
   _getSnapshot as getSnapshot,
   _subscribe as subscribe,
   _resetStore as resetStore,
@@ -195,5 +197,86 @@ describe("snapshot identity", () => {
     addCollection("X");
     const after = getSnapshot();
     expect(before).not.toBe(after);
+  });
+});
+
+// ─── getManuallyAssignedNames ─────────────────────────────────────────
+
+describe("getManuallyAssignedNames", () => {
+  it("returns empty set when no collections", () => {
+    const names = getManuallyAssignedNames();
+    expect(names.size).toBe(0);
+  });
+
+  it("returns empty set when collections have no variables", () => {
+    addCollection("Empty");
+    const names = getManuallyAssignedNames();
+    expect(names.size).toBe(0);
+  });
+
+  it("returns correct set after assigning variables", () => {
+    const a = addCollection("A");
+    const b = addCollection("B");
+    assignVariable(a.id, "--color-red");
+    assignVariable(a.id, "--color-blue");
+    assignVariable(b.id, "--spacing-sm");
+    const names = getManuallyAssignedNames();
+    expect(names.size).toBe(3);
+    expect(names.has("--color-red")).toBe(true);
+    expect(names.has("--color-blue")).toBe(true);
+    expect(names.has("--spacing-sm")).toBe(true);
+  });
+
+  it("does not include unassigned variables", () => {
+    const c = addCollection("Colors");
+    assignVariable(c.id, "--color-red");
+    unassignVariable("--color-red");
+    const names = getManuallyAssignedNames();
+    expect(names.has("--color-red")).toBe(false);
+  });
+});
+
+// ─── bulkAssign ───────────────────────────────────────────────────────
+
+describe("bulkAssign", () => {
+  it("assigns multiple variables to a collection", () => {
+    const c = addCollection("Colors");
+    bulkAssign(c.id, ["--red", "--blue", "--green"]);
+    const snap = getSnapshot();
+    expect(snap[0].variableNames).toEqual(["--red", "--blue", "--green"]);
+  });
+
+  it("removes variables from other collections", () => {
+    const a = addCollection("A");
+    const b = addCollection("B");
+    assignVariable(a.id, "--red");
+    assignVariable(a.id, "--blue");
+    bulkAssign(b.id, ["--red", "--blue"]);
+    const snap = getSnapshot();
+    expect(snap.find((c) => c.id === a.id)!.variableNames).toEqual([]);
+    expect(snap.find((c) => c.id === b.id)!.variableNames).toEqual(["--red", "--blue"]);
+  });
+
+  it("does not duplicate if already in target collection", () => {
+    const c = addCollection("Colors");
+    assignVariable(c.id, "--red");
+    bulkAssign(c.id, ["--red", "--blue"]);
+    const snap = getSnapshot();
+    expect(snap[0].variableNames).toEqual(["--red", "--blue"]);
+  });
+
+  it("only persists once", () => {
+    const c = addCollection("Colors");
+    const fn = vi.fn();
+    subscribe(fn);
+    bulkAssign(c.id, ["--a", "--b", "--c", "--d"]);
+    // bulkAssign should call persist exactly once → 1 notification
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("works with empty array", () => {
+    const c = addCollection("Colors");
+    bulkAssign(c.id, []);
+    expect(getSnapshot()[0].variableNames).toEqual([]);
   });
 });

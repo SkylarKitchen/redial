@@ -119,6 +119,48 @@ function getCollectionForVariable(variableName: string): TokenCollection | null 
   return collections.find((c) => c.variableNames.includes(variableName)) ?? null;
 }
 
+/**
+ * Efficiently returns the set of all variable names across all manual
+ * collections. Used by the auto-collections engine to skip assigned vars.
+ */
+function getManuallyAssignedNames(): Set<string> {
+  const names = new Set<string>();
+  for (const c of collections) {
+    for (const n of c.variableNames) {
+      names.add(n);
+    }
+  }
+  return names;
+}
+
+/**
+ * Batch assignment: assigns multiple variables to a collection, removing
+ * each from any other collection. Only calls persist() once at the end.
+ */
+function bulkAssign(collectionId: string, variableNames: string[]) {
+  const nameSet = new Set(variableNames);
+  collections = collections.map((c) => {
+    if (c.id === collectionId) {
+      // Add new names that aren't already present
+      const existing = new Set(c.variableNames);
+      const merged = [...c.variableNames];
+      for (const name of variableNames) {
+        if (!existing.has(name)) {
+          merged.push(name);
+        }
+      }
+      return { ...c, variableNames: merged };
+    }
+    // Remove from any other collection
+    const filtered = c.variableNames.filter((n) => !nameSet.has(n));
+    if (filtered.length !== c.variableNames.length) {
+      return { ...c, variableNames: filtered };
+    }
+    return c;
+  });
+  persist();
+}
+
 // ─── Reset (for tests) ──────────────────────────────────────────
 
 function resetStore() {
@@ -140,6 +182,8 @@ export function useTokenCollections() {
     assignVariable,
     unassignVariable,
     getCollectionForVariable,
+    getManuallyAssignedNames,
+    bulkAssign,
   };
 }
 
@@ -151,6 +195,8 @@ export {
   assignVariable as _assignVariable,
   unassignVariable as _unassignVariable,
   getCollectionForVariable as _getCollectionForVariable,
+  getManuallyAssignedNames as _getManuallyAssignedNames,
+  bulkAssign as _bulkAssign,
   getSnapshot as _getSnapshot,
   subscribe as _subscribe,
   resetStore as _resetStore,

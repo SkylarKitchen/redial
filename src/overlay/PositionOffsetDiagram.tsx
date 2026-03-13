@@ -131,7 +131,7 @@ function AutoLabel({ onClick }: { onClick: () => void }) {
         textAlign: "center" as const,
         transition: `background ${ms("normal")}`,
       }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.05)"; }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = surface.hover; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
     >
       Auto

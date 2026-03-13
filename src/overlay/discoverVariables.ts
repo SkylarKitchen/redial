@@ -18,6 +18,12 @@ export interface CSSVariable {
   numericValue?: number;
   /** For length values, the unit (px, em, rem, %, etc.) */
   unit?: string;
+  /** Raw value from the stylesheet rule (before computation), e.g. "var(--gray-900)" */
+  rawValue?: string;
+  /** Direct alias target variable name, e.g. "--gray-900" */
+  aliasOf?: string;
+  /** Fallback value from var(--x, fallback), e.g. "#111827" */
+  aliasFallback?: string;
 }
 
 // ─── Color Detection ─────────────────────────────────────────────────
@@ -52,6 +58,24 @@ export function detectVarType(value: string): { type: VarType; numericValue?: nu
   if (len) return { type: "length", numericValue: len.num, unit: len.unit };
   if (NUMBER_RE.test(value.trim())) return { type: "number", numericValue: parseFloat(value) };
   return { type: "string" };
+}
+
+// ─── Alias Detection ────────────────────────────────────────────────
+
+const ALIAS_RE = /^\s*var\(\s*(--[\w-]+)\s*(?:,\s*(.*))?\)\s*$/s;
+
+/**
+ * Parse a raw CSS value for a `var()` alias reference.
+ * Returns `{ target, fallback }` if the value is a var() expression,
+ * or `null` if it's a plain value (hex, length, etc.).
+ */
+export function parseVarAlias(raw: string): { target: string; fallback: string | undefined } | null {
+  if (!raw) return null;
+  const m = raw.match(ALIAS_RE);
+  if (!m) return null;
+  const target = m[1];
+  const fallback = m[2] !== undefined ? m[2].trim() || undefined : undefined;
+  return { target, fallback };
 }
 
 // ─── Recursive Rule Walker ──────────────────────────────────────────
@@ -92,11 +116,14 @@ export function discoverVariables(element: Element): CSSVariable[] {
           const value = (isRoot ? rootStyles : elStyles).getPropertyValue(prop).trim();
           if (value) {
             const detected = detectVarType(value);
+            const rawVal = rule.style.getPropertyValue(prop).trim();
+            const alias = parseVarAlias(rawVal);
             found.set(prop, {
               name: prop,
               value,
               source: matchesEl ? "element" : "root",
               ...detected,
+              ...(alias ? { rawValue: rawVal, aliasOf: alias.target, aliasFallback: alias.fallback } : {}),
             });
           }
         }
@@ -114,7 +141,11 @@ export function discoverVariables(element: Element): CSSVariable[] {
       if (prop.startsWith("--")) {
         const value = htmlEl.style.getPropertyValue(prop).trim();
         if (value) {
-          found.set(prop, { name: prop, value, source: "element", ...detectVarType(value) });
+          const alias = parseVarAlias(value);
+          found.set(prop, {
+            name: prop, value, source: "element", ...detectVarType(value),
+            ...(alias ? { rawValue: value, aliasOf: alias.target, aliasFallback: alias.fallback } : {}),
+          });
         }
       }
     }
@@ -129,7 +160,11 @@ export function discoverVariables(element: Element): CSSVariable[] {
         if (prop.startsWith("--") && !found.has(prop)) {
           const value = elStyles.getPropertyValue(prop).trim();
           if (value) {
-            found.set(prop, { name: prop, value, source: "inherited", ...detectVarType(value) });
+            const alias = parseVarAlias(value);
+            found.set(prop, {
+              name: prop, value, source: "inherited", ...detectVarType(value),
+              ...(alias ? { rawValue: value, aliasOf: alias.target, aliasFallback: alias.fallback } : {}),
+            });
           }
         }
       }
@@ -166,7 +201,12 @@ export function discoverAllVariables(): CSSVariable[] {
           if (!prop.startsWith("--")) continue;
           const value = rootStyles.getPropertyValue(prop).trim();
           if (value) {
-            found.set(prop, { name: prop, value, source: "root", ...detectVarType(value) });
+            const rawVal = rule.style.getPropertyValue(prop).trim();
+            const alias = parseVarAlias(rawVal);
+            found.set(prop, {
+              name: prop, value, source: "root", ...detectVarType(value),
+              ...(alias ? { rawValue: rawVal, aliasOf: alias.target, aliasFallback: alias.fallback } : {}),
+            });
           }
         }
       });
@@ -182,7 +222,11 @@ export function discoverAllVariables(): CSSVariable[] {
     if (prop.startsWith("--")) {
       const value = rootEl.style.getPropertyValue(prop).trim();
       if (value) {
-        found.set(prop, { name: prop, value, source: "root", ...detectVarType(value) });
+        const alias = parseVarAlias(value);
+        found.set(prop, {
+          name: prop, value, source: "root", ...detectVarType(value),
+          ...(alias ? { rawValue: value, aliasOf: alias.target, aliasFallback: alias.fallback } : {}),
+        });
       }
     }
   }
@@ -353,6 +397,66 @@ export function scanVarReferences(
 
   return results;
 }
+
+// ─── Alias Graph & Tier Classification ──────────────────────────────
+
+export type AliasTier = "primitive" | "semantic" | "component";
+
+/**
+ * Build a directed alias graph from a set of CSS variables.
+ * Provides forward resolution (resolve), reverse lookup (dependents),
+ * and the raw edge map.
+ */
+export function buildAliasGraph(vars: CSSVariable[]) {
+  const edges = new Map<string, string>();
+  for (const v of vars) {
+    if (v.aliasOf) edges.set(v.name, v.aliasOf);
+  }
+
+  /** Walk the alias chain from `name`, returning the full path. Detects cycles. */
+  function resolve(name: string): string[] {
+    const path: string[] = [name];
+    const visited = new Set<string>([name]);
+    let current = name;
+    while (edges.has(current)) {
+      const next = edges.get(current)!;
+      if (visited.has(next)) break; // cycle detected
+      visited.add(next);
+      path.push(next);
+      current = next;
+    }
+    return path;
+  }
+
+  /** Return all variable names that directly alias TO the given name. */
+  function dependents(name: string): string[] {
+    const result: string[] = [];
+    for (const [src, tgt] of edges) {
+      if (tgt === name) result.push(src);
+    }
+    return result.sort();
+  }
+
+  return { edges, resolve, dependents };
+}
+
+/**
+ * Classify a variable into a tier based on its alias chain depth:
+ * - `"primitive"` — no alias (leaf value)
+ * - `"semantic"` — aliases a primitive (1 hop)
+ * - `"component"` — aliases a semantic or deeper (2+ hops)
+ */
+export function classifyTier(
+  v: CSSVariable,
+  graph: ReturnType<typeof buildAliasGraph>,
+): AliasTier {
+  if (!v.aliasOf) return "primitive";
+  const path = graph.resolve(v.name);
+  // path includes the variable itself, so chain length = path.length - 1
+  return path.length - 1 >= 2 ? "component" : "semantic";
+}
+
+// ─── Reference Replace ──────────────────────────────────────────────
 
 /**
  * Replace all references to `oldName` with `newName` across stylesheets
