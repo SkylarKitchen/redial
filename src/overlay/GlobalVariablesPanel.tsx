@@ -10,7 +10,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { X, Plus, Copy, Trash2, FolderPlus } from "lucide-react";
+import { X, Plus, Copy, Trash2, FolderPlus, Pin } from "lucide-react";
 import { useTokenCollections, type TokenCollection } from "./tokenCollections";
 import {
   discoverAllVariables,
@@ -18,10 +18,14 @@ import {
   groupByPrefix,
   parseLength,
   replaceVarReferences,
+  buildAliasGraph,
+  classifyTier,
   type CSSVariable,
   type VarCategory,
   type PrefixGroup,
+  type AliasTier,
 } from "./discoverVariables";
+import { inferAutoCollections, type AutoCollection } from "./autoCollections";
 import {
   applyCustomProperty,
   addCustomProperty,
@@ -55,6 +59,12 @@ const CATEGORY_LABELS: Record<VarCategory, string> = {
   other: "Other",
 };
 
+const TIER_LABELS: Record<AliasTier, string> = {
+  primitive: "Primitives",
+  semantic: "Semantic",
+  component: "Component",
+};
+
 const VAR_LABEL_STYLE: React.CSSProperties = {
   width: 130,
   fontSize: 11,
@@ -67,7 +77,7 @@ const VAR_LABEL_STYLE: React.CSSProperties = {
   alignItems: "center",
 };
 
-type ViewMode = "category" | "prefix" | "collection";
+type ViewMode = "category" | "prefix" | "collection" | "tier";
 
 // ─── Ordering Persistence ─────────────────────────────────────────────
 
@@ -916,6 +926,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
     assignVariable: assignVar,
     unassignVariable: unassignVar,
     getCollectionForVariable,
+    bulkAssign,
   } = useTokenCollections();
 
   const overrideSnapshot = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
@@ -953,6 +964,20 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
   const categoryGrouped = useMemo(() => groupByCategory(filtered), [filtered]);
   const prefixGrouped = useMemo(() => groupByPrefix(filtered), [filtered]);
 
+  const aliasGraph = useMemo(() => buildAliasGraph(allVars), [allVars]);
+
+  const tierGrouped = useMemo(() => {
+    const groups: Record<AliasTier, CSSVariable[]> = {
+      primitive: [],
+      semantic: [],
+      component: [],
+    };
+    for (const v of filtered) {
+      groups[classifyTier(v, aliasGraph)].push(v);
+    }
+    return groups;
+  }, [filtered, aliasGraph]);
+
   // Collection-grouped: variables sorted into user collections + uncategorized
   const collectionGrouped = useMemo(() => {
     const groups: { collection: TokenCollection; vars: CSSVariable[] }[] = [];
@@ -975,6 +1000,14 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
     return { groups, uncategorized };
   }, [filtered, collections]);
 
+  const autoCollections = useMemo(() => {
+    const manualNames = new Set<string>();
+    for (const c of collections) {
+      for (const n of c.variableNames) manualNames.add(n);
+    }
+    return inferAutoCollections(collectionGrouped.uncategorized, manualNames);
+  }, [collectionGrouped.uncategorized, collections]);
+
   useEffect(() => {
     if (addingCollection) newCollectionRef.current?.focus();
   }, [addingCollection]);
@@ -991,6 +1024,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
     { value: "category", label: "Category" },
     { value: "prefix", label: "Prefix" },
     { value: "collection", label: "Collections" },
+    { value: "tier", label: "Tier" },
   ];
 
   return (
@@ -1122,6 +1156,22 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
               />
             )}
           </>
+        ) : viewMode === "tier" ? (
+          (Object.keys(TIER_LABELS) as AliasTier[]).map((tier) => {
+            const vars = tierGrouped[tier];
+            if (vars.length === 0) return null;
+            return (
+              <VariableGroup
+                key={tier}
+                title={TIER_LABELS[tier]}
+                variables={vars}
+                searching={searching}
+                order={order}
+                onOrderChange={handleOrderChange}
+                onContextMenu={handleContextMenu}
+              />
+            );
+          })
         ) : (
           /* Collections view */
           <>
@@ -1191,9 +1241,29 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
               />
             ))}
 
-            {/* Uncategorized — sub-grouped by category */}
-            {collectionGrouped.uncategorized.length > 0 && (() => {
-              const catGroups = groupByCategory(collectionGrouped.uncategorized);
+            {/* Auto-collections */}
+            {autoCollections.map((ac) => (
+              <AutoCollectionSection
+                key={ac.id}
+                autoCollection={ac}
+                allVars={filtered}
+                searching={searching}
+                order={order}
+                onOrderChange={handleOrderChange}
+                onContextMenu={handleContextMenu}
+                onPin={() => {
+                  const manual = addColl(ac.name);
+                  bulkAssign(manual.id, ac.variableNames);
+                }}
+              />
+            ))}
+
+            {/* Remaining truly uncategorized (vars not in any auto-collection either) */}
+            {(() => {
+              const autoNames = new Set(autoCollections.flatMap((ac) => ac.variableNames));
+              const remaining = collectionGrouped.uncategorized.filter((v) => !autoNames.has(v.name));
+              if (remaining.length === 0) return null;
+              const catGroups = groupByCategory(remaining);
               return (Object.keys(CATEGORY_LABELS) as VarCategory[]).map(cat => {
                 if (catGroups[cat].length === 0) return null;
                 return (

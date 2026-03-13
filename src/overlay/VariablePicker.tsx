@@ -340,22 +340,45 @@ export function VariablePicker({
                     variable={v}
                     isActive={activeVariable === v.name}
                     onSelect={() => handleSelect(v.name)}
+                    aliasOf={v.aliasOf}
                   />
                 ))}
               </div>
             ))}
             {grouped.uncategorized.length > 0 && (
-              <div>
-                {grouped.ordered.length > 0 && <GroupHeader label="Uncategorized" />}
-                {grouped.uncategorized.map((v) => (
-                  <VarRow
-                    key={v.name}
-                    variable={v}
-                    isActive={activeVariable === v.name}
-                    onSelect={() => handleSelect(v.name)}
-                  />
-                ))}
-              </div>
+              autoGrouped.length > 0 ? (
+                autoGrouped.map((ac) => (
+                  <div key={ac.id}>
+                    <GroupHeader label={ac.name} />
+                    {ac.variableNames.map((name) => {
+                      const v = filtered.find((fv) => fv.name === name);
+                      if (!v) return null;
+                      return (
+                        <VarRow
+                          key={v.name}
+                          variable={v}
+                          isActive={activeVariable === v.name}
+                          onSelect={() => handleSelect(v.name)}
+                          aliasOf={v.aliasOf}
+                        />
+                      );
+                    })}
+                  </div>
+                ))
+              ) : (
+                <div>
+                  {grouped.ordered.length > 0 && <GroupHeader label="Uncategorized" />}
+                  {grouped.uncategorized.map((v) => (
+                    <VarRow
+                      key={v.name}
+                      variable={v}
+                      isActive={activeVariable === v.name}
+                      onSelect={() => handleSelect(v.name)}
+                      aliasOf={v.aliasOf}
+                    />
+                  ))}
+                </div>
+              )
             )}
           </>
         )}

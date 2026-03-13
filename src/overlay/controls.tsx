@@ -5,7 +5,7 @@
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
  */
 
-import React, { useState, useCallback, useRef, useEffect, memo, createContext, useContext } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo, memo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,6 +20,7 @@ import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "./colorUtils";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
+import { parseVarAlias } from "./discoverVariables";
 import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight, Link2, Unlink } from "lucide-react";
@@ -817,6 +818,41 @@ function SelectRowCustom({
 
 // ─── ColorRow ───────────────────────────────────────────────────────
 
+/** Walk the alias chain for a CSS variable, returning all names in the chain. */
+function resolveAliasChain(varName: string, maxDepth = 5): string[] {
+  const chain = [varName];
+  const visited = new Set([varName]);
+  let current = varName;
+
+  for (let i = 0; i < maxDepth; i++) {
+    let raw: string | null = null;
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        for (let j = 0; j < sheet.cssRules.length; j++) {
+          const rule = sheet.cssRules[j];
+          if (
+            rule instanceof CSSStyleRule &&
+            (rule.selectorText === ":root" || rule.selectorText === "html")
+          ) {
+            const val = rule.style.getPropertyValue(current).trim();
+            if (val) { raw = val; break; }
+          }
+        }
+      } catch { /* cross-origin */ }
+      if (raw) break;
+    }
+
+    if (!raw) break;
+    const alias = parseVarAlias(raw);
+    if (!alias || visited.has(alias.target)) break;
+    visited.add(alias.target);
+    chain.push(alias.target);
+    current = alias.target;
+  }
+
+  return chain;
+}
+
 export function ColorRow({
   label,
   value,
@@ -860,6 +896,14 @@ export function ColorRow({
   const displayColor = resolvedColor ?? value;
   const displayLabel = varName ? varName.replace(/^--/, "") : value;
   const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
+
+  // Build alias chain tooltip (e.g. "button-bg → primary-500 → #3b82f6")
+  const aliasChainTitle = useMemo(() => {
+    if (!varName) return undefined;
+    const chain = resolveAliasChain(varName);
+    if (chain.length <= 1) return value; // no chain, just show raw var(--foo)
+    return chain.map((n) => n.replace(/^--/, "")).join(" \u2192 ") + ` = ${displayColor}`;
+  }, [varName, value, displayColor]);
 
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const compactLabelOverrides: React.CSSProperties = compact ? { width: 44, padding: 0, paddingLeft: 1 } : {};
@@ -919,9 +963,10 @@ export function ColorRow({
           border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
           boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
         }}
+        title={aliasChainTitle}
       />
       <span
-        title={varName ? value : undefined}
+        title={aliasChainTitle}
         style={{
           fontSize: 10,
           fontFamily: font.mono,
