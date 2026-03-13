@@ -81,6 +81,7 @@ function GlobalVariableRow({ variable }: { variable: CSSVariable }) {
         value={draft}
         onChange={(c) => { setDraft(c); commit(c); }}
         indicator={indicator}
+        labelWidth={140}
       />
     );
   }

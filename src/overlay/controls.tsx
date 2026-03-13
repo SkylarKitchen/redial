@@ -770,6 +770,7 @@ export function ColorRow({
   computedProp,
   computedElement,
   compact,
+  labelWidth,
 }: {
   label: string;
   value: string;
@@ -784,6 +785,8 @@ export function ColorRow({
   computedElement?: Element;
   /** Compact mode: no horizontal padding, narrower label — for sub-layouts */
   compact?: boolean;
+  /** Override default label width (e.g. for wider variable names) */
+  labelWidth?: number;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
@@ -798,12 +801,15 @@ export function ColorRow({
 
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const compactLabelOverrides: React.CSSProperties = compact ? { width: 44, padding: 0, paddingLeft: 1 } : {};
+  const widthOverrides: React.CSSProperties = labelWidth != null
+    ? { width: labelWidth, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+    : {};
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
       onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
-      title={colorLabelTitle}
-      style={{ ...labelStyle(indicator), ...compactLabelOverrides }}
+      title={colorLabelTitle ?? label}
+      style={{ ...labelStyle(indicator), ...compactLabelOverrides, ...widthOverrides }}
     >
       {label}
     </span>
