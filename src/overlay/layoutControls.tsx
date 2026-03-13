@@ -12,6 +12,7 @@ import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
 import { evaluateMathExpr } from "./inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, labelIndicator, segment } from "./theme";
+import { ms } from "./timing";
 import type { IndicatorType } from "./StyleIndicator";
 import { SegmentedControl } from "./SegmentedControl";
 import {
@@ -118,7 +119,7 @@ function ReverseButton({ active, onClick }: { active: boolean; onClick: () => vo
         flexShrink: 0,
         padding: 4,
         overflow: "hidden",
-        transition: "background 75ms ease",
+        transition: `background ${ms("fast")} ease`,
         background: active ? segment.activeBg : segment.bg,
         color: active ? text.primary : text.secondary,
       }}
@@ -275,7 +276,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
             padding: 0,
             background: isOverflowActive ? segment.activeBg : "transparent",
             color: isOverflowActive ? text.primary : text.hint,
-            transition: "background 75ms ease",
+            transition: `background ${ms("fast")} ease`,
           }}
         >
           <ChevronSmallDownIcon size={16} />
@@ -428,7 +429,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
           flexShrink: 0,
           padding: 4,
           overflow: "hidden",
-          transition: "background 75ms ease",
+          transition: `background ${ms("fast")} ease`,
           background: isWrap ? segment.activeBg : segment.bg,
           color: isWrap ? text.primary : text.secondary,
         }}
@@ -455,7 +456,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
             padding: 0,
             background: isReverse ? segment.activeBg : "transparent",
             color: isReverse ? text.primary : text.hint,
-            transition: "background 75ms ease",
+            transition: `background ${ms("fast")} ease`,
           }}
         >
           <ChevronSmallDownIcon size={16} />

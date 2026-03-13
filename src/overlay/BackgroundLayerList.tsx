@@ -382,7 +382,7 @@ export function BackgroundLayerList({
                     />
                     <div className="flex gap-1">
                       <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.35)]">
+                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
                           Size
                         </span>
                         <Select
@@ -400,20 +400,22 @@ export function BackgroundLayerList({
                                 value={w}
                                 placeholder="W"
                                 onChange={(e) => updateImage(layer.id, { size: `${e.target.value} ${h}` })}
-                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.75)] text-[10px] px-1 font-mono"
+                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
+                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
                               />
                               <input
                                 value={h}
                                 placeholder="H"
                                 onChange={(e) => updateImage(layer.id, { size: `${w} ${e.target.value}` })}
-                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.75)] text-[10px] px-1 font-mono"
+                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
+                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
                               />
                             </div>
                           );
                         })()}
                       </div>
                       <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.35)]">
+                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
                           Position
                         </span>
                         <Select
@@ -431,20 +433,22 @@ export function BackgroundLayerList({
                                 value={x}
                                 placeholder="X"
                                 onChange={(e) => updateImage(layer.id, { position: `${e.target.value} ${y}` })}
-                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.75)] text-[10px] px-1 font-mono"
+                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
+                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
                               />
                               <input
                                 value={y}
                                 placeholder="Y"
                                 onChange={(e) => updateImage(layer.id, { position: `${x} ${e.target.value}` })}
-                                className="flex-1 h-[22px] bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.75)] text-[10px] px-1 font-mono"
+                                className="flex-1 h-[22px] rounded-[3px] text-[10px] px-1 font-mono"
+                                style={{ background: color.input, border: `1px solid ${color.border}`, color: blackAlpha(0.75) }}
                               />
                             </div>
                           );
                         })()}
                       </div>
                       <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.35)]">
+                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
                           Repeat
                         </span>
                         <Select
@@ -456,7 +460,7 @@ export function BackgroundLayerList({
                     </div>
                     <div className="flex gap-1">
                       <div className="flex-1 flex flex-col gap-0.5">
-                        <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.35)]">
+                        <span className="text-[10px] font-[system-ui,sans-serif]" style={{ color: blackAlpha(0.35) }}>
                           Attachment
                         </span>
                         <Select
@@ -471,7 +475,7 @@ export function BackgroundLayerList({
 
                 {/* Blend mode */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-[system-ui,sans-serif] text-[rgba(0,0,0,0.35)] min-w-9">
+                  <span className="text-[10px] font-[system-ui,sans-serif] min-w-9" style={{ color: blackAlpha(0.35) }}>
                     Blend
                   </span>
                   <Select

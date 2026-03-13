@@ -12,7 +12,7 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { ms } from "./timing";
-import { color } from "./theme";
+import { color, font } from "./theme";
 
 export interface ShadowValue {
   x: number;
@@ -96,7 +96,7 @@ function NumericInput({
           textTransform: "uppercase",
           letterSpacing: "0.05em",
           color: "#737373",
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: font.sans,
         }}
       >
         {label}
@@ -116,7 +116,7 @@ function NumericInput({
             borderRadius: "2px",
             color: "#171717",
             fontSize: "10px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: font.mono,
             textAlign: "center",
             padding: "2px",
             outline: "none",
@@ -133,7 +133,7 @@ function NumericInput({
             display: "inline-block",
             width: "36px",
             fontSize: "10px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: font.mono,
             color: value !== 0 ? "#525252" : "#A3A3A3",
             cursor: "text",
             padding: "2px",
@@ -245,7 +245,7 @@ function ShadowRow({
           title={shadow.inset ? "Inset (click to toggle)" : "Outset (click to toggle)"}
           style={{
             fontSize: "9px",
-            fontFamily: "ui-monospace, 'SF Mono', monospace",
+            fontFamily: font.mono,
             color: shadow.inset ? color.primary : "#737373",
             background: shadow.inset ? "rgba(59,130,246,0.15)" : "rgba(0,0,0,0.03)",
             border: shadow.inset
@@ -347,7 +347,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
           width: "100%",
           padding: "4px 0",
           fontSize: "10px",
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: font.sans,
           color: color.primary,
           background: "rgba(59,130,246,0.08)",
           border: "1px dashed rgba(59,130,246,0.3)",
@@ -397,7 +397,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
             fontSize: "10px",
             color: "#A3A3A3",
             textAlign: "center",
-            fontFamily: "system-ui, sans-serif",
+            fontFamily: font.sans,
           }}
         >
           No shadows

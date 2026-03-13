@@ -1683,11 +1683,11 @@ export function Overlay() {
 
       {/* Floating action button -- bottom-right activation trigger */}
       <div
-        className={cn(
-          "fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root",
-          (selecting || selectedEl) && "border-[#3B82F6]/40 shadow-[0_0_0_1px_rgba(59,130,246,0.4),0_4px_20px_rgba(0,0,0,0.12)]",
-          !(selecting || selectedEl) && "shadow-[0_4px_20px_rgba(0,0,0,0.25),0_0_0_0.5px_rgba(255,255,255,0.06)]",
-        )}
+        className="fixed bottom-6 right-6 z-[2147483647] w-12 h-12 rounded-full bg-[#1e1e1e] border border-white/[0.08] cursor-pointer flex items-center justify-center transition-[box-shadow,border-color] duration-200 ease __tuner-root"
+        style={(selecting || selectedEl)
+          ? { borderColor: primaryAlpha(0.4), boxShadow: `0 0 0 1px ${primaryAlpha(0.4)}, 0 4px 20px ${blackAlpha(0.12)}` }
+          : { boxShadow: `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px rgba(255,255,255,0.06)` }
+        }
         onClick={() => {
           if (selectedEl) {
             handleClose();

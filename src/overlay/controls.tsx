@@ -23,7 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, focusRing } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, focusRing, presets } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -242,6 +242,46 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
   );
 }
 
+// ─── PresetChips ─────────────────────────────────────────────────────
+
+function PresetChips({ property, onSelect }: {
+  property: string;
+  onSelect: (value: string | number) => void;
+}) {
+  const values = presets[property];
+  if (!values || values.length === 0) return null;
+
+  return (
+    <div style={{ display: "flex", gap: 4, padding: "1px 12px 2px 82px" }}>
+      {values.map((v) => (
+        <button
+          key={String(v)}
+          onClick={() => onSelect(v)}
+          style={{
+            fontFamily: font.mono,
+            fontSize: 10,
+            color: text.label,
+            background: "transparent",
+            border: `1px solid ${border.default}`,
+            borderRadius: 3,
+            padding: "1px 6px",
+            cursor: "pointer",
+            lineHeight: "16px",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = surface.hover;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+          }}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── SliderRow ──────────────────────────────────────────────────────
 
 export function SliderRow({
@@ -262,6 +302,8 @@ export function SliderRow({
   conversionHint,
   snapPoints,
   snapThreshold,
+  property,
+  onPreset,
 }: {
   label: string;
   value: number;
@@ -287,6 +329,10 @@ export function SliderRow({
   snapPoints?: number[];
   /** Pixel distance for snap activation (default 3) */
   snapThreshold?: number;
+  /** Key into theme presets (e.g. "opacity", "gap") */
+  property?: string;
+  /** Called when a string preset is selected (numeric presets use onChange) */
+  onPreset?: (value: string | number) => void;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
@@ -314,7 +360,14 @@ export function SliderRow({
       {label}
     </span>
   );
+  const handlePresetSelect = useCallback((v: string | number) => {
+    const n = typeof v === "number" ? v : parseFloat(String(v));
+    if (!isNaN(n)) onChange(n);
+    else if (onPreset) onPreset(v);
+  }, [onChange, onPreset]);
+
   return (
+    <>
     <div className="flex items-center gap-2 px-3 py-0.5" onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
         {computedProp && computedElement ? (
@@ -347,6 +400,8 @@ export function SliderRow({
         ) : null}
       </div>
     </div>
+    {property && <PresetChips property={property} onSelect={handlePresetSelect} />}
+    </>
   );
 }
 
@@ -424,17 +479,21 @@ export function SelectRow({
       ) : labelContent}
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger
-          className={cn(
-            "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
-            "text-[11px] font-mono text-[var(--foreground)] px-1.5",
-            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-            "hover:bg-[rgba(0,0,0,0.07)]"
-          )}
+          className="tuner-focusable flex-1 h-6 rounded-sm text-[11px] font-mono px-1.5 hover:bg-[rgba(0,0,0,0.07)]"
+          style={{
+            backgroundColor: color.input,
+            border: `1px solid ${color.border}`,
+            color: color.foreground,
+          }}
         >
           <SelectValue />
         </SelectTrigger>
         <SelectContent
-          className="bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg max-h-[180px]"
+          className="rounded shadow-lg max-h-[180px]"
+          style={{
+            backgroundColor: color.popover,
+            border: `1px solid ${color.border}`,
+          }}
         >
           {options.map((opt) => (
             <SelectItem
@@ -442,7 +501,7 @@ export function SelectRow({
               value={opt.value}
               className={cn(
                 "text-[11px] font-mono cursor-pointer",
-                "focus:bg-[var(--accent)] focus:text-[var(--accent-foreground)]"
+                "focus:bg-[rgba(0,0,0,0.05)] focus:text-[#171717]"
               )}
             >
               {opt.label}
@@ -518,13 +577,7 @@ function SelectRowCustom({
       ) : labelContent}
       <div ref={containerRef} className="relative flex-1">
         <button
-          className={cn(
-            "tuner-focusable w-full h-6 flex items-center justify-between",
-            "bg-[var(--input)] border border-[var(--border)] rounded-sm",
-            "text-[11px] font-mono text-[var(--foreground)] px-1.5 cursor-pointer outline-none",
-            "hover:bg-[rgba(0,0,0,0.07)]",
-            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          )}
+          className="tuner-focusable w-full h-6 flex items-center justify-between rounded-sm text-[11px] font-mono px-1.5 cursor-pointer outline-none hover:bg-[rgba(0,0,0,0.07)]"
           tabIndex={0}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
@@ -535,19 +588,22 @@ function SelectRowCustom({
             }
           }}
           style={{
+            backgroundColor: open ? blackAlpha(0.07) : color.input,
+            border: `1px solid ${color.border}`,
+            color: color.foreground,
             fontFamily: fontPreview && current ? `${current.value}, ui-monospace, 'SF Mono', monospace` : undefined,
-            ...(open ? { background: blackAlpha(0.07) } : {}),
           }}
         >
           <span className="overflow-hidden text-ellipsis whitespace-nowrap">
             {current?.label ?? value}
           </span>
-          <ChevronDown size={12} strokeWidth={2} className="text-[var(--muted-foreground)] shrink-0 ml-1" />
+          <ChevronDown size={12} strokeWidth={2} className="shrink-0 ml-1" style={{ color: color.mutedForeground }} />
         </button>
 
         {open && (
           <Command
-            className="absolute top-[calc(100%+2px)] left-0 right-0 min-w-full bg-[var(--popover)] border border-[var(--border)] rounded shadow-lg z-[200]"
+            className="absolute top-[calc(100%+2px)] left-0 right-0 min-w-full rounded shadow-lg z-[200]"
+            style={{ backgroundColor: color.popover, border: `1px solid ${color.border}` }}
             filter={(value, search) => {
               const opt = options.find((o) => o.value === value);
               if (!opt) return 0;
@@ -566,7 +622,7 @@ function SelectRowCustom({
               autoFocus
             />
             <CommandList className="max-h-[180px]">
-              <CommandEmpty className="py-1.5 text-center text-[11px] text-[var(--muted-foreground)] italic">
+              <CommandEmpty className="py-1.5 text-center text-[11px] italic" style={{ color: color.mutedForeground }}>
                 No matches
               </CommandEmpty>
               {options.map((opt) => (
@@ -577,11 +633,9 @@ function SelectRowCustom({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className={cn(
-                    "px-2 py-1 text-[11px] font-mono cursor-pointer leading-4",
-                    opt.value === value && "bg-[var(--primary)] text-white"
-                  )}
+                  className="px-2 py-1 text-[11px] font-mono cursor-pointer leading-4"
                   style={{
+                    ...(opt.value === value ? { backgroundColor: color.primary, color: "#fff" } : {}),
                     fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
                   }}
                 >
@@ -657,11 +711,7 @@ export function ColorRow({
       ) : labelContent}
       <div
         ref={swatchRef}
-        className={cn(
-          "tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0",
-          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          varName ? "border-2" : "border border-[var(--border)]"
-        )}
+        className="tuner-focusable w-5 h-5 rounded-sm cursor-pointer shrink-0"
         tabIndex={0}
         role="button"
         onClick={() => setPickerOpen(!pickerOpen)}
@@ -676,16 +726,15 @@ export function ColorRow({
             displayColor === "transparent"
               ? "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px"
               : displayColor,
-          ...(varName ? { borderColor: primaryAlpha(0.6) } : {}),
+          border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
         }}
       />
       <span
         title={varName ? value : undefined}
         className={cn(
-          "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0",
-          !varName && "text-[var(--muted-foreground)]"
+          "text-[10px] font-mono overflow-hidden text-ellipsis whitespace-nowrap flex-1 min-w-0"
         )}
-        style={varName ? { color: primaryAlpha(0.8) } : undefined}
+        style={{ color: varName ? primaryAlpha(0.8) : color.mutedForeground }}
       >
         {displayLabel}
       </span>
@@ -729,11 +778,12 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
       </span>
       <input
         type="text"
-        className={cn(
-          "tuner-focusable flex-1 h-6 bg-[var(--input)] border border-[var(--border)] rounded-sm",
-          "text-[var(--foreground)] text-[10px] font-mono px-1.5 outline-none",
-          "focus:ring-2 focus:ring-[var(--ring)] focus:border-[rgba(59,130,246,0.5)]"
-        )}
+        className="tuner-focusable flex-1 h-6 rounded-sm text-[10px] font-mono px-1.5 outline-none"
+        style={{
+          backgroundColor: color.input,
+          border: `1px solid ${color.border}`,
+          color: color.foreground,
+        }}
         tabIndex={0}
         value={value}
         placeholder={placeholder}
@@ -805,8 +855,8 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          className="w-7 border rounded-sm text-[var(--foreground)] text-[10px] font-mono text-center py-px px-0.5 outline-none"
-          style={{ background: blackAlpha(0.07), borderColor: primaryAlpha(0.5) }}
+          className="w-7 rounded-sm text-[10px] font-mono text-center py-px px-0.5 outline-none"
+          style={{ background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`, color: color.foreground }}
           onClick={(e) => e.stopPropagation()}
         />
       );
@@ -825,13 +875,9 @@ export const EditableValue = memo(
           setEditing(true);
         }}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-        className={cn(
-          "text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none",
-          "hover:bg-[rgba(0,0,0,0.05)]",
-          "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-          value !== 0 ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)]"
-        )}
+        className="text-[10px] font-mono cursor-text py-px px-[3px] rounded-sm min-w-4 text-center outline-none hover:bg-[rgba(0,0,0,0.05)]"
         style={{
+          color: value !== 0 ? color.foreground : color.mutedForeground,
           transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
         }}
       >

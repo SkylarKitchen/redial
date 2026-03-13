@@ -192,6 +192,15 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
 
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
+// ─── Value Presets ──────────────────────────────────────────────
+
+export const presets: Record<string, (string | number)[]> = {
+  opacity: [0, 0.5, 1],
+  gap: [0, 4, 8, 16],
+};
+
+// ─── Spacing Zone Colors ────────────────────────────────────────
+
 export const spacingZone = {
   marginBase: "transparent",
   marginHover: blackAlpha(0.08),
