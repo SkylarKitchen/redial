@@ -12,6 +12,14 @@ import type { IndicatorType } from "./StyleIndicator";
 import { indicatorColor } from "./theme";
 import type { UnitConversionContext } from "./unitConversion";
 
+// ─── Section Order ────────────────────────────────────────────────────────
+
+/** Canonical order of CSS property sections (used by keyboard navigation). */
+export const SECTION_ORDER = [
+  "Layout", "Spacing", "Size", "Position",
+  "Typography", "Backgrounds", "Borders", "Effects",
+] as const;
+
 // ─── SectionCtx ──────────────────────────────────────────────────────────
 
 /** Shared prop bundle passed to every section component. */

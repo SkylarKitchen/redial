@@ -19,6 +19,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { PromptPanel } from "./PromptPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
+import { BoxModelOverlay } from "./BoxModelOverlay";
 import { FlexGapOverlay } from "./FlexGapOverlay";
 import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
 import { SpacingPreviewOverlay } from "./SpacingPreviewOverlay";

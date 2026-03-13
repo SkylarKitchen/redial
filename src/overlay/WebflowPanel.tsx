@@ -42,20 +42,27 @@ export interface WebflowPanelProps {
   activeClassName?: string | null;
   /** Active pseudo-class state ("none" = base styles, "hover", "focus", etc.) */
   activeState?: string;
+  /** Controlled expanded section (from Overlay keyboard navigation) */
+  expandedSection?: string | null;
+  /** Callback when section is toggled (for controlled mode) */
+  onExpandSection?: (section: string | null) => void;
 }
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none" }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
 
   // ── Focus mode: only one section open at a time ──
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  // Controlled mode (props) or uncontrolled (local state)
+  const [localSection, setLocalSection] = useState<string | null>(null);
+  const expandedSection = controlledSection !== undefined ? controlledSection : localSection;
+  const setExpandedSection = onExpandSection ?? setLocalSection;
   const handleSectionToggle = useCallback((title: string) => {
-    setExpandedSection(prev => prev === title ? null : title);
-  }, []);
+    setExpandedSection(expandedSection === title ? null : title);
+  }, [expandedSection, setExpandedSection]);
 
   /** Build fresh conversion context on demand */
   const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
