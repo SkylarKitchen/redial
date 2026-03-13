@@ -994,56 +994,52 @@ function SpacingValue({ value, zone, hoverZone, setHoverZone, onChange }: {
   value: number; zone: string; hoverZone: string | null;
   setHoverZone: (z: string | null) => void; onChange: (v: number) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [tempVal, setTempVal] = useState(String(value));
   const isMargin = zone.startsWith("m");
   const isHovered = hoverZone === zone;
 
-  if (editing) {
-    return (
-      <input autoFocus value={tempVal}
-        onChange={(e) => setTempVal(e.target.value)}
-        onBlur={() => { onChange(parseInt(tempVal) || 0); setEditing(false); }}
-        onKeyDown={(e) => { if (e.key === "Enter") { onChange(parseInt(tempVal) || 0); setEditing(false); } }}
-        style={{
-          width: 28, fontSize: 10, fontFamily: font.mono, textAlign: "center",
-          background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`,
-          borderRadius: 2, color: blackAlpha(0.8), padding: "1px 2px", outline: "none",
-        }}
-      />
-    );
-  }
-
   return (
     <span
-      onClick={() => { setTempVal(String(value)); setEditing(true); }}
       onMouseEnter={() => setHoverZone(zone)}
       onMouseLeave={() => setHoverZone(null)}
       style={{
         fontSize: 10, fontFamily: font.mono,
         color: isHovered ? color.primary : (isMargin ? blackAlpha(0.55) : blackAlpha(0.8)),
         padding: "2px 4px", borderRadius: 3, minWidth: 18, textAlign: "center",
-        cursor: "text", transition: `color ${timing.fast}ms ease`,
+        cursor: "ew-resize", userSelect: "none",
+        transition: `color ${timing.fast}ms ease`,
       }}
     >{value}</span>
   );
 }
 
+function UnitPill({ unit }: { unit: string }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      height: 20, padding: "0 6px",
+      fontSize: 10, fontFamily: font.mono,
+      background: surface.base, border: `1px solid ${border.base}`,
+      borderRadius: 4, color: blackAlpha(0.55),
+      cursor: "pointer", maxWidth: 36, lineHeight: 1,
+    }}>{unit}</span>
+  );
+}
+
 function InteractiveSpacingBox() {
   const [margin, setMargin] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
-  const [padding, setPadding] = useState({ top: 16, right: 24, bottom: 16, left: 24 });
+  const [padding, setPadding] = useState({ top: 0, right: 0, bottom: 0, left: 0 });
   const [hoverZone, setHoverZone] = useState<string | null>(null);
 
   return (
-    <div style={{ padding: 0 }}>
+    <div style={{ padding: "8px 12px 4px" }}>
       <div style={{
         position: "relative", border: `1px solid ${surface.active}`, borderRadius: 4,
         background: hoverZone?.startsWith("m") ? spacingZone.marginHover : spacingZone.marginBase,
         transition: `background ${timing.fast}ms ease`,
       }}>
-        <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
+        <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3, zIndex: 1 }}>
           <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Margin</span>
-          <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
+          <UnitPill unit="px" />
         </div>
         <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
           <SpacingValue value={margin.top} zone="m-top" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setMargin((p) => ({ ...p, top: v }))} />
