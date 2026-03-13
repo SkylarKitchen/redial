@@ -163,6 +163,64 @@ function resolveCustomProperty(el: Element, name: string): CustomProp | null {
 }
 
 /**
+ * Test if a class looks like a Tailwind utility class.
+ * Matches standard utilities (w-4, text-sm, flex, bg-blue-500, p-4, rounded-lg),
+ * responsive prefixes (sm:, md:, lg:), state prefixes (hover:, focus:, dark:),
+ * and arbitrary values (w-[200px], bg-[#ff0000]).
+ */
+function isTailwindUtilityClass(cls: string): boolean {
+  // Strip responsive/state prefixes: "sm:w-4" → "w-4", "hover:bg-red-500" → "bg-red-500"
+  const bare = cls.replace(
+    /^(sm|md|lg|xl|2xl|hover|focus|active|dark|group-hover|focus-within|focus-visible|first|last|odd|even|disabled|placeholder|before|after):/,
+    ""
+  );
+
+  // Standalone utilities: flex, hidden, absolute, relative, block, inline, grid, etc.
+  if (/^(flex|hidden|block|inline|inline-block|inline-flex|grid|absolute|relative|fixed|sticky|overflow-hidden|overflow-auto|overflow-scroll|truncate|sr-only|not-sr-only|isolate|grow|shrink|underline|overline|line-through|no-underline|uppercase|lowercase|capitalize|normal-case|italic|not-italic|antialiased|visible|invisible|collapse)$/.test(bare)) {
+    return true;
+  }
+
+  // Utility with value: prefix-value pattern (w-4, bg-blue-500, text-sm, pt-2, rounded-lg, etc.)
+  if (/^[a-z][\w]*-[\w./[\]#]+$/.test(bare)) {
+    return true;
+  }
+
+  // Negative utilities: -mt-4, -translate-x-1/2
+  if (/^-[a-z][\w]*-[\w./[\]#]+$/.test(bare)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Test if an element appears to be styled with Tailwind utility classes.
+ * Checks for common patterns: responsive prefixes, Tailwind utility names.
+ * Distinguishes from CSS Module classes (which have hash suffixes).
+ *
+ * Logic: If an element has 3+ classes matching Tailwind utility patterns
+ * (after filtering out CSS module classes), consider it a Tailwind element.
+ */
+export function isTailwindElement(el: Element): boolean {
+  const classes = el.className;
+  if (typeof classes !== "string" || !classes.trim()) return false;
+
+  const classList = classes.split(/\s+/);
+  let twCount = 0;
+
+  for (const cls of classList) {
+    // Skip CSS module classes — they're not Tailwind
+    if (isCSSModuleClass(cls)) continue;
+    if (isTailwindUtilityClass(cls)) {
+      twCount++;
+      if (twCount >= 3) return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Test if a class looks like a CSS module class (webpack or Turbopack).
  */
 function isCSSModuleClass(cls: string): boolean {

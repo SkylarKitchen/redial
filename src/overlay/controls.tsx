@@ -13,6 +13,7 @@ import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { StyleIndicator, type IndicatorType } from "./StyleIndicator";
+import { ResetPopover } from "./ResetPopover";
 import { getIndicatorColor, getIndicatorTitle, convertPresets } from "./panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
@@ -316,6 +317,21 @@ function PresetChips({ property, onSelect, unit }: {
   );
 }
 
+// ─── Reset Popover Hook ─────────────────────────────────────────────
+
+/** Shared hook for the click-on-modified-label reset popover. */
+function useResetPopover(indicator?: IndicatorType, onReset?: () => void) {
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const triggerOpen = useCallback(() => {
+    if (indicator === "modified" && onReset) setOpen(true);
+  }, [indicator, onReset]);
+  const node = open && anchorRef.current && onReset ? (
+    <ResetPopover anchor={anchorRef.current} onReset={onReset} onClose={() => setOpen(false)} />
+  ) : null;
+  return { anchorRef, triggerOpen, node };
+}
+
 // ─── SliderRow ──────────────────────────────────────────────────────
 
 export function SliderRow({
@@ -382,10 +398,12 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
+  const resetPopover = useResetPopover(indicator, onReset);
   const labelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
+      ref={resetPopover.anchorRef}
       title={labelTitle}
       style={labelStyle(labelColor)}
     >
@@ -402,7 +420,7 @@ export function SliderRow({
   return (
     <>
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
-      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
+      <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
         {computedProp && computedElement ? (
           <ComputedTooltip property={computedProp} element={computedElement}>
             {labelContent}
@@ -435,6 +453,7 @@ export function SliderRow({
       </div>
     </div>
     {property && <PresetChips property={property} onSelect={handlePresetSelect} unit={unit} />}
+    {resetPopover.node}
     </>
   );
 }
@@ -471,11 +490,13 @@ export function SelectRow({
   /** Target element for computed tooltip */
   computedElement?: Element;
 }) {
+  const resetPopover = useResetPopover(indicator, onReset);
   const selectLabelColor = indicator ? getIndicatorColor(indicator) : text.label;
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
   const labelContent = (
     <span
-      onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+      ref={resetPopover.anchorRef}
+      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
       title={selectLabelTitle}
       style={labelStyle(selectLabelColor)}
     >

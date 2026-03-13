@@ -1652,18 +1652,18 @@ export function Overlay() {
                 )}
               </PanelErrorBoundary>
             </div>
-            <SessionDrawer
-              open={sessionOpen}
-              onResetAll={handleResetAll}
-            />
-            {showHistory && (
-              <HistoryDrawer
-                entries={historyEntries}
-                onUndoToIndex={handleUndoToIndex}
-                onClose={() => setShowHistory(false)}
-              />
-            )}
           </div>
+          <SessionDrawer
+            open={sessionOpen}
+            onResetAll={handleResetAll}
+          />
+          {showHistory && (
+            <HistoryDrawer
+              entries={historyEntries}
+              onUndoToIndex={handleUndoToIndex}
+              onClose={() => setShowHistory(false)}
+            />
+          )}
           <Footer
             element={selectedEl}
             onReset={handleReset}

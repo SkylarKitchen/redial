@@ -706,11 +706,12 @@ export async function handleCommit(
 
   for (const [sourceFile, fileChanges] of changesByFile) {
     try {
-      // Resolve the actual file path (handles bare filenames)
+      // Resolve the actual file path (handles bare filenames + source maps)
       const filePath = await resolveSourceFile(
         projectRoot,
         sourceFile,
-        fileChanges[0]?.componentName
+        fileChanges[0]?.componentName,
+        fileChanges[0]?.cssHref
       );
 
       if (!filePath) {

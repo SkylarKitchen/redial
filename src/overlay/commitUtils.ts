@@ -7,11 +7,12 @@
  */
 
 import type { DiffEntry } from "./apply";
-import { resolveSource, getModuleClassInfo, getGlobalCSSSource } from "./sourcemap";
-import { getReadableName } from "./scope";
+import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource } from "./sourcemap";
+import { getReadableName, isTailwindElement } from "./scope";
 import type { Scope } from "./scope";
 import { getAuthoredValue } from "./getAuthoredValue";
 import { parseVarRef } from "./colorVariables";
+import { formatTailwindDiff } from "./tailwind";
 
 export interface EnrichedChange extends DiffEntry {
   sourceFile?: string;
@@ -19,6 +20,31 @@ export interface EnrichedChange extends DiffEntry {
   className?: string;
   componentName?: string;
   state?: string;
+  /** Compiled CSS href for server-side source map resolution */
+  cssHref?: string;
+  mode?: "css" | "tailwind";
+  tailwindClasses?: string;
+  existingClasses?: string;
+}
+
+/**
+ * Find the stylesheet href for a rule matching the given element.
+ * Used to pass the compiled CSS path to the server for source map resolution.
+ */
+function getStylesheetHref(el: Element): string | undefined {
+  try {
+    for (const sheet of document.styleSheets) {
+      try {
+        if (!sheet.href) continue;
+        for (const rule of sheet.cssRules) {
+          if (rule instanceof CSSStyleRule && el.matches(rule.selectorText)) {
+            return sheet.href;
+          }
+        }
+      } catch { /* CORS */ }
+    }
+  } catch { /* no access */ }
+  return undefined;
 }
 
 /**
@@ -34,9 +60,27 @@ export function enrichChangesForCommit(
     activeState?: string;
   },
 ): EnrichedChange[] {
+  // Tailwind path: convert CSS diffs to Tailwind classes and target JSX source
+  if (isTailwindElement(element)) {
+    const reactSource = getReactSource(element);
+    const tailwindClasses = formatTailwindDiff(changes);
+    const existingClasses = typeof element.className === "string" ? element.className : "";
+
+    return changes.map((c) => ({
+      ...c,
+      sourceFile: reactSource?.file,
+      sourceLine: reactSource?.line,
+      mode: "tailwind" as const,
+      tailwindClasses,
+      existingClasses,
+    }));
+  }
+
+  // CSS path: standard enrichment
   const isStateActive = opts.activeState !== undefined && opts.activeState !== "none";
   const needsClassInfo = opts.scope === "class" || isStateActive;
   const moduleInfo = needsClassInfo ? getModuleClassInfo(element) : null;
+  const cssHref = getStylesheetHref(element);
 
   return changes.map((c) => {
     // Check if the authored value is a var() reference
@@ -58,6 +102,7 @@ export function enrichChangesForCommit(
         className: undefined,
         componentName: moduleInfo?.componentName,
         state: isStateActive ? opts.activeState : undefined,
+        cssHref,
       };
     }
 
@@ -71,6 +116,7 @@ export function enrichChangesForCommit(
         : undefined,
       componentName: moduleInfo?.componentName,
       state: isStateActive ? opts.activeState : undefined,
+      cssHref,
     };
   });
 }

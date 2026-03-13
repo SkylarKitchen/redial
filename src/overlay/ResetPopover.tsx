@@ -1,0 +1,113 @@
+/**
+ * ResetPopover.tsx — Click-on-modified-label popover with Reset action
+ *
+ * Webflow-style dark popover that appears below a modified (blue) property label.
+ * Shows a clickable Reset row with the Option+Click shortcut hint.
+ * Portal-rendered to document.body so it escapes panel overflow.
+ */
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { Undo2 } from "lucide-react";
+import { surface, shadow, font } from "./theme";
+import { ms } from "./timing";
+
+export interface ResetPopoverProps {
+  /** Element to position below */
+  anchor: HTMLElement;
+  /** Fire the property reset */
+  onReset: () => void;
+  /** Close the popover */
+  onClose: () => void;
+}
+
+export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const [hovered, setHovered] = useState(false);
+
+  // Position below anchor, clamped to viewport
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ar = anchor.getBoundingClientRect();
+    const mr = el.getBoundingClientRect();
+    let top = ar.bottom + 4;
+    let left = ar.left;
+    if (left + mr.width > window.innerWidth - 8) left = window.innerWidth - mr.width - 8;
+    if (top + mr.height > window.innerHeight - 8) top = ar.top - mr.height - 4;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    setPos({ top, left });
+  }, [anchor]);
+
+  // Click-outside → close
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [onClose]);
+
+  // Escape → close
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); onClose(); }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [onClose]);
+
+  const handleReset = useCallback(() => { onReset(); onClose(); }, [onReset, onClose]);
+
+  return createPortal(
+    <div
+      ref={ref}
+      data-tuner-portal
+      style={{
+        position: "fixed",
+        zIndex: 2147483647,
+        top: pos?.top ?? 0,
+        left: pos?.left ?? 0,
+        visibility: pos ? "visible" : "hidden",
+        minWidth: 200,
+        background: surface.darkMenu,
+        borderRadius: 6,
+        boxShadow: shadow.dropdown,
+        padding: 4,
+      }}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={handleReset}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReset(); }
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "6px 10px",
+          borderRadius: 4,
+          cursor: "pointer",
+          outline: "none",
+          background: hovered ? "rgba(255,255,255,0.08)" : "transparent",
+          transition: `background ${ms("fast")}`,
+        }}
+      >
+        <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#E5E5E5" }}>
+          <Undo2 size={13} strokeWidth={2} />
+          Reset
+        </span>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontFamily: font.sans }}>
+          Option + click
+        </span>
+      </div>
+    </div>,
+    document.body,
+  );
+}
