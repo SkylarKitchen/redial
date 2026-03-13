@@ -81,6 +81,9 @@ const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
     gap: 4,
     cursor: "default",
     color: li.text,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
     ...(isModified ? {
       background: li.bg,
       ...labelHighlight,
@@ -443,7 +446,7 @@ export function SliderRow({
   }, [snapPoints, snapThreshold, min, max]);
 
   const resetPopover = useResetPopover(indicator, onReset);
-  const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
@@ -536,7 +539,7 @@ export function SelectRow({
   computedElement?: Element;
 }) {
   const resetPopover = useResetPopover(indicator, onReset);
-  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
@@ -657,7 +660,7 @@ function SelectRowCustom({
     return () => document.removeEventListener("mousedown", handler, true);
   }, [open]);
 
-  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
@@ -1003,6 +1006,7 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
+        title={label}
         style={labelStyle()}
       >
         {label}
@@ -1057,7 +1061,7 @@ export function NumberRow({
   computedElement?: Element;
 }) {
   const resetPopover = useResetPopover(indicator, onReset);
-  const labelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
     <span ref={resetPopover.anchorRef} title={labelTitle} style={labelStyle(indicator)}>
       {label}
