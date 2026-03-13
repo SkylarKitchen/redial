@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
-import { Section, SelectRow, ColorRow, useResetPopover } from "./controls";
+import { Section, SelectRow, ColorRow, useResetPopover, SubSectionHeader } from "./controls";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "./unitConversion";
@@ -21,7 +21,7 @@ import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
-import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, MINI_ACTION_BUTTON, INLINE_SWATCH, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
+import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, INLINE_SWATCH } from "./panelStyles";
 import { text, border, surface, font, indicatorStyle, layout } from "./theme";
 import { ms } from "./timing";
 import {

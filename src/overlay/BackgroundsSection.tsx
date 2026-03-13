@@ -7,47 +7,13 @@
  */
 
 import { useState, useCallback, memo } from "react";
-import { Section, SelectRow, ColorRow } from "./controls";
+import { Section, SelectRow, ColorRow, SubSectionHeader } from "./controls";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
 import { resetProp, resetAndReadStr } from "./apply";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS, BG_SIZE_OPTIONS, BG_POSITION_OPTIONS, BG_REPEAT_OPTIONS, BG_ATTACHMENT_OPTIONS } from "./panelConstants";
-import { Plus } from "lucide-react";
-import { text } from "./theme";
-import { ms } from "./timing";
-import { SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-
-// ─── Sub-section header (matches EffectsSection pattern) ──────────────
-
-function SubSectionHeader({ label, onAdd }: {
-  label: string;
-  onAdd?: () => void;
-}) {
-  return (
-    <div style={SUB_HEADER_ROW}>
-      <span style={SUB_HEADER}>
-        {label}
-      </span>
-      {onAdd && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onAdd(); }}
-          style={{
-            background: "none", border: "none", cursor: "pointer", padding: "2px",
-            color: text.disabled, display: "flex", alignItems: "center",
-            borderRadius: "3px", transition: `color ${ms("fast")} ease`,
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = text.label; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = text.disabled; }}
-        >
-          <Plus size={14} strokeWidth={1.5} />
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ─── Props ────────────────────────────────────────────────────────────
 
 export interface BackgroundsSectionProps {
