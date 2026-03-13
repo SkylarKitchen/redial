@@ -75,6 +75,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 ## Completed
 
+### 2026-03-13 — TextToggle wrong border token
+Replaced 3 `surface.track` border usages in layoutControls.tsx (TextToggle container, internal divider, MiniDropdown popup) with `border.input` — the correct semantic token for input control borders.
+
 ### 2026-03-13 — SpacingBoxModel hardcoded colors
 Replaced 3 hardcoded values in SpacingBoxModel.tsx tooltip: `rgba(250,249,245,0.97)` → `bgAlpha(0.97)`, inline shadow → `shadow.dropdown`, `rgba(0,0,0,0.07)` border → `border.subtle`.
 
