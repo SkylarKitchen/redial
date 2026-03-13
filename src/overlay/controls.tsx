@@ -1,5 +1,5 @@
 /**
- * controls.tsx — Shared UI components using Tailwind + Shadcn primitives
+ * controls.tsx — Shared UI components using inline styles + theme tokens
  *
  * Section, ValueInput, SliderRow, SelectRow, ColorRow, TextRow, EditableValue.
  * Extracted from WebflowPanel.tsx and SpacingBoxModel.tsx.
@@ -61,6 +61,27 @@ export interface EditableValueProps {
 /** Double-click on a value input selects all text for quick replacement. */
 export const selectAllOnDoubleClick = (e: React.MouseEvent<HTMLInputElement>) => {
   e.currentTarget.select();
+};
+
+// ─── Shared styles ──────────────────────────────────────────────────
+
+const labelStyle = (c: string): React.CSSProperties => ({
+  fontSize: 11,
+  width: 70,
+  flexShrink: 0,
+  textTransform: "capitalize",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+  cursor: "default",
+  color: c,
+});
+
+const rowStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  padding: "2px 12px",
 };
 
 // ─── Section ────────────────────────────────────────────────────────
@@ -232,6 +253,7 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       style={{
         ...flashStyle,
         width: 40,
+        height: 28,
         borderRadius: 2,
         padding: "0 6px",
         fontSize: 11,
@@ -239,7 +261,6 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
         outline: "none",
         textAlign: "right" as const,
         flexShrink: 0,
-        height: 28,
         color: color.foreground,
         ...(embedded ? { background: "transparent", border: "none" } : {
           backgroundColor: color.input,
@@ -361,7 +382,7 @@ export function SliderRow({
   const labelContent = (
     <span
       title={labelTitle}
-      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, color: labelColor }}
+      style={labelStyle(labelColor)}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -375,7 +396,7 @@ export function SliderRow({
 
   return (
     <>
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset}>
         {computedProp && computedElement ? (
           <ComputedTooltip property={computedProp} element={computedElement}>
@@ -384,7 +405,8 @@ export function SliderRow({
         ) : labelContent}
       </LabelScrub>
       <Slider
-        className="tuner-focusable flex-1"
+        className="tuner-focusable"
+        style={{ flex: 1 }}
         aria-label={`${label}: ${value}${unit}`}
         min={min}
         max={max}
@@ -450,7 +472,7 @@ export function SelectRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={selectLabelTitle}
-      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: selectLabelColor }}
+      style={labelStyle(selectLabelColor)}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -477,7 +499,7 @@ export function SelectRow({
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -502,7 +524,7 @@ export function SelectRow({
         </SelectTrigger>
         <SelectContent
           style={{
-            borderRadius: 6,
+            borderRadius: 4,
             boxShadow: shadow.dropdown,
             maxHeight: 180,
             backgroundColor: color.popover,
@@ -513,7 +535,11 @@ export function SelectRow({
             <SelectItem
               key={opt.value}
               value={opt.value}
-              className="text-[11px] font-mono cursor-pointer focus:bg-[rgba(0,0,0,0.05)] focus:text-[#171717]"
+              style={{
+                fontSize: 11,
+                fontFamily: font.mono,
+                cursor: "pointer",
+              }}
             >
               {opt.label}
             </SelectItem>
@@ -550,6 +576,7 @@ function SelectRowCustom({
   computedElement?: Element;
 }) {
   const [open, setOpen] = useState(false);
+  const [btnHovered, setBtnHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const current = options.find((o) => o.value === value);
 
@@ -571,7 +598,7 @@ function SelectRowCustom({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={selectLabelTitle}
-      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: selectLabelColor }}
+      style={labelStyle(selectLabelColor)}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -579,7 +606,7 @@ function SelectRowCustom({
   );
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
           {labelContent}
@@ -591,6 +618,8 @@ function SelectRowCustom({
           tabIndex={0}
           aria-expanded={open}
           onClick={() => setOpen((o) => !o)}
+          onMouseEnter={() => setBtnHovered(true)}
+          onMouseLeave={() => setBtnHovered(false)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
               e.preventDefault();
@@ -609,20 +638,31 @@ function SelectRowCustom({
             padding: "0 6px",
             cursor: "pointer",
             outline: "none",
-            backgroundColor: open ? blackAlpha(0.07) : color.input,
+            backgroundColor: open ? blackAlpha(0.07) : btnHovered ? surface.hover : color.input,
             border: `1px solid ${color.border}`,
             color: color.foreground,
           }}
         >
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
             {current?.label ?? value}
           </span>
-          <ChevronDown size={12} strokeWidth={2} style={{ color: color.mutedForeground, flexShrink: 0, marginLeft: 4 }} />
+          <ChevronDown size={12} strokeWidth={2} style={{ flexShrink: 0, marginLeft: 4, color: color.mutedForeground }} />
         </button>
 
         {open && (
           <Command
-            style={{ position: "absolute" as const, top: "calc(100% + 2px)", left: 0, right: 0, minWidth: "100%", borderRadius: 6, boxShadow: shadow.dropdown, zIndex: 200, backgroundColor: color.popover, border: `1px solid ${color.border}` }}
+            style={{
+              position: "absolute" as const,
+              top: "calc(100% + 2px)",
+              left: 0,
+              right: 0,
+              minWidth: "100%",
+              borderRadius: 4,
+              boxShadow: shadow.dropdown,
+              zIndex: 200,
+              backgroundColor: color.popover,
+              border: `1px solid ${color.border}`,
+            }}
             filter={(value, search) => {
               const opt = options.find((o) => o.value === value);
               if (!opt) return 0;
@@ -631,7 +671,7 @@ function SelectRowCustom({
           >
             <CommandInput
               placeholder="Search..."
-              className="h-7 text-[11px] font-sans"
+              style={{ height: 28, fontSize: 11, fontFamily: font.sans }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") {
                   e.stopPropagation();
@@ -640,8 +680,8 @@ function SelectRowCustom({
               }}
               autoFocus
             />
-            <CommandList className="max-h-[180px]">
-              <CommandEmpty className="py-1.5 text-center text-[11px] italic" style={{ color: color.mutedForeground }}>
+            <CommandList style={{ maxHeight: 180 }}>
+              <CommandEmpty style={{ padding: "6px 0", textAlign: "center" as const, fontSize: 11, fontStyle: "italic", color: color.mutedForeground }}>
                 No matches
               </CommandEmpty>
               {options.map((opt) => (
@@ -652,10 +692,13 @@ function SelectRowCustom({
                     onChange(opt.value);
                     setOpen(false);
                   }}
-                  className="px-2 py-1 text-[11px] font-mono cursor-pointer leading-4"
                   style={{
+                    padding: "4px 8px",
+                    fontSize: 11,
+                    fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
+                    cursor: "pointer",
+                    lineHeight: "16px",
                     ...(opt.value === value ? { backgroundColor: color.primary, color: "#fff" } : {}),
-                    fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : undefined,
                   }}
                 >
                   {opt.label}
@@ -709,7 +752,7 @@ export function ColorRow({
     <span
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
       title={colorLabelTitle}
-      style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: colorLabelColor }}
+      style={labelStyle(colorLabelColor)}
     >
       {indicator && <StyleIndicator type={indicator} />}
       {label}
@@ -720,7 +763,7 @@ export function ColorRow({
     <div
       onContextMenu={onContextMenu}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
-      style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px", position: "relative" }}
+      style={{ ...rowStyle, position: "relative" }}
     >
       {computedProp && computedElement ? (
         <ComputedTooltip property={computedProp} element={computedElement}>
@@ -754,7 +797,16 @@ export function ColorRow({
       />
       <span
         title={varName ? value : undefined}
-        style={{ fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0, color: varName ? primaryAlpha(0.8) : color.mutedForeground }}
+        style={{
+          fontSize: 10,
+          fontFamily: font.mono,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap" as const,
+          flex: 1,
+          minWidth: 0,
+          color: varName ? primaryAlpha(0.8) : color.mutedForeground,
+        }}
       >
         {displayLabel}
       </span>
@@ -788,10 +840,10 @@ export function TextRow({ label, value, placeholder, onChange, onReset, onContex
   computedElement?: Element;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 12px" }} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
       <span
         onClick={(e) => { if (e.altKey && onReset) onReset(); }}
-        style={{ fontSize: 11, width: 70, flexShrink: 0, textTransform: "capitalize" as const, display: "inline-flex", alignItems: "center", gap: 4, cursor: "default", color: text.label }}
+        style={labelStyle(text.label)}
       >
         {label}
       </span>
@@ -827,6 +879,7 @@ export const EditableValue = memo(
     const { value, onChange, onAltClick } = props;
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(String(value));
+    const [hovered, setHovered] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Sync draft when external value changes
@@ -881,7 +934,18 @@ export const EditableValue = memo(
           onKeyDown={handleKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
-          style={{ width: 28, borderRadius: 2, fontSize: 10, fontFamily: font.mono, textAlign: "center" as const, padding: "1px 2px", outline: "none", background: blackAlpha(0.07), border: `1px solid ${primaryAlpha(0.5)}`, color: color.foreground }}
+          style={{
+            width: 28,
+            borderRadius: 2,
+            fontSize: 10,
+            fontFamily: font.mono,
+            textAlign: "center" as const,
+            padding: "1px 2px",
+            outline: "none",
+            background: blackAlpha(0.07),
+            border: `1px solid ${primaryAlpha(0.5)}`,
+            color: color.foreground,
+          }}
           onClick={(e) => e.stopPropagation()}
         />
       );
@@ -900,6 +964,8 @@ export const EditableValue = memo(
           setEditing(true);
         }}
         onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
           fontSize: 10,
           fontFamily: font.mono,
@@ -909,6 +975,7 @@ export const EditableValue = memo(
           minWidth: 16,
           textAlign: "center" as const,
           outline: "none",
+          background: hovered ? surface.hover : "transparent",
           color: value !== 0 ? color.foreground : color.mutedForeground,
           transition: `background ${ms("normal")}, box-shadow ${ms("fast")}`,
         }}

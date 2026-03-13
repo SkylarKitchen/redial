@@ -45,8 +45,6 @@ import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout } from "./theme";
 
 // --- Error Boundary for Panel resilience ---
@@ -94,9 +92,9 @@ export function Overlay() {
   const [panelKey, setPanelKeyRaw] = useState(0); // force re-mount on new selection
   const panelScrollRef = useRef<HTMLDivElement>(null);
   const savedScrollRef = useRef(0);
-  /** Helper to get the scrollable viewport inside a Radix ScrollArea */
+  /** Helper to get the scrollable viewport element */
   const getScrollViewport = useCallback(() => {
-    return panelScrollRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null ?? panelScrollRef.current;
+    return panelScrollRef.current;
   }, []);
   /** Wrapper that saves scroll position before triggering a remount */
   const setPanelKey: typeof setPanelKeyRaw = useCallback((v) => {
@@ -1566,7 +1564,9 @@ export function Overlay() {
                   onClick={() => setActiveTab(tab)}
                   style={{
                     background: "transparent",
-                    border: "none",
+                    borderTop: "none",
+                    borderLeft: "none",
+                    borderRight: "none",
                     borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
                     paddingLeft: 10,
                     paddingRight: 10,

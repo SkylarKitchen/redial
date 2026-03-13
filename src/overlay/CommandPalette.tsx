@@ -247,9 +247,18 @@ export function CommandPalette({
             border: `1px solid ${border.default}`,
           }}
         >
+          <style>{`
+            .tuner-cmd [cmdk-group-heading] { padding: 0 8px; font-weight: 500; color: ${text.label}; }
+            .tuner-cmd [cmdk-group]:not([hidden]) ~ [cmdk-group] { padding-top: 0; }
+            .tuner-cmd [cmdk-group] { padding: 0 8px; }
+            .tuner-cmd [cmdk-input-wrapper] svg { height: 20px; width: 20px; }
+            .tuner-cmd [cmdk-input] { height: 48px; }
+            .tuner-cmd [cmdk-item] { padding: 6px 8px; }
+            .tuner-cmd [cmdk-item] svg { height: 20px; width: 20px; }
+          `}</style>
           <Command
             shouldFilter={false}
-            className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-1.5 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+            className="tuner-cmd"
           >
             <CommandInput
               placeholder="Search properties, actions, or elements..."
