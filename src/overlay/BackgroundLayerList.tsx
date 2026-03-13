@@ -13,6 +13,7 @@ import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X, Eye, EyeOff } from "lucide-react";
 import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
+import { color, blackAlpha, border, surface, shadow } from "./theme";
 
 export interface BackgroundLayer {
   id: string;
@@ -109,7 +110,12 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="h-6 bg-[var(--input)] border border-[var(--border)] rounded-[3px] text-[rgba(0,0,0,0.7)] text-[11px] font-mono px-1 cursor-pointer"
+      className="h-6 rounded-[3px] text-[11px] font-mono px-1 cursor-pointer"
+      style={{
+        background: color.input,
+        border: `1px solid ${color.border}`,
+        color: blackAlpha(0.7),
+      }}
     >
       {options.map((o) => (
         <option key={o} value={o}>

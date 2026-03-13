@@ -23,7 +23,7 @@ import { evaluateMathExpr } from "./inputMath";
 import { beginBatch, endBatch } from "./apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { ms } from "./timing";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, focusRing } from "./theme";
 import { useWheelAdjust } from "./useWheelAdjust";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export function useValueFlash(value: number) {
     return () => clearTimeout(timer.current);
   }, [value]);
 
-  return flash ? { backgroundColor: primaryAlpha(0.12), transition: "background-color 200ms" } : { transition: "background-color 200ms" };
+  return flash ? { backgroundColor: primaryAlpha(0.12), transition: `background-color ${ms("layout")}` } : { transition: `background-color ${ms("layout")}` };
 }
 
 
@@ -101,7 +101,7 @@ export function Section({
         if (onToggle) onToggle(title);
         else setOwnOpen(isOpen);
       }}
-      className={cn("border-b border-[var(--border)]", open && "border-transparent")}
+      style={{ borderBottom: open ? "1px solid transparent" : `1px solid ${color.border}` }}
     >
       <CollapsibleTrigger asChild>
         <div
@@ -117,9 +117,14 @@ export function Section({
           }}
           className={cn(
             "flex justify-between items-center cursor-pointer rounded-sm outline-none px-3 pt-2.5 pb-1.5",
-            "focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-            open && "sticky top-0 z-[2] bg-white"
+            open && "sticky top-0 z-[2]"
           )}
+          style={{
+            ...(open ? { background: color.background } : {}),
+            boxShadow: undefined, // focus-visible handled below
+          }}
+          onFocus={(e) => { e.currentTarget.style.boxShadow = focusRing; }}
+          onBlur={(e) => { e.currentTarget.style.boxShadow = ""; }}
         >
           <span className="text-[13px] font-medium text-[var(--foreground)] flex items-center gap-1.5">
             {title}
