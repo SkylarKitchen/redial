@@ -15,7 +15,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **Toolbar dark theme colors** — Added `surface.darkToolbar` (#1e1e1e) token, replaced hardcoded hex in Toolbar.tsx.
 - [x] **CommandPalette badge colors** — Added `badge.action/actionBg` (emerald) and `badge.element/elementBg` (amber) tokens, replaced hardcoded values.
 - [x] **SpacingBoxModel hardcoded colors** — Replaced tooltip background with `bgAlpha(0.97)`, shadow with `shadow.dropdown`, border with `border.subtle`.
-- [ ] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
+- [x] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
 - [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
 - [ ] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
 - [ ] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
