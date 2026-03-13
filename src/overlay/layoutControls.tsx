@@ -50,19 +50,22 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
         fontSize: 11.5,
         flexShrink: 0,
         userSelect: "none" as const,
-        borderRadius: 2,
-        padding: "0 1px",
         lineHeight: "16px",
         width: 49,
-        background: colors.bg,
-        color: colors.text,
         fontFamily: font.sans,
         letterSpacing: -0.115,
         cursor: onReset ? "default" : undefined,
       }}
       onClick={(e) => { if (e.altKey && onReset) onReset(); }}
     >
-      {label}
+      <span style={{
+        background: colors.bg,
+        color: colors.text,
+        borderRadius: 2,
+        padding: "0 2px",
+      }}>
+        {label}
+      </span>
     </span>
   );
 }
