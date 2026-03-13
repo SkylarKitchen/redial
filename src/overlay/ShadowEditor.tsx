@@ -11,6 +11,7 @@ import { useDragReorder } from "./useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
+import { shadowToCSS } from "./cssParsers";
 import { ms } from "./timing";
 import { color, font, border, zIndex } from "./theme";
 
@@ -190,7 +191,7 @@ function ShadowRow({
         transition: `opacity ${ms("normal")}`,
       }}
     >
-      {/* Row 1: drag handle + numeric inputs */}
+      {/* Row 1: drag handle + preview swatch + numeric inputs */}
       <div style={{ display: "flex", gap: "6px", marginBottom: "4px", alignItems: "flex-end" }}>
         {dragHandleProps && (
           <DragHandle
@@ -199,6 +200,21 @@ function ShadowRow({
             style={{ alignSelf: "center" }}
           />
         )}
+        {/* Shadow preview swatch */}
+        <div
+          title={shadowToCSS([shadow])}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 3,
+            background: color.background,
+            border: `1px solid ${border.default}`,
+            boxShadow: shadowToCSS([shadow]),
+            flexShrink: 0,
+            alignSelf: "center",
+            overflow: "hidden",
+          }}
+        />
         <NumericInput value={shadow.x} label="X" onChange={updateField("x") as (v: number) => void} />
         <NumericInput value={shadow.y} label="Y" onChange={updateField("y") as (v: number) => void} />
         <NumericInput value={shadow.blur} label="Blur" onChange={updateField("blur") as (v: number) => void} />
