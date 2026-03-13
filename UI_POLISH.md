@@ -17,8 +17,8 @@ These items fix existing test failures and TypeScript errors. No polish work sho
 - [x] **Fix class-scope undo/redo** (`scope.test.ts`): Already fixed — all 40 scope tests pass including undo/redo class sync tests. `onClassChange` listener pattern is implemented.
 - [x] **Fix state reset leaving apply.ts overrides** (`statePreview.test.ts`): Already fixed — all 28 statePreview tests pass. `resetStateOverrides` is now called from Footer.tsx handleReset.
 - [x] **Fix IconButtonGroup active state** (`iconButtonActiveState.test.ts`): Active state uses inline `backgroundColor`/`color` which gets overridden by Tailwind `!important`. Switch to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className approach.
-- [ ] **Fix spacing zone base colors** (`spacingZoneColors.test.ts`): Tests expect `transparent` at rest but theme.ts defines `marginBase: primaryAlpha(0.06)` and `paddingBase: greenAlpha(0.06)`. Either update tests to match the design intent (subtle color at rest) or change theme tokens to `transparent` if that's the desired UX.
-- [ ] **Fix UnitSelector overflow clip** (`unitDropdownClip.test.ts`): The annotation `<span>` at `controls.tsx:464` has `overflow: "hidden"` which the test flags as a clip risk for UnitSelector. Either move UnitSelector outside the overflow container or use a portal.
+- [x] **Fix spacing zone base colors** (`spacingZoneColors.test.ts`): Changed marginBase/paddingBase to `"transparent"` — zones only show color on hover.
+- [x] **Fix UnitSelector overflow clip** (`unitDropdownClip.test.ts`): Already fixed — `overflow: "hidden"` removed from annotation span. All 7 tests pass.
 
 ---
 
@@ -74,6 +74,12 @@ These are grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — Fix spacing zone base colors
+Changed `marginBase` and `paddingBase` in theme.ts from `primaryAlpha(0.06)` / `greenAlpha(0.06)` to `"transparent"`. Zones are invisible at rest, colored only on hover.
+
+### 2026-03-13 — Fix UnitSelector overflow clip
+Already resolved — `overflow: "hidden"` removed from annotation span in controls.tsx. All 7 unitDropdownClip tests pass.
 
 ### 2026-03-13 — Fix IconButtonGroup active state
 Moved active state styling from inline `backgroundColor`/`color` (which were silently overridden by Tailwind `!important`) to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className. Non-active hover/muted styles remain inline with `undefined` fallback when active.
