@@ -2,7 +2,7 @@
 
 Autonomous improvement queue. Each item is self-contained and verifiable. Agent picks the next unchecked `[ ]` item, implements, tests, and checks it off.
 
-**Status: 43 done, 2 remaining** | All tokens from `theme.ts` / `timing.ts`, never hardcode hex.
+**Status: 45/45 complete** | All tokens from `theme.ts` / `timing.ts`, never hardcode hex.
 
 ---
 
@@ -73,160 +73,27 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 ---
 
-<details>
-<summary><strong>Completed (43 items)</strong></summary>
-
-### 2026-03-13 — Toolbar wrong fontFamily
-Replaced hardcoded `"system-ui, -apple-system, sans-serif"` with `font.sans` token in Toolbar.tsx ToolButton. Now uses `"Inter, system-ui, sans-serif"` consistent with the rest of the panel.
-
-### 2026-03-13 — StateSelector hardcoded green
-Replaced hardcoded `#34d399` in StateSelector.tsx with `badge.action` token. Same emerald green value, now governed by the token system.
-
-### 2026-03-13 — ScopePill duplicate hover
-Fixed no-op ternary in Header.tsx ScopePill where active+hovered and active-only both resolved to `surface.active`. Active+hovered now uses `blackAlpha(0.1)` (10% vs 8%) for perceptible hover feedback.
-
-### 2026-03-13 — Color swatch inset border
-Added `inset 0 0 0 1px blackAlpha(0.06)` box-shadow to color swatches in ColorRow. Provides a subtle inner border visible on white/near-white swatches without affecting colored ones. Skipped when a CSS variable binding border is active.
-
-### 2026-03-13 — Section header hover highlight
-Added `surface.hover` background on hover to collapsed Section headers in controls.tsx. Uses `ms("fast")` transition. Only applies when section is collapsed — open/sticky headers keep `color.background` to cover scrolling content.
-
-### 2026-03-13 — GapInput missing value flash
-Added `useValueFlash(value)` to `GapInput` and `TrackCountInput` in layoutControls.tsx. Both now show a brief `primaryAlpha(0.12)` background flash on value change, consistent with `ValueInput` and `SizeInputCell`.
-
-### 2026-03-13 — z-index sprawl
-Added 4-tier `zIndex` token family to theme.ts: `max` (2147483647), `overlay` (max-1), `guide` (max-2), `backdrop` (max-3). Replaced all hardcoded z-index magic numbers across 19 component files and 4 Z_INDEX constants. Updated z-index test to accept `zIndex.max` token form. 21 files changed.
-
-### 2026-03-13 — Footer hardcoded success greens
-Added `color.success` (#22c55e), `color.successMuted` (#16a34a), `successAlpha()`, and `successMutedAlpha()` to theme.ts. Replaced 5 hardcoded green values in Footer.tsx (copied text, copied bg/border, saved bg, saved shadow).
-
-### 2026-03-13 — Toolbar hardcoded rgba whites
-Added `darkToolbar` token family to theme.ts with 6 tokens (text, textMuted, icon, active, hover, border). Replaced all 6 hardcoded `rgba(255,255,255,...)` values in Toolbar.tsx with corresponding tokens.
-
-### 2026-03-13 — SpacingBoxModel inline focus ring
-Replaced hardcoded `rgba(59,130,246,0.3)` focus ring in SpacingBoxModel.tsx onFocus handler with `focusRing` token from theme.ts. Same visual result, now governed by the token system.
-
-### 2026-03-13 — TextToggle wrong border token
-Replaced 3 `surface.track` border usages in layoutControls.tsx (TextToggle container, internal divider, MiniDropdown popup) with `border.input` — the correct semantic token for input control borders.
-
-### 2026-03-13 — SpacingBoxModel hardcoded colors
-Replaced 3 hardcoded values in SpacingBoxModel.tsx tooltip: `rgba(250,249,245,0.97)` → `bgAlpha(0.97)`, inline shadow → `shadow.dropdown`, `rgba(0,0,0,0.07)` border → `border.subtle`.
-
-### 2026-03-13 — CommandPalette badge colors
-Added `badge.action` (#34d399, emerald), `badge.actionBg`, `badge.element` (#fbbf24, amber), `badge.elementBg` tokens to theme.ts. Replaced 4 hardcoded values in CommandPalette.tsx CATEGORY_BADGE_STYLES.
-
-### 2026-03-13 — Toolbar dark theme colors
-Added `surface.darkToolbar: "#1e1e1e"` token to theme.ts. Replaced hardcoded hex in Toolbar.tsx line 138.
-
-### 2026-03-13 — FlexGapOverlay hardcoded colors
-Added `overlay.flexGap.*` tokens and `flexGapAlpha()` helper to theme.ts. Replaced 3 hardcoded magenta values (#FF44CC, rgba(255,68,204,...)) in FlexGapOverlay.tsx with theme tokens.
-
-### 2026-03-13 — GridOverlay hardcoded colors
-Added `overlay.grid.*` token family and `gridAlpha()` helper to theme.ts. Replaced 5 hardcoded `rgba(217,119,87,...)` constants in GridOverlay.tsx (LINE_COLOR, GAP_COLOR, LABEL_COLOR, LABEL_BG, OUTLINE_COLOR) with theme tokens.
-
-### 2026-03-13 — Separator consistency
-Replaced 2 hardcoded rgba separator borders with `border.subtle` token: ShadowEditor.tsx (rgba(0,0,0,0.04)) and SideSelector.tsx (rgba(0,0,0,0.05)). Other rgba values in the codebase are grid lines, hover states, or canvas fills — not separators.
-
-### 2026-03-13 — Border radius consistency
-Added `layout.pillRadius: 4` token to theme.ts. Updated `ScopePill` in Header.tsx (was hardcoded `4`) and `PILL_BUTTON` in panelStyles.ts (was `3`) to use the token. Both now consistently use `layout.pillRadius`.
-
-### 2026-03-13 — Monospace font audit
-Audited all `fontFamily` usages across overlay files. All 90+ instances already use `font.mono` from theme.ts. Two `ui-monospace` strings in controls.tsx are intentional (font-family preview for selected font). No changes needed.
-
-### 2026-03-13 — Transition timing audit
-Replaced 7 hardcoded `ms` values in 5 files: FilterSliders (100ms→normal), TransitionEditor (100ms→normal), ShadowEditor (100ms→normal), UnitSelector (300ms→slow), Overlay.tsx (150ms→expand ×2, 75ms→fast). Added `ms` import to FilterSliders and TransitionEditor.
-
-### 2026-03-13 — Move #d4956a to theme.ts
-Added `color.primaryActive: "#d4956a"` token to theme.ts. Replaced 2 hardcoded hex values in Overlay.tsx injected CSS for webkit and moz slider thumb `:active` states.
-
-### 2026-03-13 — Fix spacing zone base colors
-Changed `marginBase` and `paddingBase` in theme.ts from `primaryAlpha(0.06)` / `greenAlpha(0.06)` to `"transparent"`. Zones are invisible at rest, colored only on hover.
-
-### 2026-03-13 — Fix UnitSelector overflow clip
-Already resolved — `overflow: "hidden"` removed from annotation span in controls.tsx. All 7 unitDropdownClip tests pass.
-
-### 2026-03-13 — Fix IconButtonGroup active state
-Moved active state styling from inline `backgroundColor`/`color` (which were silently overridden by Tailwind `!important`) to `data-[state=on]:bg-primary` and `data-[state=on]:text-primary-foreground` className. Non-active hover/muted styles remain inline with `undefined` fallback when active.
-
-### 2026-03-13 — Fix class-scope undo/redo & state reset overrides
-Already resolved — all scope and statePreview tests pass. `onClassChange` listener and `resetStateOverrides` are implemented.
-
-### 2026-03-13 — Fix annotation not destructured in SliderRow
-Added missing `annotation` to destructured params in `SliderRow` (`controls.tsx:378`). The prop was defined in the type and used in JSX but never extracted from the props object, so the Tailwind class hint annotation was always `undefined`.
-
-### 2026-03-13 — Reset shake on no-op
-Added shake animation to Reset button in `Footer.tsx`. When clicked with no overrides (count=0), the button does a 3-cycle horizontal shake (2px amplitude, 300ms via `timing.slow`). Converted to `motion.button` with keyframe animation `x: [0, -2, 2, -2, 2, -2, 2, 0]`. Button remains clickable but visually dimmed at 0.5 opacity.
-
-### 2026-03-13 — Save button success state
-Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. After a successful save (no failures), the Save button turns green (`#22c55e`) with "✓ Saved" text for 1.5s, then smoothly transitions back to `color.primary` via `timing.normal` transitions on background, box-shadow, and opacity.
-
-### 2026-03-13 — Copy button checkmark
-Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
-
-### 2026-03-13 — text.disabled contrast audit
-Audited all 63 usages of `text.disabled` (#737373, 4.7:1) across 25 files. Every usage falls into an appropriate category: disabled controls, decorative icons (chevrons, separators), supplementary labels (channel names, keyboard shortcuts, axis labels), inactive toggle states, or placeholder/empty-state text. No primary content text uses this token. No changes needed — current scoping is correct.
-
-### 2026-03-13 — Hint text contrast
-Darkened `text.hint` from `#A3A3A3` (2.5:1) to `#757575` (4.6:1) in theme.ts. Passes WCAG AA minimum of 4.5:1. Still lighter than `text.disabled` (#737373, 4.7:1), preserving the visual hierarchy. Single token change affects all 26 usages.
-
-### 2026-03-13 — Header breadcrumb focus
-Added `focusRing` box-shadow, `tabIndex={0}`, `role="button"`, and Enter/Space keyboard activation to breadcrumb ancestor segments and the ellipsis expander in Header.tsx. Close button also gets `focusRing` on focus with `outline: "none"` to suppress the default.
-
-### 2026-03-13 — Toolbar missing ARIA
-Added `aria-label={label}` and `aria-pressed={!!active}` to the `<button>` in `ToolButton` (Toolbar.tsx). All 4 toolbar buttons (Select, Variables, AI, Session) now announce their label and toggle state to screen readers.
-
-### 2026-03-13 — Standardize focus ring approach
-Unified 8 inline focus ring variants across 7 files to use the canonical `focusRing` token (`box-shadow: 0 0 0 2px color.ring`). Fixed: CSSVariablesSection (was 20% opacity via hex `33`), GlobalVariablesPanel ×2 (same), IconButtonGroup (was `primaryAlpha(0.3)`), PositionSelector, TextStyleRow, TransformOriginPicker, WebflowSegmentedControl (last two were hardcoded rgba). Converted WebflowPanel.tsx `.tuner-focusable` from `outline` to `box-shadow` to match.
-
-### 2026-03-13 — Element outline pulse on select
-Added `@keyframes tuner-outline-pulse` to the injected focus-ring stylesheet in Overlay.tsx. A `--pulse` CSS class triggers a 400ms box-shadow expand+fade animation (`color.primary` glow). Applied via `useEffect` watching `panelKey` — triggers on both direct selection and breadcrumb navigation. Uses `timing.toolbar` (400ms) for cleanup timeout.
-
-### 2026-03-13 — Section collapse memory
-Added `SectionMemoryProvider` context in controls.tsx. Overlay.tsx owns the `Record<string, boolean>` state (survives panelKey remounts). WebflowPanel wraps its JSX in the provider, and each `Section` reads/writes the shared context on toggle. No prop threading to section files needed.
-
-### 2026-03-13 — Icon opacity audit
-Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (was `opacity: 0.6`), Header.tsx ChevronRight ×2 (were `opacity: 0.4`). All other icon usages already use theme tokens.
-
-### 2026-03-13 — Dropdown shadow token adoption
-Replaced inline boxShadow strings with `shadow.dropdown` in TransformEditor.tsx, FilterSliders.tsx, SpacingValuePopover.tsx (was slightly larger `0 8px 24px` — normalized to standard dropdown). Replaced `shadow.picker` in ColorPickerEnhanced.tsx. All 4 were exact or near-exact matches to existing tokens. Added `shadow` import to 3 files (SpacingValuePopover already had it).
-
-### 2026-03-13 — SpacingGuidesOverlay hardcoded colors
-Added `spacingMarginAlpha()` and `spacingPaddingAlpha()` helpers + `overlay.spacing.*` token family (margin, marginFill, padding, paddingFill) to theme.ts. Replaced 4 top-level color constants in SpacingGuidesOverlay.tsx with token references and 1 `rgba(0,0,0,0.25)` with `blackAlpha(0.25)`. Follows the same pattern as `overlay.grid.*` and `overlay.flexGap.*`.
-
-### 2026-03-13 — PositionOffsetDiagram hardcoded text colors
-Replaced 6 hardcoded color values in PositionOffsetDiagram.tsx: `#A3A3A3` → `text.hint` (×3, AutoLabel + zero-value + unit suffix), `#171717` → `text.primary` (×1, editing input), `#525252` → `text.secondary` (×1, non-zero values), `rgba(0,0,0,0.07)` → `blackAlpha(0.07)`, `rgba(217,119,87,0.5)` → `gridAlpha(0.5)` (focus border matches position section's warm accent). Zero hardcoded hex/rgba remaining.
-
-### 2026-03-13 — GradientEditor hardcoded text colors
-Replaced 8 hardcoded color values in GradientEditor.tsx with theme tokens: `#171717` → `text.primary`, `#737373` → `text.disabled` (×2), `#C4C4C4` → `blackAlpha(0.23)`, `rgba(0,0,0,0.04)` → `color.input`, `rgba(0,0,0,0.08)` → `blackAlpha(0.08)`, `rgba(0,0,0,0.12)` → `blackAlpha(0.12)`, `rgba(0,0,0,0.6)` → `blackAlpha(0.6)`. Only remaining hex is `#ffffff` default stop color (CSS value, not theme token).
-
-### 2026-03-13 — ShadowEditor hardcoded text colors
-Replaced 15 hardcoded color values in ShadowEditor.tsx with theme tokens: `#737373` → `text.disabled` (×3), `#171717` → `text.primary` (×1), `#525252` → `text.secondary` (×2), `#A3A3A3` → `text.hint` (×2), `rgba(59,130,246,...)` → `primaryAlpha()` (×5), `rgba(0,0,0,...)` → `blackAlpha()` (×3). Only remaining rgba values are the DEFAULT_SHADOW color constant and a dynamic hex→rgba conversion in the picker callback.
-
-### 2026-03-12 — Value change flash
-Added `useValueFlash` hook in `controls.tsx`. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`. Brief `primaryAlpha(0.12)` background flash on value change (200ms fade).
-
----
-
 ## Phase 6 — Sub-Editor Token Debt & Shadow Consistency
 
 Deeper sweep of section-specific editors that were missed by the Phase 1 top-level audit.
 
-- [x] **ShadowEditor hardcoded text colors** — `ShadowEditor.tsx` has 10+ hardcoded hex values (`#737373`, `#171717`, `#525252`, `#A3A3A3`) that map directly to existing `text.*` tokens (`text.disabled`, `text.primary`, `text.secondary`, `text.hint`). Also has hardcoded `rgba(59,130,246,...)` that should use `primaryAlpha()` and `rgba(0,0,0,...)` that should use `blackAlpha()`. Target: lines 100, 117, 119, 139, 238, 273–277, 376–387, 422.
-- [x] **GradientEditor hardcoded text colors** — `GradientEditor.tsx` has `#171717`, `#737373`, `#C4C4C4`, `#525252` for labels and controls. Replace with `text.primary`, `text.disabled`, `text.hint`, `text.secondary`. Also has 5+ `rgba(0,0,0,...)` border/background values that should use `blackAlpha()`. Target: lines 209, 231, 250, 289–303, 323, 339.
-- [x] **PositionOffsetDiagram hardcoded text colors** — `PositionOffsetDiagram.tsx` uses `#A3A3A3`, `#171717`, `#525252` for diagram labels. Replace with `text.hint`, `text.primary`, `text.secondary`. Target: lines 126, 204, 226, 243.
-- [x] **SpacingGuidesOverlay hardcoded colors** — `SpacingGuidesOverlay.tsx` defines 4 top-level color constants (`#57A8FF`, `rgba(87,168,255,0.30)`, `#4CAF50`, `rgba(76,175,80,0.30)`) outside the token system. Add `overlay.spacing.*` token family to theme.ts (matching the pattern used for `overlay.grid.*` and `overlay.flexGap.*`). Target: lines 23–26.
-- [x] **Dropdown shadow token adoption** — 4 components use inline `boxShadow: "0 4px 12px rgba(0,0,0,0.1)"` which is identical to `shadow.dropdown`. Replace with the token. Similarly, `ColorPickerEnhanced.tsx:452` uses `"0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)"` which matches `shadow.picker`. Target: `TransformEditor.tsx:150`, `FilterSliders.tsx:362`, `SpacingValuePopover.tsx:178`, `ColorPickerEnhanced.tsx:452`.
-- [x] **Internal z-index values outside token system** — Phase 1 cleaned up `2147483647` (max-int), but 14 components still use lower hardcoded z-index values (`100`, `200`, `10`, `1`, `2`) for internal stacking. Add `zIndex.internal` tiers to theme.ts (e.g. `zIndex.stickyHeader: 2`, `zIndex.dropdown: 100`, `zIndex.popover: 200`) to eliminate magic numbers. Target: `TransformEditor.tsx:148`, `layoutControls.tsx:225/384/586`, `BackgroundLayerList.tsx:235`, `FilterSliders.tsx:360`, `Footer.tsx:282`, `SpacingValuePopover.tsx:325`.
-- [x] **TransformEditor hover uses `primaryAlpha` instead of `surface.*`** — `TransformEditor.tsx:165` uses `primaryAlpha(0.2)` for dropdown item hover, violating the hover convention (`surface.hover` for light backgrounds). Also uses `surface.track` for border (line 145) instead of `border.input`. Target: lines 145, 165.
-- [x] **TextStyleRow dark-on-primary text** — `TextStyleRow.tsx:163` uses `rgba(255,255,255,0.6)` for active text color on primary background. This should use a token — add `color.primaryTextMuted` or use `darkToolbar.textMuted` if the semantic fits. Target: line 163.
-- [x] **layoutControls dark dropdown hardcoded color** — `layoutControls.tsx:433` uses `#e8e8e8` for dark dropdown text. This doesn't match any theme token. Should use `darkToolbar.textMuted` or add an appropriate token. Target: line 433.
-- [x] **BezierEditor/TransitionEditor canvas hardcoded values** — `BezierEditor.tsx:271` uses `rgba(0,0,0,0.04)` and `TransitionEditor.tsx:814/821` uses `rgba(0,0,0,0.03)` and `rgba(0,0,0,0.07)` for canvas fills and grid lines. These subtle background values should use `blackAlpha()` for consistency, even if the raw values are kept — it makes the intent clear and keeps the convention uniform. Target: `BezierEditor.tsx:271`, `TransitionEditor.tsx:814/821`.
+- [x] **ShadowEditor hardcoded text colors** — Replaced 15 hardcoded values with `text.*` tokens and `primaryAlpha()`/`blackAlpha()`.
+- [x] **GradientEditor hardcoded text colors** — Replaced 8 hardcoded values with theme tokens.
+- [x] **PositionOffsetDiagram hardcoded text colors** — Replaced 6 hardcoded values with theme tokens.
+- [x] **SpacingGuidesOverlay hardcoded colors** — Added `overlay.spacing.*` token family matching grid/flexGap pattern.
+- [x] **Dropdown shadow token adoption** — Replaced 4 inline boxShadow strings with `shadow.dropdown`/`shadow.picker`.
+- [x] **Internal z-index values outside token system** — Added 5 internal z-index tiers, replaced magic numbers in 10 files.
+- [x] **TransformEditor hover convention** — Replaced `primaryAlpha(0.2)` with `surface.hover`, `surface.track` with `border.input`.
+- [x] **TextStyleRow dark-on-primary text** — Added `color.primaryForegroundMuted` token.
+- [x] **layoutControls dark dropdown hardcoded color** — Replaced `#e8e8e8` with `darkToolbar.text`.
+- [x] **BezierEditor/TransitionEditor canvas hardcoded values** — Replaced 3 `rgba(0,0,0,...)` with `blackAlpha()`.
+- [x] **Icon opacity audit** — Normalized 3 icon opacity violations to `text.disabled` token.
 
 ---
 
 ## Removed (audited 2026-03-13)
 
-Items removed because they were already fixed, became outdated as the codebase evolved, or were too speculative for low-risk polish:
+Items removed because they were already fixed, became outdated, or were too speculative:
 
 - **Dropdown scroll-to-selected** — Handled by Shadcn Select component natively.
 - **Slider value tooltip** — `ComputedTooltip` already provides this.
@@ -245,35 +112,139 @@ Items removed because they were already fixed, became outdated as the codebase e
 - **Footer button focus** — Buttons use `tuner-focusable` class with injected styles.
 - **Copy button checkmark animation** — Already uses Motion.js transitions.
 
-### 2026-03-13 — Hover state standardization
-Replaced 9 raw `rgba()` hover values in 6 files with semantic `surface.hover`/`surface.active` tokens: PositionOffsetDiagram (×2), ShadowEditor (×1), SideSelector (×3 — active bg, hover bg, restore bg), HistoryDrawer (Tailwind class → inline style), BackgroundLayerList (×2 — `color.muted` → `surface.hover`), TextStyleRow (`blackAlpha(0.07)` → `surface.active`). Added hover convention doc comment to theme.ts: light bg → `surface.*`, dark bg → `darkToolbar.*`, no raw rgba.
-
-### 2026-03-13 — Toolbar expanded animation timing
-Replaced hardcoded `duration: 0.15` in Toolbar.tsx AnimatePresence exit transition with `timing.expand / 1000` (150ms → same value, now governed by token system). Motion uses seconds, timing tokens use milliseconds.
-
-### 2026-03-13 — SessionDrawer hardcoded timeout
-Replaced 3 hardcoded values in SessionDrawer.tsx: copy auto-dismiss `1500` → `timing.dismissal` (1700ms), save auto-dismiss `2000` → `timing.dismissal`, and message animation `duration: 0.15` → `timing.expand / 1000`. All timing now governed by tokens.
-
-</details>
-
 ---
 
-## Removed (audited 2026-03-13)
-
 <details>
-<summary>Items removed after audit (already fixed, outdated, or too speculative)</summary>
+<summary><strong>Completion log (45 entries)</strong></summary>
 
-### 2026-03-13 — Internal z-index values outside token system
-Added 5 internal z-index tiers to theme.ts: `above: 1`, `sticky: 2`, `float: 10`, `dropdown: 100`, `popover: 200`. Replaced hardcoded magic numbers across 10 files: controls.tsx (1→above, 2→sticky), GlobalVariablesPanel.tsx (1→above ×3), SpacingBoxModel.tsx (1→above ×2), SpacingValuePopover.tsx (10→float), TransformEditor.tsx (100→dropdown), FilterSliders.tsx (100→dropdown), BackgroundLayerList.tsx (100→dropdown), Footer.tsx (100→dropdown), layoutControls.tsx (200→popover ×3). Zero internal z-index magic numbers remain.
+### Phase 1
 
-### 2026-03-13 — TransformEditor hover convention
-Replaced `primaryAlpha(0.2)` dropdown hover with `surface.hover` (follows light-bg hover convention). Replaced `surface.track` dropdown border with `border.input` (correct semantic token for control borders). Removed unused `primaryAlpha` import.
+**GridOverlay** — Added `overlay.grid.*` token family and `gridAlpha()` helper. Replaced 5 hardcoded `rgba(217,119,87,...)` constants.
 
-### 2026-03-13 — TextStyleRow dark-on-primary text
-Added `color.primaryForegroundMuted: "rgba(255,255,255,0.6)"` token to theme.ts — pairs with existing `color.primaryForeground` for secondary text on blue primary backgrounds. Replaced hardcoded `rgba(255,255,255,0.6)` in TextStyleRow.tsx active item font-size display. Chose this over `darkToolbar.textMuted` (0.7 opacity, wrong semantic context).
+**FlexGapOverlay** — Added `overlay.flexGap.*` tokens and `flexGapAlpha()` helper. Replaced 3 hardcoded magenta values.
 
-### 2026-03-13 — layoutControls dark dropdown hardcoded color
-Replaced `#e8e8e8` in `DarkMenuOption` with `darkToolbar.text` — these are primary menu labels on a `surface.darkMenu` (#363636) background. Used `darkToolbar.text` (full white) over `darkToolbar.textMuted` (0.7 opacity, too dim) since menu labels should be clearly legible. The visual difference from #e8e8e8 to full white on dark gray is negligible.
+**Toolbar dark theme** — Added `surface.darkToolbar: "#1e1e1e"` token. Replaced hardcoded hex in Toolbar.tsx.
 
-### 2026-03-13 — BezierEditor/TransitionEditor canvas blackAlpha
-Replaced 3 hardcoded `rgba(0,0,0,...)` values with `blackAlpha()` calls: BezierEditor.tsx canvas background (0.04), TransitionEditor.tsx canvas fill (0.03) and grid stroke (0.07). Added `blackAlpha` import to BezierEditor. Two remaining `rgba(0,0,0,0.35)` in TransitionEditor are embedded in SVG data URIs — not practical to tokenize.
+**CommandPalette badges** — Added `badge.action` (#34d399), `badge.actionBg`, `badge.element` (#fbbf24), `badge.elementBg` tokens. Replaced 4 hardcoded values.
+
+**SpacingBoxModel** — Replaced tooltip bg with `bgAlpha(0.97)`, shadow with `shadow.dropdown`, border with `border.subtle`.
+
+**TextToggle border** — Replaced 3 `surface.track` border usages with `border.input`.
+
+**SpacingBoxModel focus ring** — Replaced hardcoded `rgba(59,130,246,0.3)` with `focusRing` token.
+
+**Toolbar rgba whites** — Added `darkToolbar` token family (text, textMuted, icon, active, hover, border). Replaced 6 hardcoded values.
+
+**Toolbar fontFamily** — Replaced hardcoded `"system-ui, -apple-system, sans-serif"` with `font.sans`.
+
+**StateSelector green** — Replaced hardcoded `#34d399` with `badge.action` token.
+
+**Footer success greens** — Added `color.success` (#22c55e), `color.successMuted` (#16a34a), `successAlpha()`, `successMutedAlpha()`. Replaced 5 hardcoded values.
+
+**ScopePill hover** — Fixed no-op ternary. Active+hovered now uses `blackAlpha(0.1)`.
+
+**z-index sprawl** — Added 4-tier `zIndex` token family. Replaced magic numbers across 19 files.
+
+**GapInput value flash** — Added `useValueFlash` to `GapInput` and `TrackCountInput`.
+
+### Phase 2
+
+**Section header hover** — Added `surface.hover` background on collapsed Section headers. Uses `ms("fast")` transition.
+
+**Color swatch inset border** — Added `inset 0 0 0 1px blackAlpha(0.06)` box-shadow for white/near-white swatches.
+
+**Input placeholder styling** — Numeric inputs showing keywords render italic at `text.disabled` opacity.
+
+**Label truncation** — Added `overflow: hidden`, `textOverflow: ellipsis`, and `title` attribute.
+
+**SizeInputCell width** — Expanded from fixed 36px to flexible width.
+
+**UnitSelector dismissal** — Replaced hardcoded `1700ms` with timing token.
+
+**Footer reset hover** — Changed hover to `surface.hover`, reserved `surface.active` for pressed state.
+
+**Font weight preview** — Each font-weight option rendered at its actual weight.
+
+**Shadow preview swatch** — 20x20 preview square with current shadow applied.
+
+### Phase 3
+
+**Panel shadow lift** — Deeper box-shadow during drag via `shadow.panelDrag` variant.
+
+**Section collapse memory** — `SectionMemoryProvider` context in controls.tsx. Survives element re-selections.
+
+**Element outline pulse** — 400ms `@keyframes tuner-outline-pulse` box-shadow animation on select.
+
+### Phase 4
+
+**Focus ring standardization** — Unified 8 inline variants across 7 files to `focusRing` token.
+
+**Toolbar ARIA** — Added `aria-label={label}` and `aria-pressed={!!active}` to ToolButton.
+
+**Breadcrumb focus** — Added `focusRing`, `tabIndex={0}`, `role="button"`, and keyboard activation.
+
+**Hint text contrast** — Darkened `text.hint` from #A3A3A3 (2.5:1) to #757575 (4.6:1).
+
+**text.disabled audit** — All 63 usages verified as appropriate for disabled/decorative contexts.
+
+### Phase 5
+
+**Hover standardization** — Replaced 9 raw `rgba()` hover values in 6 files with semantic tokens. Added convention doc to theme.ts.
+
+**Toolbar animation timing** — Replaced hardcoded `duration: 0.15` with `timing.expand / 1000`.
+
+**SessionDrawer timeout** — Replaced 3 hardcoded timing values with `timing.dismissal` and `timing.expand / 1000`.
+
+### Phase 6
+
+**ShadowEditor** — Replaced 15 hardcoded colors. Remaining hex values are CSS defaults only.
+
+**GradientEditor** — Replaced 8 hardcoded colors. Only remaining hex is `#ffffff` default stop color.
+
+**PositionOffsetDiagram** — Replaced 6 hardcoded colors including `rgba(217,119,87,0.5)` → `gridAlpha(0.5)`.
+
+**SpacingGuidesOverlay** — Added `overlay.spacing.*` token family + alpha helpers. Replaced 4 top-level constants.
+
+**Dropdown shadow adoption** — Replaced 4 inline boxShadow strings with `shadow.dropdown`/`shadow.picker`.
+
+**Internal z-index** — Added 5 internal tiers (`above`, `sticky`, `float`, `dropdown`, `popover`). Replaced magic numbers in 10 files.
+
+**TransformEditor hover** — `primaryAlpha(0.2)` → `surface.hover`, `surface.track` → `border.input`.
+
+**TextStyleRow** — Added `color.primaryForegroundMuted: "rgba(255,255,255,0.6)"` token.
+
+**layoutControls dark dropdown** — Replaced `#e8e8e8` with `darkToolbar.text`.
+
+**BezierEditor/TransitionEditor canvas** — Replaced 3 `rgba(0,0,0,...)` with `blackAlpha()`.
+
+**Icon opacity** — Normalized 3 lucide-react icon opacity violations to `text.disabled`.
+
+**Value change flash** — Added `useValueFlash` hook. Wired into `ValueInput`, `SizeInputCell`, `TypoValueCell`.
+
+**Separator consistency** — Replaced 2 hardcoded rgba separators with `border.subtle`.
+
+**Border radius consistency** — Added `layout.pillRadius: 4` token. Updated ScopePill and PILL_BUTTON.
+
+**Monospace font audit** — All 90+ instances verified as using `font.mono`. No changes needed.
+
+**Transition timing audit** — Replaced 7 hardcoded `ms` values in 5 files.
+
+**Move #d4956a** — Added `color.primaryActive` token for slider thumb `:active` states.
+
+**Fix spacing zone base colors** — Changed `marginBase`/`paddingBase` to `"transparent"`.
+
+**Fix UnitSelector overflow** — `overflow: "hidden"` removed from annotation span.
+
+**Fix IconButtonGroup active** — Moved active styling from inline to `data-[state=on]` className.
+
+**Fix class-scope undo/redo** — `onClassChange` listener and `resetStateOverrides` confirmed working.
+
+**Fix annotation destructure** — Added missing `annotation` to `SliderRow` destructured params.
+
+**Reset shake** — 3-cycle horizontal shake animation on no-op reset click.
+
+**Save button success** — Green "Saved" state for 1.5s after successful save.
+
+**Copy button checkmark** — Green "Copied" state for 1.5s after clipboard copy.
+
+</details>

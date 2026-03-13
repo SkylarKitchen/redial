@@ -6,11 +6,11 @@ date: 2026-03-13
 
 # Close Remaining Gaps
 
+**Status: 11 of 13 iterations complete.** Remaining: #8 (spacing box model interactions — 3 criteria), #11 (NPM publish — 3 fields).
+
 ## Overview
 
-Redial's UI has ~90% of the Webflow spec's property surface area built as components. The remaining gaps fall into three categories: **pipeline depth** (making the core loop work across all modes), **missing CSS properties** (completing sections), and **interaction polish** (the Webflow-feel details).
-
-13 iterations, ordered by impact on the core promise: "tune → save → real code."
+13 iterations ordered by impact on the core promise: "tune → save → real code." Covers pipeline depth, missing CSS properties, and interaction polish.
 
 ## Problem Statement
 
