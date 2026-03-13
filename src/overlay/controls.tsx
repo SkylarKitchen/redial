@@ -109,7 +109,7 @@ export function Section({
   onToggle,
   onReset,
 }: {
-  title: string;
+  title: React.ReactNode;
   collapsed?: boolean;
   children: React.ReactNode;
   indicator?: IndicatorType;
