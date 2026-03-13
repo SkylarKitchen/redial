@@ -123,6 +123,44 @@ describe("getReadableName", () => {
   });
 });
 
+// ─── applyClassStyle (class-scope save path) ─────────────────────────
+
+describe("applyClassStyle — class-scope save path", () => {
+  it("creates style tag with correct CSS rule for a class and property", () => {
+    applyClassStyle("Card_wrapper__f3k2m", "background-color", "#f0f0f0");
+    const tag = getStyleTag();
+    expect(tag).not.toBeNull();
+    // The rule should target the exact class
+    expect(tag!.textContent).toContain("Card_wrapper__f3k2m");
+    // The rule should contain the property with !important
+    expect(tag!.textContent).toContain(
+      "background-color: #f0f0f0 !important"
+    );
+  });
+
+  it("resetClassStyles removes all overrides for a class", () => {
+    applyClassStyle("Card_wrapper__f3k2m", "color", "red");
+    applyClassStyle("Card_wrapper__f3k2m", "font-size", "20px");
+    applyClassStyle("Card_wrapper__f3k2m", "padding", "12px");
+
+    // Confirm they exist first
+    const tagBefore = getStyleTag();
+    expect(tagBefore!.textContent).toContain("color: red !important");
+    expect(tagBefore!.textContent).toContain("font-size: 20px !important");
+    expect(tagBefore!.textContent).toContain("padding: 12px !important");
+
+    // Reset all overrides for this class
+    resetClassStyles("Card_wrapper__f3k2m");
+
+    const tagAfter = getStyleTag();
+    // The style tag should no longer contain this class's rules
+    expect(tagAfter!.textContent).not.toContain("Card_wrapper__f3k2m");
+    expect(tagAfter!.textContent).not.toContain("color: red");
+    expect(tagAfter!.textContent).not.toContain("font-size: 20px");
+    expect(tagAfter!.textContent).not.toContain("padding: 12px");
+  });
+});
+
 // ─── applyClassStyle ──────────────────────────────────────────────────
 
 describe("applyClassStyle", () => {

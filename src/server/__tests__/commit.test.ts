@@ -526,6 +526,66 @@ describe("handleCommit", () => {
     expect(content).toContain("font-size: 18px");
   });
 
+  it("class-scoped change targets correct block when multiple class blocks exist", async () => {
+    const filePath = "src/Buttons.module.css";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  color: red;",
+      "  padding: 8px;",
+      "}",
+      "",
+      ".card {",
+      "  color: blue;",
+      "  padding: 16px;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "red", to: "green", sourceFile: filePath, className: "btn" }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // .btn block was modified
+    expect(content).toContain("color: green");
+    // .card block was NOT modified
+    expect(content).toContain("color: blue");
+    // Other properties in both blocks are untouched
+    expect(content).toContain("padding: 8px");
+    expect(content).toContain("padding: 16px");
+  });
+
+  it("element-scoped change without className skips class block search", async () => {
+    const filePath = "src/Layout.module.css";
+    await writeFixture(filePath, [
+      ".btn {",
+      "  color: red;",
+      "}",
+      "",
+      ".header {",
+      "  color: red;",
+      "}",
+    ].join("\n"));
+
+    // Element-scoped: no className, sourceLine points to .btn block (line 1)
+    const result = await handleCommit(
+      [{ prop: "color", from: "red", to: "purple", sourceFile: filePath, sourceLine: 1 }],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // Window search found .btn's color (near sourceLine 1) and changed it
+    expect(content).toMatch(/\.btn\s*\{[^}]*color:\s*purple/);
+    // .header's color was NOT modified — element scope used window search, not class block
+    expect(content).toMatch(/\.header\s*\{[^}]*color:\s*red/);
+  });
+
   it("uses className for class-scoped search to find correct block", async () => {
     const filePath = "src/Page.module.scss";
     await writeFixture(filePath, [
