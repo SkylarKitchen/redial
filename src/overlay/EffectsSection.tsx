@@ -374,6 +374,16 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SelectRow label="Pointer" value={pointerEvents} options={POINTER_EVENTS_OPTIONS} onChange={handlePointerEventsChange} onReset={() => resetCssStr("pointer-events", setPointerEvents)} indicator={ind("pointer-events")} onContextMenu={ctxMenu("pointer-events", pointerEvents)} computedProp="pointer-events" computedElement={element} />
       <SelectRow label="Visibility" value={visibility} options={VISIBILITY_OPTIONS} onChange={handleVisibilityChange} onReset={() => resetCssStr("visibility", setVisibility)} indicator={ind("visibility")} onContextMenu={ctxMenu("visibility", visibility)} computedProp="visibility" computedElement={element} />
       <SelectRow label="Selection" value={userSelect} options={USER_SELECT_OPTIONS} onChange={handleUserSelectChange} onReset={() => resetCssStr("user-select", setUserSelect)} indicator={ind("user-select")} onContextMenu={ctxMenu("user-select", userSelect)} computedProp="user-select" computedElement={element} />
+
+      {/* Transition options menu portal */}
+      {transMenuAnchor && createPortal(
+        <TransitionOptionsMenu
+          anchor={transMenuAnchor}
+          items={transMenuItems}
+          onClose={() => setTransMenuAnchor(null)}
+        />,
+        document.body
+      )}
     </Section>
   );
 });
