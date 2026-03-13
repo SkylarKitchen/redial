@@ -246,7 +246,7 @@ export function SizeInputCell({
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
             style={{
-              width: 36,
+              width: "100%",
               border: `1px solid ${primaryAlpha(0.5)}`,
               borderRadius: 2,
               fontSize: 10,
