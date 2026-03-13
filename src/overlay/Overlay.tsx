@@ -15,7 +15,7 @@ import { Selector } from "./Selector";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
-import { CommonPanel } from "./CommonPanel";
+
 import { PromptPanel } from "./PromptPanel";
 import { SessionDrawer } from "./SessionDrawer";
 import { GridOverlay } from "./GridOverlay";
@@ -106,8 +106,8 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, [getScrollViewport]);
 
-  // Tab state: "common" (Quick — flat simplified view), "custom" (Full — WebflowPanel), or "prompt" (AI — context copy)
-  const [activeTab, setActiveTab] = useState<"common" | "custom" | "prompt">("common");
+  // Tab state: "custom" (Style — WebflowPanel) or "prompt" (AI — context copy)
+  const [activeTab, setActiveTab] = useState<"custom" | "prompt">("custom");
 
   // Session-wide state
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -630,7 +630,7 @@ export function Overlay() {
     // Reset scope, tab, overlays, search, and modals on new selection
     setScope("element");
     setActiveClassName(null);
-    setActiveTab("common");
+    setActiveTab("custom");
     setShowGridOverlay(false);
     setShowHistory(false);
     setShowSearch(false);
@@ -1478,11 +1478,11 @@ export function Overlay() {
               </span>
             </div>
           )}
-          {/* -- Quick / Full / AI tab bar -- */}
+          {/* -- Style / AI tab bar -- */}
           <div className="flex border-b px-3 shrink-0" style={{ borderColor: border.subtle }}>
-            {(["common", "custom", "prompt"] as const).map((tab) => {
+            {(["custom", "prompt"] as const).map((tab) => {
               const isActive = activeTab === tab;
-              const label = tab === "common" ? "Quick" : tab === "custom" ? "Full" : "AI";
+              const label = tab === "custom" ? "Style" : "AI";
               return (
                 <button
                   key={tab}
@@ -1520,17 +1520,7 @@ export function Overlay() {
               )}
             >
               <PanelErrorBoundary onError={handleClose}>
-                {activeTab === "common" ? (
-                  <CommonPanel
-                    key={panelKey}
-                    element={selectedEl}
-                    spacing={inferResult.spacing}
-                    onSpacingChange={handleSpacingChange}
-                    scope={scope}
-                    activeClassName={activeClassName}
-                    activeState={activeState}
-                  />
-                ) : activeTab === "custom" ? (
+                {activeTab === "custom" ? (
                   <WebflowPanel
                     key={panelKey}
                     element={selectedEl}

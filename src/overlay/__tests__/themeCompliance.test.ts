@@ -39,7 +39,6 @@ const KEY_COMPONENT_FILES = [
   "UnitSelector.tsx",
   "controls.tsx",
   "layoutControls.tsx",
-  "CommonPanel.tsx",
   "PromptPanel.tsx",
   "BackgroundLayerList.tsx",
 ];

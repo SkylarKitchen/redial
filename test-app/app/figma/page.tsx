@@ -940,7 +940,7 @@ export default function FigmaPage() {
               showState
               badge={5}
             />
-            <TabBar tabs={["Common", "Custom", "Prompt"]} active={1} />
+            <TabBar tabs={["Style", "AI"]} active={0} />
             <SearchBar />
 
             <SectionOpen title="Layout" indicator>
@@ -1078,7 +1078,7 @@ export default function FigmaPage() {
         <div data-component="FullPanel-Collapsed">
           <div style={panelShell}>
             <PanelHeaderFull tag="<div>" className=".container" />
-            <TabBar tabs={["Common", "Custom", "Prompt"]} active={1} />
+            <TabBar tabs={["Style", "AI"]} active={0} />
             {["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].map(s => (
               <SectionClosed key={s} title={s} indicator={s === "Layout" || s === "Size"} />
             ))}
@@ -1086,51 +1086,11 @@ export default function FigmaPage() {
           </div>
         </div>
 
-        {/* ── 3. Full Panel — Common Tab ── */}
-        <div data-component="FullPanel-Common">
-          <div style={panelShell}>
-            <PanelHeaderFull tag="<div>" className=".card" sourceFile="src/Card.tsx" />
-            <TabBar tabs={["Common", "Custom", "Prompt"]} active={0} />
-            {/* Flat groups like CommonPanel */}
-            <div style={{ padding: "8px 0" }}>
-              <div style={{ padding: "0 12px 4px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: text.label }}>Style</div>
-              <ColorRow label="BG" hex="#FFFFFF" />
-              <SliderTrack pct={100} label="Opacity" value={100} unit="%" />
-              <SliderTrack pct={20} label="Radius" value={8} />
-            </div>
-            <SectionDivider />
-            <div style={{ padding: "8px 0" }}>
-              <div style={{ padding: "0 12px 4px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: text.label }}>Margin</div>
-              <SpacingBox />
-            </div>
-            <SectionDivider />
-            <div style={{ padding: "8px 0" }}>
-              <div style={{ padding: "0 12px 4px", fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: text.label }}>Size</div>
-              <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
-                <div style={sizeCell}>
-                  <div style={sizeCellLabel}>W</div>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeCellValue, textTransform: "capitalize" }}>Auto</span></div>
-                  <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={sizeCellUnit}>–</span></div>
-                </div>
-                <div style={sizeCell}>
-                  <div style={sizeCellLabel}>H</div>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeCellValue, textTransform: "capitalize" }}>Auto</span></div>
-                  <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={sizeCellUnit}>–</span></div>
-                </div>
-              </div>
-            </div>
-            <FooterBar />
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4. Full Panel — Prompt Tab ── */}
-      <div className="section-label">Full Panel — Prompt Tab</div>
-      <div className="row">
+        {/* ── 3. Full Panel — Prompt Tab ── */}
         <div data-component="FullPanel-Prompt">
           <div style={panelShell}>
             <PanelHeaderFull tag="<button>" className=".btnPrimary" sourceFile="src/components/Button.tsx" />
-            <TabBar tabs={["Common", "Custom", "Prompt"]} active={2} />
+            <TabBar tabs={["Style", "AI"]} active={1} />
             <PromptPanelContent />
             <FooterBar />
           </div>

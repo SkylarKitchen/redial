@@ -70,9 +70,9 @@ describe("getAuthoredValue", () => {
 // ─── isAutoSize ───────────────────────────────────────────────────────
 
 describe("isAutoSize", () => {
-  it("returns true when no width is authored (the bug: CommonPanel shows computed pixels instead)", () => {
+  it("returns true when no width is authored (avoids showing computed pixels)", () => {
     const el = makeEl();
-    // In CommonPanel today, this element would show W: 680 from getComputedStyle().
+    // Without isAutoSize, the panel would show W: 680 from getComputedStyle().
     // It should show "auto" because no width was explicitly set.
     expect(isAutoSize(el, "width")).toBe(true);
   });
