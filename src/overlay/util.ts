@@ -78,11 +78,39 @@ export function buildBreadcrumb(
 }
 
 /**
- * Build a stable CSS selector path that uniquely identifies an element across reloads.
- * Uses tag + nth-child from body down for maximum specificity.
- * e.g. "body > div:nth-child(1) > main:nth-child(2) > h1:nth-child(1)"
+ * Build a stable CSS selector that uniquely identifies an element across reloads.
+ * Uses a priority cascade for resilience against DOM reordering:
+ *   1. el.id → "#theId"
+ *   2. data-testid → '[data-testid="value"]'
+ *   3. CSS module class (full mangled name) → ".Button_btn__a8f2k"
+ *   4. Fallback → nth-child path from body
  */
 export function getStableSelector(el: Element): string {
+  // Priority 1: id
+  if (el.id) {
+    return `#${CSS.escape(el.id)}`;
+  }
+
+  // Priority 2: data-testid
+  const testId = el.getAttribute("data-testid");
+  if (testId) {
+    return `[data-testid="${CSS.escape(testId)}"]`;
+  }
+
+  // Priority 3: CSS module class (full mangled name — unique per component instance)
+  if (typeof el.className === "string") {
+    for (const cls of el.className.split(/\s+/)) {
+      if (
+        /^[A-Z]\w+_\w+__\w+$/.test(cls) ||       // webpack
+        /^[\w-]+-module__\w+__\w+$/.test(cls) ||   // Turbopack
+        /^_\w+_\w+_\d+$/.test(cls)                 // Vite
+      ) {
+        return `.${CSS.escape(cls)}`;
+      }
+    }
+  }
+
+  // Priority 4: nth-child path (original fallback)
   const segments: string[] = [];
   let current: Element | null = el;
 
