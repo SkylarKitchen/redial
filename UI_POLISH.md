@@ -30,7 +30,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 ## Phase 2 — Input & Control Polish (medium effort, high UX value)
 
 ### Input Improvements
-- [ ] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition. Gives visual feedback that sections are clickable.
+- [x] **Section header hover highlight**: Add `surface.hover` background on section header row hover in the `Section` component (`controls.tsx`). Use timing token for transition. Gives visual feedback that sections are clickable.
 - [ ] **Color swatch inset border**: The `1px solid color.border` on color swatches handles most cases, but pure-white or near-white swatches still blend into the panel background. Add an `inset` shadow or ensure border is always visible even for white swatches. Target: `ColorRow` in `controls.tsx:859`.
 - [ ] **Input placeholder styling**: Numeric inputs showing "auto"/"none" keywords should render in italic at `text.disabled` opacity. Target: `SizeInputCell` keyword mode.
 - [ ] **Label truncation with tooltip**: Long property labels (e.g., "border-top-left-radius") can clip. Add `overflow: hidden`, `textOverflow: ellipsis`, and `title` attribute to `labelStyle` in `controls.tsx`.
@@ -83,6 +83,9 @@ Replaced hardcoded `#34d399` in StateSelector.tsx with `badge.action` token. Sam
 
 ### 2026-03-13 — ScopePill duplicate hover
 Fixed no-op ternary in Header.tsx ScopePill where active+hovered and active-only both resolved to `surface.active`. Active+hovered now uses `blackAlpha(0.1)` (10% vs 8%) for perceptible hover feedback.
+
+### 2026-03-13 — Section header hover highlight
+Added `surface.hover` background on hover to collapsed Section headers in controls.tsx. Uses `ms("fast")` transition. Only applies when section is collapsed — open/sticky headers keep `color.background` to cover scrolling content.
 
 ### 2026-03-13 — GapInput missing value flash
 Added `useValueFlash(value)` to `GapInput` and `TrackCountInput` in layoutControls.tsx. Both now show a brief `primaryAlpha(0.12)` background flash on value change, consistent with `ValueInput` and `SizeInputCell`.
