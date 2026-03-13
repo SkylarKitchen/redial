@@ -72,15 +72,6 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const { apply, ind, sectionInd, cs, element, getConversionCtx, ctxMenu } = ctx;
   const parentIsFlexOrGrid = parentIsFlex || parentIsGrid;
 
-  // Only show flex/grid child section when a property is actually overridden
-  const hasFlexChildOverride = parentIsFlexOrGrid && (
-    ind("flex-grow") !== "none" || ind("flex-shrink") !== "none" ||
-    ind("flex-basis") !== "none" || ind("order") !== "none" ||
-    ind("align-self") !== "none" ||
-    flexGrow !== 0 || flexShrink !== 1 || flexOrder !== 0 ||
-    (alignSelf !== "auto" && alignSelf !== "normal")
-  );
-
   // ── Local state ──
 
   // Flex
@@ -119,6 +110,15 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const { conversionHint: rowGapHint, fireConversionHint: fireRowGapHint } = useConversionHint();
   const { conversionHint: colGapHint, fireConversionHint: fireColGapHint } = useConversionHint();
   const { conversionHint: basisHint, fireConversionHint: fireBasisHint } = useConversionHint();
+
+  // Only show flex/grid child section when a property is actually overridden
+  const hasFlexChildOverride = parentIsFlexOrGrid && (
+    ind("flex-grow") !== "none" || ind("flex-shrink") !== "none" ||
+    ind("flex-basis") !== "none" || ind("order") !== "none" ||
+    ind("align-self") !== "none" ||
+    flexGrow !== 0 || flexShrink !== 1 || flexOrder !== 0 ||
+    (alignSelf !== "auto" && alignSelf !== "normal")
+  );
 
   // ── Helpers ──
 
@@ -468,7 +468,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
         </>
       )}
 
-      {parentIsFlexOrGrid && (
+      {hasFlexChildOverride && (
         <>
           <div className="pt-1.5 pb-0.5 px-3 text-[10px] uppercase tracking-[0.04em]" style={{ color: text.label }}>
             {parentIsFlex ? "Flex Child" : "Grid Child"}
