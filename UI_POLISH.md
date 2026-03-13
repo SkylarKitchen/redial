@@ -48,7 +48,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 ### Panel Behavior
 - [x] **Panel shadow lift on drag**: While dragging the panel, deepen box-shadow (`shadow.panel` → a heavier variant like `shadow.panelDrag`). Revert on drop. Target: `Overlay.tsx` drag handlers.
-- [ ] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage, just React state). Target: `WebflowPanel.tsx`.
+- [x] **Section collapse memory**: Remember which sections are collapsed across element selections within a session (not localStorage, just React state). Target: `WebflowPanel.tsx`.
 
 ### Visual Feedback
 - [ ] **Element outline pulse on select**: Brief scale+opacity pulse on the selection outline when selecting a new element (400ms). Target: `Overlay.tsx` selection outline.
@@ -161,6 +161,9 @@ Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. Aft
 
 ### 2026-03-13 — Copy button checkmark
 Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
+
+### 2026-03-13 — Section collapse memory
+Added `SectionMemoryProvider` context in controls.tsx. Overlay.tsx owns the `Record<string, boolean>` state (survives panelKey remounts). WebflowPanel wraps its JSX in the provider, and each `Section` reads/writes the shared context on toggle. No prop threading to section files needed.
 
 ### 2026-03-13 — Icon opacity audit
 Normalized 3 lucide-react icon opacity violations to `text.disabled` token: Footer.tsx ChevronDown (was `opacity: 0.6`), Header.tsx ChevronRight ×2 (were `opacity: 0.4`). All other icon usages already use theme tokens.

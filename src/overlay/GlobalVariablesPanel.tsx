@@ -38,7 +38,7 @@ import { DragHandle } from "./DragHandle";
 import { useDragReorder } from "./useDragReorder";
 import { useFocusTrap } from "./useFocusTrap";
 import { ROW, MINI_ACTION_BUTTON } from "./panelStyles";
-import { text, border, surface, font, color, shadow, labelIndicator, labelHighlight, zIndex } from "./theme";
+import { text, border, surface, font, color, shadow, labelIndicator, labelHighlight, layout, zIndex } from "./theme";
 import { ms } from "./timing";
 import type { IndicatorType } from "./theme";
 
@@ -56,7 +56,7 @@ const CATEGORY_LABELS: Record<VarCategory, string> = {
 };
 
 const VAR_LABEL_STYLE: React.CSSProperties = {
-  width: 120,
+  width: 130,
   fontSize: 11,
   fontFamily: font.mono,
   flexShrink: 0,
@@ -380,39 +380,6 @@ function GlobalVariableRow({
     ? { background: labelIndicator.modified.bg, color: labelIndicator.modified.text, ...labelHighlight }
     : { color: text.label };
 
-  const hoverActions = hovered && !renaming ? (
-    <div style={{ ...VAR_LABEL_STYLE, justifyContent: "flex-end", gap: 2 }}>
-      <button
-        onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-        title="Duplicate"
-        style={{
-          width: 18, height: 18, border: "none", background: "transparent",
-          borderRadius: 3, cursor: "pointer", display: "flex",
-          alignItems: "center", justifyContent: "center", color: text.hint,
-          opacity: 0.7, transition: `opacity ${ms("fast")}`,
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
-      >
-        <Copy size={11} />
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        title="Delete"
-        style={{
-          width: 18, height: 18, border: "none", background: "transparent",
-          borderRadius: 3, cursor: "pointer", display: "flex",
-          alignItems: "center", justifyContent: "center", color: text.hint,
-          opacity: 0.7, transition: `opacity ${ms("fast")}`,
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
-      >
-        <Trash2 size={11} />
-      </button>
-    </div>
-  ) : null;
-
   // Rename mode
   if (renaming) {
     return (
@@ -444,7 +411,7 @@ function GlobalVariableRow({
 
   const rowContent = (labelNode: React.ReactNode, controlNode: React.ReactNode) => (
     <div
-      style={ROW}
+      style={{ ...ROW, position: "relative" }}
       onMouseEnter={() => onHoverChange(true)}
       onMouseLeave={() => onHoverChange(false)}
       onContextMenu={onContextMenu}
@@ -452,7 +419,45 @@ function GlobalVariableRow({
       {showDragHandle && dragHandleProps && (
         <DragHandle isDragging={isDragging} onPointerDown={dragHandleProps.onPointerDown} />
       )}
-      {hoverActions || labelNode}
+      {labelNode}
+      {hovered && !renaming && (
+        <div style={{
+          position: "absolute",
+          left: showDragHandle ? 28 : 12,
+          top: 0, bottom: 0,
+          display: "flex", alignItems: "center", gap: 2,
+          zIndex: 1, background: color.background,
+        }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
+            title="Duplicate"
+            style={{
+              width: 18, height: 18, border: "none", background: "transparent",
+              borderRadius: 3, cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", color: text.hint,
+              opacity: 0.7, transition: `opacity ${ms("fast")}`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+          >
+            <Copy size={11} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            title="Delete"
+            style={{
+              width: 18, height: 18, border: "none", background: "transparent",
+              borderRadius: 3, cursor: "pointer", display: "flex",
+              alignItems: "center", justifyContent: "center", color: text.hint,
+              opacity: 0.7, transition: `opacity ${ms("fast")}`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.7"; }}
+          >
+            <Trash2 size={11} />
+          </button>
+        </div>
+      )}
       {controlNode}
     </div>
   );
@@ -497,7 +502,7 @@ function GlobalVariableRow({
         onMouseEnter={() => onHoverChange(true)}
         onMouseLeave={() => onHoverChange(false)}
         onContextMenu={onContextMenu}
-        style={{ position: "relative" }}
+        style={{ position: "relative", minHeight: layout.iconBtnSize, paddingRight: 2 }}
       >
         {showDragHandle && dragHandleProps && (
           <div style={{ position: "absolute", left: -2, top: "50%", transform: "translateY(-50%)", zIndex: 1 }}>
@@ -509,7 +514,7 @@ function GlobalVariableRow({
           value={draft}
           onChange={(c) => { setDraft(c); commit(c); }}
           indicator={indicator}
-          labelWidth={120}
+          labelWidth={130}
           actions={colorActions}
         />
       </div>
@@ -1186,17 +1191,24 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
               />
             ))}
 
-            {/* Uncategorized */}
-            {collectionGrouped.uncategorized.length > 0 && (
-              <VariableGroup
-                title="(No Collection)"
-                variables={collectionGrouped.uncategorized}
-                searching={searching}
-                order={order}
-                onOrderChange={handleOrderChange}
-                onContextMenu={handleContextMenu}
-              />
-            )}
+            {/* Uncategorized — sub-grouped by category */}
+            {collectionGrouped.uncategorized.length > 0 && (() => {
+              const catGroups = groupByCategory(collectionGrouped.uncategorized);
+              return (Object.keys(CATEGORY_LABELS) as VarCategory[]).map(cat => {
+                if (catGroups[cat].length === 0) return null;
+                return (
+                  <VariableGroup
+                    key={`uncat-${cat}`}
+                    title={CATEGORY_LABELS[cat]}
+                    variables={catGroups[cat]}
+                    searching={searching}
+                    order={order}
+                    onOrderChange={handleOrderChange}
+                    onContextMenu={handleContextMenu}
+                  />
+                );
+              });
+            })()}
           </>
         )}
       </div>
