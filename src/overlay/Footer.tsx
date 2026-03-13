@@ -14,7 +14,7 @@ import { formatCSSDiff, getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 import { timing } from "./timing";
 import type { DiffEntry } from "./apply";
-import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, destructiveAlpha } from "./theme";
+import { color, text, border, surface, font, shadow, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "./theme";
 import { getConfig } from "./config";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -261,9 +261,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               paddingRight: 8,
               borderRadius: 6,
               cursor: "pointer",
-              color: copied ? "#16a34a" : (clipboardHovered ? blackAlpha(0.7) : text.label),
-              background: copied ? "rgba(22,163,74,0.08)" : (copyOpen ? surface.active : (clipboardHovered ? surface.active : surface.hover)),
-              border: `1px solid ${copied ? "rgba(22,163,74,0.25)" : (copyOpen ? border.hover : border.default)}`,
+              color: copied ? color.successMuted : (clipboardHovered ? blackAlpha(0.7) : text.label),
+              background: copied ? successMutedAlpha(0.08) : (copyOpen ? surface.active : (clipboardHovered ? surface.active : surface.hover)),
+              border: `1px solid ${copied ? successMutedAlpha(0.25) : (copyOpen ? border.hover : border.default)}`,
               transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
             }}
           >
@@ -354,9 +354,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               borderRadius: 6,
               border: "none",
               cursor: (count === 0 || saving) ? "default" : "pointer",
-              background: saved ? "#22c55e" : color.primary,
+              background: saved ? color.success : color.primary,
               color: color.primaryForeground,
-              boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px rgba(34,197,94,0.4)` : `0 1px 3px ${primaryAlpha(0.4)}`,
+              boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px ${successAlpha(0.4)}` : `0 1px 3px ${primaryAlpha(0.4)}`,
               opacity: (count === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
               transition: `opacity ${timing.normal}ms, background ${timing.normal}ms, box-shadow ${timing.normal}ms`,
             }}

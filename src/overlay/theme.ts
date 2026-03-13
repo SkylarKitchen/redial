@@ -42,6 +42,11 @@ export const color = {
 
   /** Destructive red */
   destructive: "#ef4444",
+
+  /** Success green — bright (save confirmed) */
+  success: "#22c55e",
+  /** Success green — muted/darker (copy confirmed) */
+  successMuted: "#16a34a",
 } as const;
 
 // ─── Opacity Variants ────────────────────────────────────────────
@@ -55,6 +60,11 @@ export const destructiveAlpha = (a: number) => `rgba(239,68,68,${a})`;
 /** Black at a given alpha. e.g. blackAlpha(0.12) → "rgba(0,0,0,0.12)" */
 export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;
 export const greenAlpha = (a: number) => `rgba(99,196,99,${a})`;
+
+/** Success green (bright) at a given alpha. rgb(34,197,94) = #22c55e */
+export const successAlpha = (a: number) => `rgba(34,197,94,${a})`;
+/** Success green (muted) at a given alpha. rgb(22,163,74) = #16a34a */
+export const successMutedAlpha = (a: number) => `rgba(22,163,74,${a})`;
 
 // ─── Semantic Aliases ────────────────────────────────────────────
 
