@@ -12,7 +12,7 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 - [x] **Value change flash**: When a slider/input value changes, briefly flash the value text with a subtle `primaryAlpha(0.15)` background (200ms). Helps users confirm their change registered. Target: `ValueInput`, `SizeInputCell`, `TypoValueCell`.
 - [x] **Copy button checkmark**: After a successful copy (CSS/TW/Vars), briefly replace the button text with a ✓ checkmark for 1.5s before reverting. Target: `Footer.tsx` copy dropdown items.
 - [x] **Save button success state**: After save completes, briefly turn Save button green (#22c55e) with checkmark for 1.5s, then animate back to `color.primary`. Target: `Footer.tsx` ActionButton.
-- [ ] **Reset shake on no-op**: If user clicks Reset when there are no overrides, apply a brief horizontal shake animation (3 cycles, 2px amplitude, 300ms). Target: `Footer.tsx` Reset button.
+- [x] **Reset shake on no-op**: If user clicks Reset when there are no overrides, apply a brief horizontal shake animation (3 cycles, 2px amplitude, 300ms). Target: `Footer.tsx` Reset button.
 - [ ] **Section header hover**: Add subtle background highlight (`surface.hover`) on section header row hover, with timing token transition. Target: `Section` component in `controls.tsx`.
 
 ### Input Polish
@@ -65,6 +65,9 @@ Autonomous improvement queue. Each item is a self-contained, visually verifiable
 ---
 
 ## Completed
+
+### 2026-03-13 — Reset shake on no-op
+Added shake animation to Reset button in `Footer.tsx`. When clicked with no overrides (count=0), the button does a 3-cycle horizontal shake (2px amplitude, 300ms via `timing.slow`). Converted to `motion.button` with keyframe animation `x: [0, -2, 2, -2, 2, -2, 2, 0]`. Button remains clickable but visually dimmed at 0.5 opacity.
 
 ### 2026-03-13 — Save button success state
 Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. After a successful save (no failures), the Save button turns green (`#22c55e`) with "✓ Saved" text for 1.5s, then smoothly transitions back to `color.primary` via `timing.normal` transitions on background, box-shadow, and opacity.
