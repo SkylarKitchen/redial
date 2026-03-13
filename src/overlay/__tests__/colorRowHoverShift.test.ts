@@ -36,10 +36,12 @@ describe("ColorRow hover actions must not shift layout", () => {
     const hasActions = colorRowSrc.includes("{actions}");
     expect(hasActions, "ColorRow must render {actions}").toBe(true);
 
-    // The actions rendering block should include position: "absolute" nearby.
-    // Look for the pattern: a div/container with position:"absolute" that contains {actions}
-    const actionsBlockPattern = /position:\s*["']absolute["'][\s\S]{0,400}\{actions\}/;
-    const usesAbsolutePositioning = actionsBlockPattern.test(colorRowSrc);
+    // The actions container must use position:absolute — either inline or via a
+    // named style constant. Check both patterns.
+    const inlineAbsolute = /position:\s*["']absolute["'][\s\S]{0,400}\{actions\}/.test(colorRowSrc);
+    const namedStyleAbsolute = /style=\{(\w+Overlay\w*|actions\w*Style)\}[\s\S]{0,100}\{actions\}/.test(colorRowSrc)
+      && /position:\s*["']absolute["']/.test(CONTROLS_SRC);
+    const usesAbsolutePositioning = inlineAbsolute || namedStyleAbsolute;
 
     expect(
       usesAbsolutePositioning,

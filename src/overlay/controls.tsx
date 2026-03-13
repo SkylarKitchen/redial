@@ -95,6 +95,19 @@ const rowStyle: React.CSSProperties = {
   padding: "2px 12px",
 };
 
+/** Absolute overlay for ColorRow action buttons — prevents layout shift on hover. */
+const actionsOverlayStyle: React.CSSProperties = {
+  position: "absolute",
+  left: 12,
+  top: 0,
+  bottom: 0,
+  display: "flex",
+  alignItems: "center",
+  gap: 2,
+  zIndex: 1,
+  background: color.background,
+};
+
 // ─── Section ────────────────────────────────────────────────────────
 
 export function Section({
@@ -834,17 +847,7 @@ export function ColorRow({
         </ComputedTooltip>
       ) : labelContent}
       {actions && (
-        <div style={{
-          position: "absolute",
-          left: 12,
-          top: 0,
-          bottom: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          zIndex: 1,
-          background: color.background,
-        }}>
+        <div style={actionsOverlayStyle}>
           {actions}
         </div>
       )}
