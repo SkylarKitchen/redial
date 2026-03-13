@@ -10,15 +10,15 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font } from "./theme";
+import { font, overlay } from "./theme";
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const GAP_COLOR = "#FF44CC";
-const GAP_HATCH = "rgba(255,68,204,0.15)";
-const GAP_BORDER = "rgba(255,68,204,0.5)";
+const GAP_COLOR = overlay.flexGap.solid;
+const GAP_HATCH = overlay.flexGap.hatch;
+const GAP_BORDER = overlay.flexGap.border;
 const HATCH_SPACING = 5;
 const Z_INDEX = 2147483645;
 const LABEL_FONT = font.mono;

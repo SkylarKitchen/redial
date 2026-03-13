@@ -234,6 +234,9 @@ export const presetBaseUnit: Record<string, string> = {
 /** Grid overlay orange at a given alpha. rgb(217,119,87) */
 export const gridAlpha = (a: number) => `rgba(217,119,87,${a})`;
 
+/** Flex gap overlay magenta at a given alpha. rgb(255,68,204) = #FF44CC */
+export const flexGapAlpha = (a: number) => `rgba(255,68,204,${a})`;
+
 export const overlay = {
   grid: {
     /** Dashed grid lines between tracks */
@@ -246,6 +249,14 @@ export const overlay = {
     labelBg: "rgba(250,249,245,0.85)",
     /** Container outline border */
     outline: gridAlpha(0.25),
+  },
+  flexGap: {
+    /** Badge background & solid color — full opacity */
+    solid: "#FF44CC",
+    /** Hatched fill */
+    hatch: flexGapAlpha(0.15),
+    /** Dashed border around gap region */
+    border: flexGapAlpha(0.5),
   },
 } as const;
 
