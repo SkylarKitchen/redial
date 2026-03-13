@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { text, color } from "./theme";
+import { text, color, badge } from "./theme";
 
 export interface StateSelectorProps {
   value: string;
@@ -54,7 +54,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
           width: "auto",
           gap: 4,
           boxShadow: "none",
-          color: isBase ? text.label : "#34d399",
+          color: isBase ? text.label : badge.action,
         }}
       >
         <SelectValue>
