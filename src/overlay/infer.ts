@@ -553,6 +553,9 @@ function getDisplayClassInline(el: Element): string | null {
     // Turbopack: file-module__hash__className (requires -module segment)
     const turbo = cls.match(/^[\w-]+-module__\w+__(\w+)$/);
     if (turbo) return turbo[1];
+    // Vite: _className_hash_digits
+    const vite = cls.match(/^_(\w+)_\w+_\d+$/);
+    if (vite) return vite[1];
   }
 
   return list[0] || null;

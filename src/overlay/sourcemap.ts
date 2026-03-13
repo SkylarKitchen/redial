@@ -68,7 +68,11 @@ export function getCSSSource(
 
   const moduleClass = classes
     .split(/\s+/)
-    .find((cls) => /^[A-Z]\w+_\w+__\w+$/.test(cls) || /^[\w-]+__\w+__\w+$/.test(cls));
+    .find((cls) =>
+      /^[A-Z]\w+_\w+__\w+$/.test(cls) ||    // webpack
+      /^[\w-]+__\w+__\w+$/.test(cls) ||      // Turbopack
+      /^_\w+_\w+_\d+$/.test(cls)             // Vite
+    );
 
   if (!moduleClass) return null;
 
