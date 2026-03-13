@@ -446,7 +446,7 @@ function TrackSection({ label, tracks, onTracksChange }: {
       {/* Track list */}
       {tracks.map((track, i) => (
         <TrackItem
-          key={i}
+          key={track.id}
           track={track}
           onTrackChange={t => handleTrackChange(i, t)}
           onDelete={() => handleDelete(i)}
