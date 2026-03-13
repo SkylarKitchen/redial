@@ -16,7 +16,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 - [x] **CommandPalette badge colors** — Added `badge.action/actionBg` (emerald) and `badge.element/elementBg` (amber) tokens, replaced hardcoded values.
 - [x] **SpacingBoxModel hardcoded colors** — Replaced tooltip background with `bgAlpha(0.97)`, shadow with `shadow.dropdown`, border with `border.subtle`.
 - [x] **TextToggle wrong border token** — `layoutControls.tsx:80` uses `surface.track` for borders. Should use `border.default` or `border.input`.
-- [ ] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
+- [x] **SpacingBoxModel inline focus ring** — `SpacingBoxModel.tsx` has inline `rgba(59,130,246,0.3)` focus ring. Replace with `focusRing` from theme.ts.
 - [ ] **Toolbar hardcoded rgba whites** — `Toolbar.tsx` has 5+ hardcoded `rgba(255,255,255,...)` values for dark-on-dark hover/active states. Extract to `darkToolbar.*` token family in theme.ts (e.g. `darkToolbar.text`, `darkToolbar.textMuted`, `darkToolbar.hover`, `darkToolbar.active`, `darkToolbar.border`).
 - [ ] **Toolbar wrong fontFamily** — `Toolbar.tsx:71` uses `"system-ui, -apple-system, sans-serif"` instead of `font.sans` from theme.ts.
 - [ ] **StateSelector hardcoded green** — `StateSelector.tsx:57` uses `#34d399` for active state color. Should use `badge.action` token (same value, but via theme).
@@ -74,6 +74,9 @@ Grep-and-fix passes that enforce the token system uniformly.
 ---
 
 ## Completed
+
+### 2026-03-13 — SpacingBoxModel inline focus ring
+Replaced hardcoded `rgba(59,130,246,0.3)` focus ring in SpacingBoxModel.tsx onFocus handler with `focusRing` token from theme.ts. Same visual result, now governed by the token system.
 
 ### 2026-03-13 — TextToggle wrong border token
 Replaced 3 `surface.track` border usages in layoutControls.tsx (TextToggle container, internal divider, MiniDropdown popup) with `border.input` — the correct semantic token for input control borders.
