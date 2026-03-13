@@ -1018,7 +1018,7 @@ function UnitPill({ unit }: { unit: string }) {
       display: "inline-flex", alignItems: "center", justifyContent: "center",
       height: 20, padding: "0 6px",
       fontSize: 10, fontFamily: font.mono,
-      background: surface.base, border: `1px solid ${border.base}`,
+      background: color.input, border: `1px solid ${color.border}`,
       borderRadius: 4, color: blackAlpha(0.55),
       cursor: "pointer", maxWidth: 36, lineHeight: 1,
     }}>{unit}</span>
@@ -1053,9 +1053,9 @@ function InteractiveSpacingBox() {
             background: hoverZone?.startsWith("p") ? spacingZone.paddingHover : spacingZone.paddingBase,
             margin: "2px 0", position: "relative", transition: `background ${timing.fast}ms ease`,
           }}>
-            <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3 }}>
+            <div style={{ position: "absolute", top: 2, left: 6, display: "flex", alignItems: "center", gap: 3, zIndex: 1 }}>
               <span style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.05em", color: blackAlpha(0.55) }}>Padding</span>
-              <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.8), padding: "0 4px" }}>px</span>
+              <UnitPill unit="px" />
             </div>
             <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 2px" }}>
               <SpacingValue value={padding.top} zone="p-top" hoverZone={hoverZone} setHoverZone={setHoverZone} onChange={(v) => setPadding((p) => ({ ...p, top: v }))} />
