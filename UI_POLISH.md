@@ -59,7 +59,7 @@ Grep-and-fix passes that enforce the token system uniformly.
 
 - [x] **Standardize focus ring approach** — Components use 3 different focus patterns: `outline: 1px solid rgba(...)` (WebflowPanel), `boxShadow: 0 0 0 2px ...` (IconButtonGroup), and none (Header, Footer buttons). Pick one canonical approach using `focusRing` from theme.ts and apply globally.
 - [x] **Toolbar missing ARIA** — `ToolButton` in `Toolbar.tsx` has no `aria-label` or `aria-pressed` attributes. Add `aria-label={label}` and `aria-pressed={active}`.
-- [ ] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button when navigating with keyboard.
+- [x] **Header breadcrumb focus** — No visible focus ring on breadcrumb items or close button when navigating with keyboard.
 - [ ] **Hint text contrast** — `text.hint` (#A3A3A3) on white background: contrast ratio is ~2.7:1, below WCAG AA (4.5:1). Darken to ~#8A8A8A for 3.9:1 or ~#757575 for 4.6:1.
 - [ ] **`text.disabled` contrast** — `#737373` on white is ~4.6:1, which barely passes AA for normal text. Verify it's only used for disabled/decorative elements where AA isn't strictly required.
 
@@ -161,6 +161,9 @@ Added `saved` state to `Footer.tsx` mirroring the existing `copied` pattern. Aft
 
 ### 2026-03-13 — Copy button checkmark
 Added `copied` state to `Footer.tsx`. After successful clipboard copy, "Clipboard" button briefly shows "✓ Copied" with green tint (`#16a34a`) for 1.5s, then smoothly reverts via `timing.normal` transitions.
+
+### 2026-03-13 — Header breadcrumb focus
+Added `focusRing` box-shadow, `tabIndex={0}`, `role="button"`, and Enter/Space keyboard activation to breadcrumb ancestor segments and the ellipsis expander in Header.tsx. Close button also gets `focusRing` on focus with `outline: "none"` to suppress the default.
 
 ### 2026-03-13 — Toolbar missing ARIA
 Added `aria-label={label}` and `aria-pressed={!!active}` to the `<button>` in `ToolButton` (Toolbar.tsx). All 4 toolbar buttons (Select, Variables, AI, Session) now announce their label and toggle state to screen readers.
