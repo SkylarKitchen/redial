@@ -1,8 +1,9 @@
 /**
  * spacingZoneColors.test.ts — Verify spacing zone color design tokens.
  *
- * Margin zones use warm orange tones, padding zones use cool blue tones.
- * This matches the Webflow convention and our design spec.
+ * At rest, both margin and padding zones should be neutral (transparent).
+ * Color only appears on hover/interaction — orange for margin, blue for padding.
+ * This matches Webflow's actual behavior.
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,33 +17,32 @@ function parseRgba(s: string): { r: number; g: number; b: number; a: number } | 
 }
 
 describe("spacing zone colors", () => {
-  it("marginBase should be a warm orange tone", () => {
-    const c = parseRgba(spacingZone.marginBase);
+  it("marginBase should be transparent at rest", () => {
+    // Margin zone at rest = no visible color (transparent)
+    expect(spacingZone.marginBase).toBe("transparent");
+  });
+
+  it("paddingBase should be transparent at rest", () => {
+    // Padding zone at rest = no visible color (transparent)
+    expect(spacingZone.paddingBase).toBe("transparent");
+  });
+
+  it("marginHover should be a warm orange tone", () => {
+    const c = parseRgba(spacingZone.marginHover);
     expect(c).not.toBeNull();
     if (c) {
-      // Orange: high red, moderate green, low blue
+      // Orange: high red, low blue
       expect(c.r).toBeGreaterThan(200);
       expect(c.b).toBeLessThan(50);
     }
   });
 
-  it("paddingBase should be a cool blue tone", () => {
-    const c = parseRgba(spacingZone.paddingBase);
+  it("paddingHover should be a cool blue tone", () => {
+    const c = parseRgba(spacingZone.paddingHover);
     expect(c).not.toBeNull();
     if (c) {
-      // Blue: high blue channel
-      expect(c.b).toBeGreaterThan(200);
-    }
-  });
-
-  it("margin and padding zones should be visually distinct", () => {
-    const margin = parseRgba(spacingZone.marginBase);
-    const padding = parseRgba(spacingZone.paddingBase);
-    expect(margin).not.toBeNull();
-    expect(padding).not.toBeNull();
-    if (margin && padding) {
-      // They should have different dominant channels
-      expect(margin.r).not.toBe(padding.r);
+      // Blue-ish: primary color with some blue channel
+      expect(c.b).toBeGreaterThan(100);
     }
   });
 });

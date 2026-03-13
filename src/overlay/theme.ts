@@ -170,11 +170,11 @@ export const labelIndicator: Record<string, { bg: string; text: string }> = {
 // ─── Spacing Zone Colors ────────────────────────────────────────
 
 export const spacingZone = {
-  marginBase: "rgba(255, 149, 0, 0.08)",
+  marginBase: "transparent",
   marginHover: "rgba(255, 149, 0, 0.14)",
   marginBorderBase: blackAlpha(0.15),
   marginBorderHover: blackAlpha(0.30),
-  paddingBase: primaryAlpha(0.08),
+  paddingBase: "transparent",
   paddingHover: primaryAlpha(0.14),
   paddingBorderBase: primaryAlpha(0.25),
   paddingBorderHover: primaryAlpha(0.5),
