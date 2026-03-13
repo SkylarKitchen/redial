@@ -379,9 +379,6 @@ const footerBtnStandard: React.CSSProperties = {
   color: blackAlpha(0.8),
   cursor: "pointer",
   userSelect: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 };
 
 const footerBtnPrimary: React.CSSProperties = {
@@ -396,9 +393,6 @@ const footerBtnPrimary: React.CSSProperties = {
   boxShadow: `0 1px 3px ${primaryAlpha(0.4)}`,
   cursor: "pointer",
   userSelect: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 };
 
 // ─── Interactive Sub-components ─────────────────────────────────────────────
@@ -884,6 +878,9 @@ function HoverButton({ children, style: baseStyle, hoverStyle, onClick, disabled
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         ...baseStyle,
         ...(hovered && !disabled ? (hoverStyle ?? { filter: "brightness(0.92)" }) : {}),
         opacity: disabled ? 0.35 : 1,
