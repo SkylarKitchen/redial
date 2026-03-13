@@ -12,7 +12,7 @@ import type { Scope } from "./scope";
 import { getReadableName } from "./scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight } from "lucide-react";
-import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha } from "./theme";
+import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha, focusRing } from "./theme";
 import { ms } from "./timing";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
@@ -129,6 +129,8 @@ export function Header({
             onClick={onClose}
             onMouseEnter={() => setCloseHovered(true)}
             onMouseLeave={() => setCloseHovered(false)}
+            onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
+            onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             title="Close (Esc)"
             style={{
               display: "flex",
@@ -139,6 +141,7 @@ export function Header({
               padding: 0,
               borderRadius: 3,
               border: "none",
+              outline: "none",
               background: closeHovered ? surface.hover : "transparent",
               color: closeHovered ? blackAlpha(0.7) : text.disabled,
               cursor: "pointer",
@@ -192,14 +195,20 @@ export function Header({
                     <>
                       <ChevronRight size={10} strokeWidth={2} style={{ color: text.disabled }} />
                       <span
+                        tabIndex={0}
+                        role="button"
                         onClick={(e) => { e.stopPropagation(); setBreadcrumbExpanded(true); }}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setBreadcrumbExpanded(true); } }}
                         onMouseEnter={() => setEllipsisHovered(true)}
                         onMouseLeave={() => setEllipsisHovered(false)}
+                        onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
+                        onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                         style={{
                           cursor: "pointer",
                           paddingLeft: 2,
                           paddingRight: 2,
                           borderRadius: 2,
+                          outline: "none",
                           color: ellipsisHovered ? blackAlpha(0.7) : text.disabled,
                           background: ellipsisHovered ? surface.hover : "transparent",
                           transition: `color ${ms("normal")}, background ${ms("normal")}`,
@@ -212,12 +221,18 @@ export function Header({
                   )}
                   {i > 0 && <ChevronRight size={10} strokeWidth={2} style={{ color: text.disabled }} />}
                   <span
+                    tabIndex={isLast ? undefined : 0}
+                    role={isLast ? undefined : "button"}
                     onClick={(e) => { e.stopPropagation(); if (!isLast) onBreadcrumbClick?.(seg.el); }}
+                    onKeyDown={isLast ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBreadcrumbClick?.(seg.el); } }}
                     onMouseEnter={() => { if (!isLast) { setHoveredBreadcrumbIdx(i); onBreadcrumbHover?.(seg.el); } }}
                     onMouseLeave={() => { if (!isLast) { setHoveredBreadcrumbIdx(null); onBreadcrumbHover?.(null); } }}
+                    onFocus={isLast ? undefined : (e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
+                    onBlur={isLast ? undefined : (e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                     style={{
                       whiteSpace: "nowrap",
                       borderRadius: 2,
+                      outline: "none",
                       transition: `color ${ms("normal")}, background ${ms("normal")}`,
                       ...(isLast
                         ? { cursor: "default", color: text.primary }
