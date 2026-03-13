@@ -114,27 +114,31 @@ export function Section({
               else setOwnOpen(!open);
             }
           }}
-          className={cn(
-            "flex justify-between items-center cursor-pointer rounded-sm outline-none px-3 pt-2.5 pb-1.5",
-            open && "sticky top-0 z-[2]"
-          )}
           style={{
-            ...(open ? { background: color.background } : {}),
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+            borderRadius: 2,
+            outline: "none",
+            padding: "10px 12px 6px",
+            ...(open ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background } : {}),
           }}
         >
-          <span className="text-[13px] font-medium flex items-center gap-1.5" style={{ color: color.foreground }}>
+          <span style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}>
             {title}
             {indicator && indicator !== "none" && <StyleIndicator type={indicator} />}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             {headerAction && (
               <span onClick={(e) => e.stopPropagation()}>
                 {headerAction}
               </span>
             )}
             <span
-              className="flex items-center"
               style={{
+                display: "flex",
+                alignItems: "center",
                 color: color.mutedForeground,
                 transition: `transform ${ms("expand")} ease`,
                 transform: open ? "rotate(90deg)" : "rotate(0deg)",
@@ -146,7 +150,7 @@ export function Section({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="pb-2">{children}</div>
+        <div style={{ paddingBottom: 8 }}>{children}</div>
       </CollapsibleContent>
     </Collapsible>
   );
@@ -224,15 +228,20 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onBlur={commit}
       onKeyDown={handleKeyDown}
       onDoubleClick={selectAllOnDoubleClick}
-      className={cn(
-        "w-10 rounded-sm px-1.5 text-[11px] font-mono outline-none text-right shrink-0",
-        embedded ? "bg-transparent border-none" : ""
-      )}
+      className="tuner-focusable"
       style={{
         ...flashStyle,
+        width: 40,
+        borderRadius: 2,
+        padding: "0 6px",
+        fontSize: 11,
+        fontFamily: font.mono,
+        outline: "none",
+        textAlign: "right" as const,
+        flexShrink: 0,
         height: 28,
         color: color.foreground,
-        ...(embedded ? {} : {
+        ...(embedded ? { background: "transparent", border: "none" } : {
           backgroundColor: color.input,
           border: `1px solid ${color.border}`,
         }),

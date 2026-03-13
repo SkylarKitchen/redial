@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { color } from "./theme";
+import { color, border, text, font } from "./theme";
 
 interface ShortcutsHelpProps {
   onClose: () => void;
@@ -49,7 +49,7 @@ const SHORTCUTS = [
   {
     category: "Navigation",
     items: [
-      { keys: "1–8", desc: "Jump to section" },
+      { keys: "1\u20138", desc: "Jump to section" },
       { keys: "[ ]", desc: "Cycle sections" },
       { keys: "T", desc: "Toggle Style / AI tab" },
     ],
@@ -60,30 +60,58 @@ export function ShortcutsHelp({ onClose }: ShortcutsHelpProps) {
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent
-        style={{ backgroundColor: color.background, borderColor: color.border }}
-        className="__tuner-root max-w-[400px] max-h-[80vh] overflow-y-auto border"
+        style={{
+          backgroundColor: color.background,
+          borderColor: color.border,
+          maxWidth: 400,
+          maxHeight: "80vh",
+          overflowY: "auto",
+          border: `1px solid ${color.border}`,
+        }}
+        className="__tuner-root"
       >
         <DialogHeader>
-          <DialogTitle style={{ color: color.foreground }} className="text-[14px] font-semibold">
+          <DialogTitle style={{ color: color.foreground, fontSize: 14, fontWeight: 600 }}>
             Keyboard Shortcuts
           </DialogTitle>
         </DialogHeader>
 
         {SHORTCUTS.map((section) => (
-          <div key={section.category} className="mb-4">
-            <div style={{ color: color.mutedForeground }} className="text-[11px] font-medium uppercase tracking-wider mb-2">
+          <div key={section.category} style={{ marginBottom: 16 }}>
+            <div style={{
+              color: color.mutedForeground,
+              fontSize: 11,
+              fontWeight: 500,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 8,
+            }}>
               {section.category}
             </div>
 
             {section.items.map((item) => (
               <div
                 key={item.keys}
-                className="flex items-center justify-between py-1"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "4px 0",
+                }}
               >
-                <span style={{ backgroundColor: color.input, borderColor: color.border }} className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono border rounded">
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "2px 6px",
+                  fontSize: 10,
+                  fontFamily: font.mono,
+                  border: `1px solid ${color.border}`,
+                  borderRadius: 4,
+                  backgroundColor: color.input,
+                }}>
                   {item.keys}
                 </span>
-                <span style={{ color: color.foreground }} className="text-[12px]">
+                <span style={{ color: color.foreground, fontSize: 12 }}>
                   {item.desc}
                 </span>
               </div>

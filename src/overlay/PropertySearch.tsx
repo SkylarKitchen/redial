@@ -5,9 +5,10 @@
  * to show only those containing matching CSS property names.
  */
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { Search, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { color, border, surface, text, font } from "./theme";
+import { ms } from "./timing";
 
 // ─── Section-to-properties mapping ──────────────────────────────────
 
@@ -71,6 +72,7 @@ export interface PropertySearchProps {
 
 export function PropertySearch({ value, onChange, onClose }: PropertySearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [clearHovered, setClearHovered] = useState(false);
 
   // Auto-focus when mounted
   useEffect(() => {
@@ -95,12 +97,23 @@ export function PropertySearch({ value, onChange, onClose }: PropertySearchProps
   }, [onChange]);
 
   return (
-    <div className="px-3 py-1.5 border-b border-[var(--border)] relative">
+    <div style={{
+      padding: "6px 12px",
+      borderBottom: `1px solid ${border.default}`,
+      position: "relative",
+    }}>
       {/* Search icon */}
       <Search
         size={13}
         strokeWidth={2}
-        className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)] pointer-events-none"
+        style={{
+          position: "absolute",
+          left: 20,
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: text.label,
+          pointerEvents: "none",
+        }}
       />
 
       <input
@@ -110,19 +123,42 @@ export function PropertySearch({ value, onChange, onClose }: PropertySearchProps
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Search properties..."
-        className="w-full h-8 bg-[var(--input)] border-none px-7 text-[12px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none rounded"
+        style={{
+          width: "100%",
+          height: 32,
+          background: color.input,
+          border: "none",
+          paddingLeft: 28,
+          paddingRight: 28,
+          fontSize: 12,
+          color: text.primary,
+          outline: "none",
+          borderRadius: 4,
+        }}
       />
 
       {/* Clear button */}
       {value && (
         <button
           onClick={handleClear}
-          className={cn(
-            "absolute right-[18px] top-1/2 -translate-y-1/2",
-            "bg-transparent border-none p-0.5 cursor-pointer",
-            "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-            "flex items-center justify-center rounded-sm",
-          )}
+          onMouseEnter={() => setClearHovered(true)}
+          onMouseLeave={() => setClearHovered(false)}
+          style={{
+            position: "absolute",
+            right: 18,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "transparent",
+            border: "none",
+            padding: 2,
+            cursor: "pointer",
+            color: clearHovered ? text.primary : text.label,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 2,
+            transition: `color ${ms("fast")}`,
+          }}
         >
           <X size={12} strokeWidth={2} />
         </button>
