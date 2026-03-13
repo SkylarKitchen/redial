@@ -29,24 +29,57 @@ export interface SectionCtx {
 
 // ─── Indicator Helpers ───────────────────────────────────────────────
 
-/** Binary indicator: "modified" if inline style is set, "none" otherwise. */
+/** CSS properties that are inherited by default */
+export const INHERITABLE_PROPERTIES = new Set([
+  "color", "font-family", "font-size", "font-style", "font-weight", "font-variant",
+  "line-height", "letter-spacing", "word-spacing", "text-align", "text-indent",
+  "text-transform", "text-decoration", "white-space", "word-break", "word-wrap",
+  "direction", "visibility", "cursor", "list-style", "list-style-type", "quotes",
+  "hyphens", "tab-size", "text-shadow",
+]);
+
 export function getIndicatorType(
   el: Element,
   prop: string,
-  _cs?: CSSStyleDeclaration,
-  _parentCs?: CSSStyleDeclaration | null,
+  cs?: CSSStyleDeclaration,
+  parentCs?: CSSStyleDeclaration | null,
 ): IndicatorType {
-  if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "modified";
+  if ((el as HTMLElement).style.getPropertyValue(prop) !== "") return "element";
+  if (isVariableLinked(el, prop)) return "variable";
+  if (INHERITABLE_PROPERTIES.has(prop) && parentCs) {
+    const computedValue = cs?.getPropertyValue(prop) ?? "";
+    const parentValue = parentCs.getPropertyValue(prop);
+    if (computedValue !== parentValue) return "inherited";
+  }
   return "none";
 }
 
+// ─── Indicator Colors & Titles (Phase J) ────────────────────────────
+
+// Indicator colors are canonical in theme.ts — reference them here
+const INDICATOR_COLORS: Record<IndicatorType, string> = indicatorColor;
+
+const INDICATOR_TITLES: Record<IndicatorType, string | null> = {
+  element: "Set locally. Alt+Click to reset.",
+  inherited: "Inherited. Alt+Click to override.",
+  state: "Set on state. Alt+Click to clear.",
+  variable: "Uses CSS variable.",
+  direct: "Set locally. Alt+Click to reset.",
+  none: null,
+};
+
 export function getIndicatorColor(type: IndicatorType): string {
-  return indicatorColor[type] ?? indicatorColor.none;
+  return INDICATOR_COLORS[type];
 }
 
-export function getIndicatorTitle(type: IndicatorType): string | undefined {
-  if (type === "modified") return "Modified — Option+Click to reset";
-  return undefined;
+export function getIndicatorTitle(type: IndicatorType, el?: Element, prop?: string): string | undefined {
+  if (type === "inherited" && el && prop) {
+    const parent = el.parentElement;
+    const tag = parent?.tagName.toLowerCase() ?? "";
+    const cls = parent?.className ? `.${parent.className.split(" ")[0]}` : "";
+    return `Inherited from ${tag}${cls}. Alt+Click to override.`;
+  }
+  return INDICATOR_TITLES[type] ?? undefined;
 }
 
 // ─── Authored Value / Unit Detection ─────────────────────────────────
@@ -99,6 +132,27 @@ export function precisionForStep(step: number): number {
   const s = step.toString();
   const dot = s.indexOf(".");
   return dot < 0 ? 0 : s.length - dot - 1;
+}
+
+// ─── Variable Detection ─────────────────────────────────────────────
+
+/** WeakMap cache: element → set of properties that use var() */
+const varCache = new WeakMap<Element, Map<string, boolean>>();
+
+/** Check whether a property's authored value uses a CSS variable */
+export function isVariableLinked(el: Element, prop: string): boolean {
+  let propMap = varCache.get(el);
+  if (!propMap) {
+    propMap = new Map();
+    varCache.set(el, propMap);
+  }
+  const cached = propMap.get(prop);
+  if (cached !== undefined) return cached;
+
+  const authored = getAuthoredValue(el, prop);
+  const result = authored !== null && authored.includes("var(");
+  propMap.set(prop, result);
+  return result;
 }
 
 // ─── Text Detection ──────────────────────────────────────────────────

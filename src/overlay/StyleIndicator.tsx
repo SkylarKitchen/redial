@@ -1,13 +1,10 @@
 /**
  * StyleIndicator.tsx — small colored dot indicating the source of a style property
  *
- * Colors:
- *   direct    → blue (#3b82f6)   — set on current class
- *   inherited → orange (#f59e0b) — inherited from parent/base
- *   state     → green (#22c55e)  — state-specific style
- *   element   → pink (#ec4899)   — element-level only
- *   none      → not rendered
+ * Colors come from theme.indicatorColor — see theme.ts for the palette.
  */
+
+import { indicatorColor } from "./theme";
 
 export type IndicatorType = "direct" | "inherited" | "state" | "element" | "variable" | "none";
 
@@ -19,11 +16,11 @@ const INDICATOR_CONFIG: Record<
   Exclude<IndicatorType, "none">,
   { color: string; title: string }
 > = {
-  direct: { color: "#3b82f6", title: "Direct: style set on current class" },
-  inherited: { color: "#f59e0b", title: "Inherited: from parent or base class" },
-  state: { color: "#22c55e", title: "State: state-specific style" },
-  element: { color: "#ec4899", title: "Element: element-level override" },
-  variable: { color: "#a78bfa", title: "Variable: uses CSS var()" },
+  direct: { color: indicatorColor.direct, title: "Direct: style set on current class" },
+  inherited: { color: indicatorColor.inherited, title: "Inherited: from parent or base class" },
+  state: { color: indicatorColor.state, title: "State: state-specific style" },
+  element: { color: indicatorColor.element, title: "Element: element-level override" },
+  variable: { color: indicatorColor.variable, title: "Variable: uses CSS var()" },
 };
 
 export function StyleIndicator({ type }: StyleIndicatorProps) {
