@@ -8,7 +8,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import type { SpacingValues } from "./infer";
-import { applyInlineStyle } from "./apply";
+import { applyInlineStyle, stateKey } from "./apply";
 import { applyClassStyle, type Scope } from "./scope";
 import { applyStateStyle } from "./statePreview";
 import { buildConversionContext } from "./unitConversion";
