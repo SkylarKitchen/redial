@@ -259,7 +259,7 @@ export function applyInlineStyle(
       // Coalesce: if the last undo entry is for the same (el, prop), don't push
       // another entry — keeps the original `prev` so undo reverts the entire drag
       const lastUndo = undoStack[undoStack.length - 1];
-      if (!(lastUndo && !isBatch(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
+      if (!(lastUndo && !isBatch(lastUndo) && !isDomMove(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
         undoStack.push({ el, prop, prev: existing.current, state: parsed.state, className });
       }
     }
@@ -506,7 +506,7 @@ export function resetStateOverrides(el: Element, state: string): void {
       if (isBatch(entry)) {
         entry.entries = entry.entries.filter(e => !(e.el === el && e.state === state));
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (entry.el === el && entry.state === state) {
+      } else if (!isDomMove(entry) && entry.el === el && entry.state === state) {
         stack.splice(i, 1);
       }
     }
@@ -535,7 +535,7 @@ export function reset(el: Element): void {
       if (isBatch(entry)) {
         entry.entries = entry.entries.filter((e) => e.el !== el);
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (!isBatch(entry) && entry.el === el) {
+      } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el) {
         stack.splice(i, 1);
       }
     }
@@ -806,7 +806,7 @@ export function resetProp(el: Element, prop: string): void {
     if (isBatch(entry)) {
       entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
       if (entry.entries.length === 0) undoStack.splice(i, 1);
-    } else if (!isBatch(entry) && entry.el === el && entry.prop === prop) {
+    } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el && entry.prop === prop) {
       undoStack.splice(i, 1);
     }
   }
@@ -834,7 +834,7 @@ export function resetProp(el: Element, prop: string): void {
               if (isBatch(ue)) {
                 ue.entries = ue.entries.filter((e) => !(e.el === el && e.prop === cp));
                 if (ue.entries.length === 0) undoStack.splice(i, 1);
-              } else if (!isBatch(ue) && ue.el === el && ue.prop === cp) {
+              } else if (!isBatch(ue) && !isDomMove(ue) && ue.el === el && ue.prop === cp) {
                 undoStack.splice(i, 1);
               }
             }
