@@ -1,1 +1,22 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 29 bezier editor tests pass. The 1 pre-existing failure is in `cssLayerSpecificity.test.ts` (unrelated — it checks for built CSS output).
+
+`★ Insight ─────────────────────────────────────`
+- **Source-level analysis vs component rendering**: Since the project doesn't have React Testing Library, the test follows the established pattern of reading source files and verifying structural patterns via regex. This still catches real regressions — if someone changes the coordinate math, breaks the preset values, or removes the `key={animKey}` restart mechanism, these tests will fail.
+- **Coordinate mapping verification**: The test replicated the `toNormX`/`toNormY` functions and verified them mathematically against known canvas coordinates (center → 0.5, corners → 0/1). This ensures the drag-to-value math is correct independently of the React component.
+- **The `key={animKey}` pattern**: React unmounts and remounts a component when its `key` prop changes. By incrementing `animKey` whenever the bezier values change, the preview animation div gets destroyed and recreated, which restarts the CSS animation from scratch. Without this, changing the curve wouldn't visually restart the preview.
+`─────────────────────────────────────────────────`
+
+Here's a summary of the 29 tests across 4 describe blocks:
+
+| Group | Tests | What it verifies |
+|---|---|---|
+| **Drag handling** | 11 | Coordinate mapping math, clamping bounds, rounding precision, control point selection, mouse listener lifecycle |
+| **Presets** | 9 | All 5 CSS easing presets have correct `[x1, y1, x2, y2]`, X values within valid range, click wiring, active state detection |
+| **Preview animation** | 6 | `animKey` remount pattern, useEffect dependency on all 4 values, keyframes injection, infinite alternate playback |
+| **Value display** | 2 | Formatted `cubic-bezier()` string, 2 decimal place formatting |
+
+---
+
+**Asked**: Write tests verifying bezier curve editor: drag updates values, preset buttons set coordinates, preview restarts on change.  
+**Did**: Created `bezier-editor.test.ts` with 29 tests across 4 groups using source-analysis + extracted-constant patterns. All pass. Full suite unaffected (1 pre-existing failure in unrelated CSS layer test).

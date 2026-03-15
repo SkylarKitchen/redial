@@ -71,27 +71,27 @@ topic: v1-refinement-prd
 
 - [x] **P1** Write a test in `src/overlay/__tests__/backgroundsSection.test.ts` that verifies: (1) clicking "+ Add background" creates a new layer, (2) layer types include color, gradient (linear/radial/conic), and image, (3) gradient editor supports all three gradient types with angle slider for linear, (4) background-clip includes the `text` option, (5) blend mode dropdown has all 16 blend modes from the spec.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/bordersSection.test.ts` that verifies: (1) side selector tabs (All/Top/Right/Bottom/Left) switch which border properties are editable, (2) when "All" is selected, changes apply to all 4 sides, (3) radius linked/unlinked toggle works — linked mode shows 1 slider for all corners, unlinked shows 4 individual inputs, (4) border-radius supports both `px` and `%` units.
+- [x] **P1** Write a test in `src/overlay/__tests__/bordersSection.test.ts` that verifies: (1) side selector tabs (All/Top/Right/Bottom/Left) switch which border properties are editable, (2) when "All" is selected, changes apply to all 4 sides, (3) radius linked/unlinked toggle works — linked mode shows 1 slider for all corners, unlinked shows 4 individual inputs, (4) border-radius supports both `px` and `%` units.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/effectsSection.test.ts` that verifies: (1) opacity slider displays as 0%–100% (not 0–1), (2) box shadow editor supports inset toggle, (3) multiple shadows can be added and each has X/Y/blur/spread/color controls, (4) transform editor includes translate (X,Y,Z), scale (X,Y), rotate (angle), skew (X,Y), (5) filter sliders cover all 8 filter types: blur, brightness, contrast, grayscale, hue-rotate, invert, saturate, sepia.
+- [x] **P1** Write a test in `src/overlay/__tests__/effectsSection.test.ts` that verifies: (1) opacity slider displays as 0%–100% (not 0–1), (2) box shadow editor supports inset toggle, (3) multiple shadows can be added and each has X/Y/blur/spread/color controls, (4) transform editor includes translate (X,Y,Z), scale (X,Y), rotate (angle), skew (X,Y), (5) filter sliders cover all 8 filter types: blur, brightness, contrast, grayscale, hue-rotate, invert, saturate, sepia.
 
-- [ ] **P1** Write a test that verifies the bezier curve editor: (1) dragging control points updates the cubic-bezier values, (2) preset buttons (ease, ease-in, ease-out, ease-in-out, linear) set correct control point coordinates, (3) the preview animation restarts when the curve changes.
+- [x] **P1** Write a test that verifies the bezier curve editor: (1) dragging control points updates the cubic-bezier values, (2) preset buttons (ease, ease-in, ease-out, ease-in-out, linear) set correct control point coordinates, (3) the preview animation restarts when the curve changes.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/styleIndicators.test.ts` that verifies: (1) a property with no override shows no indicator dot, (2) a property overridden at element scope shows a pink dot, (3) a property overridden at class scope shows a blue dot, (4) a property inherited from a parent class shows an orange dot. Mock the necessary scope and style detection functions.
+- [x] **P1** Write a test in `src/overlay/__tests__/styleIndicators.test.ts` that verifies: (1) a property with no override shows no indicator dot, (2) a property overridden at element scope shows a pink dot, (3) a property overridden at class scope shows a blue dot, (4) a property inherited from a parent class shows an orange dot. Mock the necessary scope and style detection functions.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/unitSelector.test.ts` that verifies: (1) changing unit triggers value conversion (e.g., 16px → 1em when root font-size is 16px), (2) each property context offers only valid units (e.g., opacity has no unit selector, border-width is px-only), (3) the `—` option represents auto/none/unitless depending on context.
+- [x] **P1** Write a test in `src/overlay/__tests__/unitSelector.test.ts` that verifies: (1) changing unit triggers value conversion (e.g., 16px → 1em when root font-size is 16px), (2) each property context offers only valid units (e.g., opacity has no unit selector, border-width is px-only), (3) the `—` option represents auto/none/unitless depending on context.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/labelScrub.test.ts` that verifies: (1) mousedown on a property label starts scrub mode, (2) mousemove changes the value proportional to horizontal movement, (3) holding Shift during scrub applies 10x multiplier, (4) holding Alt during scrub applies 0.1x multiplier, (5) mouseup commits the final value, (6) cursor changes to `ew-resize` on hover over scrubbable labels.
+- [x] **P1** Write a test in `src/overlay/__tests__/labelScrub.test.ts` that verifies: (1) mousedown on a property label starts scrub mode, (2) mousemove changes the value proportional to horizontal movement, (3) holding Shift during scrub applies 10x multiplier, (4) holding Alt during scrub applies 0.1x multiplier, (5) mouseup commits the final value, (6) cursor changes to `ew-resize` on hover over scrubbable labels.
 
-- [ ] **P1** Write a comprehensive keyboard shortcut test in `src/overlay/__tests__/keyboardShortcuts.test.ts` that verifies ALL 12 shortcuts from the spec: (1) `` ` `` toggles selection mode, (2) `Esc` closes panel, (3) `Cmd+Z` triggers undo, (4) `Cmd+Shift+Z` triggers redo, (5) arrow keys navigate elements (up=parent, down=first child, left=prev sibling, right=next sibling), (6) `D` hold strips overrides temporarily, (7) `S` cycles scope, (8) `R` resets current element, (9) `Cmd+S` saves, (10) `Cmd+C` copies CSS, (11) `,` opens command palette, (12) `Tab`/`Shift+Tab` navigate controls.
+- [x] **P1** Write a comprehensive keyboard shortcut test in `src/overlay/__tests__/keyboardShortcuts.test.ts` that verifies ALL 12 shortcuts from the spec: (1) `` ` `` toggles selection mode, (2) `Esc` closes panel, (3) `Cmd+Z` triggers undo, (4) `Cmd+Shift+Z` triggers redo, (5) arrow keys navigate elements (up=parent, down=first child, left=prev sibling, right=next sibling), (6) `D` hold strips overrides temporarily, (7) `S` cycles scope, (8) `R` resets current element, (9) `Cmd+S` saves, (10) `Cmd+C` copies CSS, (11) `,` opens command palette, (12) `Tab`/`Shift+Tab` navigate controls.
 
-- [ ] **P1** Write a test that verifies keyboard shortcuts are disabled when a text input is focused (to prevent e.g., typing "S" in a font-family search from cycling scope instead of typing the letter). Check that `Overlay.tsx` keyboard handler skips shortcuts when `activeElement` is an `input`, `textarea`, or `[contenteditable]`.
+- [x] **P1** Write a test that verifies keyboard shortcuts are disabled when a text input is focused (to prevent e.g., typing "S" in a font-family search from cycling scope instead of typing the letter). Check that `Overlay.tsx` keyboard handler skips shortcuts when `activeElement` is an `input`, `textarea`, or `[contenteditable]`.
 
 ---
 
 ## P1 — Accessibility
 
-- [ ] **P1** Audit all dropdown components (`UnitSelector.tsx`, `SelectRow` in controls, `StateSelector.tsx`) for keyboard accessibility: (1) `Enter`/`Space` opens the dropdown, (2) arrow keys navigate options, (3) `Escape` closes without selecting, (4) `Tab` moves focus out. Run the existing `useDropdownKeyboard.test.ts` and verify it covers these cases. Add missing test cases.
+- [x] **P1** Audit all dropdown components (`UnitSelector.tsx`, `SelectRow` in controls, `StateSelector.tsx`) for keyboard accessibility: (1) `Enter`/`Space` opens the dropdown, (2) arrow keys navigate options, (3) `Escape` closes without selecting, (4) `Tab` moves focus out. Run the existing `useDropdownKeyboard.test.ts` and verify it covers these cases. Add missing test cases.
 
 - [ ] **P1** In `src/overlay/ShadowEditor.tsx` and `src/overlay/TransformEditor.tsx`, verify that the "+ Add" buttons and delete (×) buttons are keyboard-accessible (`tabIndex`, `role="button"`, `aria-label`). Also verify the drag handles have `aria-label="Drag to reorder"` and are focusable for screen reader users even though they're mouse-only in practice.
 
@@ -99,9 +99,9 @@ topic: v1-refinement-prd
 
 ## P1 — Test Coverage Gaps
 
-- [ ] **P1** In `src/overlay/__tests__/`, there is no test for the `GradientEditor` component. Write `gradientEditor.test.ts` covering: (1) adding a color stop by clicking the gradient bar, (2) dragging a stop changes its position, (3) deleting a stop (minimum 2 stops enforced), (4) changing gradient type between linear/radial/conic, (5) angle slider only appears for linear type.
+- [x] **P1** In `src/overlay/__tests__/`, there is no test for the `GradientEditor` component. Write `gradientEditor.test.ts` covering: (1) adding a color stop by clicking the gradient bar, (2) dragging a stop changes its position, (3) deleting a stop (minimum 2 stops enforced), (4) changing gradient type between linear/radial/conic, (5) angle slider only appears for linear type.
 
-- [ ] **P1** In `src/overlay/__tests__/`, there is no test for `BackgroundLayerList`. Write `backgroundLayerList.test.ts` covering: (1) adding a new layer, (2) selecting layer type (color vs gradient vs image), (3) deleting a layer, (4) layer order in the rendered CSS output.
+- [x] **P1** In `src/overlay/__tests__/`, there is no test for `BackgroundLayerList`. Write `backgroundLayerList.test.ts` covering: (1) adding a new layer, (2) selecting layer type (color vs gradient vs image), (3) deleting a layer, (4) layer order in the rendered CSS output.
 
 ---
 

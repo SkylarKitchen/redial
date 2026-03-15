@@ -47,7 +47,7 @@ import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { useElementTracker } from "../hooks/useElementTracker";
 import { getConfig } from "../core/config";
-import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "../theme";
+import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
 // --- Panel State Type ---
 
@@ -174,6 +174,9 @@ export function Overlay() {
 
   // Focus mode: one section open at a time (Phase K)
   const [focusMode, setFocusMode] = useState(false);
+
+  // Unsaved changes warning
+  const [closeWarning, setCloseWarning] = useState(false);
 
   // History drawer
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
@@ -796,9 +799,17 @@ export function Overlay() {
     setSearchQuery("");
     setActivePanel({ type: "none" });
     setActiveModal({ type: "none" });
+    setCloseWarning(false);
     announce("Element deselected");
   }, [announce]);
 
+  const handleCloseAttempt = useCallback(() => {
+    if (overrideCount(selectedElRef.current) > 0) {
+      setCloseWarning(true);
+    } else {
+      handleClose();
+    }
+  }, [handleClose]);
 
   // --- Reset handler: re-infer to get fresh values ---
   const handleReset = useCallback(() => {
