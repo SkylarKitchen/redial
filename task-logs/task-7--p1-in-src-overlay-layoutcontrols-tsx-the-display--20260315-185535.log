@@ -1,1 +1,38 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 8 values are already present and accessible. Here's the audit:
+
+## Verification Results
+
+**Spec requires** (line 156 of `webflow-style-panel-spec.md`):
+`block`, `flex`, `inline-flex`, `grid`, `inline-grid`, `inline-block`, `inline`, `none`
+
+### `layoutControls.tsx` — Primary tabs (lines 305–310)
+| Value | Present |
+|-------|---------|
+| `block` | yes |
+| `flex` | yes |
+| `grid` | yes |
+| `none` | yes |
+
+### `layoutControls.tsx` — Overflow dropdown (lines 313–319)
+| Value | Present |
+|-------|---------|
+| `inline-block` | yes |
+| `inline-flex` | yes |
+| `inline-grid` | yes |
+| `inline` | yes |
+| `none` | yes (duplicate for discoverability) |
+
+### `infer.ts` — Select config (lines 210–218)
+All 8 values present in the options array that powers the DialKit fallback.
+
+`★ Insight ─────────────────────────────────────`
+The code uses a clean split: 4 primary values as `SegmentedControl` tabs, and 5 overflow values in a chevron dropdown. The `PRIMARY_VALUES` Set (line 321) drives the highlight logic — when the current display value isn't in the primary set, the chevron button gets `isOverflowActive` styling so the user can see which mode is selected even when it's an inline variant. The `none` duplicate in the overflow menu is intentional UX: users looking for "hide this element" might check the dropdown first.
+`─────────────────────────────────────────────────`
+
+**No changes needed** — all 8 spec display values are accessible. The 4 most common (`block`, `flex`, `grid`, `none`) are primary tabs, and the 4 inline variants + `none` are in the overflow dropdown.
+
+---
+**Asked:** Verify all 8 display values from the spec are accessible in layoutControls.tsx
+**Did:** Audited `DISPLAY_PRIMARY` (4 values), `DISPLAY_OVERFLOW` (5 values including `inline`), and `infer.ts` options (8 values). All 8 spec values are present and accessible — no fix needed.
+---
