@@ -1693,7 +1693,7 @@ export function Overlay() {
               <div
                 ref={panelScrollRef}
                 className="__tuner-root"
-                style={{ flex: 1, minHeight: 0, overflowY: "auto" }}
+                style={{ flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain" }}
               >
                 {showSearch && (
                   <PropertySearch
