@@ -27,7 +27,7 @@ The only current selection pathway is click-to-inspect with breadcrumb (max 4 an
 
 4-phase implementation building from static tree → interactive sync → keyboard nav → live DOM observation.
 
-**Scope**: Phases 1–4. Drag-to-reorder and virtualization deferred to follow-up.
+**Scope**: Phases 1–6. Core tree (1-4) → Virtualization (5) → Drag-to-reorder (6).
 
 ## Technical Approach
 
