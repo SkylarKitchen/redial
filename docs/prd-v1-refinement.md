@@ -53,7 +53,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** Write a test in `src/overlay/__tests__/panelShell.test.ts` that verifies: (1) panel width is `layout.panelWidth` (300px), (2) border radius is 10px, (3) section separators use `border.subtle` token, (4) section headers use 13px font-size / weight 500. Read the rendered styles from `WebflowPanel.tsx` and `theme.ts` to validate these constants match the spec.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/breadcrumb.test.ts` that verifies: (1) breadcrumb collapses to `first ... last-2 > last-1 > current` when ≥4 ancestors, (2) clicking `...` expands full chain, (3) clicking an ancestor segment fires `onBreadcrumbClick` with the correct element, (4) hovering fires `onBreadcrumbHover`.
+- [x] **P1** Write a test in `src/overlay/__tests__/breadcrumb.test.ts` that verifies: (1) breadcrumb collapses to `first ... last-2 > last-1 > current` when ≥4 ancestors, (2) clicking `...` expands full chain, (3) clicking an ancestor segment fires `onBreadcrumbClick` with the correct element, (4) hovering fires `onBreadcrumbHover`.
 
 - [x] **P1** Write a test in `src/overlay/__tests__/stateSelector.test.ts` that verifies: (1) StateSelector renders with value="none" by default, (2) all pseudo-class options are present: none, hover, focus, active, visited, focus-within, focus-visible, (3) changing selection fires `onStateChange` with the new value, (4) selector refuses to change mid-drag (when `isScrubActive()` returns true).
 

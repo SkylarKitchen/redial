@@ -119,7 +119,8 @@ describe("max-width/max-height support none keyword", () => {
 describe("object-fit and object-position only appear for media elements", () => {
   it("object-fit and object-position are gated behind isMedia prop", () => {
     // The JSX should wrap the object-fit/object-position controls in {isMedia && (...)}
-    const mediaGate = sizeSectionSrc.match(/\{isMedia\s*&&\s*\([\s\S]*?\)\s*\}/);
+    // Use a greedy match to capture the full block including nested parens
+    const mediaGate = sizeSectionSrc.match(/\{isMedia\s*&&\s*\([\s\S]*?<\/>\s*\)\}/);
     expect(mediaGate, "Could not find isMedia gate in SizeSection").toBeTruthy();
     const gateBlock = mediaGate![0];
     expect(gateBlock).toContain("object-fit");

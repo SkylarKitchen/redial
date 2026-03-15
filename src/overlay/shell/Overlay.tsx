@@ -282,7 +282,7 @@ export function Overlay() {
 
   // Panel position (draggable)
   // anchor tracks which horizontal edge the panel is snapped to so resize keeps it pinned
-  const [pos, setPos] = useState({ x: window.innerWidth - PANEL_WIDTH - SNAP_MARGIN, y: SNAP_MARGIN });
+  const [pos, setPos] = useState({ x: window.innerWidth - 300 - 16, y: 16 });
   const [anchor, setAnchor] = useState<"left" | "right" | null>("right");
   const [snapping, setSnapping] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
@@ -727,6 +727,7 @@ export function Overlay() {
   const handleSelect = useCallback((el: Element) => {
     setSelecting(false);
     setSelectedEl(el);
+    setPinned(false);
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
@@ -754,7 +755,7 @@ export function Overlay() {
     const cls = el.classList.length > 0 ? el.classList[0] : "";
     announce(`Selected ${tag}${cls ? `.${cls}` : ""}`);
     // Reset position to top-right default
-    setPos({ x: window.innerWidth - PANEL_WIDTH - SNAP_MARGIN, y: SNAP_MARGIN });
+    setPos({ x: window.innerWidth - 300 - 16, y: 16 });
     setAnchor("right");
   }, []);
 
@@ -1193,7 +1194,7 @@ export function Overlay() {
 
   // --- Click-to-switch: clicking a page element while panel is open re-selects ---
   useEffect(() => {
-    if (!selectedEl || selecting) return;
+    if (!selectedEl || selecting || pinned) return;
 
     const handlePageClick = (e: MouseEvent) => {
       if (e.button !== 0) return; // Only handle left clicks
@@ -1220,7 +1221,7 @@ export function Overlay() {
 
     document.addEventListener("click", handlePageClick, true);
     return () => document.removeEventListener("click", handlePageClick, true);
-  }, [selectedEl, selecting, handleSelect]);
+  }, [selectedEl, selecting, pinned, handleSelect]);
 
   // --- Hover highlight: preview which element you'd re-select on click ---
   useEffect(() => {
