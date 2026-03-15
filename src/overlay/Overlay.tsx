@@ -44,6 +44,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
+import { NavigatorPanel } from "./NavigatorPanel";
 import { useElementTracker } from "./useElementTracker";
 import { getConfig } from "./config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "./theme";
@@ -95,6 +96,7 @@ class PanelErrorBoundary extends Component<
 export function Overlay() {
   const [selecting, setSelecting] = useState(false);
   const [selectedEl, setSelectedEl] = useState<Element | null>(null);
+  const [showNavigator, setShowNavigator] = useState(false);
   const selectedElRef = useRef(selectedEl);
   useEffect(() => { selectedElRef.current = selectedEl; }, [selectedEl]);
   const [inferResult, setInferResult] = useState<InferResult | null>(null);

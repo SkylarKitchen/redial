@@ -155,21 +155,31 @@ if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
 
 #### Phase 4: MutationObserver for Live DOM Sync
 
-**Goal**: Tree stays in sync as the page DOM changes (SPA navigation, React re-renders).
+**Goal**: Tree stays in sync as the page DOM changes (SPA navigation, React re-renders, dynamic visibility toggles).
 
 **Changes to NavigatorPanel.tsx:**
-- Create `MutationObserver` on mount, observe `<body>` with `{ childList: true, subtree: true }`
+- Create `MutationObserver` on mount, observe `<body>` with `{ childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class"] }`
+  - `attributes + attributeFilter` catches dynamic visibility toggles (modals, dropdowns that flip `display: none` via class/style changes). Without this, toggled elements would never appear in the tree.
 - Debounce rebuild: 200ms (use `timing.layout` token)
-- On rebuild: re-run `buildFilteredTree()`, preserve `expandedNodes` set (elements that are still connected)
-- Clean up disconnected elements from `expandedNodes`: filter out elements where `el.isConnected === false`
+- On rebuild: re-run `buildFilteredTree()`, preserve `expandedNodes` using **stable selector keys** (not Element references)
 - Dispose observer on unmount
 
-**Edge cases:**
-- If `selectedEl` is removed from DOM during a mutation, the tree will simply not highlight it (it won't appear in the rebuilt tree). The inspector handles this separately via HMR re-resolution (Overlay.tsx line ~1118).
-- Rapid mutations (React re-renders) are coalesced by the 200ms debounce
+**Expand state persistence (SpecFlow finding):**
+- React re-renders replace DOM nodes, invalidating `Set<Element>` references and collapsing the entire tree
+- Solution: key expand state by CSS selector path (via `getStableSelector()` from `util.ts`)
+- `expandedPaths: Set<string>` instead of `expandedNodes: Set<Element>`
+- On tree rebuild: map each `TreeNode.el` → `getStableSelector(el)`, check if path is in `expandedPaths`
+- Trade-off: `getStableSelector` is slightly more expensive than reference equality, but only called once per node per rebuild (not per frame)
 
-**Test: expandedNodes cleanup**
-- When an element is removed from DOM, it's cleaned from expandedNodes on next rebuild
+**Edge cases:**
+- If `selectedEl` is removed from DOM during a mutation, the tree will simply not highlight it (it won't appear in the rebuilt tree). The inspector handles this separately via `useElementTracker` / HMR re-resolution.
+- Rapid mutations (React re-renders) are coalesced by the 200ms debounce
+- SPA full navigation: tree fully rebuilds, expand state may partially survive if CSS selectors match new page structure
+- React Suspense: two mutations in quick succession coalesced by debounce
+
+**Test: expand state persistence**
+- After tree rebuild with new Element references, previously expanded paths stay expanded
+- Disconnected paths are cleaned on rebuild
 
 #### Phase 5: Virtualized Rendering
 
@@ -347,17 +357,37 @@ export function executeDrop(dragged: Element, target: DropTarget): { undo: () =>
 | `src/overlay/Toolbar.tsx` | **Modify** | 1 |
 | `src/overlay/apply.ts` | **Modify** (extend UndoEntry union) | 6 |
 
+## SpecFlow Edge Case Decisions
+
+Identified via spec flow analysis. Each is a resolved decision, not an open question.
+
+| Edge Case | Decision | Rationale |
+|-----------|----------|-----------|
+| SVG `className` is `SVGAnimatedString` | **Fixed** — use `el.getAttribute("class")` instead of `typeof el.className === "string"` | Already patched in `navigatorFilter.ts:78` |
+| MutationObserver misses `display` toggles | Add `attributes: true, attributeFilter: ["style", "class"]` to observer config | Modals/dropdowns that toggle visibility via class/style would otherwise never appear |
+| Expand state lost after React re-render | Key by CSS selector path (`getStableSelector`) not Element reference | DOM nodes are replaced on re-render; Set<Element> is invalidated |
+| `visibility: hidden` elements | **Skip entirely** (keep current behavior) | Unlike `display: none`, these occupy space — but they're not useful selection targets for a CSS tuning tool. Revisit if users request. |
+| `N` hotkey during selector mode | **Allow** — do NOT block `N` when `selecting === true` | The navigator is most useful when the user is trying to find an element |
+| Navigator selection auto-opens inspector | **Yes** — set `activePanel` to `{ type: "inspector", tab: "custom" }` | Matches existing Selector.tsx behavior; clicking an element always opens the inspector |
+| Deep nesting (>18 levels) | Cap visual indent at `MAX_INDENT = 12 * INDENT_PX` (192px) | Beyond 12 levels, text gets clipped in 300px panel. Tooltip shows actual depth. |
+| Panel width | **300px** (match inspector's actual rendered width) | `layout.panelWidth` (340px) is unused by the inspector itself |
+| Shadow DOM contents | Skip — show host element as leaf node | Cross-boundary traversal is complex; add as future enhancement |
+| iframe contents | Skip entirely | Cross-origin restriction; main document tree only |
+| Footer element count | Filtered/visible count (`countNodes()`) | More useful than raw DOM count |
+| Escape during drag | Cancel drag (snap back), do NOT close panel | Escape should be least-destructive; closing panel + losing drag is bad UX |
+
 ## Risk Analysis & Mitigation
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| MutationObserver performance on large DOMs | High | 200ms debounce + only observe childList (not attributes) |
+| MutationObserver performance on large DOMs | High | 200ms debounce; `attributeFilter` limits to style/class only |
 | Arrow key conflict with existing nav | Medium | Navigator keyboard only fires when panel has focus (`.__tuner-root` exclusion already exists) |
-| Stale expandedNodes references | Low | Filter `el.isConnected` on every rebuild |
-| SVG/iframe elements in tree | Low | SVG roots shown, iframe contents skipped (cross-origin) |
+| Expand state lost on re-render | High | Keyed by `getStableSelector` path, not Element reference |
+| SVG/iframe elements in tree | Low | SVG roots shown (className bug fixed), iframe contents skipped |
 | Drag-during-mutation race | Medium | Suppress MutationObserver rebuilds while dragState is active |
 | Undo stack type extension | Low | New `DomMoveUndoEntry` type added to existing discriminated union — backwards compatible |
 | Virtualization scroll jank | Low | 5-row overscan + fixed row height (26px) ensures smooth rendering |
+| `getComputedStyle` cost during tree build | Medium | Called once per element in `shouldSkipEntirely`; debounce prevents per-frame calls |
 
 ## Verification
 

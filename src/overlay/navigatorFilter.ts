@@ -75,7 +75,9 @@ export function shouldShowNode(el: Element): boolean {
 
   // 2. Has class name or id
   if (el.id) return true;
-  if (typeof el.className === "string" && el.className.trim()) return true;
+  // SVGElement.className is SVGAnimatedString, not string — use getAttribute
+  const cls = el.getAttribute("class");
+  if (cls && cls.trim()) return true;
 
   // 3. Has direct text content (not just whitespace)
   for (const child of el.childNodes) {
