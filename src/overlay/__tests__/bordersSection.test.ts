@@ -95,7 +95,8 @@ describe("Side selector tabs", () => {
         cross: true,
       }),
     );
-    expect(html).toMatch(/aria-label="Top"[^>]*aria-checked="true"/);
+    // In the rendered HTML, aria-checked comes before aria-label
+    expect(html).toMatch(/data-side="top"[^>]*aria-checked="true"/);
   });
 
   it("BordersSection uses SideSelector to switch borderSide state", () => {

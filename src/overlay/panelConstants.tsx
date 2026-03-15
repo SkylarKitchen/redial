@@ -186,7 +186,7 @@ export const SIZE_UNITS_H = ["px", "%", "vh", "em", "rem"];
 export const POSITION_UNITS = ["px", "%", "vw", "vh"];
 export const TYPO_SIZE_UNITS = ["px", "em", "rem"];
 export const LAYOUT_UNITS = ["px", "%", "em", "rem"];
-export const BORDER_UNITS = ["px", "em", "rem"];
+export const BORDER_UNITS = ["px", "%", "em", "rem"];
 export const SPACING_UNITS = ["px", "%", "em", "rem"];
 export const LINE_HEIGHT_UNITS = ["\u2014", "px", "em", "%"];
 

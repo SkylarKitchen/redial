@@ -172,8 +172,22 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
     const enriched = enrichChangesForCommit(element, changes, { scope, activeClassName, activeState });
 
+    // Clipboard fallback when no commit endpoint is configured
+    const endpoint = getConfig().commitEndpoint;
+    if (!endpoint) {
+      const css = formatCleanCSS(element, changes);
+      navigator.clipboard.writeText(css).then(() => {
+        showMessage(`Copied ${changes.length} propert${changes.length === 1 ? "y" : "ies"} to clipboard`, 3000);
+      }).catch(() => {
+        showMessage("Clipboard access denied", 2000);
+      });
+      setSaving(false);
+      savingRef.current = false;
+      return;
+    }
+
     try {
-      const res = await fetch(getConfig().commitEndpoint, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ changes: enriched }),
@@ -183,14 +197,17 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         showMessage("Save failed", 2000);
       } else {
         const result: SaveResult = await res.json();
-        const written = result.written?.length ?? 0;
+        const writtenFiles = result.written ?? [];
         const failedList = result.failed ?? [];
         const failed = failedList.length;
         if (failed > 0) {
           const detail = failedList[0]?.reason ? `: ${failedList[0].reason}` : "";
-          showMessage(`Saved ${written}, ${failed} failed${detail}`, 3000);
+          showMessage(`Saved ${writtenFiles.length}, ${failed} failed${detail}`, 3000);
         } else {
-          showMessage(`Saved ${written} change${written === 1 ? "" : "s"}`, 2000);
+          // Show file path in toast for context
+          const filePath = writtenFiles[0]?.split("/").pop() ?? "";
+          const fileHint = filePath ? ` \u2192 ${filePath}` : "";
+          showMessage(`Saved ${changes.length} propert${changes.length === 1 ? "y" : "ies"}${fileHint}`, 3000);
           setSaved(true);
           if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
@@ -198,7 +215,13 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         onSaved?.();
       }
     } catch {
-      showMessage("Save failed \u2014 no route?", 2000);
+      // Network error — fall back to clipboard
+      const css = formatCleanCSS(element, changes);
+      navigator.clipboard.writeText(css).then(() => {
+        showMessage("No commit endpoint \u2014 copied CSS to clipboard", 3000);
+      }).catch(() => {
+        showMessage("Save failed", 2000);
+      });
     } finally {
       setSaving(false);
       savingRef.current = false;

@@ -134,13 +134,12 @@ describe("useDropdownKeyboard — key handling", () => {
   });
 
   it("trigger keydown opens dropdown on ArrowDown/ArrowUp when closed", () => {
-    // onTriggerKeyDown checks !open && ArrowDown/ArrowUp
-    const triggerFn = dropdownHookSrc.slice(
-      dropdownHookSrc.indexOf("const onTriggerKeyDown"),
-      dropdownHookSrc.indexOf("const onListKeyDown"),
-    );
-    expect(triggerFn).toContain("!open");
-    expect(triggerFn).toContain("setOpen(true)");
+    // onTriggerKeyDown checks !open && ArrowDown/ArrowUp, then calls setOpen(true)
+    const triggerStart = dropdownHookSrc.indexOf("const onTriggerKeyDown");
+    // Find the next useCallback closing after the trigger function
+    const triggerChunk = dropdownHookSrc.slice(triggerStart, triggerStart + 400);
+    expect(triggerChunk).toContain("!open");
+    expect(triggerChunk).toContain("setOpen(true)");
   });
 });
 

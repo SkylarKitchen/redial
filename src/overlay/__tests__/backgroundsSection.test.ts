@@ -63,10 +63,14 @@ const gradientEditorSrc = readFileSync(
 // ─── 1. "+ Add background" creates a new layer ───────────────────────
 
 describe("Add background layer", () => {
-  it("renders the '+ Add background' button", async () => {
+  it("renders the 'Image & gradient' sub-section header with add button", async () => {
     const { BackgroundsSection } = await import("../sections/BackgroundsSection");
     const html = renderToString(createElement(BackgroundsSection, { ctx: makeMockCtx() }));
-    expect(html).toContain("+ Add background");
+    expect(html).toContain("Image &amp; gradient");
+  });
+
+  it("BackgroundLayerList has a '+ Add background' button for adding layers", () => {
+    expect(layerListSrc).toContain("+ Add background");
   });
 
   it("handleAddLayer creates a gradient layer with default linear config", () => {

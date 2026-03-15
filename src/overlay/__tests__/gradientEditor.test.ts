@@ -85,9 +85,9 @@ describe("GradientEditor — adding a color stop", () => {
     expect(gradientSrc).toContain("handleBarClick");
   });
 
-  it("ignores clicks on marker elements (data-marker)", () => {
-    // The bar click handler checks data.marker to avoid adding when clicking an existing stop
-    expect(gradientSrc).toContain("data.marker");
+  it("ignores clicks on marker elements (dataset.marker)", () => {
+    // The bar click handler checks dataset.marker to avoid adding when clicking an existing stop
+    expect(gradientSrc).toContain("dataset.marker");
   });
 
   it("new stop defaults to white (#ffffff)", () => {
@@ -139,8 +139,8 @@ describe("GradientEditor — dragging a stop changes position", () => {
 
   it("clamps position to 0-100 range", () => {
     expect(gradientSrc).toContain("clamp");
-    // Verify the clamp function bounds
-    expect(gradientSrc).toMatch(/clamp\([^)]*,\s*0,\s*100\)/);
+    // Verify the clamp function is called with 0 and 100 bounds
+    expect(gradientSrc).toContain(", 0, 100)");
   });
 
   it("disables text selection during drag", () => {

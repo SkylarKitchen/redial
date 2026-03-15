@@ -69,7 +69,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** Write a test that verifies the Typography section's advanced sub-section includes ALL spec properties: word-spacing, white-space (with `break-spaces` option), text-indent, word-break, hyphens, direction, column-count, column-gap, and text-shadow editor. Read `src/overlay/TypographySection.tsx` to confirm each property has a control.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/backgroundsSection.test.ts` that verifies: (1) clicking "+ Add background" creates a new layer, (2) layer types include color, gradient (linear/radial/conic), and image, (3) gradient editor supports all three gradient types with angle slider for linear, (4) background-clip includes the `text` option, (5) blend mode dropdown has all 16 blend modes from the spec.
+- [x] **P1** Write a test in `src/overlay/__tests__/backgroundsSection.test.ts` that verifies: (1) clicking "+ Add background" creates a new layer, (2) layer types include color, gradient (linear/radial/conic), and image, (3) gradient editor supports all three gradient types with angle slider for linear, (4) background-clip includes the `text` option, (5) blend mode dropdown has all 16 blend modes from the spec.
 
 - [ ] **P1** Write a test in `src/overlay/__tests__/bordersSection.test.ts` that verifies: (1) side selector tabs (All/Top/Right/Bottom/Left) switch which border properties are editable, (2) when "All" is selected, changes apply to all 4 sides, (3) radius linked/unlinked toggle works — linked mode shows 1 slider for all corners, unlinked shows 4 individual inputs, (4) border-radius supports both `px` and `%` units.
 
