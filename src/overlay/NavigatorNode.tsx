@@ -26,7 +26,7 @@ interface NavigatorNodeProps {
 const INDENT_PX = 16;
 export const ROW_HEIGHT = 26;
 
-export function NavigatorNode({
+export const NavigatorNode = memo(function NavigatorNode({
   node,
   depth,
   isExpanded,
@@ -46,6 +46,7 @@ export function NavigatorNode({
       role="treeitem"
       aria-expanded={hasChildren ? isExpanded : undefined}
       aria-selected={isSelected}
+      aria-level={depth + 1}
       tabIndex={isFocused ? 0 : -1}
       onClick={(e) => {
         e.stopPropagation();
@@ -157,4 +158,4 @@ export function NavigatorNode({
       )}
     </div>
   );
-}
+});

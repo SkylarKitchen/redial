@@ -7,8 +7,8 @@
  */
 
 import { useState, useCallback } from "react";
-import type { ConversionHint } from "./UnitSelector";
-import { conversionBasis, type UnitConversionContext } from "./unitConversion";
+import type { ConversionHint } from "../UnitSelector";
+import { conversionBasis, type UnitConversionContext } from "../unitConversion";
 
 /** Pure computation: build a ConversionHint object. Exported for testing. */
 export function buildConversionHint(

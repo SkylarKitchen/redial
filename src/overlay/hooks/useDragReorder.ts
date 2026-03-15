@@ -13,7 +13,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { timing, ms } from "./timing";
+import { timing, ms } from "../timing";
 
 interface DragState {
   dragIndex: number;
