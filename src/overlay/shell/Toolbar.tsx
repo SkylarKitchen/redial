@@ -159,7 +159,7 @@ export function Toolbar({
             : `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}`,
         }}
         animate={{
-          width: expanded ? 300 : 48,
+          width: expanded ? "auto" : 48,
         }}
         transition={springConfig("toolbarExpand")}
       >
