@@ -65,21 +65,6 @@ function collectExpandable(nodes: TreeNode[], maxDepth: number): Element[] {
   return result;
 }
 
-/** Find a node's parent element in the tree */
-function findParentEl(
-  nodes: TreeNode[],
-  target: Element,
-): Element | null {
-  for (const node of nodes) {
-    for (const child of node.children) {
-      if (child.el === target) return node.el;
-      const found = findParentEl([child], target);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 // ─── Component ──────────────────────────────────────────────────
 
 export function NavigatorPanel({
