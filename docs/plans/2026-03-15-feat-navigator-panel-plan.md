@@ -321,11 +321,16 @@ export function executeDrop(dragged: Element, target: DropTarget): { undo: () =>
 | File | Action | Phase |
 |------|--------|-------|
 | `src/overlay/navigatorFilter.ts` | Verify (already created) | 1 |
-| `src/overlay/NavigatorNode.tsx` | Verify (already created) | 1 |
-| `src/overlay/NavigatorPanel.tsx` | **Create** | 1, 2, 3, 4 |
+| `src/overlay/NavigatorNode.tsx` | Verify (already created), modify for drag | 1, 6 |
+| `src/overlay/NavigatorPanel.tsx` | **Create** | 1, 2, 3, 4, 5, 6 |
 | `src/overlay/__tests__/navigatorFilter.test.ts` | **Create** | 1 |
+| `src/overlay/useVirtualTree.ts` | **Create** | 5 |
+| `src/overlay/__tests__/useVirtualTree.test.ts` | **Create** | 5 |
+| `src/overlay/navigatorDrag.ts` | **Create** | 6 |
+| `src/overlay/__tests__/navigatorDrag.test.ts` | **Create** | 6 |
 | `src/overlay/Overlay.tsx` | **Modify** | 1, 2 |
 | `src/overlay/Toolbar.tsx` | **Modify** | 1 |
+| `src/overlay/apply.ts` | **Modify** (extend UndoEntry union) | 6 |
 
 ## Risk Analysis & Mitigation
 
@@ -335,6 +340,9 @@ export function executeDrop(dragged: Element, target: DropTarget): { undo: () =>
 | Arrow key conflict with existing nav | Medium | Navigator keyboard only fires when panel has focus (`.__tuner-root` exclusion already exists) |
 | Stale expandedNodes references | Low | Filter `el.isConnected` on every rebuild |
 | SVG/iframe elements in tree | Low | SVG roots shown, iframe contents skipped (cross-origin) |
+| Drag-during-mutation race | Medium | Suppress MutationObserver rebuilds while dragState is active |
+| Undo stack type extension | Low | New `DomMoveUndoEntry` type added to existing discriminated union — backwards compatible |
+| Virtualization scroll jank | Low | 5-row overscan + fixed row height (26px) ensures smooth rendering |
 
 ## Verification
 
@@ -346,6 +354,9 @@ export function executeDrop(dragged: Element, target: DropTarget): { undo: () =>
    - Click page element → tree scrolls to + highlights node
    - Arrow keys navigate tree
    - Works with SPA navigation (tree rebuilds on route change)
+   - Scroll performance smooth on large pages (virtualization active)
+   - Drag a node between siblings → DOM order changes, undo reverts it
+   - Drag a node into a container → element moves, tree updates
 
 ## References
 
