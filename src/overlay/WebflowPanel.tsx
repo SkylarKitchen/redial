@@ -19,15 +19,15 @@ import { sectionMatchesQuery } from "./PropertySearch";
 import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
 import { SectionMemoryProvider } from "./controls";
 
-import { LayoutSection } from "./LayoutSection";
-import { SpacingSection } from "./SpacingSection";
-import { SizeSection } from "./SizeSection";
-import { PositionSection } from "./PositionSection";
-import { TypographySection } from "./TypographySection";
-import { BackgroundsSection } from "./BackgroundsSection";
-import { BordersSection } from "./BordersSection";
-import { EffectsSection } from "./EffectsSection";
-import { CSSVariablesSection } from "./CSSVariablesSection";
+import { LayoutSection } from "./sections/LayoutSection";
+import { SpacingSection } from "./sections/SpacingSection";
+import { SizeSection } from "./sections/SizeSection";
+import { PositionSection } from "./sections/PositionSection";
+import { TypographySection } from "./sections/TypographySection";
+import { BackgroundsSection } from "./sections/BackgroundsSection";
+import { BordersSection } from "./sections/BordersSection";
+import { EffectsSection } from "./sections/EffectsSection";
+import { CSSVariablesSection } from "./sections/CSSVariablesSection";
 
 // ─── Props ───────────────────────────────────────────────────────────
 

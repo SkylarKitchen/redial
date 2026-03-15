@@ -4,9 +4,9 @@
  */
 
 import { useState, useCallback, useEffect } from "react";
-import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { ms } from "./timing";
-import { color, text, border, surface, primaryAlpha, blackAlpha, gridAlpha, font } from "./theme";
+import { UnitSelector, type ConversionHint } from "../UnitSelector";
+import { ms } from "../timing";
+import { color, text, border, surface, primaryAlpha, blackAlpha, gridAlpha, font } from "../theme";
 
 interface PositionOffsetDiagramProps {
   top: number;

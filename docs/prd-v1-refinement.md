@@ -23,7 +23,7 @@ topic: v1-refinement-prd
 
 ## P1 — Spec Compliance
 
-- [ ] **P1** In `src/overlay/WebflowPanel.tsx`, verify the panel body scrollbar matches the spec: thin custom scrollbar styling. If the panel uses the browser default scrollbar inside its `overflow-y: auto` container, add a `::-webkit-scrollbar` style (via inline style or a small injected `<style>` tag) to make the scrollbar 6px wide, semi-transparent thumb on transparent track, matching `theme.ts` tokens.
+- [x] **P1** In `src/overlay/WebflowPanel.tsx`, verify the panel body scrollbar matches the spec: thin custom scrollbar styling. If the panel uses the browser default scrollbar inside its `overflow-y: auto` container, add a `::-webkit-scrollbar` style (via inline style or a small injected `<style>` tag) to make the scrollbar 6px wide, semi-transparent thumb on transparent track, matching `theme.ts` tokens.
 
 - [ ] **P1** In `src/overlay/Overlay.tsx`, verify max-height is exactly `85vh` as the spec requires. If it differs, update to match. Also verify `backdrop-filter: blur(20px)` is present on the panel container.
 

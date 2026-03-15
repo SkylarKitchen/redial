@@ -6,28 +6,28 @@
  */
 
 import React, { useState, useCallback, useMemo, memo } from "react";
-import { Section, SelectRow, TextRow } from "./controls";
-import { IconButtonGroup } from "./IconButtonGroup";
-import { WebflowSegmentedControl } from "./WebflowSegmentedControl";
+import { Section, SelectRow, TextRow } from "../controls";
+import { IconButtonGroup } from "../IconButtonGroup";
+import { WebflowSegmentedControl } from "../WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
-import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./hooks/useConversionHint";
-import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
-import { parseNum } from "./cssParsers";
-import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
-import { isAutoSize } from "./getAuthoredValue";
+import { convertUnit } from "../unitConversion";
+import { useConversionHint } from "../hooks/useConversionHint";
+import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
+import { parseNum } from "../cssParsers";
+import { getAuthoredValue, detectUnit, type SectionCtx } from "../panelUtils";
+import { isAutoSize } from "../getAuthoredValue";
 import { ChevronRight } from "lucide-react";
-import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "./webflowIcons";
-import { ms } from "./timing";
-import { text, border, surface, font, layout, indicatorStyle } from "./theme";
-import { ROW, LABEL } from "./panelStyles";
+import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "../webflowIcons";
+import { ms } from "../timing";
+import { text, border, surface, font, layout, indicatorStyle } from "../theme";
+import { ROW, LABEL } from "../panelStyles";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
   CHILDREN_MODE_OPTIONS,
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BOX_SIZING_OPTIONS,
-} from "./panelConstants";
-import { discoverLengthVariables } from "./variables/discoverVariables";
+} from "../panelConstants";
+import { discoverLengthVariables } from "../variables/discoverVariables";
 
 // ─── Props ────────────────────────────────────────────────────────────
 
