@@ -6,9 +6,9 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ms } from "./timing";
-import { isNavigableElement, getDisplayClass } from "./util";
-import { color, primaryAlpha, font, zIndex } from "./theme";
+import { ms } from "../timing";
+import { isNavigableElement, getDisplayClass } from "../util";
+import { color, primaryAlpha, font, zIndex } from "../theme";
 
 interface SelectorProps {
   active: boolean;

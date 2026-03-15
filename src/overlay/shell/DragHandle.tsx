@@ -5,8 +5,8 @@
  */
 
 import { GripVertical } from "lucide-react";
-import { text } from "./theme";
-import { ms } from "./timing";
+import { text } from "../theme";
+import { ms } from "../timing";
 
 export interface DragHandleProps {
   isDragging?: boolean;

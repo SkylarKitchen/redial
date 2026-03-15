@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { text, color, badge } from "./theme";
+import { text, color, badge } from "../theme";
 
 export interface StateSelectorProps {
   value: string;

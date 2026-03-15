@@ -5,8 +5,8 @@
  * how styles behave at different breakpoints.
  */
 
-import { ms } from "./timing";
-import { text, border, surface, blackAlpha, font, color } from "./theme";
+import { ms } from "../timing";
+import { text, border, surface, blackAlpha, font, color } from "../theme";
 
 const PRESETS: Array<{ label: string; width: number | null }> = [
   { label: "375", width: 375 },

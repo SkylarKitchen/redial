@@ -13,8 +13,8 @@ import { getDisplayClass } from "../util";
 import { getReactSource } from "../core/sourcemap";
 import { timing } from "../timing";
 import { Copy, Sparkles } from "lucide-react";
-import { text, border, color, blackAlpha, primaryAlpha, bgAlpha, shadow, font } from "./theme";
-import { ms } from "./timing";
+import { text, border, color, blackAlpha, primaryAlpha, bgAlpha, shadow, font } from "../theme";
+import { ms } from "../timing";
 
 interface PromptPanelProps {
   element: Element;
