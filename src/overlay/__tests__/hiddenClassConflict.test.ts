@@ -15,7 +15,7 @@ import { join } from "path";
  * `style={{ display: 'none' }}` as initial state instead.
  */
 describe("Overlay elements must not use Tailwind hidden class for JS-toggled visibility", () => {
-  const overlayPath = join(__dirname, "../Overlay.tsx");
+  const overlayPath = join(__dirname, "../shell/Overlay.tsx");
   const source = readFileSync(overlayPath, "utf-8");
 
   // These are elements whose display is toggled via JS ref manipulation

@@ -57,7 +57,7 @@ describe("Bug: SelectContent z-index override by caller className", () => {
   });
 
   it("no overlay file passes a z-index class to SelectContent that is lower than the panel z-index", () => {
-    const files = ["controls.tsx", "StateSelector.tsx"];
+    const files = ["controls.tsx", "shell/StateSelector.tsx"];
 
     for (const file of files) {
       const src = readSrc(join(OVERLAY_DIR, file));

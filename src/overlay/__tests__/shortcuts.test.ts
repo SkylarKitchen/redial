@@ -179,7 +179,7 @@ describe("arrow key element navigation", () => {
     // reach the React onKeyDown handler instead of being stolen for element nav.
     const { readFileSync } = require("fs");
     const { join } = require("path");
-    const overlaySrc = readFileSync(join(__dirname, "..", "Overlay.tsx"), "utf-8");
+    const overlaySrc = readFileSync(join(__dirname, "..", "shell", "Overlay.tsx"), "utf-8");
 
     // Find the arrow key handler block
     const arrowBlockStart = overlaySrc.indexOf("Arrow key element navigation");

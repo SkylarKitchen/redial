@@ -36,10 +36,13 @@ bar() {
 while true; do
   clear
 
-  # Counts
-  done_count=$(grep -c '^\- \[x\]' "$PRD" 2>/dev/null || echo 0)
-  fail_count=$(grep -c '^\- \[!\]' "$PRD" 2>/dev/null || echo 0)
-  pending_count=$(grep -c '^\- \[ \]' "$PRD" 2>/dev/null || echo 0)
+  # Counts (tr -d strips whitespace from grep -c output)
+  done_count=$(grep -c '^\- \[x\]' "$PRD" 2>/dev/null | tr -d '[:space:]')
+  fail_count=$(grep -c '^\- \[!\]' "$PRD" 2>/dev/null | tr -d '[:space:]')
+  pending_count=$(grep -c '^\- \[ \]' "$PRD" 2>/dev/null | tr -d '[:space:]')
+  done_count=${done_count:-0}
+  fail_count=${fail_count:-0}
+  pending_count=${pending_count:-0}
   total=$((done_count + fail_count + pending_count))
 
   if [ "$total" -gt 0 ]; then

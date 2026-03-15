@@ -18,7 +18,7 @@ import { join } from "path";
 
 describe("TextStyleRow portal click-through", () => {
   const overlaySource = readFileSync(
-    join(__dirname, "..", "Overlay.tsx"),
+    join(__dirname, "..", "shell", "Overlay.tsx"),
     "utf-8",
   );
 

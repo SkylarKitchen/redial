@@ -43,7 +43,7 @@ describe("Dropdown opaque background", () => {
   });
 
   it("StateSelector.tsx SelectContent must have an explicit backgroundColor in its style", () => {
-    const src = readSrc(join(OVERLAY_DIR, "StateSelector.tsx"));
+    const src = readSrc(join(OVERLAY_DIR, "shell", "StateSelector.tsx"));
 
     // Find the SelectContent JSX and check for backgroundColor/background in its style prop
     const selectContentMatch = src.match(/<SelectContent[\s\S]*?>/);

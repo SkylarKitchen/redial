@@ -14,7 +14,7 @@ describe("ActionButton style contract", () => {
     const { readFileSync } = await import("fs");
     const { join } = await import("path");
     const src = readFileSync(
-      join(__dirname, "..", "Footer.tsx"),
+      join(__dirname, "..", "shell", "Footer.tsx"),
       "utf-8"
     );
 
