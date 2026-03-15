@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
-import { SpacingBoxModel } from "../SpacingBoxModel";
+import { SpacingBoxModel } from "../sections/SpacingBoxModel";
 
 /**
  * Reproduction test: pressing Shift MID-DRAG should link all 4 sides.

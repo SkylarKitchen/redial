@@ -13,7 +13,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { AlignBox, toColIndices, toRowIndices } from "../AlignBox";
+import { AlignBox, toColIndices, toRowIndices } from "../sections/AlignBox";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 

@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
-import { SpacingValuePopover } from "../SpacingValuePopover";
-import { SpacingBoxModel } from "../SpacingBoxModel";
+import { SpacingValuePopover } from "../sections/SpacingValuePopover";
+import { SpacingBoxModel } from "../sections/SpacingBoxModel";
 
 /**
  * Reproduction test: clicking preset buttons (0, 8, 16, 32, etc.)

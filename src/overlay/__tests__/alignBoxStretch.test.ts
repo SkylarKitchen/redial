@@ -10,7 +10,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
-import { AlignBox } from "../AlignBox";
+import { AlignBox } from "../sections/AlignBox";
 
 function render(justify: string, align: string, mode: "flex" | "grid" = "grid") {
   return renderToString(

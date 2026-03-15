@@ -57,7 +57,7 @@ function makeMockSpacing(): SpacingValues {
 
 describe("Section components render without throwing", () => {
   it("LayoutSection renders without throwing", async () => {
-    const { LayoutSection } = await import("../LayoutSection");
+    const { LayoutSection } = await import("../sections/LayoutSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(
@@ -79,7 +79,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("SpacingSection renders without throwing", async () => {
-    const { SpacingSection } = await import("../SpacingSection");
+    const { SpacingSection } = await import("../sections/SpacingSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(
@@ -93,7 +93,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("SizeSection renders without throwing", async () => {
-    const { SizeSection } = await import("../SizeSection");
+    const { SizeSection } = await import("../sections/SizeSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(
@@ -107,7 +107,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("PositionSection renders without throwing", async () => {
-    const { PositionSection } = await import("../PositionSection");
+    const { PositionSection } = await import("../sections/PositionSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(createElement(PositionSection, { ctx }));
@@ -115,7 +115,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("TypographySection renders without throwing", async () => {
-    const { TypographySection } = await import("../TypographySection");
+    const { TypographySection } = await import("../sections/TypographySection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(
@@ -131,7 +131,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("BackgroundsSection renders without throwing", async () => {
-    const { BackgroundsSection } = await import("../BackgroundsSection");
+    const { BackgroundsSection } = await import("../sections/BackgroundsSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(createElement(BackgroundsSection, { ctx }));
@@ -139,7 +139,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("BordersSection renders without throwing", async () => {
-    const { BordersSection } = await import("../BordersSection");
+    const { BordersSection } = await import("../sections/BordersSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(createElement(BordersSection, { ctx }));
@@ -147,7 +147,7 @@ describe("Section components render without throwing", () => {
   });
 
   it("EffectsSection renders without throwing", async () => {
-    const { EffectsSection } = await import("../EffectsSection");
+    const { EffectsSection } = await import("../sections/EffectsSection");
     const ctx = makeMockCtx();
     expect(() => {
       renderToString(createElement(EffectsSection, { ctx }));
