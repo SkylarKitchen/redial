@@ -7,8 +7,8 @@
 
 import { useRef, useEffect, useCallback, useState } from "react";
 import { Search, X } from "lucide-react";
-import { color, border, surface, text, font } from "./theme";
-import { ms } from "./timing";
+import { color, border, surface, text, font } from "../theme";
+import { ms } from "../timing";
 
 // ─── Section-to-properties mapping ──────────────────────────────────
 

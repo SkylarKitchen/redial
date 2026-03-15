@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import type { ActivePanel } from "../Overlay";
+import type { ActivePanel } from "../shell/Overlay";
 
 /**
  * Reproduces the bug: clicking the AI button in the toolbar after

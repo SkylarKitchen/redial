@@ -38,7 +38,7 @@ import {
 import { Section, ColorRow } from "../controls";
 import { UnitSelector } from "../UnitSelector";
 import { WebflowSegmentedControl } from "../WebflowSegmentedControl";
-import { DragHandle } from "../DragHandle";
+import { DragHandle } from "../shell/DragHandle";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { ROW, MINI_ACTION_BUTTON } from "../panelStyles";

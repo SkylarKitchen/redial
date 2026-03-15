@@ -5,17 +5,17 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { diff, reset, overrideCount, resetStateOverrides } from "./core/apply";
-import { diffState, resetStateStyles } from "./core/statePreview";
-import { resetClassStyles } from "./core/scope";
-import { enrichChangesForCommit } from "./core/commitUtils";
-import type { Scope } from "./core/scope";
-import { formatCSSDiff, getSelector } from "./util";
-import { formatTailwindDiff } from "./tailwind";
-import { timing } from "./timing";
-import type { DiffEntry } from "./core/apply";
-import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "./theme";
-import { getConfig } from "./core/config";
+import { diff, reset, overrideCount, resetStateOverrides } from "../core/apply";
+import { diffState, resetStateStyles } from "../core/statePreview";
+import { resetClassStyles } from "../core/scope";
+import { enrichChangesForCommit } from "../core/commitUtils";
+import type { Scope } from "../core/scope";
+import { formatCSSDiff, getSelector } from "../util";
+import { formatTailwindDiff } from "../tailwind";
+import { timing } from "../timing";
+import type { DiffEntry } from "../core/apply";
+import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
+import { getConfig } from "../core/config";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {

@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { color, border, text, font } from "./theme";
+import { color, border, text, font } from "../theme";
 
 interface ShortcutsHelpProps {
   onClose: () => void;

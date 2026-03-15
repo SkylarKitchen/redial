@@ -10,9 +10,9 @@
 import { useState, useRef, useCallback } from "react";
 import { Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useClickOutside } from "./hooks/useClickOutside";
-import { timing, ms, springConfig } from "./timing";
-import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font, zIndex } from "./theme";
+import { useClickOutside } from "../hooks/useClickOutside";
+import { timing, ms, springConfig } from "../timing";
+import { primaryAlpha, blackAlpha, bgAlpha, surface, darkToolbar, font, zIndex } from "../theme";
 import type { ActivePanel } from "./Overlay";
 
 // ─── Types ───────────────────────────────────────────────────────────

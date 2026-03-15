@@ -15,9 +15,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "./util";
+import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "../util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
-import { color, text, border, surface, font, primaryAlpha, shadow, badge } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, shadow, badge } from "../theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 

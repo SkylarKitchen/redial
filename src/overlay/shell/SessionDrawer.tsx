@@ -7,11 +7,11 @@
 
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { diffAll, resetAll, type DiffEntry } from "./core/apply";
+import { diffAll, resetAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getDisplayClass, formatCSSDiff } from "./util";
-import { resolveSource, getModuleClassInfo } from "./core/sourcemap";
-import { timing } from "./timing";
+import { getDisplayClass, formatCSSDiff } from "../util";
+import { resolveSource, getModuleClassInfo } from "../core/sourcemap";
+import { timing } from "../timing";
 import { Button } from "@/components/ui/button";
 import { text, border, surface, color, destructiveAlpha } from "./theme";
 import { getConfig } from "./core/config";

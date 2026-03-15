@@ -7,27 +7,27 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { SpacingValues } from "./core/infer";
-import { applyInlineStyle, stateKey } from "./core/apply";
-import { applyClassStyle, isTailwindElement, type Scope } from "./core/scope";
-import { applyStateStyle } from "./core/statePreview";
-import { buildConversionContext } from "./unitConversion";
-import type { IndicatorType } from "./theme";
-import { parseNum } from "./cssParsers";
-import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "./panelUtils";
+import type { SpacingValues } from "../core/infer";
+import { applyInlineStyle, stateKey } from "../core/apply";
+import { applyClassStyle, isTailwindElement, type Scope } from "../core/scope";
+import { applyStateStyle } from "../core/statePreview";
+import { buildConversionContext } from "../unitConversion";
+import type { IndicatorType } from "../theme";
+import { parseNum } from "../cssParsers";
+import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "../panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";
 import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
-import { SectionMemoryProvider } from "./controls";
+import { SectionMemoryProvider } from "../controls";
 
-import { LayoutSection } from "./sections/LayoutSection";
-import { SpacingSection } from "./sections/SpacingSection";
-import { SizeSection } from "./sections/SizeSection";
-import { PositionSection } from "./sections/PositionSection";
-import { TypographySection } from "./sections/TypographySection";
-import { BackgroundsSection } from "./sections/BackgroundsSection";
-import { BordersSection } from "./sections/BordersSection";
-import { EffectsSection } from "./sections/EffectsSection";
-import { CSSVariablesSection } from "./sections/CSSVariablesSection";
+import { LayoutSection } from "../sections/LayoutSection";
+import { SpacingSection } from "../sections/SpacingSection";
+import { SizeSection } from "../sections/SizeSection";
+import { PositionSection } from "../sections/PositionSection";
+import { TypographySection } from "../sections/TypographySection";
+import { BackgroundsSection } from "../sections/BackgroundsSection";
+import { BordersSection } from "../sections/BordersSection";
+import { EffectsSection } from "../sections/EffectsSection";
+import { CSSVariablesSection } from "../sections/CSSVariablesSection";
 
 // ─── Props ───────────────────────────────────────────────────────────
 

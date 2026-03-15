@@ -9,10 +9,10 @@
 
 import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { resetProp } from "./core/apply";
-import { useFocusTrap } from "./hooks/useFocusTrap";
-import { color, border, surface, shadow, text, font, zIndex } from "./theme";
-import { ms } from "./timing";
+import { resetProp } from "../core/apply";
+import { useFocusTrap } from "../hooks/useFocusTrap";
+import { color, border, surface, shadow, text, font, zIndex } from "../theme";
+import { ms } from "../timing";
 
 export interface ContextMenuState {
   x: number;

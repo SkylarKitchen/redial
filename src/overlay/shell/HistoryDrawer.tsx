@@ -6,9 +6,9 @@
  */
 
 import { motion } from "motion/react";
-import { timing } from "./timing";
+import { timing } from "../timing";
 import { Button } from "@/components/ui/button";
-import { text, border, surface, color } from "./theme";
+import { text, border, surface, color } from "../theme";
 
 export interface HistoryEntry {
   timestamp: number;

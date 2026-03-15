@@ -21,7 +21,7 @@
 
 import { useEffect } from "react";
 import "./styles/globals.css";
-import { Overlay } from "./overlay/Overlay";
+import { Overlay } from "./overlay/shell/Overlay";
 import { configure, type TunerConfig } from "./overlay/core/config";
 
 export interface TunerProps extends Partial<TunerConfig> {}

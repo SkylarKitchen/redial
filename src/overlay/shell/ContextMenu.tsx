@@ -8,8 +8,8 @@
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { color, border, surface, shadow, text, font, zIndex } from "./theme";
-import { ms } from "./timing";
+import { color, border, surface, shadow, text, font, zIndex } from "../theme";
+import { ms } from "../timing";
 
 export interface ContextMenuProps {
   x: number;
