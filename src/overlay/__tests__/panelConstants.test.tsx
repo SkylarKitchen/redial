@@ -206,7 +206,7 @@ describe("Unit arrays", () => {
     { name: "POSITION_UNITS", arr: POSITION_UNITS, len: 4 },
     { name: "TYPO_SIZE_UNITS", arr: TYPO_SIZE_UNITS, len: 3 },
     { name: "LAYOUT_UNITS", arr: LAYOUT_UNITS, len: 4 },
-    { name: "BORDER_UNITS", arr: BORDER_UNITS, len: 3 },
+    { name: "BORDER_UNITS", arr: BORDER_UNITS, len: 4 },
     { name: "SPACING_UNITS", arr: SPACING_UNITS, len: 4 },
     { name: "LINE_HEIGHT_UNITS", arr: LINE_HEIGHT_UNITS, len: 4 },
   ];
