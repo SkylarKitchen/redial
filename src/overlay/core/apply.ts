@@ -1148,6 +1148,7 @@ export function restoreSession(): number {
     if (restored > 0) notifyListeners();
     return restored;
   } catch {
+    clearPersistedSession();
     return 0;
   }
 }
