@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   applyInlineStyle,
   undo,
@@ -724,5 +724,31 @@ describe("restoreSession — state-keyed overrides", () => {
     unsub();
     resetAll();
     localStorage.removeItem(key);
+  });
+});
+
+// ─── restoreSession — corrupted localStorage ─────────────────────────
+
+describe("restoreSession — corrupted localStorage", () => {
+  const key = `__tuner_session:${window.location.pathname}`;
+
+  afterEach(() => {
+    resetAll();
+    localStorage.removeItem(key);
+  });
+
+  it("returns 0 and clears storage when localStorage contains invalid JSON", () => {
+    localStorage.setItem(key, "{not valid json!!!");
+    const restored = restoreSession();
+    expect(restored).toBe(0);
+    // Corrupted data should be discarded so it doesn't persist
+    expect(localStorage.getItem(key)).toBeNull();
+  });
+
+  it("returns 0 and clears storage when localStorage contains non-object JSON", () => {
+    localStorage.setItem(key, '"just a string"');
+    const restored = restoreSession();
+    expect(restored).toBe(0);
+    expect(localStorage.getItem(key)).toBeNull();
   });
 });
