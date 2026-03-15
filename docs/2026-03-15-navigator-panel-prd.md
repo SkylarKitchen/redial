@@ -148,12 +148,12 @@ Skip entirely:
 - **theme.ts**: navigator uses existing tokens (no new design tokens expected)
 - **Toolbar.tsx**: add navigator toggle button
 
-## Open Questions
+## Resolved Questions
 
-1. **Hotkey**: `N` for navigator? Or something less likely to conflict?
-2. **MutationObserver**: should the tree auto-update when the DOM changes (e.g., SPA navigation, dynamic content)? Adds complexity but prevents stale tree.
-3. **Performance**: on pages with 1000+ visible nodes after filtering, should we virtualize the tree (only render visible rows)?
-4. **Undo granularity**: should drag-to-reorder be a single undo entry, or should dragging over multiple positions create intermediate entries?
+1. **Hotkey**: `N` to toggle navigator
+2. **MutationObserver**: Yes — debounced (~200ms) observer on `<body>` with `subtree: true, childList: true`. Preserves expand/collapse state across re-renders. Necessary for SPA navigation and React re-renders.
+3. **Virtualization**: Yes — flat list of visible (expanded) nodes with indent levels, rendered in a fixed-height scrollable container. Only rows in viewport are mounted.
+4. **Undo granularity**: Single undo entry per completed drag. Use `beginBatch()`/`endBatch()` pattern from `apply.ts`. Intermediate drag positions are visual-only, not committed.
 
 ## Next Steps
 
