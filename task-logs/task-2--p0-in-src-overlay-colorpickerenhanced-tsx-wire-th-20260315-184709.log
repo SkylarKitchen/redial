@@ -1,1 +1,15 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 23 tests pass.
+
+`★ Insight ─────────────────────────────────────`
+**Architecture**: `useSwatches` uses `useSyncExternalStore` — a module-level store pattern where all `ColorPickerEnhanced` instances across the app share the same swatch list without needing React context. When one picker adds a swatch, every other mounted picker sees it instantly.
+
+**UX detail**: Semi-transparent saved swatches render a checkerboard pattern underneath using the same `CHECKER` constant the opacity slider uses. This gives a visual cue that the swatch has < 100% opacity, matching how Webflow shows transparency.
+
+**Removal via right-click**: Following the Webflow convention where context-menu on a swatch gives a "remove" action. Here it's direct (right-click removes immediately) since there's only one action.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Wire `useSwatches` into `ColorPickerEnhanced.tsx` — import hook, render saved swatches, add "+ Add" button
+**Did:** Added 3 edits to `ColorPickerEnhanced.tsx`: (1) imported `useSwatches`, (2) called the hook to get `savedSwatches/addSwatch/removeSwatch`, (3) added a "Swatches" section below CSS variables with a `+` button (saves `currentHex + alpha`), a swatch grid (click to apply, right-click to remove), checkerboard background for semi-transparent swatches, and empty-state text. Typecheck clean, 23 existing swatch tests pass.
+---

@@ -44,7 +44,7 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "./cssImport";
 import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
-import { NavigatorPanel } from "./NavigatorPanel";
+import { NavigatorPanel } from "./navigator/NavigatorPanel";
 import { useElementTracker } from "./hooks/useElementTracker";
 import { getConfig } from "./core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "./theme";
