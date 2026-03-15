@@ -428,14 +428,24 @@ export const overlay = {
 } as const;
 
 // ─── Spacing Zone Colors ────────────────────────────────────────
+// Margin = warm (orange), Padding = cool (green), Content = solid dark
+
+/** Warm-orange alpha for margin zones — derived from color.gridOrange */
+export const marginWarmAlpha = (a: number) => hexToRgba(color.gridOrange, a);
 
 export const spacingZone = {
-  marginBase: "transparent",
-  marginHover: primaryAlpha(0.14),
-  marginBorderBase: primaryAlpha(0.25),
-  marginBorderHover: primaryAlpha(0.5),
-  paddingBase: "transparent",
-  paddingHover: greenAlpha(0.14),
-  paddingBorderBase: greenAlpha(0.25),
-  paddingBorderHover: greenAlpha(0.5),
+  /** Subtle warm tint — always visible so zones are distinguishable at rest */
+  marginBase: marginWarmAlpha(0.08),
+  /** Warm highlight on hover — strong enough to read as "orange" */
+  marginHover: marginWarmAlpha(0.22),
+  marginBorderBase: marginWarmAlpha(0.3),
+  marginBorderHover: marginWarmAlpha(0.55),
+  /** Subtle cool tint — always visible at rest */
+  paddingBase: greenAlpha(0.08),
+  /** Cool highlight on hover */
+  paddingHover: greenAlpha(0.22),
+  paddingBorderBase: greenAlpha(0.3),
+  paddingBorderHover: greenAlpha(0.55),
+  /** Content center — solid darker fill (spec: "solid darker rectangle") */
+  content: blackAlpha(0.12),
 } as const;
