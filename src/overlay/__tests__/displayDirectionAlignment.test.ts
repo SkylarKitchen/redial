@@ -70,8 +70,8 @@ describe("Display and Direction row alignment", () => {
     const displayPad = displayTabsBody.match(/paddingLeft:\s*(\d+)/)?.[1];
     const flexPad = flexDirBody.match(/paddingLeft:\s*(\d+)/)?.[1];
 
-    const displayUsesROW = displayTabsBody.includes("...ROW");
-    const flexUsesROW = flexDirBody.includes("...ROW");
+    const displayUsesROW = displayTabsBody.includes("...ROW") || displayTabsBody.includes("{ROW}") || displayTabsBody.includes("= ROW");
+    const flexUsesROW = flexDirBody.includes("...ROW") || flexDirBody.includes("{ROW}") || flexDirBody.includes("= ROW");
 
     const aligned =
       (displayUsesROW && flexUsesROW) ||

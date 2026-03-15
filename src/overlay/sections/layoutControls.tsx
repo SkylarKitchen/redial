@@ -28,6 +28,7 @@ import { useClickOutside } from "../hooks/useClickOutside";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
+import { ROW } from "../panelStyles";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
 
@@ -337,7 +338,7 @@ export function DisplayTabs({ value, onChange, onReset, indicator }: {
   const isOverflowActive = !PRIMARY_VALUES.has(value);
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
+    <div style={ROW}>
       <RowLabel label="Display" indicator={indicator} isSet={value !== "block"} onReset={onReset} />
       <SegmentedControl
         options={DISPLAY_PRIMARY}
@@ -513,7 +514,7 @@ export function FlexDirectionRow({ direction, onDirectionChange, wrap, onWrapCha
   const base = direction.replace("-reverse", "") as "row" | "column";
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: layout.rowPadding }}>
+    <div style={ROW}>
       <RowLabel label="Direction" indicator={indicator} isSet={direction !== "row"} onReset={onReset} />
       {/* Row / Column icon segments */}
       <SegmentedControl

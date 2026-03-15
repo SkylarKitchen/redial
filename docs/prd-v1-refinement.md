@@ -33,9 +33,9 @@ topic: v1-refinement-prd
 
 - [x] **P1** In `src/overlay/LayoutSection.tsx`, verify the spec's gap unlock behavior: when gap is "linked" (single slider), it sets both `row-gap` and `column-gap` simultaneously. When "unlocked", it shows two separate sliders for `row-gap` and `column-gap`. Confirm this toggle exists and works correctly. If the unlock toggle is missing, add a small link/unlink icon button similar to the border radius linked toggle in `BordersSection.tsx`.
 
-- [ ] **P1** In `src/overlay/SpacingBoxModel.tsx`, verify the spec's complementary-side shortcut: **Alt+click** on a side label should apply the value to both complementary sides (e.g., Alt+click on margin-left copies its value to margin-right). **Alt+click on a corner** should apply to all 4 sides. Test this behavior end-to-end. If the Alt+click handler is missing for corners (applying to all 4), add it.
+- [x] **P1** In `src/overlay/SpacingBoxModel.tsx`, verify the spec's complementary-side shortcut: **Alt+click** on a side label should apply the value to both complementary sides (e.g., Alt+click on margin-left copies its value to margin-right). **Alt+click on a corner** should apply to all 4 sides. Test this behavior end-to-end. If the Alt+click handler is missing for corners (applying to all 4), add it.
 
-- [ ] **P1** In `src/overlay/PositionSection.tsx`, the spec says float and clear controls should only appear when position is `sticky` or `fixed`. Verify this conditional visibility. If float/clear are always shown (regardless of position type), add the conditional so they only render when position is `sticky` or `fixed`.
+- [x] **P1** In `src/overlay/PositionSection.tsx`, the spec says float and clear controls should only appear when position is `sticky` or `fixed`. Verify this conditional visibility. If float/clear are always shown (regardless of position type), add the conditional so they only render when position is `sticky` or `fixed`.
 
 - [x] **P1** In `src/overlay/TypographySection.tsx`, verify the `font-style` toggle for italic. The spec says it should be an icon button (I). Confirm it exists as a toggle (not a dropdown) and correctly applies `font-style: italic` / `font-style: normal`. If implemented as a dropdown, convert it to an `IconButtonGroup` toggle button.
 
@@ -45,13 +45,13 @@ topic: v1-refinement-prd
 
 - [ ] **P1** In `src/overlay/Overlay.tsx`, verify that selecting an element inside an `<iframe>` or `<shadow-root>` doesn't crash the panel. If `infer.ts` receives a cross-origin iframe element, it should gracefully degrade (show the element tag but no editable properties). Add a guard at the selection stage if not already present.
 
-- [ ] **P1** In `src/overlay/apply.ts`, add a maximum undo history limit (e.g., 200 entries). Currently there is no `MAX_HISTORY` constant, meaning very long editing sessions could accumulate unbounded undo entries in memory. Add `const MAX_UNDO = 200` and trim the oldest entries when the stack exceeds this limit. Write a test that performs 250 changes and verifies the undo stack is capped at 200.
+- [x] **P1** In `src/overlay/apply.ts`, add a maximum undo history limit (e.g., 200 entries). Currently there is no `MAX_HISTORY` constant, meaning very long editing sessions could accumulate unbounded undo entries in memory. Add `const MAX_UNDO = 200` and trim the oldest entries when the stack exceeds this limit. Write a test that performs 250 changes and verifies the undo stack is capped at 200.
 
 ---
 
 ## P1 — Acceptance Criteria Tests
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/panelShell.test.ts` that verifies: (1) panel width is `layout.panelWidth` (300px), (2) border radius is 10px, (3) section separators use `border.subtle` token, (4) section headers use 13px font-size / weight 500. Read the rendered styles from `WebflowPanel.tsx` and `theme.ts` to validate these constants match the spec.
+- [x] **P1** Write a test in `src/overlay/__tests__/panelShell.test.ts` that verifies: (1) panel width is `layout.panelWidth` (300px), (2) border radius is 10px, (3) section separators use `border.subtle` token, (4) section headers use 13px font-size / weight 500. Read the rendered styles from `WebflowPanel.tsx` and `theme.ts` to validate these constants match the spec.
 
 - [!] **P1** Write a test in `src/overlay/__tests__/breadcrumb.test.ts` that verifies: (1) breadcrumb collapses to `first ... last-2 > last-1 > current` when ≥4 ancestors, (2) clicking `...` expands full chain, (3) clicking an ancestor segment fires `onBreadcrumbClick` with the correct element, (4) hovering fires `onBreadcrumbHover`.
 
@@ -135,33 +135,33 @@ topic: v1-refinement-prd
 
 - [!] **P2** In `src/overlay/Overlay.tsx`, verify that the `D` key "diff peek" interaction is smooth: (1) pressing D immediately strips all overrides, (2) the visual change is instant (no animation delay), (3) releasing D restores overrides, (4) if D is tapped quickly (<200ms), it doesn't flash. Add a small debounce if the flash issue exists.
 
-- [ ] **P2** In `src/overlay/apply.ts`, verify that `restoreSession()` handles corrupted localStorage gracefully. Add a try/catch around JSON.parse of the stored session data so that corrupted data doesn't crash the panel on startup. If parsing fails, silently discard the stored session and start fresh.
+- [!] **P2** In `src/overlay/apply.ts`, verify that `restoreSession()` handles corrupted localStorage gracefully. Add a try/catch around JSON.parse of the stored session data so that corrupted data doesn't crash the panel on startup. If parsing fails, silently discard the stored session and start fresh.
 
 ---
 
 ## P2 — Performance
 
-- [ ] **P2** In `src/overlay/WebflowPanel.tsx`, verify that section collapse/expand doesn't trigger expensive re-renders of other sections. Since all 8+ sections are siblings, collapsing one section should NOT cause the others to re-render. If sections share state that triggers full re-renders, consider wrapping each section in `React.memo` or moving section state to individual components.
+- [!] **P2** In `src/overlay/WebflowPanel.tsx`, verify that section collapse/expand doesn't trigger expensive re-renders of other sections. Since all 8+ sections are siblings, collapsing one section should NOT cause the others to re-render. If sections share state that triggers full re-renders, consider wrapping each section in `React.memo` or moving section state to individual components.
 
-- [ ] **P2** Audit `src/overlay/infer.ts` for performance: `getComputedStyle()` is called once on selection, but verify it isn't called again on every render or slider drag. The infer result should be cached per selection and only refreshed on re-selection or explicit refresh. If `infer()` is called inside any render path, move it to an effect or callback.
+- [!] **P2** Audit `src/overlay/infer.ts` for performance: `getComputedStyle()` is called once on selection, but verify it isn't called again on every render or slider drag. The infer result should be cached per selection and only refreshed on re-selection or explicit refresh. If `infer()` is called inside any render path, move it to an effect or callback.
 
 ---
 
 ## P2 — Accessibility
 
-- [ ] **P2** Audit the `AlignBox` component (`src/overlay/AlignBox.tsx`) for accessibility: each cell should have `role="radio"`, `aria-checked`, and `aria-label` describing its alignment (e.g., "Align top-left"). The 3×3 grid should be wrapped in `role="radiogroup"` with an accessible name.
+- [!] **P2** Audit the `AlignBox` component (`src/overlay/AlignBox.tsx`) for accessibility: each cell should have `role="radio"`, `aria-checked`, and `aria-label` describing its alignment (e.g., "Align top-left"). The 3×3 grid should be wrapped in `role="radiogroup"` with an accessible name.
 
 ---
 
 ## P2 — Test Coverage Gaps
 
-- [ ] **P2** In `src/overlay/__tests__/`, there is no test for `CommandPalette`. Write `commandPalette.test.ts` covering: (1) `,` key opens the palette, (2) typing filters commands, (3) enter executes selected command, (4) escape closes palette, (5) palette includes commands for all keyboard shortcuts.
+- [!] **P2** In `src/overlay/__tests__/`, there is no test for `CommandPalette`. Write `commandPalette.test.ts` covering: (1) `,` key opens the palette, (2) typing filters commands, (3) enter executes selected command, (4) escape closes palette, (5) palette includes commands for all keyboard shortcuts.
 
 ---
 
 ## P2 — Directory Restructure
 
-- [ ] **P2** Restructure `src/overlay/` from a flat 103-file directory into domain subdirectories. Target structure: `sections/` (9 section files), `editors/` (19 sub-editor components), `controls/` (11 shared controls), `shell/` (Overlay, Header, Footer, Toolbar, Selector + auxiliary panels), `overlays/` (6 canvas overlays), `hooks/` (9 use*.ts files), `engine/` (apply, infer, scope, statePreview, hmr + parsers/utils), `tokens/` (theme, timing, panelConstants, panelStyles, panelUtils). Update all import paths. Run `npm run typecheck` and `npm test` after to verify nothing breaks. Reference `src/overlay/DIRECTORY.md` for the exact file-to-directory mapping.
+- [!] **P2** Restructure `src/overlay/` from a flat 103-file directory into domain subdirectories. Target structure: `sections/` (9 section files), `editors/` (19 sub-editor components), `controls/` (11 shared controls), `shell/` (Overlay, Header, Footer, Toolbar, Selector + auxiliary panels), `overlays/` (6 canvas overlays), `hooks/` (9 use*.ts files), `engine/` (apply, infer, scope, statePreview, hmr + parsers/utils), `tokens/` (theme, timing, panelConstants, panelStyles, panelUtils). Update all import paths. Run `npm run typecheck` and `npm test` after to verify nothing breaks. Reference `src/overlay/DIRECTORY.md` for the exact file-to-directory mapping.
 
 ---
 

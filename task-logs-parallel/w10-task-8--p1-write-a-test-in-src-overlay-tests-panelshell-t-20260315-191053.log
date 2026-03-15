@@ -1,1 +1,18 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+The test confirms exactly what we suspected — 5 of 6 assertions pass, with one failing:
+
+- **`layout.panelWidth` is 340, not the spec's 300px** — the token drifted from the spec. Meanwhile `Overlay.tsx:1558` hardcodes `width: 300` directly, bypassing the token entirely.
+
+`★ Insight ─────────────────────────────────────`
+This test exposes a real design-token drift problem:
+1. `layout.panelWidth` was likely bumped to 340 during development but the Overlay still hardcodes `300` — meaning the token is unused for the panel's own width.
+2. The fix path is either: update the token back to 300 (matching what's rendered), or update the Overlay to use the token and decide which width is correct.
+3. The other 4 checks (border radius, `border.subtle` separator token, 13px/500 header typography) all match the spec perfectly.
+`─────────────────────────────────────────────────`
+
+The test file is at `src/overlay/__tests__/panelShell.test.ts` with 6 tests — 5 passing, 1 failing on `layout.panelWidth` (340 vs expected 300).
+
+---
+**Asked:** Write a panelShell test verifying panel width, border radius, separator token, and header typography.
+**Did:** Created `src/overlay/__tests__/panelShell.test.ts` with 6 assertions across 4 spec requirements. 5 pass; 1 fails revealing `layout.panelWidth` is 340 (not the spec's 300), while `Overlay.tsx` hardcodes `300` separately.
+---

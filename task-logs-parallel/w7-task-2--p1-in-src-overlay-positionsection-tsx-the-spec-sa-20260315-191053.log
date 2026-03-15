@@ -1,1 +1,11 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+Clean build, no errors.
+
+`★ Insight ─────────────────────────────────────`
+The fix wraps both the toggle button (line 365) and the expanded float/clear rows (line 399) in a single `{(position === "sticky" || position === "fixed") && (<>...</>)}` fragment. This ensures the entire float/clear UI — collapsed and expanded — is hidden for `static`, `relative`, and `absolute`. The `showFloatClear` state still works as before within the conditional; it just never gets a chance to render outside sticky/fixed.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Verify and fix float/clear conditional visibility in PositionSection — should only show for sticky/fixed.
+**Did:** Confirmed float/clear was unconditionally rendered. Wrapped the toggle button + expanded content in `(position === "sticky" || position === "fixed")` guard. Build passes cleanly.
+---
