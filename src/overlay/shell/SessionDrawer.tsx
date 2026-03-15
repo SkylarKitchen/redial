@@ -13,8 +13,8 @@ import { getDisplayClass, formatCSSDiff } from "../util";
 import { resolveSource, getModuleClassInfo } from "../core/sourcemap";
 import { timing } from "../timing";
 import { Button } from "@/components/ui/button";
-import { text, border, surface, color, destructiveAlpha } from "./theme";
-import { getConfig } from "./core/config";
+import { text, border, surface, color, destructiveAlpha } from "../theme";
+import { getConfig } from "../core/config";
 
 interface SessionDrawerProps {
   open: boolean;

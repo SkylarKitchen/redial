@@ -8,10 +8,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { buildPromptContext } from "./core/elementContext";
-import { getDisplayClass } from "./util";
-import { getReactSource } from "./core/sourcemap";
-import { timing } from "./timing";
+import { buildPromptContext } from "../core/elementContext";
+import { getDisplayClass } from "../util";
+import { getReactSource } from "../core/sourcemap";
+import { timing } from "../timing";
 import { Copy, Sparkles } from "lucide-react";
 import { text, border, color, blackAlpha, primaryAlpha, bgAlpha, shadow, font } from "./theme";
 import { ms } from "./timing";

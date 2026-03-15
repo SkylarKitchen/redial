@@ -1,1 +1,25 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All three icons resolve correctly from `lucide-react`.
+
+`★ Insight ─────────────────────────────────────`
+**What was verified and fixed:**
+1. The gap linked/unlinked behavior was already fully correct — `gapLocked=true` uses the `gap` shorthand (which CSS resolves to both `row-gap` + `column-gap`), and `gapLocked=false` shows two independent sliders writing `row-gap` and `column-gap` separately.
+2. The visual fix: `Link` (chain) icon for locked state → `Unlink` (broken chain) icon for unlocked state. This matches how `GapRow` in `layoutControls.tsx` already differentiates with `LockIcon`/`UnlockIcon`, and follows the design principle from `BordersSection.tsx` where different visual modes get distinct icons.
+`─────────────────────────────────────────────────`
+
+## Summary
+
+**Gap link/unlink behavior: fully implemented and correct.** Here's the full flow:
+
+| State | UI | CSS Applied | Icon |
+|-------|-----|-------------|------|
+| Locked (`gapLocked=true`) | Single "Gap" slider | `gap: Npx` (sets both row + column) | `Link` (chain) |
+| Unlocked (`gapLocked=false`) | Two sliders: "Row Gap" + "Col Gap" | `row-gap: Npx` + `column-gap: Mpx` independently | `Unlink` (broken chain) ← **fixed** |
+| Re-locking | Syncs both to current gap value | Applies both `row-gap` + `column-gap` to match | — |
+
+**Change made:** Replaced `<Link>` with `<Unlink>` on the 2 unlocked-state buttons (grid + flex sections) so the icon visually communicates "currently unlinked — click to re-link." This applies to both the grid gap section (line ~559) and the flex gap section (line ~740).
+
+---
+**Asked:** Verify gap link/unlink toggle behavior in LayoutSection, add if missing
+**Did:** Confirmed logic is correct; fixed visual affordance — unlocked-state buttons now show `Unlink` icon instead of same `Link` icon for both states
+---
