@@ -2,7 +2,7 @@ import React, { useState, useCallback, memo } from "react";
 import { Section, SliderRow } from "../controls";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
-import { IconButtonGroup } from "../IconButtonGroup";
+import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { RowLabel } from "./layoutControls";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";

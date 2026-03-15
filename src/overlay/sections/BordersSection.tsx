@@ -1,11 +1,11 @@
 import React, { useState, useCallback, memo, useEffect } from "react";
 import { Section, ValueInput, ColorRow, useResetPopover } from "../controls";
-import { SideSelector } from "../SideSelector";
+import { SideSelector } from "../controls/SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
-import { IconButtonGroup } from "../IconButtonGroup";
-import { UnitSelector } from "../UnitSelector";
+import { IconButtonGroup } from "../controls/IconButtonGroup";
+import { UnitSelector } from "../controls/UnitSelector";
 import { Slider } from "@/components/ui/slider";
-import { LabelScrub } from "../LabelScrub";
+import { LabelScrub } from "../controls/LabelScrub";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { resetProp, resetAndReadNum, beginBatch, endBatch } from "../core/apply";

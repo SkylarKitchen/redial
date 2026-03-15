@@ -10,8 +10,8 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X, Plus } from "lucide-react";
-import { SegmentedControl } from "./SegmentedControl";
-import { UnitSelector } from "./UnitSelector";
+import { SegmentedControl } from "./controls/SegmentedControl";
+import { UnitSelector } from "./controls/UnitSelector";
 import { text, color, font, border, surface, shadow, zIndex, primaryAlpha } from "./theme";
 import { ms } from "./timing";
 

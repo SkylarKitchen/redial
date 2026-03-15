@@ -9,7 +9,7 @@
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import { Section, SelectRow, ColorRow, useResetPopover, SubSectionHeader } from "../controls";
-import { IconButtonGroup } from "../IconButtonGroup";
+import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";

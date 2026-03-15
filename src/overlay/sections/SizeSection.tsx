@@ -7,8 +7,8 @@
 
 import React, { useState, useCallback, useMemo, memo } from "react";
 import { Section, SelectRow, TextRow } from "../controls";
-import { IconButtonGroup } from "../IconButtonGroup";
-import { WebflowSegmentedControl } from "../WebflowSegmentedControl";
+import { IconButtonGroup } from "../controls/IconButtonGroup";
+import { WebflowSegmentedControl } from "../controls/WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";

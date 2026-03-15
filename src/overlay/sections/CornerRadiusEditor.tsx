@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { UnitSelector } from "../UnitSelector";
+import { UnitSelector } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash } from "../controls";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
 import { color, text, border, surface, font, primaryAlpha, type IndicatorType, indicatorStyle } from "../theme";

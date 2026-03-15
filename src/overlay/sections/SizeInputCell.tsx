@@ -14,8 +14,8 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { LabelScrub } from "../LabelScrub";
-import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../UnitSelector";
+import { LabelScrub } from "../controls/LabelScrub";
+import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "../controls";
 import { color, text, border, surface, font, primaryAlpha } from "../theme";
 import type { IndicatorType } from "../theme";

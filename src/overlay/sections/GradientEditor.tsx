@@ -6,7 +6,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ColorPickerEnhanced } from "../ColorPickerEnhanced";
+import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
 import { cssColorToHex, hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { ms } from "../timing";

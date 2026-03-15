@@ -25,7 +25,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { UnitSelector } from "../UnitSelector";
+import { UnitSelector } from "../controls/UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch, resetProp, resetAndReadNum } from "../core/apply";
 import { ms } from "../timing";

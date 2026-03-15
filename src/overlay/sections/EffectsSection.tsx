@@ -16,7 +16,7 @@ import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
-import { IconButtonGroup } from "../IconButtonGroup";
+import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import {
   parseNum,
