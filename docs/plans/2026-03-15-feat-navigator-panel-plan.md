@@ -171,6 +171,103 @@ if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
 **Test: expandedNodes cleanup**
 - When an element is removed from DOM, it's cleaned from expandedNodes on next rebuild
 
+#### Phase 5: Virtualized Rendering
+
+**Goal**: Only render tree rows visible in the scroll viewport. Prevents perf degradation on pages with 200+ filtered nodes.
+
+**New file: `src/overlay/useVirtualTree.ts`**
+- Custom hook: `useVirtualTree({ flatNodes, rowHeight, containerHeight, scrollTop })`
+- Returns `{ visibleNodes, totalHeight, offsetY }` — the slice of `FlatNode[]` to render, total scrollable height, and top padding
+- `ROW_HEIGHT` (26px) is already defined in `NavigatorNode.tsx` — export it
+- Overscan: render 5 extra rows above/below viewport to avoid flash during fast scroll
+
+**Changes to NavigatorPanel.tsx:**
+- Replace direct map over `flatNodes` with `useVirtualTree` output
+- Scrollable container: `onScroll` handler updates `scrollTop` state
+- Outer div: `height: totalHeight` (creates correct scrollbar)
+- Inner div: `transform: translateY(${offsetY}px)` (positions visible slice)
+
+**Changes to NavigatorNode.tsx:**
+- Export `ROW_HEIGHT` constant (currently local `const ROW_HEIGHT = 26`)
+
+**Test cases (`useVirtualTree.test.ts`):**
+- 100 flat nodes, container 260px (10 visible) → returns ~20 nodes (10 + overscan)
+- scrollTop = 0 → first 15 nodes returned
+- scrollTop = 2600 (bottom) → last 15 nodes returned
+- Empty list → returns empty
+
+#### Phase 6: Drag-to-Reorder
+
+**Goal**: Drag tree nodes to rearrange siblings or move into/out of containers. DOM mutations integrate with the undo stack.
+
+**New file: `src/overlay/navigatorDrag.ts`**
+
+Core exports:
+```typescript
+export interface DragState {
+  draggedEl: Element;
+  draggedNode: TreeNode;
+  dropTarget: DropTarget | null;
+}
+
+export type DropTarget =
+  | { type: "between"; parent: Element; before: Element | null } // insert before sibling (null = append)
+  | { type: "into"; container: Element }; // append to container
+
+export function canDrop(dragged: Element, target: DropTarget): boolean;
+export function executeDrop(dragged: Element, target: DropTarget): { undo: () => void };
+```
+
+**`canDrop` rules:**
+- Cannot drag `<body>`, `<html>`, `<head>`
+- Cannot drop into void elements (`<img>`, `<input>`, `<br>`, `<hr>`, `<area>`, `<col>`, `<embed>`, `<source>`, `<track>`, `<wbr>`)
+- Cannot drop an element into itself or its own descendants
+- Cannot drop into Redial's own UI (`.__tuner-root`)
+
+**`executeDrop` logic:**
+1. Save original position: `{ parent: el.parentElement, nextSibling: el.nextElementSibling }`
+2. Execute DOM mutation: `target.parent.insertBefore(el, target.before)` or `target.container.appendChild(el)`
+3. Return `undo` closure that restores original position
+
+**Undo integration with `apply.ts`:**
+- Add new undo entry type: `DomMoveUndoEntry = { type: "dom-move"; el: Element; undo: () => void; redo: () => void }`
+- Extend `UndoEntry` union in `apply.ts` to include `DomMoveUndoEntry`
+- `beginBatch()`/`endBatch()` wraps the drag so it's a single undo entry
+- After drop, push entry to undo stack + notify listeners
+
+**Changes to NavigatorNode.tsx:**
+- Add `draggable` attribute and drag handle affordance (grip dots, similar to panel header)
+- `onDragStart`: set `DragState` in parent
+- Drag handle only on left side (before chevron), keeps click-to-select on the row itself
+
+**Changes to NavigatorPanel.tsx:**
+- Local state: `dragState: DragState | null`
+- During drag: render drop indicator (blue line between rows / blue highlight on container row)
+- `onDragOver` on each row computes drop target based on cursor Y position:
+  - Top third of row → insert before this node
+  - Bottom third → insert after this node
+  - Middle third → drop into this node (if it can have children)
+- `onDrop`: call `executeDrop`, push undo entry, clear `dragState`
+- `onDragEnd`: clear `dragState` if drop didn't occur (cancelled)
+- MutationObserver will pick up the DOM change and rebuild tree automatically (200ms debounce)
+
+**Edge case: drag during MutationObserver rebuild:**
+- Suppress MutationObserver rebuilds while `dragState !== null`
+- Resume observer after drop completes
+
+**Visual feedback:**
+- Drop indicator: 2px horizontal line, `color.primary`, positioned between rows
+- Container highlight: `primaryAlpha(0.08)` background on target container row
+- Dragged row: `opacity: 0.4` on the original position
+- Invalid drop: no indicator shown (cursor stays `not-allowed`)
+
+**Test cases (`navigatorDrag.test.ts`):**
+- `canDrop`: body/html/head rejected, void elements rejected, self-drop rejected, descendant-drop rejected
+- `executeDrop` between siblings: DOM order changes correctly
+- `executeDrop` into container: element appended correctly
+- `executeDrop` undo: original position restored
+- `executeDrop` redo: mutation re-applied
+
 ## Acceptance Criteria
 
 ### Functional Requirements
@@ -191,6 +288,14 @@ if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
 - [ ] Panel is draggable with snap-to-edge behavior
 - [ ] Navigator can coexist with inspector (both open simultaneously)
 - [ ] Element count shown in footer
+- [ ] Virtualized rendering: only rows in viewport are mounted
+- [ ] Smooth scrolling with overscan (no flash on fast scroll)
+- [ ] Drag tree node to reorder siblings
+- [ ] Drag tree node into/out of containers
+- [ ] Drop indicator shows valid insertion point
+- [ ] Cannot drag body/html/head or drop into void elements
+- [ ] Drag-to-reorder integrates with Cmd+Z undo
+- [ ] MutationObserver paused during active drag
 
 ### Non-Functional Requirements
 
@@ -200,6 +305,7 @@ if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
 - [ ] MutationObserver debounce: 200ms
 - [ ] No TypeScript errors (`npm run build`)
 - [ ] All existing + new tests pass (`npm test`)
+- [ ] Virtualized tree handles 500+ nodes without jank
 
 ## Dependencies & Prerequisites
 
