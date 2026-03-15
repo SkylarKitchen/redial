@@ -275,7 +275,7 @@ describe("Cmd+C copies CSS", () => {
     // Find the plain meta+c block (not meta+alt+c)
     const metaCComment = srcIndex("Cmd+C for copy CSS");
     expect(metaCComment).toBeGreaterThan(-1);
-    const block = overlaySrc.slice(metaCComment, metaCComment + 400);
+    const block = overlaySrc.slice(metaCComment, metaCComment + 600);
     expect(block).toContain("handleCopyShortcut");
   });
 

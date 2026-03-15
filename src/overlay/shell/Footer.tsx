@@ -249,7 +249,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onClick={() => setCopyOpen((o) => !o)}
             onMouseEnter={() => setClipboardHovered(true)}
             onMouseLeave={() => setClipboardHovered(false)}
-            title="Copy, paste, import styles"
+            title="Copy CSS (⌘C)"
             style={{
               display: "inline-flex",
               alignItems: "center",
