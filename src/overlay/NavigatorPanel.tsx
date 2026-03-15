@@ -261,18 +261,22 @@ export function NavigatorPanel({
       });
     }
 
-    // Scroll the selected row into view after React renders
+    // Scroll the selected row into view using index-based positioning
     requestAnimationFrame(() => {
-      const container = scrollRef.current;
-      if (!container) return;
-      const row = container.querySelector(
-        `[data-nav-el="true"][aria-selected="true"]`,
-      );
-      if (row) {
-        row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      const target = selectedEl;
+      const idx = flatNodes.findIndex((fn) => fn.node.el === target);
+      if (idx >= 0 && scrollRef.current) {
+        const targetScroll = idx * ROW_HEIGHT;
+        const container = scrollRef.current;
+        if (
+          targetScroll < container.scrollTop ||
+          targetScroll > container.scrollTop + containerHeight - ROW_HEIGHT
+        ) {
+          container.scrollTop = targetScroll - containerHeight / 2;
+        }
       }
     });
-  }, [selectedEl, tree]);
+  }, [selectedEl, tree, flatNodes, containerHeight]);
 
   // ── Keyboard navigation ──
   const handleKeyDown = useCallback(
@@ -484,12 +488,13 @@ export function NavigatorPanel({
           </button>
         </div>
 
-        {/* ── Tree body ── */}
+        {/* ── Tree body (virtualized) ── */}
         <div
           ref={scrollRef}
           role="tree"
           tabIndex={0}
           onKeyDown={handleKeyDown}
+          onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
           style={{
             flex: 1,
             minHeight: 0,
@@ -498,19 +503,25 @@ export function NavigatorPanel({
             outline: "none",
           }}
         >
-          {flatNodes.map((flat, i) => (
-            <div key={getStableKey(flat.node.el)} data-nav-el="true">
-              <NavigatorNode
-                node={flat.node}
-                depth={flat.depth}
-                isExpanded={expandedNodes.has(flat.node.el)}
-                isSelected={flat.node.el === selectedEl}
-                isFocused={i === focusedIndex}
-                onToggle={() => handleToggle(flat.node.el)}
-                onSelect={() => onSelectElement(flat.node.el)}
-              />
+          {/* Spacer div for total scroll height */}
+          <div style={{ height: totalHeight, position: "relative" }}>
+            {/* Positioned visible slice */}
+            <div style={{ transform: `translateY(${offsetY}px)` }}>
+              {visibleNodes.map((flat) => (
+                <div key={getStableKey(flat.node.el)} data-nav-el="true">
+                  <NavigatorNode
+                    node={flat.node}
+                    depth={flat.node.depth}
+                    isExpanded={expandedNodes.has(flat.node.el)}
+                    isSelected={flat.node.el === selectedEl}
+                    isFocused={flat.index === focusedIndex}
+                    onToggle={() => handleToggle(flat.node.el)}
+                    onSelect={() => onSelectElement(flat.node.el)}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
 
       </motion.div>
