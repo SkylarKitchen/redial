@@ -5,27 +5,27 @@
  */
 
 import { useState, useCallback, memo } from "react";
-import { ms } from "../timing";
-import { Section, SliderRow, SelectRow, TextRow, ValueInput, useResetPopover } from "../controls";
+import { ms } from "./timing";
+import { Section, SliderRow, SelectRow, TextRow, ValueInput, useResetPopover } from "./controls";
 import { AlignBox } from "./AlignBox";
-import { IconButtonGroup } from "../IconButtonGroup";
-import { SegmentedControl } from "../SegmentedControl";
-import { LabelScrub } from "../LabelScrub";
-import { UnitSelector } from "../UnitSelector";
-import type { IndicatorType } from "../theme";
-import { convertUnit } from "../unitConversion";
-import { useConversionHint } from "../hooks/useConversionHint";
-import { parseNum } from "../cssParsers";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
-import { detectUnit, type SectionCtx } from "../panelUtils";
+import { IconButtonGroup } from "./IconButtonGroup";
+import { SegmentedControl } from "./SegmentedControl";
+import { LabelScrub } from "./LabelScrub";
+import { UnitSelector } from "./UnitSelector";
+import type { IndicatorType } from "./theme";
+import { convertUnit } from "./unitConversion";
+import { useConversionHint } from "./hooks/useConversionHint";
+import { parseNum } from "./cssParsers";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
+import { detectUnit, type SectionCtx } from "./panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
-import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "../panelConstants";
-import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
-import { parseGridTemplate, serializeGridTemplate } from "../GridSettingsPopup";
+import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "./panelConstants";
+import { GridRowDirectionIcon, GridColumnDirectionIcon } from "./webflowIcons";
+import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
 import { Link, Grid3x3 } from "lucide-react";
-import { cssToTwClass } from "../tailwind";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "../theme";
-import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "../panelStyles";
+import { cssToTwClass } from "./tailwind";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "./theme";
+import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "./panelStyles";
 
 // ─── Compact label with highlight ─────────────────────────────────────
 

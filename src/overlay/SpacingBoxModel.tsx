@@ -24,14 +24,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { UnitSelector } from "../UnitSelector";
+import { UnitSelector } from "./UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
-import { beginBatch, endBatch, resetProp, resetAndReadNum } from "../core/apply";
-import { ms } from "../timing";
-import { setScrubGroup, setHoverGroup } from "../core/scrubState";
-import { stepForUnit, precisionForStep } from "../panelUtils";
-import type { IndicatorType } from "../theme";
-import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing, zIndex } from "../theme";
+import { beginBatch, endBatch, resetProp, resetAndReadNum } from "./core/apply";
+import { ms } from "./timing";
+import { setScrubGroup, setHoverGroup } from "./core/scrubState";
+import { stepForUnit, precisionForStep } from "./panelUtils";
+import type { IndicatorType } from "./theme";
+import { spacingZone, surface, font, blackAlpha, color, text, bgAlpha, border, shadow, focusRing, zIndex } from "./theme";
 
 interface SpacingBoxModelProps {
   margin: { top: number; right: number; bottom: number; left: number };

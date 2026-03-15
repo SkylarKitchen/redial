@@ -10,8 +10,8 @@
  */
 
 import { useState, useCallback } from "react";
-import { ms } from "../timing";
-import { color, text, border, surface, font, blackAlpha } from "../theme";
+import { ms } from "./timing";
+import { color, text, border, surface, font, blackAlpha } from "./theme";
 
 export interface AlignBoxProps {
   justify: string;

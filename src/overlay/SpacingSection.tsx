@@ -1,10 +1,10 @@
 import React, { useState, memo } from "react";
-import { Section } from "../controls";
+import { Section } from "./controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
-import { buildConversionContext, convertUnit } from "../unitConversion";
-import { detectUnit, type SectionCtx } from "../panelUtils";
-import type { SpacingValues } from "../core/infer";
-import { SPACING_UNITS } from "../panelConstants";
+import { buildConversionContext, convertUnit } from "./unitConversion";
+import { detectUnit, type SectionCtx } from "./panelUtils";
+import type { SpacingValues } from "./core/infer";
+import { SPACING_UNITS } from "./panelConstants";
 interface SpacingSectionProps {
   ctx: SectionCtx;
   spacing: SpacingValues;

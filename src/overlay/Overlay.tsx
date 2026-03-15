@@ -1387,8 +1387,8 @@ export function Overlay() {
       <style dangerouslySetInnerHTML={{ __html: `
         .__tuner-root::-webkit-scrollbar,
         .__tuner-root *::-webkit-scrollbar {
-          width: 5px;
-          height: 5px;
+          width: 6px;
+          height: 6px;
         }
         .__tuner-root::-webkit-scrollbar-track,
         .__tuner-root *::-webkit-scrollbar-track {
@@ -1403,12 +1403,12 @@ export function Overlay() {
         .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
         .__tuner-root:hover::-webkit-scrollbar-thumb,
         .__tuner-root *:hover::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0.12);
+          background: ${surface.track};
         }
         .__tuner-root.is-scrolling::-webkit-scrollbar-thumb:hover,
         .__tuner-root:hover::-webkit-scrollbar-thumb:hover,
         .__tuner-root *:hover::-webkit-scrollbar-thumb:hover {
-          background: rgba(0,0,0,0.2);
+          background: ${blackAlpha(0.2)};
         }
         .__tuner-root,
         .__tuner-root *:not([data-radix-scroll-area-viewport]) {
@@ -1418,7 +1418,7 @@ export function Overlay() {
         .__tuner-root.is-scrolling,
         .__tuner-root:hover,
         .__tuner-root *:not([data-radix-scroll-area-viewport]):hover {
-          scrollbar-color: rgba(0,0,0,0.12) transparent;
+          scrollbar-color: ${surface.track} transparent;
         }
         /* Slider thumb styling — replaces browser defaults with light-theme matching thumb */
         .__tuner-root input[type="range"] {
