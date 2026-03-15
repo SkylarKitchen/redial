@@ -667,7 +667,12 @@ export function NavigatorPanel({
                       isDragging={nodeDragState?.draggedEl === flat.node.el}
                       isDraggedOver={isDropInto}
                       onToggle={() => handleToggle(flat.node.el)}
-                      onSelect={() => onSelectElement(flat.node.el)}
+                      onSelect={() => {
+                        onSelectElement(flat.node.el);
+                        setFocusedEl(flat.node.el);
+                        // Refocus tree container so onKeyDown keeps working
+                        scrollRef.current?.focus();
+                      }}
                       onDragStart={(e) => handleNodeDragStart(flat.node, e)}
                     />
                   </div>
