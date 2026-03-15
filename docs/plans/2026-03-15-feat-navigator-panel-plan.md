@@ -200,69 +200,82 @@ if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
 
 **Goal**: Drag tree nodes to rearrange siblings or move into/out of containers. DOM mutations integrate with the undo stack.
 
+**Existing infrastructure to reuse:**
+- `DragHandle.tsx` — Grip icon component (hover-reveal, grab/grabbing cursor). Reuse directly on each NavigatorNode row.
+- `useDragReorder.ts` — Reference for PointerEvent patterns (dead zone, setPointerCapture, displacement animation, settle timer). **Cannot reuse directly** because it operates on flat arrays via index-based reordering, while the navigator needs actual DOM mutations and cross-container moves.
+
 **New file: `src/overlay/navigatorDrag.ts`**
 
 Core exports:
 ```typescript
-export interface DragState {
+export interface NavDragState {
   draggedEl: Element;
   draggedNode: TreeNode;
   dropTarget: DropTarget | null;
+  offsetY: number;
 }
 
 export type DropTarget =
   | { type: "between"; parent: Element; before: Element | null } // insert before sibling (null = append)
   | { type: "into"; container: Element }; // append to container
 
+export function canDrag(el: Element): boolean;
 export function canDrop(dragged: Element, target: DropTarget): boolean;
-export function executeDrop(dragged: Element, target: DropTarget): { undo: () => void };
+export function executeDrop(dragged: Element, target: DropTarget): { undo: () => void; redo: () => void };
 ```
 
-**`canDrop` rules:**
+**`canDrag` rules:**
 - Cannot drag `<body>`, `<html>`, `<head>`
+
+**`canDrop` rules:**
 - Cannot drop into void elements (`<img>`, `<input>`, `<br>`, `<hr>`, `<area>`, `<col>`, `<embed>`, `<source>`, `<track>`, `<wbr>`)
-- Cannot drop an element into itself or its own descendants
+- Cannot drop an element into itself or its own descendants (`el.contains(target)`)
 - Cannot drop into Redial's own UI (`.__tuner-root`)
 
 **`executeDrop` logic:**
 1. Save original position: `{ parent: el.parentElement, nextSibling: el.nextElementSibling }`
 2. Execute DOM mutation: `target.parent.insertBefore(el, target.before)` or `target.container.appendChild(el)`
-3. Return `undo` closure that restores original position
+3. Return `undo` closure that restores original position + `redo` closure that re-executes the move
 
 **Undo integration with `apply.ts`:**
 - Add new undo entry type: `DomMoveUndoEntry = { type: "dom-move"; el: Element; undo: () => void; redo: () => void }`
 - Extend `UndoEntry` union in `apply.ts` to include `DomMoveUndoEntry`
-- `beginBatch()`/`endBatch()` wraps the drag so it's a single undo entry
-- After drop, push entry to undo stack + notify listeners
+- After drop, push entry directly to undo stack + notify listeners (no batch needed — single atomic operation)
+
+**Drag interaction (PointerEvent-based, following `useDragReorder.ts` patterns):**
+- `DragHandle` `onPointerDown` → `setPointerCapture` → 3px dead zone → enter drag mode
+- `pointermove`: update `offsetY`, compute `dropTarget` from cursor Y position
+- `pointerup`: if valid dropTarget, call `executeDrop`, push undo entry, clear state
+- `lostpointercapture` / window `blur`: cancel drag
+- `document.body.userSelect = "none"` during drag, restore on end
 
 **Changes to NavigatorNode.tsx:**
-- Add `draggable` attribute and drag handle affordance (grip dots, similar to panel header)
-- `onDragStart`: set `DragState` in parent
-- Drag handle only on left side (before chevron), keeps click-to-select on the row itself
+- Import and render `DragHandle` before the chevron (left side of row)
+- Pass `onPointerDown` from parent's drag handler
+- Drag handle visible on row hover (existing CSS pattern: `.__tuner-root *:hover > .__tuner-drag-handle`)
 
 **Changes to NavigatorPanel.tsx:**
-- Local state: `dragState: DragState | null`
+- Local state: `dragState: NavDragState | null`
 - During drag: render drop indicator (blue line between rows / blue highlight on container row)
-- `onDragOver` on each row computes drop target based on cursor Y position:
+- Drop target computation on each row based on cursor Y position:
   - Top third of row → insert before this node
   - Bottom third → insert after this node
   - Middle third → drop into this node (if it can have children)
-- `onDrop`: call `executeDrop`, push undo entry, clear `dragState`
-- `onDragEnd`: clear `dragState` if drop didn't occur (cancelled)
 - MutationObserver will pick up the DOM change and rebuild tree automatically (200ms debounce)
 
 **Edge case: drag during MutationObserver rebuild:**
 - Suppress MutationObserver rebuilds while `dragState !== null`
 - Resume observer after drop completes
 
-**Visual feedback:**
-- Drop indicator: 2px horizontal line, `color.primary`, positioned between rows
+**Visual feedback (matching `useDragReorder.ts` patterns):**
+- Drop indicator: 2px horizontal line, `color.primary`, positioned between rows (same as `dropLineStyle()`)
 - Container highlight: `primaryAlpha(0.08)` background on target container row
-- Dragged row: `opacity: 0.4` on the original position
-- Invalid drop: no indicator shown (cursor stays `not-allowed`)
+- Dragged row: `opacity: 0.4` on the original position, elevated with `zIndex: 50`
+- Invalid drop: no indicator shown (cursor stays default)
 
 **Test cases (`navigatorDrag.test.ts`):**
-- `canDrop`: body/html/head rejected, void elements rejected, self-drop rejected, descendant-drop rejected
+- `canDrag`: body/html/head rejected, normal elements accepted
+- `canDrop`: void elements rejected, self-drop rejected, descendant-drop rejected, tuner-root rejected
 - `executeDrop` between siblings: DOM order changes correctly
 - `executeDrop` into container: element appended correctly
 - `executeDrop` undo: original position restored
@@ -315,6 +328,8 @@ export function executeDrop(dragged: Element, target: DropTarget): { undo: () =>
 - `timing.ts` ← `timing.layout` for debounce, `ms()`, `springConfig()` (existing)
 - `theme.ts` ← all styling tokens (existing)
 - `motion/react` ← `AnimatePresence`, `motion` (existing dependency)
+- `DragHandle.tsx` ← existing grip icon component, reuse for Phase 6
+- `useDragReorder.ts` ← existing drag hook, reference for PointerEvent patterns (not directly reusable for DOM mutations)
 
 ## Key Files Summary
 
