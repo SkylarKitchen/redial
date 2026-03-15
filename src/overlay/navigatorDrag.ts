@@ -7,7 +7,7 @@
  * - DOM move execution with undo/redo support
  */
 
-import type { TreeNode } from "./navigatorFilter";
+import type { TreeNode } from "./navigator/navigatorFilter";
 
 // ─── Types ────────────────────────────────────────────────────────
 

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { TreeNode } from "../navigatorFilter";
+import type { TreeNode } from "../navigator/navigatorFilter";
 
 // We test the core logic directly — extract it from the hook's useMemo.
 // Since useVirtualTree is just useMemo over a pure calculation, we replicate

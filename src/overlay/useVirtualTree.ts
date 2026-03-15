@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from "react";
-import type { TreeNode } from "./navigatorFilter";
+import type { TreeNode } from "./navigator/navigatorFilter";
 
 // ─── Types ──────────────────────────────────────────────────────
 

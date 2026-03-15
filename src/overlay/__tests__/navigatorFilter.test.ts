@@ -8,7 +8,7 @@ import {
   countNodes,
   getAncestorsInTree,
   type TreeNode,
-} from "../navigatorFilter";
+} from "../navigator/navigatorFilter";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 
