@@ -11,8 +11,8 @@
 
 import { useRef, useCallback, useState } from "react";
 import { ms } from "./timing";
-import { setScrubActive } from "./scrubState";
-import { beginBatch, endBatch } from "./apply";
+import { setScrubActive } from "./core/scrubState";
+import { beginBatch, endBatch } from "./core/apply";
 import { color, text, font } from "./theme";
 
 export interface LabelScrubProps {

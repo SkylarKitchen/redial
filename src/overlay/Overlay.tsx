@@ -499,6 +499,13 @@ export function Overlay() {
       if (target?.isContentEditable) return;
       if (insidePanel) return;
 
+      // N to toggle navigator (no modifier, no selectedEl required)
+      if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
+        e.preventDefault();
+        setShowNavigator((v) => !v);
+        return;
+      }
+
       // / to open property search (when not in input/textarea)
       if (e.key === "/" && selectedEl && !selecting) {
         e.preventDefault();
@@ -621,12 +628,8 @@ export function Overlay() {
         setSelecting((s) => !s);
       }
 
-      // N to toggle navigator (no modifier, no selectedEl required)
-      if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
-        e.preventDefault();
-        setShowNavigator((v) => !v);
-        return;
-      }
+      // N to toggle navigator — moved below input guard (line ~498)
+      // so it doesn't fire while typing in text fields
 
       // Escape: dismiss modal first, then close search, then close panel
       if (e.key === "Escape" && selectedEl && !selecting) {

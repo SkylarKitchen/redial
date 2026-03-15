@@ -34,7 +34,7 @@ import {
   isCustomPropertyDirty,
   subscribeOverrides,
   getOverrideSnapshot,
-} from "./apply";
+} from "./core/apply";
 import { Section, ColorRow } from "./controls";
 import { UnitSelector } from "./UnitSelector";
 import { WebflowSegmentedControl } from "./WebflowSegmentedControl";

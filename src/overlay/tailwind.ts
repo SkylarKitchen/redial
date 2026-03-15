@@ -5,7 +5,7 @@
  * All functions are pure — no DOM access, no side effects.
  */
 
-import type { DiffEntry } from "./apply";
+import type { DiffEntry } from "./core/apply";
 
 /** Convert a CSS diff to a space-separated Tailwind v4 class string. */
 export function formatTailwindDiff(changes: DiffEntry[]): string {

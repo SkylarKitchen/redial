@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { font, zIndex, overlay, blackAlpha } from "./theme";
-import { getScrubGroup } from "./scrubState";
+import { getScrubGroup } from "./core/scrubState";
 
 // ---------------------------------------------------------------------------
 // Constants

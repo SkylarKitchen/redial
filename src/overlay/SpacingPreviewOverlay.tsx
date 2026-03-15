@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { getHoverGroup, getScrubGroup } from "./scrubState";
+import { getHoverGroup, getScrubGroup } from "./core/scrubState";
 import { spacingZone, zIndex } from "./theme";
 
 // ---------------------------------------------------------------------------

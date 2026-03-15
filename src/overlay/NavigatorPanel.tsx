@@ -29,7 +29,7 @@ import {
   type NavDragState,
   type DropTarget,
 } from "./navigatorDrag";
-import { pushDomMove } from "./apply";
+import { pushDomMove } from "./core/apply";
 import {
   color,
   text,
@@ -110,7 +110,7 @@ export function NavigatorPanel({
   const [expandedNodes, setExpandedNodes] = useState<Set<Element>>(
     () => new Set(),
   );
-  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [focusedEl, setFocusedEl] = useState<Element | null>(null);
 
   // ── Node drag-to-reorder state ──
   const [nodeDragState, setNodeDragState] = useState<NavDragState | null>(null);
@@ -259,11 +259,9 @@ export function NavigatorPanel({
     [pos],
   );
 
-  // ── Bidirectional selection sync ──
+  // ── Bidirectional selection sync: expand ancestors ──
   useEffect(() => {
     if (!selectedEl) return;
-
-    // Expand all ancestors so the selected node is visible
     const ancestors = getAncestorsInTree(tree, selectedEl);
     if (ancestors.length > 0) {
       setExpandedNodes((prev) => {
@@ -272,23 +270,31 @@ export function NavigatorPanel({
         return next;
       });
     }
+  }, [selectedEl, tree]);
 
-    // Scroll the selected row into view using index-based positioning
-    requestAnimationFrame(() => {
-      const target = selectedEl;
-      const idx = flatNodes.findIndex((fn) => fn.node.el === target);
-      if (idx >= 0 && scrollRef.current) {
-        const targetScroll = idx * ROW_HEIGHT;
-        const container = scrollRef.current;
-        if (
-          targetScroll < container.scrollTop ||
-          targetScroll > container.scrollTop + containerHeight - ROW_HEIGHT
-        ) {
-          container.scrollTop = targetScroll - containerHeight / 2;
-        }
+  // ── Bidirectional selection sync: scroll into view ──
+  // Separate effect so it runs *after* flatNodes recomputes from ancestor expansion
+  const pendingScrollRef = useRef<Element | null>(null);
+  useEffect(() => {
+    if (selectedEl) pendingScrollRef.current = selectedEl;
+  }, [selectedEl]);
+
+  useEffect(() => {
+    const target = pendingScrollRef.current;
+    if (!target) return;
+    const idx = flatNodes.findIndex((fn) => fn.node.el === target);
+    if (idx >= 0 && scrollRef.current) {
+      const targetScroll = idx * ROW_HEIGHT;
+      const container = scrollRef.current;
+      if (
+        targetScroll < container.scrollTop ||
+        targetScroll > container.scrollTop + containerHeight - ROW_HEIGHT
+      ) {
+        container.scrollTop = targetScroll - containerHeight / 2;
       }
-    });
-  }, [selectedEl, tree, flatNodes, containerHeight]);
+      pendingScrollRef.current = null;
+    }
+  }, [flatNodes, containerHeight]);
 
   // ── Keyboard navigation ──
   const handleKeyDown = useCallback(

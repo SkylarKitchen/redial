@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { beginBatch, endBatch } from "./apply";
+import { beginBatch, endBatch } from "./core/apply";
 
 export function useWheelAdjust(
   elRef: React.RefObject<HTMLElement | null>,

@@ -9,7 +9,7 @@
 
 import React, { useEffect, useRef, useCallback, useState } from "react";
 import { createPortal } from "react-dom";
-import { resetProp } from "./apply";
+import { resetProp } from "./core/apply";
 import { useFocusTrap } from "./useFocusTrap";
 import { color, border, surface, shadow, text, font, zIndex } from "./theme";
 import { ms } from "./timing";
