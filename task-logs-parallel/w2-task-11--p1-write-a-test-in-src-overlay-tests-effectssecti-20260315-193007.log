@@ -1,1 +1,23 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 74 new tests pass. The only failure is a pre-existing one in `cssLayerSpecificity.test.ts` (unrelated — it looks for a build artifact that doesn't exist in the test environment).
+
+`★ Insight ─────────────────────────────────────`
+**TypeScript quoted property keys**: When a TypeScript interface uses hyphenated property names like `"hue-rotate": number`, the key must be quoted. This means string searches for `hue-rotate:` fail — the actual character sequence is `hue-rotate":` (with a closing quote before the colon). This is a common gotcha when doing source text analysis.
+
+**Fallthrough vs explicit checks**: The `getUnit()` function in `TransformEditor.tsx` uses a fallthrough pattern — it checks `translate`, `rotate`, and `skew` explicitly, then returns `""` as default for everything else (including `scale`). The test verifies this by asserting the function doesn't assign a unit to `scale`, rather than looking for an explicit `scale` branch.
+`─────────────────────────────────────────────────`
+
+Here's what was written — **74 tests** across 5 test groups:
+
+| Group | Tests | Strategy |
+|-------|-------|----------|
+| (1) Opacity 0%–100% | 6 | Source analysis: verifies `min={0} max={100} unit="%" step={1}`, the `* 100` display transform, and `/100` on change |
+| (2) Inset toggle | 9 | Source analysis + parser tests: button wiring, title text, styling; `shadowToCSS`/`parseBoxShadow` inset round-trip |
+| (3) Multiple shadows | 14 | Source analysis + parser tests: array interface, X/Y/blur/spread/color controls, add/delete/reorder; multi-shadow parse/serialize |
+| (4) Transform editor | 25 | Source analysis + parser tests: type union, translate(X,Y,Z), scale(X,Y), rotate(angle), skew(X,Y); units, defaults, round-trips |
+| (5) Filter sliders | 20 | Source analysis + parser tests: all 8 keys in interface/meta/array, units per type, slider/input wiring, parse/serialize round-trips |
+
+---
+
+**Asked:** Write P1 acceptance tests for the Effects section covering opacity display, shadow inset, multi-shadows, transforms, and filter types.  
+**Did:** Created `src/overlay/__tests__/effectsSection.test.ts` with 74 passing tests verifying all 5 requirements through source text analysis and CSS parser function testing.

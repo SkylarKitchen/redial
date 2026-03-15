@@ -636,7 +636,12 @@ export function Overlay() {
 
       if (e.key === "`" && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
-        setSelecting((s) => !s);
+        if (selectedEl && !selecting) {
+          // Closing the panel — check for unsaved changes
+          handleCloseAttempt();
+        } else {
+          setSelecting((s) => !s);
+        }
       }
 
       // N to toggle navigator — moved below input guard (line ~498)
@@ -655,8 +660,7 @@ export function Overlay() {
           setShowSearch(false);
           return;
         }
-        setSelectedEl(null);
-        setInferResult(null);
+        handleCloseAttempt();
       }
 
       // D for diff peek (hold) / toggle (handled by button)
@@ -713,7 +717,7 @@ export function Overlay() {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll, handleCloseAttempt]);
 
   // --- Clipboard message auto-clear ---
   useEffect(() => {
@@ -1631,7 +1635,7 @@ export function Overlay() {
 
               <Header
                 element={selectedEl}
-                onClose={handleClose}
+                onClose={handleCloseAttempt}
                 onDragStart={handleDragStart}
                 totalChanges={totalChanges}
                 sessionOpen={false}
@@ -1761,6 +1765,65 @@ export function Overlay() {
                 hasClipboard={hasClipboardStyles()}
                 onPasteStyles={handlePasteStyles}
               />
+              <AnimatePresence>
+                {closeWarning && (() => {
+                  const count = overrideCount(selectedElRef.current);
+                  return (
+                    <motion.div
+                      key="close-warning"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{
+                        background: destructiveAlpha(0.08),
+                        fontSize: 12,
+                        fontFamily: font.sans,
+                        color: text.label,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "6px 10px",
+                        borderTop: `1px solid ${border.default}`,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <span>{count} unsaved change{count === 1 ? "" : "s"}</span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => { handleClose(); setCloseWarning(false); }}
+                          style={{
+                            background: surface.hover,
+                            border: `1px solid ${border.default}`,
+                            borderRadius: 4,
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            fontFamily: font.sans,
+                            color: text.label,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Discard
+                        </button>
+                        <button
+                          onClick={() => setCloseWarning(false)}
+                          style={{
+                            background: surface.hover,
+                            border: `1px solid ${border.default}`,
+                            borderRadius: 4,
+                            padding: "2px 8px",
+                            fontSize: 11,
+                            fontFamily: font.sans,
+                            color: text.label,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Keep Editing
+                        </button>
+                      </div>
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
             </>
           )}
 

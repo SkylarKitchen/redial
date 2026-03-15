@@ -38,10 +38,12 @@ function ToolButton({
   label,
   active,
   onClick,
+  shortcut,
 }: {
   label: string;
   active?: boolean;
   onClick: () => void;
+  shortcut?: string;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -49,6 +51,7 @@ function ToolButton({
     <button
       aria-label={label}
       aria-pressed={!!active}
+      title={shortcut ? `${label} (${shortcut})` : label}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -175,6 +178,7 @@ export function Toolbar({
             justifyContent: "center",
           }}
           onClick={handleFabClick}
+          title="Inspect element"
         >
           <Plus
             size={20}
@@ -203,11 +207,13 @@ export function Toolbar({
             >
               <ToolButton
                 label="Select"
+                shortcut="`"
                 active={selecting || (hasSelectedEl && activePanel.type === "inspector")}
                 onClick={onToggleSelecting}
               />
               <ToolButton
                 label="Navigator"
+                shortcut="N"
                 active={navigatorOpen}
                 onClick={onToggleNavigator}
               />
@@ -218,11 +224,13 @@ export function Toolbar({
               />
               <ToolButton
                 label="AI"
+                shortcut="T"
                 active={activePanel.type === "inspector" && "tab" in activePanel && activePanel.tab === "prompt"}
                 onClick={onOpenPrompt}
               />
               <ToolButton
-                label="Session"
+                label="Changes"
+                shortcut="H"
                 active={activePanel.type === "session"}
                 onClick={onToggleSession}
               />

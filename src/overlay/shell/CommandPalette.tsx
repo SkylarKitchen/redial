@@ -44,6 +44,8 @@ const ACTIONS = [
   "Copy Tailwind",
   "Paste Styles",
   "Toggle Diff",
+  "Toggle Changes Drawer",
+  "Toggle Navigator",
 ] as const;
 
 const CATEGORY_BADGE_STYLES: Record<SearchResult["category"], React.CSSProperties> = {
