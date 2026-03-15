@@ -267,8 +267,9 @@ export function NavigatorPanel({
           if (node.children.length > 0 && expandedNodes.has(node.el)) {
             handleToggle(node.el);
           } else {
-            // Move to parent
-            const parentEl = findParentEl(tree, node.el);
+            // Move to parent (reuse getAncestorsInTree — parent is the last ancestor)
+            const ancestors = getAncestorsInTree(tree, node.el);
+            const parentEl = ancestors.length > 0 ? ancestors[ancestors.length - 1] : null;
             if (parentEl) {
               const parentIdx = flatNodes.findIndex(
                 (f) => f.node.el === parentEl,
@@ -286,11 +287,6 @@ export function NavigatorPanel({
     [flatNodes, focusedIndex, expandedNodes, handleToggle, tree, onSelectElement],
   );
 
-  // Reset focus index on tree rebuild
-  useEffect(() => {
-    setFocusedIndex(-1);
-  }, [rebuildKey]);
-
   // ── MutationObserver for live DOM sync ──
   useEffect(() => {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -306,6 +302,7 @@ export function NavigatorPanel({
           }
           return next;
         });
+        setFocusedIndex(-1);
         setRebuildKey((k) => k + 1);
       }, timing.layout);
     });
