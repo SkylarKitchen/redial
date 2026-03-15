@@ -96,6 +96,7 @@ class PanelErrorBoundary extends Component<
 export function Overlay() {
   const [selecting, setSelecting] = useState(false);
   const [selectedEl, setSelectedEl] = useState<Element | null>(null);
+  const [pinned, setPinned] = useState(false);
   const [showNavigator, setShowNavigator] = useState(false);
   const selectedElRef = useRef(selectedEl);
   useEffect(() => { selectedElRef.current = selectedEl; }, [selectedEl]);
@@ -281,7 +282,7 @@ export function Overlay() {
 
   // Panel position (draggable)
   // anchor tracks which horizontal edge the panel is snapped to so resize keeps it pinned
-  const [pos, setPos] = useState({ x: window.innerWidth - 340, y: 16 });
+  const [pos, setPos] = useState({ x: window.innerWidth - PANEL_WIDTH - SNAP_MARGIN, y: SNAP_MARGIN });
   const [anchor, setAnchor] = useState<"left" | "right" | null>("right");
   const [snapping, setSnapping] = useState(false);
   const [panelDragging, setPanelDragging] = useState(false);
@@ -753,7 +754,7 @@ export function Overlay() {
     const cls = el.classList.length > 0 ? el.classList[0] : "";
     announce(`Selected ${tag}${cls ? `.${cls}` : ""}`);
     // Reset position to top-right default
-    setPos({ x: window.innerWidth - 340, y: 16 });
+    setPos({ x: window.innerWidth - PANEL_WIDTH - SNAP_MARGIN, y: SNAP_MARGIN });
     setAnchor("right");
   }, []);
 

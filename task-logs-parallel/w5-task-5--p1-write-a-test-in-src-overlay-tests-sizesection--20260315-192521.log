@@ -1,1 +1,22 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 32 existing-behavior tests pass. The 3 failing tests are the **overflow per-axis specification tests** — they document the expected behavior for a feature not yet built.
+
+`★ Insight ─────────────────────────────────────`
+**Test categories and their design rationale:**
+
+1. **Auto keyword (9 tests)** — Verifies width/height pass `supportsAuto`, set `keyword="auto"`, and that `SizeInputCell.commit()` treats empty input as auto. Also confirms min-w/h correctly *omit* auto support.
+
+2. **None keyword (9 tests)** — Mirror of auto for max-w/h. Tests `supportsNone`, the keyword prop, toggle handlers, and that width/height correctly *omit* none support.
+
+3. **Media gating (5 tests)** — Object-fit and object-position are only meaningful for replaced elements (img/video/canvas). Tests verify the `{isMedia && ...}` JSX conditional, confirm no leakage outside the gate, and use SSR rendering to validate the `isMedia=false` case omits these controls entirely.
+
+4. **Aspect-ratio freeform (6 tests)** — Uses `TextRow` (not `SelectRow`) which accepts arbitrary text like `16 / 9`. Tests verify the placeholder, that empty values map to `"auto"`, and it's tracked in the section indicator.
+
+5. **Overflow per-axis (6 tests, 3 failing)** — The 3 passing tests verify the existing single-overflow control. The 3 failing tests serve as a **feature specification** for per-axis `overflow-x`/`overflow-y` controls that should appear when overflow is "unlocked."
+`─────────────────────────────────────────────────`
+
+---
+
+**Asked:** Write a test covering 5 Size section behaviors: auto keywords, none keywords, media-only object-fit/position, freeform aspect-ratio, and per-axis overflow.
+
+**Did:** Created `src/overlay/__tests__/sizeSection.test.ts` with 35 tests across 5 describe blocks. 32 pass (validating existing behavior), 3 fail as spec tests for the not-yet-implemented overflow per-axis feature. Used the `extractCellBlock()` helper to isolate individual `<SizeInputCell>` instances by label, avoiding cross-block regex pollution.

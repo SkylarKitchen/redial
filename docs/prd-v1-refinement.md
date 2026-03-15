@@ -61,7 +61,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** Write a test in `src/overlay/__tests__/spacingBoxModel.test.ts` that verifies: (1) click on a value enters edit mode, (2) arrow up/down increments/decrements by 1, (3) shift+arrow increments by 10, (4) tab moves between values in order (top → right → bottom → left), (5) padding values cannot go negative while margin values can.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/sizeSection.test.ts` that verifies: (1) width/height support `auto` as a keyword value (not just numeric), (2) min/max-width/height support `none` as a keyword, (3) object-fit and object-position only appear for media elements (`img`, `video`, `canvas`), (4) aspect-ratio accepts freeform text input like "16 / 9", (5) overflow per-axis controls (`overflow-x`, `overflow-y`) appear when overflow is "unlocked".
+- [x] **P1** Write a test in `src/overlay/__tests__/sizeSection.test.ts` that verifies: (1) width/height support `auto` as a keyword value (not just numeric), (2) min/max-width/height support `none` as a keyword, (3) object-fit and object-position only appear for media elements (`img`, `video`, `canvas`), (4) aspect-ratio accepts freeform text input like "16 / 9", (5) overflow per-axis controls (`overflow-x`, `overflow-y`) appear when overflow is "unlocked".
 
 - [ ] **P1** Write a test in `src/overlay/__tests__/positionSection.test.ts` that verifies: (1) offset controls (top/right/bottom/left) are hidden when position is `static`, (2) they appear for `relative`, `absolute`, `fixed`, `sticky`, (3) z-index accepts `auto` as a keyword and numeric values from -1 to 9999, (4) changing position from `static` to `absolute` reveals the offset diagram with smooth animation.
 
