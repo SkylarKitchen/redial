@@ -6,7 +6,7 @@
  * receives a SectionCtx prop bundle for element/apply/indicator access.
  */
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { SpacingValues } from "../core/infer";
 import { applyInlineStyle, stateKey } from "../core/apply";
 import { applyClassStyle, isTailwindElement, type Scope } from "../core/scope";
@@ -28,6 +28,8 @@ import { BackgroundsSection } from "../sections/BackgroundsSection";
 import { BordersSection } from "../sections/BordersSection";
 import { EffectsSection } from "../sections/EffectsSection";
 import { CSSVariablesSection } from "../sections/CSSVariablesSection";
+
+const EMPTY_MEMORY: Record<string, boolean> = {};
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -66,9 +68,13 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   const [localSection, setLocalSection] = useState<string | null>(null);
   const expandedSection = controlledSection !== undefined ? controlledSection : localSection;
   const setExpandedSection = onExpandSection ?? setLocalSection;
+  // Use a ref so handleSectionToggle doesn't depend on expandedSection,
+  // keeping a stable callback reference across renders (critical for memo).
+  const expandedRef = useRef(expandedSection);
+  expandedRef.current = expandedSection;
   const handleSectionToggle = useCallback((title: string) => {
-    setExpandedSection(expandedSection === title ? null : title);
-  }, [expandedSection, setExpandedSection]);
+    setExpandedSection(expandedRef.current === title ? null : title);
+  }, [setExpandedSection]);
 
   /** Build fresh conversion context on demand */
   const getConversionCtx = useCallback(() => buildConversionContext(element), [element]);
@@ -165,11 +171,18 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     onToggle: handleSectionToggle,
   } : {};
 
+  // ── Stable section memory props (avoid new refs every render) ──
+  const stableMemory = sectionMemory ?? EMPTY_MEMORY;
+  const handleMemoryUpdate = useCallback(
+    (name: string, open: boolean) => onSectionMemoryChange?.(prev => ({ ...prev, [name]: open })),
+    [onSectionMemoryChange],
+  );
+
   // ── Render ──
   return (
     <SectionMemoryProvider
-      memory={sectionMemory ?? {}}
-      onUpdate={(name, open) => onSectionMemoryChange?.(prev => ({ ...prev, [name]: open }))}
+      memory={stableMemory}
+      onUpdate={handleMemoryUpdate}
     >
     <div className="font-sans">
       {noResults && (

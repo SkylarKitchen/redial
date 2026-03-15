@@ -7,7 +7,7 @@
  * appropriate controls for each.
  */
 
-import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import React, { memo, useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "../core/apply";
 import type { IndicatorType } from "../theme";
 import { Section, ColorRow, SliderRow } from "../controls";
@@ -247,7 +247,7 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function CSSVariablesSection({
+export const CSSVariablesSection = memo(function CSSVariablesSection({
   element,
 }: {
   element: Element;
@@ -325,4 +325,4 @@ export function CSSVariablesSection({
       )}
     </Section>
   );
-}
+});
