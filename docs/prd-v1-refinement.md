@@ -17,7 +17,7 @@ topic: v1-refinement-prd
 
 - [x] **P0** In `src/overlay/ColorPickerEnhanced.tsx`, wire the saved-color swatch system. The infrastructure exists (`src/overlay/useSwatches.ts` — add/remove/persist to localStorage) but is NOT imported or used in the color picker. Add: (1) import `useSwatches` in `ColorPickerEnhanced.tsx`, (2) render saved swatches below the CSS variable swatches, (3) add an "+ Add to swatches" button that calls `addSwatch(currentHex, currentOpacity)` when clicked. Follow the existing variable-swatch rendering pattern already in the component.
 
-- [ ] **P0** In `src/overlay/infer.ts`, add a try/catch around the `getComputedStyle()` call at the entry point. If `getComputedStyle` throws (e.g., element is detached, is an SVG foreignObject, or is in a shadow DOM), return a safe fallback `InferResult` with all default values rather than crashing the panel. Write a test that passes a detached element to `infer()` and verifies it returns without throwing.
+- [x] **P0** In `src/overlay/infer.ts`, add a try/catch around the `getComputedStyle()` call at the entry point. If `getComputedStyle` throws (e.g., element is detached, is an SVG foreignObject, or is in a shadow DOM), return a safe fallback `InferResult` with all default values rather than crashing the panel. Write a test that passes a detached element to `infer()` and verifies it returns without throwing.
 
 ---
 

@@ -1,1 +1,13 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+The 19 failing tests are pre-existing (they reference moved files like `EffectsSection.tsx` — artifacts of the directory restructure already in progress). The infer tests all pass clean.
+
+`★ Insight ─────────────────────────────────────`
+- The fix uses **early return** rather than wrapping the entire 340-line function body in a try/catch. This keeps the happy path at zero indentation cost.
+- The `catch` is parameterless (`catch {` not `catch (e)`) — a TypeScript 4.0+ feature that signals "we don't care about the error value, just the fact that it threw."
+- The fallback returns `config: {}` which means the panel renders with no sections — a graceful degradation rather than a crash. Downstream code already handles missing sections since they're all optional in `DialConfig`.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Wrap `getComputedStyle()` in `infer.ts` with try/catch, return safe fallback on failure, write test for detached element.
+**Did:** Added test that mocks `getComputedStyle` to throw (confirmed it failed), then wrapped the call with try/catch returning `{ config: {}, name: tag, varUnits: {}, spacing: zeroes }`. All 33 infer tests pass.
+---
