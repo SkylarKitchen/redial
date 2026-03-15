@@ -370,6 +370,9 @@ export function ColorPickerEnhanced({
   const applyHexInput = useCallback(() => {
     let val = hexInput.trim();
     if (!val.startsWith("#")) val = "#" + val;
+    // Skip reconversion if hex hasn't been user-edited — avoids HSB precision drift
+    // from the lossy HSB → integer RGB → hex → RGB → HSB round-trip
+    if (val.toUpperCase() === currentHex.toUpperCase()) return;
     if (isValidHex(val)) {
       const rgb = hexToRgb(val);
       const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
