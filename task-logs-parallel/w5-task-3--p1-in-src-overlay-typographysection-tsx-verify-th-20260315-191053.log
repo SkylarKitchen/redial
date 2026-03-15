@@ -1,1 +1,49 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+The implementation is **already correct** — no changes needed. Here's the verification:
+
+## Findings
+
+**The `font-style` toggle is already implemented as an `IconButtonGroup` toggle button, matching the spec exactly.**
+
+### Evidence:
+
+1. **Toggle definition** (`panelConstants.tsx:46-49`):
+   ```tsx
+   export const ITALIC_OPTIONS = [
+     { value: "normal", title: "Normal", icon: <span ...>I</span> },
+     { value: "italic", title: "Italic", icon: <Italic size={12} strokeWidth={1.5} /> },
+   ];
+   ```
+   Two options — `normal` and `italic` — rendered as icon buttons, not a dropdown.
+
+2. **State initialization** (`TypographySection.tsx:82`):
+   ```tsx
+   const [fontStyle, setFontStyle] = useState(() => cs.fontStyle);
+   ```
+   Reads the current computed `font-style` from the element.
+
+3. **Handler** (`TypographySection.tsx:198-202`):
+   ```tsx
+   const handleFontStyleIconChange = useCallback((v: string) => {
+     const val = v === "none" ? "normal" : v;
+     setFontStyle(val);
+     apply("font-style", val);
+   }, [apply]);
+   ```
+   Maps `"none"` → `"normal"` (defensive fallback), then applies either `font-style: italic` or `font-style: normal`.
+
+4. **Render** (`TypographySection.tsx:282`):
+   ```tsx
+   <IconButtonGroup options={ITALIC_OPTIONS} value={fontStyle} onChange={handleFontStyleIconChange} />
+   ```
+   Uses `IconButtonGroup` (not a dropdown/`SelectRow`/`MiniDropdown`), with the `I` icon for "Italic".
+
+`★ Insight ─────────────────────────────────────`
+- The `IconButtonGroup` acts as a segmented toggle — clicking "Italic" sets `font-style: italic`, clicking "Normal" (the I icon) sets `font-style: normal`. This is the correct UX for a binary CSS property.
+- The `v === "none" ? "normal" : v` guard in the handler is a safety net — `IconButtonGroup` can emit `"none"` when deselecting in some multi-select modes, but since this isn't `multi`, it's just defensive coding.
+`─────────────────────────────────────────────────`
+
+---
+
+**Asked:** Verify `font-style` italic toggle is an icon button, not a dropdown, applying `italic`/`normal`.  
+**Did:** Read `TypographySection.tsx` and `panelConstants.tsx` — confirmed it's already an `IconButtonGroup` toggle with the correct `I` icon and `font-style: italic` / `font-style: normal` behavior. No changes required.

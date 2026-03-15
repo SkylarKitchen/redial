@@ -37,9 +37,9 @@ topic: v1-refinement-prd
 
 - [ ] **P1** In `src/overlay/PositionSection.tsx`, the spec says float and clear controls should only appear when position is `sticky` or `fixed`. Verify this conditional visibility. If float/clear are always shown (regardless of position type), add the conditional so they only render when position is `sticky` or `fixed`.
 
-- [ ] **P1** In `src/overlay/TypographySection.tsx`, verify the `font-style` toggle for italic. The spec says it should be an icon button (I). Confirm it exists as a toggle (not a dropdown) and correctly applies `font-style: italic` / `font-style: normal`. If implemented as a dropdown, convert it to an `IconButtonGroup` toggle button.
+- [x] **P1** In `src/overlay/TypographySection.tsx`, verify the `font-style` toggle for italic. The spec says it should be an icon button (I). Confirm it exists as a toggle (not a dropdown) and correctly applies `font-style: italic` / `font-style: normal`. If implemented as a dropdown, convert it to an `IconButtonGroup` toggle button.
 
-- [ ] **P1** In `src/overlay/GradientEditor.tsx`, verify clicking empty space on the gradient bar adds a new color stop at that position. The comment on line 5 says "click empty space to add" — confirm this is implemented with a click handler on the gradient bar that calculates the position percentage from click coordinates and inserts a new stop.
+- [x] **P1** In `src/overlay/GradientEditor.tsx`, verify clicking empty space on the gradient bar adds a new color stop at that position. The comment on line 5 says "click empty space to add" — confirm this is implemented with a click handler on the gradient bar that calculates the position percentage from click coordinates and inserts a new stop.
 
 - [ ] **P1** In `src/overlay/panelUtils.ts`, verify the style indicator system implements ALL 5 states from the spec: (1) **blue** = direct style on current class, (2) **orange** = inherited from parent/base class, (3) **green** = state-specific style (when viewing a pseudo-class state), (4) **pink** = element-level style (not saved to a class), (5) **no dot** = browser default. If the green (state) indicator is missing, add it. Read `theme.ts` for indicator color tokens.
 
@@ -77,63 +77,63 @@ topic: v1-refinement-prd
 
 - [!] **P1** Write a test that verifies the bezier curve editor: (1) dragging control points updates the cubic-bezier values, (2) preset buttons (ease, ease-in, ease-out, ease-in-out, linear) set correct control point coordinates, (3) the preview animation restarts when the curve changes.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/styleIndicators.test.ts` that verifies: (1) a property with no override shows no indicator dot, (2) a property overridden at element scope shows a pink dot, (3) a property overridden at class scope shows a blue dot, (4) a property inherited from a parent class shows an orange dot. Mock the necessary scope and style detection functions.
+- [!] **P1** Write a test in `src/overlay/__tests__/styleIndicators.test.ts` that verifies: (1) a property with no override shows no indicator dot, (2) a property overridden at element scope shows a pink dot, (3) a property overridden at class scope shows a blue dot, (4) a property inherited from a parent class shows an orange dot. Mock the necessary scope and style detection functions.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/unitSelector.test.ts` that verifies: (1) changing unit triggers value conversion (e.g., 16px → 1em when root font-size is 16px), (2) each property context offers only valid units (e.g., opacity has no unit selector, border-width is px-only), (3) the `—` option represents auto/none/unitless depending on context.
+- [!] **P1** Write a test in `src/overlay/__tests__/unitSelector.test.ts` that verifies: (1) changing unit triggers value conversion (e.g., 16px → 1em when root font-size is 16px), (2) each property context offers only valid units (e.g., opacity has no unit selector, border-width is px-only), (3) the `—` option represents auto/none/unitless depending on context.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/labelScrub.test.ts` that verifies: (1) mousedown on a property label starts scrub mode, (2) mousemove changes the value proportional to horizontal movement, (3) holding Shift during scrub applies 10x multiplier, (4) holding Alt during scrub applies 0.1x multiplier, (5) mouseup commits the final value, (6) cursor changes to `ew-resize` on hover over scrubbable labels.
+- [!] **P1** Write a test in `src/overlay/__tests__/labelScrub.test.ts` that verifies: (1) mousedown on a property label starts scrub mode, (2) mousemove changes the value proportional to horizontal movement, (3) holding Shift during scrub applies 10x multiplier, (4) holding Alt during scrub applies 0.1x multiplier, (5) mouseup commits the final value, (6) cursor changes to `ew-resize` on hover over scrubbable labels.
 
-- [ ] **P1** Write a comprehensive keyboard shortcut test in `src/overlay/__tests__/keyboardShortcuts.test.ts` that verifies ALL 12 shortcuts from the spec: (1) `` ` `` toggles selection mode, (2) `Esc` closes panel, (3) `Cmd+Z` triggers undo, (4) `Cmd+Shift+Z` triggers redo, (5) arrow keys navigate elements (up=parent, down=first child, left=prev sibling, right=next sibling), (6) `D` hold strips overrides temporarily, (7) `S` cycles scope, (8) `R` resets current element, (9) `Cmd+S` saves, (10) `Cmd+C` copies CSS, (11) `,` opens command palette, (12) `Tab`/`Shift+Tab` navigate controls.
+- [!] **P1** Write a comprehensive keyboard shortcut test in `src/overlay/__tests__/keyboardShortcuts.test.ts` that verifies ALL 12 shortcuts from the spec: (1) `` ` `` toggles selection mode, (2) `Esc` closes panel, (3) `Cmd+Z` triggers undo, (4) `Cmd+Shift+Z` triggers redo, (5) arrow keys navigate elements (up=parent, down=first child, left=prev sibling, right=next sibling), (6) `D` hold strips overrides temporarily, (7) `S` cycles scope, (8) `R` resets current element, (9) `Cmd+S` saves, (10) `Cmd+C` copies CSS, (11) `,` opens command palette, (12) `Tab`/`Shift+Tab` navigate controls.
 
-- [ ] **P1** Write a test that verifies keyboard shortcuts are disabled when a text input is focused (to prevent e.g., typing "S" in a font-family search from cycling scope instead of typing the letter). Check that `Overlay.tsx` keyboard handler skips shortcuts when `activeElement` is an `input`, `textarea`, or `[contenteditable]`.
+- [!] **P1** Write a test that verifies keyboard shortcuts are disabled when a text input is focused (to prevent e.g., typing "S" in a font-family search from cycling scope instead of typing the letter). Check that `Overlay.tsx` keyboard handler skips shortcuts when `activeElement` is an `input`, `textarea`, or `[contenteditable]`.
 
 ---
 
 ## P1 — Accessibility
 
-- [ ] **P1** Audit all dropdown components (`UnitSelector.tsx`, `SelectRow` in controls, `StateSelector.tsx`) for keyboard accessibility: (1) `Enter`/`Space` opens the dropdown, (2) arrow keys navigate options, (3) `Escape` closes without selecting, (4) `Tab` moves focus out. Run the existing `useDropdownKeyboard.test.ts` and verify it covers these cases. Add missing test cases.
+- [!] **P1** Audit all dropdown components (`UnitSelector.tsx`, `SelectRow` in controls, `StateSelector.tsx`) for keyboard accessibility: (1) `Enter`/`Space` opens the dropdown, (2) arrow keys navigate options, (3) `Escape` closes without selecting, (4) `Tab` moves focus out. Run the existing `useDropdownKeyboard.test.ts` and verify it covers these cases. Add missing test cases.
 
-- [ ] **P1** In `src/overlay/ShadowEditor.tsx` and `src/overlay/TransformEditor.tsx`, verify that the "+ Add" buttons and delete (×) buttons are keyboard-accessible (`tabIndex`, `role="button"`, `aria-label`). Also verify the drag handles have `aria-label="Drag to reorder"` and are focusable for screen reader users even though they're mouse-only in practice.
+- [!] **P1** In `src/overlay/ShadowEditor.tsx` and `src/overlay/TransformEditor.tsx`, verify that the "+ Add" buttons and delete (×) buttons are keyboard-accessible (`tabIndex`, `role="button"`, `aria-label`). Also verify the drag handles have `aria-label="Drag to reorder"` and are focusable for screen reader users even though they're mouse-only in practice.
 
 ---
 
 ## P1 — Test Coverage Gaps
 
-- [ ] **P1** In `src/overlay/__tests__/`, there is no test for the `GradientEditor` component. Write `gradientEditor.test.ts` covering: (1) adding a color stop by clicking the gradient bar, (2) dragging a stop changes its position, (3) deleting a stop (minimum 2 stops enforced), (4) changing gradient type between linear/radial/conic, (5) angle slider only appears for linear type.
+- [!] **P1** In `src/overlay/__tests__/`, there is no test for the `GradientEditor` component. Write `gradientEditor.test.ts` covering: (1) adding a color stop by clicking the gradient bar, (2) dragging a stop changes its position, (3) deleting a stop (minimum 2 stops enforced), (4) changing gradient type between linear/radial/conic, (5) angle slider only appears for linear type.
 
-- [ ] **P1** In `src/overlay/__tests__/`, there is no test for `BackgroundLayerList`. Write `backgroundLayerList.test.ts` covering: (1) adding a new layer, (2) selecting layer type (color vs gradient vs image), (3) deleting a layer, (4) layer order in the rendered CSS output.
+- [!] **P1** In `src/overlay/__tests__/`, there is no test for `BackgroundLayerList`. Write `backgroundLayerList.test.ts` covering: (1) adding a new layer, (2) selecting layer type (color vs gradient vs image), (3) deleting a layer, (4) layer order in the rendered CSS output.
 
 ---
 
 ## P2 — Polish
 
-- [ ] **P2** In the panel container (either `Overlay.tsx` or `WebflowPanel.tsx`), add `overscroll-behavior: contain` to the scrollable area to prevent scroll chaining when the panel scroll reaches the top/bottom edge. This prevents the host page from scrolling when the user is scrolling the panel.
+- [!] **P2** In the panel container (either `Overlay.tsx` or `WebflowPanel.tsx`), add `overscroll-behavior: contain` to the scrollable area to prevent scroll chaining when the panel scroll reaches the top/bottom edge. This prevents the host page from scrolling when the user is scrolling the panel.
 
-- [ ] **P2** In `src/overlay/Header.tsx`, the source file path (e.g., `components/Hero.tsx:42`) is display-only. Make it clickable — when clicked, call `fetch('/__tuner/open-editor', { method: 'POST', body: JSON.stringify({ file, line }) })` to open the file in the user's editor. If the endpoint doesn't exist, just `console.log` the path. Add `cursor: pointer` and a subtle hover underline.
+- [!] **P2** In `src/overlay/Header.tsx`, the source file path (e.g., `components/Hero.tsx:42`) is display-only. Make it clickable — when clicked, call `fetch('/__tuner/open-editor', { method: 'POST', body: JSON.stringify({ file, line }) })` to open the file in the user's editor. If the endpoint doesn't exist, just `console.log` the path. Add `cursor: pointer` and a subtle hover underline.
 
-- [ ] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
+- [!] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
 
-- [ ] **P2** In `src/overlay/LayoutSection.tsx`, add a "Center" quick-action button that sets `justify-content: center` AND `align-items: center` in a single click. Also add a "Fill Parent" button that sets `width: 100%` and `height: 100%`. If these buttons already exist, verify they use `beginBatch()` / `endBatch()` from `apply.ts` to group the two changes into a single undo step.
+- [!] **P2** In `src/overlay/LayoutSection.tsx`, add a "Center" quick-action button that sets `justify-content: center` AND `align-items: center` in a single click. Also add a "Fill Parent" button that sets `width: 100%` and `height: 100%`. If these buttons already exist, verify they use `beginBatch()` / `endBatch()` from `apply.ts` to group the two changes into a single undo step.
 
-- [ ] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
+- [!] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
 
-- [ ] **P2** Write a test that verifies unit conversion: when switching width from `px` to `%`, the value converts correctly based on the parent element's width. Check `src/overlay/unitConversion.ts` and `src/overlay/SizeSection.tsx` to verify the conversion uses the parent element's computed dimensions, not hardcoded assumptions.
+- [!] **P2** Write a test that verifies unit conversion: when switching width from `px` to `%`, the value converts correctly based on the parent element's width. Check `src/overlay/unitConversion.ts` and `src/overlay/SizeSection.tsx` to verify the conversion uses the parent element's computed dimensions, not hardcoded assumptions.
 
-- [ ] **P2** In `src/overlay/SizeSection.tsx`, verify that the Tailwind-aware step detection (4px steps for Tailwind in px mode) works correctly. Read the step logic and confirm it detects Tailwind projects (via the scope system or a config flag) and adjusts the slider step size accordingly.
+- [!] **P2** In `src/overlay/SizeSection.tsx`, verify that the Tailwind-aware step detection (4px steps for Tailwind in px mode) works correctly. Read the step logic and confirm it detects Tailwind projects (via the scope system or a config flag) and adjusts the slider step size accordingly.
 
-- [ ] **P2** In the position offset diagram (`src/overlay/PositionOffsetDiagram.tsx` or equivalent), verify that all four offset inputs support unit selectors (`px`, `%`, `vh`, `vw`). The spec lists these units for position offsets. If any input is px-only, add `UnitSelector` to it.
+- [!] **P2** In the position offset diagram (`src/overlay/PositionOffsetDiagram.tsx` or equivalent), verify that all four offset inputs support unit selectors (`px`, `%`, `vh`, `vw`). The spec lists these units for position offsets. If any input is px-only, add `UnitSelector` to it.
 
-- [ ] **P2** In the font family dropdown (in `src/overlay/TypographySection.tsx`), verify that `fontPreview` prop is working — each font option in the dropdown should render its own name in that font face. If the preview loads slowly for many fonts, consider lazy-loading font previews as the dropdown scrolls.
+- [!] **P2** In the font family dropdown (in `src/overlay/TypographySection.tsx`), verify that `fontPreview` prop is working — each font option in the dropdown should render its own name in that font face. If the preview loads slowly for many fonts, consider lazy-loading font previews as the dropdown scrolls.
 
-- [ ] **P2** Write a test that verifies multi-layer background stacking: adding 3 background layers and verifying they render in correct CSS stacking order (last added = bottommost in CSS). Verify deleting a middle layer recomposes the background correctly.
+- [!] **P2** Write a test that verifies multi-layer background stacking: adding 3 background layers and verifying they render in correct CSS stacking order (last added = bottommost in CSS). Verify deleting a middle layer recomposes the background correctly.
 
-- [ ] **P2** In `src/overlay/BordersSection.tsx`, verify the per-side border controls show correct style/width/color when different sides have different values. E.g., if `border-top: 2px solid red` and `border-bottom: 1px dashed blue`, switching between Top and Bottom tabs should show the correct values for each side.
+- [!] **P2** In `src/overlay/BordersSection.tsx`, verify the per-side border controls show correct style/width/color when different sides have different values. E.g., if `border-top: 2px solid red` and `border-bottom: 1px dashed blue`, switching between Top and Bottom tabs should show the correct values for each side.
 
-- [ ] **P2** In `src/overlay/EffectsSection.tsx`, the cursor section has a `CURSOR_OPTIONS` list. Verify it includes ALL 14 cursor types from the spec: `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `not-allowed`, `crosshair`, `help`, `wait`, `zoom-in`, `zoom-out`, `none`. Read `panelConstants.tsx` to check. Add any missing values.
+- [!] **P2** In `src/overlay/EffectsSection.tsx`, the cursor section has a `CURSOR_OPTIONS` list. Verify it includes ALL 14 cursor types from the spec: `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `not-allowed`, `crosshair`, `help`, `wait`, `zoom-in`, `zoom-out`, `none`. Read `panelConstants.tsx` to check. Add any missing values.
 
-- [ ] **P2** In `src/overlay/ColorPickerEnhanced.tsx`, verify the color mode toggle works correctly between HSB, RGB, and Hex input modes. Check that switching modes preserves the current color value accurately (no rounding drift across mode switches). If there's visible drift (e.g., HSB → RGB → HSB changes the color), fix the conversion precision.
+- [!] **P2** In `src/overlay/ColorPickerEnhanced.tsx`, verify the color mode toggle works correctly between HSB, RGB, and Hex input modes. Check that switching modes preserves the current color value accurately (no rounding drift across mode switches). If there's visible drift (e.g., HSB → RGB → HSB changes the color), fix the conversion precision.
 
-- [ ] **P2** In `src/overlay/Overlay.tsx`, verify that the `D` key "diff peek" interaction is smooth: (1) pressing D immediately strips all overrides, (2) the visual change is instant (no animation delay), (3) releasing D restores overrides, (4) if D is tapped quickly (<200ms), it doesn't flash. Add a small debounce if the flash issue exists.
+- [!] **P2** In `src/overlay/Overlay.tsx`, verify that the `D` key "diff peek" interaction is smooth: (1) pressing D immediately strips all overrides, (2) the visual change is instant (no animation delay), (3) releasing D restores overrides, (4) if D is tapped quickly (<200ms), it doesn't flash. Add a small debounce if the flash issue exists.
 
 - [ ] **P2** In `src/overlay/apply.ts`, verify that `restoreSession()` handles corrupted localStorage gracefully. Add a try/catch around JSON.parse of the stored session data so that corrupted data doesn't crash the panel on startup. If parsing fails, silently discard the stored session and start fresh.
 
