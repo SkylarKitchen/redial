@@ -113,7 +113,7 @@ topic: v1-refinement-prd
 
 - [ ] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
 
-- [ ] **P2** In `src/overlay/LayoutSection.tsx`, add a "Center" quick-action button that sets `justify-content: center` AND `align-items: center` in a single click. Also add a "Fill Parent" button that sets `width: 100%` and `height: 100%`. If these buttons already exist, verify they use `beginBatch()` / `endBatch()` from `apply.ts` to group the two changes into a single undo step.
+- [x] **P2** In `src/overlay/LayoutSection.tsx`, add a "Center" quick-action button that sets `justify-content: center` AND `align-items: center` in a single click. Also add a "Fill Parent" button that sets `width: 100%` and `height: 100%`. If these buttons already exist, verify they use `beginBatch()` / `endBatch()` from `apply.ts` to group the two changes into a single undo step.
 
 - [ ] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
 
