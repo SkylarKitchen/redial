@@ -553,12 +553,12 @@ export function SpacingBoxModel({
               <div style={{ flex: "0 0 36px", display: "flex", justifyContent: "center" }}>
                 {renderValue("padding-left", padding.left, "padding", 7)}
               </div>
-              {/* Content placeholder */}
+              {/* Content placeholder — solid darker fill per spec */}
               <div
                 style={{
                   flex: 1,
                   height: 14,
-                  background: surface.hover,
+                  background: spacingZone.content,
                   borderRadius: "2px",
                   margin: "0 4px",
                 }}
