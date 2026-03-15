@@ -14,7 +14,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const CONTROLS_SRC = readFileSync(join(__dirname, "..", "controls.tsx"), "utf-8");
+const CONTROLS_SRC = readFileSync(join(__dirname, "..", "controls", "ColorRow.tsx"), "utf-8");
 
 describe("ColorRow hover actions must not shift layout", () => {
   it("actions container in ColorRow must use absolute or overlay positioning", () => {
