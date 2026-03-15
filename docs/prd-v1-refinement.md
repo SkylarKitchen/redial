@@ -260,14 +260,20 @@ topic: v1-refinement-prd
 
 ---
 
+## Cross-Cutting — Directory Restructure
+
+- [ ] **P2** Restructure `src/overlay/` from a flat 103-file directory into domain subdirectories. Target structure: `sections/` (9 section files), `editors/` (19 sub-editor components), `controls/` (11 shared controls), `shell/` (Overlay, Header, Footer, Toolbar, Selector + auxiliary panels), `overlays/` (6 canvas overlays), `hooks/` (9 use*.ts files), `engine/` (apply, infer, scope, statePreview, hmr + parsers/utils), `tokens/` (theme, timing, panelConstants, panelStyles, panelUtils). Update all import paths. Run `npm run typecheck` and `npm test` after to verify nothing breaks. Reference `src/overlay/DIRECTORY.md` for the exact file-to-directory mapping.
+
+---
+
 ## Summary
 
 | Priority | Count | Description |
 |----------|-------|-------------|
 | **P0**   | 3     | Transform reorder, color swatches wiring, infer.ts error boundary |
 | **P1**   | 22    | Spec compliance checks, acceptance criteria tests, accessibility audit |
-| **P2**   | 14    | Polish, nice-to-haves, performance audit, extra test coverage |
-| **Total**| **39**| |
+| **P2**   | 15    | Polish, nice-to-haves, performance audit, extra test coverage, directory restructure |
+| **Total**| **40**| |
 
 ### Suggested Work Order
 
@@ -275,3 +281,4 @@ topic: v1-refinement-prd
 2. **P1 acceptance criteria tests** — prove existing features work correctly
 3. **P1 spec compliance** — fix any gaps the tests reveal
 4. **P2 polish** — only after P0+P1 are green
+5. **P2 directory restructure** — last, since it touches every file
