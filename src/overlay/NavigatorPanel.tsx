@@ -303,44 +303,46 @@ export function NavigatorPanel({
       if (!handled.includes(e.key)) return;
       e.preventDefault();
 
+      // Derive current index from focusedEl (survives tree rebuilds)
+      const curIdx = focusedEl
+        ? flatNodes.findIndex((f) => f.node.el === focusedEl)
+        : -1;
+
       if (e.key === "ArrowDown") {
-        setFocusedIndex((i) => Math.min(i + 1, flatNodes.length - 1));
+        const next = Math.min(curIdx + 1, flatNodes.length - 1);
+        if (next >= 0) setFocusedEl(flatNodes[next].node.el);
       } else if (e.key === "ArrowUp") {
-        setFocusedIndex((i) => Math.max(i - 1, 0));
+        const next = Math.max(curIdx - 1, 0);
+        if (flatNodes.length > 0) setFocusedEl(flatNodes[next].node.el);
       } else if (e.key === "ArrowRight") {
-        if (focusedIndex >= 0 && focusedIndex < flatNodes.length) {
-          const { node } = flatNodes[focusedIndex];
+        if (curIdx >= 0 && curIdx < flatNodes.length) {
+          const { node } = flatNodes[curIdx];
           if (node.children.length > 0 && !expandedNodes.has(node.el)) {
             handleToggle(node.el);
           } else if (node.children.length > 0) {
             // Move to first child
-            setFocusedIndex((i) => Math.min(i + 1, flatNodes.length - 1));
+            const next = Math.min(curIdx + 1, flatNodes.length - 1);
+            setFocusedEl(flatNodes[next].node.el);
           }
         }
       } else if (e.key === "ArrowLeft") {
-        if (focusedIndex >= 0 && focusedIndex < flatNodes.length) {
-          const { node } = flatNodes[focusedIndex];
+        if (curIdx >= 0 && curIdx < flatNodes.length) {
+          const { node } = flatNodes[curIdx];
           if (node.children.length > 0 && expandedNodes.has(node.el)) {
             handleToggle(node.el);
           } else {
-            // Move to parent (reuse getAncestorsInTree — parent is the last ancestor)
             const ancestors = getAncestorsInTree(tree, node.el);
             const parentEl = ancestors.length > 0 ? ancestors[ancestors.length - 1] : null;
-            if (parentEl) {
-              const parentIdx = flatNodes.findIndex(
-                (f) => f.node.el === parentEl,
-              );
-              if (parentIdx >= 0) setFocusedIndex(parentIdx);
-            }
+            if (parentEl) setFocusedEl(parentEl);
           }
         }
       } else if (e.key === "Enter") {
-        if (focusedIndex >= 0 && focusedIndex < flatNodes.length) {
-          onSelectElement(flatNodes[focusedIndex].node.el);
+        if (curIdx >= 0 && curIdx < flatNodes.length) {
+          onSelectElement(flatNodes[curIdx].node.el);
         }
       }
     },
-    [flatNodes, focusedIndex, expandedNodes, handleToggle, tree, onSelectElement],
+    [flatNodes, focusedEl, expandedNodes, handleToggle, tree, onSelectElement],
   );
 
   // ── Node drag-to-reorder handler ──
@@ -460,7 +462,7 @@ export function NavigatorPanel({
           }
           return next;
         });
-        setFocusedIndex(-1);
+        setFocusedEl(null);
         setRebuildKey((k) => k + 1);
       }, timing.layout);
     });
@@ -661,7 +663,7 @@ export function NavigatorPanel({
                       depth={flat.node.depth}
                       isExpanded={expandedNodes.has(flat.node.el)}
                       isSelected={flat.node.el === selectedEl}
-                      isFocused={flat.index === focusedIndex}
+                      isFocused={flat.node.el === focusedEl}
                       isDragging={nodeDragState?.draggedEl === flat.node.el}
                       isDraggedOver={isDropInto}
                       onToggle={() => handleToggle(flat.node.el)}

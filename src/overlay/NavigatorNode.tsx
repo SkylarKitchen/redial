@@ -5,9 +5,9 @@
  * tag name, class name, and selection/focus highlights.
  */
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import type { TreeNode } from "./navigatorFilter";
-import { text, surface, font, border, color, primaryAlpha } from "./theme";
+import { text, surface, font, color, primaryAlpha } from "./theme";
 import { ms } from "./timing";
 
 interface NavigatorNodeProps {
