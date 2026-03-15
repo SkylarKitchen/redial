@@ -13,7 +13,7 @@ topic: v1-refinement-prd
 
 ## P0 — Blocking v1.0
 
-- [ ] **P0** In `src/overlay/TransformEditor.tsx`, add drag-to-reorder support using `useDragReorder` (already used by `ShadowEditor.tsx` and `TransitionEditor.tsx`). The spec says "Each transform is a removable row. Order matters (drag to reorder)." Import `useDragReorder` from `./useDragReorder` and `DragHandle` from `./DragHandle`, then wire them into the transform row rendering. Follow the same pattern as `ShadowEditor.tsx` lines 304+.
+- [x] **P0** In `src/overlay/TransformEditor.tsx`, add drag-to-reorder support using `useDragReorder` (already used by `ShadowEditor.tsx` and `TransitionEditor.tsx`). The spec says "Each transform is a removable row. Order matters (drag to reorder)." Import `useDragReorder` from `./useDragReorder` and `DragHandle` from `./DragHandle`, then wire them into the transform row rendering. Follow the same pattern as `ShadowEditor.tsx` lines 304+.
 
 - [ ] **P0** In `src/overlay/ColorPickerEnhanced.tsx`, wire the saved-color swatch system. The infrastructure exists (`src/overlay/useSwatches.ts` — add/remove/persist to localStorage) but is NOT imported or used in the color picker. Add: (1) import `useSwatches` in `ColorPickerEnhanced.tsx`, (2) render saved swatches below the CSS variable swatches, (3) add an "+ Add to swatches" button that calls `addSwatch(currentHex, currentOpacity)` when clicked. Follow the existing variable-swatch rendering pattern already in the component.
 
