@@ -7,9 +7,9 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { SpacingValues } from "./infer";
-import { applyInlineStyle, stateKey } from "./apply";
-import { applyClassStyle, isTailwindElement, type Scope } from "./scope";
+import type { SpacingValues } from "./core/infer";
+import { applyInlineStyle, stateKey } from "./core/apply";
+import { applyClassStyle, isTailwindElement, type Scope } from "./core/scope";
 import { applyStateStyle } from "./statePreview";
 import { buildConversionContext } from "./unitConversion";
 import type { IndicatorType } from "./theme";

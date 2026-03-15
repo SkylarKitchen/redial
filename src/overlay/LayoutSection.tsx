@@ -16,7 +16,7 @@ import type { IndicatorType } from "./theme";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
 import { parseNum } from "./cssParsers";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "./apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "./panelConstants";

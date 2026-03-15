@@ -8,7 +8,7 @@
  *         so it never extends below the viewport.
  */
 import { describe, it, expect } from "vitest";
-import { NavigationHistory, computePanelMaxHeight } from "../navigationHistory";
+import { NavigationHistory, computePanelMaxHeight } from "../core/navigationHistory";
 
 // ── Bug 1: Breadcrumb "back" navigation ────────────────────────────
 

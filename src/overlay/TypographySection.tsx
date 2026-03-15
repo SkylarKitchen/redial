@@ -20,7 +20,7 @@ import { detectUnit, type SectionCtx } from "./panelUtils";
 import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "./textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
-import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./apply";
+import { beginBatch, endBatch, resetProp, resetAndReadStr } from "./core/apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, INLINE_SWATCH } from "./panelStyles";
 import { text, border, surface, font, indicatorStyle, layout } from "./theme";
 import { ms } from "./timing";

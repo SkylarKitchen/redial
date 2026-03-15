@@ -30,13 +30,13 @@ import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavig
 
 import { onHmrUpdate } from "./core/hmr";
 import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./core/scope";
-import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./statePreview";
-import { enrichChangesForCommit } from "./commitUtils";
+import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./core/statePreview";
+import { enrichChangesForCommit } from "./core/commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "./GlobalVariablesPanel";
 import { timing, ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
-import { isScrubActive } from "./scrubState";
+import { isScrubActive } from "./core/scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { CommandPalette } from "./CommandPalette";
 import { ContextMenu } from "./ContextMenu";
@@ -46,7 +46,7 @@ import { formatTailwindDiff } from "./tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { NavigatorPanel } from "./NavigatorPanel";
 import { useElementTracker } from "./useElementTracker";
-import { getConfig } from "./config";
+import { getConfig } from "./core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "./theme";
 
 // --- Panel State Type ---

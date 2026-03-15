@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./apply";
+import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./core/apply";
 import type { IndicatorType } from "./theme";
 import { Section, ColorRow, SliderRow } from "./controls";
 import { discoverVariables, type CSSVariable } from "./discoverVariables";

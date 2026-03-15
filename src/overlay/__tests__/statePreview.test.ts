@@ -244,7 +244,7 @@ describe("destroyStateStyles", () => {
 
 describe("state reset clears apply.ts overrides", () => {
   it("resetStateStyles + resetStateOverrides clears composite-keyed overrides in apply.ts", async () => {
-    const { applyInlineStyle, stateKey, resetAll, overrideCount, resetStateOverrides } = await import("../apply");
+    const { applyInlineStyle, stateKey, resetAll, overrideCount, resetStateOverrides } = await import("../core/apply");
 
     const el = makeEl();
 
@@ -266,7 +266,7 @@ describe("state reset clears apply.ts overrides", () => {
   });
 
   it("totalOverrideCount returns 0 after state reset", async () => {
-    const { applyInlineStyle, stateKey, resetAll, totalOverrideCount, resetStateOverrides } = await import("../apply");
+    const { applyInlineStyle, stateKey, resetAll, totalOverrideCount, resetStateOverrides } = await import("../core/apply");
 
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");

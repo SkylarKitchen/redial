@@ -22,7 +22,7 @@ import { hexToRgba } from "./colorUtils";
 import { parseVarRef, resolveVarColor } from "./colorVariables";
 import { parseVarAlias } from "./discoverVariables";
 import { evaluateMathExpr } from "./inputMath";
-import { beginBatch, endBatch } from "./apply";
+import { beginBatch, endBatch } from "./core/apply";
 import { ChevronDown, ChevronRight, Link2, Unlink, Plus, MoreHorizontal, X, Eye, EyeOff } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";

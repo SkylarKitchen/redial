@@ -11,7 +11,7 @@ import { Section, SelectRow, ColorRow, SubSectionHeader } from "./controls";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { resetProp, resetAndReadStr } from "./apply";
+import { resetProp, resetAndReadStr } from "./core/apply";
 import type { SectionCtx } from "./panelUtils";
 import { BG_CLIP_OPTIONS, BG_SIZE_OPTIONS, BG_POSITION_OPTIONS, BG_REPEAT_OPTIONS, BG_ATTACHMENT_OPTIONS } from "./panelConstants";
 // ─── Props ────────────────────────────────────────────────────────────

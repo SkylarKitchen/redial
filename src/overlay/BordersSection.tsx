@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { convertUnit } from "./unitConversion";
 import { useConversionHint } from "./useConversionHint";
-import { resetProp, resetAndReadNum, beginBatch, endBatch } from "./apply";
+import { resetProp, resetAndReadNum, beginBatch, endBatch } from "./core/apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";
 import { cssColorToHex as rgbToHex } from "./colorUtils";

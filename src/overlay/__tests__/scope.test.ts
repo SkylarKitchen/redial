@@ -319,7 +319,7 @@ describe("destroyClassStyles", () => {
 
 describe("class-scope undo reverts <style> tag", () => {
   it("undo of class-scoped edit removes the property from <style> tag", async () => {
-    const { applyInlineStyle, undo, resetAll, onClassChange } = await import("../apply");
+    const { applyInlineStyle, undo, resetAll, onClassChange } = await import("../core/apply");
 
     // Subscribe scope.ts to class change notifications
     const unsubscribe = onClassChange(({ className, prop, value }) => {
@@ -350,7 +350,7 @@ describe("class-scope undo reverts <style> tag", () => {
   });
 
   it("redo of class-scoped edit re-applies to <style> tag", async () => {
-    const { applyInlineStyle, undo, redo, resetAll, onClassChange } = await import("../apply");
+    const { applyInlineStyle, undo, redo, resetAll, onClassChange } = await import("../core/apply");
 
     const unsubscribe = onClassChange(({ className, prop, value }) => {
       if (value !== null) {
