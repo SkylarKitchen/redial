@@ -43,7 +43,7 @@ topic: v1-refinement-prd
 
 - [ ] **P1** In `src/overlay/panelUtils.ts`, verify the style indicator system implements ALL 5 states from the spec: (1) **blue** = direct style on current class, (2) **orange** = inherited from parent/base class, (3) **green** = state-specific style (when viewing a pseudo-class state), (4) **pink** = element-level style (not saved to a class), (5) **no dot** = browser default. If the green (state) indicator is missing, add it. Read `theme.ts` for indicator color tokens.
 
-- [ ] **P1** In `src/overlay/Overlay.tsx`, verify that selecting an element inside an `<iframe>` or `<shadow-root>` doesn't crash the panel. If `infer.ts` receives a cross-origin iframe element, it should gracefully degrade (show the element tag but no editable properties). Add a guard at the selection stage if not already present.
+- [x] **P1** In `src/overlay/Overlay.tsx`, verify that selecting an element inside an `<iframe>` or `<shadow-root>` doesn't crash the panel. If `infer.ts` receives a cross-origin iframe element, it should gracefully degrade (show the element tag but no editable properties). Add a guard at the selection stage if not already present.
 
 - [x] **P1** In `src/overlay/apply.ts`, add a maximum undo history limit (e.g., 200 entries). Currently there is no `MAX_HISTORY` constant, meaning very long editing sessions could accumulate unbounded undo entries in memory. Add `const MAX_UNDO = 200` and trim the oldest entries when the stack exceeds this limit. Write a test that performs 250 changes and verifies the undo stack is capped at 200.
 

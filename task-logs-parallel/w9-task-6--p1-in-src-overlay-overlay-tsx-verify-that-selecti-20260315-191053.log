@@ -1,1 +1,35 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+Clean build. Here's a summary of what I found and fixed:
+
+`★ Insight ─────────────────────────────────────`
+**Why cross-origin iframe elements can't normally reach the panel:**
+- `document.elementFromPoint()` returns the `<iframe>` element itself, never its cross-origin content
+- `document.querySelectorAll("*")` only finds main-document elements
+- The Navigator walks `el.children`, which for `<iframe>` returns its DOM children (empty), not the content document
+
+**But there are edge cases:** the `tuner:select` custom event API accepts any Element, so external code could theoretically pass a cross-origin element. The `infer()` function already had a try/catch, but three `getComputedStyle()` call sites were unprotected.
+`─────────────────────────────────────────────────`
+
+## Summary of changes
+
+### Already resilient (no changes needed)
+- **`infer.ts:178-192`** — try/catch around `getComputedStyle` returns safe defaults (empty config, tag name, zero spacing)
+- **`scope.ts:37-57`** — `getCustomProperties` has try/catch around stylesheet iteration and `el.matches()`
+- **`getStableSelector` / `buildBreadcrumb`** — parent chain walks terminate safely at `null`
+- **`Selector.tsx`** — `elementFromPoint()` naturally returns `<iframe>` elements, not their contents
+
+### Fixed (3 unprotected `getComputedStyle` calls)
+
+| File | Line | Fix |
+|------|------|-----|
+| `util.ts:191` | `isNavigableElement()` | Wrapped `getComputedStyle(el).display` in try/catch; returns `false` on error |
+| `Overlay.tsx:149` | `isGridContainer` memo | Added try/catch; returns `false` on error |
+| `Overlay.tsx:155` | `isFlexContainer` memo | Added try/catch; returns `false` on error |
+
+### Test coverage
+- New test file `crossOriginGuard.test.ts` — 9 tests covering cross-origin iframe + shadow DOM scenarios across `infer()`, `getStableSelector()`, `buildBreadcrumb()`, and `isNavigableElement()`.
+
+---
+**Asked:** Verify iframe/shadow-root element selection doesn't crash, add guards if missing
+**Did:** Audited all selection code paths, found 3 unprotected `getComputedStyle` calls (util.ts, Overlay.tsx×2), fixed with try/catch guards, wrote 9 new tests (1 was failing before fix, all pass now). Build clean.
+---
