@@ -25,7 +25,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** In `src/overlay/WebflowPanel.tsx`, verify the panel body scrollbar matches the spec: thin custom scrollbar styling. If the panel uses the browser default scrollbar inside its `overflow-y: auto` container, add a `::-webkit-scrollbar` style (via inline style or a small injected `<style>` tag) to make the scrollbar 6px wide, semi-transparent thumb on transparent track, matching `theme.ts` tokens.
 
-- [ ] **P1** In `src/overlay/Overlay.tsx`, verify max-height is exactly `85vh` as the spec requires. If it differs, update to match. Also verify `backdrop-filter: blur(20px)` is present on the panel container.
+- [x] **P1** In `src/overlay/Overlay.tsx`, verify max-height is exactly `85vh` as the spec requires. If it differs, update to match. Also verify `backdrop-filter: blur(20px)` is present on the panel container.
 
 - [ ] **P1** In `src/overlay/Header.tsx`, the spec defines a **green** indicator for state-specific styles (hover, focus, etc.). Verify the style indicator system in `src/overlay/panelUtils.ts` includes a `"state"` indicator type with a green color from `theme.ts`. If missing, add `color.indicatorGreen` to `theme.ts` and wire it so that properties modified while a pseudo-class state is active show a green dot instead of blue.
 
