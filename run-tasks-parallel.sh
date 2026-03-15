@@ -59,6 +59,17 @@ slugify() {
   echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | cut -c1-50
 }
 
+# macOS-compatible spinlock using mkdir (atomic on all POSIX systems)
+lock() {
+  while ! mkdir "$1" 2>/dev/null; do
+    sleep 0.05
+  done
+}
+
+unlock() {
+  rmdir "$1" 2>/dev/null || true
+}
+
 # --- Create worktrees ---
 echo "========================================"
 echo " Parallel Task Runner"
@@ -96,11 +107,10 @@ worker() {
   while true; do
     # Atomic claim: lock, read counter, increment, unlock
     local task_idx
-    {
-      flock 200
-      task_idx=$(cat "$COUNTER_FILE")
-      echo $((task_idx + 1)) > "$COUNTER_FILE"
-    } 200>"$LOCK_FILE"
+    lock "${LOCK_FILE}.counter"
+    task_idx=$(cat "$COUNTER_FILE")
+    echo $((task_idx + 1)) > "$COUNTER_FILE"
+    unlock "${LOCK_FILE}.counter"
 
     # Check if we've exhausted all tasks
     if [[ "$task_idx" -ge "$TOTAL_TASKS" ]]; then
@@ -127,18 +137,16 @@ worker() {
       echo "done:${line_num}:${task_num}:${worker_id}" >> "${RESULTS_DIR}/results.log"
 
       # Atomic PRD update
-      {
-        flock 201
-        sed -i '' "${line_num}s/- \[ \]/- [x]/" "$PRD_FILE"
-      } 201>"${LOCK_FILE}.prd"
+      lock "${LOCK_FILE}.prd"
+      sed -i '' "${line_num}s/- \[ \]/- [x]/" "$PRD_FILE"
+      unlock "${LOCK_FILE}.prd"
     else
       echo "[W${worker_id}] Task $task_num: FAILED"
       echo "fail:${line_num}:${task_num}:${worker_id}" >> "${RESULTS_DIR}/results.log"
 
-      {
-        flock 201
-        sed -i '' "${line_num}s/- \[ \]/- [!]/" "$PRD_FILE"
-      } 201>"${LOCK_FILE}.prd"
+      lock "${LOCK_FILE}.prd"
+      sed -i '' "${line_num}s/- \[ \]/- [!]/" "$PRD_FILE"
+      unlock "${LOCK_FILE}.prd"
     fi
   done
 
@@ -203,5 +211,6 @@ echo "To clean up worktrees:"
 echo "  ./cleanup-workers.sh"
 
 # --- Cleanup temp files ---
-rm -f "$TASK_FILE" "$COUNTER_FILE" "$LOCK_FILE" "${LOCK_FILE}.prd"
+rm -f "$TASK_FILE" "$COUNTER_FILE"
+rmdir "${LOCK_FILE}.counter" "${LOCK_FILE}.prd" 2>/dev/null || true
 rm -rf "$RESULTS_DIR"
