@@ -480,26 +480,6 @@ export function NavigatorPanel({
           ))}
         </div>
 
-        {/* ── Footer ── */}
-        <div
-          style={{
-            height: 28,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderTop: `1px solid ${border.subtle}`,
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontSize: 10,
-              color: text.hint,
-            }}
-          >
-            {totalCount} elements
-          </span>
-        </div>
       </motion.div>
     </AnimatePresence>
   );
