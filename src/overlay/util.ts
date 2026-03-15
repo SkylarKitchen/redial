@@ -30,8 +30,9 @@ function extractModuleName(cls: string): string | null {
  * Regular: "btn primary" → "btn"
  */
 export function getDisplayClass(el: Element): string | null {
-  const classes = el.className;
-  if (typeof classes !== "string" || !classes.trim()) return null;
+  // Use getAttribute to handle SVGElement.className (SVGAnimatedString, not string)
+  const classes = el.getAttribute("class");
+  if (!classes || !classes.trim()) return null;
 
   const list = classes.split(/\s+/);
 

@@ -12,7 +12,7 @@ import {
   useRef,
   useMemo,
 } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import {
   buildFilteredTree,
   flattenTree,
@@ -50,6 +50,18 @@ const SNAP_THRESHOLD = 20;
 const SNAP_MARGIN = 16;
 const DEFAULT_POS = { x: 16, y: 80 };
 const PANEL_HEIGHT_ESTIMATE = 500;
+
+/** Stable key generator for Element references (avoids index-based keys) */
+let _nextKeyId = 0;
+const _keyMap = new WeakMap<Element, string>();
+function getStableKey(el: Element): string {
+  let key = _keyMap.get(el);
+  if (!key) {
+    key = `nav-${_nextKeyId++}`;
+    _keyMap.set(el, key);
+  }
+  return key;
+}
 
 // ─── Helpers ────────────────────────────────────────────────────
 
@@ -319,7 +331,6 @@ export function NavigatorPanel({
   const [closeHovered, setCloseHovered] = useState(false);
 
   return (
-    <AnimatePresence>
       <motion.div
         className="__tuner-root"
         style={{
@@ -466,7 +477,7 @@ export function NavigatorPanel({
           }}
         >
           {flatNodes.map((flat, i) => (
-            <div key={`${flat.node.tag}-${flat.depth}-${i}`} data-nav-el="true">
+            <div key={getStableKey(flat.node.el)} data-nav-el="true">
               <NavigatorNode
                 node={flat.node}
                 depth={flat.depth}
@@ -481,6 +492,5 @@ export function NavigatorPanel({
         </div>
 
       </motion.div>
-    </AnimatePresence>
   );
 }
