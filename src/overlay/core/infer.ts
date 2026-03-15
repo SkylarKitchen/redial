@@ -172,8 +172,24 @@ export const SPACING_PROPS = [
 ];
 
 export function infer(el: Element): InferResult {
-  const cs = getComputedStyle(el);
   const tag = el.tagName.toLowerCase();
+
+  let cs: CSSStyleDeclaration;
+  try {
+    cs = getComputedStyle(el);
+  } catch {
+    // Element is detached, inside a closed shadow root, or otherwise
+    // inaccessible (e.g. SVG foreignObject). Return safe defaults.
+    return {
+      config: {},
+      name: tag,
+      varUnits: {},
+      spacing: {
+        margin:  { top: 0, right: 0, bottom: 0, left: 0 },
+        padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      },
+    };
+  }
   const config: DialConfig = {};
   const varUnits: Record<string, string> = {};
 

@@ -286,4 +286,29 @@ describe("infer", () => {
     // [value, min, max, step] — step should be 4px, not 1px
     expect(radiusRange[3]).toBe(4);
   });
+
+  it("returns safe fallback for detached element (getComputedStyle throws)", () => {
+    // Create an element but do NOT attach it to the DOM
+    const el = document.createElement("div");
+    // In some environments getComputedStyle on a detached element throws;
+    // force the throw to simulate SVG foreignObject / shadow DOM / detached cases
+    const origGetComputedStyle = globalThis.getComputedStyle;
+    globalThis.getComputedStyle = () => {
+      throw new Error("Failed to execute 'getComputedStyle' on detached element");
+    };
+    try {
+      const result = infer(el);
+      // Should not throw — returns a safe fallback
+      expect(result).toBeDefined();
+      expect(result.name).toBe("div");
+      expect(result.config).toBeDefined();
+      expect(result.varUnits).toEqual({});
+      expect(result.spacing).toEqual({
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        padding: { top: 0, right: 0, bottom: 0, left: 0 },
+      });
+    } finally {
+      globalThis.getComputedStyle = origGetComputedStyle;
+    }
+  });
 });
