@@ -112,6 +112,10 @@ export function NavigatorPanel({
   );
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
+  // ── Node drag-to-reorder state ──
+  const [nodeDragState, setNodeDragState] = useState<NavDragState | null>(null);
+  const isDraggingNodeRef = useRef(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
@@ -333,11 +337,113 @@ export function NavigatorPanel({
     [flatNodes, focusedIndex, expandedNodes, handleToggle, tree, onSelectElement],
   );
 
+  // ── Node drag-to-reorder handler ──
+  // Use a ref to track the latest drop target for the pointerup handler,
+  // since the closure captures the initial state.
+  const nodeDragDropRef = useRef<DropTarget | null>(null);
+
+  const handleNodeDragStart = useCallback(
+    (node: TreeNode, e: React.PointerEvent) => {
+      if (!canDrag(node.el)) return;
+      const target = e.currentTarget as HTMLElement;
+      target.setPointerCapture(e.pointerId);
+
+      const startY = e.clientY;
+      let hasMoved = false;
+      isDraggingNodeRef.current = true;
+      nodeDragDropRef.current = null;
+      document.body.style.userSelect = "none";
+
+      const onMove = (ev: PointerEvent) => {
+        const dy = ev.clientY - startY;
+        if (!hasMoved && Math.abs(dy) < 3) return; // dead zone
+        hasMoved = true;
+
+        // Compute drop target from cursor position relative to tree rows
+        const container = scrollRef.current;
+        if (!container) return;
+        const rows = container.querySelectorAll("[data-nav-el]");
+        let dropTarget: DropTarget | null = null;
+
+        for (let ri = 0; ri < rows.length; ri++) {
+          const rect = rows[ri].getBoundingClientRect();
+          if (ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+            // Find the matching flatNode by looking at the visible slice
+            const visIdx = ri;
+            if (visIdx >= visibleNodes.length) break;
+            const rowNode = visibleNodes[visIdx].node;
+
+            // Skip self
+            if (rowNode.el === node.el) break;
+
+            const third = rect.height / 3;
+            if (ev.clientY < rect.top + third) {
+              // Top third: insert before this element
+              dropTarget = {
+                type: "between",
+                parent: rowNode.el.parentElement!,
+                before: rowNode.el,
+              };
+            } else if (
+              ev.clientY > rect.bottom - third &&
+              rowNode.children.length > 0
+            ) {
+              // Bottom third of a container: insert into
+              dropTarget = { type: "into", container: rowNode.el };
+            } else {
+              // Middle or bottom of leaf: insert after
+              dropTarget = {
+                type: "between",
+                parent: rowNode.el.parentElement!,
+                before: rowNode.el.nextElementSibling,
+              };
+            }
+            break;
+          }
+        }
+
+        if (dropTarget && !canDrop(node.el, dropTarget)) dropTarget = null;
+
+        nodeDragDropRef.current = dropTarget;
+        setNodeDragState({
+          draggedEl: node.el,
+          draggedNode: node,
+          dropTarget,
+          offsetY: dy,
+        });
+      };
+
+      const onUp = () => {
+        target.removeEventListener("pointermove", onMove);
+        target.removeEventListener("pointerup", onUp);
+        target.removeEventListener("lostpointercapture", onUp);
+        document.body.style.userSelect = "";
+
+        if (hasMoved && nodeDragDropRef.current) {
+          const result = executeDrop(node.el, nodeDragDropRef.current);
+          pushDomMove(result);
+          // Rebuild tree after the move
+          setRebuildKey((k) => k + 1);
+        }
+
+        isDraggingNodeRef.current = false;
+        nodeDragDropRef.current = null;
+        setNodeDragState(null);
+      };
+
+      target.addEventListener("pointermove", onMove);
+      target.addEventListener("pointerup", onUp);
+      target.addEventListener("lostpointercapture", onUp);
+    },
+    [visibleNodes],
+  );
+
   // ── MutationObserver for live DOM sync ──
   useEffect(() => {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const observer = new MutationObserver(() => {
+      if (isDraggingNodeRef.current) return;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         // Clean disconnected elements from expandedNodes
@@ -515,19 +621,50 @@ export function NavigatorPanel({
           <div style={{ height: totalHeight, position: "relative" }}>
             {/* Positioned visible slice */}
             <div style={{ transform: `translateY(${offsetY}px)` }}>
-              {visibleNodes.map((flat) => (
-                <div key={getStableKey(flat.node.el)} data-nav-el="true">
-                  <NavigatorNode
-                    node={flat.node}
-                    depth={flat.node.depth}
-                    isExpanded={expandedNodes.has(flat.node.el)}
-                    isSelected={flat.node.el === selectedEl}
-                    isFocused={flat.index === focusedIndex}
-                    onToggle={() => handleToggle(flat.node.el)}
-                    onSelect={() => onSelectElement(flat.node.el)}
-                  />
-                </div>
-              ))}
+              {visibleNodes.map((flat, vi) => {
+                const isDropBefore =
+                  nodeDragState?.dropTarget?.type === "between" &&
+                  nodeDragState.dropTarget.before === flat.node.el;
+                const isDropInto =
+                  nodeDragState?.dropTarget?.type === "into" &&
+                  nodeDragState.dropTarget.container === flat.node.el;
+
+                return (
+                  <div
+                    key={getStableKey(flat.node.el)}
+                    data-nav-el="true"
+                    style={{ position: "relative" }}
+                  >
+                    {/* Drop indicator line — before this row */}
+                    {isDropBefore && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          height: 2,
+                          background: color.primary,
+                          zIndex: zIndex.above,
+                          pointerEvents: "none",
+                        }}
+                      />
+                    )}
+                    <NavigatorNode
+                      node={flat.node}
+                      depth={flat.node.depth}
+                      isExpanded={expandedNodes.has(flat.node.el)}
+                      isSelected={flat.node.el === selectedEl}
+                      isFocused={flat.index === focusedIndex}
+                      isDragging={nodeDragState?.draggedEl === flat.node.el}
+                      isDraggedOver={isDropInto}
+                      onToggle={() => handleToggle(flat.node.el)}
+                      onSelect={() => onSelectElement(flat.node.el)}
+                      onDragStart={(e) => handleNodeDragStart(flat.node, e)}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
