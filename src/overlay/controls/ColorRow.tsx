@@ -1,0 +1,273 @@
+/**
+ * controls/ColorRow.tsx — Color swatch row with picker, variable linking,
+ * alias chain tooltip, and reset popover.
+ */
+
+import React, { useState, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { type IndicatorType } from "../theme";
+import { getIndicatorTitle } from "../panelUtils";
+import { ComputedTooltip } from "../ComputedTooltip";
+import { ColorPickerEnhanced } from "../ColorPickerEnhanced";
+import { hexToRgba } from "../colorUtils";
+import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
+import { parseVarAlias } from "../variables/discoverVariables";
+import { Link2, Unlink } from "lucide-react";
+import { VariablePicker } from "../VariablePicker";
+import { ms } from "../timing";
+import { color, text, font, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
+import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover } from "./helpers";
+
+/** Walk the alias chain for a CSS variable, returning all names in the chain. */
+function resolveAliasChain(varName: string, maxDepth = 5): string[] {
+  const chain = [varName];
+  const visited = new Set([varName]);
+  let current = varName;
+
+  for (let i = 0; i < maxDepth; i++) {
+    let raw: string | null = null;
+    for (const sheet of Array.from(document.styleSheets)) {
+      try {
+        for (let j = 0; j < sheet.cssRules.length; j++) {
+          const rule = sheet.cssRules[j];
+          if (
+            rule instanceof CSSStyleRule &&
+            (rule.selectorText === ":root" || rule.selectorText === "html")
+          ) {
+            const val = rule.style.getPropertyValue(current).trim();
+            if (val) { raw = val; break; }
+          }
+        }
+      } catch { /* cross-origin */ }
+      if (raw) break;
+    }
+
+    if (!raw) break;
+    const alias = parseVarAlias(raw);
+    if (!alias || visited.has(alias.target)) break;
+    visited.add(alias.target);
+    chain.push(alias.target);
+    current = alias.target;
+  }
+
+  return chain;
+}
+
+export function ColorRow({
+  label,
+  value,
+  onChange,
+  onReset,
+  indicator,
+  onContextMenu,
+  computedProp,
+  computedElement,
+  compact,
+  labelWidth,
+  actions,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  /** Called on alt+click label to reset property */
+  onReset?: () => void;
+  indicator?: IndicatorType;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  /** CSS property name for computed tooltip (e.g. "color") */
+  computedProp?: string;
+  /** Target element for computed tooltip */
+  computedElement?: Element;
+  /** Compact mode: no horizontal padding, narrower label — for sub-layouts */
+  compact?: boolean;
+  /** Override default label width (e.g. for wider variable names) */
+  labelWidth?: number;
+  /** Optional action buttons rendered between label and swatch */
+  actions?: React.ReactNode;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
+  const swatchRef = useRef<HTMLDivElement>(null);
+  const linkBtnRef = useRef<HTMLButtonElement>(null);
+  const resetPopover = useResetPopover(indicator, onReset);
+
+  // Resolve var() references for display
+  const varName = parseVarRef(value);
+  const resolvedColor = varName ? resolveVarColor(value) : null;
+  const displayColor = resolvedColor ?? value;
+  const displayLabel = varName ? varName.replace(/^--/, "") : value;
+  const pickerColor = resolvedColor ?? (value === "transparent" ? "#000000" : value);
+
+  // Build alias chain tooltip (e.g. "button-bg -> primary-500 -> #3b82f6")
+  const aliasChainTitle = useMemo(() => {
+    if (!varName) return undefined;
+    const chain = resolveAliasChain(varName);
+    if (chain.length <= 1) return value; // no chain, just show raw var(--foo)
+    return chain.map((n) => n.replace(/^--/, "")).join(" \u2192 ") + ` = ${displayColor}`;
+  }, [varName, value, displayColor]);
+
+  const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
+  const compactLabelOverrides: React.CSSProperties = compact ? { width: 44, padding: 0, paddingLeft: 1 } : {};
+  const widthOverrides: React.CSSProperties = labelWidth != null
+    ? { width: labelWidth, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
+    : {};
+  const labelContent = (
+    <span
+      ref={resetPopover.anchorRef}
+      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
+      title={colorLabelTitle ?? label}
+      style={{ ...labelStyle(indicator), ...compactLabelOverrides, ...widthOverrides }}
+    >
+      {label}
+    </span>
+  );
+
+  const compactRowOverrides: React.CSSProperties = compact ? { padding: "2px 0", gap: 4 } : {};
+  return (
+    <div
+      onContextMenu={onContextMenu}
+      onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
+      style={{ ...rowStyle, position: "relative", ...compactRowOverrides }}
+    >
+      {computedProp && computedElement ? (
+        <ComputedTooltip property={computedProp} element={computedElement}>
+          {labelContent}
+        </ComputedTooltip>
+      ) : labelContent}
+      {actions && (
+        <div style={actionsOverlayStyle}>
+          {actions}
+        </div>
+      )}
+      <div
+        ref={swatchRef}
+        className="tuner-focusable"
+        tabIndex={0}
+        role="button"
+        onClick={() => setPickerOpen(!pickerOpen)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setPickerOpen(!pickerOpen);
+          }
+        }}
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 2,
+          cursor: "pointer",
+          flexShrink: 0,
+          background:
+            displayColor === "transparent"
+              ? checkerboard
+              : displayColor,
+          border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
+          boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
+        }}
+        title={aliasChainTitle}
+      />
+      <span
+        title={aliasChainTitle}
+        style={{
+          fontSize: 10,
+          fontFamily: font.mono,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap" as const,
+          flex: 1,
+          minWidth: 0,
+          color: varName ? primaryAlpha(0.8) : color.mutedForeground,
+        }}
+      >
+        {displayLabel}
+      </span>
+      {/* Link/Unlink variable button */}
+      {varName ? (
+        <button
+          type="button"
+          title="Unlink variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (resolvedColor) onChange(resolvedColor);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: primaryAlpha(0.6),
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Unlink size={11} strokeWidth={2} />
+        </button>
+      ) : (
+        <button
+          ref={linkBtnRef}
+          type="button"
+          title="Link to variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            setVarPickerOpen(!varPickerOpen);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.6,
+            transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
+        >
+          <Link2 size={11} strokeWidth={2} />
+        </button>
+      )}
+      {varPickerOpen && linkBtnRef.current && (
+        <VariablePicker
+          anchor={linkBtnRef.current}
+          type="color"
+          onSelect={(varExpr) => onChange(varExpr)}
+          onClose={() => setVarPickerOpen(false)}
+          activeVariable={varName}
+        />
+      )}
+      {pickerOpen && swatchRef.current && (() => {
+        const pickerWidth = 240 + 24; // width + padding
+        const pickerHeight = 300;
+        const gap = 4;
+        const rect = swatchRef.current!.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const placeAbove = spaceBelow < pickerHeight + gap;
+        const top = placeAbove
+          ? rect.top - pickerHeight - gap
+          : rect.bottom + gap;
+        const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
+        return createPortal(
+          <div style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
+            <ColorPickerEnhanced
+              color={pickerColor}
+              onChange={(hex, opacity) => {
+                onChange(opacity < 1 ? hexToRgba(hex, opacity) : hex);
+              }}
+              onClose={() => setPickerOpen(false)}
+              onSelectVariable={(varExpr) => {
+                onChange(varExpr);
+                setPickerOpen(false);
+              }}
+              activeVariable={varName}
+            />
+          </div>,
+          document.body
+        );
+      })()}
+      {resetPopover.node}
+    </div>
+  );
+}
