@@ -19,7 +19,7 @@ import type { UnitConversionContext } from "../unitConversion";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function makeMockCtx(overrides?: Partial<{ display: string; parentDisplay: string }>): SectionCtx {
+function makeMockCtx(overrides?: Partial<{ display: string }>): SectionCtx {
   const element = document.createElement("div");
   element.style.display = overrides?.display ?? "block";
   element.style.flexDirection = "row";
@@ -58,9 +58,8 @@ function makeMockCtx(overrides?: Partial<{ display: string; parentDisplay: strin
   };
 }
 
-function renderLayout(props: Record<string, unknown>) {
-  // Lazy import to avoid module resolution issues before test env is ready
-  const { LayoutSection } = require("../sections/LayoutSection");
+async function renderLayout(props: Record<string, unknown>) {
+  const { LayoutSection } = await import("../sections/LayoutSection");
   const defaults = {
     ctx: makeMockCtx(),
     display: "block",
@@ -87,26 +86,22 @@ const layoutSrc = readFileSync(
 // ─── 1. Flex child controls shown when parentIsFlex ──────────────────
 
 describe("Flex child controls visibility", () => {
-  it("shows flex child controls (Grow, Shrink, Basis, Order, Align Self) when parentIsFlex and has overrides", () => {
-    // The flex child section requires hasFlexChildOverride to be true.
-    // hasFlexChildOverride checks parentIsFlexOrGrid AND (any dirty indicator or non-default value).
+  it("shows flex child controls (Grow, Shrink, Basis, Order, Align Self) when parentIsFlex and has overrides", async () => {
+    // hasFlexChildOverride requires parentIsFlexOrGrid AND non-default value.
     // We use a ctx with non-default flexGrow to trigger the section.
     const ctx = makeMockCtx();
     (ctx.element as HTMLElement).style.flexGrow = "2";
-    // Re-read computed style after mutation
     const cs = getComputedStyle(ctx.element);
     const ctxWithOverride: SectionCtx = { ...ctx, cs };
 
-    const html = renderLayout({
+    const html = await renderLayout({
       ctx: ctxWithOverride,
       display: "block",
       parentIsFlex: true,
       parentIsGrid: false,
     });
 
-    // "Flex Child" sub-label should appear
     expect(html).toContain("Flex Child");
-    // Individual controls should be present
     expect(html).toContain("Grow");
     expect(html).toContain("Shrink");
     expect(html).toContain("Basis");
@@ -114,25 +109,24 @@ describe("Flex child controls visibility", () => {
     expect(html).toContain("Align Self");
   });
 
-  it("hides flex child controls when parent is NOT flex or grid", () => {
-    const html = renderLayout({
+  it("hides flex child controls when parent is NOT flex or grid", async () => {
+    const html = await renderLayout({
       display: "block",
       parentIsFlex: false,
       parentIsGrid: false,
     });
 
-    // "Flex Child" sub-label must NOT appear
     expect(html).not.toContain("Flex Child");
     expect(html).not.toContain("Grid Child");
   });
 
-  it("shows Grid Child label when parentIsGrid (not parentIsFlex)", () => {
+  it("shows Grid Child label when parentIsGrid (not parentIsFlex)", async () => {
     const ctx = makeMockCtx();
     (ctx.element as HTMLElement).style.alignSelf = "center";
     const cs = getComputedStyle(ctx.element);
     const ctxWithOverride: SectionCtx = { ...ctx, cs };
 
-    const html = renderLayout({
+    const html = await renderLayout({
       ctx: ctxWithOverride,
       display: "block",
       parentIsFlex: false,
@@ -143,14 +137,13 @@ describe("Flex child controls visibility", () => {
     expect(html).toContain("Align Self");
   });
 
-  it("shows Grow/Shrink/Basis/Order only for flex parent, not grid parent", () => {
-    // Grid child section shows align-self but NOT grow/shrink/basis/order
+  it("shows Grow/Shrink/Basis/Order only for flex parent, not grid parent", async () => {
     const ctx = makeMockCtx();
     (ctx.element as HTMLElement).style.alignSelf = "center";
     const cs = getComputedStyle(ctx.element);
     const ctxWithOverride: SectionCtx = { ...ctx, cs };
 
-    const html = renderLayout({
+    const html = await renderLayout({
       ctx: ctxWithOverride,
       display: "block",
       parentIsFlex: false,
@@ -160,7 +153,6 @@ describe("Flex child controls visibility", () => {
     // Grid child only shows Align Self, not the flex-specific controls
     expect(html).toContain("Align Self");
     // Grow/Shrink/Basis/Order are inside {parentIsFlex && ...} guard
-    // so they should not appear for grid-only parents
     expect(html).not.toContain("Grow");
     expect(html).not.toContain("Shrink");
   });
@@ -170,13 +162,11 @@ describe("Flex child controls visibility", () => {
 
 describe("Source-level: flex child conditional rendering", () => {
   it("hasFlexChildOverride requires parentIsFlexOrGrid", () => {
-    // The hasFlexChildOverride variable must check parentIsFlexOrGrid
     expect(layoutSrc).toContain("parentIsFlexOrGrid");
     expect(layoutSrc).toMatch(/hasFlexChildOverride.*parentIsFlexOrGrid/s);
   });
 
   it("Grow/Shrink/Basis/Order are gated behind parentIsFlex", () => {
-    // The JSX wraps grow/shrink/basis/order in {parentIsFlex && (...)}
     expect(layoutSrc).toMatch(/\{parentIsFlex\s*&&/);
   });
 
@@ -188,30 +178,27 @@ describe("Source-level: flex child conditional rendering", () => {
 // ─── 3. Grid track editors appear when display is "grid" ─────────────
 
 describe("Grid track editors visibility", () => {
-  it("shows GridTrackRow (Columns/Rows) when isGrid is true", () => {
+  it("shows GridTrackRow (Columns/Rows) when isGrid is true", async () => {
     const ctx = makeMockCtx({ display: "grid" });
-    const html = renderLayout({
+    const html = await renderLayout({
       ctx,
       display: "grid",
       isGrid: true,
       isFlex: false,
     });
 
-    // GridTrackRow renders sub-labels "Columns" and "Rows"
     expect(html).toContain("Columns");
     expect(html).toContain("Rows");
   });
 
-  it("hides grid controls when isGrid is false", () => {
-    const html = renderLayout({
+  it("hides grid controls when isGrid is false", async () => {
+    const html = await renderLayout({
       display: "flex",
       isGrid: false,
       isFlex: true,
     });
 
-    // The grid track row includes "Grid" label + "Columns"/"Rows" sub-labels
-    // When not in grid mode, these should be absent
-    // (Note: "Direction" appears for both flex and grid, so we check "Columns")
+    // Grid-specific sub-labels should not appear
     expect(html).not.toContain("Columns");
     expect(html).not.toContain("Rows");
   });
@@ -221,15 +208,14 @@ describe("Grid track editors visibility", () => {
   });
 
   it("grid section renders grid-template-columns and grid-template-rows controls", () => {
-    // The source must reference GridTrackRow which controls these properties
     expect(layoutSrc).toContain("GridTrackRow");
     expect(layoutSrc).toContain("grid-template-columns");
     expect(layoutSrc).toContain("grid-template-rows");
   });
 
-  it("grid section renders auto-flow direction control", () => {
+  it("grid section renders auto-flow direction control", async () => {
     const ctx = makeMockCtx({ display: "grid" });
-    const html = renderLayout({
+    const html = await renderLayout({
       ctx,
       display: "grid",
       isGrid: true,
@@ -257,18 +243,11 @@ describe("AlignBox 3x3 sets both justify-content and align-items on click", () =
       }),
     );
 
-    // The AlignBox renders 9 cells (3x3 dot grid)
-    // Each cell has role="button" for accessibility
+    // The AlignBox renders 9 cells (3x3 dot grid) with role="button"
     expect(html).toContain('role="button"');
   });
 
-  it("AlignBox onChange callback signature passes (justify, align) pair", () => {
-    // Verify the AlignBox interface accepts a 2-argument onChange
-    const { AlignBox } = require("../sections/AlignBox");
-    const onChange = vi.fn();
-
-    // Render and simulate: we can't click in SSR, but we can verify
-    // the source ensures handleCellClick calls onChange(justifyCols[col], alignRows[row])
+  it("AlignBox source calls onChange with both justify and align arguments", () => {
     const alignBoxSrc = readFileSync(
       join(__dirname, "../sections/AlignBox.tsx"),
       "utf-8",
@@ -286,7 +265,6 @@ describe("AlignBox 3x3 sets both justify-content and align-items on click", () =
     expect(flexAlignMatch, "Could not find flex-mode AlignBox").toBeTruthy();
 
     const alignBoxUsage = flexAlignMatch![0];
-    // The onChange must reference both justify-content and align-items
     expect(alignBoxUsage).toContain("justify-content");
     expect(alignBoxUsage).toContain("align-items");
   });

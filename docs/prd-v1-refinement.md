@@ -57,7 +57,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** Write a test in `src/overlay/__tests__/stateSelector.test.ts` that verifies: (1) StateSelector renders with value="none" by default, (2) all pseudo-class options are present: none, hover, focus, active, visited, focus-within, focus-visible, (3) changing selection fires `onStateChange` with the new value, (4) selector refuses to change mid-drag (when `isScrubActive()` returns true).
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/layoutSection.test.ts` that verifies: (1) when parent is a flex container, flex child controls (grow, shrink, basis, order, align-self) are shown, (2) when parent is NOT flex, flex child controls are hidden, (3) when display is "grid", grid track editors (template-columns, template-rows) appear, (4) the 3×3 AlignBox sets both `justify-content` and `align-items` simultaneously on click.
+- [x] **P1** Write a test in `src/overlay/__tests__/layoutSection.test.ts` that verifies: (1) when parent is a flex container, flex child controls (grow, shrink, basis, order, align-self) are shown, (2) when parent is NOT flex, flex child controls are hidden, (3) when display is "grid", grid track editors (template-columns, template-rows) appear, (4) the 3×3 AlignBox sets both `justify-content` and `align-items` simultaneously on click.
 
 - [x] **P1** Write a test in `src/overlay/__tests__/spacingBoxModel.test.ts` that verifies: (1) click on a value enters edit mode, (2) arrow up/down increments/decrements by 1, (3) shift+arrow increments by 10, (4) tab moves between values in order (top → right → bottom → left), (5) padding values cannot go negative while margin values can.
 

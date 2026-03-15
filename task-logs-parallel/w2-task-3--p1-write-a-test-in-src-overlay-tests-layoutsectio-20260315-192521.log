@@ -1,1 +1,25 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 22 new tests pass. The 1 pre-existing failure (`cssLayerSpecificity.test.ts`) is unrelated to our changes — it's a build artifact test that expects built CSS to exist.
+
+`★ Insight ─────────────────────────────────────`
+**Why source-level tests work well here:**
+The key conditional rendering gates in `LayoutSection.tsx` are JSX expressions like `{isGrid && (` and `{parentIsFlex && (`. Source-level regex tests verify these guards exist structurally, which is more resilient than full React renders that would require mocking the entire `SectionCtx` (element, apply, ind, sectionInd, cs, parentCs, etc.). The existing test suite follows this same pattern — `layout-reset.test.ts` verifies `onReset`/`onAltClick` wiring by reading source too.
+
+**The AlignBox dual-property contract is tested at two levels:**
+1. **Unit level** — `toColIndices`/`toRowIndices` verify the 3×3 grid mapping is correct
+2. **Wiring level** — Source assertions confirm `LayoutSection` wires the flex AlignBox's `onChange` to both `apply("justify-content", j)` and `apply("align-items", a)`, and the grid AlignBox's handler applies both `justify-items` and `align-items`
+`─────────────────────────────────────────────────`
+
+Here's a summary of the 22 tests across 4 describe blocks:
+
+| Test Group | Tests | What It Verifies |
+|---|---|---|
+| **When parent is flex** | 7 | Grow, Shrink, Basis, Order controls live inside `{parentIsFlex && (` guard; Align Self is available for both flex and grid children |
+| **When parent is NOT flex** | 3 | `hasFlexChildOverride` requires `parentIsFlexOrGrid`; dynamic "Flex Child"/"Grid Child" label; entire block gated |
+| **When display is grid** | 5 | `{isGrid && (` gates `GridTrackRow`; handlers apply `grid-template-columns`/`grid-template-rows`; flex controls use separate guard |
+| **AlignBox dual-property click** | 7 | `toColIndices`/`toRowIndices` mappings; 9 cells rendered; `onChange` receives both justify+align; both flex and grid AlignBox wired to apply two CSS properties |
+
+---
+
+**Asked:** Write a test file verifying flex child control visibility, grid track editor visibility, and AlignBox dual-property wiring.
+**Did:** Created `src/overlay/__tests__/layoutSection.test.ts` with 22 tests covering all 4 requirements. All pass (1744/1745 total, 1 pre-existing unrelated failure).

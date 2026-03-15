@@ -57,7 +57,7 @@ interface NavigatorPanelProps {
 const PANEL_WIDTH = 300;
 const SNAP_THRESHOLD = 20;
 const SNAP_MARGIN = 16;
-const DEFAULT_POS = { x: 16, y: 80 };
+const DEFAULT_POS = { x: SNAP_MARGIN, y: SNAP_MARGIN };
 const PANEL_HEIGHT_ESTIMATE = 500;
 
 /** Stable key generator for Element references (avoids index-based keys) */

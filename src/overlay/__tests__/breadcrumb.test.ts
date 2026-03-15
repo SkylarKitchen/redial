@@ -11,7 +11,7 @@
  * We test via renderToString for structural assertions and via JSDOM
  * rendering for interactive behavior (click/hover).
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { buildBreadcrumb } from "../util";
@@ -121,13 +121,15 @@ describe("Breadcrumb collapse rendering", () => {
 // ─── Interactive: expand, click ancestor, hover ───────────────────────
 
 describe("Breadcrumb interactive behavior", () => {
-  // For interactive tests we need a real DOM. We'll use dynamic import
-  // of react-dom/client for rendering into a container.
+  let container: HTMLDivElement;
+  let root: any;
 
   async function mountHeader(props: Record<string, unknown>) {
     const { Header } = await import("../shell/Header");
-    const ReactDOM = await import("react-dom/client");
-    const container = document.createElement("div");
+    const { createRoot } = await import("react-dom/client");
+    const { act: reactAct } = await import("react");
+
+    container = document.createElement("div");
     document.body.appendChild(container);
 
     const el = document.createElement("div");
@@ -139,15 +141,9 @@ describe("Breadcrumb interactive behavior", () => {
       onDragStart: vi.fn(),
     };
 
-    let root: any;
-    await new Promise<void>((resolve) => {
-      // flushSync to ensure synchronous rendering
-      const { flushSync } = require("react-dom");
-      root = ReactDOM.createRoot(container);
-      flushSync(() => {
-        root.render(createElement(Header as any, { ...defaultProps, ...props }));
-      });
-      resolve();
+    root = createRoot(container);
+    reactAct(() => {
+      root.render(createElement(Header as any, { ...defaultProps, ...props }));
     });
 
     return { container, root };
@@ -157,16 +153,26 @@ describe("Breadcrumb interactive behavior", () => {
     document.body.innerHTML = "";
   });
 
+  afterEach(() => {
+    if (root) {
+      const { act: reactAct } = require("react");
+      reactAct(() => { root.unmount(); });
+    }
+  });
+
   it("clicking '...' expands full breadcrumb chain", async () => {
+    const { act: reactAct } = await import("react");
     const bc = makeBreadcrumb(5);
-    const { container, root } = await mountHeader({ breadcrumb: bc });
+    await mountHeader({ breadcrumb: bc });
 
     // Initially collapsed — ellipsis is present
     const ellipsis = container.querySelector('[title="Show full breadcrumb"]');
     expect(ellipsis).toBeTruthy();
 
-    // Click the ellipsis
-    ellipsis!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    // Click the ellipsis (wrapped in act to flush state update)
+    reactAct(() => {
+      ellipsis!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
 
     // After expansion all segments should be visible and ellipsis gone
     const expandedEllipsis = container.querySelector('[title="Show full breadcrumb"]');
@@ -179,41 +185,43 @@ describe("Breadcrumb interactive behavior", () => {
     expect(text).toContain("section");
     expect(text).toContain("article");
     expect(text).toContain("ul");
-
-    root.unmount();
   });
 
   it("clicking an ancestor segment fires onBreadcrumbClick with correct element", async () => {
+    const { act: reactAct } = await import("react");
     const bc = makeBreadcrumb(3); // no collapse, 3 segments
     const clickHandler = vi.fn();
-    const { container, root } = await mountHeader({
+    await mountHeader({
       breadcrumb: bc,
       onBreadcrumbClick: clickHandler,
     });
 
-    // Find ancestor segments (non-last items with role="button")
+    // Find ancestor segments (non-last items with data-breadcrumb-ancestor)
     const ancestors = container.querySelectorAll('[data-breadcrumb-ancestor]');
     expect(ancestors.length).toBeGreaterThanOrEqual(1);
 
     // Click the first ancestor
-    ancestors[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    reactAct(() => {
+      ancestors[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
     expect(clickHandler).toHaveBeenCalledTimes(1);
     expect(clickHandler).toHaveBeenCalledWith(bc[0].el);
 
     // Click the second ancestor
     if (ancestors.length > 1) {
-      ancestors[1].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      reactAct(() => {
+        ancestors[1].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
       expect(clickHandler).toHaveBeenCalledTimes(2);
       expect(clickHandler).toHaveBeenCalledWith(bc[1].el);
     }
-
-    root.unmount();
   });
 
   it("hovering an ancestor fires onBreadcrumbHover with element, leaving fires with null", async () => {
+    const { act: reactAct } = await import("react");
     const bc = makeBreadcrumb(3);
     const hoverHandler = vi.fn();
-    const { container, root } = await mountHeader({
+    await mountHeader({
       breadcrumb: bc,
       onBreadcrumbHover: hoverHandler,
     });
@@ -221,14 +229,16 @@ describe("Breadcrumb interactive behavior", () => {
     const ancestors = container.querySelectorAll('[data-breadcrumb-ancestor]');
     expect(ancestors.length).toBeGreaterThanOrEqual(1);
 
-    // Hover enter
-    ancestors[0].dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+    // React's onMouseEnter is triggered via mouseover event delegation
+    reactAct(() => {
+      ancestors[0].dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    });
     expect(hoverHandler).toHaveBeenCalledWith(bc[0].el);
 
-    // Hover leave
-    ancestors[0].dispatchEvent(new MouseEvent("mouseleave", { bubbles: true }));
+    // React's onMouseLeave is triggered via mouseout event delegation
+    reactAct(() => {
+      ancestors[0].dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
+    });
     expect(hoverHandler).toHaveBeenCalledWith(null);
-
-    root.unmount();
   });
 });
