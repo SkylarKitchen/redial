@@ -17,7 +17,7 @@ import { Footer } from "./Footer";
 import { WebflowPanel } from "./WebflowPanel";
 
 import { PromptPanel } from "./PromptPanel";
-import { SessionDrawer } from "./SessionDrawer";
+import { ChangesDrawer, type HistoryEntry, type ChangesTab } from "./ChangesDrawer";
 import { GridOverlay } from "../overlays/GridOverlay";
 import { BoxModelOverlay } from "../overlays/BoxModelOverlay";
 import { SECTION_ORDER } from "../panelUtils";

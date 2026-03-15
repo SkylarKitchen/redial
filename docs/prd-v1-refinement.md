@@ -111,45 +111,45 @@ topic: v1-refinement-prd
 
 - [x] **P2** In `src/overlay/Header.tsx`, the source file path (e.g., `components/Hero.tsx:42`) is display-only. Make it clickable — when clicked, call `fetch('/__tuner/open-editor', { method: 'POST', body: JSON.stringify({ file, line }) })` to open the file in the user's editor. If the endpoint doesn't exist, just `console.log` the path. Add `cursor: pointer` and a subtle hover underline.
 
-- [ ] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
+- [x] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
 
 - [x] **P2** In `src/overlay/LayoutSection.tsx`, add a "Center" quick-action button that sets `justify-content: center` AND `align-items: center` in a single click. Also add a "Fill Parent" button that sets `width: 100%` and `height: 100%`. If these buttons already exist, verify they use `beginBatch()` / `endBatch()` from `apply.ts` to group the two changes into a single undo step.
 
-- [ ] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
+- [x] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
 
 - [x] **P2** Write a test that verifies unit conversion: when switching width from `px` to `%`, the value converts correctly based on the parent element's width. Check `src/overlay/unitConversion.ts` and `src/overlay/SizeSection.tsx` to verify the conversion uses the parent element's computed dimensions, not hardcoded assumptions.
 
 - [x] **P2** In `src/overlay/SizeSection.tsx`, verify that the Tailwind-aware step detection (4px steps for Tailwind in px mode) works correctly. Read the step logic and confirm it detects Tailwind projects (via the scope system or a config flag) and adjusts the slider step size accordingly.
 
-- [ ] **P2** In the position offset diagram (`src/overlay/PositionOffsetDiagram.tsx` or equivalent), verify that all four offset inputs support unit selectors (`px`, `%`, `vh`, `vw`). The spec lists these units for position offsets. If any input is px-only, add `UnitSelector` to it.
+- [x] **P2** In the position offset diagram (`src/overlay/PositionOffsetDiagram.tsx` or equivalent), verify that all four offset inputs support unit selectors (`px`, `%`, `vh`, `vw`). The spec lists these units for position offsets. If any input is px-only, add `UnitSelector` to it.
 
-- [ ] **P2** In the font family dropdown (in `src/overlay/TypographySection.tsx`), verify that `fontPreview` prop is working — each font option in the dropdown should render its own name in that font face. If the preview loads slowly for many fonts, consider lazy-loading font previews as the dropdown scrolls.
+- [x] **P2** In the font family dropdown (in `src/overlay/TypographySection.tsx`), verify that `fontPreview` prop is working — each font option in the dropdown should render its own name in that font face. If the preview loads slowly for many fonts, consider lazy-loading font previews as the dropdown scrolls.
 
-- [ ] **P2** Write a test that verifies multi-layer background stacking: adding 3 background layers and verifying they render in correct CSS stacking order (last added = bottommost in CSS). Verify deleting a middle layer recomposes the background correctly.
+- [x] **P2** Write a test that verifies multi-layer background stacking: adding 3 background layers and verifying they render in correct CSS stacking order (last added = bottommost in CSS). Verify deleting a middle layer recomposes the background correctly.
 
-- [ ] **P2** In `src/overlay/BordersSection.tsx`, verify the per-side border controls show correct style/width/color when different sides have different values. E.g., if `border-top: 2px solid red` and `border-bottom: 1px dashed blue`, switching between Top and Bottom tabs should show the correct values for each side.
+- [x] **P2** In `src/overlay/BordersSection.tsx`, verify the per-side border controls show correct style/width/color when different sides have different values. E.g., if `border-top: 2px solid red` and `border-bottom: 1px dashed blue`, switching between Top and Bottom tabs should show the correct values for each side.
 
 - [x] **P2** In `src/overlay/EffectsSection.tsx`, the cursor section has a `CURSOR_OPTIONS` list. Verify it includes ALL 14 cursor types from the spec: `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `not-allowed`, `crosshair`, `help`, `wait`, `zoom-in`, `zoom-out`, `none`. Read `panelConstants.tsx` to check. Add any missing values.
 
-- [ ] **P2** In `src/overlay/ColorPickerEnhanced.tsx`, verify the color mode toggle works correctly between HSB, RGB, and Hex input modes. Check that switching modes preserves the current color value accurately (no rounding drift across mode switches). If there's visible drift (e.g., HSB → RGB → HSB changes the color), fix the conversion precision.
+- [x] **P2** In `src/overlay/ColorPickerEnhanced.tsx`, verify the color mode toggle works correctly between HSB, RGB, and Hex input modes. Check that switching modes preserves the current color value accurately (no rounding drift across mode switches). If there's visible drift (e.g., HSB → RGB → HSB changes the color), fix the conversion precision.
 
-- [ ] **P2** In `src/overlay/Overlay.tsx`, verify that the `D` key "diff peek" interaction is smooth: (1) pressing D immediately strips all overrides, (2) the visual change is instant (no animation delay), (3) releasing D restores overrides, (4) if D is tapped quickly (<200ms), it doesn't flash. Add a small debounce if the flash issue exists.
+- [x] **P2** In `src/overlay/Overlay.tsx`, verify that the `D` key "diff peek" interaction is smooth: (1) pressing D immediately strips all overrides, (2) the visual change is instant (no animation delay), (3) releasing D restores overrides, (4) if D is tapped quickly (<200ms), it doesn't flash. Add a small debounce if the flash issue exists.
 
-- [ ] **P2** In `src/overlay/apply.ts`, verify that `restoreSession()` handles corrupted localStorage gracefully. Add a try/catch around JSON.parse of the stored session data so that corrupted data doesn't crash the panel on startup. If parsing fails, silently discard the stored session and start fresh.
+- [x] **P2** In `src/overlay/apply.ts`, verify that `restoreSession()` handles corrupted localStorage gracefully. Add a try/catch around JSON.parse of the stored session data so that corrupted data doesn't crash the panel on startup. If parsing fails, silently discard the stored session and start fresh.
 
 ---
 
 ## P2 — Performance
 
-- [ ] **P2** In `src/overlay/WebflowPanel.tsx`, verify that section collapse/expand doesn't trigger expensive re-renders of other sections. Since all 8+ sections are siblings, collapsing one section should NOT cause the others to re-render. If sections share state that triggers full re-renders, consider wrapping each section in `React.memo` or moving section state to individual components.
+- [x] **P2** In `src/overlay/WebflowPanel.tsx`, verify that section collapse/expand doesn't trigger expensive re-renders of other sections. Since all 8+ sections are siblings, collapsing one section should NOT cause the others to re-render. If sections share state that triggers full re-renders, consider wrapping each section in `React.memo` or moving section state to individual components.
 
-- [ ] **P2** Audit `src/overlay/infer.ts` for performance: `getComputedStyle()` is called once on selection, but verify it isn't called again on every render or slider drag. The infer result should be cached per selection and only refreshed on re-selection or explicit refresh. If `infer()` is called inside any render path, move it to an effect or callback.
+- [x] **P2** Audit `src/overlay/infer.ts` for performance: `getComputedStyle()` is called once on selection, but verify it isn't called again on every render or slider drag. The infer result should be cached per selection and only refreshed on re-selection or explicit refresh. If `infer()` is called inside any render path, move it to an effect or callback.
 
 ---
 
 ## P2 — Accessibility
 
-- [ ] **P2** Audit the `AlignBox` component (`src/overlay/AlignBox.tsx`) for accessibility: each cell should have `role="radio"`, `aria-checked`, and `aria-label` describing its alignment (e.g., "Align top-left"). The 3×3 grid should be wrapped in `role="radiogroup"` with an accessible name.
+- [x] **P2** Audit the `AlignBox` component (`src/overlay/AlignBox.tsx`) for accessibility: each cell should have `role="radio"`, `aria-checked`, and `aria-label` describing its alignment (e.g., "Align top-left"). The 3×3 grid should be wrapped in `role="radiogroup"` with an accessible name.
 
 ---
 
@@ -161,7 +161,7 @@ topic: v1-refinement-prd
 
 ## P2 — Directory Restructure
 
-- [ ] **P2** Restructure `src/overlay/` from a flat 103-file directory into domain subdirectories. Target structure: `sections/` (9 section files), `editors/` (19 sub-editor components), `controls/` (11 shared controls), `shell/` (Overlay, Header, Footer, Toolbar, Selector + auxiliary panels), `overlays/` (6 canvas overlays), `hooks/` (9 use*.ts files), `engine/` (apply, infer, scope, statePreview, hmr + parsers/utils), `tokens/` (theme, timing, panelConstants, panelStyles, panelUtils). Update all import paths. Run `npm run typecheck` and `npm test` after to verify nothing breaks. Reference `src/overlay/DIRECTORY.md` for the exact file-to-directory mapping.
+- [x] **P2** Restructure `src/overlay/` from a flat 103-file directory into domain subdirectories. Target structure: `sections/` (9 section files), `editors/` (19 sub-editor components), `controls/` (11 shared controls), `shell/` (Overlay, Header, Footer, Toolbar, Selector + auxiliary panels), `overlays/` (6 canvas overlays), `hooks/` (9 use*.ts files), `engine/` (apply, infer, scope, statePreview, hmr + parsers/utils), `tokens/` (theme, timing, panelConstants, panelStyles, panelUtils). Update all import paths. Run `npm run typecheck` and `npm test` after to verify nothing breaks. Reference `src/overlay/DIRECTORY.md` for the exact file-to-directory mapping.
 
 ---
 

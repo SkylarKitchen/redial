@@ -1,1 +1,18 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 20 tests pass.
+
+`★ Insight ─────────────────────────────────────`
+**Regex gotcha with JSX tags**: When matching JSX tags containing `[\s\S]*?`, the "non-greedy" quantifier still crosses `/>` boundaries. The fix was to use `lastIndexOf("<AlignBox", idx)` + `indexOf("/>", idx)` to extract the exact tag — a technique that respects JSX structure where arrow functions (`=>`) and inline objects (`{...}`) make character-class exclusions like `[^>]` unreliable.
+
+**What the 20 tests cover**:
+1. **Mode prop contract** (6 tests): type definition, default value, value-array switching
+2. **Grid property mapping** (5 tests): X→`justify-items` (not `justify-content`), Y→`align-items`, indicator tracking, state binding
+3. **Flex property mapping** (3 tests): X→`justify-content` (not `justify-items`), Y→`align-items`
+4. **Value correctness** (4 tests): flex uses `flex-start`/`flex-end`, grid uses `start`/`end`, no cross-contamination
+5. **Property separation** (2 tests): flex and grid handlers write to distinct justify properties, both share `align-items` for Y
+`─────────────────────────────────────────────────`
+
+---
+
+**Asked**: Write a test verifying AlignBox maps correctly for grid context (X→`justify-items`, Y→`align-items`) and detects display type via `mode` prop.
+**Did**: Created `src/overlay/__tests__/layoutAlignBox.test.ts` with 20 passing tests covering mode prop switching, grid vs flex CSS property targeting, value correctness per mode, and property separation guarantees.

@@ -1,1 +1,20 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+109 passed, 1 failed — and the failure is a pre-existing issue (`cssLayerSpecificity.test.ts` looking for build artifacts), not related to our change. Our new test is part of the 2282 passing tests.
+
+`★ Insight ─────────────────────────────────────`
+**Why a 2-line fix works**: The root cause wasn't bad math — the HSB↔RGB conversion precision loss is inherent (continuous floats → 256 discrete integers → floats). The bug was *when* the conversion runs. `applyHexInput` fired on blur whenever the user clicked the mode toggle, even though the hex hadn't been edited. The guard `val.toUpperCase() === currentHex.toUpperCase()` short-circuits the reconversion, preserving the original HSB precision.
+
+**Why drift stabilizes**: After one HSB→RGB→HSB round-trip, the HSB values land on a point that maps exactly back to the same integer RGB. So drift can't accumulate beyond the first cycle — but even one cycle shifts the internal state, which is why the guard matters.
+`─────────────────────────────────────────────────`
+
+**Summary of changes:**
+
+| File | Change |
+|------|--------|
+| `src/overlay/controls/ColorPickerEnhanced.tsx:373` | Added early return in `applyHexInput` when hex matches `currentHex` |
+| `src/overlay/__tests__/colorModeDrift.test.ts` | New test file (3 tests): drift detection, guard check, accumulation safety |
+
+---
+**Asked:** Verify color mode toggle doesn't cause precision drift in HSB↔RGB↔Hex round-trips; fix if present.
+**Did:** Identified the drift path (hex input blur on mode switch triggers lossy reconversion), wrote 3 tests (1 failing), added a 2-line guard in `applyHexInput` to skip conversion when hex is unchanged — all tests pass (2282/2282 + 1 pre-existing failure).
+---

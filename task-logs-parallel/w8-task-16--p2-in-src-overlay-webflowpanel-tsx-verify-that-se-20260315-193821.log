@@ -1,0 +1,24 @@
+[WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 2,289 tests pass. The one failure (`cssLayerSpecificity.test.ts`) is pre-existing and unrelated to our changes — it's a build-artifact test.
+
+`★ Insight ─────────────────────────────────────`
+**Why the ref pattern works for stable callbacks:** When `useCallback` closes over a state value like `expandedSection`, React must recreate the callback whenever that value changes — breaking `memo` for every consumer. By storing the value in a `useRef` and reading `.current` inside the callback, the callback's dependency array becomes empty (just `setExpandedSection` which is a stable setter), so it keeps the same reference identity across renders. The ref always reads the latest value when invoked.
+
+**Why context changes bypass `React.memo`:** Context is React's escape hatch from the props-based render tree. When a context provider's value changes, React skips the normal `shouldComponentUpdate` / `memo` checks and re-renders every consumer directly. This is why the inline `onUpdate` arrow function was so impactful — it caused the `useMemo` inside `SectionMemoryProvider` to produce a new context value on every parent render, which then forced every `<Section>` consumer to re-render.
+`─────────────────────────────────────────────────`
+
+## Summary of changes
+
+| Issue | File | Fix |
+|---|---|---|
+| `handleSectionToggle` recreated every toggle | `WebflowPanel.tsx:71-77` | Use `useRef` for `expandedSection` to keep callback stable |
+| Inline `onUpdate` in provider | `WebflowPanel.tsx:174-179` | Extracted to `handleMemoryUpdate` with `useCallback` |
+| `sectionMemory ?? {}` new object each render | `WebflowPanel.tsx:32, 175` | Module-level `EMPTY_MEMORY` constant |
+| `CSSVariablesSection` missing `memo` | `CSSVariablesSection.tsx:250` | Wrapped in `memo()` (now all 9 sections are memo'd) |
+
+**Net effect:** In the default (non-focus) mode, collapsing a section was already safe — each `Section` manages its own state. In **focus mode**, toggling previously caused all 8+ sibling sections to re-render due to the unstable callback. Now `memo` can actually do its job.
+
+---
+**Asked:** Verify section collapse/expand doesn't trigger expensive sibling re-renders
+**Did:** Audited WebflowPanel render architecture, found 4 issues (unstable toggle callback, inline context provider callback, new empty object per render, CSSVariablesSection missing memo), fixed all 4. All 2,289 tests pass.
+---

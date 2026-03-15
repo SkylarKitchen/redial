@@ -1,1 +1,26 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+That's a pre-existing failure in `cssLayerSpecificity.test.ts` unrelated to fontPreview — it checks for a built CSS file. My new test (110th file, 12 new tests) all pass cleanly.
+
+`★ Insight ─────────────────────────────────────`
+**fontPreview verification summary:**
+- **Working correctly.** The `fontFamily` inline style on each `CommandItem` uses the font's own name in the stack (e.g., `"Georgia, ui-monospace, 'SF Mono', monospace"`), so each option visually renders in its own typeface.
+- **No lazy loading needed.** All fonts come from two sources: `document.fonts` (already loaded on the page) and `FALLBACK_FONTS` (7 system fonts like `system-ui`, `Georgia`, `serif`). The dropdown never triggers remote font fetches — there's nothing to lazy-load.
+- **Graceful fallback.** The `ui-monospace, 'SF Mono', monospace` fallback chain ensures that if any font somehow isn't available, the option still renders in a readable monospace face instead of the browser's default.
+`─────────────────────────────────────────────────`
+
+Here's what I found:
+
+**fontPreview is working correctly.** The implementation at `SelectRow.tsx:281` applies `fontFamily: "${opt.value}, ui-monospace, 'SF Mono', monospace"` to every dropdown option, and line 213 does the same for the trigger button. Each font name renders in its own typeface.
+
+**Lazy loading is unnecessary.** The font list comes from:
+1. `document.fonts` (line 87-100 of TypographySection.tsx) — these are already loaded on the page
+2. `FALLBACK_FONTS` — 7 system fonts (`system-ui`, `Georgia`, `Times New Roman`, `Courier New`, `monospace`, `sans-serif`, `serif`) that are always available
+
+No remote font fetching happens when the dropdown opens, so there's no slow-loading scenario to optimize.
+
+**New test coverage:** Added `fontPreview.test.ts` with 12 tests covering trigger styling, option styling, fallback behavior, font list construction, and the absence of remote font loading. All pass (2290/2291 total, the 1 failure is pre-existing and unrelated).
+
+---
+**Asked:** Verify fontPreview prop works in font family dropdown; consider lazy-loading if slow
+**Did:** Read SelectRow.tsx + TypographySection.tsx, confirmed fontPreview correctly applies per-font styling, determined lazy loading is unnecessary (all fonts pre-loaded), wrote 12 new tests in fontPreview.test.ts — all passing
+---
