@@ -22,7 +22,7 @@ import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } f
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "../panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
 import { parseGridTemplate, serializeGridTemplate } from "../GridSettingsPopup";
-import { Link, Grid3x3 } from "lucide-react";
+import { Link, Unlink, Grid3x3 } from "lucide-react";
 import { cssToTwClass } from "../tailwind";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "../theme";
 import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "../panelStyles";
@@ -556,7 +556,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     color: text.disabled,
                   }}
                 >
-                  <Link size={12} strokeWidth={1.5} />
+                  <Unlink size={12} strokeWidth={1.5} />
                 </button>
               </div>
               <SliderRow
@@ -737,7 +737,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     color: text.disabled,
                   }}
                 >
-                  <Link size={12} strokeWidth={1.5} />
+                  <Unlink size={12} strokeWidth={1.5} />
                 </button>
               </div>
               <SliderRow
