@@ -11,7 +11,7 @@ import { getReactSource } from "../core/sourcemap";
 import type { Scope } from "../core/scope";
 import { getReadableName } from "../core/scope";
 import { StateSelector } from "./StateSelector";
-import { X, ChevronRight } from "lucide-react";
+import { X, ChevronRight, Pin } from "lucide-react";
 import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha, focusRing } from "../theme";
 import { ms } from "../timing";
 
@@ -33,6 +33,8 @@ interface HeaderProps {
   activeClassName?: string | null;
   state?: string;
   onStateChange?: (state: string) => void;
+  pinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 export function Header({
@@ -51,9 +53,12 @@ export function Header({
   activeClassName,
   state,
   onStateChange,
+  pinned = false,
+  onTogglePin,
 }: HeaderProps) {
   const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
   const [closeHovered, setCloseHovered] = useState(false);
+  const [pinHovered, setPinHovered] = useState(false);
   const [ellipsisHovered, setEllipsisHovered] = useState(false);
   const [hoveredBreadcrumbIdx, setHoveredBreadcrumbIdx] = useState<number | null>(null);
 
@@ -124,6 +129,33 @@ export function Header({
             >
               {totalChanges}
             </div>
+          )}
+          {onTogglePin && (
+            <button
+              onClick={onTogglePin}
+              onMouseEnter={() => setPinHovered(true)}
+              onMouseLeave={() => setPinHovered(false)}
+              onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
+              onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+              title="Pin element (P)"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: 20,
+                width: 20,
+                padding: 0,
+                borderRadius: 3,
+                border: "none",
+                outline: "none",
+                background: pinned ? primaryAlpha(0.15) : (pinHovered ? surface.hover : "transparent"),
+                color: pinned ? primaryAlpha(0.95) : (pinHovered ? blackAlpha(0.7) : text.disabled),
+                cursor: "pointer",
+                transition: `color ${ms("normal")}, background ${ms("normal")}`,
+              }}
+            >
+              <Pin size={12} strokeWidth={2} />
+            </button>
           )}
           <button
             onClick={onClose}

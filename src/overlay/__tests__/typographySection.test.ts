@@ -80,8 +80,8 @@ function makeMockCtx(): SectionCtx {
   };
 }
 
-function renderTypography(overrides?: Record<string, unknown>) {
-  const { TypographySection } = require("../sections/TypographySection");
+async function renderTypography(overrides?: Record<string, unknown>) {
+  const { TypographySection } = await import("../sections/TypographySection");
   const defaults = {
     ctx: makeMockCtx(),
     columnGap: 0,
@@ -96,7 +96,6 @@ function renderTypography(overrides?: Record<string, unknown>) {
 
 describe("Font-family dropdown searchable", () => {
   it("source passes searchable prop to the font SelectRow", () => {
-    // The SelectRow for Font must include the `searchable` flag
     expect(typoSrc).toMatch(/SelectRow[^>]*label="Font"[^>]*searchable/);
   });
 
@@ -104,8 +103,8 @@ describe("Font-family dropdown searchable", () => {
     expect(typoSrc).toMatch(/SelectRow[^>]*label="Font"[^>]*fontPreview/);
   });
 
-  it("renders a font-family control in the output", () => {
-    const html = renderTypography();
+  it("renders a font-family control in the output", async () => {
+    const html = await renderTypography();
     expect(html).toContain("Font");
   });
 });
@@ -113,16 +112,16 @@ describe("Font-family dropdown searchable", () => {
 // ─── 2. Font-weight dropdown shows labels alongside numeric values ────
 
 describe("Font-weight dropdown labels", () => {
-  it("FONT_WEIGHT_OPTIONS contains all 9 weight levels (100–900)", () => {
-    const { FONT_WEIGHT_OPTIONS } = require("../panelConstants");
+  it("FONT_WEIGHT_OPTIONS contains all 9 weight levels (100-900)", async () => {
+    const { FONT_WEIGHT_OPTIONS } = await import("../panelConstants");
     expect(FONT_WEIGHT_OPTIONS).toHaveLength(9);
 
     const values = FONT_WEIGHT_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["100", "200", "300", "400", "500", "600", "700", "800", "900"]);
   });
 
-  it("each weight option includes a descriptive label (Thin, Light, Regular, ..., Black)", () => {
-    const { FONT_WEIGHT_OPTIONS } = require("../panelConstants");
+  it("each weight option includes a descriptive label (Thin, Light, Regular, ..., Black)", async () => {
+    const { FONT_WEIGHT_OPTIONS } = await import("../panelConstants");
     const expectedNames = ["Thin", "Extra Light", "Light", "Regular", "Medium", "Semi Bold", "Bold", "Extra Bold", "Black"];
 
     for (const name of expectedNames) {
@@ -131,8 +130,8 @@ describe("Font-weight dropdown labels", () => {
     }
   });
 
-  it("weight labels combine numeric value + name (e.g. '400 - Regular')", () => {
-    const { FONT_WEIGHT_OPTIONS } = require("../panelConstants");
+  it("weight labels combine numeric value + name (e.g. '400 - Regular')", async () => {
+    const { FONT_WEIGHT_OPTIONS } = await import("../panelConstants");
     const regular = FONT_WEIGHT_OPTIONS.find((o: { value: string }) => o.value === "400");
     expect(regular.label).toBe("400 - Regular");
 
@@ -144,8 +143,8 @@ describe("Font-weight dropdown labels", () => {
     expect(typoSrc).toMatch(/SelectRow[^>]*label="Weight"[^>]*options=\{FONT_WEIGHT_OPTIONS\}/);
   });
 
-  it("renders weight controls in the output", () => {
-    const html = renderTypography();
+  it("renders weight controls in the output", async () => {
+    const html = await renderTypography();
     expect(html).toContain("Weight");
   });
 });
@@ -153,8 +152,8 @@ describe("Font-weight dropdown labels", () => {
 // ─── 3. Text-align icon buttons are mutually exclusive (radio) ────────
 
 describe("Text-align radio behavior", () => {
-  it("TEXT_ALIGN_OPTIONS has 4 values: left, center, right, justify", () => {
-    const { TEXT_ALIGN_OPTIONS } = require("../panelConstants");
+  it("TEXT_ALIGN_OPTIONS has 4 values: left, center, right, justify", async () => {
+    const { TEXT_ALIGN_OPTIONS } = await import("../panelConstants");
     expect(TEXT_ALIGN_OPTIONS).toHaveLength(4);
 
     const values = TEXT_ALIGN_OPTIONS.map((o: { value: string }) => o.value);
@@ -172,17 +171,14 @@ describe("Text-align radio behavior", () => {
   });
 
   it("IconButtonGroup uses type='single' when multi is false", () => {
-    // Non-multi mode renders a ToggleGroup with type="single"
     expect(iconButtonGroupSrc).toContain('type="single"');
   });
 
   it("IconButtonGroup items get role='radio' in single mode", () => {
-    // Items in single mode have role="radio"
     expect(iconButtonGroupSrc).toMatch(/role=\{multi \? undefined : "radio"\}/);
   });
 
   it("IconButtonGroup single mode: clicking same value toggles to 'none'", () => {
-    // In non-multi mode, clicking the active value returns "none"
     expect(iconButtonGroupSrc).toContain('optValue === value ? "none" : optValue');
   });
 });
@@ -191,15 +187,14 @@ describe("Text-align radio behavior", () => {
 
 describe("Text-decoration multi-toggle behavior", () => {
   it("text-decoration IconButtonGroup passes multi prop", () => {
-    // The decoration row uses <IconButtonGroup ... multi />
     const decoMatch = typoSrc.match(
       /<IconButtonGroup\s+options=\{TEXT_DECORATION_OPTIONS\}[^/]*?multi[^/]*?\/>/,
     );
     expect(decoMatch, "Could not find text-decoration IconButtonGroup with multi").toBeTruthy();
   });
 
-  it("TEXT_DECORATION_OPTIONS includes none, line-through, underline, overline", () => {
-    const { TEXT_DECORATION_OPTIONS } = require("../panelConstants");
+  it("TEXT_DECORATION_OPTIONS includes none, line-through, underline, overline", async () => {
+    const { TEXT_DECORATION_OPTIONS } = await import("../panelConstants");
     const values = TEXT_DECORATION_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toContain("none");
     expect(values).toContain("line-through");
@@ -208,7 +203,6 @@ describe("Text-decoration multi-toggle behavior", () => {
   });
 
   it("IconButtonGroup multi mode combines values with space separator", () => {
-    // In multi mode, toggling values joins them: "underline line-through"
     expect(iconButtonGroupSrc).toContain("Array.from(current).join(\" \")");
   });
 
@@ -222,7 +216,6 @@ describe("Text-decoration multi-toggle behavior", () => {
 
   it("clicking 'none' in multi mode clears all selections", () => {
     expect(iconButtonGroupSrc).toContain('if (optValue === "none")');
-    // Should call onChange("none") when none is clicked
     expect(iconButtonGroupSrc).toContain('onChange("none")');
   });
 });
@@ -230,8 +223,8 @@ describe("Text-decoration multi-toggle behavior", () => {
 // ─── 5. Text-transform buttons are mutually exclusive ─────────────────
 
 describe("Text-transform radio behavior", () => {
-  it("CAPITALIZE_OPTIONS has 4 values: none, uppercase, capitalize, lowercase", () => {
-    const { CAPITALIZE_OPTIONS } = require("../panelConstants");
+  it("CAPITALIZE_OPTIONS has 4 values: none, uppercase, capitalize, lowercase", async () => {
+    const { CAPITALIZE_OPTIONS } = await import("../panelConstants");
     expect(CAPITALIZE_OPTIONS).toHaveLength(4);
 
     const values = CAPITALIZE_OPTIONS.map((o: { value: string }) => o.value);
@@ -239,7 +232,6 @@ describe("Text-transform radio behavior", () => {
   });
 
   it("text-transform IconButtonGroup does NOT pass multi prop", () => {
-    // The Capitalize row should use IconButtonGroup WITHOUT multi
     const capsMatch = typoSrc.match(
       /<IconButtonGroup\s+options=\{CAPITALIZE_OPTIONS\}[^/]*?\/>/,
     );
@@ -272,8 +264,8 @@ describe("Advanced sub-section toggle", () => {
     expect(typoSrc).toContain("setShowTypoAdvanced(!showTypoAdvanced)");
   });
 
-  it("renders with advanced section collapsed by default (no advanced controls visible)", () => {
-    const html = renderTypography();
+  it("renders with advanced section collapsed by default (no advanced controls visible)", async () => {
+    const html = await renderTypography();
     // Advanced section has controls like "Letter spacing", "Text indent", etc.
     // When collapsed, these should NOT appear
     expect(html).toContain("More type options");
@@ -293,8 +285,6 @@ describe("Advanced sub-section toggle", () => {
 // ─── 7. Advanced sub-section includes ALL spec properties ─────────────
 
 describe("Advanced sub-section spec completeness", () => {
-  // All properties that must appear in the advanced sub-section
-
   it("includes word-spacing control", () => {
     expect(typoSrc).toContain("Word spacing");
     expect(typoSrc).toContain('apply("word-spacing"');
@@ -306,8 +296,8 @@ describe("Advanced sub-section spec completeness", () => {
     expect(typoSrc).toContain('apply("white-space"');
   });
 
-  it("white-space includes break-spaces option", () => {
-    const { WHITE_SPACE_OPTIONS } = require("../panelConstants");
+  it("white-space includes break-spaces option", async () => {
+    const { WHITE_SPACE_OPTIONS } = await import("../panelConstants");
     const values = WHITE_SPACE_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toContain("break-spaces");
   });
@@ -373,13 +363,11 @@ describe("Advanced sub-section spec completeness", () => {
   });
 
   it("all advanced controls are inside the showTypoAdvanced guard", () => {
-    // Find the gated block
     const guardIdx = typoSrc.indexOf("{showTypoAdvanced && (");
     expect(guardIdx).toBeGreaterThan(-1);
 
     const advancedBlock = typoSrc.slice(guardIdx);
 
-    // All these labels/controls must be within the gated block
     const expectedInAdvanced = [
       "Letter spacing",
       "Text indent",
@@ -387,10 +375,10 @@ describe("Advanced sub-section spec completeness", () => {
       "Column gap",
       "Word spacing",
       "Hyphens",
-      "Case",         // text-transform/capitalize
+      "Case",
       "Direction",
-      "Breaking",     // word-break + line-break
-      "Wrap",         // white-space (it's a SelectRow with label="Wrap")
+      "Breaking",
+      "Wrap",
       "Truncate",
       "Stroke",
       "Text shadows",
@@ -405,17 +393,17 @@ describe("Advanced sub-section spec completeness", () => {
 // ─── Smoke test: renders without throwing ─────────────────────────────
 
 describe("TypographySection render smoke test", () => {
-  it("renders without throwing", () => {
-    expect(() => renderTypography()).not.toThrow();
+  it("renders without throwing", async () => {
+    await expect(renderTypography()).resolves.toBeDefined();
   });
 
-  it("renders the section title 'Typography'", () => {
-    const html = renderTypography();
+  it("renders the section title 'Typography'", async () => {
+    const html = await renderTypography();
     expect(html).toContain("Typography");
   });
 
-  it("renders core controls: Font, Weight, Size, Height, Color, Align", () => {
-    const html = renderTypography();
+  it("renders core controls: Font, Weight, Size, Height, Color, Align", async () => {
+    const html = await renderTypography();
     expect(html).toContain("Font");
     expect(html).toContain("Weight");
     expect(html).toContain("Size");
@@ -424,8 +412,8 @@ describe("TypographySection render smoke test", () => {
     expect(html).toContain("Align");
   });
 
-  it("renders Style row with Italicize and Decoration sub-labels", () => {
-    const html = renderTypography();
+  it("renders Style row with Italicize and Decoration sub-labels", async () => {
+    const html = await renderTypography();
     expect(html).toContain("Italicize");
     expect(html).toContain("Decoration");
   });
@@ -434,38 +422,38 @@ describe("TypographySection render smoke test", () => {
 // ─── Option arrays completeness ───────────────────────────────────────
 
 describe("Typography-related option arrays completeness", () => {
-  it("HYPHENS_OPTIONS includes none, manual, auto", () => {
-    const { HYPHENS_OPTIONS } = require("../panelConstants");
+  it("HYPHENS_OPTIONS includes none, manual, auto", async () => {
+    const { HYPHENS_OPTIONS } = await import("../panelConstants");
     const values = HYPHENS_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["none", "manual", "auto"]);
   });
 
-  it("WORD_BREAK_OPTIONS includes normal, break-all, keep-all, break-word", () => {
-    const { WORD_BREAK_OPTIONS } = require("../panelConstants");
+  it("WORD_BREAK_OPTIONS includes normal, break-all, keep-all, break-word", async () => {
+    const { WORD_BREAK_OPTIONS } = await import("../panelConstants");
     const values = WORD_BREAK_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["normal", "break-all", "keep-all", "break-word"]);
   });
 
-  it("LINE_BREAK_OPTIONS includes auto, normal, loose, strict, anywhere", () => {
-    const { LINE_BREAK_OPTIONS } = require("../panelConstants");
+  it("LINE_BREAK_OPTIONS includes auto, normal, loose, strict, anywhere", async () => {
+    const { LINE_BREAK_OPTIONS } = await import("../panelConstants");
     const values = LINE_BREAK_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["auto", "normal", "loose", "strict", "anywhere"]);
   });
 
-  it("DIRECTION_OPTIONS has ltr and rtl", () => {
-    const { DIRECTION_OPTIONS } = require("../panelConstants");
+  it("DIRECTION_OPTIONS has ltr and rtl", async () => {
+    const { DIRECTION_OPTIONS } = await import("../panelConstants");
     const values = DIRECTION_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["ltr", "rtl"]);
   });
 
-  it("ITALIC_OPTIONS has normal and italic", () => {
-    const { ITALIC_OPTIONS } = require("../panelConstants");
+  it("ITALIC_OPTIONS has normal and italic", async () => {
+    const { ITALIC_OPTIONS } = await import("../panelConstants");
     const values = ITALIC_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["normal", "italic"]);
   });
 
-  it("WHITE_SPACE_OPTIONS includes all 6 values including break-spaces", () => {
-    const { WHITE_SPACE_OPTIONS } = require("../panelConstants");
+  it("WHITE_SPACE_OPTIONS includes all 6 values including break-spaces", async () => {
+    const { WHITE_SPACE_OPTIONS } = await import("../panelConstants");
     expect(WHITE_SPACE_OPTIONS).toHaveLength(6);
     const values = WHITE_SPACE_OPTIONS.map((o: { value: string }) => o.value);
     expect(values).toEqual(["normal", "nowrap", "pre", "pre-wrap", "pre-line", "break-spaces"]);

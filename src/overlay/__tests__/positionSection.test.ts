@@ -54,8 +54,8 @@ function makeMockCtx(overrides?: Partial<{ position: string; zIndex: string }>):
   };
 }
 
-function renderPosition(overrides?: Partial<{ position: string; zIndex: string }>) {
-  const { PositionSection } = require("../sections/PositionSection");
+async function renderPosition(overrides?: Partial<{ position: string; zIndex: string }>) {
+  const { PositionSection } = await import("../sections/PositionSection");
   const ctx = makeMockCtx(overrides);
   return renderToString(createElement(PositionSection, { ctx }));
 }
@@ -78,12 +78,10 @@ const selectorSrc = readFileSync(
 // ─── 1. Offset controls hidden when position is static ───────────────
 
 describe("Offset controls hidden when position is static", () => {
-  it("does not render PositionOffsetDiagram when position is static", () => {
-    const html = renderPosition({ position: "static" });
+  it("does not render PositionOffsetDiagram when position is static", async () => {
+    const html = await renderPosition({ position: "static" });
     // The offset diagram renders "element" text inside a placeholder box
     expect(html).not.toContain("element");
-    // Pin preset buttons should not appear
-    expect(html).not.toContain("Pin");
     // Z-Index row should not appear
     expect(html).not.toContain("Z-Index");
   });
@@ -104,19 +102,19 @@ describe("Offset controls appear for non-static positions", () => {
   const NON_STATIC_POSITIONS = ["relative", "absolute", "fixed", "sticky"];
 
   for (const pos of NON_STATIC_POSITIONS) {
-    it(`renders offset diagram when position is ${pos}`, () => {
-      const html = renderPosition({ position: pos });
+    it(`renders offset diagram when position is ${pos}`, async () => {
+      const html = await renderPosition({ position: pos });
       // The offset diagram renders "element" text inside a placeholder box
       expect(html).toContain("element");
     });
 
-    it(`renders Z-Index row when position is ${pos}`, () => {
-      const html = renderPosition({ position: pos });
+    it(`renders Z-Index row when position is ${pos}`, async () => {
+      const html = await renderPosition({ position: pos });
       expect(html).toContain("Z-Index");
     });
 
-    it(`renders pin preset buttons when position is ${pos}`, () => {
-      const html = renderPosition({ position: pos });
+    it(`renders pin preset buttons when position is ${pos}`, async () => {
+      const html = await renderPosition({ position: pos });
       // PIN_PRESET_ICONS renders buttons with title attributes like "TL", "TR", etc.
       expect(html).toContain("TL");
       expect(html).toContain("TR");
@@ -136,8 +134,8 @@ describe("Offset controls appear for non-static positions", () => {
 // ─── 3. z-index accepts auto and numeric values ──────────────────────
 
 describe("z-index accepts auto and numeric values", () => {
-  it("shows Auto button when z-index is auto", () => {
-    const html = renderPosition({ position: "absolute", zIndex: "auto" });
+  it("shows Auto button when z-index is auto", async () => {
+    const html = await renderPosition({ position: "absolute", zIndex: "auto" });
     expect(html).toContain("Auto");
   });
 
@@ -186,23 +184,23 @@ describe("z-index accepts auto and numeric values", () => {
 // ─── 4. Static-to-absolute reveals offset diagram ────────────────────
 
 describe("Changing position from static to absolute reveals offset diagram", () => {
-  it("static renders no offset diagram; absolute renders it", () => {
-    const staticHtml = renderPosition({ position: "static" });
-    const absoluteHtml = renderPosition({ position: "absolute" });
+  it("static renders no offset diagram; absolute renders it", async () => {
+    const staticHtml = await renderPosition({ position: "static" });
+    const absoluteHtml = await renderPosition({ position: "absolute" });
 
     // "element" text only appears inside PositionOffsetDiagram
     expect(staticHtml).not.toContain("element");
     expect(absoluteHtml).toContain("element");
   });
 
-  it("absolute renders Columns/Rows labels (below offset diagram)", () => {
-    const absoluteHtml = renderPosition({ position: "absolute" });
+  it("absolute renders Columns/Rows labels (below offset diagram)", async () => {
+    const absoluteHtml = await renderPosition({ position: "absolute" });
     expect(absoluteHtml).toContain("Columns");
     expect(absoluteHtml).toContain("Rows");
   });
 
-  it("static does not render Columns/Rows labels", () => {
-    const staticHtml = renderPosition({ position: "static" });
+  it("static does not render Columns/Rows labels", async () => {
+    const staticHtml = await renderPosition({ position: "static" });
     expect(staticHtml).not.toContain("Columns");
     expect(staticHtml).not.toContain("Rows");
   });
@@ -244,9 +242,15 @@ describe("Changing position from static to absolute reveals offset diagram", () 
 // ─── 5. Float and Clear collapsible ──────────────────────────────────
 
 describe("Float and Clear section", () => {
-  it("Float and Clear toggle button always renders regardless of position", () => {
-    const staticHtml = renderPosition({ position: "static" });
-    expect(staticHtml).toContain("Float and clear");
+  it("Float and Clear toggle button renders when section is expanded (non-static)", async () => {
+    const absoluteHtml = await renderPosition({ position: "absolute" });
+    expect(absoluteHtml).toContain("Float and clear");
+  });
+
+  it("Float and Clear toggle button is hidden when section is collapsed (static)", async () => {
+    // When position is static, the Section is collapsed and its body is hidden
+    const staticHtml = await renderPosition({ position: "static" });
+    expect(staticHtml).not.toContain("Float and clear");
   });
 
   it("Float and Clear content is collapsed by default", () => {

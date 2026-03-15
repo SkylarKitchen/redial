@@ -1,1 +1,25 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 22 tests pass.
+
+`★ Insight ─────────────────────────────────────`
+**Why source-level tests instead of DOM rendering?** This codebase uses `readFileSync` to analyze component source code rather than mounting React components with `@testing-library/react`. This works well here because:
+- The components have complex portal/DOM dependencies that are hard to mock in happy-dom
+- Structural properties (conditional guards, prop wiring, timing tokens) are stable contracts that don't change with refactors
+- Source analysis catches wiring issues that rendering tests might miss (e.g., a prop being passed but never used)
+
+**The `position !== "static"` pattern** (line 136) is a clean exclusion guard — it automatically supports any future CSS position values without needing a whitelist update. This is better than `position === "absolute" || position === "fixed" || ...` which would need maintenance.
+`─────────────────────────────────────────────────`
+
+Here's the final test structure with 22 tests across 4 describe blocks:
+
+| Describe block | Tests | What it verifies |
+|---|---|---|
+| Offsets hidden when static | 5 | Conditional guard wraps diagram, z-index, and pin presets; Section starts collapsed |
+| Offsets appear for non-static | 4 | All 5 position options exist; exclusion guard (not whitelist); props passed to diagram |
+| Z-index input | 7 | Auto toggle, auto text rendering, `apply("z-index", "auto")`, parseInt parsing, no clamping, arrow keys, apply wiring |
+| Smooth animation | 6 | Collapsible component, timing tokens, expand duration (150ms), chevron rotation, state-driven collapse toggle |
+
+---
+**Asked:** Write P1 acceptance tests for PositionSection covering offset visibility, z-index behavior, and animation.
+**Did:** Created `positionSection.test.ts` with 22 source-level tests across 4 groups — all passing. Fixed two string-matching issues (PIN_PRESET import vs render, and z-index Auto text slice window).
+---

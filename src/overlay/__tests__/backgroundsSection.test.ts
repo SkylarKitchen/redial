@@ -63,8 +63,8 @@ const gradientEditorSrc = readFileSync(
 // ─── 1. "+ Add background" creates a new layer ───────────────────────
 
 describe("Add background layer", () => {
-  it("renders the '+ Add background' button", () => {
-    const { BackgroundsSection } = require("../sections/BackgroundsSection");
+  it("renders the '+ Add background' button", async () => {
+    const { BackgroundsSection } = await import("../sections/BackgroundsSection");
     const html = renderToString(createElement(BackgroundsSection, { ctx: makeMockCtx() }));
     expect(html).toContain("+ Add background");
   });
@@ -107,7 +107,6 @@ describe("Layer types", () => {
   });
 
   it("image layer has url, size, position, repeat, and attachment fields", () => {
-    // Verify the image interface structure
     expect(layerListSrc).toContain("url: string");
     expect(layerListSrc).toContain("size: string");
     expect(layerListSrc).toContain("position: string");
@@ -120,12 +119,10 @@ describe("Layer types", () => {
 
 describe("Gradient editor", () => {
   it("GradientEditor supports linear, radial, and conic type buttons", () => {
-    // The typeOptions array must include all three
     expect(gradientEditorSrc).toContain('"linear", "radial", "conic"');
   });
 
   it("angle slider is shown only for linear gradients", () => {
-    // Conditional rendering: {type === "linear" && (...angle...)}
     expect(gradientEditorSrc).toMatch(/type\s*===\s*"linear"\s*&&/);
     expect(gradientEditorSrc).toContain("Angle");
   });
@@ -135,8 +132,8 @@ describe("Gradient editor", () => {
     expect(gradientEditorSrc).toContain("max={360}");
   });
 
-  it("buildGradientCSS produces correct CSS for linear gradients", () => {
-    const { buildGradientCSS } = require("../sections/GradientEditor");
+  it("buildGradientCSS produces correct CSS for linear gradients", async () => {
+    const { buildGradientCSS } = await import("../sections/GradientEditor");
     const result = buildGradientCSS("linear", 90, [
       { color: "#ff0000", position: 0 },
       { color: "#0000ff", position: 100 },
@@ -144,8 +141,8 @@ describe("Gradient editor", () => {
     expect(result).toBe("linear-gradient(90deg, #ff0000 0%, #0000ff 100%)");
   });
 
-  it("buildGradientCSS produces correct CSS for radial gradients", () => {
-    const { buildGradientCSS } = require("../sections/GradientEditor");
+  it("buildGradientCSS produces correct CSS for radial gradients", async () => {
+    const { buildGradientCSS } = await import("../sections/GradientEditor");
     const result = buildGradientCSS("radial", 0, [
       { color: "#ff0000", position: 0 },
       { color: "#0000ff", position: 100 },
@@ -153,8 +150,8 @@ describe("Gradient editor", () => {
     expect(result).toBe("radial-gradient(circle, #ff0000 0%, #0000ff 100%)");
   });
 
-  it("buildGradientCSS produces correct CSS for conic gradients", () => {
-    const { buildGradientCSS } = require("../sections/GradientEditor");
+  it("buildGradientCSS produces correct CSS for conic gradients", async () => {
+    const { buildGradientCSS } = await import("../sections/GradientEditor");
     const result = buildGradientCSS("conic", 45, [
       { color: "#ff0000", position: 0 },
       { color: "#0000ff", position: 100 },
@@ -162,8 +159,8 @@ describe("Gradient editor", () => {
     expect(result).toBe("conic-gradient(from 45deg, #ff0000 0%, #0000ff 100%)");
   });
 
-  it("buildGradientCSS sorts stops by position", () => {
-    const { buildGradientCSS } = require("../sections/GradientEditor");
+  it("buildGradientCSS sorts stops by position", async () => {
+    const { buildGradientCSS } = await import("../sections/GradientEditor");
     const result = buildGradientCSS("linear", 180, [
       { color: "#0000ff", position: 100 },
       { color: "#ff0000", position: 0 },
@@ -171,8 +168,8 @@ describe("Gradient editor", () => {
     expect(result).toBe("linear-gradient(180deg, #ff0000 0%, #0000ff 100%)");
   });
 
-  it("GradientEditor renders without throwing", () => {
-    const { GradientEditor } = require("../sections/GradientEditor");
+  it("GradientEditor renders without throwing", async () => {
+    const { GradientEditor } = await import("../sections/GradientEditor");
     expect(() =>
       renderToString(
         createElement(GradientEditor, {
@@ -188,8 +185,8 @@ describe("Gradient editor", () => {
     ).not.toThrow();
   });
 
-  it("GradientEditor renders type toggle buttons for all three types", () => {
-    const { GradientEditor } = require("../sections/GradientEditor");
+  it("GradientEditor renders type toggle buttons for all three types", async () => {
+    const { GradientEditor } = await import("../sections/GradientEditor");
     const html = renderToString(
       createElement(GradientEditor, {
         type: "linear",
@@ -210,26 +207,25 @@ describe("Gradient editor", () => {
 // ─── 4. background-clip includes text ────────────────────────────────
 
 describe("Background clip options", () => {
-  it("BG_CLIP_OPTIONS includes the 'text' value", () => {
-    const { BG_CLIP_OPTIONS } = require("../panelConstants");
-    const values = BG_CLIP_OPTIONS.map((o: { value: string }) => o.value);
+  it("BG_CLIP_OPTIONS includes the 'text' value", async () => {
+    const { BG_CLIP_OPTIONS } = await import("../panelConstants");
+    const values = BG_CLIP_OPTIONS.map((o) => o.value);
     expect(values).toContain("text");
   });
 
-  it("BG_CLIP_OPTIONS includes border-box, padding-box, content-box, and text", () => {
-    const { BG_CLIP_OPTIONS } = require("../panelConstants");
-    const values = BG_CLIP_OPTIONS.map((o: { value: string }) => o.value);
+  it("BG_CLIP_OPTIONS includes border-box, padding-box, content-box, and text", async () => {
+    const { BG_CLIP_OPTIONS } = await import("../panelConstants");
+    const values = BG_CLIP_OPTIONS.map((o) => o.value);
     expect(values).toEqual(expect.arrayContaining(["border-box", "padding-box", "content-box", "text"]));
   });
 
-  it("BackgroundsSection renders Clipping dropdown", () => {
-    const { BackgroundsSection } = require("../sections/BackgroundsSection");
+  it("BackgroundsSection renders Clipping dropdown", async () => {
+    const { BackgroundsSection } = await import("../sections/BackgroundsSection");
     const html = renderToString(createElement(BackgroundsSection, { ctx: makeMockCtx() }));
     expect(html).toContain("Clipping");
   });
 
   it("handleBgClipChange applies -webkit-background-clip when text is selected", () => {
-    // Source must set -webkit-background-clip: text for Safari compatibility
     expect(bgSectionSrc).toContain('-webkit-background-clip');
     expect(bgSectionSrc).toMatch(/v\s*===\s*"text"[\s\S]*?-webkit-background-clip/);
   });
@@ -238,14 +234,14 @@ describe("Background clip options", () => {
 // ─── 5. Blend mode dropdown has all 16 modes ─────────────────────────
 
 describe("Blend mode dropdown", () => {
-  it("BLEND_MODE_OPTIONS has exactly 16 blend modes", () => {
-    const { BLEND_MODE_OPTIONS } = require("../panelConstants");
+  it("BLEND_MODE_OPTIONS has exactly 16 blend modes", async () => {
+    const { BLEND_MODE_OPTIONS } = await import("../panelConstants");
     expect(BLEND_MODE_OPTIONS).toHaveLength(16);
   });
 
-  it("BLEND_MODE_OPTIONS includes all 16 CSS blend modes", () => {
-    const { BLEND_MODE_OPTIONS } = require("../panelConstants");
-    const values = BLEND_MODE_OPTIONS.map((o: { value: string }) => o.value);
+  it("BLEND_MODE_OPTIONS includes all 16 CSS blend modes", async () => {
+    const { BLEND_MODE_OPTIONS } = await import("../panelConstants");
+    const values = BLEND_MODE_OPTIONS.map((o) => o.value);
     const expected = [
       "normal", "multiply", "screen", "overlay",
       "darken", "lighten", "color-dodge", "color-burn",
@@ -260,7 +256,6 @@ describe("Blend mode dropdown", () => {
   });
 
   it("each layer row includes a blend mode selector", () => {
-    // The expanded layer controls include a "Blend" label with a Select
     expect(layerListSrc).toContain("Blend");
     expect(layerListSrc).toContain("BLEND_MODES");
   });

@@ -543,6 +543,13 @@ export function Overlay() {
         return;
       }
 
+      // P to toggle pin
+      if (e.key === "p" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
+        e.preventDefault();
+        setPinned(p => !p);
+        return;
+      }
+
       // Shift+R to reset ALL elements
       if (e.key === "R" && e.shiftKey && !e.metaKey && !e.ctrlKey && selectedEl && !selecting && !diffMode) {
         e.preventDefault();
@@ -1225,7 +1232,7 @@ export function Overlay() {
 
   // --- Hover highlight: preview which element you'd re-select on click ---
   useEffect(() => {
-    if (!selectedEl || selecting || !hoverHighlightRef.current) return;
+    if (!selectedEl || selecting || pinned || !hoverHighlightRef.current) return;
     const highlight = hoverHighlightRef.current;
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -1265,7 +1272,7 @@ export function Overlay() {
       document.removeEventListener("mouseleave", handleMouseLeave);
       highlight.style.display = "none";
     };
-  }, [selectedEl, selecting]);
+  }, [selectedEl, selecting, pinned]);
 
   // --- Right-click context menu on page elements ---
   useEffect(() => {
@@ -1626,6 +1633,8 @@ export function Overlay() {
                 activeClassName={activeClassName}
                 state={activeState}
                 onStateChange={handleStateChange}
+                pinned={pinned}
+                onTogglePin={handleTogglePin}
               />
               {focusMode && (
                 <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
