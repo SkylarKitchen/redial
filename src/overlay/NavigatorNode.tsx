@@ -21,7 +21,7 @@ interface NavigatorNodeProps {
 }
 
 const INDENT_PX = 16;
-const ROW_HEIGHT = 26;
+export const ROW_HEIGHT = 26;
 
 export function NavigatorNode({
   node,

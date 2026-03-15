@@ -20,7 +20,8 @@ import {
   getAncestorsInTree,
   type TreeNode,
 } from "./navigatorFilter";
-import { NavigatorNode } from "./NavigatorNode";
+import { NavigatorNode, ROW_HEIGHT } from "./NavigatorNode";
+import { useVirtualTree } from "./useVirtualTree";
 import {
   color,
   text,
@@ -104,6 +105,19 @@ export function NavigatorPanel({
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(400);
+
+  // ── Measure scroll container height ──
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      setContainerHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // ── Build filtered tree ──
   const tree = useMemo(
