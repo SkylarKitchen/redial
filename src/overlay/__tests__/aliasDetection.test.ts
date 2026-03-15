@@ -5,7 +5,7 @@ import {
   buildAliasGraph,
   classifyTier,
   type CSSVariable,
-} from "../discoverVariables";
+} from "../variables/discoverVariables";
 
 // ─── parseVarAlias ──────────────────────────────────────────────────
 

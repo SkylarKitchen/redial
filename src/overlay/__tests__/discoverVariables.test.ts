@@ -7,7 +7,7 @@ import {
   walkRules,
   discoverVariables,
   discoverLengthVariables,
-} from "../discoverVariables";
+} from "../variables/discoverVariables";
 
 // ─── parseLength ────────────────────────────────────────────────────
 

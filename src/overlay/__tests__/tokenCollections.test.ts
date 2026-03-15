@@ -12,7 +12,7 @@ import {
   _getSnapshot as getSnapshot,
   _subscribe as subscribe,
   _resetStore as resetStore,
-} from "../tokenCollections";
+} from "../variables/tokenCollections";
 
 beforeEach(() => {
   resetStore();

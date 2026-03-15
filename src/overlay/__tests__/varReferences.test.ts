@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, afterEach } from "vitest";
-import { scanVarReferences, replaceVarReferences } from "../discoverVariables";
+import { scanVarReferences, replaceVarReferences } from "../variables/discoverVariables";
 
 /** Clean up any elements we add during tests */
 function cleanup() {

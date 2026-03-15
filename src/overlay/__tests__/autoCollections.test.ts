@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import { inferAutoCollections, type AutoCollection } from "../autoCollections";
-import type { CSSVariable, VarType } from "../discoverVariables";
+import { inferAutoCollections, type AutoCollection } from "../variables/autoCollections";
+import type { CSSVariable, VarType } from "../variables/discoverVariables";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 

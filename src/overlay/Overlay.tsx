@@ -33,7 +33,7 @@ import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } 
 import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./core/statePreview";
 import { enrichChangesForCommit } from "./core/commitUtils";
 import { Toolbar } from "./Toolbar";
-import { GlobalVariablesPanel } from "./GlobalVariablesPanel";
+import { GlobalVariablesPanel } from "./variables/GlobalVariablesPanel";
 import { timing, ms, setReducedMotion, springConfig } from "./timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "./core/scrubState";

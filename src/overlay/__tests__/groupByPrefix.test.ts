@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import type { CSSVariable } from "../discoverVariables";
-import { groupByPrefix } from "../discoverVariables";
+import type { CSSVariable } from "../variables/discoverVariables";
+import { groupByPrefix } from "../variables/discoverVariables";
 
 /** Helper to create a minimal CSSVariable for testing */
 function makeVar(name: string): CSSVariable {

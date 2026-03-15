@@ -12,7 +12,7 @@ import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";
 import { shadowToCSS } from "./cssParsers";
-import { parseVarRef, resolveVarColor } from "./colorVariables";
+import { parseVarRef, resolveVarColor } from "./variables/colorVariables";
 import { ms } from "./timing";
 import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "./theme";
 import { EditorRemoveButton, VisibilityToggle } from "./controls";

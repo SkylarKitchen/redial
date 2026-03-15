@@ -8,6 +8,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
 import { EditorRemoveButton } from "./controls";
+import { DragHandle } from "./DragHandle";
+import { useDragReorder } from "./useDragReorder";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, focusBorder } from "./theme";
 
 export interface TransformValue {
@@ -58,6 +60,7 @@ function getUnit(type: TransformType, axis: "x" | "y" | "z"): string {
 }
 
 export function TransformEditor({ transforms, onChange, origin, onOriginChange }: TransformEditorProps) {
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transforms, onChange);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -101,14 +104,27 @@ export function TransformEditor({ transforms, onChange, origin, onOriginChange }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
       {/* Transform cards */}
-      {transforms.map((t, index) => (
-        <TransformCard
-          key={index}
-          transform={t}
-          onUpdate={(field, value) => handleUpdate(index, field, value)}
-          onRemove={() => handleRemove(index)}
-        />
-      ))}
+      <div style={{ position: "relative" }}>
+        {transforms.map((t, index) => {
+          const dragProps = handleProps(index);
+          return (
+            <div key={index} ref={registerRef(index)} style={{ ...itemStyle(index), marginBottom: "6px" }}>
+              <TransformCard
+                transform={t}
+                onUpdate={(field, value) => handleUpdate(index, field, value)}
+                onRemove={() => handleRemove(index)}
+                dragHandleProps={dragProps}
+                isDragging={isDragging}
+              />
+            </div>
+          );
+        })}
+        {/* Drop indicator line */}
+        {(() => {
+          const style = dropLineStyle();
+          return style ? <div style={style} /> : null;
+        })()}
+      </div>
 
       {/* Add transform */}
       <div style={{ position: "relative" }} ref={dropdownRef}>

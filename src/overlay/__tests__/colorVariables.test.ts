@@ -4,7 +4,7 @@ import {
   parseVarRef,
   resolveVarColor,
   discoverColorVariables,
-} from "../colorVariables";
+} from "../variables/colorVariables";
 
 // ─── parseVarRef (pure) ──────────────────────────────────────────────
 
