@@ -10,7 +10,7 @@ import { join } from "path";
 import { describe, it, expect } from "vitest";
 
 const effectsSrc = readFileSync(
-  join(__dirname, "..", "EffectsSection.tsx"),
+  join(__dirname, "..", "sections", "EffectsSection.tsx"),
   "utf-8",
 );
 

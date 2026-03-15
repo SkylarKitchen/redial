@@ -159,49 +159,49 @@ describe("Section components render without throwing", () => {
 
 describe("Section components export correctly", () => {
   it("LayoutSection is a function", async () => {
-    const mod = await import("../LayoutSection");
+    const mod = await import("../sections/LayoutSection");
     expect(typeof mod.LayoutSection).toBe("object"); // memo wraps in object
     expect(typeof mod.LayoutSection.type).toBe("function");
   });
 
   it("SpacingSection is a function", async () => {
-    const mod = await import("../SpacingSection");
+    const mod = await import("../sections/SpacingSection");
     expect(typeof mod.SpacingSection).toBe("object");
     expect(typeof mod.SpacingSection.type).toBe("function");
   });
 
   it("SizeSection is a function", async () => {
-    const mod = await import("../SizeSection");
+    const mod = await import("../sections/SizeSection");
     expect(typeof mod.SizeSection).toBe("object");
     expect(typeof mod.SizeSection.type).toBe("function");
   });
 
   it("PositionSection is a function", async () => {
-    const mod = await import("../PositionSection");
+    const mod = await import("../sections/PositionSection");
     expect(typeof mod.PositionSection).toBe("object");
     expect(typeof mod.PositionSection.type).toBe("function");
   });
 
   it("TypographySection is a function", async () => {
-    const mod = await import("../TypographySection");
+    const mod = await import("../sections/TypographySection");
     expect(typeof mod.TypographySection).toBe("object");
     expect(typeof mod.TypographySection.type).toBe("function");
   });
 
   it("BackgroundsSection is a function", async () => {
-    const mod = await import("../BackgroundsSection");
+    const mod = await import("../sections/BackgroundsSection");
     expect(typeof mod.BackgroundsSection).toBe("object");
     expect(typeof mod.BackgroundsSection.type).toBe("function");
   });
 
   it("BordersSection is a function", async () => {
-    const mod = await import("../BordersSection");
+    const mod = await import("../sections/BordersSection");
     expect(typeof mod.BordersSection).toBe("object");
     expect(typeof mod.BordersSection.type).toBe("function");
   });
 
   it("EffectsSection is a function", async () => {
-    const mod = await import("../EffectsSection");
+    const mod = await import("../sections/EffectsSection");
     expect(typeof mod.EffectsSection).toBe("object");
     expect(typeof mod.EffectsSection.type).toBe("function");
   });

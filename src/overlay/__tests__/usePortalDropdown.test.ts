@@ -15,7 +15,7 @@ import { join } from "path";
 const overlayDir = join(__dirname, "..");
 const hookSrc = readFileSync(join(overlayDir, "hooks", "usePortalDropdown.ts"), "utf-8");
 const unitSrc = readFileSync(join(overlayDir, "UnitSelector.tsx"), "utf-8");
-const positionSrc = readFileSync(join(overlayDir, "PositionSelector.tsx"), "utf-8");
+const positionSrc = readFileSync(join(overlayDir, "sections", "PositionSelector.tsx"), "utf-8");
 const controlsSrc = readFileSync(join(overlayDir, "controls.tsx"), "utf-8");
 const textStyleSrc = readFileSync(join(overlayDir, "TextStyleRow.tsx"), "utf-8");
 
