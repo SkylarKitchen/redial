@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { isScrubActive, setScrubActive } from "../scrubState";
+import { isScrubActive, setScrubActive } from "../core/scrubState";
 
 beforeEach(() => {
   setScrubActive(false);

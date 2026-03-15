@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { isScrubActive, setScrubActive } from "../scrubState";
+import { isScrubActive, setScrubActive } from "../core/scrubState";
 
 // ─── Scrub guard ─────────────────────────────────────────────────────
 

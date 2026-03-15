@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formatTailwindDiff, cssToTwClass } from "../tailwind";
-import type { DiffEntry } from "../apply";
+import type { DiffEntry } from "../core/apply";
 
 /** Helper to test a single CSS property → Tailwind class conversion. */
 function tw(prop: string, value: string): string {

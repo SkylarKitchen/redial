@@ -22,7 +22,7 @@
 import { useEffect } from "react";
 import "./styles/globals.css";
 import { Overlay } from "./overlay/Overlay";
-import { configure, type TunerConfig } from "./overlay/config";
+import { configure, type TunerConfig } from "./overlay/core/config";
 
 export interface TunerProps extends Partial<TunerConfig> {}
 
@@ -42,9 +42,9 @@ export function Tuner({ commitEndpoint }: TunerProps = {}) {
 }
 
 // Re-export types and utilities for consumers
-export type { InferResult } from "./overlay/infer";
-export { infer, PX_PROPS, TOGGLE_CSS, toCSSValue, flattenValues } from "./overlay/infer";
-export type { Scope } from "./overlay/scope";
-export type { SourceInfo } from "./overlay/sourcemap";
-export { configure } from "./overlay/config";
-export type { TunerConfig } from "./overlay/config";
+export type { InferResult } from "./overlay/core/infer";
+export { infer, PX_PROPS, TOGGLE_CSS, toCSSValue, flattenValues } from "./overlay/core/infer";
+export type { Scope } from "./overlay/core/scope";
+export type { SourceInfo } from "./overlay/core/sourcemap";
+export { configure } from "./overlay/core/config";
+export type { TunerConfig } from "./overlay/core/config";

@@ -24,12 +24,12 @@ import { SECTION_ORDER } from "./panelUtils";
 import { FlexGapOverlay } from "./FlexGapOverlay";
 import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
 import { SpacingPreviewOverlay } from "./SpacingPreviewOverlay";
-import { infer, type InferResult } from "./infer";
-import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./apply";
+import { infer, type InferResult } from "./core/infer";
+import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./core/apply";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";
 
-import { onHmrUpdate } from "./hmr";
-import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./scope";
+import { onHmrUpdate } from "./core/hmr";
+import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "./core/scope";
 import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "./statePreview";
 import { enrichChangesForCommit } from "./commitUtils";
 import { Toolbar } from "./Toolbar";

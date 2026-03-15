@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import fs from "fs";
 import path from "path";
-import { applyInlineStyle, isDirty, resetProp, resetAll } from "../apply";
+import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
 
 // ═══════════════════════════════════════════════════════════════════════
 // PART 1: Unit tests — resetProp works for every editable CSS property

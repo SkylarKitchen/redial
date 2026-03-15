@@ -5,7 +5,7 @@ import {
   getReactSource,
   getCSSSource,
   resolveSource,
-} from "../sourcemap";
+} from "../core/sourcemap";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 

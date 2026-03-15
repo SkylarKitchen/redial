@@ -8,7 +8,7 @@ import {
   resetClassStyles,
   destroyClassStyles,
   getCustomProperties,
-} from "../scope";
+} from "../core/scope";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

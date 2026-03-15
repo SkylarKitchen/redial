@@ -4,7 +4,7 @@ import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import type { SectionCtx } from "../panelUtils";
 import type { UnitConversionContext } from "../unitConversion";
-import type { SpacingValues } from "../infer";
+import type { SpacingValues } from "../core/infer";
 
 // ─── Mock SectionCtx ─────────────────────────────────────────────────
 

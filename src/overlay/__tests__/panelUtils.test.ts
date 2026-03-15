@@ -9,7 +9,7 @@ import {
   isTextBearing,
   TEXT_TAGS,
 } from "../panelUtils";
-import { applyInlineStyle, resetAll } from "../apply";
+import { applyInlineStyle, resetAll } from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 

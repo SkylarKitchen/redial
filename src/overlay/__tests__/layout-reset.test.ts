@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { applyInlineStyle, isDirty, resetProp, resetAll } from "../apply";
+import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
 
 // ── Unit test: resetProp works for layout properties ──────────────────
 

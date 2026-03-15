@@ -27,7 +27,7 @@ import {
   parseStateKey,
   onStateChange,
   restoreSession,
-} from "../apply";
+} from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

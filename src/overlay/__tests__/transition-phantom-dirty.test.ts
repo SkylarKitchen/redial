@@ -24,7 +24,7 @@ import {
   applyInlineStyle,
   isDirty,
   resetAll,
-} from "../apply";
+} from "../core/apply";
 
 function makeEl(): HTMLElement {
   const el = document.createElement("div");

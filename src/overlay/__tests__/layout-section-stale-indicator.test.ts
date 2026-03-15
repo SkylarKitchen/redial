@@ -19,7 +19,7 @@
  */
 
 import { describe, it, expect, afterEach } from "vitest";
-import { applyInlineStyle, isDirty, resetProp, resetAll } from "../apply";
+import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
 
 /**
  * Simulate sectionInd: returns "modified" if ANY prop in the list is dirty.

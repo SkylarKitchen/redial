@@ -19,7 +19,7 @@ import {
   isDirty,
   resetAll,
   resetProp,
-} from "../apply";
+} from "../core/apply";
 import { getIndicatorType } from "../panelUtils";
 
 function makeEl(tag = "div"): HTMLElement {

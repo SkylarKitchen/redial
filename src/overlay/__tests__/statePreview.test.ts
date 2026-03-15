@@ -9,7 +9,7 @@ import {
   getStateStyleTag,
   VALID_STATES,
   flushScheduledRebuild,
-} from "../statePreview";
+} from "../core/statePreview";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

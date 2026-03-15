@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach } from "vitest";
-import { applyInlineStyle, diff, resetAll, isDirty, getInitial } from "../apply";
+import { applyInlineStyle, diff, resetAll, isDirty, getInitial } from "../core/apply";
 import { parseVarRef } from "../colorVariables";
 
 // ─── Setup ────────────────────────────────────────────────────────────

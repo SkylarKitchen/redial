@@ -7,7 +7,7 @@ import {
   flattenValues,
   SPACING_PROPS,
   infer,
-} from "../infer";
+} from "../core/infer";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

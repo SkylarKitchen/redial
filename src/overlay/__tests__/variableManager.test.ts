@@ -9,7 +9,7 @@ import {
   undo,
   resetAll,
   totalOverrideCount,
-} from "../apply";
+} from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { applyInlineStyle, isDirty, resetProp, resetAll } from "../apply";
+import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
 
 describe("SizeInputCell reset via resetProp", () => {
   it("resetProp clears the dirty flag and restores original value", () => {
