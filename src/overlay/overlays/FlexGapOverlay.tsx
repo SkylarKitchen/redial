@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, overlay, zIndex } from "./theme";
+import { font, overlay, zIndex } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Constants

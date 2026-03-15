@@ -21,15 +21,15 @@ import {
   type TreeNode,
 } from "./navigatorFilter";
 import { NavigatorNode, ROW_HEIGHT } from "./NavigatorNode";
-import { useVirtualTree } from "./useVirtualTree";
+import { useVirtualTree } from "../useVirtualTree";
 import {
   canDrag,
   canDrop,
   executeDrop,
   type NavDragState,
   type DropTarget,
-} from "./navigatorDrag";
-import { pushDomMove } from "./core/apply";
+} from "../navigatorDrag";
+import { pushDomMove } from "../core/apply";
 import {
   color,
   text,
@@ -41,8 +41,8 @@ import {
   primaryAlpha,
   layout,
   zIndex,
-} from "./theme";
-import { timing, ms, springConfig } from "./timing";
+} from "../theme";
+import { timing, ms, springConfig } from "../timing";
 
 // ─── Props ──────────────────────────────────────────────────────
 

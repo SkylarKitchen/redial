@@ -10,7 +10,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import { zIndex } from "./theme";
+import { zIndex } from "../theme";
 
 const MARGIN_COLOR = "rgba(255, 155, 0, 0.15)";
 const PADDING_COLOR = "rgba(99, 196, 99, 0.15)";

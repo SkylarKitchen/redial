@@ -10,8 +10,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { getHoverGroup, getScrubGroup } from "./core/scrubState";
-import { spacingZone, zIndex } from "./theme";
+import { getHoverGroup, getScrubGroup } from "../core/scrubState";
+import { spacingZone, zIndex } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Constants — derived from theme tokens

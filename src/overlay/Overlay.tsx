@@ -18,12 +18,12 @@ import { WebflowPanel } from "./WebflowPanel";
 
 import { PromptPanel } from "./PromptPanel";
 import { SessionDrawer } from "./SessionDrawer";
-import { GridOverlay } from "./GridOverlay";
-import { BoxModelOverlay } from "./BoxModelOverlay";
+import { GridOverlay } from "./overlays/GridOverlay";
+import { BoxModelOverlay } from "./overlays/BoxModelOverlay";
 import { SECTION_ORDER } from "./panelUtils";
-import { FlexGapOverlay } from "./FlexGapOverlay";
-import { SpacingGuidesOverlay } from "./SpacingGuidesOverlay";
-import { SpacingPreviewOverlay } from "./SpacingPreviewOverlay";
+import { FlexGapOverlay } from "./overlays/FlexGapOverlay";
+import { SpacingGuidesOverlay } from "./overlays/SpacingGuidesOverlay";
+import { SpacingPreviewOverlay } from "./overlays/SpacingPreviewOverlay";
 import { infer, type InferResult } from "./core/infer";
 import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "./core/apply";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "./util";

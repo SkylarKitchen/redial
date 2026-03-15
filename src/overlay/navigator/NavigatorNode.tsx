@@ -7,8 +7,8 @@
 
 import { useState, memo } from "react";
 import type { TreeNode } from "./navigatorFilter";
-import { text, surface, font, color, primaryAlpha } from "./theme";
-import { ms } from "./timing";
+import { text, surface, font, color, primaryAlpha } from "../theme";
+import { ms } from "../timing";
 
 interface NavigatorNodeProps {
   node: TreeNode;

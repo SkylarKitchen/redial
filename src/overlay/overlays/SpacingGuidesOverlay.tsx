@@ -13,8 +13,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, zIndex, overlay, blackAlpha } from "./theme";
-import { getScrubGroup } from "./core/scrubState";
+import { font, zIndex, overlay, blackAlpha } from "../theme";
+import { getScrubGroup } from "../core/scrubState";
 
 // ---------------------------------------------------------------------------
 // Constants

@@ -6,7 +6,7 @@
  * tree structure suitable for rendering.
  */
 
-import { getDisplayClass, isNavigableElement } from "./util";
+import { getDisplayClass, isNavigableElement } from "../util";
 
 // ─── Types ────────────────────────────────────────────────────────
 

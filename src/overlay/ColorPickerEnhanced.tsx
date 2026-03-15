@@ -16,6 +16,7 @@ import { ms } from "./timing";
 import { discoverColorVariables, type ColorVariable } from "./variables/colorVariables";
 import { useTokenCollections } from "./variables/tokenCollections";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "./theme";
+import { useSwatches } from "./useSwatches";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -154,6 +155,7 @@ export function ColorPickerEnhanced({
   const [newVarName, setNewVarName] = useState("");
   const newVarInputRef = useRef<HTMLInputElement>(null);
   const { collections, getCollectionForVariable } = useTokenCollections();
+  const { swatches: savedSwatches, addSwatch, removeSwatch } = useSwatches();
 
   // Focus the name input when the create form opens
   useEffect(() => {
@@ -869,6 +871,96 @@ export function ColorPickerEnhanced({
           )}
         </div>
       )}
+
+      {/* ── Saved Swatches ──────────────────────────────────── */}
+      <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <span style={{ fontSize: 9, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            Swatches
+          </span>
+          <button
+            type="button"
+            onClick={() => addSwatch(currentHex, alpha)}
+            title="Add current color to swatches"
+            style={{
+              background: "none",
+              border: `1px solid ${themeColor.border}`,
+              borderRadius: 3,
+              color: text.label,
+              fontSize: 11,
+              lineHeight: 1,
+              width: 18,
+              height: 18,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = text.hint;
+              (e.currentTarget as HTMLElement).style.color = text.secondary;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
+              (e.currentTarget as HTMLElement).style.color = text.label;
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        {savedSwatches.length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+            {savedSwatches.map((sw, i) => (
+              <button
+                type="button"
+                key={`${sw.hex}-${sw.opacity}-${i}`}
+                onClick={() => {
+                  const rgb = hexToRgb(sw.hex);
+                  const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
+                  setHue(hsb.h);
+                  setSat(hsb.s);
+                  setBri(hsb.b);
+                  setAlpha(sw.opacity);
+                  emitChange(hsb.h, hsb.s, hsb.b, sw.opacity);
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  removeSwatch(i);
+                }}
+                title={`${sw.hex} ${Math.round(sw.opacity * 100)}%\nRight-click to remove`}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 3,
+                  border: `1px solid ${border.hover}`,
+                  background: sw.opacity < 1
+                    ? `linear-gradient(${sw.hex}${Math.round(sw.opacity * 255).toString(16).padStart(2, "0")}, ${sw.hex}${Math.round(sw.opacity * 255).toString(16).padStart(2, "0")}), ${CHECKER}`
+                    : sw.hex,
+                  cursor: "pointer",
+                  padding: 0,
+                  flexShrink: 0,
+                  transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = border.hover;
+                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 10, color: text.hint, fontStyle: "italic" }}>
+            Click + to save a color
+          </div>
+        )}
+      </div>
     </div>
   );
 }
