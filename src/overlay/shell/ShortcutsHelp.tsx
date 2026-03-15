@@ -11,6 +11,8 @@ const SHORTCUTS = [
     items: [
       { keys: "`", desc: "Toggle selection mode" },
       { keys: "Esc", desc: "Close panel" },
+      { keys: "P", desc: "Pin / unpin element" },
+      { keys: "N", desc: "Toggle navigator" },
       { keys: "\u2191 \u2193 \u2190 \u2192", desc: "Navigate elements" },
     ],
   },
@@ -41,7 +43,7 @@ const SHORTCUTS = [
       { keys: "\u2318K", desc: "Command palette" },
       { keys: "?", desc: "This help" },
       { keys: "/", desc: "Search properties" },
-      { keys: "H", desc: "Toggle history drawer" },
+      { keys: "H", desc: "Toggle changes drawer" },
       { keys: "M", desc: "Toggle box model overlay" },
       { keys: "G", desc: "Toggle grid overlay" },
     ],
