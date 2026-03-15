@@ -315,7 +315,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onMouseLeave={() => setResetHovered(false)}
             animate={shaking ? { x: [0, -2, 2, -2, 2, -2, 2, 0] } : { x: 0 }}
             transition={shaking ? { duration: timing.slow / 1000 } : { duration: 0 }}
-            title="Reset (R)"
+            title="Reset element (R)"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -341,7 +341,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             onMouseEnter={() => setSaveHovered(true)}
             onMouseLeave={() => setSaveHovered(false)}
             disabled={count === 0 || saving}
-            title="Save to source"
+            title="Save to source (⌘S)"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -361,7 +361,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               transition: `opacity ${timing.normal}ms, background ${timing.normal}ms, box-shadow ${timing.normal}ms`,
             }}
           >
-            {saving ? "..." : saved ? "\u2713 Saved" : "Save"}
+            {saving ? "..." : saved ? "\u2713 Saved" : count > 0 ? `Save (${count})` : "Save"}
           </button>
         </div>
       </div>

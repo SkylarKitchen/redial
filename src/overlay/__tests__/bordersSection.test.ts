@@ -72,31 +72,29 @@ describe("Side selector tabs", () => {
     expect(sideSelectorSrc).toContain('"all", "top", "right", "bottom", "left"');
   });
 
-  it("SideSelector renders ARIA radiogroup with 5 buttons", () => {
-    const { SideSelector } = require("../controls/SideSelector");
+  it("SideSelector renders ARIA radiogroup with 5 buttons", async () => {
+    const { SideSelector } = await import("../controls/SideSelector");
     const html = renderToString(
       createElement(SideSelector, {
-        value: "all",
+        value: "all" as const,
         onChange: vi.fn(),
         cross: true,
       }),
     );
     expect(html).toContain('role="radiogroup"');
-    // Each button should have role="radio"
     const radioMatches = html.match(/role="radio"/g);
     expect(radioMatches).toHaveLength(5);
   });
 
-  it("SideSelector marks the active side with aria-checked=true", () => {
-    const { SideSelector } = require("../controls/SideSelector");
+  it("SideSelector marks the active side with aria-checked=true", async () => {
+    const { SideSelector } = await import("../controls/SideSelector");
     const html = renderToString(
       createElement(SideSelector, {
-        value: "top",
+        value: "top" as const,
         onChange: vi.fn(),
         cross: true,
       }),
     );
-    // The "top" button should have aria-checked="true"
     expect(html).toMatch(/aria-label="Top"[^>]*aria-checked="true"/);
   });
 
@@ -110,13 +108,10 @@ describe("Side selector tabs", () => {
   });
 
   it("borderProp helper computes per-side property names", () => {
-    // When borderSide is "top", borderProp("style") should return "border-top-style"
-    // When borderSide is "all", it returns "border-style"
     expect(bordersSrc).toContain('borderSide === "all" ? `border-${suffix}` : `border-${borderSide}-${suffix}`');
   });
 
   it("side change triggers re-read of computed style for that side", () => {
-    // useEffect on borderSide reads fresh computed style
     expect(bordersSrc).toMatch(/useEffect\(\(\)\s*=>\s*\{[\s\S]*?borderSide/);
     expect(bordersSrc).toContain("getComputedStyle(element)");
   });
@@ -125,20 +120,15 @@ describe("Side selector tabs", () => {
 // ─── 2. "All" selected applies to all 4 sides ───────────────────────
 
 describe("All-sides mode", () => {
-  it("BordersSection renders without throwing", () => {
-    const { BordersSection } = require("../sections/BordersSection");
+  it("BordersSection renders without throwing", async () => {
+    const { BordersSection } = await import("../sections/BordersSection");
     expect(() =>
       renderToString(createElement(BordersSection, { ctx: makeMockCtx() })),
     ).not.toThrow();
   });
 
   it("when borderSide is 'all', borderProp returns shorthand properties", () => {
-    // borderProp("style") returns "border-style" when side is "all"
-    // borderProp("width") returns "border-width"
-    // borderProp("color") returns "border-color"
-    // The initial state is "all"
     expect(bordersSrc).toContain('"all"');
-    // The handler applies to the computed prop name, which for "all" is the shorthand
     expect(bordersSrc).toContain('`border-${suffix}`');
   });
 
@@ -157,9 +147,9 @@ describe("All-sides mode", () => {
     expect(bordersSrc).toMatch(/apply\(borderProp\("color"\)/);
   });
 
-  it("Border style options include none, solid, dotted, dashed", () => {
-    const { BORDER_STYLE_ICON_OPTIONS } = require("../panelConstants");
-    const values = BORDER_STYLE_ICON_OPTIONS.map((o: { value: string }) => o.value);
+  it("Border style options include none, solid, dotted, dashed", async () => {
+    const { BORDER_STYLE_ICON_OPTIONS } = await import("../panelConstants");
+    const values = BORDER_STYLE_ICON_OPTIONS.map((o) => o.value);
     expect(values).toEqual(["none", "solid", "dotted", "dashed"]);
   });
 });
@@ -172,14 +162,11 @@ describe("Radius mode toggle (linked/unlinked)", () => {
   });
 
   it("single mode renders a single slider for all corners", () => {
-    // The Slider component is always shown in the main radius row
     expect(bordersSrc).toContain("handleRadiusAllChange");
-    // The slider calls handleRadiusAllChange which updates all 4 corners
     expect(bordersSrc).toMatch(/handleRadiusAllChange[\s\S]*?setRadiusTL\(v\)/);
   });
 
   it("handleRadiusAllChange updates all 4 corner values simultaneously", () => {
-    // Verify it sets all 4 states and calls apply for each
     expect(bordersSrc).toContain("setRadiusTL(v)");
     expect(bordersSrc).toContain("setRadiusTR(v)");
     expect(bordersSrc).toContain("setRadiusBR(v)");
@@ -191,7 +178,6 @@ describe("Radius mode toggle (linked/unlinked)", () => {
   });
 
   it("individual mode renders CornerRadiusEditor with 4 corner cells", () => {
-    // When radiusMode === "individual", the CornerRadiusEditor appears
     expect(bordersSrc).toMatch(/radiusMode\s*===\s*"individual"\s*&&/);
     expect(bordersSrc).toContain("CornerRadiusEditor");
   });
@@ -209,11 +195,11 @@ describe("Radius mode toggle (linked/unlinked)", () => {
   });
 
   it("CornerRadiusEditor renders as a 2x2 grid", () => {
-    expect(cornerRadiusSrc).toContain("gridTemplateColumns: \"1fr 1fr\"");
+    expect(cornerRadiusSrc).toContain('gridTemplateColumns: "1fr 1fr"');
   });
 
-  it("CornerRadiusEditor renders without throwing", () => {
-    const { CornerRadiusEditor } = require("../sections/CornerRadiusEditor");
+  it("CornerRadiusEditor renders without throwing", async () => {
+    const { CornerRadiusEditor } = await import("../sections/CornerRadiusEditor");
     expect(() =>
       renderToString(
         createElement(CornerRadiusEditor, {
@@ -235,36 +221,30 @@ describe("Radius mode toggle (linked/unlinked)", () => {
   });
 
   it("RadiusModeIcons toggle renders two buttons (single and individual)", () => {
-    // Two mode options: "single" and "individual"
     expect(bordersSrc).toContain('key: "single"');
     expect(bordersSrc).toContain('key: "individual"');
     expect(bordersSrc).toContain('title: "Single value"');
     expect(bordersSrc).toContain('title: "Individual corners"');
   });
 
-  it("single mode renders slider + single ValueInput", () => {
-    const { BordersSection } = require("../sections/BordersSection");
+  it("single mode renders Radius label and slider", async () => {
+    const { BordersSection } = await import("../sections/BordersSection");
     const html = renderToString(createElement(BordersSection, { ctx: makeMockCtx() }));
-    // Default state (all corners = 0) -> single mode
-    // Should show the slider (aria-label="Radius: ...")
+    // Default state (all corners = 0) -> single mode, should show "Radius" label
     expect(html).toContain("Radius");
-    // Should NOT show the CornerRadiusEditor grid (which uses class CornerIcon)
-    // The 2x2 grid has gridTemplateColumns: "1fr 1fr" — check it's absent when single
-    // The individual mode content includes corner bracket icons
-    // In single mode, we only have one ValueInput for radius
   });
 });
 
 // ─── 4. border-radius supports px and % ──────────────────────────────
 
 describe("Radius unit support", () => {
-  it("BORDER_UNITS includes % as a supported unit", () => {
-    const { BORDER_UNITS } = require("../panelConstants");
+  it("BORDER_UNITS includes % as a supported unit", async () => {
+    const { BORDER_UNITS } = await import("../panelConstants");
     expect(BORDER_UNITS).toContain("%");
   });
 
-  it("BORDER_UNITS includes px", () => {
-    const { BORDER_UNITS } = require("../panelConstants");
+  it("BORDER_UNITS includes px", async () => {
+    const { BORDER_UNITS } = await import("../panelConstants");
     expect(BORDER_UNITS).toContain("px");
   });
 
@@ -275,7 +255,6 @@ describe("Radius unit support", () => {
 
   it("handleRadiusUnitChange converts all 4 corners and applies", () => {
     expect(bordersSrc).toContain("handleRadiusUnitChange");
-    // It should call convertUnit and apply for all 4 corners
     expect(bordersSrc).toMatch(/handleRadiusUnitChange[\s\S]*?convertUnit/);
     expect(bordersSrc).toMatch(/handleRadiusUnitChange[\s\S]*?apply\("border-top-left-radius"/);
   });

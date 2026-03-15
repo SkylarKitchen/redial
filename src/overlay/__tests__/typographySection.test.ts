@@ -161,9 +161,9 @@ describe("Text-align radio behavior", () => {
   });
 
   it("text-align IconButtonGroup does NOT pass multi prop (defaults to radio)", () => {
-    // In the source, the Align row should use IconButtonGroup WITHOUT multi
+    // Find the IconButtonGroup for TEXT_ALIGN_OPTIONS and verify no multi prop
     const alignMatch = typoSrc.match(
-      /Align[\s\S]*?<IconButtonGroup\s+options=\{TEXT_ALIGN_OPTIONS\}[^}]*?\/>/,
+      /<IconButtonGroup\s+options=\{TEXT_ALIGN_OPTIONS\}[^/]*?\/>/,
     );
     expect(alignMatch, "Could not find text-align IconButtonGroup").toBeTruthy();
     // The match should NOT contain "multi"
