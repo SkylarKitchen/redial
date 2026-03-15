@@ -93,7 +93,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** Audit all dropdown components (`UnitSelector.tsx`, `SelectRow` in controls, `StateSelector.tsx`) for keyboard accessibility: (1) `Enter`/`Space` opens the dropdown, (2) arrow keys navigate options, (3) `Escape` closes without selecting, (4) `Tab` moves focus out. Run the existing `useDropdownKeyboard.test.ts` and verify it covers these cases. Add missing test cases.
 
-- [ ] **P1** In `src/overlay/ShadowEditor.tsx` and `src/overlay/TransformEditor.tsx`, verify that the "+ Add" buttons and delete (×) buttons are keyboard-accessible (`tabIndex`, `role="button"`, `aria-label`). Also verify the drag handles have `aria-label="Drag to reorder"` and are focusable for screen reader users even though they're mouse-only in practice.
+- [x] **P1** In `src/overlay/ShadowEditor.tsx` and `src/overlay/TransformEditor.tsx`, verify that the "+ Add" buttons and delete (×) buttons are keyboard-accessible (`tabIndex`, `role="button"`, `aria-label`). Also verify the drag handles have `aria-label="Drag to reorder"` and are focusable for screen reader users even though they're mouse-only in practice.
 
 ---
 

@@ -760,6 +760,7 @@ export function Overlay() {
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
+    setCloseWarning(false);
     // Screen reader announcement
     const tag = el.tagName.toLowerCase();
     const cls = el.classList.length > 0 ? el.classList[0] : "";
