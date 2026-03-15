@@ -161,7 +161,7 @@ describe("resetProp works for every editable CSS property", () => {
 
 /** Read a component's source file. */
 function readSrc(filename: string): string {
-  return fs.readFileSync(path.resolve(__dirname, `../${filename}`), "utf-8");
+  return fs.readFileSync(path.resolve(__dirname, `../sections/${filename}`), "utf-8");
 }
 
 /**

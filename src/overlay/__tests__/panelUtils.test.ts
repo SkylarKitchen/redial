@@ -9,7 +9,7 @@ import {
   isTextBearing,
   TEXT_TAGS,
 } from "../panelUtils";
-import { applyInlineStyle, resetAll } from "../core/apply";
+import { applyInlineStyle, resetAll, stateKey } from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +71,45 @@ describe("getIndicatorType", () => {
     const cs = getComputedStyle(child);
     const parentCs = getComputedStyle(parent);
     expect(getIndicatorType(child, "color", cs, parentCs)).toBe("modified");
+  });
+
+  it('returns "state" when activeState is set and the state-keyed property is dirty', () => {
+    const el = makeEl();
+    // Simulate a hover-state override: apply with the composite key "hover::color"
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
+    const cs = getComputedStyle(el);
+    expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("state");
+  });
+
+  it('returns "none" when activeState is set but property has no state override', () => {
+    const el = makeEl();
+    const cs = getComputedStyle(el);
+    expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("none");
+  });
+
+  it('returns "modified" for base-state dirty property even when activeState is set', () => {
+    const el = makeEl();
+    // Dirty in base state
+    applyInlineStyle(el, "color", "blue");
+    const cs = getComputedStyle(el);
+    // When viewing hover state, base-state change still shows as "modified"
+    expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("modified");
+  });
+
+  it('returns "state" over "modified" when both state and base are dirty', () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "blue"); // base dirty
+    applyInlineStyle(el, stateKey("hover", "color"), "red"); // state dirty
+    const cs = getComputedStyle(el);
+    // "state" takes priority since we're viewing the hover state
+    expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("state");
+  });
+
+  it('returns "modified" (not "state") when activeState is "none"', () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "blue");
+    const cs = getComputedStyle(el);
+    expect(getIndicatorType(el, "color", cs, null, "none")).toBe("modified");
   });
 });
 
@@ -180,11 +219,17 @@ describe("isTextBearing", () => {
 describe("getIndicatorColor", () => {
   it("returns a color string for each indicator type", () => {
     expect(typeof getIndicatorColor("modified")).toBe("string");
+    expect(typeof getIndicatorColor("state")).toBe("string");
     expect(typeof getIndicatorColor("none")).toBe("string");
   });
 
   it("returns distinct colors for modified vs none", () => {
     expect(getIndicatorColor("modified")).not.toBe(getIndicatorColor("none"));
+  });
+
+  it("returns a green color for state type (distinct from modified blue)", () => {
+    expect(getIndicatorColor("state")).not.toBe(getIndicatorColor("modified"));
+    expect(getIndicatorColor("state")).not.toBe(getIndicatorColor("none"));
   });
 });
 
@@ -194,6 +239,11 @@ describe("getIndicatorTitle", () => {
   it("returns a title string for modified type", () => {
     expect(getIndicatorTitle("modified")).toBeDefined();
     expect(getIndicatorTitle("modified")).toContain("Modified");
+  });
+
+  it("returns a title string for state type", () => {
+    expect(getIndicatorTitle("state")).toBeDefined();
+    expect(getIndicatorTitle("state")).toContain("State");
   });
 
   it("returns undefined for 'none' type", () => {

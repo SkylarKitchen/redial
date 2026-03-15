@@ -7,11 +7,11 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { BezierEditor } from "./BezierEditor";
-import { useDragReorder } from "./hooks/useDragReorder";
-import { DragHandle } from "./DragHandle";
-import { EditorRemoveButton, VisibilityToggle } from "./controls";
-import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";
-import { ms } from "./timing";
+import { useDragReorder } from "../hooks/useDragReorder";
+import { DragHandle } from "../DragHandle";
+import { EditorRemoveButton, VisibilityToggle } from "../controls";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
+import { ms } from "../timing";
 
 export interface TransitionValue {
   property: string;

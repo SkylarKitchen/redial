@@ -7,10 +7,10 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
-import { EditorRemoveButton } from "./controls";
-import { DragHandle } from "./DragHandle";
-import { useDragReorder } from "./useDragReorder";
-import { color, text, border, surface, font, shadow, zIndex, blackAlpha, focusBorder } from "./theme";
+import { EditorRemoveButton } from "../controls";
+import { DragHandle } from "../DragHandle";
+import { useDragReorder } from "../useDragReorder";
+import { color, text, border, surface, font, shadow, zIndex, blackAlpha, focusBorder } from "../theme";
 
 export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";

@@ -11,13 +11,13 @@
 
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
-import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "./controls";
+import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "../controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { FilterSliders, type FilterValues } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
-import { IconButtonGroup } from "./IconButtonGroup";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
+import { IconButtonGroup } from "../IconButtonGroup";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import {
   parseNum,
   parseBoxShadow,
@@ -28,8 +28,8 @@ import {
   filterToCSS,
   transformToCSS,
   transitionsToCSS,
-} from "./cssParsers";
-import type { SectionCtx } from "./panelUtils";
+} from "../cssParsers";
+import type { SectionCtx } from "../panelUtils";
 import {
   BLEND_MODE_OPTIONS,
   CURSOR_OPTIONS,
@@ -38,11 +38,11 @@ import {
   USER_SELECT_OPTIONS,
   BACKFACE_OPTIONS,
   OUTLINE_STYLE_OPTIONS,
-} from "./panelConstants";
-import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
-import { ms } from "./timing";
-import { ROW, LABEL } from "./panelStyles";
-import { useFocusTrap } from "./hooks/useFocusTrap";
+} from "../panelConstants";
+import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "../theme";
+import { ms } from "../timing";
+import { ROW, LABEL } from "../panelStyles";
+import { useFocusTrap } from "../hooks/useFocusTrap";
 
 // ─── Transition Options Menu (portal) ─────────────────────────────────
 

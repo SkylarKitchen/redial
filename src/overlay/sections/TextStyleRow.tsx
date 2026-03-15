@@ -13,10 +13,10 @@ import React, { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, zIndex } from "./theme";
-import { ms } from "./timing";
-import { usePortalDropdown } from "./hooks/usePortalDropdown";
-import type { TextStyle } from "./textStyleScanner";
+import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, zIndex } from "../theme";
+import { ms } from "../timing";
+import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import type { TextStyle } from "../textStyleScanner";
 
 export interface TextStyleRowProps {
   styles: TextStyle[];

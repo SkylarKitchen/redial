@@ -11,13 +11,13 @@
 
 import { useState, useRef, useCallback, useId, useMemo } from "react";
 import { createPortal } from "react-dom";
-import type { IndicatorType } from "./theme";
+import type { IndicatorType } from "../theme";
 import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react";
-import { ms } from "./timing";
-import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndicator, labelHighlight, shadow, zIndex } from "./theme";
-import { useResetPopover } from "./controls";
-import { useDropdownKeyboard } from "./hooks/useDropdownKeyboard";
-import { usePortalDropdown } from "./hooks/usePortalDropdown";
+import { ms } from "../timing";
+import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndicator, labelHighlight, shadow, zIndex } from "../theme";
+import { useResetPopover } from "../controls";
+import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
+import { usePortalDropdown } from "../hooks/usePortalDropdown";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 

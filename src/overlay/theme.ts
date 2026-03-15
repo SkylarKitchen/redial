@@ -79,6 +79,10 @@ export const color = {
   /** Success green — muted/darker (copy confirmed) */
   successMuted: "#16a34a",
 
+  // ── Indicators ──
+  /** Indicator green — state-specific style modifications (hover, focus, etc.) */
+  indicatorGreen: "#16a34a",
+
   // ── Dark surfaces ──
   /** Dark menu/dropdown surface */
   darkMenu: "#363636",
@@ -329,19 +333,20 @@ export const shadow = {
 } as const;
 
 // ─── Indicator Colors ───────────────────────────────────────────────
-// INTENTIONAL SIMPLIFICATION: user requested binary modified/none only.
 
 export const indicatorColor: Record<string, string> = {
   modified: color.primary,
+  state: color.indicatorGreen,
   none: color.mutedForeground,
 };
 
 // ─── Label Indicator Colors ─────────────────────────────────────────
 
-export type IndicatorType = "modified" | "none";
+export type IndicatorType = "modified" | "state" | "none";
 
 export const labelIndicator: Record<IndicatorType, { bg: string; text: string }> = {
   modified: { bg: hexToRgba(color.indicatorBlue, 0.2), text: color.primaryDark },
+  state: { bg: hexToRgba(color.indicatorGreen, 0.2), text: color.indicatorGreen },
   none: { bg: "transparent", text: color.foregroundSecondary },
 };
 

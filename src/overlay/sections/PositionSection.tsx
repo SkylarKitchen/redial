@@ -1,19 +1,19 @@
 import React, { useState, useCallback, memo } from "react";
-import { Section, SliderRow } from "./controls";
+import { Section, SliderRow } from "../controls";
 import { PositionOffsetDiagram } from "./PositionOffsetDiagram";
 import { PositionSelector } from "./PositionSelector";
-import { IconButtonGroup } from "./IconButtonGroup";
+import { IconButtonGroup } from "../IconButtonGroup";
 import { RowLabel } from "./layoutControls";
-import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./hooks/useConversionHint";
-import { resetAndReadNum, resetAndReadStr } from "./core/apply";
-import { parseNum } from "./cssParsers";
-import { isAutoSize } from "./getAuthoredValue";
-import { detectUnit, type SectionCtx } from "./panelUtils";
-import { POSITION_UNITS, PIN_PRESETS } from "./panelConstants";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "./theme";
-import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
-import { ms } from "./timing";
+import { convertUnit } from "../unitConversion";
+import { useConversionHint } from "../hooks/useConversionHint";
+import { resetAndReadNum, resetAndReadStr } from "../core/apply";
+import { parseNum } from "../cssParsers";
+import { isAutoSize } from "../getAuthoredValue";
+import { detectUnit, type SectionCtx } from "../panelUtils";
+import { POSITION_UNITS, PIN_PRESETS } from "../panelConstants";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout } from "../theme";
+import { ROW, LABEL, SUB_HEADER_ROW, SUB_HEADER } from "../panelStyles";
+import { ms } from "../timing";
 import { ChevronDown, LocateFixed, X } from "lucide-react";
 import {
   PositionTopLeftIcon, PositionTopRightIcon,
@@ -23,7 +23,7 @@ import {
   PositionAllIcon,
   FloatLeftIcon, FloatRightIcon,
   ClearLeftIcon, ClearRightIcon, ClearBothIcon,
-} from "./webflowIcons";
+} from "../webflowIcons";
 
 // ─── Pin preset order matching Figma layout (single horizontal row) ───
 

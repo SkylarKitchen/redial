@@ -167,7 +167,7 @@ describe("no shorthand/non-shorthand CSS conflicts in inline styles", () => {
     "Header.tsx",
     "Footer.tsx",
     "Panel.tsx",
-    "SizeSection.tsx",
+    "sections/SizeSection.tsx",
     "controls.tsx",
   ];
 

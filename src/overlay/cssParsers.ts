@@ -5,10 +5,10 @@
  * All functions are pure — no DOM access, no side effects.
  */
 
-import type { ShadowValue } from "./ShadowEditor";
-import type { FilterValues } from "./FilterSliders";
-import type { TransformValue } from "./TransformEditor";
-import type { TransitionValue } from "./TransitionEditor";
+import type { ShadowValue } from "./sections/ShadowEditor";
+import type { FilterValues } from "./sections/FilterSliders";
+import type { TransformValue } from "./sections/TransformEditor";
+import type { TransitionValue } from "./sections/TransitionEditor";
 
 /** Parse a numeric CSS value, returning 0 for non-numeric inputs. */
 export function parseNum(val: string): number {

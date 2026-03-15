@@ -14,7 +14,7 @@ import path from "path";
 
 function readSection(filename: string): string {
   return fs.readFileSync(
-    path.resolve(__dirname, `../${filename}`),
+    path.resolve(__dirname, `../sections/${filename}`),
     "utf-8"
   );
 }

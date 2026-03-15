@@ -58,7 +58,7 @@ describe("LayoutSection wires onReset/onAltClick for all controls", () => {
     const fs = await import("fs");
     const path = await import("path");
     layoutSrc = fs.readFileSync(
-      path.resolve(__dirname, "../LayoutSection.tsx"),
+      path.resolve(__dirname, "../sections/LayoutSection.tsx"),
       "utf-8"
     );
     expect(layoutSrc).toBeTruthy();

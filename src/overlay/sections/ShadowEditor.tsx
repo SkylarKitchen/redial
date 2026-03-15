@@ -7,15 +7,15 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
-import { useDragReorder } from "./hooks/useDragReorder";
-import { DragHandle } from "./DragHandle";
-import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
-import { cssColorToHex } from "./colorUtils";
-import { shadowToCSS } from "./cssParsers";
-import { parseVarRef, resolveVarColor } from "./variables/colorVariables";
-import { ms } from "./timing";
-import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "./theme";
-import { EditorRemoveButton, VisibilityToggle } from "./controls";
+import { useDragReorder } from "../hooks/useDragReorder";
+import { DragHandle } from "../DragHandle";
+import { ColorPickerEnhanced } from "../ColorPickerEnhanced";
+import { cssColorToHex } from "../colorUtils";
+import { shadowToCSS } from "../cssParsers";
+import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
+import { ms } from "../timing";
+import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "../theme";
+import { EditorRemoveButton, VisibilityToggle } from "../controls";
 
 export interface ShadowValue {
   x: number;

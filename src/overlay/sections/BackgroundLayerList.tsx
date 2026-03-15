@@ -8,13 +8,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
-import { BLEND_MODE_OPTIONS } from "./panelConstants";
+import { BLEND_MODE_OPTIONS } from "../panelConstants";
 import { X } from "lucide-react";
-import { useDragReorder } from "./hooks/useDragReorder";
-import { DragHandle } from "./DragHandle";
-import { VisibilityToggle } from "./controls";
-import { color, blackAlpha, border, surface, shadow, font, zIndex, checkerboard } from "./theme";
-import { ms } from "./timing";
+import { useDragReorder } from "../hooks/useDragReorder";
+import { DragHandle } from "../DragHandle";
+import { VisibilityToggle } from "../controls";
+import { color, blackAlpha, border, surface, shadow, font, zIndex, checkerboard } from "../theme";
+import { ms } from "../timing";
 
 export interface BackgroundLayer {
   id: string;

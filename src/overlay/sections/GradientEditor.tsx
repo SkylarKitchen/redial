@@ -6,11 +6,11 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
-import { cssColorToHex, hexToRgba } from "./colorUtils";
-import { parseVarRef, resolveVarColor } from "./variables/colorVariables";
-import { ms } from "./timing";
-import { color, text, surface, font, blackAlpha, border, primaryAlpha, zIndex } from "./theme";
+import { ColorPickerEnhanced } from "../ColorPickerEnhanced";
+import { cssColorToHex, hexToRgba } from "../colorUtils";
+import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
+import { ms } from "../timing";
+import { color, text, surface, font, blackAlpha, border, primaryAlpha, zIndex } from "../theme";
 
 export interface GradientStop {
   color: string;

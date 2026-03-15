@@ -7,7 +7,7 @@
  */
 
 import type React from "react";
-import { isDirty } from "./core/apply";
+import { isDirty, stateKey } from "./core/apply";
 import { extractUnit } from "./cssParsers";
 import type { IndicatorType } from "./theme";
 import { indicatorColor } from "./theme";
@@ -40,13 +40,19 @@ export interface SectionCtx {
 
 // ─── Indicator Helpers ───────────────────────────────────────────────────
 
-/** Binary indicator: "modified" if property is dirty (initial !== current), "none" otherwise. */
+/** Indicator: "state" (green) when a pseudo-class state is active and the property is dirty
+ *  for that state, "modified" (blue) for base-state changes, "none" otherwise. */
 export function getIndicatorType(
   el: Element,
   prop: string,
   _cs?: CSSStyleDeclaration,
   _parentCs?: CSSStyleDeclaration | null,
+  activeState?: string,
 ): IndicatorType {
+  // When a pseudo-class state is active, check the state-keyed override
+  if (activeState && activeState !== "none") {
+    if (isDirty(el, stateKey(activeState, prop))) return "state";
+  }
   if (isDirty(el, prop)) return "modified";
   return "none";
 }
@@ -56,6 +62,7 @@ export function getIndicatorColor(type: IndicatorType): string {
 }
 
 export function getIndicatorTitle(type: IndicatorType): string | undefined {
+  if (type === "state") return "State-specific style — Option+Click to reset";
   if (type === "modified") return "Modified — Option+Click to reset";
   return undefined;
 }

@@ -10,9 +10,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { selectAllOnDoubleClick } from "./controls";
-import { ms } from "./timing";
-import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "./theme";
+import { selectAllOnDoubleClick } from "../controls";
+import { ms } from "../timing";
+import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "../theme";
 
 // 8px grid spacing presets
 const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];

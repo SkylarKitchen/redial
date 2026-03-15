@@ -34,9 +34,9 @@ describe("Position section: Option+Click reset coverage", () => {
   let iconButtonGroup: string;
 
   beforeAll(() => {
-    positionSection = readFile("PositionSection.tsx");
-    positionSelector = readFile("PositionSelector.tsx");
-    positionOffsetDiagram = readFile("PositionOffsetDiagram.tsx");
+    positionSection = readFile("sections/PositionSection.tsx");
+    positionSelector = readFile("sections/PositionSelector.tsx");
+    positionOffsetDiagram = readFile("sections/PositionOffsetDiagram.tsx");
     iconButtonGroup = readFile("IconButtonGroup.tsx");
   });
 

@@ -1,21 +1,21 @@
 import React, { useState, useCallback, memo, useEffect } from "react";
-import { Section, ValueInput, ColorRow, useResetPopover } from "./controls";
-import { SideSelector } from "./SideSelector";
+import { Section, ValueInput, ColorRow, useResetPopover } from "../controls";
+import { SideSelector } from "../SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
-import { IconButtonGroup } from "./IconButtonGroup";
-import { UnitSelector } from "./UnitSelector";
+import { IconButtonGroup } from "../IconButtonGroup";
+import { UnitSelector } from "../UnitSelector";
 import { Slider } from "@/components/ui/slider";
-import { LabelScrub } from "./LabelScrub";
-import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./hooks/useConversionHint";
-import { resetProp, resetAndReadNum, beginBatch, endBatch } from "./core/apply";
-import { parseNum } from "./cssParsers";
-import { detectUnit, type SectionCtx } from "./panelUtils";
-import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "./panelConstants";
-import { ms } from "./timing";
-import { text, color, surface, font, border, indicatorStyle, type IndicatorType } from "./theme";
-import { ROW, LABEL } from "./panelStyles";
+import { LabelScrub } from "../LabelScrub";
+import { convertUnit } from "../unitConversion";
+import { useConversionHint } from "../hooks/useConversionHint";
+import { resetProp, resetAndReadNum, beginBatch, endBatch } from "../core/apply";
+import { parseNum } from "../cssParsers";
+import { detectUnit, type SectionCtx } from "../panelUtils";
+import { cssColorToHex as rgbToHex } from "../colorUtils";
+import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "../panelConstants";
+import { ms } from "../timing";
+import { text, color, surface, font, border, indicatorStyle, type IndicatorType } from "../theme";
+import { ROW, LABEL } from "../panelStyles";
 
 // ─── Radius mode ──────────────────────────────────────────────────────
 

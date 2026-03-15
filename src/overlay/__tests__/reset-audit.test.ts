@@ -16,7 +16,7 @@ import path from "path";
 /** Read a section component's source code */
 function readSection(filename: string): string {
   return fs.readFileSync(
-    path.resolve(__dirname, `../${filename}`),
+    path.resolve(__dirname, `../sections/${filename}`),
     "utf-8"
   );
 }

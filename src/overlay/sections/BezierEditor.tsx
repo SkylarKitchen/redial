@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "./theme";
+import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "../theme";
 
 export interface BezierEditorProps {
   value: [number, number, number, number]; // [x1, y1, x2, y2]

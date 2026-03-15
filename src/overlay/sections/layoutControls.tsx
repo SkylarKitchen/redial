@@ -9,25 +9,25 @@
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink, WrapText, Settings } from "lucide-react";
-import { GridSettingsPopup } from "./GridSettingsPopup";
-import { LabelScrub } from "./LabelScrub";
-import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "./controls";
-import { evaluateMathExpr } from "./inputMath";
-import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, darkToolbar, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
-import { useResetPopover } from "./controls";
-import { ms } from "./timing";
-import { SegmentedControl } from "./SegmentedControl";
+import { GridSettingsPopup } from "../GridSettingsPopup";
+import { LabelScrub } from "../LabelScrub";
+import { UnitSelector, type ConversionHint } from "../UnitSelector";
+import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "../controls";
+import { evaluateMathExpr } from "../inputMath";
+import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, darkToolbar, type IndicatorType, indicatorStyle, altClickReset } from "../theme";
+import { useResetPopover } from "../controls";
+import { ms } from "../timing";
+import { SegmentedControl } from "../SegmentedControl";
 import {
   ArrowReverseIcon, UnlockIcon, LockIcon,
   DisplayInlineBlockIcon, DisplayFlexIcon, DisplayGridIcon,
   DisplayInlineIcon, DisplayHideIcon, ChevronSmallDownIcon,
-} from "./webflowIcons";
+} from "../webflowIcons";
 
-import { useClickOutside } from "./hooks/useClickOutside";
-import { useDropdownKeyboard } from "./hooks/useDropdownKeyboard";
-import { useWheelAdjust } from "./hooks/useWheelAdjust";
-import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "./panelConstants";
+import { useClickOutside } from "../hooks/useClickOutside";
+import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
+import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────
 

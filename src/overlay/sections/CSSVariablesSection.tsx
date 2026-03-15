@@ -8,12 +8,12 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
-import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "./core/apply";
-import type { IndicatorType } from "./theme";
-import { Section, ColorRow, SliderRow } from "./controls";
-import { discoverVariables, type CSSVariable } from "./variables/discoverVariables";
-import { ROW, SUB_LABEL } from "./panelStyles";
-import { text, border, surface, font, color, focusRing, labelIndicator, labelHighlight } from "./theme";
+import { applyCustomProperty, isCustomPropertyDirty, subscribeOverrides, getOverrideSnapshot } from "../core/apply";
+import type { IndicatorType } from "../theme";
+import { Section, ColorRow, SliderRow } from "../controls";
+import { discoverVariables, type CSSVariable } from "../variables/discoverVariables";
+import { ROW, SUB_LABEL } from "../panelStyles";
+import { text, border, surface, font, color, focusRing, labelIndicator, labelHighlight } from "../theme";
 
 // ─── Variable Row ────────────────────────────────────────────────────
 

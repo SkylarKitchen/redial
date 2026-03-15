@@ -87,12 +87,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
 
   // ── Indicator helpers ──
   const ind = useCallback(
-    (prop: string) => getIndicatorType(element, prop, cs, parentCs),
-    [element, cs, parentCs]
+    (prop: string) => getIndicatorType(element, prop, cs, parentCs, activeState),
+    [element, cs, parentCs, activeState]
   );
 
   const sectionInd = useCallback(
     (props: string[]): IndicatorType => {
+      // "state" takes priority when any prop has a state-specific override
+      if (props.some((p) => ind(p) === "state")) return "state";
       return props.some((p) => ind(p) === "modified") ? "modified" : "none";
     },
     [ind],

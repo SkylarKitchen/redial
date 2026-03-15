@@ -14,8 +14,8 @@
  */
 
 import { useState, useCallback } from "react";
-import { ms } from "./timing";
-import { color, focusRing } from "./theme";
+import { ms } from "../timing";
+import { color, focusRing } from "../theme";
 
 export interface TransformOriginPickerProps {
   value: string;

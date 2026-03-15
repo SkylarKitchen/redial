@@ -33,7 +33,7 @@ describe("useValueFlash must not use backgroundColor longhand", () => {
 
 describe("consumers of useValueFlash must not mix background shorthand with flash spread", () => {
   const overlayDir = join(__dirname, "..");
-  const consumers = ["layoutControls.tsx", "CornerRadiusEditor.tsx", "SizeInputCell.tsx"];
+  const consumers = ["sections/layoutControls.tsx", "sections/CornerRadiusEditor.tsx", "sections/SizeInputCell.tsx"];
 
   for (const file of consumers) {
     it(`${file}: no style block has both background shorthand and ...flashStyle`, () => {
