@@ -16,7 +16,7 @@ import { describe, it, expect } from "vitest";
 
 const overlayDir = join(__dirname, "..");
 const positionSrc = readFileSync(join(overlayDir, "sections", "PositionSelector.tsx"), "utf-8");
-const controlsSrc = readFileSync(join(overlayDir, "controls.tsx"), "utf-8");
+const controlsSrc = readFileSync(join(overlayDir, "controls", "SelectRow.tsx"), "utf-8");
 const sideSrc = readFileSync(join(overlayDir, "SideSelector.tsx"), "utf-8");
 
 // ─── Fix 1: PositionSelector portal ─────────────────────────────────
@@ -64,7 +64,7 @@ describe("Fix 2: SelectRowCustom uses portal for dropdown", () => {
   // Extract just the SelectRowCustom function to avoid false positives
   // from other components in controls.tsx
   const fnStart = controlsSrc.indexOf("function SelectRowCustom(");
-  const fnBody = controlsSrc.slice(fnStart, controlsSrc.indexOf("\n// ─── Color", fnStart));
+  const fnBody = controlsSrc.slice(fnStart);
 
   it("calls createPortal for the Command dropdown", () => {
     expect(fnBody).toContain("createPortal(");

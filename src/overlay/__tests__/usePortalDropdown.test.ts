@@ -16,7 +16,7 @@ const overlayDir = join(__dirname, "..");
 const hookSrc = readFileSync(join(overlayDir, "hooks", "usePortalDropdown.ts"), "utf-8");
 const unitSrc = readFileSync(join(overlayDir, "UnitSelector.tsx"), "utf-8");
 const positionSrc = readFileSync(join(overlayDir, "sections", "PositionSelector.tsx"), "utf-8");
-const controlsSrc = readFileSync(join(overlayDir, "controls.tsx"), "utf-8");
+const controlsSrc = readFileSync(join(overlayDir, "controls", "SelectRow.tsx"), "utf-8");
 const textStyleSrc = readFileSync(join(overlayDir, "sections", "TextStyleRow.tsx"), "utf-8");
 
 // ─── Hook implementation ──────────────────────────────────────────
@@ -70,12 +70,11 @@ describe("usePortalDropdown adopted by all dropdown components", () => {
     expect(positionSrc).toContain("portalRef");
   });
 
-  it("SelectRowCustom (controls.tsx) imports and uses usePortalDropdown", () => {
+  it("SelectRowCustom (SelectRow.tsx) imports and uses usePortalDropdown", () => {
     expect(controlsSrc).toContain('import { usePortalDropdown }');
-    const fnStart = controlsSrc.indexOf("function SelectRowCustom(");
-    const fnBody = controlsSrc.slice(fnStart, controlsSrc.indexOf("\n// ─── Color", fnStart));
-    expect(fnBody).toContain("usePortalDropdown({");
-    expect(fnBody).toContain("portalRef");
+    expect(controlsSrc).toContain("function SelectRowCustom(");
+    expect(controlsSrc).toContain("usePortalDropdown({");
+    expect(controlsSrc).toContain("portalRef");
   });
 
   it("TextStyleRow imports and uses usePortalDropdown", () => {
@@ -97,9 +96,7 @@ describe("querySelector-based click-outside removed from components", () => {
   });
 
   it("SelectRowCustom does not use querySelector for portal detection", () => {
-    const fnStart = controlsSrc.indexOf("function SelectRowCustom(");
-    const fnBody = controlsSrc.slice(fnStart, controlsSrc.indexOf("\n// ─── Color", fnStart));
-    expect(fnBody).not.toContain('querySelector("[data-select-custom-portal]")');
+    expect(controlsSrc).not.toContain('querySelector("[data-select-custom-portal]")');
   });
 
   it("TextStyleRow does not use querySelector for portal detection", () => {
@@ -121,10 +118,8 @@ describe("data attributes preserved on portal divs", () => {
   });
 
   it("SelectRowCustom still has data-tuner-portal and data-select-custom-portal", () => {
-    const fnStart = controlsSrc.indexOf("function SelectRowCustom(");
-    const fnBody = controlsSrc.slice(fnStart, controlsSrc.indexOf("\n// ─── Color", fnStart));
-    expect(fnBody).toContain("data-tuner-portal");
-    expect(fnBody).toContain("data-select-custom-portal");
+    expect(controlsSrc).toContain("data-tuner-portal");
+    expect(controlsSrc).toContain("data-select-custom-portal");
   });
 
   it("TextStyleRow still has data-tuner-portal and data-textstyle-portal", () => {

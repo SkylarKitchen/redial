@@ -18,7 +18,8 @@
  * - Drag-to-scrub with optimistic local state (real-time text updates)
  * - Shift+drag updates all 4 sides uniformly
  * - Alt(Option)+drag updates axis pair (left+right or top+bottom)
- * - Alt(Option)+click resets property to default
+ * - Alt(Option)+click copies value to complementary (opposite) side
+ * - Alt(Option)+click on a corner zone applies value to all 4 sides
  * - Tab/Shift+Tab navigation in visual order
  */
 
@@ -65,6 +66,24 @@ const SIDES = ["top", "right", "bottom", "left"] as const;
 const AXIS_PARTNER: Record<string, string> = {
   top: "bottom", bottom: "top", left: "right", right: "left",
 };
+
+/** Map each corner position to the side whose value it uses */
+const CORNER_SIDE: Record<string, string> = {
+  "top-left": "top",
+  "top-right": "right",
+  "bottom-right": "bottom",
+  "bottom-left": "left",
+};
+
+/** Corner position styles (absolute within the box) */
+const CORNER_POS: Record<string, React.CSSProperties> = {
+  "top-left": { top: 0, left: 0 },
+  "top-right": { top: 0, right: 0 },
+  "bottom-right": { bottom: 0, right: 0 },
+  "bottom-left": { bottom: 0, left: 0 },
+};
+
+const CORNERS = ["top-left", "top-right", "bottom-right", "bottom-left"] as const;
 
 /** "margin-top" → "Edit margin top" / "Edit margin top · ⌥ click to reset" */
 function propLabel(prop: string, isEdited?: boolean): string {
@@ -336,16 +355,15 @@ export function SpacingBoxModel({
             if (wasClick && ev.type === "pointerup") {
               const pev = ev as PointerEvent;
               if (pev.altKey) {
-                // Alt(Option)+click: reset this property to default
-                const newValue = resetAndReadNum(element, prop);
-                if (onReset) {
-                  // Use onReset to update parent state without re-applying inline style
-                  onReset(prop, newValue);
-                } else {
-                  // Fallback: re-apply via onChange (legacy path)
-                  const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
-                  onChangeRef.current(prop, newValue, unit);
-                }
+                // Alt(Option)+click: copy this side's value to its complementary (opposite) side
+                const side = prop.split("-")[1]; // e.g. "left"
+                const partner = AXIS_PARTNER[side]; // e.g. "right"
+                const prefix = isMargin ? "margin" : "padding";
+                const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+                const partnerProp = [prefix, partner].join("-");
+                // Apply this side's value to both this side and its complement
+                onChangeRef.current(prop, value, unit);
+                onChangeRef.current(partnerProp, value, unit);
               } else {
                 // Regular click: open popover
                 const rect = el.getBoundingClientRect();
@@ -379,6 +397,53 @@ export function SpacingBoxModel({
     );
   };
 
+  // --- Render corner zones for a box (margin or padding) ---
+  const renderCornerZones = (group: "margin" | "padding") => {
+    const isMargin = group === "margin";
+    const values = isMargin ? margin : padding;
+    return CORNERS.map((corner) => {
+      const side = CORNER_SIDE[corner]; // e.g. "top"
+      const cornerValue = values[side as keyof typeof values]; // value from that side
+      const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
+
+      let downPos: { x: number; y: number } | null = null;
+
+      return (
+        <div
+          key={`${group}-${corner}`}
+          data-spacing-corner={`${group}-${corner}`}
+          style={{
+            position: "absolute",
+            ...CORNER_POS[corner],
+            width: 10,
+            height: 10,
+            cursor: "pointer",
+            zIndex: 1,
+          }}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            downPos = { x: e.clientX, y: e.clientY };
+          }}
+          onPointerUp={(e) => {
+            if (!downPos) return;
+            const dx = Math.abs(e.clientX - downPos.x);
+            const dy = Math.abs(e.clientY - downPos.y);
+            downPos = null;
+            // Only treat as click if not dragged
+            if (dx < 3 && dy < 3 && e.altKey) {
+              const prefix = isMargin ? "margin" : "padding";
+              for (const s of SIDES) {
+                onChangeRef.current(`${prefix}-${s}`, cornerValue, unit);
+              }
+            }
+          }}
+        />
+      );
+    });
+  };
+
   return (
     <div style={{ padding: "8px 12px 4px" }} ref={containerRef} onKeyDown={handleKeyDown}>
       {/* Margin box (outer) */}
@@ -392,6 +457,9 @@ export function SpacingBoxModel({
           transition: `background ${ms("fast")}`,
         }}
       >
+        {/* Corner zones for margin box */}
+        {renderCornerZones("margin")}
+
         {/* MARGIN label + unit selector */}
         <div
           style={{
@@ -442,6 +510,9 @@ export function SpacingBoxModel({
               transition: `background ${ms("fast")}`,
             }}
           >
+            {/* Corner zones for padding box */}
+            {renderCornerZones("padding")}
+
             {/* PADDING label + unit selector */}
             <div
               style={{

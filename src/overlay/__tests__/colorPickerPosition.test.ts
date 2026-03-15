@@ -18,7 +18,7 @@ import { join } from "path";
 
 describe("ColorPicker viewport positioning", () => {
   const controlsSrc = readFileSync(
-    join(__dirname, "..", "controls.tsx"),
+    join(__dirname, "..", "controls", "ColorRow.tsx"),
     "utf-8"
   );
 
