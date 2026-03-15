@@ -27,6 +27,14 @@ const ALIGN_ROWS_FLEX = ["flex-start", "center", "flex-end"] as const;
 const JUSTIFY_COLS_GRID = ["start", "center", "end"] as const;
 const ALIGN_ROWS_GRID = ["start", "center", "end"] as const;
 
+const ROW_NAMES = ["top", "middle", "bottom"] as const;
+const COL_NAMES = ["left", "center", "right"] as const;
+
+/** Human-readable alignment label for a grid cell */
+export function cellLabel(row: number, col: number): string {
+  return `Align ${ROW_NAMES[row]}-${COL_NAMES[col]}`;
+}
+
 export const SPACING_OPTIONS = [
   { value: "space-between", label: "Between" },
   { value: "space-around", label: "Around" },
@@ -197,6 +205,8 @@ function DotGrid({
 }) {
   return (
     <div
+      role="radiogroup"
+      aria-label="Alignment"
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr 1fr",
@@ -218,8 +228,9 @@ function DotGrid({
               key={key}
               {...(isActive ? { "data-active": true } : {})}
               tabIndex={0}
-              role="button"
-              aria-label={`Align column ${col} row ${row}`}
+              role="radio"
+              aria-checked={isActive}
+              aria-label={cellLabel(row, col)}
               onClick={() => onCellClick(col, row)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -286,6 +297,8 @@ function BarIndicator({
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       {/* Faded dot backdrop */}
       <div
+        role="radiogroup"
+        aria-label="Alignment"
         style={{
           position: "absolute",
           inset: 0,
@@ -298,12 +311,15 @@ function BarIndicator({
         }}
       >
         {[0, 1, 2].flatMap((row) =>
-          [0, 1, 2].map((col) => (
+          [0, 1, 2].map((col) => {
+            const isActive = activeCols.includes(col) && activeRows.includes(row);
+            return (
             <div
               key={`${row}-${col}`}
               tabIndex={0}
-              role="button"
-              aria-label={`Align column ${col} row ${row}`}
+              role="radio"
+              aria-checked={isActive}
+              aria-label={cellLabel(row, col)}
               onClick={() => onCellClick(col, row)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -328,7 +344,8 @@ function BarIndicator({
                 background: blackAlpha(0.15),
               }} />
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
