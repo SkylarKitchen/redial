@@ -18,7 +18,7 @@ import { join } from "path";
  * Without these, the row overflows the 300px panel.
  */
 
-const BORDERS_PATH = join(__dirname, "..", "BordersSection.tsx");
+const BORDERS_PATH = join(__dirname, "..", "sections", "BordersSection.tsx");
 
 describe("Radius row must not overflow the panel", () => {
   it("Slider uses inline style flex:1 (not className flex-1) to avoid conflict with w-full", () => {

@@ -33,7 +33,7 @@ describe("SizeInputCell reset via resetProp", () => {
     const fs = await import("fs");
     const path = await import("path");
     const src = fs.readFileSync(
-      path.resolve(__dirname, "../SizeSection.tsx"),
+      path.resolve(__dirname, "../sections/SizeSection.tsx"),
       "utf-8"
     );
 

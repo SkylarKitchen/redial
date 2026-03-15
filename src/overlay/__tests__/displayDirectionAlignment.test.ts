@@ -36,7 +36,7 @@ function extractFunctionBody(src: string, fnName: string): string {
 
 describe("Display and Direction row alignment", () => {
   const layoutControlsSrc = readFileSync(
-    join(overlayDir, "layoutControls.tsx"),
+    join(overlayDir, "sections", "layoutControls.tsx"),
     "utf-8",
   );
 

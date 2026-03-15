@@ -19,7 +19,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const src = fs.readFileSync(
-  path.resolve(__dirname, "../SizeInputCell.tsx"),
+  path.resolve(__dirname, "../sections/SizeInputCell.tsx"),
   "utf-8"
 );
 

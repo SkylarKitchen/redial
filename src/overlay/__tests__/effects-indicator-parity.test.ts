@@ -19,7 +19,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 const src = readFileSync(
-  join(__dirname, "../EffectsSection.tsx"),
+  join(__dirname, "../sections/EffectsSection.tsx"),
   "utf-8",
 );
 
