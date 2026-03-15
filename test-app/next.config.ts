@@ -6,7 +6,7 @@ import path from "path";
 const withTuner = require("./with-tuner.cjs");
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  devIndicators: false,
   turbopack: {
     root: path.resolve(__dirname, ".."),
     resolveAlias: {
