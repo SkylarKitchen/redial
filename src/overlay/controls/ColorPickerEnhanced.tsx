@@ -16,7 +16,7 @@ import { ms } from "../timing";
 import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
 import { useTokenCollections } from "../variables/tokenCollections";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "../theme";
-import { useSwatches } from "../useSwatches";
+import { useSwatches } from "../hooks/useSwatches";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 

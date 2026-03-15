@@ -9,7 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
 import { EditorRemoveButton } from "../controls";
 import { DragHandle } from "../shell/DragHandle";
-import { useDragReorder } from "../useDragReorder";
+import { useDragReorder } from "../hooks/useDragReorder";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, focusBorder } from "../theme";
 
 export interface TransformValue {
