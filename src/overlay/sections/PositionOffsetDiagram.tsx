@@ -57,21 +57,27 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
         }}
       >
         {/* Top */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 4px" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, padding: "8px 0 4px" }}>
           {auto.top ? (
             <AutoLabel onClick={() => onAutoDisable?.("top")} />
           ) : (
-            <EditableValue value={top} onChange={(v) => onChange("top", v)} suffix={units.top} onReset={() => onReset?.("top")} step={stepFor("top")} />
+            <>
+              <EditableValue value={top} onChange={(v) => onChange("top", v)} onReset={() => onReset?.("top")} step={stepFor("top")} />
+              <UnitSelector value={units.top} options={availableUnits} onChange={(u) => onUnitChange("top", u)} conversionHint={conversionHint} embedded />
+            </>
           )}
         </div>
 
         {/* Left / element / Right */}
         <div style={{ display: "flex", alignItems: "center" }}>
-          <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+          <div style={{ flex: "0 0 56px", display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
             {auto.left ? (
               <AutoLabel onClick={() => onAutoDisable?.("left")} />
             ) : (
-              <EditableValue value={left} onChange={(v) => onChange("left", v)} suffix={units.left} onReset={() => onReset?.("left")} step={stepFor("left")} />
+              <>
+                <EditableValue value={left} onChange={(v) => onChange("left", v)} onReset={() => onReset?.("left")} step={stepFor("left")} />
+                <UnitSelector value={units.left} options={availableUnits} onChange={(u) => onUnitChange("left", u)} conversionHint={conversionHint} embedded />
+              </>
             )}
           </div>
           {/* Element placeholder */}
@@ -92,21 +98,27 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
               element
             </span>
           </div>
-          <div style={{ flex: "0 0 40px", display: "flex", justifyContent: "center" }}>
+          <div style={{ flex: "0 0 56px", display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
             {auto.right ? (
               <AutoLabel onClick={() => onAutoDisable?.("right")} />
             ) : (
-              <EditableValue value={right} onChange={(v) => onChange("right", v)} suffix={units.right} onReset={() => onReset?.("right")} step={stepFor("right")} />
+              <>
+                <EditableValue value={right} onChange={(v) => onChange("right", v)} onReset={() => onReset?.("right")} step={stepFor("right")} />
+                <UnitSelector value={units.right} options={availableUnits} onChange={(u) => onUnitChange("right", u)} conversionHint={conversionHint} embedded />
+              </>
             )}
           </div>
         </div>
 
         {/* Bottom */}
-        <div style={{ display: "flex", justifyContent: "center", padding: "4px 0 8px" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, padding: "4px 0 8px" }}>
           {auto.bottom ? (
             <AutoLabel onClick={() => onAutoDisable?.("bottom")} />
           ) : (
-            <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} suffix={units.bottom} onReset={() => onReset?.("bottom")} step={stepFor("bottom")} />
+            <>
+              <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} onReset={() => onReset?.("bottom")} step={stepFor("bottom")} />
+              <UnitSelector value={units.bottom} options={availableUnits} onChange={(u) => onUnitChange("bottom", u)} conversionHint={conversionHint} embedded />
+            </>
           )}
         </div>
       </div>
@@ -144,13 +156,11 @@ function AutoLabel({ onClick }: { onClick: () => void }) {
 function EditableValue({
   value,
   onChange,
-  suffix,
   onReset,
   step: stepProp = 1,
 }: {
   value: number;
   onChange: (value: number) => void;
-  suffix?: string;
   onReset?: () => void;
   step?: number;
 }) {
@@ -239,11 +249,6 @@ function EditableValue({
       }}
     >
       {value}
-      {suffix && (
-        <span style={{ fontSize: "8px", color: text.hint, marginLeft: "1px" }}>
-          {suffix}
-        </span>
-      )}
     </span>
   );
 }

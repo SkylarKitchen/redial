@@ -239,7 +239,48 @@ describe("Changing position from static to absolute reveals offset diagram", () 
   });
 });
 
-// ─── 5. Float and Clear collapsible ──────────────────────────────────
+// ─── 5. Position offset UnitSelector for each direction ──────────────
+
+describe("Position offset inputs support UnitSelector", () => {
+  it("PositionOffsetDiagram renders UnitSelector for each offset direction", () => {
+    // The diagram must render a UnitSelector next to each offset value (top, right, bottom, left)
+    // Not just a static text suffix — users need to be able to change units
+    const unitSelectorCount = (diagramSrc.match(/<UnitSelector/g) || []).length;
+    expect(unitSelectorCount, "Expected 4 UnitSelector instances (one per offset direction)").toBeGreaterThanOrEqual(4);
+  });
+
+  it("PositionOffsetDiagram passes availableUnits to UnitSelector options", () => {
+    // Each UnitSelector should receive the availableUnits as its options prop
+    expect(diagramSrc).toMatch(/options=\{availableUnits\}/);
+  });
+
+  it("PositionOffsetDiagram passes onUnitChange to UnitSelector onChange", () => {
+    // Each UnitSelector onChange must call onUnitChange with the correct prop name
+    expect(diagramSrc).toMatch(/onUnitChange\("top"/);
+    expect(diagramSrc).toMatch(/onUnitChange\("right"/);
+    expect(diagramSrc).toMatch(/onUnitChange\("bottom"/);
+    expect(diagramSrc).toMatch(/onUnitChange\("left"/);
+  });
+
+  it("PositionOffsetDiagram passes conversionHint to UnitSelector", () => {
+    expect(diagramSrc).toMatch(/conversionHint=\{conversionHint\}/);
+  });
+
+  it("PositionSection passes POSITION_UNITS as availableUnits to diagram", () => {
+    expect(positionSrc).toContain("availableUnits={POSITION_UNITS}");
+  });
+
+  it("POSITION_UNITS includes px, %, vw, and vh per spec", () => {
+    // Verify the source at import-time — POSITION_UNITS should contain all 4 spec units
+    const constantsSrc = readFileSync(
+      join(__dirname, "../panelConstants.tsx"),
+      "utf-8",
+    );
+    expect(constantsSrc).toMatch(/POSITION_UNITS\s*=\s*\[.*"px".*"%".*"vw".*"vh".*\]/);
+  });
+});
+
+// ─── 6. Float and Clear collapsible ──────────────────────────────────
 
 describe("Float and Clear section", () => {
   it("Float and Clear toggle button renders when section is expanded (non-static)", async () => {
