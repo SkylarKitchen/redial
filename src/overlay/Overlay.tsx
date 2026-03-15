@@ -621,6 +621,13 @@ export function Overlay() {
         setSelecting((s) => !s);
       }
 
+      // N to toggle navigator (no modifier, no selectedEl required)
+      if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {
+        e.preventDefault();
+        setShowNavigator((v) => !v);
+        return;
+      }
+
       // Escape: dismiss modal first, then close search, then close panel
       if (e.key === "Escape" && selectedEl && !selecting) {
         if (activeModal.type !== "none") {
@@ -1737,6 +1744,18 @@ export function Overlay() {
       )}
       </AnimatePresence>
 
+      {/* Navigator panel (independent lifecycle — can coexist with inspector) */}
+      <AnimatePresence>
+        {showNavigator && (
+          <NavigatorPanel
+            key="navigator-panel"
+            selectedEl={selectedEl}
+            onSelectElement={handleSelect}
+            onClose={() => setShowNavigator(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Command Palette modal */}
       {activeModal.type === "commandPalette" && selectedEl && (
         <CommandPalette
@@ -1796,6 +1815,8 @@ export function Overlay() {
         selecting={selecting}
         hasSelectedEl={!!selectedEl}
         activePanel={activePanel}
+        navigatorOpen={showNavigator}
+        onToggleNavigator={() => setShowNavigator((v) => !v)}
         onToggleSelecting={() => {
           setSelecting((s) => {
             if (!s) {
