@@ -252,6 +252,7 @@ export function Overlay() {
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
   const diffHoldRef = useRef(false); // distinguishes hold-D from button toggle
+  const diffTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // debounce timer for diff peek
 
   // ─── Accessibility: prefers-reduced-motion (Item 59) ───────────────
   const [reducedMotion, setReducedMotionState] = useState(false);
@@ -704,11 +705,15 @@ export function Overlay() {
       }
 
       // D for diff peek (hold) / toggle (handled by button)
+      // Uses a debounce to prevent visual flash on quick taps (<150ms)
       if (e.key === "d" && !e.repeat && selectedEl && !selecting && !e.metaKey && !e.ctrlKey) {
         if (overrideCount(selectedEl) === 0) return;
         diffHoldRef.current = true;
-        stripAllOverrides();
-        setDiffMode(true);
+        diffTimerRef.current = setTimeout(() => {
+          diffTimerRef.current = null;
+          stripAllOverrides();
+          setDiffMode(true);
+        }, 150);
       }
 
       // Arrow key element navigation: ↑ parent, ↓ first visible child, ←/→ siblings
@@ -746,8 +751,15 @@ export function Overlay() {
       // Restore overrides when D is released (hold-to-peek)
       if (e.key === "d" && diffHoldRef.current) {
         diffHoldRef.current = false;
-        restoreAllOverrides();
-        setDiffMode(false);
+        if (diffTimerRef.current !== null) {
+          // Released before debounce fired — cancel timer, no visual change (prevents flash)
+          clearTimeout(diffTimerRef.current);
+          diffTimerRef.current = null;
+        } else {
+          // Released after debounce — restore overrides
+          restoreAllOverrides();
+          setDiffMode(false);
+        }
       }
     };
 
@@ -1025,6 +1037,10 @@ export function Overlay() {
   // --- Cleanup: restore overrides if component unmounts during diff ---
   useEffect(() => {
     return () => {
+      if (diffTimerRef.current !== null) {
+        clearTimeout(diffTimerRef.current);
+        diffTimerRef.current = null;
+      }
       if (diffMode) {
         restoreAllOverrides();
       }

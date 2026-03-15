@@ -60,6 +60,7 @@ export function Header({
   const [closeHovered, setCloseHovered] = useState(false);
   const [pinHovered, setPinHovered] = useState(false);
   const [ellipsisHovered, setEllipsisHovered] = useState(false);
+  const [sourceHovered, setSourceHovered] = useState(false);
   const [hoveredBreadcrumbIdx, setHoveredBreadcrumbIdx] = useState<number | null>(null);
 
   // Reset expanded state when the selected element changes
@@ -185,10 +186,34 @@ export function Header({
         </div>
       </div>
 
-      {/* -- Source file -- */}
+      {/* -- Source file (click to open in editor) -- */}
       {sourceFile && (
         <div style={{ paddingLeft: 12, paddingRight: 12, paddingTop: 2 }}>
-          <span style={{ fontSize: 10, fontFamily: font.mono, color: text.disabled }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: font.mono,
+              color: text.disabled,
+              cursor: "pointer",
+              textDecoration: sourceHovered ? "underline" : "none",
+              transition: `color ${ms("normal")}`,
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              const file = reactSource!.file;
+              const line = reactSource!.line;
+              fetch("/__tuner/open-editor", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ file, line }),
+              }).catch(() => {
+                console.log(`${file}${line ? `:${line}` : ""}`);
+              });
+            }}
+            onMouseEnter={() => setSourceHovered(true)}
+            onMouseLeave={() => setSourceHovered(false)}
+          >
             {sourceFile}
           </span>
         </div>
