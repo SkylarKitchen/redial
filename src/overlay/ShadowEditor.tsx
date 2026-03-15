@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
-import { useDragReorder } from "./useDragReorder";
+import { useDragReorder } from "./hooks/useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { cssColorToHex } from "./colorUtils";

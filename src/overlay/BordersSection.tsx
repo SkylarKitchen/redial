@@ -7,7 +7,7 @@ import { UnitSelector } from "./UnitSelector";
 import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./useConversionHint";
+import { useConversionHint } from "./hooks/useConversionHint";
 import { resetProp, resetAndReadNum, beginBatch, endBatch } from "./core/apply";
 import { parseNum } from "./cssParsers";
 import { detectUnit, type SectionCtx } from "./panelUtils";

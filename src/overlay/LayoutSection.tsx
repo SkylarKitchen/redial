@@ -14,7 +14,7 @@ import { LabelScrub } from "./LabelScrub";
 import { UnitSelector } from "./UnitSelector";
 import type { IndicatorType } from "./theme";
 import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./useConversionHint";
+import { useConversionHint } from "./hooks/useConversionHint";
 import { parseNum } from "./cssParsers";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
 import { detectUnit, type SectionCtx } from "./panelUtils";

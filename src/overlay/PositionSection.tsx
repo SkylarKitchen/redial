@@ -5,7 +5,7 @@ import { PositionSelector } from "./PositionSelector";
 import { IconButtonGroup } from "./IconButtonGroup";
 import { RowLabel } from "./layoutControls";
 import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./useConversionHint";
+import { useConversionHint } from "./hooks/useConversionHint";
 import { resetAndReadNum, resetAndReadStr } from "./core/apply";
 import { parseNum } from "./cssParsers";
 import { isAutoSize } from "./getAuthoredValue";

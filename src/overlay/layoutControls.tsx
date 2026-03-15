@@ -24,9 +24,9 @@ import {
   DisplayInlineIcon, DisplayHideIcon, ChevronSmallDownIcon,
 } from "./webflowIcons";
 
-import { useClickOutside } from "./useClickOutside";
-import { useDropdownKeyboard } from "./useDropdownKeyboard";
-import { useWheelAdjust } from "./useWheelAdjust";
+import { useClickOutside } from "./hooks/useClickOutside";
+import { useDropdownKeyboard } from "./hooks/useDropdownKeyboard";
+import { useWheelAdjust } from "./hooks/useWheelAdjust";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "./panelConstants";
 
 // ─── RowLabel ───────────────────────────────────────────────────────

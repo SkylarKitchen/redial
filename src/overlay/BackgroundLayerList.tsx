@@ -10,7 +10,7 @@ import { GradientEditor, buildGradientCSS } from "./GradientEditor";
 import type { GradientStop } from "./GradientEditor";
 import { BLEND_MODE_OPTIONS } from "./panelConstants";
 import { X } from "lucide-react";
-import { useDragReorder } from "./useDragReorder";
+import { useDragReorder } from "./hooks/useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { VisibilityToggle } from "./controls";
 import { color, blackAlpha, border, surface, shadow, font, zIndex, checkerboard } from "./theme";

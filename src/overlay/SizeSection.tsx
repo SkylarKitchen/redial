@@ -11,7 +11,7 @@ import { IconButtonGroup } from "./IconButtonGroup";
 import { WebflowSegmentedControl } from "./WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "./unitConversion";
-import { useConversionHint } from "./useConversionHint";
+import { useConversionHint } from "./hooks/useConversionHint";
 import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "./core/apply";
 import { parseNum } from "./cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "./panelUtils";
