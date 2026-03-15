@@ -59,8 +59,8 @@ describe("Dropdown opaque background", () => {
     ).toBe(true);
   });
 
-  it("controls.tsx SelectContent must have an explicit backgroundColor in its style", () => {
-    const src = readSrc(join(OVERLAY_DIR, "controls.tsx"));
+  it("controls SelectContent must have an explicit backgroundColor in its style", () => {
+    const src = readSrc(join(OVERLAY_DIR, "controls", "SelectRow.tsx"));
 
     const selectContentBlocks = src.split("<SelectContent");
     // Skip first chunk (before any SelectContent)
@@ -72,7 +72,7 @@ describe("Dropdown opaque background", () => {
       const hasStyleBg = /style=\{[\s\S]*?background(?:Color)?\s*:/m.test(tag);
       expect(
         hasStyleBg,
-        `controls.tsx: SelectContent #${i} is missing an inline background/backgroundColor. ` +
+        `SelectRow.tsx: SelectContent #${i} is missing an inline background/backgroundColor. ` +
         "Dropdown may appear transparent in portal context."
       ).toBe(true);
     }

@@ -14,7 +14,7 @@ import { join } from "path";
  */
 describe("useValueFlash must not use backgroundColor longhand", () => {
   const controlsSource = readFileSync(
-    join(__dirname, "..", "controls", "helpers.tsx"),
+    join(__dirname, "..", "controls.tsx"),
     "utf-8",
   );
 

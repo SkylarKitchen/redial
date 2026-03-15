@@ -24,8 +24,8 @@ function readSrc(path: string) {
 }
 
 describe("Bug: SelectContent z-index override by caller className", () => {
-  it("controls.tsx SelectContent className must not contain a z-index utility lower than the panel", () => {
-    const src = readSrc(join(OVERLAY_DIR, "controls.tsx"));
+  it("controls SelectContent className must not contain a z-index utility lower than the panel", () => {
+    const src = readSrc(join(OVERLAY_DIR, "controls", "SelectRow.tsx"));
 
     // Find all SelectContent className attributes
     // Pattern: <SelectContent followed by className="..." on the same or next line
@@ -57,7 +57,7 @@ describe("Bug: SelectContent z-index override by caller className", () => {
   });
 
   it("no overlay file passes a z-index class to SelectContent that is lower than the panel z-index", () => {
-    const files = ["controls.tsx", "shell/StateSelector.tsx"];
+    const files = ["controls/SelectRow.tsx", "shell/StateSelector.tsx"];
 
     for (const file of files) {
       const src = readSrc(join(OVERLAY_DIR, file));

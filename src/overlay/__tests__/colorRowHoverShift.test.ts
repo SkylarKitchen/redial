@@ -15,6 +15,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 const CONTROLS_SRC = readFileSync(join(__dirname, "..", "controls", "ColorRow.tsx"), "utf-8");
+const HELPERS_SRC = readFileSync(join(__dirname, "..", "controls", "helpers.tsx"), "utf-8");
 
 describe("ColorRow hover actions must not shift layout", () => {
   it("actions container in ColorRow must use absolute or overlay positioning", () => {
@@ -37,10 +38,11 @@ describe("ColorRow hover actions must not shift layout", () => {
     expect(hasActions, "ColorRow must render {actions}").toBe(true);
 
     // The actions container must use position:absolute — either inline or via a
-    // named style constant. Check both patterns.
+    // named style constant. Check both patterns (style may be defined in helpers).
+    const combinedSrc = CONTROLS_SRC + HELPERS_SRC;
     const inlineAbsolute = /position:\s*["']absolute["'][\s\S]{0,400}\{actions\}/.test(colorRowSrc);
     const namedStyleAbsolute = /style=\{(\w+Overlay\w*|actions\w*Style)\}[\s\S]{0,100}\{actions\}/.test(colorRowSrc)
-      && /position:\s*["']absolute["']/.test(CONTROLS_SRC);
+      && /position:\s*["']absolute["']/.test(combinedSrc);
     const usesAbsolutePositioning = inlineAbsolute || namedStyleAbsolute;
 
     expect(
