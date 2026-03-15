@@ -387,7 +387,7 @@ export function Overlay() {
   }, [announce]);
 
   const handleCloseAttempt = useCallback(() => {
-    if (overrideCount(selectedElRef.current) > 0) {
+    if (selectedElRef.current && overrideCount(selectedElRef.current) > 0) {
       setCloseWarning(true);
     } else {
       handleClose();
@@ -1798,7 +1798,7 @@ export function Overlay() {
               />
               <AnimatePresence>
                 {closeWarning && (() => {
-                  const count = overrideCount(selectedElRef.current);
+                  const count = selectedElRef.current ? overrideCount(selectedElRef.current) : 0;
                   return (
                     <motion.div
                       key="close-warning"
