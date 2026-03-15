@@ -155,7 +155,7 @@ topic: v1-refinement-prd
 
 ## P2 — Test Coverage Gaps
 
-- [ ] **P2** In `src/overlay/__tests__/`, there is no test for `CommandPalette`. Write `commandPalette.test.ts` covering: (1) `,` key opens the palette, (2) typing filters commands, (3) enter executes selected command, (4) escape closes palette, (5) palette includes commands for all keyboard shortcuts.
+- [x] **P2** In `src/overlay/__tests__/`, there is no test for `CommandPalette`. Write `commandPalette.test.ts` covering: (1) `,` key opens the palette, (2) typing filters commands, (3) enter executes selected command, (4) escape closes palette, (5) palette includes commands for all keyboard shortcuts.
 
 ---
 
