@@ -9,7 +9,7 @@
 
 import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink, WrapText, Settings } from "lucide-react";
-import { GridSettingsPopup } from "../GridSettingsPopup";
+import { GridSettingsPopup } from "./GridSettingsPopup";
 import { LabelScrub } from "../controls/LabelScrub";
 import { UnitSelector, type ConversionHint } from "../controls/UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "../controls";

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseGridTemplate, serializeGridTemplate, type GridTrackDef } from "../GridSettingsPopup";
+import { parseGridTemplate, serializeGridTemplate, type GridTrackDef } from "../sections/GridSettingsPopup";
 
 /** Strip volatile `id` fields for structural comparison */
 function stripIds(tracks: GridTrackDef[]) {

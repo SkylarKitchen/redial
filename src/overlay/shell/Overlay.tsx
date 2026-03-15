@@ -729,9 +729,15 @@ export function Overlay() {
     selectedSelectorRef.current = getStableSelector(el);
     setInferResult(infer(el));
     setPanelKey((k) => k + 1);
-    // Reset scope, tab, overlays, search, and modals on new selection
-    setScope("element");
-    setActiveClassName(null);
+    // Default to class scope when classes detected, element otherwise
+    const classes = getCSSModuleClasses(el);
+    if (classes.length > 0) {
+      setScope("class");
+      setActiveClassName(classes[0]);
+    } else {
+      setScope("element");
+      setActiveClassName(null);
+    }
     const queuedTab = pendingTabRef.current;
     pendingTabRef.current = null;
     setActivePanel({ type: "inspector", tab: queuedTab ?? "custom" });

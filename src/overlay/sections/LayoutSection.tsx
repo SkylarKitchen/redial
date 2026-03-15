@@ -21,7 +21,7 @@ import { detectUnit, type SectionCtx } from "../panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "../panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
-import { parseGridTemplate, serializeGridTemplate } from "../GridSettingsPopup";
+import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
 import { Link, Unlink, Grid3x3 } from "lucide-react";
 import { cssToTwClass } from "../tailwind";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "../theme";

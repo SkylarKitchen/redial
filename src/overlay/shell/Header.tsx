@@ -261,7 +261,7 @@ export function Header({
           {cssClasses.length > 0 && onScopeChange && (
             <>
               <ScopePill
-                label="element"
+                label="Just this"
                 active={scope === "element"}
                 onClick={() => onScopeChange("element")}
               />
@@ -270,7 +270,7 @@ export function Header({
                 return (
                   <ScopePill
                     key={cls}
-                    label={`.${readable}`}
+                    label={`All .${readable}`}
                     active={scope === "class" && activeClassName === cls}
                     onClick={() => onScopeChange("class", cls)}
                   />

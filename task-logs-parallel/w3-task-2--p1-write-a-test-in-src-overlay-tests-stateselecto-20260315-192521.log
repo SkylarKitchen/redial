@@ -1,1 +1,24 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 15 tests executed. Results:
+
+| Group | Tests | Status |
+|---|---|---|
+| Default value | 3 tests | **13 passed** |
+| Pseudo-class options | 8 tests (7 `it.each` + 1 count) | **All passed** |
+| onChange wiring | 2 tests | **All passed** |
+| Drag guard | 2 tests | **2 failed** (expected) |
+
+The two **intentionally failing** tests are in the "drag guard" group:
+- `imports isScrubActive from scrubState` — StateSelector doesn't import it yet
+- `checks isScrubActive() before calling onChange` — no guard exists yet
+
+`★ Insight ─────────────────────────────────────`
+**Why the drag guard matters:** During a `LabelScrub` drag (e.g., scrubbing a font-size value), `setPointerCapture` is active and the mouse may pass over the state dropdown. Without the guard, a stray click release could change the pseudo-class context mid-scrub, causing the user's edit to land on the wrong state — a subtle but data-corrupting UX bug.
+
+**TDD contract established:** The failing tests define *exactly* what the fix needs to do: import `isScrubActive` and gate `onChange` behind it. A subagent can now implement the fix and prove it with these tests turning green.
+`─────────────────────────────────────────────────`
+
+---
+
+**Asked:** Write a test for StateSelector covering default value, pseudo-class options, onChange wiring, and drag-guard behavior.
+**Did:** Created `src/overlay/__tests__/stateSelector.test.ts` with 15 tests across 4 groups. 13 pass immediately (verifying existing behavior); 2 fail intentionally — they define the drag-guard contract that `StateSelector.tsx` needs to implement (import `isScrubActive` + gate `onChange`).

@@ -96,19 +96,34 @@ function findClippedUnitSelectors(
   return violations;
 }
 
+/** Recursively find all .tsx files in a directory. */
+function findTsxFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory() && entry.name !== "__tests__" && entry.name !== "assets") {
+      results.push(...findTsxFiles(fullPath));
+    } else if (entry.name.endsWith(".tsx")) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
 describe("UnitSelector dropdown not clipped by overflow-hidden ancestors", () => {
-  const files = readdirSync(overlayDir).filter(
-    (f) => f.endsWith(".tsx") && f !== "UnitSelector.tsx"
+  const allFiles = findTsxFiles(overlayDir).filter(
+    (f) => !f.endsWith("UnitSelector.tsx")
   );
 
-  const filesWithUnitSelector = files.filter((f) => {
-    const source = readFileSync(join(overlayDir, f), "utf-8");
+  const filesWithUnitSelector = allFiles.filter((f) => {
+    const source = readFileSync(f, "utf-8");
     return source.includes("<UnitSelector");
   });
 
   for (const file of filesWithUnitSelector) {
-    it(`${file}: no overflow-hidden ancestor wrapping UnitSelector`, () => {
-      const source = readFileSync(join(overlayDir, file), "utf-8");
+    const relPath = file.replace(overlayDir + "/", "");
+    it(`${relPath}: no overflow-hidden ancestor wrapping UnitSelector`, () => {
+      const source = readFileSync(file, "utf-8");
       const violations = findClippedUnitSelectors(source);
 
       const messages = violations.map(

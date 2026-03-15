@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach } from "vitest";
-import { canDrag, canDrop, executeDrop, type DropTarget } from "../navigatorDrag";
+import { canDrag, canDrop, executeDrop, type DropTarget } from "../navigator/navigatorDrag";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 

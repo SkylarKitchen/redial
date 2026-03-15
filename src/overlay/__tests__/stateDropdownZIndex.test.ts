@@ -29,11 +29,18 @@ function readSrc(path: string) {
   return readFileSync(path, "utf-8");
 }
 
-/** Find all .tsx files in a directory (non-recursive). */
-function tsxFiles(dir: string) {
-  return readdirSync(dir)
-    .filter((f) => f.endsWith(".tsx"))
-    .map((f) => join(dir, f));
+/** Find all .tsx files in a directory (recursive). */
+function tsxFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory() && entry.name !== "__tests__" && entry.name !== "assets") {
+      results.push(...tsxFiles(fullPath));
+    } else if (entry.name.endsWith(".tsx")) {
+      results.push(fullPath);
+    }
+  }
+  return results;
 }
 
 /** Check if file has at least one panel-level z-index (inline, token, or Tailwind). */

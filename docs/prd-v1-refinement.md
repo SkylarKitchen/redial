@@ -55,11 +55,11 @@ topic: v1-refinement-prd
 
 - [ ] **P1** Write a test in `src/overlay/__tests__/breadcrumb.test.ts` that verifies: (1) breadcrumb collapses to `first ... last-2 > last-1 > current` when ≥4 ancestors, (2) clicking `...` expands full chain, (3) clicking an ancestor segment fires `onBreadcrumbClick` with the correct element, (4) hovering fires `onBreadcrumbHover`.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/stateSelector.test.ts` that verifies: (1) StateSelector renders with value="none" by default, (2) all pseudo-class options are present: none, hover, focus, active, visited, focus-within, focus-visible, (3) changing selection fires `onStateChange` with the new value, (4) selector refuses to change mid-drag (when `isScrubActive()` returns true).
+- [x] **P1** Write a test in `src/overlay/__tests__/stateSelector.test.ts` that verifies: (1) StateSelector renders with value="none" by default, (2) all pseudo-class options are present: none, hover, focus, active, visited, focus-within, focus-visible, (3) changing selection fires `onStateChange` with the new value, (4) selector refuses to change mid-drag (when `isScrubActive()` returns true).
 
 - [ ] **P1** Write a test in `src/overlay/__tests__/layoutSection.test.ts` that verifies: (1) when parent is a flex container, flex child controls (grow, shrink, basis, order, align-self) are shown, (2) when parent is NOT flex, flex child controls are hidden, (3) when display is "grid", grid track editors (template-columns, template-rows) appear, (4) the 3×3 AlignBox sets both `justify-content` and `align-items` simultaneously on click.
 
-- [ ] **P1** Write a test in `src/overlay/__tests__/spacingBoxModel.test.ts` that verifies: (1) click on a value enters edit mode, (2) arrow up/down increments/decrements by 1, (3) shift+arrow increments by 10, (4) tab moves between values in order (top → right → bottom → left), (5) padding values cannot go negative while margin values can.
+- [x] **P1** Write a test in `src/overlay/__tests__/spacingBoxModel.test.ts` that verifies: (1) click on a value enters edit mode, (2) arrow up/down increments/decrements by 1, (3) shift+arrow increments by 10, (4) tab moves between values in order (top → right → bottom → left), (5) padding values cannot go negative while margin values can.
 
 - [ ] **P1** Write a test in `src/overlay/__tests__/sizeSection.test.ts` that verifies: (1) width/height support `auto` as a keyword value (not just numeric), (2) min/max-width/height support `none` as a keyword, (3) object-fit and object-position only appear for media elements (`img`, `video`, `canvas`), (4) aspect-ratio accepts freeform text input like "16 / 9", (5) overflow per-axis controls (`overflow-x`, `overflow-y`) appear when overflow is "unlocked".
 

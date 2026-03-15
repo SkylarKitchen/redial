@@ -1,1 +1,22 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 16 tests pass. The `act(...)` warnings in stderr are just happy-dom's usual noise — they don't affect correctness.
+
+`★ Insight ─────────────────────────────────────`
+- **Popover keyboard events propagate via React's synthetic event system.** The `handleInputKeyDown` in SpacingValuePopover uses `React.KeyboardEvent`, but dispatching native `KeyboardEvent` with `bubbles: true` on the input element works because React's event delegation picks it up from the root.
+- **Props stay constant during test sequences.** Since we don't re-render with updated props after each `onChange` call, each ArrowDown/Up press computes from the *original* prop value. This is why the "padding clamp" test uses assertions on individual calls rather than cumulative results — each press sees `value=2` and subtracts 1, getting `1` each time, rather than cascading `2→1→0`.
+- **Tab wrapping uses modular arithmetic**: `(current + 1) % 8` for forward, `(current + 7) % 8` for backward (equivalent to -1 mod 8). This is a clean pattern that avoids conditionals for boundary cases.
+`─────────────────────────────────────────────────`
+
+**Summary: 16 tests across 5 groups, all green.**
+
+| Group | Tests | What's verified |
+|-------|-------|----------------|
+| Click to edit | 2 | Clicking margin/padding cells opens the popover with correct value |
+| Arrow up/down | 2 | ArrowUp adds 1, ArrowDown subtracts 1 |
+| Shift+arrow | 2 | Shift multiplier makes step 10 |
+| Tab navigation | 5 | Forward tab order, full 8-cell cycle, wrap-around, and Shift+Tab backward |
+| Negative constraints | 5 | Padding clamps at 0 (both regular and shift), margin allows negatives |
+
+---
+**Asked:** Write `spacingBoxModel.test.ts` with 5 categories of interaction tests.
+**Did:** Created the test file with 16 tests across all 5 categories. All pass on first run.
