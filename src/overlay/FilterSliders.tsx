@@ -8,7 +8,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useDragReorder } from "./useDragReorder";
+import { useDragReorder } from "./hooks/useDragReorder";
 import { DragHandle } from "./DragHandle";
 import { EditorRemoveButton, VisibilityToggle } from "./controls";
 import { color, text, surface, font, shadow, zIndex, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "./theme";

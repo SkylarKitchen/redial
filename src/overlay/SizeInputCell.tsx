@@ -21,7 +21,7 @@ import { color, text, border, surface, font, primaryAlpha } from "./theme";
 import type { IndicatorType } from "./theme";
 import { parseValueWithUnit } from "./parseValueWithUnit";
 import { evaluateMathExpr } from "./inputMath";
-import { useWheelAdjust } from "./useWheelAdjust";
+import { useWheelAdjust } from "./hooks/useWheelAdjust";
 
 export interface SizeInputCellProps {
   label: string;

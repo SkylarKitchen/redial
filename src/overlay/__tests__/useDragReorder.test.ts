@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeOverIndex, computeItemShift } from "../useDragReorder";
+import { computeOverIndex, computeItemShift } from "../hooks/useDragReorder";
 
 // Uniform layout: 4 items, each 50px tall, stacked at y=0,50,100,150
 const TOPS_4 = [0, 50, 100, 150];

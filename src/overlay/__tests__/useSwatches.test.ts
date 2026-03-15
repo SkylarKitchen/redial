@@ -6,7 +6,7 @@ import {
   _getSnapshot as getSnapshot,
   _subscribe as subscribe,
   _resetStore as resetStore,
-} from "../useSwatches";
+} from "../hooks/useSwatches";
 
 const STORAGE_KEY = "__tuner_swatches";
 

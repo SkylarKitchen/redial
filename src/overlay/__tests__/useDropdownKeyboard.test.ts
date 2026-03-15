@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeNextIndex, typeAheadMatch } from "../useDropdownKeyboard";
+import { computeNextIndex, typeAheadMatch } from "../hooks/useDropdownKeyboard";
 
 describe("computeNextIndex", () => {
   // --- ArrowDown ---

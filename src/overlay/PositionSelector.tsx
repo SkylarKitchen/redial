@@ -16,8 +16,8 @@ import { ChevronDown, X, Move, LocateFixed, Pin, StickyNote } from "lucide-react
 import { ms } from "./timing";
 import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndicator, labelHighlight, shadow, zIndex } from "./theme";
 import { useResetPopover } from "./controls";
-import { useDropdownKeyboard } from "./useDropdownKeyboard";
-import { usePortalDropdown } from "./usePortalDropdown";
+import { useDropdownKeyboard } from "./hooks/useDropdownKeyboard";
+import { usePortalDropdown } from "./hooks/usePortalDropdown";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 

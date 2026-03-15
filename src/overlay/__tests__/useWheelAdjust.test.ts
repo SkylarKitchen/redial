@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeWheelValue } from "../useWheelAdjust";
+import { computeWheelValue } from "../hooks/useWheelAdjust";
 
 // Helpers: deltaY < 0 = scroll up (increment), deltaY > 0 = scroll down (decrement)
 const UP = -1;

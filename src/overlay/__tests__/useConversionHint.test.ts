@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildConversionHint } from "../useConversionHint";
+import { buildConversionHint } from "../hooks/useConversionHint";
 import type { UnitConversionContext } from "../unitConversion";
 
 /** Helper to create a standard conversion context. */

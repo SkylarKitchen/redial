@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import { FOCUSABLE_SELECTOR, getNextFocusTarget } from "../useFocusTrap";
+import { FOCUSABLE_SELECTOR, getNextFocusTarget } from "../hooks/useFocusTrap";
 
 /* ------------------------------------------------------------------ */
 /*  FOCUSABLE_SELECTOR                                                 */

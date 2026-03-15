@@ -27,8 +27,8 @@ import { ChevronDown, ChevronRight, Link2, Unlink, Plus, MoreHorizontal, X, Eye,
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "./timing";
 import { color, text, border, surface, font, shadow, layout, blackAlpha, primaryAlpha, presets, presetBaseUnit, checkerboard, labelIndicator, labelHighlight, zIndex } from "./theme";
-import { useWheelAdjust } from "./useWheelAdjust";
-import { usePortalDropdown } from "./usePortalDropdown";
+import { useWheelAdjust } from "./hooks/useWheelAdjust";
+import { usePortalDropdown } from "./hooks/usePortalDropdown";
 import { SUB_HEADER_ROW, SUB_HEADER } from "./panelStyles";
 
 // ─── Value Flash Hook ────────────────────────────────────────────────

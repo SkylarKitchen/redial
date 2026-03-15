@@ -42,7 +42,7 @@ import {
 import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "./theme";
 import { ms } from "./timing";
 import { ROW, LABEL } from "./panelStyles";
-import { useFocusTrap } from "./useFocusTrap";
+import { useFocusTrap } from "./hooks/useFocusTrap";
 
 // ─── Transition Options Menu (portal) ─────────────────────────────────
 
