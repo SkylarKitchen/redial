@@ -41,7 +41,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** In `src/overlay/GradientEditor.tsx`, verify clicking empty space on the gradient bar adds a new color stop at that position. The comment on line 5 says "click empty space to add" — confirm this is implemented with a click handler on the gradient bar that calculates the position percentage from click coordinates and inserts a new stop.
 
-- [ ] **P1** In `src/overlay/panelUtils.ts`, verify the style indicator system implements ALL 5 states from the spec: (1) **blue** = direct style on current class, (2) **orange** = inherited from parent/base class, (3) **green** = state-specific style (when viewing a pseudo-class state), (4) **pink** = element-level style (not saved to a class), (5) **no dot** = browser default. If the green (state) indicator is missing, add it. Read `theme.ts` for indicator color tokens.
+- [x] **P1** In `src/overlay/panelUtils.ts`, verify the style indicator system implements ALL 5 states from the spec: (1) **blue** = direct style on current class, (2) **orange** = inherited from parent/base class, (3) **green** = state-specific style (when viewing a pseudo-class state), (4) **pink** = element-level style (not saved to a class), (5) **no dot** = browser default. If the green (state) indicator is missing, add it. Read `theme.ts` for indicator color tokens.
 
 - [x] **P1** In `src/overlay/Overlay.tsx`, verify that selecting an element inside an `<iframe>` or `<shadow-root>` doesn't crash the panel. If `infer.ts` receives a cross-origin iframe element, it should gracefully degrade (show the element tag but no editable properties). Add a guard at the selection stage if not already present.
 

@@ -312,7 +312,7 @@ describe("SubSectionHeader is shared — no local definitions", () => {
   }
 
   it("controls exports SubSectionHeader", () => {
-    const src = fs.readFileSync(path.resolve(__dirname, "../controls.tsx"), "utf-8");
+    const src = fs.readFileSync(path.resolve(__dirname, "../controls/SubSectionHeader.tsx"), "utf-8");
     expect(src).toContain("export function SubSectionHeader");
   });
 });
@@ -395,7 +395,7 @@ describe("Editor files use shared EditorRemoveButton (no inline X buttons)", () 
   }
 
   it("controls exports EditorRemoveButton", () => {
-    const src = fs.readFileSync(path.resolve(__dirname, "../controls.tsx"), "utf-8");
+    const src = fs.readFileSync(path.resolve(__dirname, "../controls/EditorRemoveButton.tsx"), "utf-8");
     expect(src).toContain("export function EditorRemoveButton");
   });
 });
@@ -425,7 +425,7 @@ describe("Editor files use shared VisibilityToggle (no inline Eye imports)", () 
   }
 
   it("controls exports VisibilityToggle", () => {
-    const src = fs.readFileSync(path.resolve(__dirname, "../controls.tsx"), "utf-8");
+    const src = fs.readFileSync(path.resolve(__dirname, "../controls/VisibilityToggle.tsx"), "utf-8");
     expect(src).toContain("export function VisibilityToggle");
   });
 });
