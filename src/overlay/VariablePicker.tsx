@@ -8,9 +8,9 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { discoverVariables, discoverAllVariables, buildAliasGraph, type CSSVariable, type VarType, type AliasTier } from "./discoverVariables";
-import { inferAutoCollections } from "./autoCollections";
-import { useTokenCollections } from "./tokenCollections";
+import { discoverVariables, discoverAllVariables, buildAliasGraph, type CSSVariable, type VarType, type AliasTier } from "./variables/discoverVariables";
+import { inferAutoCollections } from "./variables/autoCollections";
+import { useTokenCollections } from "./variables/tokenCollections";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
 import { ms } from "./timing";
 

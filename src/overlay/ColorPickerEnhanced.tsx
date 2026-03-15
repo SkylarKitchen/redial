@@ -13,8 +13,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
 import { ms } from "./timing";
-import { discoverColorVariables, type ColorVariable } from "./colorVariables";
-import { useTokenCollections } from "./tokenCollections";
+import { discoverColorVariables, type ColorVariable } from "./variables/colorVariables";
+import { useTokenCollections } from "./variables/tokenCollections";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "./theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────

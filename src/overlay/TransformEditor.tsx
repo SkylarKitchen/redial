@@ -213,10 +213,14 @@ function TransformCard({
   transform,
   onUpdate,
   onRemove,
+  dragHandleProps,
+  isDragging,
 }: {
   transform: TransformValue;
   onUpdate: (field: "x" | "y" | "z", value: number) => void;
   onRemove: () => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
 }) {
   const { type } = transform;
   const range = TRANSFORM_RANGES[type];
@@ -235,6 +239,15 @@ function TransformCard({
         overflow: "hidden",
       }}
     >
+      {/* Drag handle */}
+      {dragHandleProps && (
+        <DragHandle
+          isDragging={isDragging}
+          onPointerDown={dragHandleProps.onPointerDown}
+          style={{ alignSelf: "center" }}
+        />
+      )}
+
       {/* Label */}
       <span
         style={{

@@ -27,7 +27,7 @@ import {
   OBJECT_FIT_OPTIONS, OBJECT_POSITION_OPTIONS,
   BOX_SIZING_OPTIONS,
 } from "./panelConstants";
-import { discoverLengthVariables } from "./discoverVariables";
+import { discoverLengthVariables } from "./variables/discoverVariables";
 
 // ─── Props ────────────────────────────────────────────────────────────
 
