@@ -775,6 +775,8 @@ export function Overlay() {
     pendingTabRef.current = null;
   }, []);
 
+  const handleTogglePin = useCallback(() => setPinned(p => !p), []);
+
   const handleClose = useCallback(() => {
     setSelectedEl(null);
     selectedSelectorRef.current = null;
