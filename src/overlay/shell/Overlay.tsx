@@ -33,21 +33,21 @@ import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } 
 import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "../core/statePreview";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
-import { GlobalVariablesPanel } from "./variables/GlobalVariablesPanel";
-import { timing, ms, setReducedMotion, springConfig } from "./timing";
+import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
+import { timing, ms, setReducedMotion, springConfig } from "../timing";
 import { AnimatePresence, motion } from "motion/react";
-import { isScrubActive } from "./core/scrubState";
+import { isScrubActive } from "../core/scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { CommandPalette } from "./CommandPalette";
 import { ContextMenu } from "./ContextMenu";
 import { ShortcutsHelp } from "./ShortcutsHelp";
-import { parseCSSText } from "./cssImport";
-import { formatTailwindDiff } from "./tailwind";
+import { parseCSSText } from "../cssImport";
+import { formatTailwindDiff } from "../tailwind";
 import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
-import { NavigatorPanel } from "./navigator/NavigatorPanel";
-import { useElementTracker } from "./hooks/useElementTracker";
-import { getConfig } from "./core/config";
-import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "./theme";
+import { NavigatorPanel } from "../navigator/NavigatorPanel";
+import { useElementTracker } from "../hooks/useElementTracker";
+import { getConfig } from "../core/config";
+import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, layout, zIndex } from "../theme";
 
 // --- Panel State Type ---
 

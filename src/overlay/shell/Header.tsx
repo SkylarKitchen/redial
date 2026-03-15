@@ -6,10 +6,10 @@
  */
 
 import { useState, useEffect } from "react";
-import { getDisplayClass } from "./util";
-import { getReactSource } from "./core/sourcemap";
-import type { Scope } from "./core/scope";
-import { getReadableName } from "./core/scope";
+import { getDisplayClass } from "../util";
+import { getReactSource } from "../core/sourcemap";
+import type { Scope } from "../core/scope";
+import { getReadableName } from "../core/scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight } from "lucide-react";
 import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha, focusRing } from "./theme";
