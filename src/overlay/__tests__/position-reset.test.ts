@@ -37,7 +37,7 @@ describe("Position section: Option+Click reset coverage", () => {
     positionSection = readFile("sections/PositionSection.tsx");
     positionSelector = readFile("sections/PositionSelector.tsx");
     positionOffsetDiagram = readFile("sections/PositionOffsetDiagram.tsx");
-    iconButtonGroup = readFile("IconButtonGroup.tsx");
+    iconButtonGroup = readFile("controls/IconButtonGroup.tsx");
   });
 
   // ── PositionSelector (the "Position: Fixed" dropdown) ──

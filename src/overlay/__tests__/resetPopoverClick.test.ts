@@ -64,7 +64,7 @@ describe("ResetPopover", () => {
   it("popover uses light-mode colors from theme tokens", () => {
     // The ResetPopover must use light-mode tokens, not darkMenu
     const source = require("fs").readFileSync(
-      require("path").resolve(__dirname, "../ResetPopover.tsx"), "utf8"
+      require("path").resolve(__dirname, "../controls/ResetPopover.tsx"), "utf8"
     );
     // Should NOT use darkMenu
     expect(source).not.toContain("darkMenu");

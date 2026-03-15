@@ -17,7 +17,7 @@ import { join } from "path";
  * data-[state=on]:bg-primary) so tailwind-merge can resolve conflicts.
  */
 
-const ICON_BUTTON_GROUP = join(__dirname, "../IconButtonGroup.tsx");
+const ICON_BUTTON_GROUP = join(__dirname, "../controls/IconButtonGroup.tsx");
 
 describe("IconButtonGroup active state uses Tailwind classes, not inline styles", () => {
   const source = readFileSync(ICON_BUTTON_GROUP, "utf-8");

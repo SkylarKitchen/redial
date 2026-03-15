@@ -17,7 +17,7 @@ import { describe, it, expect } from "vitest";
 const overlayDir = join(__dirname, "..");
 const positionSrc = readFileSync(join(overlayDir, "sections", "PositionSelector.tsx"), "utf-8");
 const controlsSrc = readFileSync(join(overlayDir, "controls", "SelectRow.tsx"), "utf-8");
-const sideSrc = readFileSync(join(overlayDir, "SideSelector.tsx"), "utf-8");
+const sideSrc = readFileSync(join(overlayDir, "controls", "SideSelector.tsx"), "utf-8");
 
 // ─── Fix 1: PositionSelector portal ─────────────────────────────────
 

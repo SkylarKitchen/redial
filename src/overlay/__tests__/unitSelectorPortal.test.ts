@@ -18,7 +18,7 @@ import { join } from "path";
  * pattern used by all other overlay dropdowns.
  */
 
-const unitSelectorPath = join(__dirname, "..", "UnitSelector.tsx");
+const unitSelectorPath = join(__dirname, "..", "controls", "UnitSelector.tsx");
 
 describe("UnitSelector dropdown must use a portal to escape scroll overflow", () => {
   const source = readFileSync(unitSelectorPath, "utf-8");
