@@ -21,6 +21,7 @@ interface ToolbarProps {
   selecting: boolean;
   hasSelectedEl: boolean;
   activePanel: ActivePanel;
+  changesOpen: boolean;
   onToggleSelecting: () => void;
   onToggleNavigator: () => void;
   navigatorOpen: boolean;
@@ -92,6 +93,7 @@ export function Toolbar({
   selecting,
   hasSelectedEl,
   activePanel,
+  changesOpen,
   onToggleSelecting,
   onToggleNavigator,
   navigatorOpen,
@@ -231,7 +233,7 @@ export function Toolbar({
               <ToolButton
                 label="Changes"
                 shortcut="H"
-                active={activePanel.type === "session"}
+                active={changesOpen}
                 onClick={onToggleSession}
               />
             </motion.div>

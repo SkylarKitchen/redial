@@ -43,7 +43,6 @@ import { ContextMenu } from "./ContextMenu";
 import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "../cssImport";
 import { formatTailwindDiff } from "../tailwind";
-import { HistoryDrawer, type HistoryEntry } from "./HistoryDrawer";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { useElementTracker } from "../hooks/useElementTracker";
 import { getConfig } from "../core/config";
@@ -54,8 +53,7 @@ import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primar
 export type ActivePanel =
   | { type: "none" }
   | { type: "inspector"; tab: "custom" | "prompt" }
-  | { type: "variables" }
-  | { type: "session" };
+  | { type: "variables" };
 
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
@@ -184,9 +182,10 @@ export function Overlay() {
   });
   const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // History drawer
+  // Changes drawer (unified pending + history)
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [changesDrawerOpen, setChangesDrawerOpen] = useState(false);
+  const [changesDrawerTab, setChangesDrawerTab] = useState<ChangesTab>("pending");
 
   // Subscribe to property changes for history tracking (debounced to avoid flooding during drags)
   const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -614,10 +613,11 @@ export function Overlay() {
         return;
       }
 
-      // H to toggle history drawer
+      // H to toggle changes drawer (history tab)
       if (e.key === "h" && !e.metaKey && !e.ctrlKey && selectedEl && !selecting) {
         e.preventDefault();
-        setShowHistory((v) => !v);
+        setChangesDrawerTab("history");
+        setChangesDrawerOpen((v) => !v);
         return;
       }
 
@@ -813,7 +813,7 @@ export function Overlay() {
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setExpandedSection(null);
-    setShowHistory(false);
+    setChangesDrawerOpen(false);
     setShowSearch(false);
     setSearchQuery("");
     setActiveModal({ type: "none" });
@@ -857,9 +857,8 @@ export function Overlay() {
 
   const handleToggleSession = useCallback(() => {
     setSelecting(false);
-    setActivePanel((prev) =>
-      prev.type === "session" ? { type: "none" } : { type: "session" }
-    );
+    setChangesDrawerTab("pending");
+    setChangesDrawerOpen((v) => !v);
   }, []);
 
   // --- History: undo to a specific index ---
@@ -1615,7 +1614,7 @@ export function Overlay() {
 
       {/* Panel (inspector or global variables) */}
       <AnimatePresence>
-      {((selectedEl && inferResult && activePanel.type === "inspector") || activePanel.type === "variables" || activePanel.type === "session") && (
+      {((selectedEl && inferResult && activePanel.type === "inspector") || activePanel.type === "variables") && (
         <motion.div
           key="tuner-panel"
           className="__tuner-root"
@@ -1633,7 +1632,7 @@ export function Overlay() {
             flexDirection: "column",
             overflow: "hidden",
             border: diffMode ? "1px solid rgba(250,204,21,0.3)" : `1px solid ${blackAlpha(0.07)}`,
-            pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables" || activePanel.type === "session") ? undefined : "none"),
+            pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables") ? undefined : "none"),
             top: pos.y,
             left: pos.x,
             transformOrigin: "bottom right",
@@ -1672,7 +1671,7 @@ export function Overlay() {
                 onClose={handleCloseAttempt}
                 onDragStart={handleDragStart}
                 totalChanges={totalChanges}
-                sessionOpen={false}
+                sessionOpen={changesDrawerOpen}
                 onShowSession={handleToggleSession}
                 breadcrumb={breadcrumb}
                 onBreadcrumbClick={handleBreadcrumbClick}
@@ -1777,17 +1776,15 @@ export function Overlay() {
                   </PanelErrorBoundary>
                 </div>
               </div>
-              <SessionDrawer
-                open={false}
+              <ChangesDrawer
+                open={changesDrawerOpen}
+                tab={changesDrawerTab}
+                onTabChange={setChangesDrawerTab}
                 onResetAll={handleResetAll}
+                entries={historyEntries}
+                onUndoToIndex={handleUndoToIndex}
+                onClose={() => setChangesDrawerOpen(false)}
               />
-              {showHistory && (
-                <HistoryDrawer
-                  entries={historyEntries}
-                  onUndoToIndex={handleUndoToIndex}
-                  onClose={() => setShowHistory(false)}
-                />
-              )}
               <Footer
                 element={selectedEl}
                 onReset={handleReset}
@@ -1894,12 +1891,6 @@ export function Overlay() {
             <GlobalVariablesPanel onClose={() => setActivePanel({ type: "none" })} />
           )}
 
-          {activePanel.type === "session" && (
-            <SessionDrawer
-              open={true}
-              onResetAll={handleResetAll}
-            />
-          )}
         </motion.div>
       )}
       </AnimatePresence>
@@ -1975,13 +1966,14 @@ export function Overlay() {
         selecting={selecting}
         hasSelectedEl={!!selectedEl}
         activePanel={activePanel}
+        changesOpen={changesDrawerOpen}
         navigatorOpen={showNavigator}
         onToggleNavigator={() => setShowNavigator((v) => !v)}
         onToggleSelecting={() => {
           setSelecting((s) => {
             if (!s) {
               setActivePanel((prev) =>
-                prev.type === "variables" || prev.type === "session" ? { type: "none" } : prev
+                prev.type === "variables" ? { type: "none" } : prev
               );
             }
             return !s;
