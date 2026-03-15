@@ -21,14 +21,14 @@ import {
   type TreeNode,
 } from "./navigatorFilter";
 import { NavigatorNode, ROW_HEIGHT } from "./NavigatorNode";
-import { useVirtualTree } from "../useVirtualTree";
+import { useVirtualTree } from "../hooks/useVirtualTree";
 import {
   canDrag,
   canDrop,
   executeDrop,
   type NavDragState,
   type DropTarget,
-} from "../navigatorDrag";
+} from "./navigatorDrag";
 import { pushDomMove } from "../core/apply";
 import {
   color,
