@@ -143,6 +143,14 @@ export function NavigatorPanel({
 
   const totalCount = useMemo(() => countNodes(tree), [tree]);
 
+  // ── Virtualized rendering ──
+  const { visibleNodes, totalHeight, offsetY } = useVirtualTree({
+    flatNodes,
+    rowHeight: ROW_HEIGHT,
+    containerHeight,
+    scrollTop,
+  });
+
   // ── Toggle expand/collapse ──
   const handleToggle = useCallback((el: Element) => {
     setExpandedNodes((prev) => {
