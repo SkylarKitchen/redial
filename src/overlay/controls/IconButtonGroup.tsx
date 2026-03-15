@@ -9,8 +9,8 @@
 import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { color, surface, text, border as borderTokens, focusRing, primaryAlpha } from "./theme";
-import { ms } from "./timing";
+import { color, surface, text, border as borderTokens, focusRing, primaryAlpha } from "../theme";
+import { ms } from "../timing";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;

@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useRef, useEffect, useMemo, createContext } from "react";
 import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
-import { ResetPopover } from "../ResetPopover";
+import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "../panelUtils";
 import { ms } from "../timing";
 import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, labelHighlight, zIndex } from "../theme";

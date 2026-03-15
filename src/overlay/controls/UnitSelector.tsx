@@ -10,10 +10,10 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react";
 import { createPortal } from "react-dom";
-import { useDropdownKeyboard } from "./hooks/useDropdownKeyboard";
-import { usePortalDropdown } from "./hooks/usePortalDropdown";
-import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "./theme";
-import { ms, timing } from "./timing";
+import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
+import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "../theme";
+import { ms, timing } from "../timing";
 
 export interface SpecialOption {
   value: string;

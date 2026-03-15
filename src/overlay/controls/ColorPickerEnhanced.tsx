@@ -11,12 +11,12 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { hexToRgb, rgbToHex, isValidHex } from "./colorUtils";
-import { ms } from "./timing";
-import { discoverColorVariables, type ColorVariable } from "./variables/colorVariables";
-import { useTokenCollections } from "./variables/tokenCollections";
-import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "./theme";
-import { useSwatches } from "./useSwatches";
+import { hexToRgb, rgbToHex, isValidHex } from "../colorUtils";
+import { ms } from "../timing";
+import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
+import { useTokenCollections } from "../variables/tokenCollections";
+import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "../theme";
+import { useSwatches } from "../useSwatches";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 

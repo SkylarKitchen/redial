@@ -12,8 +12,8 @@
  */
 
 import React, { useCallback, useState } from "react";
-import { ms } from "./timing";
-import { surface, border as borderToken, text, color, blackAlpha, focusRing } from "./theme";
+import { ms } from "../timing";
+import { surface, border as borderToken, text, color, blackAlpha, focusRing } from "../theme";
 
 export type Side = "all" | "top" | "right" | "bottom" | "left";
 

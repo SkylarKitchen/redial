@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
-import { ComputedTooltip } from "../ComputedTooltip";
+import { ComputedTooltip } from "./ComputedTooltip";
 import { ChevronDown } from "lucide-react";
 import { color, font, shadow, surface, blackAlpha, zIndex } from "../theme";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";

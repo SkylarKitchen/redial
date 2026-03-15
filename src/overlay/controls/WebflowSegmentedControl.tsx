@@ -6,8 +6,8 @@
  */
 
 import { useCallback } from "react";
-import { text, font, segment, focusRing } from "./theme";
-import { ms } from "./timing";
+import { text, font, segment, focusRing } from "../theme";
+import { ms } from "../timing";
 
 export interface SegmentOption {
   value: string;

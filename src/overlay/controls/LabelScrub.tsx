@@ -10,10 +10,10 @@
  */
 
 import { useRef, useCallback, useState } from "react";
-import { ms } from "./timing";
-import { setScrubActive } from "./core/scrubState";
-import { beginBatch, endBatch } from "./core/apply";
-import { color, text, font } from "./theme";
+import { ms } from "../timing";
+import { setScrubActive } from "../core/scrubState";
+import { beginBatch, endBatch } from "../core/apply";
+import { color, text, font } from "../theme";
 
 export interface LabelScrubProps {
   children: React.ReactNode;

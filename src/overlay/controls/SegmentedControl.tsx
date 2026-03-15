@@ -7,8 +7,8 @@
  */
 
 import { useCallback } from "react";
-import { segment, text, font } from "./theme";
-import { ms } from "./timing";
+import { segment, text, font } from "../theme";
+import { ms } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
 

@@ -9,8 +9,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Undo2 } from "lucide-react";
-import { color, text, surface, border, shadow, font, zIndex } from "./theme";
-import { ms } from "./timing";
+import { color, text, surface, border, shadow, font, zIndex } from "../theme";
+import { ms } from "../timing";
 
 export interface ResetPopoverProps {
   /** Element to position below */

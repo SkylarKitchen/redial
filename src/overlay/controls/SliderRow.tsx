@@ -5,11 +5,11 @@
 
 import React, { useCallback } from "react";
 import { Slider } from "@/components/ui/slider";
-import { LabelScrub } from "../LabelScrub";
-import { UnitSelector, type ConversionHint } from "../UnitSelector";
+import { LabelScrub } from "./LabelScrub";
+import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
-import { ComputedTooltip } from "../ComputedTooltip";
+import { ComputedTooltip } from "./ComputedTooltip";
 import { beginBatch, endBatch } from "../core/apply";
 import { text, border, surface, font } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";

@@ -4,10 +4,10 @@
  */
 
 import React from "react";
-import { LabelScrub } from "../LabelScrub";
+import { LabelScrub } from "./LabelScrub";
 import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
-import { ComputedTooltip } from "../ComputedTooltip";
+import { ComputedTooltip } from "./ComputedTooltip";
 import { text, border, surface } from "../theme";
 import { labelStyle, rowStyle, useResetPopover } from "./helpers";
 import { ValueInput } from "./ValueInput";
