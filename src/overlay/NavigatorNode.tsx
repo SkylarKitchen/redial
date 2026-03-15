@@ -65,6 +65,7 @@ export function NavigatorNode({
         fontSize: 11,
         fontFamily: font.mono,
         color: isSelected ? color.primary : text.primary,
+        opacity: isDragging ? 0.4 : 1,
         background: isSelected
           ? primaryAlpha(0.08)
           : hovered
@@ -78,6 +79,40 @@ export function NavigatorNode({
         outlineOffset: -1,
       }}
     >
+      {/* Drag handle */}
+      {onDragStart && (
+        <div
+          onPointerDown={onDragStart}
+          className="__tuner-drag-handle"
+          style={{
+            width: 12,
+            height: ROW_HEIGHT,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "grab",
+            opacity: 0,
+            transition: `opacity ${ms("fast")}`,
+            flexShrink: 0,
+            touchAction: "none",
+          }}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "2px 2px", gap: 1 }}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                style={{
+                  width: 2,
+                  height: 2,
+                  borderRadius: "50%",
+                  background: text.hint,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Chevron */}
       <span
         onClick={(e) => {
