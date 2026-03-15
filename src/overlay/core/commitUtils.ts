@@ -10,9 +10,9 @@ import type { DiffEntry } from "./apply";
 import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource } from "./sourcemap";
 import { getReadableName, isTailwindElement } from "./scope";
 import type { Scope } from "./scope";
-import { getAuthoredValue } from "./getAuthoredValue";
-import { parseVarRef } from "./colorVariables";
-import { formatTailwindDiff } from "./tailwind";
+import { getAuthoredValue } from "../getAuthoredValue";
+import { parseVarRef } from "../colorVariables";
+import { formatTailwindDiff } from "../tailwind";
 
 export interface EnrichedChange extends DiffEntry {
   sourceFile?: string;

@@ -6,7 +6,7 @@
  * pasted into Claude or other AI tools.
  */
 
-import { buildBreadcrumb, getDisplayClass } from "./util";
+import { buildBreadcrumb, getDisplayClass } from "../util";
 import { getReactSource } from "./sourcemap";
 
 /**

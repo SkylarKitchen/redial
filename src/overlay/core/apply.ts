@@ -12,7 +12,7 @@
  * pathname so changes survive page refreshes and HMR reloads.
  */
 
-import { getStableSelector } from "./util";
+import { getStableSelector } from "../util";
 
 export type Override = {
   initial: string;

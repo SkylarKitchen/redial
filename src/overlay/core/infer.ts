@@ -97,8 +97,8 @@ export function flattenValues(
 
 // --- Internal helpers ---
 
-import { cssColorToHex as rgbToHex } from "./colorUtils";
-import { parseNum } from "./cssParsers";
+import { cssColorToHex as rgbToHex } from "../colorUtils";
+import { parseNum } from "../cssParsers";
 
 /**
  * Magnitude-based slider range (matches dialkit's inferRange table).
