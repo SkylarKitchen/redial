@@ -173,29 +173,50 @@ describe("Arrow keys navigate elements", () => {
   });
 });
 
-// ─── 6. D hold strips overrides temporarily ─────────────────────────
+// ─── 6. D hold strips overrides temporarily (with debounce) ─────────
 describe("D hold strips overrides temporarily", () => {
   it("checks for d keydown (non-repeat)", () => {
     expectInSource('e.key === "d" && !e.repeat');
   });
 
-  it("calls stripAllOverrides on keydown", () => {
+  it("uses a debounced timer before stripping overrides (prevents flash on quick taps)", () => {
     const dBlock = overlaySrc.slice(
       srcIndex('e.key === "d" && !e.repeat'),
-      srcIndex('e.key === "d" && !e.repeat') + 300,
+      srcIndex('e.key === "d" && !e.repeat') + 500,
     );
+    // Should use setTimeout to delay the strip, not call stripAllOverrides directly
+    expect(dBlock).toContain("setTimeout");
     expect(dBlock).toContain("stripAllOverrides");
     expect(dBlock).toContain("setDiffMode(true)");
   });
 
-  it("restores overrides on keyup", () => {
-    // keyup handler for d
+  it("cancels debounce timer on quick keyup (no flash)", () => {
     const keyUpBlock = overlaySrc.slice(
       srcIndex("handleKeyUp"),
-      srcIndex("handleKeyUp") + 400,
+      srcIndex("handleKeyUp") + 600,
+    );
+    // Should clear the timer if released before debounce fires
+    expect(keyUpBlock).toContain("clearTimeout");
+  });
+
+  it("restores overrides on keyup after debounce has fired", () => {
+    const keyUpBlock = overlaySrc.slice(
+      srcIndex("handleKeyUp"),
+      srcIndex("handleKeyUp") + 600,
     );
     expect(keyUpBlock).toContain("restoreAllOverrides");
     expect(keyUpBlock).toContain("setDiffMode(false)");
+  });
+
+  it("has a diffTimerRef for debounce management", () => {
+    expectInSource("diffTimerRef");
+  });
+
+  it("cleans up pending timer on unmount", () => {
+    // The cleanup effect should clear diffTimerRef if pending
+    const cleanupIdx = srcIndex("Cleanup: restore overrides if component unmounts");
+    const cleanupBlock = overlaySrc.slice(cleanupIdx, cleanupIdx + 400);
+    expect(cleanupBlock).toContain("diffTimerRef");
   });
 });
 
