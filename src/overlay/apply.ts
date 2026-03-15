@@ -46,10 +46,15 @@ export function parseStateKey(key: string): { state: string; prop: string } {
 
 type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string; className?: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
-type UndoEntry = SingleUndoEntry | BatchUndoEntry;
+type DomMoveUndoEntry = { type: 'dom-move'; undo: () => void; redo: () => void };
+type UndoEntry = SingleUndoEntry | BatchUndoEntry | DomMoveUndoEntry;
 
 function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
   return 'type' in entry && entry.type === 'batch';
+}
+
+function isDomMove(entry: UndoEntry): entry is DomMoveUndoEntry {
+  return 'type' in entry && entry.type === 'dom-move';
 }
 
 // --- Subscription API for useSyncExternalStore ---
@@ -281,9 +286,16 @@ export function applyInlineStyle(
   notifyChange(el, cssProp, elOverrides.get(prop)!.initial, value);
 }
 
-export function undo(): { el: Element; prop: string } | null {
+export function undo(): { el: Element; prop?: string } | null {
   const last = undoStack.pop();
   if (!last) return null;
+
+  if (isDomMove(last)) {
+    last.undo();
+    redoStack.push(last);
+    notifyListeners();
+    return { el: document.body };
+  }
 
   if (isBatch(last)) {
     // Build redo batch: capture current values before restoring
@@ -380,9 +392,16 @@ export function undo(): { el: Element; prop: string } | null {
   return { el, prop };
 }
 
-export function redo(): { el: Element; prop: string } | null {
+export function redo(): { el: Element; prop?: string } | null {
   const last = redoStack.pop();
   if (!last) return null;
+
+  if (isDomMove(last)) {
+    last.redo();
+    undoStack.push(last);
+    notifyListeners();
+    return { el: document.body };
+  }
 
   if (isBatch(last)) {
     // Re-apply batch entries and push an undo batch
@@ -1013,6 +1032,22 @@ export function isCustomPropertyDirty(name: string): boolean {
   const entry = customPropertyOverrides.get(name);
   if (!entry) return false;
   return entry.initial !== entry.current;
+}
+
+// --- DOM Move (Navigator drag-to-reorder) ---
+
+/**
+ * Push a DOM move operation onto the undo stack.
+ * Used by NavigatorPanel after a drag-to-reorder drop.
+ */
+export function pushDomMove(result: { undo: () => void; redo: () => void }): void {
+  // New action invalidates redo history
+  if (redoStack.length > 0) redoStack.length = 0;
+  undoStack.push({ type: 'dom-move', undo: result.undo, redo: result.redo });
+  if (undoStack.length > MAX_UNDO) {
+    undoStack.splice(0, undoStack.length - MAX_UNDO);
+  }
+  notifyListeners();
 }
 
 // --- Session Persistence ---

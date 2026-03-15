@@ -16,8 +16,11 @@ interface NavigatorNodeProps {
   isExpanded: boolean;
   isSelected: boolean;
   isFocused: boolean;
+  isDraggedOver?: boolean;
+  isDragging?: boolean;
   onToggle: () => void;
   onSelect: () => void;
+  onDragStart?: (e: React.PointerEvent) => void;
 }
 
 const INDENT_PX = 16;
@@ -29,8 +32,11 @@ export function NavigatorNode({
   isExpanded,
   isSelected,
   isFocused,
+  isDraggedOver,
+  isDragging,
   onToggle,
   onSelect,
+  onDragStart,
 }: NavigatorNodeProps) {
   const [hovered, setHovered] = useState(false);
   const hasChildren = node.children.length > 0;
