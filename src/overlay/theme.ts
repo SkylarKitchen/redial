@@ -434,18 +434,13 @@ export const overlay = {
 export const marginWarmAlpha = (a: number) => hexToRgba(color.gridOrange, a);
 
 export const spacingZone = {
-  /** Subtle warm tint — always visible so zones are distinguishable at rest */
-  marginBase: marginWarmAlpha(0.08),
-  /** Warm highlight on hover — strong enough to read as "orange" */
-  marginHover: marginWarmAlpha(0.22),
+  marginBase: "transparent",
+  marginHover: "transparent",
   marginBorderBase: marginWarmAlpha(0.3),
   marginBorderHover: marginWarmAlpha(0.55),
-  /** Subtle cool tint — always visible at rest */
-  paddingBase: greenAlpha(0.08),
-  /** Cool highlight on hover */
-  paddingHover: greenAlpha(0.22),
+  paddingBase: "transparent",
+  paddingHover: "transparent",
   paddingBorderBase: greenAlpha(0.3),
   paddingBorderHover: greenAlpha(0.55),
-  /** Content center — solid darker fill (spec: "solid darker rectangle") */
-  content: blackAlpha(0.12),
+  content: "transparent",
 } as const;
