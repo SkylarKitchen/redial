@@ -13,12 +13,16 @@ import { describe, it, expect, beforeAll } from "vitest";
 import fs from "fs";
 import path from "path";
 
-/** Read a section component's source code */
+/** Read a component's source code (defaults to sections/ subdir) */
 function readSection(filename: string): string {
-  return fs.readFileSync(
-    path.resolve(__dirname, `../sections/${filename}`),
-    "utf-8"
-  );
+  // Try sections/ first, fall back to overlay root
+  const sectionsPath = path.resolve(__dirname, `../sections/${filename}`);
+  const rootPath = path.resolve(__dirname, `../${filename}`);
+  try {
+    return fs.readFileSync(sectionsPath, "utf-8");
+  } catch {
+    return fs.readFileSync(rootPath, "utf-8");
+  }
 }
 
 /**

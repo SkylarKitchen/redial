@@ -27,7 +27,7 @@ topic: v1-refinement-prd
 
 - [x] **P1** In `src/overlay/Overlay.tsx`, verify max-height is exactly `85vh` as the spec requires. If it differs, update to match. Also verify `backdrop-filter: blur(20px)` is present on the panel container.
 
-- [ ] **P1** In `src/overlay/Header.tsx`, the spec defines a **green** indicator for state-specific styles (hover, focus, etc.). Verify the style indicator system in `src/overlay/panelUtils.ts` includes a `"state"` indicator type with a green color from `theme.ts`. If missing, add `color.indicatorGreen` to `theme.ts` and wire it so that properties modified while a pseudo-class state is active show a green dot instead of blue.
+- [x] **P1** In `src/overlay/Header.tsx`, the spec defines a **green** indicator for state-specific styles (hover, focus, etc.). Verify the style indicator system in `src/overlay/panelUtils.ts` includes a `"state"` indicator type with a green color from `theme.ts`. If missing, add `color.indicatorGreen` to `theme.ts` and wire it so that properties modified while a pseudo-class state is active show a green dot instead of blue.
 
 - [ ] **P1** In `src/overlay/layoutControls.tsx`, the `DISPLAY_PRIMARY` array has `[block, flex, grid, none]`. The spec also lists `inline` as a primary display mode in the overflow dropdown (`DISPLAY_OVERFLOW`). Verify that ALL 8 display values from the spec are accessible: `block`, `flex`, `inline-flex`, `grid`, `inline-grid`, `inline-block`, `inline`, `none`. Check that `inline` and `inline-flex` and `inline-grid` are in the overflow dropdown if not in the primary tabs.
 
