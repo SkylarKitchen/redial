@@ -16,13 +16,13 @@ import type { IndicatorType } from "../theme";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { parseNum } from "../cssParsers";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
+import { resetProp, resetAndReadNum, resetAndReadStr, beginBatch, endBatch } from "../core/apply";
 import { detectUnit, type SectionCtx } from "../panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "../panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
 import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
-import { Link, Unlink, Grid3x3 } from "lucide-react";
+import { Link, Unlink, Grid3x3, AlignCenter, Maximize } from "lucide-react";
 import { cssToTwClass } from "../tailwind";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "../theme";
 import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "../panelStyles";
@@ -341,6 +341,31 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     (v: number) => { setFlexOrder(v); apply("order", String(v)); },
     [apply],
   );
+
+  // ── Quick-action handlers ──
+
+  const handleCenter = useCallback(() => {
+    beginBatch();
+    if (isGrid) {
+      setJustifyItems("center");
+      setGridAlignItems("center");
+      apply("justify-items", "center");
+      apply("align-items", "center");
+    } else {
+      setJustifyContent("center");
+      setAlignItems("center");
+      apply("justify-content", "center");
+      apply("align-items", "center");
+    }
+    endBatch();
+  }, [apply, isGrid]);
+
+  const handleFillParent = useCallback(() => {
+    beginBatch();
+    apply("width", "100%");
+    apply("height", "100%");
+    endBatch();
+  }, [apply]);
 
   // ── JSX ──
 
@@ -768,6 +793,29 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </>
           )}
         </>
+      )}
+
+      {/* Quick actions: Center + Fill Parent */}
+      {(isFlex || isGrid) && (
+        <div style={{ ...ROW, gap: 6 }}>
+          <RowLabel label="Quick" indicator="none" />
+          <button
+            title="Center: justify-content + align-items center"
+            onClick={handleCenter}
+            style={{ ...PILL_BUTTON, flex: 1, justifyContent: "center" }}
+          >
+            <AlignCenter size={12} strokeWidth={1.5} />
+            Center
+          </button>
+          <button
+            title="Fill Parent: width 100% + height 100%"
+            onClick={handleFillParent}
+            style={{ ...PILL_BUTTON, flex: 1, justifyContent: "center" }}
+          >
+            <Maximize size={12} strokeWidth={1.5} />
+            Fill Parent
+          </button>
+        </div>
       )}
 
       {hasFlexChildOverride && (
