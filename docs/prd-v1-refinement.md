@@ -107,9 +107,9 @@ topic: v1-refinement-prd
 
 ## P2 — Polish
 
-- [ ] **P2** In the panel container (either `Overlay.tsx` or `WebflowPanel.tsx`), add `overscroll-behavior: contain` to the scrollable area to prevent scroll chaining when the panel scroll reaches the top/bottom edge. This prevents the host page from scrolling when the user is scrolling the panel.
+- [x] **P2** In the panel container (either `Overlay.tsx` or `WebflowPanel.tsx`), add `overscroll-behavior: contain` to the scrollable area to prevent scroll chaining when the panel scroll reaches the top/bottom edge. This prevents the host page from scrolling when the user is scrolling the panel.
 
-- [ ] **P2** In `src/overlay/Header.tsx`, the source file path (e.g., `components/Hero.tsx:42`) is display-only. Make it clickable — when clicked, call `fetch('/__tuner/open-editor', { method: 'POST', body: JSON.stringify({ file, line }) })` to open the file in the user's editor. If the endpoint doesn't exist, just `console.log` the path. Add `cursor: pointer` and a subtle hover underline.
+- [x] **P2** In `src/overlay/Header.tsx`, the source file path (e.g., `components/Hero.tsx:42`) is display-only. Make it clickable — when clicked, call `fetch('/__tuner/open-editor', { method: 'POST', body: JSON.stringify({ file, line }) })` to open the file in the user's editor. If the endpoint doesn't exist, just `console.log` the path. Add `cursor: pointer` and a subtle hover underline.
 
 - [ ] **P2** Write a test in `src/overlay/__tests__/layoutAlignBox.test.ts` that verifies the AlignBox maps correctly for grid context: X axis → `justify-items` (not `justify-content`), Y axis → `align-items`. Check that the component receives a `mode` prop or detects display type to switch between flex and grid alignment property names.
 
@@ -117,9 +117,9 @@ topic: v1-refinement-prd
 
 - [ ] **P2** In `src/overlay/SpacingBoxModel.tsx`, verify that the color zones match the spec: margin area uses a warm transparent tone, padding area uses a cool transparent tone, and content center uses a solid darker rectangle. Read `theme.ts` for the actual token values (`spacingMargin`, `spacingPadding`, `spacingContent` or equivalent). If the colors feel too similar, increase the contrast difference between zones.
 
-- [ ] **P2** Write a test that verifies unit conversion: when switching width from `px` to `%`, the value converts correctly based on the parent element's width. Check `src/overlay/unitConversion.ts` and `src/overlay/SizeSection.tsx` to verify the conversion uses the parent element's computed dimensions, not hardcoded assumptions.
+- [x] **P2** Write a test that verifies unit conversion: when switching width from `px` to `%`, the value converts correctly based on the parent element's width. Check `src/overlay/unitConversion.ts` and `src/overlay/SizeSection.tsx` to verify the conversion uses the parent element's computed dimensions, not hardcoded assumptions.
 
-- [ ] **P2** In `src/overlay/SizeSection.tsx`, verify that the Tailwind-aware step detection (4px steps for Tailwind in px mode) works correctly. Read the step logic and confirm it detects Tailwind projects (via the scope system or a config flag) and adjusts the slider step size accordingly.
+- [x] **P2** In `src/overlay/SizeSection.tsx`, verify that the Tailwind-aware step detection (4px steps for Tailwind in px mode) works correctly. Read the step logic and confirm it detects Tailwind projects (via the scope system or a config flag) and adjusts the slider step size accordingly.
 
 - [ ] **P2** In the position offset diagram (`src/overlay/PositionOffsetDiagram.tsx` or equivalent), verify that all four offset inputs support unit selectors (`px`, `%`, `vh`, `vw`). The spec lists these units for position offsets. If any input is px-only, add `UnitSelector` to it.
 
@@ -129,7 +129,7 @@ topic: v1-refinement-prd
 
 - [ ] **P2** In `src/overlay/BordersSection.tsx`, verify the per-side border controls show correct style/width/color when different sides have different values. E.g., if `border-top: 2px solid red` and `border-bottom: 1px dashed blue`, switching between Top and Bottom tabs should show the correct values for each side.
 
-- [ ] **P2** In `src/overlay/EffectsSection.tsx`, the cursor section has a `CURSOR_OPTIONS` list. Verify it includes ALL 14 cursor types from the spec: `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `not-allowed`, `crosshair`, `help`, `wait`, `zoom-in`, `zoom-out`, `none`. Read `panelConstants.tsx` to check. Add any missing values.
+- [x] **P2** In `src/overlay/EffectsSection.tsx`, the cursor section has a `CURSOR_OPTIONS` list. Verify it includes ALL 14 cursor types from the spec: `auto`, `default`, `pointer`, `text`, `move`, `grab`, `grabbing`, `not-allowed`, `crosshair`, `help`, `wait`, `zoom-in`, `zoom-out`, `none`. Read `panelConstants.tsx` to check. Add any missing values.
 
 - [ ] **P2** In `src/overlay/ColorPickerEnhanced.tsx`, verify the color mode toggle works correctly between HSB, RGB, and Hex input modes. Check that switching modes preserves the current color value accurately (no rounding drift across mode switches). If there's visible drift (e.g., HSB → RGB → HSB changes the color), fix the conversion precision.
 

@@ -1,1 +1,17 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 17 tests pass.
+
+`★ Insight ─────────────────────────────────────`
+**What this test suite proves:**
+1. **`buildConversionContext` reads real parent dimensions** — it uses `getComputedStyle(parent).width`, not any hardcoded fallback. The test with `743px` (a non-standard width) confirms no default value is baked in.
+2. **The full pipeline works** — `buildConversionContext(child) → convertUnit(px, %, ctx)` correctly yields percentages relative to the actual parent. Two identical 200px children inside 400px vs 800px parents produce 50% and 25% respectively.
+3. **Round-trip precision is documented** — px→%→px preserves the value exactly when the parent divides evenly, but can lose ~0.02px precision due to 2-decimal rounding (e.g., 537px parent). This is expected behavior.
+4. **SizeSection wiring is correct** — the `onUnitChange` handlers call `getConversionCtx()` (not a hardcoded context) and pass the correct axis (`"width"` or `"height"`) to `convertUnit`.
+
+**No bugs found** — the conversion system correctly uses parent element computed dimensions throughout the pipeline. The architecture cleanly separates DOM reading (`buildConversionContext`) from pure math (`convertUnit`), making it both testable and correct.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Write a test verifying unit conversion (px→%) uses parent element's width, not hardcoded values.
+**Did:** Read `unitConversion.ts`, `SizeSection.tsx`, and existing tests. Found `buildConversionContext` had zero test coverage. Wrote 17 tests in `unitConversionContext.test.ts` covering: DOM context building, full px→% pipeline with varying parents, round-trip precision, zero-width edge case, `conversionBasis` labels, and SizeSection handler wiring. All 17 pass. No bugs found — conversions correctly use parent computed dimensions.
+---

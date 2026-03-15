@@ -1,0 +1,30 @@
+[WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+All 14 cursor types from the spec are already present in `CURSOR_OPTIONS`:
+
+| # | Value | Label | Present |
+|---|-------|-------|---------|
+| 1 | `auto` | Auto | yes |
+| 2 | `pointer` | Pointer | yes |
+| 3 | `default` | Default | yes |
+| 4 | `text` | Text | yes |
+| 5 | `move` | Move | yes |
+| 6 | `grab` | Grab | yes |
+| 7 | `grabbing` | Grabbing | yes |
+| 8 | `not-allowed` | Not Allowed | yes |
+| 9 | `crosshair` | Crosshair | yes |
+| 10 | `wait` | Wait | yes |
+| 11 | `help` | Help | yes |
+| 12 | `zoom-in` | Zoom In | yes |
+| 13 | `zoom-out` | Zoom Out | yes |
+| 14 | `none` | None | yes |
+
+No changes needed — `panelConstants.tsx:268-283` already has all 14 spec-required cursor types.
+
+`★ Insight ─────────────────────────────────────`
+The ordering here is intentional: `auto` first (most common default), then `pointer`/`default` (most frequently used), then interaction cursors (`text`, `move`, `grab`/`grabbing`), then feedback cursors (`not-allowed`, `crosshair`, `wait`, `help`), then zoom, and finally `none`. This groups them by usage frequency rather than alphabetically, which is better UX for a design tool dropdown.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Verify CURSOR_OPTIONS has all 14 spec cursor types, add any missing.
+**Did:** Read `panelConstants.tsx:268-283` — confirmed all 14 values present. No changes needed.
+---

@@ -178,6 +178,12 @@ export function Overlay() {
   // Unsaved changes warning
   const [closeWarning, setCloseWarning] = useState(false);
 
+  // First-use hint bar (dismissed after 5s or interaction, never shows again)
+  const [showHintBar, setShowHintBar] = useState(() => {
+    try { return localStorage.getItem("redial:hintDismissed") !== "true"; } catch { return true; }
+  });
+  const hintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // History drawer
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -232,6 +238,16 @@ export function Overlay() {
 
   // Sync statePreview.ts <style> tag with apply.ts undo/redo
   useEffect(() => syncWithApplyUndoRedo(), []);
+
+  // Auto-dismiss hint bar after 5 seconds
+  useEffect(() => {
+    if (!showHintBar || !selectedEl) return;
+    hintTimerRef.current = setTimeout(() => {
+      setShowHintBar(false);
+      try { localStorage.setItem("redial:hintDismissed", "true"); } catch {}
+    }, 5000);
+    return () => { if (hintTimerRef.current) clearTimeout(hintTimerRef.current); };
+  }, [showHintBar, selectedEl]);
 
   // Diff mode (Phase 1)
   const [diffMode, setDiffMode] = useState(false);
@@ -353,6 +369,30 @@ export function Overlay() {
       setPanelKey((k) => k + 1);
     }
   }, [selectedEl]);
+
+  // --- Close handlers (must be before hotkey useEffect that references them) ---
+  const handleClose = useCallback(() => {
+    setSelectedEl(null);
+    selectedSelectorRef.current = null;
+    setInferResult(null);
+    setScope("element");
+    setActiveClassName(null);
+    setActiveState("none");
+    setShowSearch(false);
+    setSearchQuery("");
+    setActivePanel({ type: "none" });
+    setActiveModal({ type: "none" });
+    setCloseWarning(false);
+    announce("Element deselected");
+  }, [announce]);
+
+  const handleCloseAttempt = useCallback(() => {
+    if (overrideCount(selectedElRef.current) > 0) {
+      setCloseWarning(true);
+    } else {
+      handleClose();
+    }
+  }, [handleClose]);
 
   // --- Hotkey: backtick toggles selection ---
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
@@ -757,6 +797,7 @@ export function Overlay() {
     const queuedTab = pendingTabRef.current;
     pendingTabRef.current = null;
     setActivePanel({ type: "inspector", tab: queuedTab ?? "custom" });
+    setShowNavigator(true);
     setShowGridOverlay(false);
     setShowBoxModel(false);
     setExpandedSection(null);
@@ -792,29 +833,6 @@ export function Overlay() {
   }, []);
 
   const handleTogglePin = useCallback(() => setPinned(p => !p), []);
-
-  const handleClose = useCallback(() => {
-    setSelectedEl(null);
-    selectedSelectorRef.current = null;
-    setInferResult(null);
-    setScope("element");
-    setActiveClassName(null);
-    setActiveState("none");
-    setShowSearch(false);
-    setSearchQuery("");
-    setActivePanel({ type: "none" });
-    setActiveModal({ type: "none" });
-    setCloseWarning(false);
-    announce("Element deselected");
-  }, [announce]);
-
-  const handleCloseAttempt = useCallback(() => {
-    if (overrideCount(selectedElRef.current) > 0) {
-      setCloseWarning(true);
-    } else {
-      handleClose();
-    }
-  }, [handleClose]);
 
   // --- Reset handler: re-infer to get fresh values ---
   const handleReset = useCallback(() => {
@@ -1823,6 +1841,35 @@ export function Overlay() {
                     </motion.div>
                   );
                 })()}
+              </AnimatePresence>
+              {/* First-use hint bar */}
+              <AnimatePresence>
+                {showHintBar && (
+                  <motion.div
+                    key="hint-bar"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => {
+                      setShowHintBar(false);
+                      try { localStorage.setItem("redial:hintDismissed", "true"); } catch {}
+                    }}
+                    style={{
+                      fontSize: 10,
+                      fontFamily: font.sans,
+                      color: text.disabled,
+                      background: surface.subtle,
+                      textAlign: "center",
+                      padding: "5px 12px",
+                      borderTop: `1px solid ${border.subtle}`,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                  >
+                    {"\u2318S save \u00b7 \u2318Z undo \u00b7 ? all shortcuts"}
+                  </motion.div>
+                )}
               </AnimatePresence>
             </>
           )}

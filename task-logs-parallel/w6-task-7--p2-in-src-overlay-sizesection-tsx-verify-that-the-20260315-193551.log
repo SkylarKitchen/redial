@@ -1,1 +1,31 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+The full chain is clear. Here's my verification:
+
+`★ Insight ─────────────────────────────────────`
+
+**The Tailwind step detection in SizeSection is correct and complete.** Here's how the full chain works:
+
+1. **Detection** (`scope.ts:204`): `isTailwindElement(el)` scans the element's classes, skips CSS Module hashes, and checks each remaining class against Tailwind utility patterns (standalone keywords, prefix-value, negative utilities, responsive/state prefixes). If **3+ classes** match, it returns `true` — a reasonable heuristic since hand-authored classes rarely look like `w-4 bg-blue-500 flex`.
+
+2. **Propagation** (`WebflowPanel.tsx:149`): The result is `useMemo`'d per-element and bundled into the `SectionCtx` object that all section components receive.
+
+3. **Step logic** (`SizeSection.tsx:52`): A single helper function handles the decision:
+   ```ts
+   const twStep = (unit: string) => ctx.isTailwind && unit === "px" ? 4 : 1;
+   ```
+   This returns `4` when **both** conditions are true: the element is Tailwind-styled AND the current unit is `px`. For `%`, `rem`, `em`, `vw`, etc., it falls back to `1`.
+
+4. **Usage**: `twStep()` is applied to **all 6 size inputs** — width, height, min-width, max-width, min-height, max-height (lines 254, 276, 298, 317, 341, 362). Every size slider/scrub in the section gets the correct step.
+
+**Why 4px?** Tailwind's default spacing scale increments by 4px (`1rem = 16px`, and the scale goes `1 = 0.25rem = 4px`, `2 = 0.5rem = 8px`, etc.). Snapping to 4px steps means scrubbing always lands on a value that maps cleanly to a Tailwind class.
+
+`─────────────────────────────────────────────────`
+
+**One gap worth noting:** There are no tests covering the Tailwind step behavior in `sizeSection.test.ts`. The existing tests all use `isTailwind: false` in their mock contexts. The same pattern *is* tested implicitly through other sections (TypographySection, LayoutSection use the same `ctx.isTailwind` pattern), but SizeSection specifically lacks coverage for `isTailwind: true` scenarios.
+
+**Verdict: The implementation is correct.** The detection heuristic → context propagation → step logic chain is sound. The `twStep` helper cleanly encapsulates the rule. The only actionable follow-up would be adding a test that mocks `ctx.isTailwind = true` and verifies the step prop on rendered `SizeInputCell` components — but that's a test coverage nice-to-have, not a bug.
+
+---
+**Asked:** Verify Tailwind-aware step detection (4px steps) in SizeSection.tsx
+**Did:** Traced the full chain: `isTailwindElement()` heuristic in scope.ts → `isTailwind` flag in SectionCtx → `twStep()` helper in SizeSection.tsx applied to all 6 size inputs. Logic is correct; noted missing test coverage for `isTailwind: true` case.
+---

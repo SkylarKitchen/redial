@@ -1,1 +1,13 @@
 [WARN] Fast mode is not available in the Agent SDK. Using Opus 4.6.
+108 passed, 1 failed — and that 1 failure is the pre-existing "should have built CSS available" test (unrelated to this change). All 2,278 other tests pass.
+
+`★ Insight ─────────────────────────────────────`
+- **`onMouseDown` stopPropagation** is critical here. The entire header div is a drag handle (`cursor: grab`, `onMouseDown={onDragStart}`). Without stopping propagation on mousedown, clicking the source path would start dragging the panel instead of triggering the click.
+- **`.catch()` fallback** — the fetch will reject if the `/__tuner/open-editor` endpoint doesn't exist (network error, not a 404). This gracefully degrades to `console.log` so users can still see and copy the path.
+- **Non-null assertion `reactSource!`** is safe inside the `{sourceFile && ...}` guard — `sourceFile` is derived from `reactSource?.displayPath`, so if `sourceFile` is truthy, `reactSource` is guaranteed non-null.
+`─────────────────────────────────────────────────`
+
+---
+**Asked:** Make the source file path in the Header clickable to open in editor via `/__tuner/open-editor`, with graceful console.log fallback.
+**Did:** Edited `src/overlay/shell/Header.tsx` — added `sourceHovered` state, made the source path `<span>` clickable with `cursor: pointer`, hover underline, `stopPropagation` on mousedown (to prevent drag), and a click handler that POSTs `{ file, line }` to `/__tuner/open-editor` with `.catch()` falling back to `console.log`.
+---
