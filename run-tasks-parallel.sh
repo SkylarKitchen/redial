@@ -132,6 +132,9 @@ worker() {
     echo "[W${worker_id}] Task $task_num/$TOTAL_TASKS: $(echo "$task_text" | cut -c1-70)..."
 
     # Run claude in the worktree directory
+    local start_time
+    start_time=$(date +%s)
+
     if (cd "$wt_path" && claude -p --dangerously-skip-permissions $EXTRA_FLAGS "$task_text") > "$logfile" 2>&1; then
       echo "[W${worker_id}] Task $task_num: DONE"
       echo "done:${line_num}:${task_num}:${worker_id}" >> "${RESULTS_DIR}/results.log"
@@ -141,6 +144,18 @@ worker() {
       sed -i '' "${line_num}s/- \[ \]/- [x]/" "$PRD_FILE"
       unlock "${LOCK_FILE}.prd"
     else
+      local elapsed_task=$(( $(date +%s) - start_time ))
+
+      # Fast-fail guard: if task failed in under 15 seconds, it's likely
+      # an auth/rate-limit issue, not a real task failure. Kill this worker
+      # so it doesn't burn through the entire queue.
+      if [[ "$elapsed_task" -lt 15 ]]; then
+        echo "[W${worker_id}] Task $task_num: INSTANT FAIL (${elapsed_task}s) — likely auth/rate limit. Worker stopping."
+        echo "instant_fail:${line_num}:${task_num}:${worker_id}" >> "${RESULTS_DIR}/results.log"
+        # Do NOT mark as failed — leave as [ ] for retry
+        break
+      fi
+
       echo "[W${worker_id}] Task $task_num: FAILED"
       echo "fail:${line_num}:${task_num}:${worker_id}" >> "${RESULTS_DIR}/results.log"
 
