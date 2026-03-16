@@ -11,7 +11,7 @@ import { useState, useRef, useCallback, useEffect, useId } from "react";
 import { ChevronDown, Link, Unlink, WrapText, Settings } from "lucide-react";
 import { GridSettingsPopup } from "./GridSettingsPopup";
 import { LabelScrub } from "../controls/LabelScrub";
-import { UnitSelector, type ConversionHint } from "../controls/UnitSelector";
+import { UnitSelector, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { ValueInput, selectAllOnDoubleClick, useValueFlash } from "../controls";
 import { evaluateMathExpr } from "../inputMath";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, bgAlpha, segment, shadow, zIndex, layout, darkToolbar, type IndicatorType, indicatorStyle, altClickReset } from "../theme";
@@ -1067,6 +1067,10 @@ export function TypoValueCell({
   step = 1,
   keyword,
   conversionHint,
+  cssVar,
+  cssVarResolved,
+  onCssVarChange,
+  variableOptions,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -1077,12 +1081,21 @@ export function TypoValueCell({
   keyword?: string | null;
   /** Conversion tooltip hint passed through to UnitSelector */
   conversionHint?: ConversionHint | null;
+  /** Currently selected CSS variable name, or null */
+  cssVar?: string | null;
+  /** Resolved display value of the variable (e.g. "16") */
+  cssVarResolved?: string;
+  /** Called when a CSS variable is selected from the dropdown */
+  onCssVarChange?: (varName: string | null) => void;
+  /** CSS variable options for the UnitSelector dropdown */
+  variableOptions?: VariableOption[];
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const cellRef = useRef<HTMLDivElement>(null);
   const flashStyle = useValueFlash(value);
-  useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null });
+  const isVariable = keyword == null && (cssVar ?? null) !== null;
+  useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null || isVariable });
 
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
@@ -1131,7 +1144,27 @@ export function TypoValueCell({
         ...flashStyle,
       }}
     >
-      {isKeyword ? (
+      {isVariable ? (
+        <span
+          title={`${cssVar}: ${cssVarResolved ?? "?"}`}
+          onClick={() => onCssVarChange?.(null)}
+          style={{
+            flex: 1,
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 6,
+            paddingRight: 6,
+            cursor: "pointer",
+            outline: "none",
+            color: color.primary,
+            overflow: "clip",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {cssVar?.replace(/^--/, "")}
+        </span>
+      ) : isKeyword ? (
         <span
           tabIndex={0}
           onClick={() => setEditing(true)}
@@ -1198,7 +1231,15 @@ export function TypoValueCell({
         alignItems: "center",
       }}>
         {units && onUnitChange ? (
-          <UnitSelector value={unit} options={units} onChange={onUnitChange} conversionHint={conversionHint} embedded />
+          <UnitSelector
+            value={isVariable ? "VAR" : unit}
+            options={units}
+            onChange={(u) => { if (isVariable) onCssVarChange?.(null); onUnitChange(u); }}
+            conversionHint={conversionHint}
+            variableOptions={variableOptions}
+            onVariableSelect={(name) => onCssVarChange?.(name)}
+            embedded
+          />
         ) : (
           <span style={{
             fontSize: 9,
