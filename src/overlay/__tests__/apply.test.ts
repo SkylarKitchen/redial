@@ -869,3 +869,48 @@ describe("restoreSession — corrupted localStorage", () => {
     expect(localStorage.getItem(key)).toBeNull();
   });
 });
+
+// ─── Undo coalescing ──────────────────────────────────────────────────
+
+describe("undo coalescing", () => {
+  it("consecutive same-prop applies create separate undo entries (no implicit coalescing)", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "display", "flex");
+    applyInlineStyle(el, "display", "grid");
+
+    // First undo: grid → flex
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+
+    // Second undo: flex → removed (initial)
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("");
+  });
+
+  it("batched same-prop changes coalesce into one undo entry", () => {
+    const el = makeEl();
+    beginBatch();
+    applyInlineStyle(el, "width", "10px");
+    applyInlineStyle(el, "width", "50px");
+    applyInlineStyle(el, "width", "100px");
+    endBatch();
+
+    // Single undo reverts entire batch
+    undo();
+    expect(el.style.getPropertyValue("width")).toBe("");
+  });
+
+  it("three discrete display changes produce three undo steps", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "display", "block");
+    applyInlineStyle(el, "display", "flex");
+    applyInlineStyle(el, "display", "grid");
+
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("block");
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("");
+  });
+});

@@ -79,6 +79,10 @@ export const color = {
   /** Success green — muted/darker (copy confirmed) */
   successMuted: "#16a34a",
 
+  // ── Variable linking ──
+  /** Purple accent — variable link affordance */
+  variable: "#6B5CE7",
+
   // ── Indicators ──
   /** Indicator green — state-specific style modifications (hover, focus, etc.) */
   indicatorGreen: "#16a34a",
@@ -143,6 +147,9 @@ export const whiteAlpha = (a: number) => `rgba(255,255,255,${a})`;
 export const successAlpha = (a: number) => hexToRgba(color.success, a);
 /** Success green (muted) at a given alpha — derived from color.successMuted */
 export const successMutedAlpha = (a: number) => hexToRgba(color.successMuted, a);
+
+/** Variable purple at a given alpha — derived from color.variable */
+export const variableAlpha = (a: number) => hexToRgba(color.variable, a);
 
 // ─── Semantic Aliases ────────────────────────────────────────────
 
