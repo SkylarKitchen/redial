@@ -2,7 +2,7 @@
  * WebflowPanel.tsx — Orchestrator for the CSS property panel.
  *
  * Owns cross-section state (display, columnGap, derived flags) and
- * renders 8 section components + CSSVariablesSection. Each section
+ * renders 8 section components. Each section
  * receives a SectionCtx prop bundle for element/apply/indicator access.
  */
 
@@ -27,7 +27,7 @@ import { TypographySection } from "../sections/TypographySection";
 import { BackgroundsSection } from "../sections/BackgroundsSection";
 import { BordersSection } from "../sections/BordersSection";
 import { EffectsSection } from "../sections/EffectsSection";
-import { CSSVariablesSection } from "../sections/CSSVariablesSection";
+
 
 const EMPTY_MEMORY: Record<string, boolean> = {};
 
@@ -268,9 +268,6 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
       {showSection("Effects") && (
         <EffectsSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Effects")} />
       )}
-
-      {/* 9. CSS Variables — hide during search to avoid leaking below "No results" */}
-      {!isSearching && <CSSVariablesSection element={element} />}
 
       {/* Right-click property context menu */}
       {ctxMenuState && (

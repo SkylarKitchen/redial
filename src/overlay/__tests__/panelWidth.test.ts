@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import { getVariablesPanelWidth } from "../variables/panelWidth";
 
 describe("getVariablesPanelWidth", () => {
-  it("returns 580 for 0 modes (floor)", () => {
-    expect(getVariablesPanelWidth(0)).toBe(580);
+  it("returns 520 for 0 modes (floor)", () => {
+    expect(getVariablesPanelWidth(0)).toBe(520);
   });
 
-  it("returns 580 for 1 mode (floor)", () => {
-    expect(getVariablesPanelWidth(1)).toBe(580);
+  it("returns 520 for 1 mode (380+140=520, matches floor)", () => {
+    expect(getVariablesPanelWidth(1)).toBe(520);
   });
 
   it("returns 660 for 2 modes", () => {
