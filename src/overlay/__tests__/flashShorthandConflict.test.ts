@@ -3,31 +3,28 @@ import { readFileSync } from "fs";
 import { join } from "path";
 
 /**
- * React warns when removing a longhand (backgroundColor) during rerender
- * while its shorthand (background) is still set. useValueFlash is spread
- * into containers that use `background`, so it must never return `backgroundColor`.
- *
- * Error reproduced:
- *   "Removing a style property during rerender (backgroundColor) when a
- *    conflicting property is set (background) can lead to styling bugs."
- *    at TrackCountInput (layoutControls.tsx:818)
+ * React warns when mixing shorthand (background) and longhand (backgroundColor)
+ * properties on the same element during rerender. useValueFlash is spread into
+ * containers, so it must use `backgroundColor` (longhand) consistently, and
+ * consumers that also set a background must use `backgroundColor` too.
  */
-describe("useValueFlash must not use backgroundColor longhand", () => {
+describe("useValueFlash uses backgroundColor (longhand) consistently", () => {
   const controlsSource = readFileSync(
     join(__dirname, "..", "controls", "helpers.tsx"),
     "utf-8",
   );
 
-  it("return statement uses background (shorthand), not backgroundColor (longhand)", () => {
-    // Extract the useValueFlash function body
+  it("return statement uses backgroundColor (longhand), not background (shorthand)", () => {
     const fnMatch = controlsSource.match(
       /export function useValueFlash[\s\S]*?^}/m,
     );
     expect(fnMatch).not.toBeNull();
     const fnBody = fnMatch![0];
 
-    // Must not contain backgroundColor anywhere in the return
-    expect(fnBody).not.toMatch(/backgroundColor/);
+    // Flash property must be backgroundColor (longhand)
+    expect(fnBody).toMatch(/backgroundColor/);
+    // Must not use background shorthand (which conflicts with backgroundColor on consumers)
+    expect(fnBody).not.toMatch(/[^-]background\s*:/);
   });
 });
 

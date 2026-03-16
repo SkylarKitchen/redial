@@ -654,7 +654,7 @@ function GapInput({ value, unit, onChange }: {
         alignItems: "center",
         padding: 4,
         gap: 2,
-        background: segment.hoverBg,
+        backgroundColor: segment.hoverBg,
         overflow: "hidden",
         ...flashStyle,
       }}>
@@ -824,7 +824,7 @@ function TrackCountInput({ value, onChange }: {
       borderRadius: segment.radius,
       border: `1px solid ${border.default}`,
       overflow: "hidden",
-      background: segment.hoverBg,
+      backgroundColor: segment.hoverBg,
       alignItems: "center",
       ...flashStyle,
     }}>
