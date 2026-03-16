@@ -1179,7 +1179,7 @@ export function Overlay() {
     return () => window.removeEventListener("resize", handleResize);
   }, [anchor, activePanel.type, variablesModeCount]);
 
-  // --- Reposition panel when switching between inspector (300px) and variables (550px) ---
+  // --- Reposition panel when switching between inspector (300px) and variables (dynamic) ---
   useEffect(() => {
     const pw = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
     setPos((p) => {

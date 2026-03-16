@@ -900,17 +900,17 @@ export function CollectionDetail({
   }, []);
 
   const registerModeScroll = useCallback((el: HTMLDivElement | null) => {
-    if (el && !modeScrollRefs.current.includes(el)) {
-      modeScrollRefs.current.push(el);
+    if (el) {
+      if (!modeScrollRefs.current.includes(el)) {
+        modeScrollRefs.current.push(el);
+      }
+    } else {
+      // React calls ref(null) on unmount — remove stale entries
+      modeScrollRefs.current = modeScrollRefs.current.filter(
+        (ref) => ref !== null && document.contains(ref),
+      );
     }
   }, []);
-
-  // Clean stale refs when variables change (rows mount/unmount)
-  useEffect(() => {
-    modeScrollRefs.current = modeScrollRefs.current.filter(
-      (el) => el && document.contains(el),
-    );
-  }, [variables]);
 
   // Infer subgroups from the variables in this collection
   const subgroups = useMemo(() => inferSubgroups(variables), [variables]);
