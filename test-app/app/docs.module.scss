@@ -98,7 +98,7 @@
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #6e6459;
+    color: #5a5148;
     text-decoration: none;
     transition: color 0.15s ease;
 
@@ -119,7 +119,7 @@
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #6e6459;
+    color: #5a5148;
     text-decoration: none;
     transition: color 0.15s ease;
 
@@ -163,15 +163,15 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.15em;
-    color: #6e6459;
+    color: #5a5148;
     margin-bottom: 8px;
   }
 }
 
 .sidebarLink {
   font-family: var(--font-cormorant);
-  font-size: 15px;
-  color: #6e6459;
+  font-size: 16px;
+  color: #5a5148;
   text-decoration: none;
   padding: 3px 0;
   transition: color 0.15s ease;
@@ -213,7 +213,7 @@
   font-size: 19px;
   font-style: italic;
   line-height: 1.72;
-  color: #4d4639;
+  color: #3d372e;
   max-width: 540px;
 }
 
@@ -285,7 +285,7 @@
   font-family: var(--font-cormorant);
   font-size: 24px;
   font-weight: 300;
-  color: #6e6459;
+  color: #5a5148;
   flex-shrink: 0;
   min-width: 28px;
   line-height: 1.3;
@@ -304,9 +304,9 @@
   }
 
   p {
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.72;
-    color: #4d4639;
+    color: #3d372e;
   }
 }
 
@@ -346,9 +346,9 @@
 
   p {
     font-family: var(--font-cormorant);
-    font-size: 16px;
-    line-height: 1.6;
-    color: #4d4639;
+    font-size: 17px;
+    line-height: 1.65;
+    color: #3d372e;
   }
 }
 
@@ -387,7 +387,7 @@
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #6e6459;
+  color: #5a5148;
 }
 
 // ── CTA Buttons ──
@@ -452,7 +452,7 @@
   font-size: 19px;
   font-style: italic;
   line-height: 1.72;
-  color: #4d4639;
+  color: #3d372e;
   margin-bottom: 40px;
 }
 
@@ -476,9 +476,9 @@
 
   p {
     font-family: var(--font-cormorant);
-    font-size: 17px;
+    font-size: 18px;
     line-height: 1.72;
-    color: #4d4639;
+    color: #3d372e;
     margin-bottom: 16px;
   }
 }
@@ -509,7 +509,7 @@
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-cormorant);
-  font-size: 16px;
+  font-size: 17px;
   margin-bottom: 24px;
 
   th {
@@ -525,7 +525,7 @@
 
   td {
     padding: 12px 16px;
-    color: #4d4639;
+    color: #3d372e;
     border-bottom: 1px solid #d5cec3;
   }
 
@@ -552,8 +552,8 @@
 
   & > p {
     font-family: var(--font-cormorant);
-    font-size: 17px;
-    color: #4d4639;
+    font-size: 18px;
+    color: #3d372e;
     margin-bottom: 24px;
     line-height: 1.72;
   }
@@ -581,9 +581,9 @@
 
   p {
     font-family: var(--font-cormorant);
-    font-size: 15px;
-    line-height: 1.6;
-    color: #4d4639;
+    font-size: 16px;
+    line-height: 1.65;
+    color: #3d372e;
   }
 }
 
@@ -593,7 +593,7 @@
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-cormorant);
-  font-size: 16px;
+  font-size: 17px;
   margin-bottom: 24px;
 
   th {
@@ -609,7 +609,7 @@
 
   td {
     padding: 12px 16px;
-    color: #4d4639;
+    color: #3d372e;
     border-bottom: 1px solid #d5cec3;
   }
 
@@ -660,7 +660,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #6e6459;
+  color: #5a5148;
   font-weight: 600;
 }
 
@@ -675,8 +675,8 @@
 
 .orderedList {
   font-family: var(--font-cormorant);
-  font-size: 17px;
-  color: #4d4639;
+  font-size: 18px;
+  color: #3d372e;
   line-height: 1.72;
   padding-left: 20px;
   margin-bottom: 16px;
@@ -697,11 +697,11 @@
   p {
     font-family: var(--font-cormorant);
     font-size: 14px;
-    color: #6e6459;
+    color: #5a5148;
   }
 
   a {
-    color: #4d4639;
+    color: #3d372e;
     text-decoration: none;
 
     &:hover {

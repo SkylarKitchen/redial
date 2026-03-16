@@ -141,7 +141,19 @@ export function deriveSourceFromClassName(
       displayPath: `${componentName}.module.scss`,
     };
   }
-  // Turbopack: file-module__hash__className
+  // Turbopack (new format): file-module-scss-module__hash__cls or file-module-css-module__hash__cls
+  // The file extension is encoded in the class name itself.
+  const turboExt = moduleClass.match(/^([\w-]+)-module-(scss|css)-module__\w+__\w+$/);
+  if (turboExt) {
+    const fileName = turboExt[1];
+    const ext = `.module.${turboExt[2]}`;
+    return {
+      file: `${fileName}${ext}`,
+      line: undefined,
+      displayPath: `${fileName}${ext}`,
+    };
+  }
+  // Turbopack (legacy format): file-module__hash__className
   const turbo = moduleClass.match(/^([\w-]+)-module__\w+__\w+$/);
   if (turbo) {
     const fileName = turbo[1];
@@ -244,7 +256,12 @@ export function getModuleClassInfo(
     if (webpack) {
       return { className: webpack[2], componentName: webpack[1] };
     }
-    // Turbopack: file-module__hash__className
+    // Turbopack (new format): file-module-scss-module__hash__cls or file-module-css-module__hash__cls
+    const turboExt = cls.match(/^([\w-]+)-module-(scss|css)-module__\w+__(\w+)$/);
+    if (turboExt) {
+      return { className: turboExt[3], componentName: turboExt[1] };
+    }
+    // Turbopack (legacy format): file-module__hash__className
     const turbo = cls.match(/^([\w-]+)-module__\w+__(\w+)$/);
     if (turbo) {
       return { className: turbo[2], componentName: turbo[1] };

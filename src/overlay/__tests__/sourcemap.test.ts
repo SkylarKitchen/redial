@@ -116,6 +116,24 @@ describe("getModuleClassInfo", () => {
     });
   });
 
+  it("parses new Turbopack SCSS class with extension in name", () => {
+    const el = makeEl();
+    el.className = "page-module-scss-module__8o7Fma__hero";
+    expect(getModuleClassInfo(el)).toEqual({
+      className: "hero",
+      componentName: "page",
+    });
+  });
+
+  it("parses new Turbopack CSS class with extension in name", () => {
+    const el = makeEl();
+    el.className = "page-module-css-module__abc123__main";
+    expect(getModuleClassInfo(el)).toEqual({
+      className: "main",
+      componentName: "page",
+    });
+  });
+
   it("parses a Vite CSS module class", () => {
     const el = makeEl();
     el.className = "_btn_1a2b3_5";
@@ -285,6 +303,17 @@ describe("getCSSSource", () => {
     });
   });
 
+  it("derives source file from new Turbopack SCSS class format", () => {
+    const el = makeEl();
+    el.className = "page-module-scss-module__8o7Fma__btnPrimary";
+    const result = getCSSSource(el, "color");
+    expect(result).toEqual({
+      file: "page.module.scss",
+      line: undefined,
+      displayPath: "page.module.scss",
+    });
+  });
+
   it("returns null for element with no module class", () => {
     const el = makeEl();
     el.className = "btn primary";
@@ -430,5 +459,43 @@ describe("deriveSourceFromClassName", () => {
   // Non-module class
   it("returns null for unrecognized class patterns", () => {
     expect(deriveSourceFromClassName("plain-class", "color")).toBeNull();
+  });
+
+  // ─── New Turbopack format (extension in class name) ──────────────────
+
+  it("handles new Turbopack SCSS class: page-module-scss-module__hash__cls", () => {
+    const result = deriveSourceFromClassName(
+      "page-module-scss-module__8o7Fma__page",
+      "color"
+    );
+    expect(result).toEqual({
+      file: "page.module.scss",
+      line: undefined,
+      displayPath: "page.module.scss",
+    });
+  });
+
+  it("handles new Turbopack CSS class: page-module-css-module__hash__cls", () => {
+    const result = deriveSourceFromClassName(
+      "page-module-css-module__abc123__main",
+      "color"
+    );
+    expect(result).toEqual({
+      file: "page.module.css",
+      line: undefined,
+      displayPath: "page.module.css",
+    });
+  });
+
+  it("handles new Turbopack format with hyphenated filename", () => {
+    const result = deriveSourceFromClassName(
+      "my-component-module-scss-module__xYz789__wrapper",
+      "color"
+    );
+    expect(result).toEqual({
+      file: "my-component.module.scss",
+      line: undefined,
+      displayPath: "my-component.module.scss",
+    });
   });
 });
