@@ -317,22 +317,22 @@ export function Header({
         <div style={{ display: "flex", alignItems: "center", gap: 3, paddingLeft: 12, paddingRight: 12, paddingTop: 6, paddingBottom: 8, flexWrap: "wrap" }}>
           {cssClasses.length > 0 && onScopeChange && (
             <>
-              <ScopePill
-                label="Just this"
-                active={scope === "element"}
-                onClick={() => onScopeChange("element")}
-              />
               {cssClasses.map((cls) => {
                 const readable = getReadableName(cls) ?? cls;
                 return (
                   <ScopePill
                     key={cls}
-                    label={`All .${readable}`}
+                    label={`.${readable}`}
                     active={scope === "class" && activeClassName === cls}
                     onClick={() => onScopeChange("class", cls)}
                   />
                 );
               })}
+              <ScopePill
+                label="element"
+                active={scope === "element"}
+                onClick={() => onScopeChange("element")}
+              />
             </>
           )}
           {state !== undefined && onStateChange && (
