@@ -24,6 +24,14 @@ export interface UsePortalDropdownOptions {
   containerRef: React.RefObject<HTMLElement | null>;
   /** Estimated dropdown height for initial flip calculation (default: 220) */
   estimatedHeight?: number;
+  /** Estimated dropdown width for initial horizontal clamping (default: 60) */
+  estimatedWidth?: number;
+}
+
+/** Clamp a left value so the dropdown stays within viewport with 8px margin */
+function clampLeft(left: number, width: number): number {
+  const maxLeft = window.innerWidth - width - 8;
+  return Math.max(8, Math.min(left, maxLeft));
 }
 
 export function usePortalDropdown({
@@ -32,6 +40,7 @@ export function usePortalDropdown({
   triggerRef,
   containerRef,
   estimatedHeight = 220,
+  estimatedWidth = 60,
 }: UsePortalDropdownOptions) {
   const [dropdownPos, setDropdownPos] = useState<PortalDropdownPos | null>(null);
   const portalRef = useRef<HTMLDivElement>(null);
@@ -45,11 +54,11 @@ export function usePortalDropdown({
     correctedRef.current = false;
     setDropdownPos({
       top: up ? rect.top - estimatedHeight - 2 : rect.bottom + 2,
-      left: rect.left,
+      left: clampLeft(rect.left, Math.max(rect.width, estimatedWidth)),
       width: rect.width,
       up,
     });
-  }, [triggerRef, estimatedHeight]);
+  }, [triggerRef, estimatedHeight, estimatedWidth]);
 
   // Ref-based click-outside: instance-safe, no querySelector
   useEffect(() => {
