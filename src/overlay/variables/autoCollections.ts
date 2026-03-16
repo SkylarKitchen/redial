@@ -53,6 +53,80 @@ function detectNamespace(vars: CSSVariable[]): string | null {
   return null;
 }
 
+// ─── Within-Collection Subgroups ──────────────────────────────────
+
+export interface Subgroup {
+  name: string; // "" for ungrouped single-segment vars
+  variables: CSSVariable[];
+}
+
+export function inferSubgroups(vars: CSSVariable[]): Subgroup[] {
+  if (vars.length === 0) return [];
+
+  const byFirst = new Map<string, CSSVariable[]>();
+  const ungrouped: CSSVariable[] = [];
+
+  for (const v of vars) {
+    const segs = v.name.slice(2).split("-");
+    if (segs.length === 1) {
+      ungrouped.push(v);
+    } else {
+      const first = segs[0];
+      if (!byFirst.has(first)) byFirst.set(first, []);
+      byFirst.get(first)!.push(v);
+    }
+  }
+
+  const result: Subgroup[] = [];
+
+  for (const [first, groupVars] of byFirst) {
+    const bySecond = new Map<string, CSSVariable[]>();
+    let allHaveThirdSeg = true;
+
+    for (const v of groupVars) {
+      const segs = v.name.slice(2).split("-");
+      if (segs.length >= 3) {
+        const key = `${segs[0]}-${segs[1]}`;
+        if (!bySecond.has(key)) bySecond.set(key, []);
+        bySecond.get(key)!.push(v);
+      } else {
+        allHaveThirdSeg = false;
+      }
+    }
+
+    if (allHaveThirdSeg && bySecond.size > 1) {
+      // Multiple distinct second-segment prefixes → split into separate subgroups
+      for (const [prefix, subVars] of bySecond) {
+        result.push({
+          name: prefix,
+          variables: subVars.sort((a, b) => a.name.localeCompare(b.name)),
+        });
+      }
+    } else if (allHaveThirdSeg && bySecond.size === 1) {
+      // All vars share the same two-segment prefix → use it as the group name
+      const [[prefix, subVars]] = bySecond;
+      result.push({
+        name: prefix,
+        variables: subVars.sort((a, b) => a.name.localeCompare(b.name)),
+      });
+    } else {
+      result.push({
+        name: first,
+        variables: groupVars.sort((a, b) => a.name.localeCompare(b.name)),
+      });
+    }
+  }
+
+  if (ungrouped.length > 0) {
+    result.unshift({
+      name: "",
+      variables: ungrouped.sort((a, b) => a.name.localeCompare(b.name)),
+    });
+  }
+
+  return result.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // ─── Main Engine ─────────────────────────────────────────────────────
 
 export function inferAutoCollections(
