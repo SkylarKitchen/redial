@@ -484,8 +484,6 @@ export function NavigatorPanel({
     };
   }, []);
 
-  // ── Close button hover ──
-  const [closeHovered, setCloseHovered] = useState(false);
 
   return (
       <motion.div
@@ -660,37 +658,12 @@ export function NavigatorPanel({
                   cursor: "pointer",
                   padding: 0,
                   lineHeight: 1,
-                  marginRight: 2,
                   transition: `background ${ms("fast")}`,
                 }}
               >
                 ‹
               </button>
 
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                onMouseEnter={() => setCloseHovered(true)}
-                onMouseLeave={() => setCloseHovered(false)}
-                style={{
-                  width: 24,
-                  height: 24,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 14,
-                  color: text.label,
-                  background: closeHovered ? surface.hover : "transparent",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                  padding: 0,
-                  lineHeight: 1,
-                  transition: `background ${ms("fast")}`,
-                }}
-              >
-                ×
-              </button>
             </div>
 
             {/* ── Tree body (virtualized) ── */}
