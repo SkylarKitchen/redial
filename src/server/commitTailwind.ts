@@ -262,6 +262,56 @@ export function findClassNameAttribute(
 }
 
 /**
+ * Search project JSX/TSX files for one containing the given className string.
+ * Used as a fallback when React _debugSource is unavailable (e.g., Turbopack).
+ * Returns the relative file path or null.
+ */
+async function findFileByClassName(
+  projectRoot: string,
+  className: string,
+): Promise<string | null> {
+  if (!className) return null;
+
+  const JSX_EXTENSIONS = new Set([".tsx", ".jsx", ".js", ".ts"]);
+  const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", ".turbo"]);
+
+  async function walk(dir: string): Promise<string | null> {
+    let entries;
+    try {
+      entries = await readdir(dir, { withFileTypes: true });
+    } catch { return null; }
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        if (SKIP_DIRS.has(entry.name)) continue;
+        const found = await walk(join(dir, entry.name));
+        if (found) return found;
+      } else if (JSX_EXTENSIONS.has(extname(entry.name))) {
+        const filePath = join(dir, entry.name);
+        try {
+          const content = await readFile(filePath, "utf-8");
+          if (content.includes(className)) {
+            // Verify it's actually inside a className attribute
+            const lines = content.split("\n");
+            const found = findClassNameAttribute(lines);
+            if (found) {
+              const foundClasses = lines[found.lineIdx].slice(found.start, found.end);
+              if (foundClasses === className) {
+                // Return path relative to project root
+                return filePath.slice(projectRoot.length + 1);
+              }
+            }
+          }
+        } catch { /* unreadable file */ }
+      }
+    }
+    return null;
+  }
+
+  return walk(projectRoot);
+}
+
+/**
  * Handle Tailwind class commit: read JSX files, merge classes, write back.
  */
 export async function handleTailwindCommit(
@@ -274,13 +324,19 @@ export async function handleTailwindCommit(
   // Group changes by file to batch writes
   const changesByFile = new Map<string, TailwindChange[]>();
   for (const change of changes) {
-    if (!change.sourceFile) {
+    let file: string | undefined = change.sourceFile;
+    // Fallback: when _debugSource is unavailable, search project for the className
+    if (!file && change.existingClasses) {
+      file = (await findFileByClassName(projectRoot, change.existingClasses)) ?? undefined;
+    }
+    if (!file) {
       result.failed.push({ ...change, reason: "no source file specified" });
       continue;
     }
-    const existing = changesByFile.get(change.sourceFile) ?? [];
-    existing.push(change);
-    changesByFile.set(change.sourceFile, existing);
+    const resolved = { ...change, sourceFile: file };
+    const existing = changesByFile.get(file) ?? [];
+    existing.push(resolved);
+    changesByFile.set(file, existing);
   }
 
   for (const [sourceFile, fileChanges] of changesByFile) {
