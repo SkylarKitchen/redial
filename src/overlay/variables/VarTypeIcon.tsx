@@ -1,0 +1,62 @@
+import React from "react";
+import type { VarType } from "./discoverVariables";
+import { text, font } from "../theme";
+
+const FONT_RE = /font/i;
+
+export function getVarTypeIcon(type: VarType, varName?: string): string {
+  switch (type) {
+    case "color":
+      return "●";
+    case "number":
+      return "#";
+    case "length":
+      return "↗";
+    case "string":
+      return varName && FONT_RE.test(varName) ? "Ā" : "↗";
+  }
+}
+
+export function VarTypeIcon({
+  type,
+  varName,
+  colorValue,
+}: {
+  type: VarType;
+  varName?: string;
+  colorValue?: string;
+}) {
+  const icon = getVarTypeIcon(type, varName);
+
+  if (type === "color" && colorValue) {
+    return (
+      <span
+        style={{
+          display: "inline-block",
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: colorValue,
+          border: "1px solid rgba(0,0,0,0.1)",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        fontFamily: font.mono,
+        color: text.hint,
+        width: 14,
+        textAlign: "center",
+        flexShrink: 0,
+        lineHeight: 1,
+      }}
+    >
+      {icon}
+    </span>
+  );
+}
