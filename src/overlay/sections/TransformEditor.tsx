@@ -16,7 +16,8 @@ export interface TransformValue {
   type: "translate" | "scale" | "rotate" | "skew";
   x: number;
   y: number;
-  z?: number;
+  z?: number;           // translate, scale, rotate (not skew)
+  scaleLocked?: boolean; // scale only — uniform X/Y/Z lock
 }
 
 export interface TransformEditorProps {
@@ -39,14 +40,14 @@ const TRANSFORM_LABELS: Record<TransformType, string> = {
 
 const TRANSFORM_DEFAULTS: Record<TransformType, TransformValue> = {
   translate: { type: "translate", x: 0, y: 0, z: 0 },
-  scale: { type: "scale", x: 1, y: 1 },
-  rotate: { type: "rotate", x: 0, y: 0 },
+  scale: { type: "scale", x: 1, y: 1, z: 1, scaleLocked: true },
+  rotate: { type: "rotate", x: 0, y: 0, z: 0 },
   skew: { type: "skew", x: 0, y: 0 },
 };
 
 const TRANSFORM_RANGES: Record<TransformType, { min: number; max: number; step: number }> = {
   translate: { min: -500, max: 500, step: 1 },
-  scale: { min: 0, max: 5, step: 0.1 },
+  scale: { min: 0, max: 5, step: 0.01 },
   rotate: { min: -360, max: 360, step: 1 },
   skew: { min: -90, max: 90, step: 1 },
 };
