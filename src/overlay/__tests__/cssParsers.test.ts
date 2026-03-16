@@ -6,6 +6,8 @@ import {
   shadowToCSS,
   parseFilter,
   filterToCSS,
+  parseFilterItems,
+  filterItemsToCSS,
   parseTransform,
   transformToCSS,
   parseSelfPerspective,
@@ -223,6 +225,138 @@ describe("filterToCSS", () => {
     // Both non-default → both appear
     const css2 = filterToCSS({ blur: 2, brightness: 80 });
     expect(css2).toBe("blur(2px) brightness(0.8)");
+  });
+});
+
+// ─── parseFilterItems ─────────────────────────────────────────────────
+
+describe("parseFilterItems", () => {
+  it("returns empty array for 'none'", () => {
+    expect(parseFilterItems("none")).toEqual([]);
+  });
+
+  it("returns empty array for empty string", () => {
+    expect(parseFilterItems("")).toEqual([]);
+  });
+
+  it("parses blur with px value", () => {
+    const result = parseFilterItems("blur(4px)");
+    expect(result).toEqual([
+      { type: "blur", values: [4], visible: true, expanded: false },
+    ]);
+  });
+
+  it("parses percentage filter (brightness) — scales decimal to 0-100", () => {
+    const result = parseFilterItems("brightness(0.8)");
+    expect(result).toEqual([
+      { type: "brightness", values: [80], visible: true, expanded: false },
+    ]);
+  });
+
+  it("parses hue-rotate in degrees", () => {
+    const result = parseFilterItems("hue-rotate(90deg)");
+    expect(result).toEqual([
+      { type: "hue-rotate", values: [90], visible: true, expanded: false },
+    ]);
+  });
+
+  it("parses multiple filters preserving order", () => {
+    const result = parseFilterItems("blur(2px) brightness(0.9) contrast(1.1)");
+    expect(result).toHaveLength(3);
+    expect(result[0]).toMatchObject({ type: "blur", values: [2] });
+    expect(result[1]).toMatchObject({ type: "brightness", values: [90] });
+    expect(result[2]).toMatchObject({ type: "contrast", values: [110] });
+  });
+
+  it("parses drop-shadow with color", () => {
+    const result = parseFilterItems("drop-shadow(2px 4px 6px rgba(0,0,0,0.3))");
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      type: "drop-shadow",
+      values: [2, 4, 6],
+      color: "rgba(0,0,0,0.3)",
+    });
+  });
+
+  it("parses drop-shadow without explicit color", () => {
+    const result = parseFilterItems("drop-shadow(2px 4px 6px)");
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      type: "drop-shadow",
+      values: [2, 4, 6],
+    });
+  });
+
+  it("parses grayscale", () => {
+    const result = parseFilterItems("grayscale(0.5)");
+    expect(result).toEqual([
+      { type: "grayscale", values: [50], visible: true, expanded: false },
+    ]);
+  });
+
+  it("handles mixed filters including drop-shadow", () => {
+    const result = parseFilterItems("blur(5px) drop-shadow(1px 2px 3px #000) sepia(0.5)");
+    expect(result).toHaveLength(3);
+    expect(result[0].type).toBe("blur");
+    expect(result[1].type).toBe("drop-shadow");
+    expect(result[2].type).toBe("sepia");
+  });
+});
+
+describe("filterItemsToCSS", () => {
+  it("returns 'none' for empty array", () => {
+    expect(filterItemsToCSS([])).toBe("none");
+  });
+
+  it("serializes blur", () => {
+    expect(filterItemsToCSS([
+      { type: "blur", values: [4], visible: true, expanded: false },
+    ])).toBe("blur(4px)");
+  });
+
+  it("serializes hue-rotate", () => {
+    expect(filterItemsToCSS([
+      { type: "hue-rotate", values: [90], visible: true, expanded: false },
+    ])).toBe("hue-rotate(90deg)");
+  });
+
+  it("serializes percentage filter back to decimal", () => {
+    expect(filterItemsToCSS([
+      { type: "brightness", values: [80], visible: true, expanded: false },
+    ])).toBe("brightness(0.8)");
+  });
+
+  it("serializes drop-shadow with color", () => {
+    expect(filterItemsToCSS([
+      { type: "drop-shadow", values: [2, 4, 6], color: "rgba(0,0,0,0.3)", visible: true, expanded: false },
+    ])).toBe("drop-shadow(2px 4px 6px rgba(0,0,0,0.3))");
+  });
+
+  it("serializes drop-shadow without color (uses default)", () => {
+    expect(filterItemsToCSS([
+      { type: "drop-shadow", values: [2, 4, 6], visible: true, expanded: false },
+    ])).toBe("drop-shadow(2px 4px 6px rgba(0,0,0,0.25))");
+  });
+
+  it("excludes hidden items", () => {
+    expect(filterItemsToCSS([
+      { type: "blur", values: [4], visible: false, expanded: false },
+      { type: "brightness", values: [80], visible: true, expanded: false },
+    ])).toBe("brightness(0.8)");
+  });
+
+  it("returns 'none' when all items hidden", () => {
+    expect(filterItemsToCSS([
+      { type: "blur", values: [4], visible: false, expanded: false },
+    ])).toBe("none");
+  });
+
+  it("serializes multiple items in order", () => {
+    const css = filterItemsToCSS([
+      { type: "blur", values: [2], visible: true, expanded: false },
+      { type: "brightness", values: [80], visible: true, expanded: false },
+    ]);
+    expect(css).toBe("blur(2px) brightness(0.8)");
   });
 });
 
