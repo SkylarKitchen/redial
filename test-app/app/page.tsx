@@ -11,7 +11,7 @@ export default function Home() {
         {/* ── Hero ── */}
         <section className={styles.hero}>
           <h1 className={styles.heroTitle}>Visual CSS tuning for Next.js</h1>
-          <p className={`${styles.heroSubtitle} ${styles.dropCap}`}>
+          <p className={styles.heroSubtitle}>
             Click any element, drag sliders and pick colors, then save changes
             straight to your source files. Zero config, full undo stack, instant
             HMR reload.
@@ -41,7 +41,6 @@ export default function Home() {
         <h2 className={styles.sectionHeading}>How it works</h2>
         <div className={styles.steps}>
           {[
-            ["Press ` (backtick)", "Enter selection mode"],
             ["Click any element", "Panel appears with context-aware controls"],
             ["Drag sliders, pick colors", "Changes apply instantly"],
             ["Undo, redo, reset", "Full undo stack, Alt+click to reset"],

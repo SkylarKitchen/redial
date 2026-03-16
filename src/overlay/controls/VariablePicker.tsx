@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { discoverVariables, discoverAllVariables, buildAliasGraph, type CSSVariable, type VarType, type AliasTier } from "../variables/discoverVariables";
 import { inferAutoCollections } from "../variables/autoCollections";
 import { useTokenCollections } from "../variables/tokenCollections";
+import { X } from "lucide-react";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "../theme";
 import { ms } from "../timing";
 
@@ -22,6 +23,8 @@ export interface VariablePickerProps {
   onSelect: (varExpr: string) => void;
   onClose: () => void;
   activeVariable?: string | null;
+  /** Called when user clicks the unlink X — removes the variable link */
+  onUnlink?: () => void;
 }
 
 // ─── Type indicator ──────────────────────────────────────────────────
@@ -170,6 +173,7 @@ export function VariablePicker({
   onSelect,
   onClose,
   activeVariable,
+  onUnlink,
 }: VariablePickerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -288,7 +292,7 @@ export function VariablePicker({
         top: pos?.top ?? 0,
         left: pos?.left ?? 0,
         visibility: pos ? "visible" : "hidden",
-        width: 220,
+        width: 240,
         maxHeight: 300,
         background: color.background,
         border: `1px solid ${border.default}`,
@@ -299,6 +303,37 @@ export function VariablePicker({
         overflow: "hidden",
       }}
     >
+      {/* Connect header + optional unlink X */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 8px 4px",
+        flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: text.primary }}>
+          Connect
+        </span>
+        {onUnlink && (
+          <button
+            type="button"
+            title="Unlink variable"
+            onClick={(e) => { e.stopPropagation(); onUnlink(); onClose(); }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: text.hint,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <X size={12} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+
       {/* Search */}
       <div style={{ padding: "6px 6px 4px", borderBottom: `1px solid ${border.subtle}`, flexShrink: 0 }}>
         <input
