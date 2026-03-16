@@ -12,7 +12,6 @@ import { Copy, Trash2, Plus } from "lucide-react";
 import { inferSubgroups, type Subgroup } from "./autoCollections";
 import { VarTypeIcon } from "./VarTypeIcon";
 import { VariableValue } from "./ReferencePill";
-import { buildAliasGraph } from "./discoverVariables";
 import type { CSSVariable } from "./discoverVariables";
 import type { TokenCollection } from "./tokenCollections";
 import {
@@ -26,10 +25,8 @@ import {
   surface,
   font,
   color,
-  focusRing,
   shadow,
   zIndex,
-  layout,
   labelIndicator,
   labelHighlight,
   type IndicatorType,
@@ -674,9 +671,6 @@ export function CollectionDetail({
 
   // Infer subgroups from the variables in this collection
   const subgroups = useMemo(() => inferSubgroups(variables), [variables]);
-
-  // Build alias graph for reference resolution
-  const aliasGraph = useMemo(() => buildAliasGraph(allVariables), [allVariables]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, variable: CSSVariable) => {
     e.preventDefault();
