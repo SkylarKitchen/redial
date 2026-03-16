@@ -107,6 +107,79 @@ const HANDLE_SIZE = 14;
 const CHECKER =
   "repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/8px 8px";
 
+// ─── Variable Grouping (Figma-style prefix groups) ──────────────
+
+interface ColorVarGroup {
+  name: string; // e.g. "color/primary" — empty string for ungrouped
+  items: { leaf: string; cv: ColorVariable }[];
+}
+
+function groupByPrefix(vars: ColorVariable[]): ColorVarGroup[] {
+  const byFirst = new Map<string, ColorVariable[]>();
+  const ungrouped: ColorVariable[] = [];
+
+  for (const cv of vars) {
+    const segs = cv.name.slice(2).split("-"); // strip --
+    if (segs.length >= 2) {
+      const first = segs[0];
+      if (!byFirst.has(first)) byFirst.set(first, []);
+      byFirst.get(first)!.push(cv);
+    } else {
+      ungrouped.push(cv);
+    }
+  }
+
+  const groups: ColorVarGroup[] = [];
+
+  for (const [first, groupVars] of byFirst) {
+    // Check if deeper subgroups exist (e.g. color/primary vs color/neutral)
+    const bySecond = new Map<string, ColorVariable[]>();
+    let allHaveThird = true;
+
+    for (const cv of groupVars) {
+      const segs = cv.name.slice(2).split("-");
+      if (segs.length >= 3) {
+        const key = segs[1];
+        if (!bySecond.has(key)) bySecond.set(key, []);
+        bySecond.get(key)!.push(cv);
+      } else {
+        allHaveThird = false;
+      }
+    }
+
+    if (allHaveThird && bySecond.size > 1) {
+      // Multiple subgroups: color/primary, color/neutral, etc.
+      for (const [second, subVars] of bySecond) {
+        groups.push({
+          name: `${first}/${second}`,
+          items: subVars.map((cv) => ({
+            leaf: cv.name.slice(2).split("-").slice(2).join("-"),
+            cv,
+          })).sort((a, b) => a.leaf.localeCompare(b.leaf)),
+        });
+      }
+    } else {
+      // Single group: "bg", "border", etc.
+      groups.push({
+        name: first,
+        items: groupVars.map((cv) => ({
+          leaf: cv.name.slice(2).split("-").slice(1).join("-"),
+          cv,
+        })).sort((a, b) => a.leaf.localeCompare(b.leaf)),
+      });
+    }
+  }
+
+  if (ungrouped.length > 0) {
+    groups.unshift({
+      name: "",
+      items: ungrouped.map((cv) => ({ leaf: cv.name.slice(2), cv })),
+    });
+  }
+
+  return groups.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // ─── Component ───────────────────────────────────────────────────
 
 export function ColorPickerEnhanced({
@@ -152,8 +225,7 @@ export function ColorPickerEnhanced({
   const [isCreatingVar, setIsCreatingVar] = useState(false);
   const [newVarName, setNewVarName] = useState("");
   const newVarInputRef = useRef<HTMLInputElement>(null);
-  const { collections, getCollectionForVariable } = useTokenCollections();
-  const { swatches: savedSwatches, addSwatch, removeSwatch } = useSwatches();
+  const colorGroups = useMemo(() => groupByPrefix(colorVars), [colorVars]);
 
   // Focus the name input when the create form opens
   useEffect(() => {
