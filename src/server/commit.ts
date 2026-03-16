@@ -13,6 +13,44 @@ import { readFile, writeFile, readdir, stat } from "fs/promises";
 import { resolve, join, basename, normalize } from "path";
 import { trySourceMapResolution } from "./sourceMapCache";
 
+/**
+ * Search the project for a CSS file that defines a custom property.
+ * Used as a fallback when the client can't determine the definition site
+ * (e.g., variable is in a bundled global stylesheet).
+ */
+async function findVariableDefinitionFile(
+  projectRoot: string,
+  varName: string,
+): Promise<string | null> {
+  const cssFiles = await findCSSFiles(projectRoot);
+  const pattern = new RegExp(`${varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`);
+  for (const file of cssFiles) {
+    try {
+      const source = await readFile(file, "utf-8");
+      if (pattern.test(source)) return file;
+    } catch { /* skip unreadable files */ }
+  }
+  return null;
+}
+
+/** Collect all CSS/SCSS files in the project (excluding node_modules etc.) */
+async function findCSSFiles(dir: string): Promise<string[]> {
+  const results: string[] = [];
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (EXCLUDE_DIRS.has(entry.name)) continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...await findCSSFiles(full));
+      } else if (/\.(css|scss)$/.test(entry.name)) {
+        results.push(full);
+      }
+    }
+  } catch { /* skip */ }
+  return results;
+}
+
 /** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
 const VALID_STATES = new Set([
   "hover", "focus", "active", "visited",
@@ -707,7 +745,7 @@ export async function handleCommit(
   for (const [sourceFile, fileChanges] of changesByFile) {
     try {
       // Resolve the actual file path (handles bare filenames + source maps)
-      const filePath = await resolveSourceFile(
+      let filePath = await resolveSourceFile(
         projectRoot,
         sourceFile,
         fileChanges[0]?.componentName,
@@ -715,13 +753,23 @@ export async function handleCommit(
       );
 
       if (!filePath) {
-        for (const change of fileChanges) {
-          result.failed.push({
-            ...change,
-            reason: `file not found: "${sourceFile}"`,
-          });
+        // Fallback: if the property is a CSS custom property, search project for its definition
+        const firstProp = fileChanges[0]?.prop;
+        if (firstProp?.startsWith("--")) {
+          const varFile = await findVariableDefinitionFile(projectRoot, firstProp);
+          if (varFile) {
+            filePath = varFile;
+          }
         }
-        continue;
+        if (!filePath) {
+          for (const change of fileChanges) {
+            result.failed.push({
+              ...change,
+              reason: `file not found: "${sourceFile}"`,
+            });
+          }
+          continue;
+        }
       }
 
       const source = await readFile(filePath, "utf-8");
