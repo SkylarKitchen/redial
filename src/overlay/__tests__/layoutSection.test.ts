@@ -345,7 +345,7 @@ const layoutSrcFresh = readFileSync(
 );
 
 describe("Grid Columns/Rows content alignment rows", () => {
-  it("renders Columns alignment row when isGrid", async () => {
+  it("renders 'More alignment options' toggle when isGrid", async () => {
     const ctx = makeMockCtx({ display: "grid" });
     const html = await renderLayout({
       ctx,
@@ -353,12 +353,10 @@ describe("Grid Columns/Rows content alignment rows", () => {
       isFlex: false,
       isGrid: true,
     });
-    // "Columns" appears from both GridTrackRow and the new content alignment row
-    expect(html).toContain("Columns");
-    expect(html).toContain("Grid justify-content");
+    expect(html).toContain("More alignment options");
   });
 
-  it("renders Rows alignment row when isGrid", async () => {
+  it("Columns/Rows rows are collapsed by default (not rendered in initial HTML)", async () => {
     const ctx = makeMockCtx({ display: "grid" });
     const html = await renderLayout({
       ctx,
@@ -366,17 +364,18 @@ describe("Grid Columns/Rows content alignment rows", () => {
       isFlex: false,
       isGrid: true,
     });
-    expect(html).toContain("Grid align-content");
+    // The icon button groups are hidden until toggle is clicked
+    expect(html).not.toContain("Grid justify-content");
+    expect(html).not.toContain("Grid align-content");
   });
 
-  it("does NOT render Columns/Rows alignment rows when isFlex", async () => {
+  it("does NOT render 'More alignment options' when isFlex", async () => {
     const html = await renderLayout({
       display: "flex",
       isFlex: true,
       isGrid: false,
     });
-    expect(html).not.toContain("Grid justify-content");
-    expect(html).not.toContain("Grid align-content");
+    expect(html).not.toContain("More alignment options");
   });
 
   it("does NOT render Quick row (removed)", async () => {

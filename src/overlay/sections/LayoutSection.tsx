@@ -163,6 +163,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const [gridColCount, setGridColCount] = useState(() => parseTrackCount(cs.gridTemplateColumns));
   const [gridRowCount, setGridRowCount] = useState(() => parseTrackCount(cs.gridTemplateRows));
   const [gridTrackLinked, setGridTrackLinked] = useState(false);
+  const [showMoreAlign, setShowMoreAlign] = useState(false);
 
   // Flex child
   const [flexGrow, setFlexGrow] = useState(() => parseNum(cs.flexGrow));
@@ -457,27 +458,36 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </div>
           </div>
 
-          {/* Columns: justify-content (grid track distribution) */}
-          <div style={ROW}>
-            <RowLabel label="Columns" indicator={ind("justify-content")} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
-            <IconButtonGroup
-              options={GRID_JUSTIFY_CONTENT_OPTIONS}
-              value={justifyContent === "normal" ? "stretch" : justifyContent}
-              onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
-              aria-label="Grid justify-content"
-            />
+          {/* More alignment options toggle */}
+          <div onClick={() => setShowMoreAlign(!showMoreAlign)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderTop: `1px solid ${border.subtle}` }}>
+            <ChevronRight size={9} strokeWidth={2} style={{ color: text.label, transition: `transform ${ms("expand")}`, transform: showMoreAlign ? "rotate(90deg)" : "rotate(0deg)" }} />
+            <span style={{ fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: text.label }}>More alignment options</span>
           </div>
+          {showMoreAlign && (
+            <>
+              {/* Columns: justify-content (grid track distribution) */}
+              <div style={ROW}>
+                <RowLabel label="Columns" indicator={ind("justify-content")} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
+                <IconButtonGroup
+                  options={GRID_JUSTIFY_CONTENT_OPTIONS}
+                  value={justifyContent === "normal" ? "stretch" : justifyContent}
+                  onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+                  aria-label="Grid justify-content"
+                />
+              </div>
 
-          {/* Rows: align-content (grid track distribution) */}
-          <div style={ROW}>
-            <RowLabel label="Rows" indicator={ind("align-content")} onReset={() => resetCssStr("align-content", setAlignContent)} />
-            <IconButtonGroup
-              options={GRID_ALIGN_CONTENT_OPTIONS}
-              value={alignContent === "normal" ? "stretch" : alignContent}
-              onChange={(v) => { setAlignContent(v); apply("align-content", v); }}
-              aria-label="Grid align-content"
-            />
-          </div>
+              {/* Rows: align-content (grid track distribution) */}
+              <div style={ROW}>
+                <RowLabel label="Rows" indicator={ind("align-content")} onReset={() => resetCssStr("align-content", setAlignContent)} />
+                <IconButtonGroup
+                  options={GRID_ALIGN_CONTENT_OPTIONS}
+                  value={alignContent === "normal" ? "stretch" : alignContent}
+                  onChange={(v) => { setAlignContent(v); apply("align-content", v); }}
+                  aria-label="Grid align-content"
+                />
+              </div>
+            </>
+          )}
 
           {/* Gap: slider + lock */}
           {gapLocked ? (
