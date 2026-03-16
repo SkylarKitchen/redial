@@ -250,7 +250,7 @@ export function ColorRow({
           : rect.bottom + gap;
         const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
         return createPortal(
-          <div style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
+          <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
             <ColorPickerEnhanced
               color={pickerColor}
               onChange={(hex, opacity) => {
