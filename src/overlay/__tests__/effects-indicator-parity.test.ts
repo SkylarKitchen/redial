@@ -41,9 +41,15 @@ function extractRowIndicatorProps(source: string): string[] {
 const sectionProps = extractSectionIndProps(src);
 const rowProps = extractRowIndicatorProps(src);
 
+// Properties whose indicators are delegated to child components (e.g. TransformEditor's
+// settings panel handles perspective & backface-visibility indicators internally).
+// They must stay in sectionInd so the section header lights up, but they won't have
+// a direct ind("...") call in EffectsSection itself.
+const DELEGATED_TO_CHILD = ["perspective", "backface-visibility"];
+
 describe("Effects section indicator parity", () => {
   it("every sectionInd property has a matching row-level ind() call", () => {
-    const missing = sectionProps.filter((p) => !rowProps.includes(p));
+    const missing = sectionProps.filter((p) => !rowProps.includes(p) && !DELEGATED_TO_CHILD.includes(p));
     expect(
       missing,
       `These properties are in sectionInd but have NO row indicator — ` +
