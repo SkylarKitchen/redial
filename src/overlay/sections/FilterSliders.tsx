@@ -199,6 +199,16 @@ function FilterItemEditor({
     [item, onUpdate]
   );
 
+  const handleTypeChange = useCallback((newType: FilterType) => {
+    const newMeta = FILTER_META[newType];
+    onUpdate({
+      ...item,
+      type: newType,
+      values: [...newMeta.defaultValues],
+      color: newMeta.defaultColor,
+    });
+  }, [item, onUpdate]);
+
   const handleColorChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onUpdate({ ...item, color: e.target.value });
@@ -208,6 +218,32 @@ function FilterItemEditor({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "4px 0 4px 20px" }}>
+      {/* Filter type dropdown */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <span style={{ fontSize: "10px", fontFamily: font.sans, color: text.label, width: "44px", flexShrink: 0 }}>
+          Filter
+        </span>
+        <select
+          value={item.type}
+          onChange={(e) => handleTypeChange(e.target.value as FilterType)}
+          style={{
+            flex: 1,
+            background: color.input,
+            border: `1px solid ${border.default}`,
+            borderRadius: "3px",
+            color: text.secondary,
+            fontSize: "10px",
+            fontFamily: font.sans,
+            padding: "3px 6px",
+            outline: "none",
+          }}
+        >
+          {FILTER_CATEGORIES.flatMap(cat => cat.types).map(t => (
+            <option key={t} value={t}>{FILTER_META[t].label}</option>
+          ))}
+        </select>
+      </div>
+
       {/* Parameter sliders */}
       {meta.paramLabels.map((label, idx) => {
         const val = item.values[idx] ?? 0;
