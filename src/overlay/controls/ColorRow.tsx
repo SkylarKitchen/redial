@@ -85,9 +85,8 @@ export function ColorRow({
   actions?: React.ReactNode;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [varPickerOpen, setVarPickerOpen] = useState(false);
+  const [rowHovered, setRowHovered] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
-  const linkBtnRef = useRef<HTMLButtonElement>(null);
   const resetPopover = useResetPopover(indicator, onReset);
   const { pressHandlers: swatchPress, pressStyle: swatchPressStyle } = usePressScale(0.92);
 

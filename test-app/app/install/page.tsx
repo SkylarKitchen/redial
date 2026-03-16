@@ -44,7 +44,6 @@ export default function InstallPage() {
             </pre>
           </section>
 
-          <hr className={styles.rule} />
           <section id="next-plugin" className={styles.contentSection}>
             <h2>Next.js Plugin</h2>
             <p>
@@ -61,7 +60,6 @@ module.exports = withTuner({
             </pre>
           </section>
 
-          <hr className={styles.rule} />
           <section id="api-route" className={styles.contentSection}>
             <h2>API Route</h2>
             <p>
@@ -74,7 +72,6 @@ export { GET, POST } from "redial/server";`}
             </pre>
           </section>
 
-          <hr className={styles.rule} />
           <section id="component" className={styles.contentSection}>
             <h2>Component</h2>
             <p>
@@ -99,7 +96,6 @@ export default function RootLayout({ children }) {
             </pre>
           </section>
 
-          <hr className={styles.rule} />
           <section id="configuration" className={styles.contentSection}>
             <h2>Configuration</h2>
             <p>Pass props to the Tuner component to customize behavior:</p>
@@ -135,7 +131,6 @@ export default function RootLayout({ children }) {
             </table>
           </section>
 
-          <hr className={styles.rule} />
           <section id="exports" className={styles.contentSection}>
             <h2>Exports</h2>
             <p>Everything Redial exposes:</p>
@@ -148,7 +143,6 @@ const withTuner = require("redial/next-plugin"); // Webpack plugin`}
             </pre>
           </section>
 
-          <hr className={styles.rule} />
           <section id="requirements" className={styles.contentSection}>
             <h2>Requirements</h2>
             <table className={styles.propsTable}>
