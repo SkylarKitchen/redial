@@ -727,6 +727,71 @@ describe("restoreSession — state-keyed overrides", () => {
   });
 });
 
+// ─── undo/reset preserves pre-existing inline styles ──────────────────
+
+describe("undo/reset preserves pre-existing inline styles", () => {
+  it("undo restores pre-existing inline style", () => {
+    const el = makeEl();
+    el.style.display = "flex";
+    applyInlineStyle(el, "display", "grid");
+    expect(el.style.getPropertyValue("display")).toBe("grid");
+
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+  });
+
+  it("reset restores pre-existing inline style", () => {
+    const el = makeEl();
+    el.style.display = "flex";
+    applyInlineStyle(el, "display", "grid");
+
+    reset(el);
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+  });
+
+  it("resetProp restores pre-existing inline style", () => {
+    const el = makeEl();
+    el.style.display = "flex";
+    applyInlineStyle(el, "display", "grid");
+
+    resetProp(el, "display");
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+  });
+
+  it("resetAll restores pre-existing inline styles", () => {
+    const el = makeEl();
+    el.style.display = "flex";
+    applyInlineStyle(el, "display", "grid");
+
+    resetAll();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+  });
+
+  it("batch undo restores pre-existing inline styles", () => {
+    const el = makeEl();
+    el.style.display = "flex";
+    el.style.gap = "16px";
+
+    beginBatch();
+    applyInlineStyle(el, "display", "grid");
+    applyInlineStyle(el, "gap", "24px");
+    endBatch();
+
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+    expect(el.style.getPropertyValue("gap")).toBe("16px");
+  });
+
+  it("undo removes property when no pre-existing inline style", () => {
+    const el = makeEl();
+    // No pre-existing inline style
+    applyInlineStyle(el, "display", "grid");
+
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("");
+  });
+});
+
 // ─── restoreSession — corrupted localStorage ─────────────────────────
 
 describe("restoreSession — corrupted localStorage", () => {

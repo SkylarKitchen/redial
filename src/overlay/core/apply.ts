@@ -17,6 +17,7 @@ import { getStableSelector } from "../util";
 export type Override = {
   initial: string;
   current: string;
+  inlineOriginal: string | null;
 };
 
 export type DiffEntry = {
@@ -232,8 +233,10 @@ export function applyInlineStyle(
 
   if (!elOverrides.has(prop)) {
     // First time touching this prop — capture the original computed value
+    // Also capture pre-existing inline value so undo/reset can restore it
+    const inlineOriginal = isStateKeyed ? null : ((el as HTMLElement).style.getPropertyValue(cssProp) || null);
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
-    elOverrides.set(prop, { initial, current: value });
+    elOverrides.set(prop, { initial, current: value, inlineOriginal });
 
     // New override: dirty if initial !== value
     if (initial !== value) dirtyCount++;
@@ -322,7 +325,13 @@ export function undo(): { el: Element; prop?: string } | null {
       const wasDirty = entry.initial !== entry.current;
 
       if (prev === entry.initial) {
-        if (!isState) (el as HTMLElement).style.removeProperty(prop);
+        if (!isState) {
+          if (entry.inlineOriginal) {
+            (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
+          } else {
+            (el as HTMLElement).style.removeProperty(prop);
+          }
+        }
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
         if (isState) notifyStateChange(el, state, cssProp, null);
@@ -370,8 +379,14 @@ export function undo(): { el: Element; prop?: string } | null {
   const wasDirty = entry.initial !== entry.current;
 
   if (prev === entry.initial) {
-    // Undoing back to original — remove override entirely
-    if (!isState) (el as HTMLElement).style.removeProperty(prop);
+    // Undoing back to original — restore pre-existing inline value or remove
+    if (!isState) {
+      if (entry.inlineOriginal) {
+        (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
+      } else {
+        (el as HTMLElement).style.removeProperty(prop);
+      }
+    }
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
     if (isState) notifyStateChange(el, state, cssProp, null);
@@ -519,11 +534,15 @@ export function reset(el: Element): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
 
-  for (const [prop, { initial, current }] of elOverrides) {
-    if (initial !== current) dirtyCount--;
+  for (const [prop, override] of elOverrides) {
+    if (override.initial !== override.current) dirtyCount--;
     // Only remove inline style for non-state-keyed properties
     if (!prop.includes("::")) {
-      (el as HTMLElement).style.removeProperty(prop);
+      if (override.inlineOriginal) {
+        (el as HTMLElement).style.setProperty(prop, override.inlineOriginal);
+      } else {
+        (el as HTMLElement).style.removeProperty(prop);
+      }
     }
   }
   overrides.delete(el);
@@ -546,9 +565,13 @@ export function reset(el: Element): void {
 
 export function resetAll(): void {
   for (const [el, props] of overrides) {
-    for (const [prop] of props) {
+    for (const [prop, override] of props) {
       if (!prop.includes("::")) {
-        (el as HTMLElement).style.removeProperty(prop);
+        if (override.inlineOriginal) {
+          (el as HTMLElement).style.setProperty(prop, override.inlineOriginal);
+        } else {
+          (el as HTMLElement).style.removeProperty(prop);
+        }
       }
     }
   }
