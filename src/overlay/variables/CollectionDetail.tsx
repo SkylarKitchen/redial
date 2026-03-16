@@ -433,7 +433,6 @@ function ModeValueCell({
       style={{
         flex: "0 0 106px",
         minWidth: 0,
-        overflow: "hidden",
         position: "relative",
       }}
     >
