@@ -1005,7 +1005,8 @@ export function GridTrackRow({ columns, rows, onColumnsChange, onRowsChange,
         <span style={{ flex: 1, display: "flex", justifyContent: "center" }}>
           <span style={{ fontSize: 10, color: text.label, fontFamily: font.sans }}>Rows</span>
         </span>
-        <span style={{ width: 44, flexShrink: 0 }} />
+        <span style={{ width: 20, flexShrink: 0 }} />
+        <span style={{ width: 20, flexShrink: 0 }} />
       </div>
       {/* Grid settings popup */}
       {settingsOpen && settingsAnchor && gridCols != null && gridRows != null && onGridColsChange && onGridRowsChange && (

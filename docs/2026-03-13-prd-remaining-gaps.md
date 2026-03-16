@@ -6,7 +6,7 @@ date: 2026-03-13
 
 # Close Remaining Gaps
 
-**Status: 11 of 13 iterations complete.** Remaining: #8 (spacing box model interactions — 3 criteria), #11 (NPM publish — 3 fields).
+**Status: 12 of 13 iterations complete.** Remaining: #11 (package metadata — 3 fields).
 
 ## Overview
 
@@ -288,9 +288,9 @@ When hovering over a value in the box model, highlight the corresponding side of
 
 ### Acceptance criteria
 
-- [ ] Alt+click on a side value applies to complementary side
-- [ ] Alt+click on a corner applies to all 4 sides of that type (margin or padding)
-- [ ] Hovering a value highlights the corresponding zone in the diagram
+- [x] Alt+click on a side value applies to complementary side
+- [x] Alt+click on a corner applies to all 4 sides of that type (margin or padding)
+- [x] Hovering a value highlights the corresponding zone in the diagram
 - [x] Margin and padding zones have distinct warm/cool tint colors
 - [x] Existing interactions (click-to-edit, arrow keys, tab navigation) still work
 - [x] `npm run typecheck` passes
