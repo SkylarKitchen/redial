@@ -100,14 +100,22 @@ function removeModeOverrideInternal(
 
 // ─── Public API ─────────────────────────────────────────────────────
 
+/** When true, consecutive applies for the same selector+varName merge into one undo entry */
+let coalescing = false;
+
+/** Enable undo coalescing (call before rapid-fire updates like color picker drag) */
+export function beginModeCoalesce(): void { coalescing = true; }
+
+/** Disable undo coalescing */
+export function endModeCoalesce(): void { coalescing = false; }
+
 export function applyModeOverride(
   selector: string,
   varName: string,
   value: string,
 ): void {
-  // Coalesce consecutive entries for the same selector+varName (e.g., color picker drag)
   const top = undoStack[undoStack.length - 1];
-  if (top && top.selector === selector && top.varName === varName) {
+  if (coalescing && top && top.selector === selector && top.varName === varName) {
     top.next = value;
   } else {
     const prev = store.get(selector)?.get(varName) ?? null;

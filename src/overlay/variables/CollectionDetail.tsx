@@ -25,6 +25,8 @@ import {
   isModeOverrideDirty,
   subscribeModeOverrides,
   getModeOverrideSnapshot,
+  beginModeCoalesce,
+  endModeCoalesce,
 } from "./modeOverrides";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
 import { cssColorToHex, hexToRgba } from "../colorUtils";
@@ -463,11 +465,12 @@ function ModeValueCell({
               color={value ? cssColorToHex(value) : "#000000"}
               onChange={(hex, opacity) => {
                 if (mode.selector) {
+                  beginModeCoalesce();
                   const final = opacity < 1 ? hexToRgba(hex, opacity) : hex;
                   applyModeOverride(mode.selector, varName, final);
                 }
               }}
-              onClose={() => setPickerOpen(false)}
+              onClose={() => { endModeCoalesce(); setPickerOpen(false); }}
             />
           </div>,
           document.body,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../docs.module.scss";
 
 interface SidebarSection {
@@ -14,28 +14,29 @@ export default function DocsSidebar({
   sections: SidebarSection[];
 }) {
   const [activeId, setActiveId] = useState<string>("");
-
-  const ids = sections.flatMap((s) => s.links.map((l) => l.id));
-
-  const handleScroll = useCallback(() => {
-    const offset = 120; // nav height + margin
-    let current = ids[0] || "";
-
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el && el.getBoundingClientRect().top <= offset) {
-        current = id;
-      }
-    }
-
-    setActiveId(current);
-  }, [ids]);
+  const idsRef = useRef(sections.flatMap((s) => s.links.map((l) => l.id)));
 
   useEffect(() => {
-    handleScroll(); // set initial
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const ids = idsRef.current;
+
+    function onScroll() {
+      const offset = 120;
+      let current = ids[0] || "";
+
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = id;
+        }
+      }
+
+      setActiveId((prev) => (prev === current ? prev : current));
+    }
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <aside className={styles.sidebar}>
