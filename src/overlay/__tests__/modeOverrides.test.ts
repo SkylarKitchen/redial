@@ -106,3 +106,38 @@ describe("subscription", () => {
     expect(s2).toBeGreaterThan(s1);
   });
 });
+
+describe("undo/redo", () => {
+  it("undo reverts the last applyModeOverride", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    applyModeOverride(".dark", "--bg", "#222");
+    undoModeOverride();
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
+  });
+
+  it("undo removes variable if it was newly added", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    undoModeOverride();
+    expect(getModeOverrides(".dark")).toBeUndefined();
+  });
+
+  it("redo re-applies after undo", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    undoModeOverride();
+    redoModeOverride();
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
+  });
+
+  it("new apply after undo clears redo stack", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    undoModeOverride();
+    applyModeOverride(".dark", "--bg", "#333");
+    redoModeOverride(); // no-op
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#333" });
+  });
+
+  it("undo past the beginning is a no-op", () => {
+    undoModeOverride();
+    expect(getModeOverrides(".dark")).toBeUndefined();
+  });
+});

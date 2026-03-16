@@ -14,6 +14,18 @@ const store = new Map<string, Map<string, string>>();
 /** Monotonic counter for useSyncExternalStore snapshot */
 let version = 0;
 
+// ─── Undo / Redo ────────────────────────────────────────────────────
+
+interface UndoEntry {
+  selector: string;
+  varName: string;
+  prev: string | null; // null = variable didn't exist
+  next: string;
+}
+
+const undoStack: UndoEntry[] = [];
+const redoStack: UndoEntry[] = [];
+
 /** Style element reference */
 let styleEl: HTMLStyleElement | null = null;
 
