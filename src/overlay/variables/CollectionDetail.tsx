@@ -376,7 +376,7 @@ function ModeValueCell({
 
   if (editing) {
     return (
-      <div style={{ flex: 1, minWidth: 80 }}>
+      <div style={{ flex: "0 0 140px" }}>
         <input
           ref={inputRef}
           value={draft}
@@ -409,8 +409,7 @@ function ModeValueCell({
     <div
       onClick={editable ? () => setEditing(true) : undefined}
       style={{
-        flex: 1,
-        minWidth: 80,
+        flex: "0 0 140px",
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
@@ -495,6 +494,8 @@ function DetailVariableRow({
   onRenameCommit,
   onRenameCancel,
   modeValues,
+  registerModeScroll,
+  onModeScroll,
 }: {
   variable: CSSVariable;
   subgroupName: string;
@@ -509,6 +510,10 @@ function DetailVariableRow({
   onRenameCancel: () => void;
   /** When multi-mode is active, per-mode values for this variable */
   modeValues?: Array<{ modeName: string; mode: InferredMode; value: string | undefined }>;
+  /** Register this row's mode container for scroll sync */
+  registerModeScroll?: (el: HTMLDivElement | null) => void;
+  /** Scroll handler for mode container sync */
+  onModeScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -625,7 +630,11 @@ function DetailVariableRow({
       {/* Value cell(s) */}
       {modeValues ? (
         /* Multi-mode: one editable cell per mode */
-        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
+        <div
+          ref={registerModeScroll}
+          onScroll={onModeScroll}
+          style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4, overflowX: "auto" }}
+        >
           {modeValues.map((mv) => (
             <ModeValueCell
               key={mv.modeName}
@@ -736,6 +745,8 @@ function SubgroupSection({
   onRenameCommit,
   onRenameCancel,
   modes,
+  registerModeScroll,
+  onModeScroll,
 }: {
   subgroup: Subgroup;
   allVariables: CSSVariable[];
@@ -755,6 +766,10 @@ function SubgroupSection({
   onRenameCancel: () => void;
   /** When multi-mode is active, the relevant inferred modes */
   modes?: InferredMode[];
+  /** Register a row's mode container for scroll sync */
+  registerModeScroll?: (el: HTMLDivElement | null) => void;
+  /** Scroll handler for mode container sync */
+  onModeScroll?: (e: React.UIEvent<HTMLDivElement>) => void;
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -803,6 +818,8 @@ function SubgroupSection({
             onRenameCommit={(newName) => onRenameCommit(v.name, newName)}
             onRenameCancel={onRenameCancel}
             modeValues={modeValues}
+            registerModeScroll={registerModeScroll}
+            onModeScroll={onModeScroll}
           />
         );
       })}
@@ -869,6 +886,31 @@ export function CollectionDetail({
 
   // Subscribe to mode override changes so cells re-render with fresh data
   const _modeOverrideVersion = useSyncExternalStore(subscribeModeOverrides, getModeOverrideSnapshot);
+
+  // Scroll sync refs for frozen-column mode layout
+  const modeScrollRefs = useRef<HTMLDivElement[]>([]);
+
+  const handleModeScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    for (const el of modeScrollRefs.current) {
+      if (el && el !== e.currentTarget) {
+        el.scrollLeft = scrollLeft;
+      }
+    }
+  }, []);
+
+  const registerModeScroll = useCallback((el: HTMLDivElement | null) => {
+    if (el && !modeScrollRefs.current.includes(el)) {
+      modeScrollRefs.current.push(el);
+    }
+  }, []);
+
+  // Clean stale refs when variables change (rows mount/unmount)
+  useEffect(() => {
+    modeScrollRefs.current = modeScrollRefs.current.filter(
+      (el) => el && document.contains(el),
+    );
+  }, [variables]);
 
   // Infer subgroups from the variables in this collection
   const subgroups = useMemo(() => inferSubgroups(variables), [variables]);
@@ -955,11 +997,23 @@ export function CollectionDetail({
           {relevantModes ? (
             <>
               <div style={{ width: 130, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
-              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
+              <div
+                ref={registerModeScroll}
+                onScroll={handleModeScroll}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  overflowX: "auto",
+                  scrollbarWidth: "none",
+                }}
+              >
                 {relevantModes.map((m) => (
                   <div
                     key={m.name}
-                    style={{ flex: 1, minWidth: 80, textAlign: "right", ...COLUMN_HEADER_STYLE }}
+                    style={{ flex: "0 0 140px", textAlign: "right", ...COLUMN_HEADER_STYLE }}
                   >
                     {m.name}
                   </div>
@@ -1006,6 +1060,8 @@ export function CollectionDetail({
             onRenameCommit={handleRenameCommit}
             onRenameCancel={handleRenameCancel}
             modes={relevantModes ?? undefined}
+            registerModeScroll={relevantModes ? registerModeScroll : undefined}
+            onModeScroll={relevantModes ? handleModeScroll : undefined}
           />
         ))}
       </div>
