@@ -932,7 +932,7 @@ export function Overlay() {
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
   const SNAP_MARGIN = 16;
-  const PANEL_WIDTH = 300;
+  const PANEL_WIDTH = activePanel.type === "variables" ? 550 : 300;
   const PANEL_HEIGHT_ESTIMATE = 500;
 
   const handleDragStart = useCallback(
@@ -1154,18 +1154,37 @@ export function Overlay() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         // If anchored to an edge, recompute from that edge; otherwise just clamp
+        const pw = activePanel.type === "variables" ? 550 : 300;
         const x = anchor === "right"
-          ? vw - 300 - MARGIN
+          ? vw - pw - MARGIN
           : anchor === "left"
             ? MARGIN
-            : Math.max(0, Math.min(vw - 300, p.x));
+            : Math.max(0, Math.min(vw - pw, p.x));
         const y = Math.max(0, Math.min(vh - 100, p.y));
         return { x, y };
       });
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [anchor]);
+  }, [anchor, activePanel.type]);
+
+  // --- Reposition panel when switching between inspector (300px) and variables (550px) ---
+  useEffect(() => {
+    const pw = activePanel.type === "variables" ? 550 : 300;
+    setPos((p) => {
+      const vw = window.innerWidth;
+      const MARGIN = 16;
+      // If panel would overflow right edge, clamp it
+      if (p.x + pw > vw - MARGIN) {
+        return { x: Math.max(MARGIN, vw - pw - MARGIN), y: p.y };
+      }
+      // If anchored right, snap to right edge with new width
+      if (anchor === "right") {
+        return { x: vw - pw - MARGIN, y: p.y };
+      }
+      return p;
+    });
+  }, [activePanel.type, anchor]);
 
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
   useEffect(() => {

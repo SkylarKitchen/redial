@@ -55,7 +55,7 @@ Three layers:
 ## Install
 
 ```sh
-npm install redial
+npm install github:SkylarKitchen/redial
 ```
 
 ## Setup
@@ -238,7 +238,7 @@ const withTuner = require("redial/next-plugin"); // Next.js plugin
 ## Development
 
 ```sh
-git clone https://github.com/TODO/redial
+git clone https://github.com/SkylarKitchen/redial
 cd redial
 npm install
 npm run build        # TypeScript compile (tsup)

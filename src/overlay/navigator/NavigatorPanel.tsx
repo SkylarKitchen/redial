@@ -55,6 +55,8 @@ interface NavigatorPanelProps {
 // ─── Constants ──────────────────────────────────────────────────
 
 const PANEL_WIDTH = 300;
+const COLLAPSED_WIDTH = 28;
+const COLLAPSED_HEIGHT = 80;
 const SNAP_THRESHOLD = 20;
 const SNAP_MARGIN = 16;
 const DEFAULT_POS = { x: SNAP_MARGIN, y: SNAP_MARGIN };
@@ -474,6 +476,11 @@ export function NavigatorPanel({
       if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, []);
+
+  // ── Collapse state ──
+  const [collapsed, setCollapsed] = useState(false);
+  const [collapseHovered, setCollapseHovered] = useState(false);
+  const preCollapsePos = useRef(pos);
 
   // ── Close button hover ──
   const [closeHovered, setCloseHovered] = useState(false);

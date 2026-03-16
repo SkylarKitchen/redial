@@ -5,11 +5,11 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TODO/redial"
+    "url": "https://github.com/SkylarKitchen/redial"
   },
-  "homepage": "https://github.com/TODO/redial#readme",
+  "homepage": "https://github.com/SkylarKitchen/redial#readme",
   "bugs": {
-    "url": "https://github.com/TODO/redial/issues"
+    "url": "https://github.com/SkylarKitchen/redial/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -14,7 +14,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
 import { EditorRemoveButton, VisibilityToggle } from "../controls";
-import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
+import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
