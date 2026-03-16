@@ -23,10 +23,11 @@ import {
   parseBoxShadow,
   parseFilter,
   parseTransform,
+  parseSelfPerspective,
   parseTransitions,
   shadowToCSS,
   filterToCSS,
-  transformToCSS,
+  transformToCSSWithPerspective,
   transitionsToCSS,
 } from "../cssParsers";
 import type { SectionCtx } from "../panelUtils";
@@ -36,7 +37,6 @@ import {
   POINTER_EVENTS_OPTIONS,
   VISIBILITY_OPTIONS,
   USER_SELECT_OPTIONS,
-  BACKFACE_OPTIONS,
   OUTLINE_STYLE_OPTIONS,
 } from "../panelConstants";
 import { color, text, border, surface, shadow, zIndex, type IndicatorType, indicatorStyle, altClickReset } from "../theme";
@@ -184,6 +184,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [userSelect, setUserSelect] = useState(() => cs.userSelect || "auto");
   const [perspective, setPerspective] = useState(() => parseNum(cs.getPropertyValue("perspective")));
   const [backfaceVisibility, setBackfaceVisibility] = useState(() => cs.getPropertyValue("backface-visibility") || "visible");
+  const [transformSettingsOpen, setTransformSettingsOpen] = useState(false);
+  const [selfPerspective, setSelfPerspective] = useState(() => parseSelfPerspective(cs.transform));
+  const [perspectiveOrigin, setPerspectiveOrigin] = useState(() => cs.getPropertyValue("perspective-origin") || "50% 50%");
 
   // Collapsed-by-default for filter sub-sections (auto-expand if element has values)
   const [filtersExpanded, setFiltersExpanded] = useState(() => {
@@ -216,9 +219,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const handleTransformsChange = useCallback(
     (t: TransformValue[]) => {
       setTransforms(t);
-      apply("transform", transformToCSS(t));
+      apply("transform", transformToCSSWithPerspective(t, selfPerspective));
     },
-    [apply]
+    [apply, selfPerspective],
   );
   const handleTransformOriginChange = useCallback(
     (o: string) => {
@@ -256,6 +259,19 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const handleUserSelectChange = useCallback((v: string) => { setUserSelect(v); apply("user-select", v); }, [apply]);
   const handlePerspectiveChange = useCallback((v: number) => { setPerspective(v); apply("perspective", v > 0 ? `${v}px` : "none"); }, [apply]);
   const handleBackfaceVisibilityChange = useCallback((v: string) => { setBackfaceVisibility(v); apply("backface-visibility", v); }, [apply]);
+
+  const handleSelfPerspectiveChange = useCallback(
+    (v: number) => {
+      setSelfPerspective(v);
+      apply("transform", transformToCSSWithPerspective(transforms, v));
+    },
+    [apply, transforms],
+  );
+
+  const handlePerspectiveOriginChange = useCallback(
+    (v: string) => { setPerspectiveOrigin(v); apply("perspective-origin", v); },
+    [apply],
+  );
 
   // ── Add shortcuts (for sub-section "+" buttons) ────────────────────
   const handleAddShadow = useCallback(() => {
@@ -332,7 +348,26 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 5. 2D & 3D transforms */}
-      <SubSectionHeader label="2D & 3D transforms" onAdd={handleAddTransform} indicator={ind("transform")} onReset={() => { resetProp(element, "transform"); resetProp(element, "transform-origin"); const fresh = getComputedStyle(element); setTransforms(parseTransform(fresh.transform)); setTransformOrigin(fresh.transformOrigin || "center"); }} />
+      <SubSectionHeader
+        label="2D & 3D transforms"
+        onAdd={handleAddTransform}
+        onMenu={() => setTransformSettingsOpen((o) => !o)}
+        indicator={ind("transform")}
+        onReset={() => {
+          resetProp(element, "transform");
+          resetProp(element, "transform-origin");
+          resetProp(element, "perspective");
+          resetProp(element, "backface-visibility");
+          resetProp(element, "perspective-origin");
+          const fresh = getComputedStyle(element);
+          setTransforms(parseTransform(fresh.transform));
+          setTransformOrigin(fresh.transformOrigin || "center");
+          setPerspective(parseNum(fresh.getPropertyValue("perspective")));
+          setBackfaceVisibility(fresh.getPropertyValue("backface-visibility") || "visible");
+          setPerspectiveOrigin(fresh.getPropertyValue("perspective-origin") || "50% 50%");
+          setSelfPerspective(parseSelfPerspective(fresh.transform));
+        }}
+      />
       {transforms.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransformEditor

@@ -14,6 +14,25 @@ import { EditorRemoveButton, VisibilityToggle } from "../controls";
 import { color, text, surface, font, shadow, zIndex, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
+export type FilterType =
+  | "blur"
+  | "drop-shadow"
+  | "brightness"
+  | "contrast"
+  | "hue-rotate"
+  | "saturate"
+  | "grayscale"
+  | "invert"
+  | "sepia";
+
+export interface FilterItem {
+  type: FilterType;
+  values: number[];    // [radius] for simple, [x, y, blur] for drop-shadow
+  color?: string;      // only for drop-shadow
+  visible: boolean;
+  expanded: boolean;
+}
+
 export interface FilterValues {
   blur: number;
   brightness: number;
@@ -64,7 +83,7 @@ function isNonDefault(key: FilterKey, value: number | undefined): boolean {
 }
 
 /** Wrapper for useDragReorder — wraps filter keys in objects */
-interface FilterItem { key: FilterKey }
+interface FilterKeyItem { key: FilterKey }
 
 export function FilterSliders({ values, onChange, type = "filter" }: FilterSlidersProps) {
   // Track which filters are explicitly shown (added by user)
@@ -101,10 +120,10 @@ export function FilterSliders({ values, onChange, type = "filter" }: FilterSlide
   );
 
   // Wrap visible filters as items for useDragReorder
-  const filterItems: FilterItem[] = visibleFilters.map((key) => ({ key }));
+  const filterItems: FilterKeyItem[] = visibleFilters.map((key) => ({ key }));
 
   const handleReorder = useCallback(
-    (items: FilterItem[]) => {
+    (items: FilterKeyItem[]) => {
       // Rebuild the full order: keep non-visible keys in place, update visible order
       const reorderedKeys = items.map((i) => i.key);
       const hiddenKeys = filterOrder.filter(

@@ -7,6 +7,7 @@
 
 import type { ShadowValue } from "./sections/ShadowEditor";
 import type { FilterValues } from "./sections/FilterSliders";
+import type { FilterItem, FilterType } from "./sections/FilterSliders";
 import type { TransformValue } from "./sections/TransformEditor";
 import type { TransitionValue } from "./sections/TransitionEditor";
 
@@ -125,6 +126,69 @@ export function filterToCSS(values: Partial<FilterValues>): string {
     else parts.push(`${k}(${val / 100})`);
   }
   return parts.length > 0 ? parts.join(" ") : "none";
+}
+
+// ─── Filter Items (new array-based API) ──────────────────────────────
+
+export function parseFilterItems(raw: string): FilterItem[] {
+  if (!raw || raw === "none") return [];
+  const matches: { index: number; item: FilterItem }[] = [];
+
+  // Match drop-shadow separately (its args contain spaces and nested parens for color)
+  const dsRegex = /drop-shadow\(([^)]*(?:\([^)]*\)[^)]*)*)\)/g;
+  const simpleRegex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
+
+  let m: RegExpExecArray | null;
+  while ((m = dsRegex.exec(raw)) !== null) {
+    const inner = m[1].trim();
+    // Extract color (rgba/hsla/hex) from the end
+    const colorMatch = inner.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})\s*$/i);
+    const color = colorMatch?.[1];
+    const numStr = color ? inner.slice(0, colorMatch!.index).trim() : inner;
+    const nums = numStr.split(/\s+/).map(parseFloat).filter(n => !isNaN(n));
+    matches.push({
+      index: m.index,
+      item: {
+        type: "drop-shadow",
+        values: [nums[0] ?? 0, nums[1] ?? 0, nums[2] ?? 0],
+        color: color || undefined,
+        visible: true,
+        expanded: false,
+      },
+    });
+  }
+
+  while ((m = simpleRegex.exec(raw)) !== null) {
+    const type = m[1] as FilterType;
+    let val = parseFloat(m[2]);
+    if (type !== "blur" && type !== "hue-rotate") {
+      val = Math.round(val * 100);
+    }
+    matches.push({
+      index: m.index,
+      item: { type, values: [val], visible: true, expanded: false },
+    });
+  }
+
+  // Sort by position in original string to preserve order
+  matches.sort((a, b) => a.index - b.index);
+  return matches.map(m => m.item);
+}
+
+export function filterItemsToCSS(items: FilterItem[]): string {
+  const visible = items.filter(i => i.visible);
+  if (visible.length === 0) return "none";
+  return visible.map(item => {
+    if (item.type === "blur") return `blur(${item.values[0]}px)`;
+    if (item.type === "hue-rotate") return `hue-rotate(${item.values[0]}deg)`;
+    if (item.type === "drop-shadow") {
+      const [x, y, blur] = item.values;
+      const c = item.color || "rgba(0,0,0,0.25)";
+      return `drop-shadow(${x}px ${y}px ${blur}px ${c})`;
+    }
+    // percentage-based: brightness, contrast, grayscale, invert, saturate, sepia
+    return `${item.type}(${item.values[0] / 100})`;
+  }).join(" ");
 }
 
 // ─── Transform ───────────────────────────────────────────────────────
