@@ -46,7 +46,6 @@ export function shouldSkipEntirely(el: Element): boolean {
 
   // Skip Redial's own UI
   if ((el as HTMLElement).closest?.(".__tuner-root")) return true;
-  if ((el as HTMLElement).closest?.("[data-agentation-root]")) return true;
   if ((el as HTMLElement).closest?.("[data-tuner-portal]")) return true;
 
   // Skip invisible elements (display: none or visibility: hidden)

@@ -419,6 +419,8 @@ export function Overlay() {
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
           announce("Redo");
+        } else {
+          redoModeOverride();
         }
         return;
       }
@@ -434,6 +436,8 @@ export function Overlay() {
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
           announce("Undo");
+        } else {
+          undoModeOverride();
         }
         return;
       }
