@@ -996,7 +996,7 @@ export function CollectionDetail({
           <div style={{ width: 14, flexShrink: 0 }} />
           {relevantModes ? (
             <>
-              <div style={{ width: 130, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
+              <div style={{ width: 100, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
               <div
                 ref={registerModeScroll}
                 onScroll={handleModeScroll}
@@ -1013,7 +1013,7 @@ export function CollectionDetail({
                 {relevantModes.map((m) => (
                   <div
                     key={m.name}
-                    style={{ flex: "0 0 140px", textAlign: "right", ...COLUMN_HEADER_STYLE }}
+                    style={{ flex: "0 0 106px", textAlign: "right", ...COLUMN_HEADER_STYLE }}
                   >
                     {m.name}
                   </div>
@@ -1027,7 +1027,7 @@ export function CollectionDetail({
             </>
           )}
           {/* Action spacer for hover buttons */}
-          <div style={{ width: 40, flexShrink: 0 }} />
+          <div style={{ width: 20, flexShrink: 0 }} />
         </div>
       </div>
 
