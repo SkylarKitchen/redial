@@ -5,6 +5,7 @@ import {
   getReactSource,
   getCSSSource,
   resolveSource,
+  deriveSourceFromClassName,
 } from "../core/sourcemap";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -357,5 +358,77 @@ describe("resolveSource", () => {
       line: undefined,
       displayPath: "Card.module.scss",
     });
+  });
+});
+
+// ─── deriveSourceFromClassName (SCSS detection via href) ─────────────
+
+describe("deriveSourceFromClassName", () => {
+  // Turbopack — no href (default .css)
+  it("defaults Turbopack to .module.css without href", () => {
+    const result = deriveSourceFromClassName("page-module__IiFEKa__btn", "color");
+    expect(result).toEqual({
+      file: "page.module.css",
+      line: undefined,
+      displayPath: "page.module.css",
+    });
+  });
+
+  // Turbopack — href with SCSS signal
+  it("detects .module.scss for Turbopack from href containing _scss", () => {
+    const href = "/_next/static/chunks/src_app_page_module_scss_abc123.css";
+    const result = deriveSourceFromClassName("page-module__IiFEKa__btn", "color", href);
+    expect(result).toEqual({
+      file: "page.module.scss",
+      line: undefined,
+      displayPath: "page.module.scss",
+    });
+  });
+
+  // Turbopack — href without SCSS signal
+  it("keeps .module.css for Turbopack when href has no SCSS signal", () => {
+    const href = "/_next/static/chunks/src_app_page_module_css_abc123.css";
+    const result = deriveSourceFromClassName("page-module__IiFEKa__btn", "color", href);
+    expect(result).toEqual({
+      file: "page.module.css",
+      line: undefined,
+      displayPath: "page.module.css",
+    });
+  });
+
+  // Vite — href with .scss in path
+  it("detects .module.scss for Vite from href containing .scss", () => {
+    const href = "/src/components/Button.module.scss?used";
+    const result = deriveSourceFromClassName("_btn_1a2b3_5", "color", href);
+    expect(result).toEqual({
+      file: "*.module.scss",
+      line: undefined,
+      displayPath: "module.scss (Vite)",
+    });
+  });
+
+  // Vite — href without SCSS
+  it("defaults Vite to .module.css without SCSS signal", () => {
+    const result = deriveSourceFromClassName("_btn_1a2b3_5", "color");
+    expect(result).toEqual({
+      file: "*.module.css",
+      line: undefined,
+      displayPath: "module.css (Vite)",
+    });
+  });
+
+  // webpack — always .scss regardless of href (can't detect from hashed URLs)
+  it("always returns .module.scss for webpack classes", () => {
+    const result = deriveSourceFromClassName("Button_btn__a8f2k", "color");
+    expect(result).toEqual({
+      file: "Button.module.scss",
+      line: undefined,
+      displayPath: "Button.module.scss",
+    });
+  });
+
+  // Non-module class
+  it("returns null for unrecognized class patterns", () => {
+    expect(deriveSourceFromClassName("plain-class", "color")).toBeNull();
   });
 });

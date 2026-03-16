@@ -90,10 +90,10 @@ export function getCSSSource(
             // Found the rule — check if the stylesheet has a sourceURL
             const href = sheet.href;
             if (href) {
-              // The href points to the compiled CSS. With source maps,
-              // we could trace back. For now, derive the source file
-              // from the CSS module class naming convention.
-              return deriveSourceFromClassName(moduleClass, prop);
+              // The href points to the compiled CSS. Derive source file
+              // from the class naming convention, using the href to
+              // detect .scss vs .css (Turbopack/Vite encode source paths).
+              return deriveSourceFromClassName(moduleClass, prop, href);
             }
           }
         }
@@ -112,16 +112,26 @@ export function getCSSSource(
 /**
  * Derive the likely source file from a CSS modules classname.
  * webpack:   "Button_btn__a8f2k"               → "Button.module.scss"
- * Turbopack: "page-module__IiFEKa__btnPrimary"  → "page.module.css"
+ * Turbopack: "page-module__IiFEKa__btnPrimary"  → "page.module.css" or ".scss"
+ * Vite:      "_btn_abc_123"                     → "*.module.css" or ".scss"
+ *
+ * When a stylesheet href is available, checks for SCSS signals in the URL
+ * (Turbopack encodes source paths like ..._module_scss_..., Vite serves
+ * original paths like /src/Button.module.scss?used).
  *
  * NOTE: line is undefined — we can't know the line from just the class name.
  * The server uses tiered search to find the property.
  */
-function deriveSourceFromClassName(
+export function deriveSourceFromClassName(
   moduleClass: string,
-  _prop: string
+  _prop: string,
+  href?: string,
 ): SourceInfo | null {
+  // Detect SCSS from stylesheet URL (Turbopack/Vite encode source paths)
+  const isScss = href ? /\.scss|_scss/i.test(href) : false;
+
   // webpack: ComponentName_className__hash
+  // webpack URLs are content-hashed — no source path signal. Default to .scss.
   const webpack = moduleClass.match(/^([A-Z]\w+)_(\w+)__\w+$/);
   if (webpack) {
     const componentName = webpack[1];
@@ -135,19 +145,21 @@ function deriveSourceFromClassName(
   const turbo = moduleClass.match(/^([\w-]+)-module__\w+__\w+$/);
   if (turbo) {
     const fileName = turbo[1];
+    const ext = isScss ? ".module.scss" : ".module.css";
     return {
-      file: `${fileName}.module.css`,
+      file: `${fileName}${ext}`,
       line: undefined,
-      displayPath: `${fileName}.module.css`,
+      displayPath: `${fileName}${ext}`,
     };
   }
   // Vite: _className_hash_digits — class name doesn't embed the filename
   const vite = moduleClass.match(/^_(\w+)_\w+_\d+$/);
   if (vite) {
+    const ext = isScss ? ".module.scss" : ".module.css";
     return {
-      file: "*.module.css",
+      file: `*${ext}`,
       line: undefined,
-      displayPath: "module.css (Vite)",
+      displayPath: `${ext.slice(1)} (Vite)`,
     };
   }
   return null;
