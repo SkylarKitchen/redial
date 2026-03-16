@@ -397,7 +397,7 @@ function ModeValueCell({
 
   if (editing) {
     return (
-      <div style={{ flex: "0 0 106px", minWidth: 0, overflow: "hidden" }}>
+      <div style={{ flex: "0 0 132px", minWidth: 0, overflow: "hidden" }}>
         <input
           ref={inputRef}
           value={draft}
@@ -430,15 +430,28 @@ function ModeValueCell({
     <div
       onMouseEnter={() => setCellHovered(true)}
       onMouseLeave={() => setCellHovered(false)}
+      onClick={editable ? () => setEditing(true) : undefined}
       style={{
-        flex: "0 0 106px",
+        flex: "0 0 132px",
         minWidth: 0,
-        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        overflow: "hidden",
+        cursor: editable ? "text" : "default",
+        borderRadius: 3,
+        padding: "1px 3px",
+        ...(isOverridden ? {
+          background: labelIndicator.modified.bg,
+          color: labelIndicator.modified.text,
+          ...labelHighlight,
+        } : {}),
       }}
     >
-      {/* Variable link dot — only for editable cells */}
+      {/* Variable link dot — inline, only for editable cells */}
       {editable && (
         <VariableLinkDot
+          inline
           rowHovered={cellHovered}
           isLinked={isLinked}
           onUnlink={handleUnlink}
@@ -447,26 +460,6 @@ function ModeValueCell({
           activeVariable={linkedVarName}
         />
       )}
-
-      {/* Inner content */}
-      <div
-        onClick={editable ? () => setEditing(true) : undefined}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-          overflow: "hidden",
-          cursor: editable ? "text" : "default",
-          borderRadius: 3,
-          padding: "1px 3px",
-          height: "100%",
-          ...(isOverridden ? {
-            background: labelIndicator.modified.bg,
-            color: labelIndicator.modified.text,
-            ...labelHighlight,
-          } : {}),
-        }}
-      >
         {/* Color dot for color-type variables */}
         {varType === "color" && value && (
           <div
@@ -518,7 +511,6 @@ function ModeValueCell({
             document.body,
           );
         })()}
-      </div>
     </div>
   );
 }
@@ -1057,7 +1049,7 @@ export function CollectionDetail({
                 {relevantModes.map((m) => (
                   <div
                     key={m.name}
-                    style={{ flex: "0 0 106px", textAlign: "right", ...COLUMN_HEADER_STYLE }}
+                    style={{ flex: "0 0 132px", textAlign: "right", ...COLUMN_HEADER_STYLE }}
                   >
                     {m.name}
                   </div>

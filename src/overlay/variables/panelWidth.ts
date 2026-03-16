@@ -1,5 +1,5 @@
 const BASE_WIDTH = 340; // sidebar 170 + padding 24 + icon 14 + name 100 + gaps 12 + action 20
-const PER_MODE = 110; // 106px cell + 4px gap
+const PER_MODE = 136; // 132px cell + 4px gap
 const MIN_WIDTH = 580; // single-mode minimum width
 const MAX_RATIO = 0.8;
 

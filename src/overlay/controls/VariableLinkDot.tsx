@@ -14,6 +14,9 @@
  *
  * Position: absolute top-left corner of parent (parent must be position: relative).
  * Size: 14px circle, shifted -7px top/left to sit on the corner.
+ *
+ * When `inline` is true, renders as an inline flex item (no absolute positioning).
+ * Use this inside containers where overflow clips absolute children (e.g. table cells).
  */
 
 import { useState, useRef, useCallback } from "react";
@@ -39,6 +42,8 @@ export interface VariableLinkDotProps {
   onSelect: (varExpr: string) => void;
   /** Currently active variable name (e.g. `--spacing-4`) for highlighting in picker */
   activeVariable?: string | null;
+  /** Render inline (no absolute positioning) — for use inside table cells / clipped containers */
+  inline?: boolean;
 }
 
 export function VariableLinkDot({
@@ -49,6 +54,7 @@ export function VariableLinkDot({
   element,
   onSelect,
   activeVariable,
+  inline = false,
 }: VariableLinkDotProps) {
   const [dotHovered, setDotHovered] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -84,9 +90,9 @@ export function VariableLinkDot({
         onMouseEnter={() => setDotHovered(true)}
         onMouseLeave={() => setDotHovered(false)}
         style={{
-          position: "absolute",
-          top: OFFSET,
-          left: OFFSET,
+          ...(inline
+            ? { position: "relative" as const, flexShrink: 0 }
+            : { position: "absolute" as const, top: OFFSET, left: OFFSET }),
           zIndex: 1,
           width: DOT_SIZE,
           height: DOT_SIZE,
