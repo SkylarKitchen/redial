@@ -26,6 +26,7 @@ import { SpacingGuidesOverlay } from "../overlays/SpacingGuidesOverlay";
 import { SpacingPreviewOverlay } from "../overlays/SpacingPreviewOverlay";
 import { infer, type InferResult } from "../core/infer";
 import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "../core/apply";
+import { undoModeOverride, redoModeOverride } from "../variables/modeOverrides";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
@@ -418,6 +419,8 @@ export function Overlay() {
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
           announce("Redo");
+        } else {
+          redoModeOverride();
         }
         return;
       }
@@ -433,6 +436,8 @@ export function Overlay() {
           setInferResult(infer(result.el));
           setPanelKey((k) => k + 1);
           announce("Undo");
+        } else {
+          undoModeOverride();
         }
         return;
       }

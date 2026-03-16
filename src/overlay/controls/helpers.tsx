@@ -7,7 +7,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo, createContext
 import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "../panelUtils";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, labelHighlight, zIndex } from "../theme";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -127,6 +127,27 @@ export function useResetPopover(indicator?: IndicatorType, onReset?: () => void)
     <ResetPopover anchor={anchorRef.current} onReset={onReset} onClose={() => setOpen(false)} />
   ) : null;
   return { anchorRef, triggerOpen, node };
+}
+
+// ─── Press Scale Hook ────────────────────────────────────────────────
+
+/** Tactile press feedback — scale down on mouseDown, spring back on release.
+ *  Spread `pressHandlers` onto the element and merge `pressStyle` into its style. */
+export function usePressScale(scale = 0.97) {
+  const [pressed, setPressed] = useState(false);
+
+  const pressHandlers = useMemo(() => ({
+    onMouseDown: () => setPressed(true),
+    onMouseUp: () => setPressed(false),
+    onMouseLeave: () => setPressed(false),
+  }), []);
+
+  const pressStyle: React.CSSProperties = useMemo(() => ({
+    transform: pressed ? `scale(${scale})` : undefined,
+    transition: cssTransition("transform", pressed ? "fast" : "release"),
+  }), [pressed, scale]);
+
+  return { pressHandlers, pressStyle };
 }
 
 // ─── PresetChips ────────────────────────────────────────────────────

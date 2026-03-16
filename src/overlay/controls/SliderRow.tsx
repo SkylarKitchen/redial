@@ -1,19 +1,22 @@
 /**
  * controls/SliderRow.tsx — Labeled slider with value input, unit selector,
- * preset chips, and label-drag scrubbing.
+ * preset chips, label-drag scrubbing, and CSS variable linking.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { type IndicatorType } from "../theme";
+import { type IndicatorType, color as themeColor, primaryAlpha } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { beginBatch, endBatch } from "../core/apply";
 import { text, border, surface, font } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
+import { VariablePicker } from "./VariablePicker";
+import { Link2, Unlink, X } from "lucide-react";
+import { ms } from "../timing";
 
 export function SliderRow({
   label,
@@ -36,6 +39,9 @@ export function SliderRow({
   property,
   onPreset,
   annotation,
+  onSelectVariable,
+  activeVariable,
+  variableElement,
 }: {
   label: string;
   value: number;
@@ -67,6 +73,12 @@ export function SliderRow({
   onPreset?: (value: string | number) => void;
   /** Small hint label shown next to the value input (e.g. Tailwind class name) */
   annotation?: string;
+  /** Called when a CSS variable is selected from the variable picker */
+  onSelectVariable?: (varExpr: string) => void;
+  /** Currently linked variable name (e.g. "--spacing-4"), enables variable mode */
+  activeVariable?: string | null;
+  /** Target element for variable picker scoped discovery */
+  variableElement?: Element;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
@@ -99,6 +111,104 @@ export function SliderRow({
     else if (onPreset) onPreset(v);
   }, [onChange, onPreset]);
 
+  // Variable picker state
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
+  const linkBtnRef = useRef<HTMLButtonElement>(null);
+
+  const isLinked = !!activeVariable;
+  const displayVarName = activeVariable ? activeVariable.replace(/^--/, "") : "";
+
+  // Unlink: resolve the variable to its computed value
+  const handleUnlink = useCallback(() => {
+    if (!computedElement || !computedProp) return;
+    const resolved = getComputedStyle(computedElement).getPropertyValue(computedProp).trim();
+    const num = parseFloat(resolved);
+    if (!isNaN(num)) onChange(num);
+  }, [computedElement, computedProp, onChange]);
+
+  // ─── Variable mode ─────────────────────────────────────────────
+  if (isLinked) {
+    return (
+      <>
+      <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
+          {computedProp && computedElement ? (
+            <ComputedTooltip property={computedProp} element={computedElement}>
+              {labelContent}
+            </ComputedTooltip>
+          ) : labelContent}
+        </LabelScrub>
+        {/* Variable name display */}
+        <span
+          title={`${activeVariable}\n${value}${unit}`}
+          style={{
+            flex: 1,
+            fontSize: 10,
+            fontFamily: font.mono,
+            color: primaryAlpha(0.8),
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {displayVarName}
+        </span>
+        {/* Unlink button */}
+        <button
+          type="button"
+          title="Unlink variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUnlink();
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: primaryAlpha(0.6),
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <Unlink size={11} strokeWidth={2} />
+        </button>
+        {/* Reset button */}
+        {indicator === "modified" && onReset && (
+          <button
+            type="button"
+            title="Reset to original value"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReset();
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: text.hint,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              opacity: 0.5,
+              transition: `opacity ${ms("fast")}`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}
+          >
+            <X size={10} strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+      {resetPopover.node}
+      </>
+    );
+  }
+
+  // ─── Numeric mode (default) ────────────────────────────────────
   return (
     <>
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
@@ -136,7 +246,76 @@ export function SliderRow({
           </div>
         ) : null}
       </div>
+      {/* Link to variable button */}
+      {onSelectVariable && (
+        <button
+          ref={linkBtnRef}
+          type="button"
+          title="Link to variable"
+          onClick={(e) => {
+            e.stopPropagation();
+            setVarPickerOpen(!varPickerOpen);
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.6,
+            transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
+        >
+          <Link2 size={11} strokeWidth={2} />
+        </button>
+      )}
+      {/* Reset button */}
+      {indicator === "modified" && onReset && (
+        <button
+          type="button"
+          title="Reset to original value"
+          onClick={(e) => {
+            e.stopPropagation();
+            onReset();
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.5,
+            transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}
+        >
+          <X size={10} strokeWidth={2.5} />
+        </button>
+      )}
     </div>
+    {/* Variable picker portal */}
+    {varPickerOpen && linkBtnRef.current && (
+      <VariablePicker
+        anchor={linkBtnRef.current}
+        type="length"
+        element={variableElement}
+        onSelect={(varExpr) => {
+          onSelectVariable!(varExpr);
+          setVarPickerOpen(false);
+        }}
+        onClose={() => setVarPickerOpen(false)}
+        activeVariable={activeVariable}
+      />
+    )}
     {property && <PresetChips property={property} onSelect={handlePresetSelect} unit={unit} />}
     {resetPopover.node}
     </>

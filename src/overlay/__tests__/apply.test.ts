@@ -808,6 +808,42 @@ describe("undo/reset preserves pre-existing inline styles", () => {
   });
 });
 
+// ─── variable link → unlink → reset flow ──────────────────────────────
+
+describe("variable link → unlink → reset", () => {
+  it("resetProp after apply(var) → apply(hex) reverts to original computed value", () => {
+    const el = makeEl();
+    // No pre-existing inline color — computed will be happy-dom's default ""
+
+    // Step 1: User links a variable
+    applyInlineStyle(el, "color", "var(--brand)");
+    expect(isDirty(el, "color")).toBe(true);
+
+    // Step 2: User unlinks — resolved hex applied over the var()
+    applyInlineStyle(el, "color", "#fef3c7");
+    expect(isDirty(el, "color")).toBe(true);
+    expect(el.style.getPropertyValue("color")).toBe("#fef3c7");
+
+    // Step 3: User clicks × to reset
+    resetProp(el, "color");
+    // Should remove the property (no pre-existing inline)
+    expect(el.style.getPropertyValue("color")).toBe("");
+    expect(isDirty(el, "color")).toBe(false);
+  });
+
+  it("undo after apply(var) → apply(hex) reverts to var()", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "var(--brand)");
+    // Break undo coalescing with a different prop
+    applyInlineStyle(el, "font-size", "14px");
+    applyInlineStyle(el, "color", "#fef3c7");
+
+    // Undo should revert to the var() value
+    undo(); // reverts color to var(--brand)
+    expect(el.style.getPropertyValue("color")).toBe("var(--brand)");
+  });
+});
+
 // ─── restoreSession — corrupted localStorage ─────────────────────────
 
 describe("restoreSession — corrupted localStorage", () => {
