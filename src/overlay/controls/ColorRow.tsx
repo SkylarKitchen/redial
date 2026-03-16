@@ -141,7 +141,7 @@ export function ColorRow({
           {actions}
         </div>
       )}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, flex: varName ? undefined : 1, minWidth: 0 }}>
         {varName ? (
           <VariableField
             variableName={varName}
@@ -207,7 +207,7 @@ export function ColorRow({
           </>
         )}
       </div>
-      {indicator === "modified" && onReset && (
+      {!varName && indicator === "modified" && onReset && (
         <button
           type="button"
           title="Reset to original value"
