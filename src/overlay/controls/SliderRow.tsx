@@ -3,7 +3,7 @@
  * preset chips, and label-drag scrubbing.
  */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
@@ -11,9 +11,12 @@ import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { beginBatch, endBatch } from "../core/apply";
-import { text, border, surface, font } from "../theme";
+import { text, border, surface, font, primaryAlpha } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
+import { VariablePicker } from "./VariablePicker";
+import { Link2, Unlink, X } from "lucide-react";
+import { ms } from "../timing";
 
 export function SliderRow({
   label,
@@ -36,6 +39,9 @@ export function SliderRow({
   property,
   onPreset,
   annotation,
+  onSelectVariable,
+  activeVariable,
+  variableElement,
 }: {
   label: string;
   value: number;
@@ -67,6 +73,12 @@ export function SliderRow({
   onPreset?: (value: string | number) => void;
   /** Small hint label shown next to the value input (e.g. Tailwind class name) */
   annotation?: string;
+  /** Called when user selects a variable from the picker; receives `var(--name)` */
+  onSelectVariable?: (varExpr: string) => void;
+  /** When set (e.g. `--spacing-4`), renders variable mode instead of slider */
+  activeVariable?: string | null;
+  /** Target element for resolving computed value on unlink */
+  variableElement?: Element;
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
