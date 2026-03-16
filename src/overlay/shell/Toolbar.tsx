@@ -98,25 +98,28 @@ export function Toolbar({
   onToggleSession,
   onClose,
 }: ToolbarProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [userExpanded, setUserExpanded] = useState(false);
   const toolbarRef = useRef<HTMLDivElement>(null);
 
   const isActive = selecting || hasSelectedEl;
+  // Toolbar must be expanded whenever any content is visible
+  const hasContent = isActive || activePanel.type !== "none" || changesOpen;
+  const expanded = userExpanded || hasContent;
 
   // Only allow click-outside collapse when nothing is active
   const collapse = useCallback(() => {
-    if (!selecting && !hasSelectedEl) setExpanded(false);
-  }, [selecting, hasSelectedEl]);
+    if (!hasContent) setUserExpanded(false);
+  }, [hasContent]);
   useClickOutside(toolbarRef, expanded, collapse);
 
   const handleFabClick = () => {
     if (expanded && !isActive) {
-      setExpanded(false);
+      setUserExpanded(false);
       return;
     }
     if (hasSelectedEl) {
       onClose();
-      setExpanded(false);
+      setUserExpanded(false);
       return;
     }
     if (selecting) {
@@ -124,7 +127,7 @@ export function Toolbar({
       return;
     }
     // Expand toolbar AND enter select mode in one click
-    setExpanded(true);
+    setUserExpanded(true);
     onToggleSelecting();
   };
 
