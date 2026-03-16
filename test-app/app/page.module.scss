@@ -1,9 +1,39 @@
-/*
- * page.module.scss — Component styles for demo pages
- *
- * Uses ONLY semantic tokens from tokens/semantic.css.
- * Dark mode is handled entirely at the token layer — no overrides needed here.
- */
+// page.module.scss — Component styles for demo pages
+//
+// Uses ONLY semantic tokens from tokens/semantic.css.
+// Dark mode is handled entirely at the token layer — no overrides needed here.
+
+// ── Shared patterns ──
+
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--space-10);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+@mixin tag-base {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+@mixin callout-base {
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+}
+
+// ── Layout ──
 
 .page {
   display: flex;
@@ -21,12 +51,13 @@
   flex-direction: column;
   gap: var(--space-12);
   background-color: var(--surface-primary);
-  padding: var(--space-12) var(--space-12);
+  padding: var(--space-12);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-md);
 }
 
-/* ── Section wrapper ── */
+// ── Section wrapper ──
+
 .section {
   display: flex;
   flex-direction: column;
@@ -41,7 +72,8 @@
   color: var(--text-secondary);
 }
 
-/* ── Navigation ── */
+// ── Navigation ──
+
 .nav {
   display: flex;
   align-items: center;
@@ -60,54 +92,53 @@
 .navLinks {
   display: flex;
   gap: var(--space-5);
+
+  a {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+  }
 }
 
-.navLinks a {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  text-decoration: none;
-}
+// ── Badge ──
 
-.navLinks a:hover {
-  color: var(--text-primary);
-}
-
-/* ── Badge ── */
 .badge {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-3);
+  @include tag-base;
   border-radius: var(--radius-full);
   background-color: var(--interactive-subtle);
   color: var(--interactive-default);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
   width: fit-content;
 }
 
-/* ── Hero ── */
+// ── Hero ──
+
 .hero {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+
+  h1 {
+    font-size: var(--font-size-5xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--text-primary);
+  }
+
+  p {
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-relaxed);
+    color: var(--text-secondary);
+    max-width: var(--container-sm);
+  }
 }
 
-.hero h1 {
-  font-size: var(--font-size-5xl);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
-  color: var(--text-primary);
-}
+// ── Buttons ──
 
-.hero p {
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-relaxed);
-  color: var(--text-secondary);
-  max-width: var(--container-sm);
-}
-
-/* ── Buttons ── */
 .buttons {
   display: flex;
   gap: var(--space-3);
@@ -115,51 +146,28 @@
 }
 
 .btnPrimary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--space-10);
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-lg);
+  @include btn-base;
   background-color: var(--interactive-default);
   color: var(--text-on-accent);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   border: none;
-  cursor: pointer;
 }
 
 .btnSecondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--space-10);
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-lg);
+  @include btn-base;
   background-color: transparent;
   color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   border: var(--border-width-thin) solid var(--border-default);
-  cursor: pointer;
 }
 
 .btnGhost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--space-10);
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-lg);
+  @include btn-base;
   background-color: transparent;
   color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
   border: none;
-  cursor: pointer;
 }
 
-/* ── Feature Cards (flex) ── */
+// ── Feature Cards ──
+
 .cards {
   display: flex;
   gap: var(--space-5);
@@ -172,22 +180,23 @@
   border-radius: var(--radius-xl);
   background-color: var(--surface-inset);
   border: var(--border-width-thin) solid var(--border-default);
+
+  h3 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+  }
+
+  p {
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-normal);
+    color: var(--text-secondary);
+  }
 }
 
-.card h3 {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  margin-bottom: var(--space-2);
-  color: var(--text-primary);
-}
+// ── Image Gallery ──
 
-.card p {
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
-  color: var(--text-secondary);
-}
-
-/* ── Image Gallery (grid) ── */
 .gallery {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -211,38 +220,39 @@
   border-radius: var(--radius-xl);
 }
 
-/* ── Testimonial ── */
+// ── Testimonial ──
+
 .testimonial {
   padding: var(--space-8);
   border-radius: var(--radius-2xl);
   background-color: var(--surface-accent-subtle);
   border-left: var(--border-width-thick) solid var(--interactive-default);
   margin: 0;
-}
 
-.testimonial p {
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-relaxed);
-  color: var(--text-primary);
-  font-style: italic;
-  margin: 0 0 var(--space-5) 0;
+  p {
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-relaxed);
+    color: var(--text-primary);
+    font-style: italic;
+    margin: 0 0 var(--space-5) 0;
+  }
 }
 
 .testimonialAuthor {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-}
 
-.testimonialAuthor strong {
-  display: block;
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-}
+  strong {
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+  }
 
-.testimonialAuthor span {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
+  span {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+  }
 }
 
 .avatar {
@@ -252,7 +262,8 @@
   background: linear-gradient(135deg, var(--interactive-default), var(--interactive-light));
 }
 
-/* ── Stats ── */
+// ── Stats ──
+
 .stats {
   display: flex;
   gap: 0;
@@ -267,10 +278,10 @@
   gap: var(--space-1);
   padding: var(--space-6) var(--space-4);
   border-right: var(--border-width-thin) solid var(--border-default);
-}
 
-.stat:last-child {
-  border-right: none;
+  &:last-child {
+    border-right: none;
+  }
 }
 
 .statNumber {
@@ -285,7 +296,8 @@
   color: var(--text-secondary);
 }
 
-/* ── Tags / Pills ── */
+// ── Tags / Pills ──
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -293,28 +305,19 @@
 }
 
 .tag {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
+  @include tag-base;
   background-color: var(--surface-muted);
   color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
 }
 
 .tagAccent {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-md);
+  @include tag-base;
   background-color: var(--interactive-subtle);
   color: var(--interactive-default);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
 }
 
-/* ── Form Elements ── */
+// ── Form Elements ──
+
 .form {
   display: flex;
   flex-direction: column;
@@ -326,86 +329,83 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
 
-.inputGroup label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-}
+  label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+  }
 
-.inputGroup input,
-.inputGroup textarea {
-  padding: var(--space-3) var(--space-3);
-  border-radius: var(--radius-lg);
-  border: var(--border-width-thin) solid var(--border-default);
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  background-color: var(--surface-primary);
-  font-family: inherit;
-  resize: vertical;
+  input,
+  textarea {
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border: var(--border-width-thin) solid var(--border-default);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    background-color: var(--surface-primary);
+    font-family: inherit;
+    resize: vertical;
+  }
 }
 
 .checkboxRow {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+
+  label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
 }
 
-.checkboxRow label {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
+// ── Table ──
 
-/* ── Table ── */
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--font-size-sm);
+
+  th {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    border-bottom: var(--border-width-medium) solid var(--border-default);
+    font-size: var(--font-size-xs);
+  }
+
+  td {
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-secondary);
+    border-bottom: var(--border-width-thin) solid var(--border-default);
+  }
+
+  tbody tr:hover {
+    background-color: var(--surface-inset);
+  }
 }
 
-.table th {
-  text-align: left;
-  padding: var(--space-3) var(--space-4);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  border-bottom: var(--border-width-medium) solid var(--border-default);
-  font-size: var(--font-size-xs);
-}
+// ── Callout / Alert ──
 
-.table td {
-  padding: var(--space-3) var(--space-4);
-  color: var(--text-secondary);
-  border-bottom: var(--border-width-thin) solid var(--border-default);
-}
-
-.table tbody tr:hover {
-  background-color: var(--surface-inset);
-}
-
-/* ── Callout / Alert ── */
 .callout {
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-lg);
+  @include callout-base;
   background-color: var(--surface-success-subtle);
   border: var(--border-width-thin) solid var(--border-success);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
   color: var(--text-on-success);
 }
 
 .calloutWarning {
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-lg);
+  @include callout-base;
   background-color: var(--surface-warning-subtle);
   border: var(--border-width-thin) solid var(--border-warning);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
   color: var(--text-on-warning);
   margin-top: var(--space-3);
 }
 
-/* ── Pricing Cards (grid) ── */
+// ── Pricing Cards ──
+
 .pricing {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -419,38 +419,38 @@
   border-radius: var(--radius-2xl);
   border: var(--border-width-thin) solid var(--border-default);
   background-color: var(--surface-primary);
-}
 
-.pricingCard h3 {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--space-2);
-}
+  h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+  }
 
-.pricingCard ul {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-5) 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  flex: 1;
-}
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-5) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+  }
 
-.pricingCard li {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  padding-left: var(--space-5);
-  position: relative;
-}
+  li {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    padding-left: var(--space-5);
+    position: relative;
 
-.pricingCard li::before {
-  content: "\2713";
-  position: absolute;
-  left: 0;
-  color: var(--status-success);
-  font-weight: var(--font-weight-semibold);
+    &::before {
+      content: "\2713";
+      position: absolute;
+      left: 0;
+      color: var(--status-success);
+      font-weight: var(--font-weight-semibold);
+    }
+  }
 }
 
 .pricingFeatured {
@@ -465,7 +465,8 @@
   letter-spacing: var(--letter-spacing-tight);
 }
 
-/* ── Progress Bars ── */
+// ── Progress Bars ──
+
 .progressGroup {
   display: flex;
   flex-direction: column;
@@ -476,13 +477,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-}
 
-.progressRow span {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  min-width: 64px;
+  span {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-primary);
+    min-width: 64px;
+  }
 }
 
 .progressTrack {
@@ -500,7 +501,8 @@
   transition: width 0.3s ease;
 }
 
-/* ── Footer ── */
+// ── Footer ──
+
 .footer {
   display: flex;
   gap: var(--space-12);
@@ -512,21 +514,21 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
 
-.footerCol h4 {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: var(--space-1);
-}
+  h4 {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+  }
 
-.footerCol a {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  text-decoration: none;
-}
+  a {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
 
-.footerCol a:hover {
-  color: var(--text-primary);
+    &:hover {
+      color: var(--text-primary);
+    }
+  }
 }
