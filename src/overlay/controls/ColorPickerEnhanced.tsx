@@ -16,6 +16,7 @@ import { ms } from "../timing";
 import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
 import { naturalCompare } from "../variables/discoverVariables";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha } from "../theme";
+import { beginBatch, endBatch } from "../core/apply";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -363,10 +364,12 @@ export function ColorPickerEnhanced({
       e: React.MouseEvent,
     ) => {
       isDraggingRef.current = true;
+      beginBatch();
       onMove(e.clientX, e.clientY);
       const move = (ev: MouseEvent) => onMove(ev.clientX, ev.clientY);
       const up = () => {
         isDraggingRef.current = false;
+        endBatch();
         document.removeEventListener("mousemove", move);
         document.removeEventListener("mouseup", up);
       };

@@ -178,11 +178,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setMessage(null);
 
     const enriched = enrichChangesForCommit(element, changes, { scope, activeClassName, activeState });
-    console.log("[Tuner] Save enriched:", enriched.map(e => ({ prop: e.prop, sourceFile: e.sourceFile, cssHref: e.cssHref?.substring(0, 80) })));
 
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
-    console.log("[Tuner] Endpoint:", endpoint);
     if (!endpoint) {
       const css = formatCleanCSS(element, changes);
       const modeCSS = serializeModeOverrides();
@@ -210,10 +208,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       });
 
       if (!res.ok) {
-        const errBody = await res.text().catch(() => "");
-        console.error("[Tuner] Save failed:", res.status, res.statusText, errBody);
-        console.error("[Tuner] Enriched payload:", JSON.stringify(enriched, null, 2));
-        showMessage(`Save failed (${res.status})`, 2000);
+        showMessage("Save failed", 2000);
       } else {
         const result: SaveResult = await res.json();
         const writtenFiles = result.written ?? [];
