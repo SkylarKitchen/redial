@@ -134,20 +134,28 @@ export function parseFilterItems(raw: string): FilterItem[] {
   if (!raw || raw === "none") return [];
   const matches: { index: number; item: FilterItem }[] = [];
 
-  // Match drop-shadow separately (its args contain spaces and nested parens for color)
-  const dsRegex = /drop-shadow\(([^)]*(?:\([^)]*\)[^)]*)*)\)/g;
-  const simpleRegex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
-
-  let m: RegExpExecArray | null;
-  while ((m = dsRegex.exec(raw)) !== null) {
-    const inner = m[1].trim();
+  // Extract drop-shadow manually (handles nested parens in color functions)
+  let searchStart = 0;
+  while (true) {
+    const dsIdx = raw.indexOf("drop-shadow(", searchStart);
+    if (dsIdx === -1) break;
+    const argsStart = dsIdx + "drop-shadow(".length;
+    // Walk to the matching closing paren
+    let depth = 1;
+    let i = argsStart;
+    while (i < raw.length && depth > 0) {
+      if (raw[i] === "(") depth++;
+      else if (raw[i] === ")") depth--;
+      i++;
+    }
+    const inner = raw.slice(argsStart, i - 1).trim();
     // Extract color (rgba/hsla/hex) from the end
     const colorMatch = inner.match(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})\s*$/i);
     const color = colorMatch?.[1];
     const numStr = color ? inner.slice(0, colorMatch!.index).trim() : inner;
     const nums = numStr.split(/\s+/).map(parseFloat).filter(n => !isNaN(n));
     matches.push({
-      index: m.index,
+      index: dsIdx,
       item: {
         type: "drop-shadow",
         values: [nums[0] ?? 0, nums[1] ?? 0, nums[2] ?? 0],
@@ -156,8 +164,12 @@ export function parseFilterItems(raw: string): FilterItem[] {
         expanded: false,
       },
     });
+    searchStart = i;
   }
 
+  // Match simple filter functions
+  const simpleRegex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
+  let m: RegExpExecArray | null;
   while ((m = simpleRegex.exec(raw)) !== null) {
     const type = m[1] as FilterType;
     let val = parseFloat(m[2]);
