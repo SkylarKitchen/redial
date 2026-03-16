@@ -25,15 +25,15 @@ const src = readFileSync(
 // ─── Extract key source regions ──────────────────────────────────
 
 const expandedMatch = src.match(
-  /function TransformExpanded\([\s\S]*?^}/m,
+  /function TransformExpanded\([\s\S]*?^}$/m,
 );
 
 const rangesMatch = src.match(
-  /const TRANSFORM_RANGES[\s\S]*?};/,
+  /const TRANSFORM_RANGES[\s\S]*?^};/m,
 );
 
 const getUnitMatch = src.match(
-  /function getUnit\([\s\S]*?^}/m,
+  /function getUnit\([\s\S]*?^}$/m,
 );
 
 // ─── Constants validation ────────────────────────────────────────

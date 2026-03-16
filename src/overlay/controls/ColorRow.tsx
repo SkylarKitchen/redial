@@ -15,7 +15,7 @@ import { parseVarAlias } from "../variables/discoverVariables";
 import { Link2, Unlink } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "../timing";
-import { color, text, font, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
+import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover } from "./helpers";
 
 /** Walk the alias chain for a CSS variable, returning all names in the chain. */
@@ -106,7 +106,7 @@ export function ColorRow({
   }, [varName, value, displayColor]);
 
   const colorLabelTitle = indicator ? getIndicatorTitle(indicator) : undefined;
-  const compactLabelOverrides: React.CSSProperties = compact ? { width: 44, padding: 0, paddingLeft: 1 } : {};
+  const compactLabelOverrides: React.CSSProperties = compact ? { width: layout.labelWidth, padding: 0, paddingLeft: 1 } : {};
   const widthOverrides: React.CSSProperties = labelWidth != null
     ? { width: labelWidth, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
     : {};

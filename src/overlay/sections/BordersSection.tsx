@@ -14,7 +14,7 @@ import { detectUnit, type SectionCtx } from "../panelUtils";
 import { cssColorToHex as rgbToHex } from "../colorUtils";
 import { BORDER_STYLE_ICON_OPTIONS, BORDER_UNITS } from "../panelConstants";
 import { ms } from "../timing";
-import { text, color, surface, font, border, indicatorStyle, type IndicatorType } from "../theme";
+import { text, color, surface, font, border, indicatorStyle, layout, type IndicatorType } from "../theme";
 import { ROW, LABEL } from "../panelStyles";
 
 // ─── Radius mode ──────────────────────────────────────────────────────
@@ -328,7 +328,7 @@ export const BordersSection = memo(function BordersSection({
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
             <span
               ref={stylePopover.anchorRef}
-              style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1, cursor: styleInd === "modified" ? "pointer" : "default" }}
+              style={{ width: layout.labelWidth, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1, cursor: styleInd === "modified" ? "pointer" : "default" }}
               onClick={(e) => { if (e.altKey) { handleStyleReset(); return; } stylePopover.triggerOpen(); }}
             >
               <span style={indicatorStyle(styleInd)}>Style</span>
@@ -347,7 +347,7 @@ export const BordersSection = memo(function BordersSection({
             <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
               <span
                 ref={widthPopover.anchorRef}
-                style={{ width: 44, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}
+                style={{ width: layout.labelWidth, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}
               >
                 <span style={indicatorStyle(widthInd)}>Width</span>
               </span>
