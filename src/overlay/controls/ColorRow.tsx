@@ -122,7 +122,7 @@ export function ColorRow({
     </span>
   );
 
-  const compactRowOverrides: React.CSSProperties = compact ? { padding: "2px 0", gap: 4 } : {};
+  const compactRowOverrides: React.CSSProperties = compact ? { padding: "4px 0", minHeight: 32, gap: 4 } : {};
   return (
     <div
       onContextMenu={onContextMenu}
