@@ -489,7 +489,6 @@ function ModeValueCell({
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
-        overflow: "hidden",
         cursor: editable ? "text" : "default",
         borderRadius: 3,
         padding: "1px 3px",
