@@ -15,7 +15,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { ms } from "../timing";
-import { color, focusRing, font, text, border, surface } from "../theme";
+import { color, focusRing, font, text, border, surface, blackAlpha, primaryAlpha } from "../theme";
 
 export interface TransformOriginPickerProps {
   value: string;
@@ -173,7 +173,7 @@ export function TransformOriginPicker({ value, onChange, showInputs }: Transform
         display: "grid",
         gridTemplateColumns: "repeat(3, 18px)",
         gridTemplateRows: "repeat(3, 18px)",
-        border: "1px solid rgba(0,0,0,0.12)",
+        border: `1px solid ${border.default}`,
         borderRadius: "3px",
         overflow: "hidden",
       }}
@@ -215,10 +215,10 @@ export function TransformOriginPicker({ value, onChange, showInputs }: Transform
                 background: isActive
                   ? color.primary
                   : isHov
-                    ? "rgba(59,130,246,0.2)"
+                    ? primaryAlpha(0.2)
                     : "transparent",
-                borderRight: ci < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",
-                borderBottom: ri < 2 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                borderRight: ci < 2 ? `1px solid ${blackAlpha(0.07)}` : "none",
+                borderBottom: ri < 2 ? `1px solid ${blackAlpha(0.07)}` : "none",
                 transition: `background ${ms("fast")}, box-shadow ${ms("fast")}`,
               }}
             >
@@ -227,7 +227,7 @@ export function TransformOriginPicker({ value, onChange, showInputs }: Transform
                   width: "4px",
                   height: "4px",
                   borderRadius: "50%",
-                  background: isActive ? "#fff" : "rgba(0,0,0,0.25)",
+                  background: isActive ? color.primaryForeground : blackAlpha(0.25),
                 }}
               />
             </div>

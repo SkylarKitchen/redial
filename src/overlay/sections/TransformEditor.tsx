@@ -73,7 +73,7 @@ const TRANSFORM_RANGES: Record<TransformType, { min: number; max: number; step: 
   skew: { min: -90, max: 90, step: 1 },
 };
 
-function getUnit(type: TransformType, _axis: "x" | "y" | "z"): string {
+function getUnit(type: TransformType): string {
   if (type === "translate") return "PX";
   if (type === "rotate") return "DEG";
   if (type === "skew") return "DEG";
@@ -147,7 +147,7 @@ const TRANSFORM_ICONS: Record<TransformType, React.ReactNode> = {
 
 // ─── Lock Icon ───────────────────────────────────────────────────
 
-function LockIcon({ locked }: { locked: boolean }) {
+function ScaleLockIcon({ locked }: { locked: boolean }) {
   if (locked) {
     return (
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -336,12 +336,12 @@ function TransformExpanded({
 
       {/* Axis sliders */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
-        <AxisSliderRow label="X" value={x} range={range} unit={getUnit(type, "x")} onChange={handleAxisChange("x")} />
-        <AxisSliderRow label="Y" value={y} range={range} unit={getUnit(type, "y")} onChange={handleAxisChange("y")} />
+        <AxisSliderRow label="X" value={x} range={range} unit={getUnit(type)} onChange={handleAxisChange("x")} />
+        <AxisSliderRow label="Y" value={y} range={range} unit={getUnit(type)} onChange={handleAxisChange("y")} />
         {hasZ && (
           <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
             <div style={{ flex: 1 }}>
-              <AxisSliderRow label="Z" value={z ?? 0} range={range} unit={getUnit(type, "z")} onChange={handleAxisChange("z")} />
+              <AxisSliderRow label="Z" value={z ?? 0} range={range} unit={getUnit(type)} onChange={handleAxisChange("z")} />
             </div>
             {isScale && (
               <button
@@ -369,7 +369,7 @@ function TransformExpanded({
                   (e.currentTarget as HTMLElement).style.background = "transparent";
                 }}
               >
-                <LockIcon locked={!!scaleLocked} />
+                <ScaleLockIcon locked={!!scaleLocked} />
               </button>
             )}
           </div>
