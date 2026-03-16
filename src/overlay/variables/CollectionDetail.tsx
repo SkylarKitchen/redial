@@ -14,6 +14,7 @@ import { VarTypeIcon } from "./VarTypeIcon";
 import { VariableValue } from "./ReferencePill";
 import type { CSSVariable } from "./discoverVariables";
 import type { TokenCollection } from "./tokenCollections";
+import type { InferredMode } from "./modeDiscovery";
 import {
   applyCustomProperty,
   isCustomPropertyDirty,
@@ -54,6 +55,8 @@ export interface CollectionDetailProps {
   onDuplicate: (varName: string) => void;
   onMoveToCollection: (varName: string, collectionId: string) => void;
   onUnassign: (varName: string) => void;
+  /** Discovered CSS variable modes (from modeDiscovery) */
+  modes?: InferredMode[];
 }
 
 // ─── Display Name Logic ─────────────────────────────────────────────
@@ -331,6 +334,7 @@ function DetailVariableRow({
   renaming,
   onRenameCommit,
   onRenameCancel,
+  modeValues,
 }: {
   variable: CSSVariable;
   subgroupName: string;
@@ -343,6 +347,8 @@ function DetailVariableRow({
   renaming: boolean;
   onRenameCommit: (newName: string) => void;
   onRenameCancel: () => void;
+  /** When multi-mode is active, per-mode values for this variable */
+  modeValues?: Array<{ modeName: string; value: string | undefined }>;
 }) {
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -418,7 +424,7 @@ function DetailVariableRow({
       />
 
       {/* Name cell */}
-      <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center" }}>
+      <div style={{ ...(modeValues ? { width: 130, flexShrink: 0 } : { flex: 1 }), minWidth: 0, display: "flex", alignItems: "center" }}>
         {renaming ? (
           <input
             ref={renameRef}
@@ -456,46 +462,74 @@ function DetailVariableRow({
         )}
       </div>
 
-      {/* Value cell */}
-      <div
-        style={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "flex-end",
-        }}
-      >
-        {editing ? (
-          <input
-            ref={valueRef}
-            type="text"
-            value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              // Live preview while typing
-              applyCustomProperty(document.documentElement, variable.name, e.target.value);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitValue(draft);
-              if (e.key === "Escape") { e.stopPropagation(); setDraft(variable.value); setEditing(false); }
-            }}
-            onBlur={() => commitValue(draft)}
-            style={{ ...INPUT_STYLE, flex: 1, textAlign: "right" }}
-          />
-        ) : (
-          <span
-            onClick={() => setEditing(true)}
-            style={{ cursor: "text", maxWidth: "100%", overflow: "hidden" }}
-          >
-            <VariableValue
-              value={variable.value}
-              aliasOf={variable.aliasOf}
-              resolvedColor={resolvedColor}
+      {/* Value cell(s) */}
+      {modeValues ? (
+        /* Multi-mode: one read-only cell per mode */
+        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
+          {modeValues.map((mv) => (
+            <div
+              key={mv.modeName}
+              style={{
+                flex: 1,
+                minWidth: 80,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                overflow: "hidden",
+              }}
+            >
+              {mv.value !== undefined ? (
+                <VariableValue value={mv.value} />
+              ) : (
+                <span style={{ color: text.disabled, fontSize: 11, fontFamily: font.mono }}>
+                  {"\u2014"}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Single-mode: editable value cell */
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+          }}
+        >
+          {editing ? (
+            <input
+              ref={valueRef}
+              type="text"
+              value={draft}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                // Live preview while typing
+                applyCustomProperty(document.documentElement, variable.name, e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitValue(draft);
+                if (e.key === "Escape") { e.stopPropagation(); setDraft(variable.value); setEditing(false); }
+              }}
+              onBlur={() => commitValue(draft)}
+              style={{ ...INPUT_STYLE, flex: 1, textAlign: "right" }}
             />
-          </span>
-        )}
-      </div>
+          ) : (
+            <span
+              onClick={() => setEditing(true)}
+              style={{ cursor: "text", maxWidth: "100%", overflow: "hidden" }}
+            >
+              <VariableValue
+                value={variable.value}
+                aliasOf={variable.aliasOf}
+                resolvedColor={resolvedColor}
+              />
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Hover action buttons */}
       {hovered && !renaming && !editing && (
@@ -553,6 +587,7 @@ function SubgroupSection({
   onRenameStart,
   onRenameCommit,
   onRenameCancel,
+  modes,
 }: {
   subgroup: Subgroup;
   allVariables: CSSVariable[];
@@ -570,6 +605,8 @@ function SubgroupSection({
   onRenameStart: (varName: string) => void;
   onRenameCommit: (oldName: string, newName: string) => void;
   onRenameCancel: () => void;
+  /** When multi-mode is active, the relevant inferred modes */
+  modes?: InferredMode[];
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -593,22 +630,29 @@ function SubgroupSection({
       )}
 
       {/* Variable rows */}
-      {subgroup.variables.map((v) => (
-        <DetailVariableRow
-          key={v.name}
-          variable={v}
-          subgroupName={subgroup.name}
-          allVariables={allVariables}
-          onApply={onApply}
-          onContextMenu={(e) => onContextMenu(e, v)}
-          onRename={() => onRenameStart(v.name)}
-          onDuplicate={() => onDuplicate(v.name)}
-          onRemove={() => onRemove(v.name)}
-          renaming={renamingVar === v.name}
-          onRenameCommit={(newName) => onRenameCommit(v.name, newName)}
-          onRenameCancel={onRenameCancel}
-        />
-      ))}
+      {subgroup.variables.map((v) => {
+        const modeValues = modes?.map((m) => ({
+          modeName: m.name,
+          value: m.values[v.name],
+        }));
+        return (
+          <DetailVariableRow
+            key={v.name}
+            variable={v}
+            subgroupName={subgroup.name}
+            allVariables={allVariables}
+            onApply={onApply}
+            onContextMenu={(e) => onContextMenu(e, v)}
+            onRename={() => onRenameStart(v.name)}
+            onDuplicate={() => onDuplicate(v.name)}
+            onRemove={() => onRemove(v.name)}
+            renaming={renamingVar === v.name}
+            onRenameCommit={(newName) => onRenameCommit(v.name, newName)}
+            onRenameCancel={onRenameCancel}
+            modeValues={modeValues}
+          />
+        );
+      })}
 
       {/* Per-subgroup add row */}
       {adding ? (
@@ -665,12 +709,23 @@ export function CollectionDetail({
   onDuplicate,
   onMoveToCollection,
   onUnassign,
+  modes,
 }: CollectionDetailProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [renamingVar, setRenamingVar] = useState<string | null>(null);
 
   // Infer subgroups from the variables in this collection
   const subgroups = useMemo(() => inferSubgroups(variables), [variables]);
+
+  // Filter modes to only those relevant to this collection's variables
+  const relevantModes = useMemo(() => {
+    if (!modes || modes.length <= 1) return null;
+    const varNames = new Set(variables.map((v) => v.name));
+    const filtered = modes.filter(
+      (m) => m.source === "base" || Object.keys(m.values).some((k) => varNames.has(k)),
+    );
+    return filtered.length <= 1 ? null : filtered;
+  }, [modes, variables]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent, variable: CSSVariable) => {
     e.preventDefault();
@@ -741,8 +796,26 @@ export function CollectionDetail({
         <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px" }}>
           {/* Icon spacer */}
           <div style={{ width: 14, flexShrink: 0 }} />
-          <div style={{ flex: 1, ...COLUMN_HEADER_STYLE }}>Name</div>
-          <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Base mode</div>
+          {relevantModes ? (
+            <>
+              <div style={{ width: 130, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
+                {relevantModes.map((m) => (
+                  <div
+                    key={m.name}
+                    style={{ flex: 1, minWidth: 80, textAlign: "right", ...COLUMN_HEADER_STYLE }}
+                  >
+                    {m.name}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ flex: 1, ...COLUMN_HEADER_STYLE }}>Name</div>
+              <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Base mode</div>
+            </>
+          )}
           {/* Action spacer for hover buttons */}
           <div style={{ width: 40, flexShrink: 0 }} />
         </div>
@@ -776,6 +849,7 @@ export function CollectionDetail({
             onRenameStart={handleRenameStart}
             onRenameCommit={handleRenameCommit}
             onRenameCancel={handleRenameCancel}
+            modes={relevantModes ?? undefined}
           />
         ))}
       </div>

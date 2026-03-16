@@ -12,6 +12,7 @@ import { CollectionDetail } from "./CollectionDetail";
 import { useTokenCollections } from "./tokenCollections";
 import { discoverAllVariables, buildAliasGraph, replaceVarReferences } from "./discoverVariables";
 import { inferAutoCollections } from "./autoCollections";
+import { discoverModeDeclarations, inferModes } from "./modeDiscovery";
 import {
   applyCustomProperty,
   addCustomProperty,
@@ -42,6 +43,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
   const overrideSnapshot = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
   const allVars = useMemo(() => discoverAllVariables(), [overrideSnapshot]);
   const _aliasGraph = useMemo(() => buildAliasGraph(allVars), [allVars]);
+  const modes = useMemo(() => inferModes(discoverModeDeclarations()), [overrideSnapshot]);
 
   // Filter by search
   const filtered = useMemo(() => {
@@ -120,6 +122,7 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
         allVariables={allVars}
         collections={collections}
         currentCollectionId={selectedId}
+        modes={modes}
         onApply={(name, value) =>
           applyCustomProperty(document.documentElement, name, value)
         }
