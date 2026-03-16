@@ -356,7 +356,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           keyword={maxHeightNone ? "none" : null}
           onValueChange={handleMaxHeightChange}
           onUnitChange={(u) => { if (maxHeightVar) setMaxHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(maxHeight, maxHeightUnit, u, ctx, "height"); fireMaxHHint(maxHeight, maxHeightUnit, c, u, ctx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
-          onKeywordChange={(k) => { if (maxHeightVar) setMaxHeightVar(null); setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${maxHeightUnit}`); }}
+          onKeywordChange={(k) => { if (maxHeightVar) setMaxHeightVar(null); setMaxHeightNone(k === "none"); const u = maxHeightUnit === "--" ? "px" : maxHeightUnit; apply("max-height", k === "none" ? "none" : `${maxHeight}${u}`); }}
           isModified={isDirty(element, "max-height")}
           supportsNone
           min={0}
