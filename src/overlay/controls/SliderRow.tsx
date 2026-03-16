@@ -94,6 +94,17 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
+  // Variable linking state
+  const [varPickerOpen, setVarPickerOpen] = useState(false);
+  const linkBtnRef = useRef<HTMLButtonElement>(null);
+
+  const handleUnlink = useCallback(() => {
+    if (!variableElement || !computedProp) return;
+    const computed = getComputedStyle(variableElement).getPropertyValue(computedProp);
+    const num = parseFloat(computed);
+    if (!isNaN(num)) onChange(num);
+  }, [variableElement, computedProp, onChange]);
+
   const resetPopover = useResetPopover(indicator, onReset);
   const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
