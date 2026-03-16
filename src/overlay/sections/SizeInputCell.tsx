@@ -165,11 +165,12 @@ export function SizeInputCell({
   const isKeyword = keyword !== null;
 
   return (
-    <div style={{ display: "flex", flex: 1, flexDirection: "column", gap: 2 }}>
+    <div style={{ display: "flex", flex: 1, flexDirection: "column", gap: 2 }} onMouseEnter={() => setRowHovered(true)} onMouseLeave={() => setRowHovered(false)}>
     <div
       ref={cellRef}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
       style={{
+        position: "relative",
         display: "flex",
         alignItems: "center",
         height: 28,
@@ -178,6 +179,17 @@ export function SizeInputCell({
         background: surface.subtle,
       }}
     >
+      {!isVariable && !isKeyword && variableOptions && onCssVarChange && (
+        <VariableLinkDot
+          rowHovered={rowHovered}
+          variableType="length"
+          onSelect={(varExpr) => {
+            const match = varExpr.match(/^var\((.+)\)$/);
+            if (match) onCssVarChange(match[1]);
+          }}
+          activeVariable={cssVar}
+        />
+      )}
       {/* Modified dot + Label — click opens reset popover */}
       {isModified && <span ref={resetPopover.anchorRef} onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }} style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4, cursor: "pointer" }} title="Click to reset" />}
       {/* Label */}

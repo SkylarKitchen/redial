@@ -140,54 +140,64 @@ export function ColorRow({
           {actions}
         </div>
       )}
-      <div
-        ref={swatchRef}
-        className="tuner-focusable"
-        tabIndex={0}
-        role="button"
-        onClick={() => setPickerOpen(!pickerOpen)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setPickerOpen(!pickerOpen);
-          }
-        }}
-        onMouseDown={swatchPress.onMouseDown}
-        onMouseUp={swatchPress.onMouseUp}
-        onMouseLeave={swatchPress.onMouseLeave}
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 2,
-          cursor: "pointer",
-          flexShrink: 0,
-          background:
-            displayColor === "transparent"
-              ? checkerboard
-              : displayColor,
-          border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
-          boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
-          ...swatchPressStyle,
-        }}
-        title={aliasChainTitle}
-      />
-      <span
-        title={aliasChainTitle}
-        style={{
-          fontSize: 10,
-          fontFamily: font.mono,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap" as const,
-          flex: 1,
-          minWidth: 0,
-          color: varName ? primaryAlpha(0.8) : color.mutedForeground,
-        }}
-      >
-        {displayLabel}
-      </span>
-      {/* Link/Unlink variable button */}
-      {varName ? (
+      <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+        {!varName && (
+          <VariableLinkDot
+            rowHovered={rowHovered}
+            variableType="color"
+            onSelect={(varExpr) => onChange(varExpr)}
+            activeVariable={varName}
+          />
+        )}
+        <div
+          ref={swatchRef}
+          className="tuner-focusable"
+          tabIndex={0}
+          role="button"
+          onClick={() => setPickerOpen(!pickerOpen)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setPickerOpen(!pickerOpen);
+            }
+          }}
+          onMouseDown={swatchPress.onMouseDown}
+          onMouseUp={swatchPress.onMouseUp}
+          onMouseLeave={swatchPress.onMouseLeave}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 2,
+            cursor: "pointer",
+            flexShrink: 0,
+            background:
+              displayColor === "transparent"
+                ? checkerboard
+                : displayColor,
+            border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
+            boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
+            ...swatchPressStyle,
+          }}
+          title={aliasChainTitle}
+        />
+        <span
+          title={aliasChainTitle}
+          style={{
+            fontSize: 10,
+            fontFamily: font.mono,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap" as const,
+            flex: 1,
+            minWidth: 0,
+            color: varName ? primaryAlpha(0.8) : color.mutedForeground,
+          }}
+        >
+          {displayLabel}
+        </span>
+      </div>
+      {/* Unlink variable button */}
+      {varName && (
         <button
           type="button"
           title="Unlink variable"
@@ -210,34 +220,6 @@ export function ColorRow({
           }}
         >
           <Unlink size={11} strokeWidth={2} />
-        </button>
-      ) : (
-        <button
-          ref={linkBtnRef}
-          type="button"
-          title="Link to variable"
-          onClick={(e) => {
-            e.stopPropagation();
-            setVarPickerOpen(!varPickerOpen);
-          }}
-          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
-          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: text.hint,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            opacity: 0.6,
-            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
-        >
-          <Link2 size={11} strokeWidth={2} />
         </button>
       )}
       {indicator === "modified" && onReset && (
@@ -267,15 +249,6 @@ export function ColorRow({
         >
           <X size={10} strokeWidth={2.5} />
         </button>
-      )}
-      {varPickerOpen && linkBtnRef.current && (
-        <VariablePicker
-          anchor={linkBtnRef.current}
-          type="color"
-          onSelect={(varExpr) => onChange(varExpr)}
-          onClose={() => setVarPickerOpen(false)}
-          activeVariable={varName}
-        />
       )}
       {pickerOpen && swatchRef.current && (() => {
         const pickerWidth = 240 + 24; // width + padding

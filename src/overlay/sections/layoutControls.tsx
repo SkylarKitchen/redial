@@ -27,6 +27,7 @@ import {
 import { useClickOutside } from "../hooks/useClickOutside";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
 import { ROW } from "../panelStyles";
 
@@ -1092,6 +1093,7 @@ export function TypoValueCell({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const [rowHovered, setRowHovered] = useState(false);
   const cellRef = useRef<HTMLDivElement>(null);
   const flashStyle = useValueFlash(value);
   const isVariable = keyword == null && (cssVar ?? null) !== null;
@@ -1132,7 +1134,10 @@ export function TypoValueCell({
   return (
     <div
       ref={cellRef}
+      onMouseEnter={() => setRowHovered(true)}
+      onMouseLeave={() => setRowHovered(false)}
       style={{
+        position: "relative",
         display: "flex",
         flex: 1,
         alignItems: "center",
@@ -1144,6 +1149,17 @@ export function TypoValueCell({
         ...flashStyle,
       }}
     >
+      {!isVariable && !isKeyword && variableOptions && onCssVarChange && (
+        <VariableLinkDot
+          rowHovered={rowHovered}
+          variableType="length"
+          onSelect={(varExpr) => {
+            const match = varExpr.match(/^var\((.+)\)$/);
+            if (match) onCssVarChange?.(match[1]);
+          }}
+          activeVariable={cssVar}
+        />
+      )}
       {isVariable ? (
         <span
           title={`${cssVar}: ${cssVarResolved ?? "?"}`}
