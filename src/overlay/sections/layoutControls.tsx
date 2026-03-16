@@ -1150,7 +1150,7 @@ export function TypoValueCell({
         ...flashStyle,
       }}
     >
-      {!isKeyword && variableOptions && onCssVarChange && (
+      {!isKeyword && !isVariable && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
           isLinked={isVariable}
@@ -1164,26 +1164,16 @@ export function TypoValueCell({
         />
       )}
       {isVariable ? (
-        <span
-          title={`${cssVar}: ${cssVarResolved ?? "?"}`}
-          onClick={() => onCssVarChange?.(null)}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            fontSize: 11,
-            fontFamily: font.mono,
-            paddingLeft: 6,
-            paddingRight: 6,
-            cursor: "pointer",
-            outline: "none",
-            color: color.primary,
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
+        <VariableField
+          variableName={cssVar!}
+          variableType="length"
+          element={undefined}
+          onSelectVariable={(varExpr) => {
+            const match = varExpr.match(/^var\((.+)\)$/);
+            if (match) onCssVarChange?.(match[1]);
           }}
-        >
-          {cssVar?.replace(/^--/, "")}
-        </span>
+          onUnlink={() => onCssVarChange?.(null)}
+        />
       ) : isKeyword ? (
         <span
           tabIndex={0}
@@ -1242,37 +1232,39 @@ export function TypoValueCell({
           {value}
         </span>
       )}
-      <div style={{
-        flexShrink: 0,
-        paddingRight: 3,
-        borderLeft: `1px solid ${blackAlpha(0.07)}`,
-        alignSelf: "stretch",
-        display: "flex",
-        alignItems: "center",
-      }}>
-        {units && onUnitChange ? (
-          <UnitSelector
-            value={isVariable ? "VAR" : unit}
-            options={units}
-            onChange={(u) => { if (isVariable) onCssVarChange?.(null); onUnitChange(u); }}
-            conversionHint={conversionHint}
-            variableOptions={variableOptions}
-            onVariableSelect={(name) => onCssVarChange?.(name)}
-            embedded
-          />
-        ) : (
-          <span style={{
-            fontSize: 9,
-            textTransform: "uppercase",
-            paddingRight: 4,
-            flexShrink: 0,
-            fontFamily: font.mono,
-            color: text.disabled,
-          }}>
-            {unit}
-          </span>
-        )}
-      </div>
+      {!isVariable && (
+        <div style={{
+          flexShrink: 0,
+          paddingRight: 3,
+          borderLeft: `1px solid ${blackAlpha(0.07)}`,
+          alignSelf: "stretch",
+          display: "flex",
+          alignItems: "center",
+        }}>
+          {units && onUnitChange ? (
+            <UnitSelector
+              value={unit}
+              options={units}
+              onChange={onUnitChange}
+              conversionHint={conversionHint}
+              variableOptions={variableOptions}
+              onVariableSelect={(name) => onCssVarChange?.(name)}
+              embedded
+            />
+          ) : (
+            <span style={{
+              fontSize: 9,
+              textTransform: "uppercase",
+              paddingRight: 4,
+              flexShrink: 0,
+              fontFamily: font.mono,
+              color: text.disabled,
+            }}>
+              {unit}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
