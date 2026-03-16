@@ -10,13 +10,11 @@
  * - Popover with click-outside dismissal
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "../colorUtils";
 import { ms } from "../timing";
 import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
-import { useTokenCollections } from "../variables/tokenCollections";
-import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, blackAlpha } from "../theme";
-import { useSwatches } from "../hooks/useSwatches";
+import { color as themeColor, text, border, surface, font, shadow, primaryAlpha } from "../theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
