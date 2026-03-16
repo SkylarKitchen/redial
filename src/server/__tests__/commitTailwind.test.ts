@@ -463,3 +463,172 @@ describe("client→server field compatibility", () => {
     expect(content).not.toContain('"flex items-center"');
   });
 });
+
+// ─── findFileByClassName fallback ─────────────────────────────────────
+
+describe("findFileByClassName fallback", () => {
+  it("finds file when sourceFile is missing but existingClasses is provided", async () => {
+    await writeFixture(
+      "src/components/Card.tsx",
+      [
+        "export function Card() {",
+        '  return <div className="flex items-center p-4">Card</div>;',
+        "}",
+      ].join("\n")
+    );
+
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: "",
+          existingClasses: "flex items-center p-4",
+          newClasses: "grid",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(1);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(
+      join(tempDir, "src/components/Card.tsx"),
+      "utf-8"
+    );
+    expect(content).toContain("items-center p-4 grid");
+    expect(content).not.toContain('"flex items-center p-4"');
+  });
+
+  it("fails gracefully when className doesn't match any file", async () => {
+    // Write a file with a DIFFERENT className so the search has something to scan
+    await writeFixture(
+      "src/Other.tsx",
+      [
+        "export function Other() {",
+        '  return <div className="text-sm">Other</div>;',
+        "}",
+      ].join("\n")
+    );
+
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: "",
+          existingClasses: "nonexistent-class-string-xyz",
+          newClasses: "p-4",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toContain("no source file specified");
+  });
+
+  it("handles multiple className attributes in same file — finds correct one", async () => {
+    // Two different className attributes on separate lines
+    await writeFixture(
+      "src/Multi.tsx",
+      [
+        "export function Multi() {",
+        "  return (",
+        "    <div>",
+        '      <header className="bg-white border-b p-2">Header</header>',
+        '      <main className="flex items-center gap-4">Content</main>',
+        "    </div>",
+        "  );",
+        "}",
+      ].join("\n")
+    );
+
+    // Target the second className by providing its exact classes
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: "src/Multi.tsx",
+          sourceLine: 5,
+          existingClasses: "flex items-center gap-4",
+          newClasses: "gap-8",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toContain("src/Multi.tsx");
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, "src/Multi.tsx"), "utf-8");
+    // The second className should be updated
+    expect(content).toContain("flex items-center gap-8");
+    expect(content).not.toContain("gap-4");
+    // The first className should be untouched
+    expect(content).toContain("bg-white border-b p-2");
+  });
+});
+
+// ─── Conflict-aware merge edge cases ──────────────────────────────────
+
+describe("mergeClasses edge cases", () => {
+  it("handles responsive prefixes correctly", () => {
+    const result = mergeClasses("sm:w-4 md:w-6", "sm:w-8");
+    // sm:w-4 should be replaced by sm:w-8, md:w-6 kept
+    expect(result).toBe("md:w-6 sm:w-8");
+  });
+
+  it("handles negative values", () => {
+    const result = mergeClasses("-mt-4 p-2", "-mt-8");
+    // -mt-4 should be replaced by -mt-8, p-2 kept
+    expect(result).toBe("p-2 -mt-8");
+  });
+
+  it("preserves order of non-conflicting classes", () => {
+    const result = mergeClasses(
+      "flex items-center justify-between text-sm",
+      "items-start"
+    );
+    // items-center replaced by items-start, rest preserved in order
+    expect(result).toBe("flex justify-between text-sm items-start");
+  });
+});
+
+// ─── Safety tests ─────────────────────────────────────────────────────
+
+describe("safety: findFileByClassName fallback", () => {
+  it("rejects sourceFile with path traversal via findFileByClassName", async () => {
+    // Even if findFileByClassName returns a traversal-looking path,
+    // the commit handler should catch it. Here we test that sourceFile
+    // with traversal is still caught when provided explicitly alongside
+    // a fallback scenario.
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: "../../etc/passwd",
+          existingClasses: "flex",
+          newClasses: "p-4",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toContain("Path traversal");
+  });
+
+  it("rejects absolute path in sourceFile", async () => {
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: "/etc/passwd",
+          existingClasses: "flex",
+          newClasses: "p-4",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+  });
+});
