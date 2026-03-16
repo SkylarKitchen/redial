@@ -7,8 +7,9 @@
  * Click the pencil to open EditVariablePopover (stub — implemented in Task 2).
  */
 
-import { useState, useRef, useCallback } from "react";
-import { color, font, layout, variableAlpha } from "../theme";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { color, font, layout, variableAlpha, text, border, surface, shadow, zIndex } from "../theme";
 import { ms } from "../timing";
 import { VariablePicker } from "./VariablePicker";
 import { Pencil } from "lucide-react";
@@ -28,14 +29,168 @@ export interface VariableFieldProps {
   onUnlink: () => void;
 }
 
-// ─── Stub: EditVariablePopover ──────────────────────────────────────
+// ─── EditVariablePopover ─────────────────────────────────────────────
 
-function EditVariablePopover(_props: {
+function EditVariablePopover({
+  anchor,
+  variableName,
+  onClose,
+}: {
   anchor: HTMLElement;
   variableName: string;
   onClose: () => void;
 }) {
-  return null; // Implemented in Task 2
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Strip -- prefix for the name field
+  const bareNameInit = variableName.startsWith("--")
+    ? variableName.slice(2)
+    : variableName;
+  const [name, setName] = useState(bareNameInit);
+
+  // Read current computed value
+  const computedInit = getComputedStyle(document.documentElement)
+    .getPropertyValue(variableName)
+    .trim();
+  const [value, setValue] = useState(computedInit);
+
+  // Position below anchor, clamped to viewport
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ar = anchor.getBoundingClientRect();
+    const mr = el.getBoundingClientRect();
+    let top = ar.bottom + 4;
+    let left = ar.left;
+    if (left + mr.width > window.innerWidth - 8)
+      left = window.innerWidth - mr.width - 8;
+    if (top + mr.height > window.innerHeight - 8)
+      top = ar.top - mr.height - 4;
+    if (left < 8) left = 8;
+    if (top < 8) top = 8;
+    setPos({ top, left });
+  }, [anchor]);
+
+  // Click-outside → close (capture phase)
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener("mousedown", handler, true);
+    return () => document.removeEventListener("mousedown", handler, true);
+  }, [onClose]);
+
+  // Escape → close (capture phase)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handler, true);
+    return () => document.removeEventListener("keydown", handler, true);
+  }, [onClose]);
+
+  // Commit name rename globally
+  const commitName = useCallback(() => {
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === bareNameInit) return;
+    const currentValue = getComputedStyle(document.documentElement)
+      .getPropertyValue(variableName)
+      .trim();
+    document.documentElement.style.removeProperty(variableName);
+    document.documentElement.style.setProperty(`--${trimmed}`, currentValue);
+  }, [name, bareNameInit, variableName]);
+
+  // Commit value update globally
+  const commitValue = useCallback(() => {
+    document.documentElement.style.setProperty(variableName, value);
+  }, [variableName, value]);
+
+  const inputStyle: React.CSSProperties = {
+    height: 28,
+    background: surface.subtle,
+    border: `1px solid ${border.default}`,
+    borderRadius: 4,
+    padding: "0 8px",
+    fontSize: 11,
+    fontFamily: font.mono,
+    color: text.primary,
+    outline: "none",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+
+  return createPortal(
+    <div
+      ref={ref}
+      data-tuner-portal
+      style={{
+        position: "fixed",
+        zIndex: zIndex.max,
+        top: pos?.top ?? 0,
+        left: pos?.left ?? 0,
+        visibility: pos ? "visible" : "hidden",
+        width: 240,
+        background: color.background,
+        border: `1px solid ${border.default}`,
+        borderRadius: 6,
+        boxShadow: shadow.dropdown,
+        padding: 12,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: text.primary,
+        }}
+      >
+        Edit variable
+      </div>
+
+      {/* Name field */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: 10, color: text.label }}>Name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commitName}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitName();
+            }
+          }}
+          style={inputStyle}
+        />
+      </div>
+
+      {/* Value field */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <label style={{ fontSize: 10, color: text.label }}>Value</label>
+        <input
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={commitValue}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitValue();
+            }
+          }}
+          style={inputStyle}
+        />
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 // ─── VariableField ──────────────────────────────────────────────────
