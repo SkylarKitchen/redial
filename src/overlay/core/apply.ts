@@ -316,7 +316,7 @@ export function undo(): { el: Element; prop?: string } | null {
         // Re-create using the stashed cleared value if available, else computed.
         const cleared = clearedOverrides.get(el)?.get(prop);
         const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
-        entry = { initial: baseline, current: baseline };
+        entry = { initial: baseline, current: baseline, inlineOriginal: null };
         elOverrides.set(prop, entry);
       }
 
@@ -369,7 +369,7 @@ export function undo(): { el: Element; prop?: string } | null {
     // Re-create using the stashed cleared value if available, else computed.
     const cleared = clearedOverrides.get(el)?.get(prop);
     const baseline = cleared?.current ?? getComputedStyle(el).getPropertyValue(cssProp).trim();
-    entry = { initial: baseline, current: baseline };
+    entry = { initial: baseline, current: baseline, inlineOriginal: null };
     elOverrides.set(prop, entry);
   }
 
@@ -440,7 +440,7 @@ export function redo(): { el: Element; prop?: string } | null {
         else if (wasDirty && !isDirtyNow) dirtyCount--;
       } else {
         const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
-        elOverrides.set(prop, { initial, current: redoValue });
+        elOverrides.set(prop, { initial, current: redoValue, inlineOriginal: null });
         if (initial !== redoValue) dirtyCount++;
       }
       if (!isState) {
@@ -478,7 +478,7 @@ export function redo(): { el: Element; prop?: string } | null {
     else if (wasDirty && !isDirtyNow) dirtyCount--;
   } else {
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
-    elOverrides.set(prop, { initial, current: redoValue });
+    elOverrides.set(prop, { initial, current: redoValue, inlineOriginal: null });
     if (initial !== redoValue) dirtyCount++;
   }
   if (!isState) {
@@ -819,7 +819,11 @@ export function resetProp(el: Element, prop: string): void {
 
   if (entry && entry.initial !== entry.current) dirtyCount--;
   if (!prop.includes("::")) {
-    (el as HTMLElement).style.removeProperty(prop);
+    if (entry?.inlineOriginal) {
+      (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
+    } else {
+      (el as HTMLElement).style.removeProperty(prop);
+    }
   }
   elOverrides.delete(prop);
   if (elOverrides.size === 0) overrides.delete(el);
@@ -948,7 +952,7 @@ export function applyCustomProperty(
   const scopeOverrides = overrides.get(scope)!;
   if (!scopeOverrides.has(name)) {
     const effectiveInitial = initial || value;
-    scopeOverrides.set(name, { initial: effectiveInitial, current: value });
+    scopeOverrides.set(name, { initial: effectiveInitial, current: value, inlineOriginal: null });
     if (effectiveInitial !== value) dirtyCount++;
   } else {
     const existing = scopeOverrides.get(name)!;
@@ -1154,7 +1158,7 @@ export function restoreSession(): number {
       const elOverrides = overrides.get(el)!;
 
       for (const [prop, override] of Object.entries(props)) {
-        elOverrides.set(prop, { initial: override.initial, current: override.current });
+        elOverrides.set(prop, { initial: override.initial, current: override.current, inlineOriginal: null });
         if (override.initial !== override.current) dirtyCount++;
 
         const parsed = parseStateKey(prop);

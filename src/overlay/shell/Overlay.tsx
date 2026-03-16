@@ -538,11 +538,11 @@ export function Overlay() {
         return;
       }
 
-      // For all other shortcuts, skip when typing in inputs or inside our panel
+      // For all other shortcuts, skip when typing in inputs or inside our panel/portals
       const tag = target?.tagName?.toLowerCase();
-      if (tag === "input" || tag === "textarea" || tag === "select") return;
-      if (target?.isContentEditable) return;
-      if (insidePanel) return;
+      const isTyping = tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable;
+      const isInsideTunerUI = insidePanel || !!target?.closest("[data-tuner-portal]");
+      if (isTyping || isInsideTunerUI) return;
 
       // N to toggle navigator (no modifier, no selectedEl required)
       if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {

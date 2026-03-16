@@ -70,6 +70,110 @@ describe("input focus guard detection", () => {
   });
 });
 
+// ─── Portal keyboard guard ──────────────────────────────────────────
+
+describe("portal keyboard guard", () => {
+  /**
+   * Mirrors the full guard logic from Overlay.tsx handleKeyDown (lines ~541-545).
+   * The guard must block plain-key shortcuts when the target is:
+   * 1. An input/textarea/select element
+   * 2. A contentEditable element
+   * 3. Inside .__tuner-root (insidePanel)
+   * 4. Inside [data-tuner-portal] (portal-rendered popups)
+   *
+   * Case 4 is critical: createPortal renders outside .__tuner-root,
+   * so buttons/sliders/preset-grids inside portals would otherwise
+   * let shortcuts like 1-8 (Focus Mode) fire while the user interacts.
+   */
+  function shouldBlockPlainShortcut(target: HTMLElement): boolean {
+    const tag = target.tagName.toLowerCase();
+    const isTyping = tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable;
+    const insidePanel = !!target.closest(".__tuner-root");
+    const insidePortal = !!target.closest("[data-tuner-portal]");
+    return isTyping || insidePanel || insidePortal;
+  }
+
+  it("blocks shortcuts for input inside a portal", () => {
+    const portal = document.createElement("div");
+    portal.setAttribute("data-tuner-portal", "");
+    document.body.appendChild(portal);
+    const input = document.createElement("input");
+    portal.appendChild(input);
+
+    expect(shouldBlockPlainShortcut(input)).toBe(true);
+    document.body.removeChild(portal);
+  });
+
+  it("blocks shortcuts for button inside a portal", () => {
+    const portal = document.createElement("div");
+    portal.setAttribute("data-tuner-portal", "");
+    document.body.appendChild(portal);
+    const btn = document.createElement("button");
+    portal.appendChild(btn);
+
+    expect(shouldBlockPlainShortcut(btn)).toBe(true);
+    document.body.removeChild(portal);
+  });
+
+  it("blocks shortcuts for div with tabIndex inside a portal", () => {
+    const portal = document.createElement("div");
+    portal.setAttribute("data-tuner-portal", "");
+    document.body.appendChild(portal);
+    const div = document.createElement("div");
+    div.tabIndex = 0;
+    portal.appendChild(div);
+
+    expect(shouldBlockPlainShortcut(div)).toBe(true);
+    document.body.removeChild(portal);
+  });
+
+  it("blocks shortcuts for range input (slider) inside a portal", () => {
+    const portal = document.createElement("div");
+    portal.setAttribute("data-tuner-portal", "");
+    document.body.appendChild(portal);
+    const range = document.createElement("input");
+    range.type = "range";
+    portal.appendChild(range);
+
+    expect(shouldBlockPlainShortcut(range)).toBe(true);
+    document.body.removeChild(portal);
+  });
+
+  it("blocks shortcuts for elements inside .__tuner-root", () => {
+    const root = document.createElement("div");
+    root.className = "__tuner-root";
+    document.body.appendChild(root);
+    const btn = document.createElement("button");
+    root.appendChild(btn);
+
+    expect(shouldBlockPlainShortcut(btn)).toBe(true);
+    document.body.removeChild(root);
+  });
+
+  it("does NOT block shortcuts for elements outside panel and portals", () => {
+    const div = document.createElement("div");
+    document.body.appendChild(div);
+
+    expect(shouldBlockPlainShortcut(div)).toBe(false);
+    document.body.removeChild(div);
+  });
+
+  it("Overlay.tsx keyboard guard checks data-tuner-portal", () => {
+    const { readFileSync } = require("fs");
+    const { join } = require("path");
+    const src = readFileSync(join(__dirname, "..", "shell", "Overlay.tsx"), "utf-8");
+
+    // Find the guard block (between "skip when typing" and the first plain-key shortcut "N to toggle")
+    const guardStart = src.indexOf("skip when typing in inputs");
+    expect(guardStart).toBeGreaterThan(-1);
+
+    const guardBlock = src.slice(guardStart, guardStart + 400);
+
+    // The guard must check for data-tuner-portal to cover portal-rendered elements
+    expect(guardBlock).toContain("data-tuner-portal");
+  });
+});
+
 // ─── Keyboard shortcut key mapping ──────────────────────────────────
 
 describe("keyboard shortcut key mapping", () => {

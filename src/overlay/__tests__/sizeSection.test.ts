@@ -114,6 +114,73 @@ describe("max-width/max-height support none keyword", () => {
   });
 });
 
+// ─── 2b. max-width/max-height handlers guard against "--" placeholder unit ──
+
+describe("max-width/max-height handlers guard against invalid unit", () => {
+  it("handleMaxWidthChange guards against '--' unit by defaulting to 'px'", () => {
+    // When maxWidthUnit is "--" (placeholder for keyword values), the handler
+    // should substitute "px" instead of producing invalid CSS like "500--"
+    const handler = sizeSectionSrc.match(/handleMaxWidthChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMaxWidthChange").toBeTruthy();
+    const body = handler![0];
+    // Must contain a guard: maxWidthUnit === "--" ? "px" : maxWidthUnit
+    expect(body).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+  });
+
+  it("handleMaxHeightChange guards against '--' unit by defaulting to 'px'", () => {
+    const handler = sizeSectionSrc.match(/handleMaxHeightChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMaxHeightChange").toBeTruthy();
+    const body = handler![0];
+    expect(body).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+  });
+
+  it("handleMinWidthChange guards against '--' unit by defaulting to 'px'", () => {
+    const handler = sizeSectionSrc.match(/handleMinWidthChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMinWidthChange").toBeTruthy();
+    const body = handler![0];
+    expect(body).toMatch(/minWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*minWidthUnit/);
+  });
+
+  it("handleMinHeightChange guards against '--' unit by defaulting to 'px'", () => {
+    const handler = sizeSectionSrc.match(/handleMinHeightChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMinHeightChange").toBeTruthy();
+    const body = handler![0];
+    expect(body).toMatch(/minHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*minHeightUnit/);
+  });
+
+  it("onKeywordChange for Max W guards against '--' unit when exiting keyword mode", () => {
+    // The onKeywordChange callback on the Max W SizeInputCell should guard
+    // against "--" unit when applying the numeric value after exiting keyword mode
+    const maxWBlock = sizeSectionSrc.match(/<SizeInputCell[\s\S]*?label="Max W"[\s\S]*?\/>/);
+    expect(maxWBlock, "Could not find Max W SizeInputCell").toBeTruthy();
+    const block = maxWBlock![0];
+    // The onKeywordChange handler must not use raw maxWidthUnit when it could be "--"
+    // It should either guard with a ternary or use a safe unit
+    expect(block).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+  });
+
+  it("onKeywordChange for Max H guards against '--' unit when exiting keyword mode", () => {
+    const maxHBlock = sizeSectionSrc.match(/<SizeInputCell[\s\S]*?label="Max H"[\s\S]*?\/>/);
+    expect(maxHBlock, "Could not find Max H SizeInputCell").toBeTruthy();
+    const block = maxHBlock![0];
+    expect(block).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+  });
+
+  it("handleMaxWidthNoneToggle guards against '--' unit", () => {
+    const handler = sizeSectionSrc.match(/handleMaxWidthNoneToggle\s*=\s*useCallback\(\s*\(\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMaxWidthNoneToggle").toBeTruthy();
+    const body = handler![0];
+    expect(body).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+  });
+
+  it("handleMaxHeightNoneToggle guards against '--' unit", () => {
+    const handler = sizeSectionSrc.match(/handleMaxHeightNoneToggle\s*=\s*useCallback\(\s*\(\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
+    expect(handler, "Could not find handleMaxHeightNoneToggle").toBeTruthy();
+    const body = handler![0];
+    expect(body).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+  });
+});
+
 // ─── 3. object-fit/object-position only appear for media elements ─────
 
 describe("object-fit and object-position only appear for media elements", () => {
