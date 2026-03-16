@@ -221,99 +221,54 @@ describe("Transform editor includes translate, scale, rotate, skew", () => {
   });
 });
 
-// ─── Filter sliders: 8 filter types ──────────────────────────────────
+// ─── FilterEditor — Webflow-style filter list ───────────────────────
 
-describe("Filter sliders cover all 8 filter types", () => {
-  const EXPECTED_FILTERS = [
-    "blur",
-    "brightness",
-    "contrast",
-    "grayscale",
-    "hue-rotate",
-    "invert",
-    "saturate",
-    "sepia",
-  ];
-
-  it("FilterValues interface defines all 8 filter keys", () => {
-    // Extract the FilterValues interface body
-    const ifaceMatch = filterSrc.match(
-      /interface FilterValues\s*\{([\s\S]*?)\}/,
-    );
-    expect(ifaceMatch, "Could not find FilterValues interface").toBeTruthy();
-    const ifaceBody = ifaceMatch![1];
-    for (const key of EXPECTED_FILTERS) {
-      // Keys may be quoted (e.g. "hue-rotate") or unquoted (e.g. blur)
-      const pattern = key.includes("-")
-        ? `"${key}":`
-        : new RegExp(`\\b${key}\\s*:`);
-      expect(
-        typeof pattern === "string" ? ifaceBody.includes(pattern) : pattern.test(ifaceBody),
-        `FilterValues should contain key "${key}"`,
-      ).toBe(true);
-    }
+describe("FilterEditor — Webflow-style filter list", () => {
+  it("exports FilterItem interface with type, values, color, visible, expanded", () => {
+    expect(filterSrc).toMatch(/export interface FilterItem/);
+    expect(filterSrc).toMatch(/type:\s*FilterType/);
+    expect(filterSrc).toMatch(/values:\s*number\[\]/);
+    expect(filterSrc).toMatch(/color\?:\s*string/);
+    expect(filterSrc).toMatch(/visible:\s*boolean/);
+    expect(filterSrc).toMatch(/expanded:\s*boolean/);
   });
 
-  it("FILTER_META has metadata for all 8 filter types", () => {
-    // Extract the FILTER_META object contents
-    const metaMatch = filterSrc.match(
-      /FILTER_META[^{]*\{([\s\S]*?)\n\};/,
-    );
-    expect(metaMatch, "Could not find FILTER_META").toBeTruthy();
-    const metaBody = metaMatch![1];
-    for (const key of EXPECTED_FILTERS) {
-      // Hyphenated keys like "hue-rotate" are quoted in source
-      const searchKey = key.includes("-") ? `"${key}":` : `${key}:`;
-      expect(
-        metaBody,
-        `FILTER_META should have entry for "${key}"`,
-      ).toContain(searchKey);
-    }
+  it("exports FilterType union with all 9 types including drop-shadow", () => {
+    expect(filterSrc).toMatch(/export type FilterType/);
+    expect(filterSrc).toMatch(/"blur"/);
+    expect(filterSrc).toMatch(/"drop-shadow"/);
+    expect(filterSrc).toMatch(/"brightness"/);
+    expect(filterSrc).toMatch(/"contrast"/);
+    expect(filterSrc).toMatch(/"hue-rotate"/);
+    expect(filterSrc).toMatch(/"saturate"/);
+    expect(filterSrc).toMatch(/"grayscale"/);
+    expect(filterSrc).toMatch(/"invert"/);
+    expect(filterSrc).toMatch(/"sepia"/);
   });
 
-  it("ALL_FILTER_KEYS lists exactly 8 filters", () => {
-    // Extract the ALL_FILTER_KEYS array — may span multiple lines
-    const keysMatch = filterSrc.match(
-      /ALL_FILTER_KEYS[^[]*\[([\s\S]*?)\];/,
-    );
-    expect(keysMatch, "Could not find ALL_FILTER_KEYS").toBeTruthy();
-    const entries = keysMatch![1].match(/"[^"]+"/g);
-    expect(entries, "Could not extract quoted strings from ALL_FILTER_KEYS").toBeTruthy();
-    expect(entries).toHaveLength(8);
-    for (const key of EXPECTED_FILTERS) {
-      expect(entries!.map((e) => e.replace(/"/g, ""))).toContain(key);
-    }
+  it("defines FILTER_CATEGORIES with 3 groups: General, Color Adjustments, Color Effects", () => {
+    expect(filterSrc).toMatch(/FILTER_CATEGORIES/);
+    expect(filterSrc).toMatch(/General/);
+    expect(filterSrc).toMatch(/Color Adjustments/);
+    expect(filterSrc).toMatch(/Color Effects/);
   });
 
-  it("each filter has label, unit, min, max, step, defaultValue in its meta", () => {
-    const metaMatch = filterSrc.match(
-      /interface FilterMeta\s*\{([\s\S]*?)\}/,
-    );
-    expect(metaMatch, "Could not find FilterMeta interface").toBeTruthy();
-    const body = metaMatch![1];
-    expect(body).toContain("label:");
-    expect(body).toContain("unit:");
-    expect(body).toContain("min:");
-    expect(body).toContain("max:");
-    expect(body).toContain("step:");
-    expect(body).toContain("defaultValue:");
+  it("renders collapsed summary rows with type:value format", () => {
+    expect(filterSrc).toMatch(/formatFilterSummary|summaryText|summary/i);
   });
 
-  it("blur uses px unit, percentage filters use %", () => {
-    // blur meta has unit: "px"
-    const blurMeta = filterSrc.match(/blur:\s*\{[^}]*\}/);
-    expect(blurMeta).toBeTruthy();
-    expect(blurMeta![0]).toContain('"px"');
-
-    // brightness meta has unit: "%"
-    const brightnessMeta = filterSrc.match(/brightness:\s*\{[^}]*\}/);
-    expect(brightnessMeta).toBeTruthy();
-    expect(brightnessMeta![0]).toContain('"%"');
+  it("uses useDragReorder for reordering filter items", () => {
+    expect(filterSrc).toMatch(/useDragReorder/);
   });
 
-  it("hue-rotate uses deg unit", () => {
-    const hueRotateMeta = filterSrc.match(/"hue-rotate":\s*\{[^}]*\}/);
-    expect(hueRotateMeta).toBeTruthy();
-    expect(hueRotateMeta![0]).toContain('"deg"');
+  it("renders DragHandle, VisibilityToggle, and EditorRemoveButton per item", () => {
+    expect(filterSrc).toMatch(/DragHandle/);
+    expect(filterSrc).toMatch(/VisibilityToggle/);
+    expect(filterSrc).toMatch(/EditorRemoveButton/);
+  });
+
+  it("accepts items: FilterItem[] and onChange: (items: FilterItem[]) => void", () => {
+    expect(filterSrc).toMatch(/items:\s*FilterItem\[\]/);
+    expect(filterSrc).toMatch(/onChange:\s*\(items:\s*FilterItem\[\]\)\s*=>\s*void/);
   });
 });
