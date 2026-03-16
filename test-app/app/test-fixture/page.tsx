@@ -162,6 +162,18 @@ export default function TestFixturePage() {
         />
       </div>
 
+      {/* ── Tailwind element (for save-path testing) ── */}
+      <div>
+        <div style={label}>fixture-tailwind</div>
+        <div
+          data-testid="fixture-tailwind"
+          className="flex items-center gap-4 p-4 bg-slate-100 rounded-lg"
+        >
+          <div className="w-10 h-10 bg-blue-500 rounded" />
+          <span className="text-sm font-medium text-slate-700">Tailwind Card</span>
+        </div>
+      </div>
+
       {/* ── Effects ── */}
       <div>
         <div style={label}>fixture-effects</div>
