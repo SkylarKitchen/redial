@@ -53,7 +53,7 @@ function searchProperties(query: string): Array<{ section: string; props: string
   return results;
 }
 
-const ACTIONS = ["Save", "Reset", "Copy CSS", "Copy Tailwind", "Paste Styles", "Toggle Diff"];
+const ACTIONS = ["Save", "Reset", "Copy CSS", "Copy Tailwind", "Paste Styles", "Toggle Diff", "Toggle Changes Drawer", "Toggle Navigator"];
 
 function searchActions(query: string): string[] {
   return ACTIONS.filter((a) => fuzzyMatch(query, a));
@@ -264,7 +264,7 @@ describe("escape closes the palette", () => {
     const escIdx = overlaySrc.indexOf('e.key === "Escape"');
     const block = overlaySrc.slice(escIdx, escIdx + 500);
     const modalIdx = block.indexOf("activeModal");
-    const closeIdx = block.indexOf("setSelectedEl(null)");
+    const closeIdx = block.indexOf("handleCloseAttempt()");
     expect(modalIdx).toBeGreaterThan(-1);
     expect(closeIdx).toBeGreaterThan(-1);
     expect(modalIdx).toBeLessThan(closeIdx);
@@ -283,10 +283,10 @@ describe("palette includes commands for all keyboard shortcuts", () => {
       expectInPalette(`"${action}"`);
     });
 
-    it("ACTIONS array has exactly 6 entries", () => {
+    it("ACTIONS array has exactly 8 entries", () => {
       // Verify the source defines exactly these actions
       expectInPalette(
-        '[\n  "Save",\n  "Reset",\n  "Copy CSS",\n  "Copy Tailwind",\n  "Paste Styles",\n  "Toggle Diff",\n]',
+        '[\n  "Save",\n  "Reset",\n  "Copy CSS",\n  "Copy Tailwind",\n  "Paste Styles",\n  "Toggle Diff",\n  "Toggle Changes Drawer",\n  "Toggle Navigator",\n]',
       );
     });
   });

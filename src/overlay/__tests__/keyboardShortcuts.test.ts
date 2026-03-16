@@ -32,10 +32,10 @@ describe("` toggles selection mode", () => {
   });
 
   it("calls setSelecting to toggle", () => {
-    // The handler should toggle: setSelecting(s => !s)
+    // The handler has branching: handleCloseAttempt() when panel open, setSelecting toggle otherwise
     const backtickBlock = overlaySrc.slice(
       srcIndex('e.key === "`"'),
-      srcIndex('e.key === "`"') + 200,
+      srcIndex('e.key === "`"') + 300,
     );
     expect(backtickBlock).toContain("setSelecting");
   });
@@ -61,7 +61,7 @@ describe("Escape closes panel", () => {
       srcIndex('e.key === "Escape"'),
       srcIndex('e.key === "Escape"') + 500,
     );
-    expect(escBlock).toContain("setSelectedEl(null)");
+    expect(escBlock).toContain("handleCloseAttempt()");
   });
 
   it("dismisses active modal before closing panel", () => {
@@ -69,9 +69,9 @@ describe("Escape closes panel", () => {
       srcIndex('e.key === "Escape"'),
       srcIndex('e.key === "Escape"') + 500,
     );
-    // Modal check comes before setSelectedEl(null)
+    // Modal check comes before handleCloseAttempt()
     const modalIdx = escBlock.indexOf("activeModal");
-    const closeIdx = escBlock.indexOf("setSelectedEl(null)");
+    const closeIdx = escBlock.indexOf("handleCloseAttempt()");
     expect(modalIdx).toBeGreaterThan(-1);
     expect(closeIdx).toBeGreaterThan(-1);
     expect(modalIdx).toBeLessThan(closeIdx);
