@@ -397,7 +397,7 @@ function ModeValueCell({
 
   if (editing) {
     return (
-      <div style={{ flex: "0 0 106px" }}>
+      <div style={{ flex: "0 0 106px", minWidth: 0, overflow: "hidden" }}>
         <input
           ref={inputRef}
           value={draft}
@@ -432,6 +432,8 @@ function ModeValueCell({
       onMouseLeave={() => setCellHovered(false)}
       style={{
         flex: "0 0 106px",
+        minWidth: 0,
+        overflow: "hidden",
         position: "relative",
       }}
     >

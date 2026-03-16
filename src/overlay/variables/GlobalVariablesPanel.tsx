@@ -51,10 +51,6 @@ export function GlobalVariablesPanel({
   const _aliasGraph = useMemo(() => buildAliasGraph(allVars), [allVars]);
   const modes = useMemo(() => inferModes(discoverModeDeclarations()), [overrideSnapshot]);
 
-  useEffect(() => {
-    onModeCount?.(modes.length);
-  }, [modes.length, onModeCount]);
-
   // Filter by search
   const filtered = useMemo(() => {
     if (!search.trim()) return allVars;
@@ -97,6 +93,21 @@ export function GlobalVariablesPanel({
     }
     return [];
   }, [selectedId, collections, autoColls, filtered]);
+
+  // Report relevant mode count for the selected collection (not total page modes)
+  const relevantModeCount = useMemo(() => {
+    if (!modes || modes.length <= 1) return 0;
+    if (selectedVars.length === 0) return 0;
+    const varNames = new Set(selectedVars.map((v) => v.name));
+    const relevant = modes.filter(
+      (m) => m.source === "base" || Object.keys(m.values).some((k) => varNames.has(k)),
+    );
+    return relevant.length <= 1 ? 0 : relevant.length;
+  }, [modes, selectedVars]);
+
+  useEffect(() => {
+    onModeCount?.(relevantModeCount);
+  }, [relevantModeCount, onModeCount]);
 
   // Selected collection name
   const selectedName = useMemo(() => {
