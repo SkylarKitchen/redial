@@ -35,14 +35,14 @@ SliderRow.tsx currently has NO variable linking props. The auto-commit hook reve
 
 **Reference pattern:** `ColorRow.tsx:87-98` — state + parseVarRef + display logic.
 
-- [ ] **Add 3 optional props** to SliderRow:
+- [x] **Add 3 optional props** to SliderRow:
   ```typescript
   onSelectVariable?: (varExpr: string) => void;
   activeVariable?: string | null;
   variableElement?: Element;
   ```
-- [ ] **Import VariablePicker** from `"./VariablePicker"` and add state: `varPickerOpen`, `linkBtnRef`
-- [ ] **Two rendering modes** controlled by `activeVariable`:
+- [x] **Import VariablePicker** from `"./VariablePicker"` and add state: `varPickerOpen`, `linkBtnRef`
+- [x] **Two rendering modes** controlled by `activeVariable`:
   - **Numeric mode** (default): current slider+input+unit. Add link icon (🔗) at row end when `onSelectVariable` is provided
   - **Variable mode** (`activeVariable` is set): replace slider+input+unit with:
     ```tsx
@@ -52,8 +52,8 @@ SliderRow.tsx currently has NO variable linking props. The auto-commit hook reve
     </span>
     ```
     Plus unlink icon + × reset icon
-- [ ] **Link icon**: `<button ref={linkBtnRef}>` that sets `setVarPickerOpen(true)`
-- [ ] **VariablePicker portal**:
+- [x] **Link icon**: `<button ref={linkBtnRef}>` that sets `setVarPickerOpen(true)`
+- [x] **VariablePicker portal**:
   ```tsx
   {varPickerOpen && linkBtnRef.current && (
     <VariablePicker
@@ -66,8 +66,8 @@ SliderRow.tsx currently has NO variable linking props. The auto-commit hook reve
     />
   )}
   ```
-- [ ] **Unlink handler**: resolve via `getComputedStyle(variableElement!)[computedProp!]`, parse to number, call `onChange(num)`
-- [ ] **Use `overflow: "clip"` not `"hidden"`** on variable name span (unitDropdownClip test scans for `"hidden"`)
+- [x] **Unlink handler**: resolve via `getComputedStyle(variableElement!)[computedProp!]`, parse to number, call `onChange(num)`
+- [x] **Use `overflow: "clip"` not `"hidden"`** on variable name span (unitDropdownClip test scans for `"hidden"`)
 
 ### Phase 1: LayoutSection.tsx (~6 SliderRow instances across grid+flex)
 
