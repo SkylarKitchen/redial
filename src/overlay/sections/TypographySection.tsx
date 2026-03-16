@@ -33,6 +33,8 @@ import {
   FALLBACK_FONTS,
 } from "../panelConstants";
 import { parseBoxShadow } from "../cssParsers";
+import { discoverLengthVariables } from "../variables/discoverVariables";
+import { getAuthoredValue } from "../panelUtils";
 
 // ─── Props ────────────────────────────────────────────────────────────
 
