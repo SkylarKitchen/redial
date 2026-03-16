@@ -368,18 +368,25 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
           setSelfPerspective(parseSelfPerspective(fresh.transform));
         }}
       />
-      {transforms.length > 0 && (
+      {(transforms.length > 0 || transformSettingsOpen) && (
         <div style={{ padding: "4px 12px" }}>
           <TransformEditor
             transforms={transforms}
             onChange={handleTransformsChange}
             origin={transformOrigin}
             onOriginChange={handleTransformOriginChange}
+            backfaceVisibility={backfaceVisibility}
+            onBackfaceChange={handleBackfaceVisibilityChange}
+            selfPerspective={selfPerspective}
+            onSelfPerspectiveChange={handleSelfPerspectiveChange}
+            childrenPerspective={perspective}
+            onChildrenPerspectiveChange={handlePerspectiveChange}
+            perspectiveOrigin={perspectiveOrigin}
+            onPerspectiveOriginChange={handlePerspectiveOriginChange}
+            settingsOpen={transformSettingsOpen}
           />
         </div>
       )}
-      <NumberRow label="Perspective" value={perspective} unit="px" onChange={handlePerspectiveChange} onReset={() => resetCss("perspective", setPerspective)} indicator={ind("perspective")} onContextMenu={ctxMenu("perspective", `${perspective}px`)} computedProp="perspective" computedElement={element} />
-      <SelectRow label="Backface" value={backfaceVisibility} options={BACKFACE_OPTIONS} onChange={handleBackfaceVisibilityChange} onReset={() => resetCssStr("backface-visibility", setBackfaceVisibility)} indicator={ind("backface-visibility")} onContextMenu={ctxMenu("backface-visibility", backfaceVisibility)} computedProp="backface-visibility" computedElement={element} />
 
       {/* 6. Transitions */}
       <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={(e) => setTransMenuAnchor(e.currentTarget)} indicator={ind("transition")} onReset={() => { resetProp(element, "transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />

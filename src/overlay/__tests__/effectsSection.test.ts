@@ -5,7 +5,7 @@
  * - Opacity slider displays as 0%–100% (not raw 0–1)
  * - Box shadow editor supports inset toggle
  * - Multiple shadows with X/Y/blur/spread/color controls
- * - Transform editor includes translate (X,Y,Z), scale (X,Y), rotate (angle), skew (X,Y)
+ * - Transform editor includes translate (X,Y,Z), scale (X,Y), rotate (X,Y,Z), skew (X,Y)
  * - Filter sliders cover all 8 filter types
  */
 
@@ -164,9 +164,9 @@ describe("Transform editor includes translate, scale, rotate, skew", () => {
     expect(body).toContain("z:");
   });
 
-  it("Z axis is only rendered for translate type", () => {
-    // The Z axis input is conditionally rendered: `type === "translate"`
-    expect(transformSrc).toMatch(/type\s*===\s*"translate"/);
+  it("Z axis is rendered for types that support it (not skew)", () => {
+    // The Z axis input is conditionally rendered: `type !== "skew"`
+    expect(transformSrc).toMatch(/type\s*!==\s*"skew"/);
     // Z label and input appear in the conditional block
     expect(transformSrc).toMatch(/label="Z"/);
   });
@@ -180,14 +180,22 @@ describe("Transform editor includes translate, scale, rotate, skew", () => {
     expect(defaults![0]).toMatch(/y:\s*1/);
   });
 
-  it("rotate has a single angle value (rendered as single input, not X/Y)", () => {
-    // Rotate renders differently: `type === "rotate"` shows single input
-    expect(transformSrc).toMatch(/type\s*===\s*"rotate"/);
-    // Rotate uses deg unit
+  it("rotate has X, Y, Z axes in degrees", () => {
+    // Rotate type exists in transform types
+    expect(transformSrc).toMatch(/"rotate"/);
+    // Rotate default has x, y, z fields
+    const defaults = transformSrc.match(
+      /rotate:\s*\{[^}]*type:\s*"rotate"[^}]*\}/,
+    );
+    expect(defaults).toBeTruthy();
+    expect(defaults![0]).toMatch(/x:\s*0/);
+    expect(defaults![0]).toMatch(/y:\s*0/);
+    expect(defaults![0]).toMatch(/z:\s*0/);
+    // Rotate uses DEG unit via getUnit
     const unitFn = transformSrc.match(/function getUnit[\s\S]*?^}/m);
     expect(unitFn).toBeTruthy();
     expect(unitFn![0]).toContain('"rotate"');
-    expect(unitFn![0]).toContain('"deg"');
+    expect(unitFn![0]).toContain('"DEG"');
   });
 
   it("skew has X and Y axes in degrees", () => {
@@ -197,8 +205,11 @@ describe("Transform editor includes translate, scale, rotate, skew", () => {
     expect(defaults).toBeTruthy();
     expect(defaults![0]).toMatch(/x:\s*0/);
     expect(defaults![0]).toMatch(/y:\s*0/);
-    // skew unit is deg
-    expect(transformSrc).toMatch(/type\s*===\s*"skew".*"deg"/s);
+    // skew unit is DEG via getUnit
+    const unitFn = transformSrc.match(/function getUnit[\s\S]*?^}/m);
+    expect(unitFn).toBeTruthy();
+    expect(unitFn![0]).toContain('"skew"');
+    expect(unitFn![0]).toContain('"DEG"');
   });
 
   it("each transform type has defined min/max/step ranges", () => {
