@@ -42,6 +42,8 @@ export function SliderRow({
   onSelectVariable,
   activeVariable,
   variableElement,
+  onUnlink,
+  variableType,
 }: {
   label: string;
   value: number;
@@ -79,6 +81,10 @@ export function SliderRow({
   activeVariable?: string | null;
   /** Target element for resolving computed value on unlink */
   variableElement?: Element;
+  /** Called on unlink instead of onChange when the display scale differs from CSS value (e.g. opacity 0-100 display vs 0-1 CSS) */
+  onUnlink?: (resolvedValue: number) => void;
+  /** VariablePicker filter type (default: "length") */
+  variableType?: "color" | "length" | "all";
 }) {
   const snapValue = useCallback((raw: number): number => {
     if (!snapPoints || snapPoints.length === 0) return raw;
@@ -102,8 +108,11 @@ export function SliderRow({
     if (!variableElement || !computedProp) return;
     const computed = getComputedStyle(variableElement).getPropertyValue(computedProp);
     const num = parseFloat(computed);
-    if (!isNaN(num)) onChange(num);
-  }, [variableElement, computedProp, onChange]);
+    if (!isNaN(num)) {
+      if (onUnlink) onUnlink(num);
+      else onChange(num);
+    }
+  }, [variableElement, computedProp, onChange, onUnlink]);
 
   const resetPopover = useResetPopover(indicator, onReset);
   const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
@@ -269,7 +278,7 @@ export function SliderRow({
     {varPickerOpen && linkBtnRef.current && onSelectVariable && (
       <VariablePicker
         anchor={linkBtnRef.current}
-        type="length"
+        type={variableType ?? "length"}
         element={variableElement}
         onSelect={(varExpr) => { onSelectVariable(varExpr); setVarPickerOpen(false); }}
         onClose={() => setVarPickerOpen(false)}
