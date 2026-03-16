@@ -52,6 +52,10 @@ interface SpacingBoxModelProps {
   onReset?: (prop: string, value: number) => void;
   /** True when the element uses Tailwind utility classes */
   isTailwind?: boolean;
+  /** Per-property CSS variable name (e.g. { "margin-top": "--space-4" }) */
+  cssVars?: Record<string, string | null>;
+  /** Called when a variable is linked/unlinked on a spacing property */
+  onVarChange?: (prop: string, varName: string | null) => void;
 }
 
 // Zone base/highlight colors — neutral grays from theme tokens
@@ -105,6 +109,8 @@ export function SpacingBoxModel({
   ind,
   onReset,
   isTailwind = false,
+  cssVars = {},
+  onVarChange,
 }: SpacingBoxModelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const marginZoneRef = useRef<HTMLDivElement>(null);
@@ -215,6 +221,54 @@ export function SpacingBoxModel({
     group: "margin" | "padding",
     tabIndex: number,
   ) => {
+    const linkedVar = cssVars[prop] ?? null;
+
+    if (linkedVar) {
+      return (
+        <div
+          data-spacing-index={tabIndex}
+          data-spacing-prop={prop}
+          tabIndex={0}
+          role="button"
+          aria-label={propLabel(prop)}
+          style={{
+            fontSize: 9,
+            fontFamily: font.mono,
+            fontWeight: 500,
+            color: color.variable,
+            cursor: "pointer",
+            padding: "2px 3px",
+            borderRadius: 3,
+            minWidth: 18,
+            textAlign: "center",
+            outline: "none",
+            userSelect: "none",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: 55,
+            position: "relative",
+          }}
+          title={`var(${linkedVar}) — click to edit`}
+          onClick={() => {
+            const rect = (document.querySelector(`[data-spacing-prop="${prop}"]`) as HTMLElement)?.getBoundingClientRect();
+            if (rect) setPopoverState({ prop, rect });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              setPopoverState({ prop, rect });
+            }
+          }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
+          onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+        >
+          {linkedVar.replace(/^--/, "")}
+        </div>
+      );
+    }
+
     const isMargin = group === "margin";
     const value = displayVal(prop, propValue);
     const indicator = ind(prop);

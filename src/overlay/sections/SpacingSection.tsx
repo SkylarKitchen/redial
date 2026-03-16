@@ -1,8 +1,9 @@
-import React, { useState, memo } from "react";
+import React, { useState, useCallback, memo } from "react";
 import { Section } from "../controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { buildConversionContext, convertUnit } from "../unitConversion";
 import { detectUnit, type SectionCtx } from "../panelUtils";
+import { getAuthoredValue } from "../getAuthoredValue";
 import type { SpacingValues } from "../core/infer";
 import { SPACING_UNITS } from "../panelConstants";
 interface SpacingSectionProps {
@@ -29,6 +30,35 @@ export const SpacingSection = memo(function SpacingSection({
   const [marginUnit, setMarginUnit] = useState(() => detectUnit(element, "margin-top"));
   const [paddingUnit, setPaddingUnit] = useState(() => detectUnit(element, "padding-top"));
 
+  // ─── CSS variable state per spacing property ────────────────────
+  const extractVar = (prop: string): string | null => {
+    const authored = getAuthoredValue(element, prop);
+    return authored?.match(/^var\(\s*(--[\w-]+)/)?.[1] ?? null;
+  };
+
+  const [spacingVars, setSpacingVars] = useState<Record<string, string | null>>(() => {
+    const vars: Record<string, string | null> = {};
+    for (const group of ["margin", "padding"]) {
+      for (const side of ["top", "right", "bottom", "left"]) {
+        vars[`${group}-${side}`] = extractVar(`${group}-${side}`);
+      }
+    }
+    return vars;
+  });
+
+  const handleSpacingVarChange = useCallback((prop: string, varName: string | null) => {
+    setSpacingVars(prev => ({ ...prev, [prop]: varName }));
+    if (varName) {
+      ctx.apply(prop, `var(${varName})`);
+    } else {
+      // Unlink: resolve computed value and apply as numeric
+      const computed = parseFloat(getComputedStyle(element).getPropertyValue(prop));
+      const isMargin = prop.startsWith("margin");
+      const unit = isMargin ? marginUnit : paddingUnit;
+      onSpacingChange(prop, isNaN(computed) ? 0 : computed, unit);
+    }
+  }, [element, ctx, marginUnit, paddingUnit, onSpacingChange]);
+
   return (
     <Section
       title="Spacing"
@@ -52,6 +82,8 @@ export const SpacingSection = memo(function SpacingSection({
         ind={ctx.ind}
         onReset={onSpacingReset}
         isTailwind={ctx.isTailwind}
+        cssVars={spacingVars}
+        onVarChange={handleSpacingVarChange}
         onMarginUnitChange={(u) => {
           const ctx = buildConversionContext(element);
           const sides = ["top", "right", "bottom", "left"] as const;
