@@ -1,18 +1,23 @@
 /**
- * FilterSliders.tsx — Grouped sliders for CSS filter and backdrop-filter
+ * FilterSliders.tsx — Webflow-style filter editor
  *
- * Renders labeled sliders for blur, brightness, contrast, grayscale,
- * hue-rotate, invert, saturate, sepia. Only non-default filters are
- * shown (blur is always visible). An "+ Add filter" dropdown lets
- * the user add more.
+ * Renders an ordered list of collapsible filter items. Each item shows
+ * a summary row when collapsed ("Blur: 5px") and expands to reveal
+ * type dropdown + parameter sliders. Categorized add dropdown groups
+ * filters into General, Color Adjustments, and Color Effects.
+ *
+ * Follows the ShadowEditor pattern: useDragReorder, DragHandle,
+ * VisibilityToggle, EditorRemoveButton per item.
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
 import { EditorRemoveButton, VisibilityToggle } from "../controls";
-import { color, text, surface, font, shadow, zIndex, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
+import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
+
+// ─── Types ──────────────────────────────────────────────────────────
 
 export type FilterType =
   | "blur"
@@ -33,24 +38,7 @@ export interface FilterItem {
   expanded: boolean;
 }
 
-export interface FilterValues {
-  blur: number;
-  brightness: number;
-  contrast: number;
-  grayscale: number;
-  "hue-rotate": number;
-  invert: number;
-  saturate: number;
-  sepia: number;
-}
-
-export interface FilterSlidersProps {
-  values: Partial<FilterValues>;
-  onChange: (filter: string, value: number) => void;
-  type?: "filter" | "backdrop-filter";
-}
-
-type FilterKey = keyof FilterValues;
+// ─── Filter metadata ────────────────────────────────────────────────
 
 interface FilterMeta {
   label: string;
@@ -58,317 +46,65 @@ interface FilterMeta {
   min: number;
   max: number;
   step: number;
-  defaultValue: number;
+  defaultValues: number[];
+  paramLabels: string[];
+  defaultColor?: string;
 }
 
-const FILTER_META: Record<FilterKey, FilterMeta> = {
-  blur: { label: "Blur", unit: "px", min: 0, max: 50, step: 0.5, defaultValue: 0 },
-  brightness: { label: "Brightness", unit: "%", min: 0, max: 200, step: 1, defaultValue: 100 },
-  contrast: { label: "Contrast", unit: "%", min: 0, max: 200, step: 1, defaultValue: 100 },
-  grayscale: { label: "Grayscale", unit: "%", min: 0, max: 100, step: 1, defaultValue: 0 },
-  "hue-rotate": { label: "Hue Rotate", unit: "deg", min: 0, max: 360, step: 1, defaultValue: 0 },
-  invert: { label: "Invert", unit: "%", min: 0, max: 100, step: 1, defaultValue: 0 },
-  saturate: { label: "Saturate", unit: "%", min: 0, max: 200, step: 1, defaultValue: 100 },
-  sepia: { label: "Sepia", unit: "%", min: 0, max: 100, step: 1, defaultValue: 0 },
+const FILTER_META: Record<FilterType, FilterMeta> = {
+  blur: { label: "Blur", unit: "px", min: 0, max: 50, step: 0.5, defaultValues: [0], paramLabels: ["Radius"] },
+  "drop-shadow": { label: "Drop Shadow", unit: "px", min: -100, max: 100, step: 1, defaultValues: [0, 2, 4], paramLabels: ["X", "Y", "Blur"], defaultColor: "rgba(0,0,0,0.3)" },
+  brightness: { label: "Brightness", unit: "%", min: 0, max: 200, step: 1, defaultValues: [100], paramLabels: ["Amount"] },
+  contrast: { label: "Contrast", unit: "%", min: 0, max: 200, step: 1, defaultValues: [100], paramLabels: ["Amount"] },
+  "hue-rotate": { label: "Hue Rotate", unit: "deg", min: 0, max: 360, step: 1, defaultValues: [0], paramLabels: ["Angle"] },
+  saturate: { label: "Saturate", unit: "%", min: 0, max: 200, step: 1, defaultValues: [100], paramLabels: ["Amount"] },
+  grayscale: { label: "Grayscale", unit: "%", min: 0, max: 100, step: 1, defaultValues: [0], paramLabels: ["Amount"] },
+  invert: { label: "Invert", unit: "%", min: 0, max: 100, step: 1, defaultValues: [0], paramLabels: ["Amount"] },
+  sepia: { label: "Sepia", unit: "%", min: 0, max: 100, step: 1, defaultValues: [0], paramLabels: ["Amount"] },
 };
 
-const ALL_FILTER_KEYS: FilterKey[] = [
-  "blur", "brightness", "contrast", "grayscale",
-  "hue-rotate", "invert", "saturate", "sepia",
+// ─── Categories ─────────────────────────────────────────────────────
+
+interface FilterCategory {
+  label: string;
+  types: FilterType[];
+}
+
+const FILTER_CATEGORIES: FilterCategory[] = [
+  { label: "General", types: ["blur", "drop-shadow"] },
+  { label: "Color Adjustments", types: ["brightness", "contrast", "hue-rotate", "saturate"] },
+  { label: "Color Effects", types: ["grayscale", "invert", "sepia"] },
 ];
 
-function isNonDefault(key: FilterKey, value: number | undefined): boolean {
-  if (value === undefined) return false;
-  return value !== FILTER_META[key].defaultValue;
+// ─── Helpers ────────────────────────────────────────────────────────
+
+function createDefaultItem(type: FilterType): FilterItem {
+  const meta = FILTER_META[type];
+  return {
+    type,
+    values: [...meta.defaultValues],
+    color: meta.defaultColor,
+    visible: true,
+    expanded: true,
+  };
 }
 
-/** Wrapper for useDragReorder — wraps filter keys in objects */
-interface FilterKeyItem { key: FilterKey }
-
-export function FilterSliders({ values, onChange, type = "filter" }: FilterSlidersProps) {
-  // Track which filters are explicitly shown (added by user)
-  const [addedFilters, setAddedFilters] = useState<Set<FilterKey>>(() => {
-    const set = new Set<FilterKey>(["blur"]);
-    for (const key of ALL_FILTER_KEYS) {
-      if (isNonDefault(key, values[key])) set.add(key);
-    }
-    return set;
-  });
-  const [hiddenFilters, setHiddenFilters] = useState<Set<FilterKey>>(new Set());
-  const [filterOrder, setFilterOrder] = useState<FilterKey[]>([...ALL_FILTER_KEYS]);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!dropdownOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [dropdownOpen]);
-
-  const visibleFilters = filterOrder.filter(
-    (key) => addedFilters.has(key) || isNonDefault(key, values[key])
-  );
-
-  const availableFilters = filterOrder.filter(
-    (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
-  );
-
-  // Wrap visible filters as items for useDragReorder
-  const filterItems: FilterKeyItem[] = visibleFilters.map((key) => ({ key }));
-
-  const handleReorder = useCallback(
-    (items: FilterKeyItem[]) => {
-      // Rebuild the full order: keep non-visible keys in place, update visible order
-      const reorderedKeys = items.map((i) => i.key);
-      const hiddenKeys = filterOrder.filter(
-        (key) => !addedFilters.has(key) && !isNonDefault(key, values[key])
-      );
-      setFilterOrder([...reorderedKeys, ...hiddenKeys]);
-    },
-    [filterOrder, addedFilters, values]
-  );
-
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(filterItems, handleReorder);
-
-  const handleAdd = useCallback((key: FilterKey) => {
-    setAddedFilters((prev) => new Set(prev).add(key));
-    setDropdownOpen(false);
-  }, []);
-
-  const toggleFilterVisible = useCallback(
-    (key: FilterKey) => {
-      setHiddenFilters((prev) => {
-        const next = new Set(prev);
-        if (next.has(key)) {
-          next.delete(key);
-        } else {
-          next.add(key);
-        }
-        // Re-fire onChange so CSS updates
-        if (next.has(key)) {
-          onChange(key, FILTER_META[key].defaultValue);
-        } else {
-          onChange(key, values[key] ?? FILTER_META[key].defaultValue);
-        }
-        return next;
-      });
-    },
-    [values, onChange]
-  );
-
-  const handleRemove = useCallback(
-    (key: FilterKey) => {
-      onChange(key, FILTER_META[key].defaultValue);
-      setAddedFilters((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    },
-    [onChange]
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-      {/* Section label */}
-      <div
-        style={{
-          fontSize: "10px",
-          fontFamily: font.sans,
-          color: text.disabled,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-          padding: "0 0 4px",
-        }}
-      >
-        {type === "backdrop-filter" ? "Backdrop Filter" : "Filter"}
-      </div>
-
-      {/* Filter rows */}
-      <div style={{ position: "relative" }}>
-      {visibleFilters.map((key, index) => {
-        const meta = FILTER_META[key];
-        const val = values[key] ?? meta.defaultValue;
-        const pct = ((val - meta.min) / (meta.max - meta.min)) * 100;
-
-        const isHidden = hiddenFilters.has(key);
-        const dragProps = handleProps(index);
-
-        return (
-          <div
-            key={key}
-            ref={registerRef(index)}
-            style={{
-              ...itemStyle(index),
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              height: "24px",
-              opacity: isHidden ? 0.4 : 1,
-              transition: `opacity ${ms("normal")}`,
-            }}
-          >
-            {/* Drag handle */}
-            <DragHandle
-              isDragging={isDragging}
-              onPointerDown={dragProps.onPointerDown}
-            />
-
-            {/* Label */}
-            <span
-              style={{
-                width: "64px",
-                fontSize: "10px",
-                fontFamily: font.sans,
-                color: text.label,
-                flexShrink: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {meta.label}
-            </span>
-
-            {/* Slider track */}
-            <div style={{ flex: 1, position: "relative", height: "14px", display: "flex", alignItems: "center" }}>
-              <input
-                type="range"
-                min={meta.min}
-                max={meta.max}
-                step={meta.step}
-                value={val}
-                onChange={(e) => onChange(key, parseFloat(e.target.value))}
-                style={{
-                  width: "100%",
-                  height: "3px",
-                  appearance: "none",
-                  WebkitAppearance: "none",
-                  background: filledTrackBg(pct),
-                  borderRadius: "2px",
-                  outline: "none",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-
-            {/* Number input */}
-            <NumberInput
-              value={val}
-              min={meta.min}
-              max={meta.max}
-              step={meta.step}
-              onChange={(v) => onChange(key, v)}
-            />
-
-            {/* Unit */}
-            <span
-              style={{
-                width: "18px",
-                fontSize: "9px",
-                fontFamily: font.mono,
-                color: text.disabled,
-                flexShrink: 0,
-              }}
-            >
-              {meta.unit}
-            </span>
-
-            {/* Eye visibility toggle */}
-            <VisibilityToggle
-              visible={!isHidden}
-              onToggle={() => toggleFilterVisible(key)}
-              title={!isHidden ? "Hide filter" : "Show filter"}
-            />
-
-            <EditorRemoveButton onClick={() => handleRemove(key)} />
-          </div>
-        );
-      })}
-
-      {/* Drop indicator line */}
-      {(() => {
-        const style = dropLineStyle();
-        return style ? <div style={style} /> : null;
-      })()}
-      </div>
-
-      {/* Add filter button + dropdown */}
-      <div style={{ position: "relative" }} ref={dropdownRef}>
-        <button
-          onClick={() => setDropdownOpen((o) => !o)}
-          disabled={availableFilters.length === 0}
-          style={{
-            background: "transparent",
-            border: `1px solid ${surface.active}`,
-            borderRadius: "3px",
-            color: availableFilters.length === 0 ? text.hint : text.label,
-            fontSize: "10px",
-            fontFamily: font.sans,
-            padding: "3px 8px",
-            cursor: availableFilters.length === 0 ? "default" : "pointer",
-            marginTop: "4px",
-          }}
-          onMouseEnter={(e) => {
-            if (availableFilters.length > 0)
-              (e.currentTarget as HTMLElement).style.background = color.input;
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "transparent";
-          }}
-        >
-          + Add filter
-        </button>
-
-        {dropdownOpen && availableFilters.length > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              left: 0,
-              marginTop: "2px",
-              background: color.popover,
-              border: `1px solid ${surface.track}`,
-              borderRadius: "4px",
-              padding: "2px 0",
-              zIndex: zIndex.dropdown,
-              minWidth: "120px",
-              boxShadow: shadow.dropdown,
-            }}
-          >
-            {availableFilters.map((key) => (
-              <div
-                key={key}
-                onClick={() => handleAdd(key)}
-                style={{
-                  padding: "4px 10px",
-                  fontSize: "10px",
-                  fontFamily: font.sans,
-                  color: text.label,
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.2);
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
-                }}
-              >
-                {FILTER_META[key].label}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function formatFilterSummary(item: FilterItem): string {
+  const meta = FILTER_META[item.type];
+  if (item.type === "drop-shadow") {
+    return `Drop shadow: ${item.values.map((v) => `${v}px`).join(" ")}`;
+  }
+  return `${meta.label}: ${item.values[0]}${meta.unit}`;
 }
+
+// ─── FilterEditor props ─────────────────────────────────────────────
+
+export interface FilterEditorProps {
+  items: FilterItem[];
+  onChange: (items: FilterItem[]) => void;
+}
+
+// ─── NumberInput ─────────────────────────────────────────────────────
 
 /** Small monospace number input with arrow key support */
 function NumberInput({
@@ -442,3 +178,524 @@ function NumberInput({
     />
   );
 }
+
+// ─── FilterItemEditor ───────────────────────────────────────────────
+
+function FilterItemEditor({
+  item,
+  onUpdate,
+}: {
+  item: FilterItem;
+  onUpdate: (item: FilterItem) => void;
+}) {
+  const meta = FILTER_META[item.type];
+
+  const handleValueChange = useCallback(
+    (paramIdx: number, val: number) => {
+      const next = [...item.values];
+      next[paramIdx] = val;
+      onUpdate({ ...item, values: next });
+    },
+    [item, onUpdate]
+  );
+
+  const handleColorChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({ ...item, color: e.target.value });
+    },
+    [item, onUpdate]
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "4px 0 4px 20px" }}>
+      {/* Parameter sliders */}
+      {meta.paramLabels.map((label, idx) => {
+        const val = item.values[idx] ?? 0;
+        const sliderMin = item.type === "drop-shadow" && idx < 2 ? -100 : meta.min;
+        const sliderMax = item.type === "drop-shadow" && idx < 2 ? 100 : meta.max;
+        const pct = ((val - sliderMin) / (sliderMax - sliderMin)) * 100;
+
+        return (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: "6px", height: "22px" }}>
+            <span
+              style={{
+                width: "36px",
+                fontSize: "9px",
+                fontFamily: font.sans,
+                color: text.disabled,
+                flexShrink: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </span>
+
+            {/* Slider */}
+            <div style={{ flex: 1, position: "relative", height: "14px", display: "flex", alignItems: "center" }}>
+              <input
+                type="range"
+                min={sliderMin}
+                max={sliderMax}
+                step={meta.step}
+                value={val}
+                onChange={(e) => handleValueChange(idx, parseFloat(e.target.value))}
+                style={{
+                  width: "100%",
+                  height: "3px",
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  background: filledTrackBg(pct),
+                  borderRadius: "2px",
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              />
+            </div>
+
+            <NumberInput
+              value={val}
+              min={sliderMin}
+              max={sliderMax}
+              step={meta.step}
+              onChange={(v) => handleValueChange(idx, v)}
+            />
+
+            <span
+              style={{
+                width: "18px",
+                fontSize: "9px",
+                fontFamily: font.mono,
+                color: text.disabled,
+                flexShrink: 0,
+              }}
+            >
+              {meta.unit}
+            </span>
+          </div>
+        );
+      })}
+
+      {/* Color input for drop-shadow */}
+      {item.type === "drop-shadow" && (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", height: "22px" }}>
+          <span
+            style={{
+              width: "36px",
+              fontSize: "9px",
+              fontFamily: font.sans,
+              color: text.disabled,
+              flexShrink: 0,
+            }}
+          >
+            Color
+          </span>
+          <input
+            type="color"
+            value={item.color || "#000000"}
+            onChange={handleColorChange}
+            style={{
+              width: "24px",
+              height: "18px",
+              border: `1px solid ${border.default}`,
+              borderRadius: "2px",
+              padding: 0,
+              cursor: "pointer",
+              background: "transparent",
+            }}
+          />
+          <span
+            style={{
+              fontSize: "9px",
+              fontFamily: font.mono,
+              color: text.hint,
+            }}
+          >
+            {item.color || "#000000"}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FilterItemRow ──────────────────────────────────────────────────
+
+function FilterItemRow({
+  item,
+  index,
+  onUpdate,
+  onRemove,
+  onToggleVisible,
+  onToggleExpanded,
+  dragHandleProps,
+  isDragging,
+}: {
+  item: FilterItem;
+  index: number;
+  onUpdate: (index: number, item: FilterItem) => void;
+  onRemove: (index: number) => void;
+  onToggleVisible: (index: number) => void;
+  onToggleExpanded: (index: number) => void;
+  dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
+  isDragging?: boolean;
+}) {
+  const summaryText = formatFilterSummary(item);
+
+  return (
+    <div
+      style={{
+        borderBottom: `1px solid ${border.subtle}`,
+        opacity: item.visible ? 1 : 0.4,
+        transition: `opacity ${ms("normal")}`,
+      }}
+    >
+      {/* Summary row (always visible) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+          height: "28px",
+          cursor: "pointer",
+        }}
+        onClick={() => onToggleExpanded(index)}
+      >
+        {dragHandleProps && (
+          <DragHandle
+            isDragging={isDragging}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              dragHandleProps.onPointerDown(e);
+            }}
+            style={{ flexShrink: 0 }}
+          />
+        )}
+
+        {/* Expand chevron */}
+        <span
+          style={{
+            fontSize: "8px",
+            color: text.disabled,
+            width: "10px",
+            textAlign: "center",
+            flexShrink: 0,
+            transition: `transform ${ms("normal")}`,
+            transform: item.expanded ? "rotate(90deg)" : "rotate(0deg)",
+          }}
+        >
+          ▶
+        </span>
+
+        {/* Summary text */}
+        <span
+          style={{
+            flex: 1,
+            fontSize: "10px",
+            fontFamily: font.sans,
+            color: text.label,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {summaryText}
+        </span>
+
+        <span onClick={(e) => e.stopPropagation()}>
+          <VisibilityToggle
+            visible={item.visible}
+            onToggle={() => onToggleVisible(index)}
+            title={item.visible ? "Hide filter" : "Show filter"}
+          />
+        </span>
+
+        <span onClick={(e) => e.stopPropagation()}>
+          <EditorRemoveButton onClick={() => onRemove(index)} />
+        </span>
+      </div>
+
+      {/* Expanded editor */}
+      {item.expanded && (
+        <FilterItemEditor
+          item={item}
+          onUpdate={(updated) => onUpdate(index, updated)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── CategorizedDropdown ────────────────────────────────────────────
+
+function CategorizedDropdown({
+  activeTypes,
+  onSelect,
+  onClose,
+}: {
+  activeTypes: Set<FilterType>;
+  onSelect: (type: FilterType) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: "absolute",
+        top: "100%",
+        left: 0,
+        marginTop: "2px",
+        background: color.popover,
+        border: `1px solid ${surface.track}`,
+        borderRadius: "4px",
+        padding: "4px 0",
+        zIndex: zIndex.dropdown,
+        minWidth: "160px",
+        boxShadow: shadow.dropdown,
+      }}
+    >
+      {FILTER_CATEGORIES.map((cat) => (
+        <div key={cat.label}>
+          {/* Category header */}
+          <div
+            style={{
+              padding: "4px 10px 2px",
+              fontSize: "9px",
+              fontFamily: font.sans,
+              color: text.disabled,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {cat.label}
+          </div>
+
+          {/* Filter types in category */}
+          {cat.types.map((type) => {
+            const isActive = activeTypes.has(type);
+            const meta = FILTER_META[type];
+            return (
+              <div
+                key={type}
+                onClick={() => onSelect(type)}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "10px",
+                  fontFamily: font.sans,
+                  color: text.label,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = primaryAlpha(0.2);
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }}
+              >
+                {/* Checkmark for active types */}
+                <span style={{ width: "12px", fontSize: "10px", color: color.primary }}>
+                  {isActive ? "✓" : ""}
+                </span>
+                {meta.label}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── FilterEditor (main component) ─────────────────────────────────
+
+export function FilterEditor({ items, onChange }: FilterEditorProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(items, onChange);
+
+  const activeTypes = new Set(items.map((i) => i.type));
+
+  const handleAdd = useCallback(
+    (type: FilterType) => {
+      const newItem = createDefaultItem(type);
+      onChange([...items, newItem]);
+      setDropdownOpen(false);
+    },
+    [items, onChange]
+  );
+
+  const handleUpdate = useCallback(
+    (index: number, item: FilterItem) => {
+      const next = [...items];
+      next[index] = item;
+      onChange(next);
+    },
+    [items, onChange]
+  );
+
+  const handleRemove = useCallback(
+    (index: number) => {
+      onChange(items.filter((_, i) => i !== index));
+    },
+    [items, onChange]
+  );
+
+  const handleToggleVisible = useCallback(
+    (index: number) => {
+      const next = [...items];
+      next[index] = { ...next[index], visible: !next[index].visible };
+      onChange(next);
+    },
+    [items, onChange]
+  );
+
+  const handleToggleExpanded = useCallback(
+    (index: number) => {
+      const next = [...items];
+      next[index] = { ...next[index], expanded: !next[index].expanded };
+      onChange(next);
+    },
+    [items, onChange]
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+      {/* Filter item rows */}
+      <div style={{ position: "relative" }}>
+        {items.map((item, i) => {
+          const dragProps = handleProps(i);
+          return (
+            <div key={i} ref={registerRef(i)} style={itemStyle(i)}>
+              <FilterItemRow
+                item={item}
+                index={i}
+                onUpdate={handleUpdate}
+                onRemove={handleRemove}
+                onToggleVisible={handleToggleVisible}
+                onToggleExpanded={handleToggleExpanded}
+                dragHandleProps={dragProps}
+                isDragging={isDragging}
+              />
+            </div>
+          );
+        })}
+
+        {/* Drop indicator line */}
+        {(() => {
+          const style = dropLineStyle();
+          return style ? <div style={style} /> : null;
+        })()}
+      </div>
+
+      {items.length === 0 && (
+        <div
+          style={{
+            padding: "8px 0",
+            fontSize: "10px",
+            color: text.hint,
+            textAlign: "center",
+            fontFamily: font.sans,
+          }}
+        >
+          No filters
+        </div>
+      )}
+
+      {/* Add filter button + categorized dropdown */}
+      <div style={{ position: "relative" }}>
+        <button
+          onClick={() => setDropdownOpen((o) => !o)}
+          style={{
+            background: "transparent",
+            border: `1px solid ${surface.active}`,
+            borderRadius: "3px",
+            color: text.label,
+            fontSize: "10px",
+            fontFamily: font.sans,
+            padding: "3px 8px",
+            cursor: "pointer",
+            marginTop: "4px",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = color.input;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+          }}
+        >
+          + Add filter
+        </button>
+
+        {dropdownOpen && (
+          <CategorizedDropdown
+            activeTypes={activeTypes}
+            onSelect={handleAdd}
+            onClose={() => setDropdownOpen(false)}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Deprecated aliases (removed in Task 3) ─────────────────────────
+
+/** @deprecated Use FilterItem[] instead */
+export interface FilterValues {
+  blur: number;
+  brightness: number;
+  contrast: number;
+  grayscale: number;
+  "hue-rotate": number;
+  invert: number;
+  saturate: number;
+  sepia: number;
+}
+
+/** @deprecated Use FilterEditor instead */
+export const FilterSliders = function FilterSliders({
+  values,
+  onChange,
+  type: _type = "filter",
+}: {
+  values: Partial<FilterValues>;
+  onChange: (filter: string, value: number) => void;
+  type?: "filter" | "backdrop-filter";
+}) {
+  // Bridge: convert flat values to FilterItem[], delegate to FilterEditor
+  const items: FilterItem[] = (Object.entries(values) as [string, number | undefined][])
+    .filter(([, v]) => v !== undefined)
+    .map(([key, val]) => ({
+      type: key as FilterType,
+      values: [val!],
+      visible: true,
+      expanded: false,
+    }));
+
+  const handleChange = useCallback(
+    (newItems: FilterItem[]) => {
+      for (const item of newItems) {
+        onChange(item.type, item.values[0] ?? 0);
+      }
+    },
+    [onChange]
+  );
+
+  return <FilterEditor items={items} onChange={handleChange} />;
+};
