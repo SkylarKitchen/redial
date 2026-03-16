@@ -155,8 +155,8 @@ variableElement={element}
 
 ## Acceptance Criteria
 
-- [ ] `npm run typecheck` — clean
-- [ ] `npm test` — all pass (especially `unitDropdownClip.test.ts`)
+- [x] `npm run typecheck` — clean
+- [x] `npm test` — all 2743 pass (including `unitDropdownClip.test.ts`)
 - [ ] Browser: select element with gap → click link icon → VariablePicker opens → select variable → row shows variable mode → unlink resolves to numeric → reset clears
 
 ## Edge Cases
