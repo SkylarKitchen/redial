@@ -243,8 +243,8 @@ describe("AlignBox 3x3 sets both justify-content and align-items on click", () =
       }),
     );
 
-    // The AlignBox renders 9 cells (3x3 dot grid) with role="button"
-    expect(html).toContain('role="button"');
+    // The AlignBox renders 9 cells (3x3 dot grid) with role="radio"
+    expect(html).toContain('role="radio"');
   });
 
   it("AlignBox source calls onChange with both justify and align arguments", () => {

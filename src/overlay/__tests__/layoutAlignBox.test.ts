@@ -141,7 +141,7 @@ describe("AlignBox emits correct CSS values per mode", () => {
     );
     // Simulate click on top-left cell (col=0, row=0) via exported constants
     // The AlignBox uses JUSTIFY_COLS_FLEX[0]="flex-start", ALIGN_ROWS_FLEX[0]="flex-start"
-    expect(html).toContain('role="button"'); // has clickable cells
+    expect(html).toContain('role="radio"'); // has clickable cells
 
     // Verify via source that flex mode arrays have correct values
     expect(alignBoxSrc).toContain('JUSTIFY_COLS_FLEX = ["flex-start", "center", "flex-end"]');
