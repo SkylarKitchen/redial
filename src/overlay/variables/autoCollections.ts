@@ -209,7 +209,7 @@ export function inferAutoCollections(
         for (const [type, typeVars] of byType) {
           subgroups.push({
             name: capitalize(type),
-            variableNames: typeVars.map((v) => v.name).sort(),
+            variableNames: typeVars.map((v) => v.name).sort(naturalCompare),
           });
         }
       }
@@ -218,7 +218,7 @@ export function inferAutoCollections(
     result.push({
       id: `auto:${name.toLowerCase()}`,
       name,
-      variableNames: groupVars.map((v) => v.name).sort(),
+      variableNames: groupVars.map((v) => v.name).sort(naturalCompare),
       subgroups,
     });
   }
@@ -228,7 +228,7 @@ export function inferAutoCollections(
     result.push({
       id: "auto:other",
       name: "Other",
-      variableNames: otherVars.map((v) => v.name).sort(),
+      variableNames: otherVars.map((v) => v.name).sort(naturalCompare),
       subgroups: [],
     });
   }

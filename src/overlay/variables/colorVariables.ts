@@ -4,6 +4,8 @@
  * variable swatches in any color field.
  */
 
+import { naturalCompare } from "./discoverVariables";
+
 // ─── Types ──────────────────────────────────────────────────────────
 
 export interface ColorVariable {
@@ -70,7 +72,7 @@ export function discoverColorVariables(): ColorVariable[] {
     }
   }
 
-  return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(found.values()).sort((a, b) => naturalCompare(a.name, b.name));
 }
 
 // ─── Resolve a var() reference ──────────────────────────────────────
