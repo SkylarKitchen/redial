@@ -90,7 +90,7 @@ function parseToken(token: string): GridTrackDef[] {
     }
     const inner = parseToken(repeatMatch[2].trim());
     const result: GridTrackDef[] = [];
-    for (let i = 0; i < count; i++) result.push(...inner.map(t => ({ ...t })));
+    for (let i = 0; i < count; i++) result.push(...inner.map(t => ({ ...t, id: nextTrackId++ })));
     return result;
   }
 

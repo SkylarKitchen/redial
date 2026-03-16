@@ -153,6 +153,21 @@ describe("parseGridTemplate", () => {
     const ids = tracks.map(t => t.id);
     expect(new Set(ids).size).toBe(3);
   });
+
+  it("assigns unique ids to tracks expanded from repeat()", () => {
+    const tracks = parseGridTemplate("repeat(5, 1fr)");
+    expect(tracks).toHaveLength(5);
+    const ids = tracks.map(t => t.id);
+    // Every track must have a distinct id — React uses these as keys
+    expect(new Set(ids).size).toBe(5);
+  });
+
+  it("assigns unique ids to tracks expanded from repeat() with minmax", () => {
+    const tracks = parseGridTemplate("repeat(3, minmax(100px, 1fr))");
+    expect(tracks).toHaveLength(3);
+    const ids = tracks.map(t => t.id);
+    expect(new Set(ids).size).toBe(3);
+  });
 });
 
 describe("serializeGridTemplate", () => {
