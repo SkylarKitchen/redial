@@ -491,25 +491,30 @@ export function NavigatorPanel({
         style={{
           position: "fixed",
           zIndex: zIndex.max,
-          width: PANEL_WIDTH,
-          height: "80vh",
-          maxHeight: "80vh",
+          width: collapsed ? COLLAPSED_WIDTH : PANEL_WIDTH,
+          height: collapsed ? COLLAPSED_HEIGHT : "80vh",
+          maxHeight: collapsed ? COLLAPSED_HEIGHT : "80vh",
           background: color.background,
-          borderRadius: layout.panelRadius,
-          boxShadow: dragging ? shadow.panelDrag : shadow.panel,
+          borderRadius: collapsed ? 8 : layout.panelRadius,
+          boxShadow: collapsed ? shadow.dropdown : (dragging ? shadow.panelDrag : shadow.panel),
           backdropFilter: "blur(20px)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
           border: `1px solid ${blackAlpha(0.07)}`,
           top: pos.y,
-          left: pos.x,
+          left: collapsed ? SNAP_MARGIN : pos.x,
           transformOrigin: "top left",
           transition: snapping
-            ? `top ${ms("expand")} ease, left ${ms("expand")} ease, box-shadow ${ms("expand")}`
-            : `box-shadow ${ms("expand")}`,
+            ? `top ${ms("expand")} ease, left ${ms("expand")} ease, width ${ms("expand")} ease, height ${ms("expand")} ease, max-height ${ms("expand")} ease, border-radius ${ms("expand")} ease, box-shadow ${ms("expand")}`
+            : `width ${ms("expand")} ease, height ${ms("expand")} ease, max-height ${ms("expand")} ease, border-radius ${ms("expand")} ease, box-shadow ${ms("expand")}`,
           fontFamily: font.sans,
+          cursor: collapsed ? "pointer" : undefined,
         }}
+        onClick={collapsed ? () => {
+          setCollapsed(false);
+          setPos(preCollapsePos.current);
+        } : undefined}
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{
           opacity: 1,
@@ -524,171 +529,237 @@ export function NavigatorPanel({
           transition: springConfig("panelClose"),
         }}
       >
-        {/* ── Header ── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: 36,
-            padding: "0 8px",
-            borderBottom: `1px solid ${border.subtle}`,
-            flexShrink: 0,
-            userSelect: "none",
-          }}
-        >
-          {/* Drag handle — 2x3 grip dots */}
+        {collapsed ? (
+          /* ── Collapsed tab: layers icon + count ── */
           <div
-            onMouseDown={handleDragStart}
             style={{
-              width: 16,
-              height: 20,
-              display: "grid",
-              gridTemplateColumns: "4px 4px",
-              gridTemplateRows: "4px 4px 4px",
-              gap: 2,
-              alignContent: "center",
-              justifyContent: "center",
-              cursor: dragging ? "grabbing" : "grab",
-              marginRight: 4,
-              flexShrink: 0,
-            }}
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: 2.5,
-                  height: 2.5,
-                  borderRadius: "50%",
-                  background: blackAlpha(0.2),
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Title */}
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: text.primary,
-              marginRight: 6,
-            }}
-          >
-            Navigator
-          </span>
-
-          {/* Element count badge */}
-          <span
-            style={{
-              fontSize: 10,
-              color: text.hint,
-            }}
-          >
-            {totalCount} elements
-          </span>
-
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            onMouseEnter={() => setCloseHovered(true)}
-            onMouseLeave={() => setCloseHovered(false)}
-            style={{
-              width: 24,
-              height: 24,
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 14,
-              color: text.label,
-              background: closeHovered ? surface.hover : "transparent",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-              padding: 0,
-              lineHeight: 1,
-              transition: `background ${ms("fast")}`,
+              height: "100%",
+              gap: 6,
             }}
+            title="Expand Navigator"
           >
-            ×
-          </button>
-        </div>
-
-        {/* ── Tree body (virtualized) ── */}
-        <div
-          ref={scrollRef}
-          role="tree"
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
-          onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overflowX: "hidden",
-            outline: "none",
-          }}
-        >
-          {/* Spacer div for total scroll height */}
-          <div style={{ height: totalHeight, position: "relative" }}>
-            {/* Positioned visible slice */}
-            <div style={{ transform: `translateY(${offsetY}px)` }}>
-              {visibleNodes.map((flat, vi) => {
-                const isDropBefore =
-                  nodeDragState?.dropTarget?.type === "between" &&
-                  nodeDragState.dropTarget.before === flat.node.el;
-                const isDropInto =
-                  nodeDragState?.dropTarget?.type === "into" &&
-                  nodeDragState.dropTarget.container === flat.node.el;
-
-                return (
-                  <div
-                    key={getStableKey(flat.node.el)}
-                    data-nav-el="true"
-                    style={{ position: "relative" }}
-                  >
-                    {/* Drop indicator line — before this row */}
-                    {isDropBefore && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          right: 0,
-                          top: 0,
-                          height: 2,
-                          background: color.primary,
-                          zIndex: zIndex.above,
-                          pointerEvents: "none",
-                        }}
-                      />
-                    )}
-                    <NavigatorNode
-                      node={flat.node}
-                      depth={flat.node.depth}
-                      isExpanded={expandedNodes.has(flat.node.el)}
-                      isSelected={flat.node.el === selectedEl}
-                      isFocused={flat.node.el === focusedEl}
-                      isDragging={nodeDragState?.draggedEl === flat.node.el}
-                      isDraggedOver={isDropInto}
-                      onToggle={() => handleToggle(flat.node.el)}
-                      onSelect={() => {
-                        onSelectElement(flat.node.el);
-                        setFocusedEl(flat.node.el);
-                        // Refocus tree container so onKeyDown keeps working
-                        scrollRef.current?.focus();
-                      }}
-                      onDragStart={(e) => handleNodeDragStart(flat.node, e)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            {/* Layers icon — 3 stacked lines */}
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ opacity: 0.6 }}>
+              <rect x="2" y="2" width="10" height="2" rx="0.5" fill={text.label} />
+              <rect x="4" y="6" width="8" height="2" rx="0.5" fill={text.label} />
+              <rect x="6" y="10" width="6" height="2" rx="0.5" fill={text.label} />
+            </svg>
+            {/* Element count */}
+            <span
+              style={{
+                fontSize: 9,
+                color: text.hint,
+                writingMode: "vertical-rl",
+                textOrientation: "mixed",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {totalCount}
+            </span>
           </div>
-        </div>
+        ) : (
+          /* ── Full panel ── */
+          <>
+            {/* ── Header ── */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                height: 36,
+                padding: "0 8px",
+                borderBottom: `1px solid ${border.subtle}`,
+                flexShrink: 0,
+                userSelect: "none",
+              }}
+            >
+              {/* Drag handle — 2x3 grip dots */}
+              <div
+                onMouseDown={handleDragStart}
+                style={{
+                  width: 16,
+                  height: 20,
+                  display: "grid",
+                  gridTemplateColumns: "4px 4px",
+                  gridTemplateRows: "4px 4px 4px",
+                  gap: 2,
+                  alignContent: "center",
+                  justifyContent: "center",
+                  cursor: dragging ? "grabbing" : "grab",
+                  marginRight: 4,
+                  flexShrink: 0,
+                }}
+              >
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: 2.5,
+                      height: 2.5,
+                      borderRadius: "50%",
+                      background: blackAlpha(0.2),
+                    }}
+                  />
+                ))}
+              </div>
 
+              {/* Title */}
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: text.primary,
+                  marginRight: 6,
+                }}
+              >
+                Navigator
+              </span>
+
+              {/* Element count badge */}
+              <span
+                style={{
+                  fontSize: 10,
+                  color: text.hint,
+                }}
+              >
+                {totalCount} elements
+              </span>
+
+              {/* Spacer */}
+              <div style={{ flex: 1 }} />
+
+              {/* Collapse button */}
+              <button
+                onClick={() => {
+                  preCollapsePos.current = pos;
+                  setCollapsed(true);
+                }}
+                onMouseEnter={() => setCollapseHovered(true)}
+                onMouseLeave={() => setCollapseHovered(false)}
+                title="Collapse panel"
+                style={{
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  color: text.label,
+                  background: collapseHovered ? surface.hover : "transparent",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  padding: 0,
+                  lineHeight: 1,
+                  marginRight: 2,
+                  transition: `background ${ms("fast")}`,
+                }}
+              >
+                ‹
+              </button>
+
+              {/* Close button */}
+              <button
+                onClick={onClose}
+                onMouseEnter={() => setCloseHovered(true)}
+                onMouseLeave={() => setCloseHovered(false)}
+                style={{
+                  width: 24,
+                  height: 24,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  color: text.label,
+                  background: closeHovered ? surface.hover : "transparent",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  padding: 0,
+                  lineHeight: 1,
+                  transition: `background ${ms("fast")}`,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* ── Tree body (virtualized) ── */}
+            <div
+              ref={scrollRef}
+              role="tree"
+              tabIndex={0}
+              onKeyDown={handleKeyDown}
+              onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+                outline: "none",
+              }}
+            >
+              {/* Spacer div for total scroll height */}
+              <div style={{ height: totalHeight, position: "relative" }}>
+                {/* Positioned visible slice */}
+                <div style={{ transform: `translateY(${offsetY}px)` }}>
+                  {visibleNodes.map((flat, vi) => {
+                    const isDropBefore =
+                      nodeDragState?.dropTarget?.type === "between" &&
+                      nodeDragState.dropTarget.before === flat.node.el;
+                    const isDropInto =
+                      nodeDragState?.dropTarget?.type === "into" &&
+                      nodeDragState.dropTarget.container === flat.node.el;
+
+                    return (
+                      <div
+                        key={getStableKey(flat.node.el)}
+                        data-nav-el="true"
+                        style={{ position: "relative" }}
+                      >
+                        {/* Drop indicator line — before this row */}
+                        {isDropBefore && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              left: 0,
+                              right: 0,
+                              top: 0,
+                              height: 2,
+                              background: color.primary,
+                              zIndex: zIndex.above,
+                              pointerEvents: "none",
+                            }}
+                          />
+                        )}
+                        <NavigatorNode
+                          node={flat.node}
+                          depth={flat.node.depth}
+                          isExpanded={expandedNodes.has(flat.node.el)}
+                          isSelected={flat.node.el === selectedEl}
+                          isFocused={flat.node.el === focusedEl}
+                          isDragging={nodeDragState?.draggedEl === flat.node.el}
+                          isDraggedOver={isDropInto}
+                          onToggle={() => handleToggle(flat.node.el)}
+                          onSelect={() => {
+                            onSelectElement(flat.node.el);
+                            setFocusedEl(flat.node.el);
+                            // Refocus tree container so onKeyDown keeps working
+                            scrollRef.current?.focus();
+                          }}
+                          onDragStart={(e) => handleNodeDragStart(flat.node, e)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </motion.div>
   );
 }
