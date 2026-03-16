@@ -212,13 +212,28 @@ export function getGlobalCSSSource(
           } catch {
             // Not a valid URL — use as-is
           }
-          // Strip common build prefixes
-          file = file
-            .replace(/^\/_next\/static\/css\//, "")
-            .replace(/^\/assets\//, "")
-            .replace(/^\//, "");
-          // Remove content hash suffixes (e.g., globals.abc123.css → globals.css)
-          file = file.replace(/\.\w{8,}\.css$/, ".css");
+
+          // Turbopack chunk URLs encode the source path:
+          // /_next/static/chunks/test-app_app_page_module_scss_module_d2439084.css
+          // → source: page.module.scss
+          const turboChunk = file.match(
+            /\/_next\/static\/chunks\/.*?([\w-]+)_module_(scss|css)_module_\w+\.css$/
+          );
+          if (turboChunk) {
+            const baseName = turboChunk[1].replace(/^.*_/, ""); // last path segment
+            file = `${baseName}.module.${turboChunk[2]}`;
+          } else {
+            // Strip common build prefixes
+            file = file
+              .replace(/^\/_next\/static\/css\//, "")
+              .replace(/^\/_next\/static\/chunks\//, "")
+              .replace(/^\/assets\//, "")
+              .replace(/^\//, "");
+            // Remove content hash suffixes (e.g., globals.abc123.css → globals.css)
+            file = file.replace(/\.\w{8,}\.css$/, ".css");
+            // Remove Turbopack-style hash suffixes (e.g., _d2439084.css → .css)
+            file = file.replace(/_\w{8}\.css$/, ".css");
+          }
 
           const displayPath = file.replace(/^.*\/src\//, "src/");
           return { file, line: undefined, displayPath };
