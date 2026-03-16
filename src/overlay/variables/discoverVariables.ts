@@ -26,6 +26,14 @@ export interface CSSVariable {
   aliasFallback?: string;
 }
 
+// ─── Natural Sort ────────────────────────────────────────────────────
+
+const naturalCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+/** Compare two strings with natural numeric ordering ("2" < "10"). */
+export const naturalCompare = (a: string, b: string): number =>
+  naturalCollator.compare(a, b);
+
 // ─── Color Detection ─────────────────────────────────────────────────
 
 const HEX_RE = /^#([0-9a-f]{3,8})$/i;
@@ -172,7 +180,7 @@ export function discoverVariables(element: Element): CSSVariable[] {
     ancestor = ancestor.parentElement;
   }
 
-  return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(found.values()).sort((a, b) => naturalCompare(a.name, b.name));
 }
 
 // ─── Convenience: Length Variables Only ──────────────────────────────
@@ -231,7 +239,7 @@ export function discoverAllVariables(): CSSVariable[] {
     }
   }
 
-  return Array.from(found.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(found.values()).sort((a, b) => naturalCompare(a.name, b.name));
 }
 
 // ─── Category Grouping ──────────────────────────────────────────────
@@ -333,16 +341,16 @@ export function groupByPrefix(vars: CSSVariable[]): {
   }
 
   // Sort everything
-  ungrouped.sort((a, b) => a.name.localeCompare(b.name));
+  ungrouped.sort((a, b) => naturalCompare(a.name, b.name));
 
   const groups = Array.from(groupMap.values()).sort((a, b) =>
-    a.prefix.localeCompare(b.prefix),
+    naturalCompare(a.prefix, b.prefix),
   );
 
   for (const g of groups) {
-    g.variables.sort((a, b) => a.name.localeCompare(b.name));
+    g.variables.sort((a, b) => naturalCompare(a.name, b.name));
     for (const sub of g.subgroups.values()) {
-      sub.variables.sort((a, b) => a.name.localeCompare(b.name));
+      sub.variables.sort((a, b) => naturalCompare(a.name, b.name));
     }
   }
 
@@ -434,7 +442,7 @@ export function buildAliasGraph(vars: CSSVariable[]) {
     for (const [src, tgt] of edges) {
       if (tgt === name) result.push(src);
     }
-    return result.sort();
+    return result.sort(naturalCompare);
   }
 
   return { edges, resolve, dependents };

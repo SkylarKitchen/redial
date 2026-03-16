@@ -6,7 +6,7 @@
  * by detecting namespace prefixes and clustering by type.
  */
 
-import type { CSSVariable, VarType } from "./discoverVariables";
+import { naturalCompare, type CSSVariable, type VarType } from "./discoverVariables";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -99,7 +99,7 @@ export function inferSubgroups(vars: CSSVariable[]): Subgroup[] {
       for (const [prefix, subVars] of bySecond) {
         result.push({
           name: prefix,
-          variables: subVars.sort((a, b) => a.name.localeCompare(b.name)),
+          variables: subVars.sort((a, b) => naturalCompare(a.name, b.name)),
         });
       }
     } else if (allHaveThirdSeg && bySecond.size === 1) {
@@ -107,12 +107,12 @@ export function inferSubgroups(vars: CSSVariable[]): Subgroup[] {
       const [[prefix, subVars]] = bySecond;
       result.push({
         name: prefix,
-        variables: subVars.sort((a, b) => a.name.localeCompare(b.name)),
+        variables: subVars.sort((a, b) => naturalCompare(a.name, b.name)),
       });
     } else {
       result.push({
         name: first,
-        variables: groupVars.sort((a, b) => a.name.localeCompare(b.name)),
+        variables: groupVars.sort((a, b) => naturalCompare(a.name, b.name)),
       });
     }
   }
@@ -120,11 +120,11 @@ export function inferSubgroups(vars: CSSVariable[]): Subgroup[] {
   if (ungrouped.length > 0) {
     result.unshift({
       name: "",
-      variables: ungrouped.sort((a, b) => a.name.localeCompare(b.name)),
+      variables: ungrouped.sort((a, b) => naturalCompare(a.name, b.name)),
     });
   }
 
-  return result.sort((a, b) => a.name.localeCompare(b.name));
+  return result.sort((a, b) => naturalCompare(a.name, b.name));
 }
 
 // ─── Main Engine ─────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ export function inferAutoCollections(
   }
 
   // Sort alphabetically by name
-  result.sort((a, b) => a.name.localeCompare(b.name));
+  result.sort((a, b) => naturalCompare(a.name, b.name));
 
   return result;
 }
