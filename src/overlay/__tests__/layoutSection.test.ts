@@ -336,7 +336,7 @@ describe("AlignBox index mapping (toColIndices / toRowIndices)", () => {
   });
 });
 
-// ─── 5. Quick-action buttons: Center + Fill Parent ────────────────────
+// ─── 5. Grid Columns/Rows content alignment rows ─────────────────────
 
 // Reload source for new tests
 const layoutSrcFresh = readFileSync(
@@ -344,26 +344,8 @@ const layoutSrcFresh = readFileSync(
   "utf-8",
 );
 
-describe("Quick-action buttons: Center and Fill Parent", () => {
-  it("renders Center button when isFlex", async () => {
-    const html = await renderLayout({
-      display: "flex",
-      isFlex: true,
-      isGrid: false,
-    });
-    expect(html).toContain("Center");
-  });
-
-  it("renders Fill Parent button when isFlex", async () => {
-    const html = await renderLayout({
-      display: "flex",
-      isFlex: true,
-      isGrid: false,
-    });
-    expect(html).toContain("Fill Parent");
-  });
-
-  it("renders Center button when isGrid", async () => {
+describe("Grid Columns/Rows content alignment rows", () => {
+  it("renders Columns alignment row when isGrid", async () => {
     const ctx = makeMockCtx({ display: "grid" });
     const html = await renderLayout({
       ctx,
@@ -371,10 +353,12 @@ describe("Quick-action buttons: Center and Fill Parent", () => {
       isFlex: false,
       isGrid: true,
     });
-    expect(html).toContain("Center");
+    // "Columns" appears from both GridTrackRow and the new content alignment row
+    expect(html).toContain("Columns");
+    expect(html).toContain("Grid justify-content");
   });
 
-  it("renders Fill Parent button when isGrid", async () => {
+  it("renders Rows alignment row when isGrid", async () => {
     const ctx = makeMockCtx({ display: "grid" });
     const html = await renderLayout({
       ctx,
@@ -382,57 +366,49 @@ describe("Quick-action buttons: Center and Fill Parent", () => {
       isFlex: false,
       isGrid: true,
     });
-    expect(html).toContain("Fill Parent");
+    expect(html).toContain("Grid align-content");
   });
 
-  it("does NOT render Center or Fill Parent when display is block", async () => {
+  it("does NOT render Columns/Rows alignment rows when isFlex", async () => {
     const html = await renderLayout({
-      display: "block",
-      isFlex: false,
+      display: "flex",
+      isFlex: true,
+      isGrid: false,
+    });
+    expect(html).not.toContain("Grid justify-content");
+    expect(html).not.toContain("Grid align-content");
+  });
+
+  it("does NOT render Quick row (removed)", async () => {
+    const html = await renderLayout({
+      display: "flex",
+      isFlex: true,
       isGrid: false,
     });
     expect(html).not.toContain("Fill Parent");
-    // "Center" can appear in other contexts (e.g. "center" in alignItems).
-    // Check for the specific button title instead:
     expect(html).not.toContain("Center: justify-content");
   });
 
-  it("handleCenter uses beginBatch/endBatch for undo grouping (source check)", () => {
-    // The handleCenter callback must wrap apply calls in beginBatch/endBatch
-    const centerMatch = layoutSrcFresh.match(/handleCenter[\s\S]*?endBatch\(\)/);
-    expect(centerMatch, "handleCenter must use beginBatch/endBatch").toBeTruthy();
-    expect(centerMatch![0]).toContain("beginBatch()");
-    expect(centerMatch![0]).toContain("endBatch()");
+  it("source wires Columns row to justify-content via apply", () => {
+    expect(layoutSrcFresh).toContain('apply("justify-content", v)');
   });
 
-  it("handleFillParent uses beginBatch/endBatch for undo grouping (source check)", () => {
-    const fillMatch = layoutSrcFresh.match(/handleFillParent[\s\S]*?endBatch\(\)/);
-    expect(fillMatch, "handleFillParent must use beginBatch/endBatch").toBeTruthy();
-    expect(fillMatch![0]).toContain("beginBatch()");
-    expect(fillMatch![0]).toContain("endBatch()");
+  it("source wires Rows row to align-content via apply", () => {
+    expect(layoutSrcFresh).toContain('apply("align-content", v)');
   });
 
-  it("handleCenter sets justify-content + align-items for flex mode", () => {
-    // In flex branch: apply("justify-content", "center") and apply("align-items", "center")
-    const centerMatch = layoutSrcFresh.match(/handleCenter[\s\S]*?endBatch\(\)/);
-    expect(centerMatch![0]).toContain('apply("justify-content", "center")');
-    expect(centerMatch![0]).toContain('apply("align-items", "center")');
+  it("source imports GRID_JUSTIFY_CONTENT_OPTIONS and GRID_ALIGN_CONTENT_OPTIONS", () => {
+    expect(layoutSrcFresh).toContain("GRID_JUSTIFY_CONTENT_OPTIONS");
+    expect(layoutSrcFresh).toContain("GRID_ALIGN_CONTENT_OPTIONS");
   });
 
-  it("handleCenter sets justify-items + align-items for grid mode", () => {
-    const centerMatch = layoutSrcFresh.match(/handleCenter[\s\S]*?endBatch\(\)/);
-    expect(centerMatch![0]).toContain('apply("justify-items", "center")');
-    expect(centerMatch![0]).toContain('apply("align-items", "center")');
+  it("source does NOT contain handleCenter or handleFillParent", () => {
+    expect(layoutSrcFresh).not.toContain("handleCenter");
+    expect(layoutSrcFresh).not.toContain("handleFillParent");
   });
 
-  it("handleFillParent sets width: 100% + height: 100%", () => {
-    const fillMatch = layoutSrcFresh.match(/handleFillParent[\s\S]*?endBatch\(\)/);
-    expect(fillMatch![0]).toContain('apply("width", "100%")');
-    expect(fillMatch![0]).toContain('apply("height", "100%")');
-  });
-
-  it("imports beginBatch and endBatch from apply", () => {
-    expect(layoutSrcFresh).toMatch(/import\s*\{[^}]*beginBatch[^}]*\}\s*from\s*["']\.\.\/core\/apply["']/);
-    expect(layoutSrcFresh).toMatch(/import\s*\{[^}]*endBatch[^}]*\}\s*from\s*["']\.\.\/core\/apply["']/);
+  it("source does NOT contain Quick row or PILL_BUTTON", () => {
+    expect(layoutSrcFresh).not.toContain("PILL_BUTTON");
+    expect(layoutSrcFresh).not.toMatch(/label="Quick"/);
   });
 });
