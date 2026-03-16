@@ -35,6 +35,7 @@ import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo }
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
+import { getVariablesPanelWidth } from "../variables/panelWidth";
 import { timing, ms, setReducedMotion, springConfig } from "../timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "../core/scrubState";
@@ -119,6 +120,7 @@ export function Overlay() {
 
   // Unified panel state — discriminated union prevents impossible states
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: "none" });
+  const [variablesModeCount, setVariablesModeCount] = useState(0);
   const totalChanges = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
 
   // Scope toggle
@@ -941,7 +943,7 @@ export function Overlay() {
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
   const SNAP_MARGIN = 16;
-  const PANEL_WIDTH = activePanel.type === "variables" ? 580 : 300;
+  const PANEL_WIDTH = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
   const PANEL_HEIGHT_ESTIMATE = 500;
 
   const handleDragStart = useCallback(
@@ -1163,7 +1165,7 @@ export function Overlay() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         // If anchored to an edge, recompute from that edge; otherwise just clamp
-        const pw = activePanel.type === "variables" ? 580 : 300;
+        const pw = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
         const x = anchor === "right"
           ? vw - pw - MARGIN
           : anchor === "left"
@@ -1175,11 +1177,11 @@ export function Overlay() {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [anchor, activePanel.type]);
+  }, [anchor, activePanel.type, variablesModeCount]);
 
   // --- Reposition panel when switching between inspector (300px) and variables (550px) ---
   useEffect(() => {
-    const pw = activePanel.type === "variables" ? 580 : 300;
+    const pw = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
     setPos((p) => {
       const vw = window.innerWidth;
       const MARGIN = 16;
@@ -1193,7 +1195,7 @@ export function Overlay() {
       }
       return p;
     });
-  }, [activePanel.type, anchor]);
+  }, [activePanel.type, anchor, variablesModeCount]);
 
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
   useEffect(() => {
@@ -1645,7 +1647,7 @@ export function Overlay() {
           style={{
             position: "fixed",
             zIndex: zIndex.max,
-            width: activePanel.type === "variables" ? 580 : 300,
+            width: activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300,
             height: "85vh",
             maxHeight: "85vh",
             background: color.background,
@@ -1912,7 +1914,10 @@ export function Overlay() {
           )}
 
           {activePanel.type === "variables" && (
-            <GlobalVariablesPanel onClose={() => setActivePanel({ type: "none" })} />
+            <GlobalVariablesPanel
+              onClose={() => setActivePanel({ type: "none" })}
+              onModeCount={setVariablesModeCount}
+            />
           )}
 
         </motion.div>

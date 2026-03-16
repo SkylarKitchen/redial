@@ -24,7 +24,13 @@ import {
 
 // ─── Main Component ────────────────────────────────────────────────────
 
-export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
+export function GlobalVariablesPanel({
+  onClose,
+  onModeCount,
+}: {
+  onClose: () => void;
+  onModeCount?: (count: number) => void;
+}) {
   // ─── State ─────────────────────────────────────────────────
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -44,6 +50,10 @@ export function GlobalVariablesPanel({ onClose }: { onClose: () => void }) {
   const allVars = useMemo(() => discoverAllVariables(), [overrideSnapshot]);
   const _aliasGraph = useMemo(() => buildAliasGraph(allVars), [allVars]);
   const modes = useMemo(() => inferModes(discoverModeDeclarations()), [overrideSnapshot]);
+
+  useEffect(() => {
+    onModeCount?.(modes.length);
+  }, [modes.length, onModeCount]);
 
   // Filter by search
   const filtered = useMemo(() => {
