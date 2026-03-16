@@ -20,3 +20,5 @@ export { SubSectionHeader } from "./SubSectionHeader";
 export { EditorRemoveButton } from "./EditorRemoveButton";
 export { VisibilityToggle } from "./VisibilityToggle";
 export { VariableLinkDot } from "./VariableLinkDot";
+export { VariableField } from "./VariableField";
+export type { VariableFieldProps } from "./VariableField";
