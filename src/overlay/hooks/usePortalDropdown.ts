@@ -78,17 +78,20 @@ export function usePortalDropdown({
     if (!open || !dropdownPos || !portalRef.current || correctedRef.current) return;
     correctedRef.current = true;
 
-    const actualHeight = portalRef.current.getBoundingClientRect().height;
+    const portalRect = portalRef.current.getBoundingClientRect();
+    const actualHeight = portalRect.height;
+    const actualWidth = portalRect.width;
     if (actualHeight <= 0 || !triggerRef.current) return;
 
     const rect = triggerRef.current.getBoundingClientRect();
     const spaceBelow = window.innerHeight - rect.bottom;
     const shouldFlipUp = spaceBelow < actualHeight;
+    const clampedLeft = clampLeft(rect.left, Math.max(rect.width, actualWidth));
 
-    if (shouldFlipUp !== dropdownPos.up) {
+    if (shouldFlipUp !== dropdownPos.up || clampedLeft !== dropdownPos.left) {
       setDropdownPos({
         top: shouldFlipUp ? rect.top - actualHeight - 2 : rect.bottom + 2,
-        left: rect.left,
+        left: clampedLeft,
         width: rect.width,
         up: shouldFlipUp,
       });

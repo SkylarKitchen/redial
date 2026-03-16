@@ -376,7 +376,7 @@ function ModeValueCell({
 
   if (editing) {
     return (
-      <div style={{ flex: "0 0 140px" }}>
+      <div style={{ flex: "0 0 106px" }}>
         <input
           ref={inputRef}
           value={draft}
@@ -409,7 +409,7 @@ function ModeValueCell({
     <div
       onClick={editable ? () => setEditing(true) : undefined}
       style={{
-        flex: "0 0 140px",
+        flex: "0 0 106px",
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-end",
@@ -589,7 +589,7 @@ function DetailVariableRow({
       />
 
       {/* Name cell */}
-      <div style={{ ...(modeValues ? { width: 130, flexShrink: 0 } : { width: 120, flexShrink: 0 }), minWidth: 0, display: "flex", alignItems: "center" }}>
+      <div style={{ ...(modeValues ? { width: 100, flexShrink: 0 } : { width: 120, flexShrink: 0 }), minWidth: 0, display: "flex", alignItems: "center" }}>
         {renaming ? (
           <input
             ref={renameRef}

@@ -42,7 +42,7 @@ describe("usePortalDropdown hook implementation", () => {
 
   it("uses useLayoutEffect for dynamic height measurement", () => {
     expect(hookSrc).toContain("useLayoutEffect");
-    expect(hookSrc).toContain("getBoundingClientRect().height");
+    expect(hookSrc).toContain("portalRect.height");
   });
 
   it("computes flip-above position based on estimated height", () => {
@@ -125,6 +125,34 @@ describe("data attributes preserved on portal divs", () => {
   it("TextStyleRow still has data-tuner-portal and data-textstyle-portal", () => {
     expect(textStyleSrc).toContain("data-tuner-portal");
     expect(textStyleSrc).toContain("data-textstyle-portal");
+  });
+});
+
+// ─── Horizontal clamping ─────────────────────────────────────────
+
+describe("horizontal viewport clamping", () => {
+  it("has clampLeft helper that clamps to viewport bounds", () => {
+    expect(hookSrc).toContain("function clampLeft(left: number, width: number): number");
+    expect(hookSrc).toContain("window.innerWidth - width - 8");
+    expect(hookSrc).toContain("Math.max(8, Math.min(left, maxLeft))");
+  });
+
+  it("applies horizontal clamping in updateDropdownPos", () => {
+    expect(hookSrc).toContain("clampLeft(rect.left, Math.max(rect.width, estimatedWidth))");
+  });
+
+  it("applies horizontal clamping in useLayoutEffect correction", () => {
+    expect(hookSrc).toContain("clampLeft(rect.left, Math.max(rect.width, actualWidth))");
+    expect(hookSrc).toContain("clampedLeft !== dropdownPos.left");
+  });
+
+  it("measures actual portal width in useLayoutEffect", () => {
+    expect(hookSrc).toContain("portalRect.width");
+  });
+
+  it("supports estimatedWidth option with default of 60", () => {
+    expect(hookSrc).toContain("estimatedWidth = 60");
+    expect(hookSrc).toContain("estimatedWidth?: number");
   });
 });
 
