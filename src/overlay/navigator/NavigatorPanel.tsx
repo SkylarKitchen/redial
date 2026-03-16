@@ -118,11 +118,17 @@ export function NavigatorPanel({
   const [nodeDragState, setNodeDragState] = useState<NavDragState | null>(null);
   const isDraggingNodeRef = useRef(false);
 
+  // ── Collapse state ──
+  const [collapsed, setCollapsed] = useState(false);
+  const [collapseHovered, setCollapseHovered] = useState(false);
+  const preCollapsePos = useRef(pos);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(400);
 
   // ── Measure scroll container height ──
+  // Re-run when collapsed changes so we re-observe the new DOM element after expand
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -131,7 +137,8 @@ export function NavigatorPanel({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collapsed]);
 
   // ── Build filtered tree ──
   const tree = useMemo(
@@ -477,11 +484,6 @@ export function NavigatorPanel({
     };
   }, []);
 
-  // ── Collapse state ──
-  const [collapsed, setCollapsed] = useState(false);
-  const [collapseHovered, setCollapseHovered] = useState(false);
-  const preCollapsePos = useRef(pos);
-
   // ── Close button hover ──
   const [closeHovered, setCloseHovered] = useState(false);
 
@@ -514,6 +516,10 @@ export function NavigatorPanel({
         onClick={collapsed ? () => {
           setCollapsed(false);
           setPos(preCollapsePos.current);
+          // Re-expand tree in case HMR/DOM mutations cleared expandedNodes while collapsed
+          initialExpandDone.current = false;
+          setRebuildKey((k) => k + 1);
+          setScrollTop(0);
         } : undefined}
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{

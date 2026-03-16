@@ -13,8 +13,11 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
+import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
+import { cssColorToHex } from "../colorUtils";
+import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { EditorRemoveButton, VisibilityToggle } from "../controls";
-import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, filledTrackBg, focusBorder } from "../theme";
+import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -102,6 +105,7 @@ function formatFilterSummary(item: FilterItem): string {
 export interface FilterEditorProps {
   items: FilterItem[];
   onChange: (items: FilterItem[]) => void;
+  type?: "filter" | "backdrop-filter";
 }
 
 // ─── NumberInput ─────────────────────────────────────────────────────
@@ -209,9 +213,14 @@ function FilterItemEditor({
     });
   }, [item, onUpdate]);
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   const handleColorChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      onUpdate({ ...item, color: e.target.value });
+    (hex: string, opacity: number) => {
+      const c = opacity < 1
+        ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
+        : hex;
+      onUpdate({ ...item, color: c });
     },
     [item, onUpdate]
   );
@@ -313,7 +322,7 @@ function FilterItemEditor({
         );
       })}
 
-      {/* Color input for drop-shadow */}
+      {/* Color picker for drop-shadow */}
       {item.type === "drop-shadow" && (
         <div style={{ display: "flex", alignItems: "center", gap: "6px", height: "22px" }}>
           <span
@@ -327,20 +336,36 @@ function FilterItemEditor({
           >
             Color
           </span>
-          <input
-            type="color"
-            value={item.color || "#000000"}
-            onChange={handleColorChange}
-            style={{
-              width: "24px",
-              height: "18px",
-              border: `1px solid ${border.default}`,
-              borderRadius: "2px",
-              padding: 0,
-              cursor: "pointer",
-              background: "transparent",
-            }}
-          />
+          <div style={{ position: "relative" }}>
+            <button
+              onClick={() => setPickerOpen(!pickerOpen)}
+              title={`Shadow color: ${item.color || "rgba(0,0,0,0.3)"}`}
+              style={{
+                width: "16px",
+                height: "16px",
+                borderRadius: "2px",
+                border: `1px solid ${blackAlpha(0.15)}`,
+                background: resolveVarColor(item.color || "") ?? item.color ?? "rgba(0,0,0,0.3)",
+                cursor: "pointer",
+                padding: 0,
+                flexShrink: 0,
+              }}
+            />
+            {pickerOpen && (
+              <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
+                <ColorPickerEnhanced
+                  color={cssColorToHex(resolveVarColor(item.color || "") ?? item.color ?? "#000000")}
+                  onChange={handleColorChange}
+                  onClose={() => setPickerOpen(false)}
+                  onSelectVariable={(varExpr) => {
+                    onUpdate({ ...item, color: varExpr });
+                    setPickerOpen(false);
+                  }}
+                  activeVariable={parseVarRef(item.color || "")}
+                />
+              </div>
+            )}
+          </div>
           <span
             style={{
               fontSize: "9px",
@@ -348,7 +373,7 @@ function FilterItemEditor({
               color: text.hint,
             }}
           >
-            {item.color || "#000000"}
+            {item.color || "rgba(0,0,0,0.3)"}
           </span>
         </div>
       )}
@@ -560,7 +585,7 @@ function CategorizedDropdown({
 
 // ─── FilterEditor (main component) ─────────────────────────────────
 
-export function FilterEditor({ items, onChange }: FilterEditorProps) {
+export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(items, onChange);
@@ -569,8 +594,15 @@ export function FilterEditor({ items, onChange }: FilterEditorProps) {
 
   const handleAdd = useCallback(
     (type: FilterType) => {
-      const newItem = createDefaultItem(type);
-      onChange([...items, newItem]);
+      // If type already exists, expand it instead of duplicating
+      const existingIdx = items.findIndex((i) => i.type === type);
+      if (existingIdx >= 0) {
+        const next = [...items];
+        next[existingIdx] = { ...next[existingIdx], expanded: true };
+        onChange(next);
+      } else {
+        onChange([...items, createDefaultItem(type)]);
+      }
       setDropdownOpen(false);
     },
     [items, onChange]
@@ -649,7 +681,7 @@ export function FilterEditor({ items, onChange }: FilterEditorProps) {
             fontFamily: font.sans,
           }}
         >
-          No filters
+          No {type === "backdrop-filter" ? "backdrop filters" : "filters"}
         </div>
       )}
 
@@ -675,7 +707,7 @@ export function FilterEditor({ items, onChange }: FilterEditorProps) {
             (e.currentTarget as HTMLElement).style.background = "transparent";
           }}
         >
-          + Add filter
+          + Add {type === "backdrop-filter" ? "backdrop filter" : "filter"}
         </button>
 
         {dropdownOpen && (
