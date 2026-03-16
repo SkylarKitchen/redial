@@ -11,7 +11,7 @@ export default function Home() {
         {/* ── Hero ── */}
         <section className={styles.hero}>
           <h1 className={styles.heroTitle}>Visual CSS tuning for Next.js</h1>
-          <p className={styles.heroSubtitle}>
+          <p className={`${styles.heroSubtitle} ${styles.dropCap}`}>
             Click any element, drag sliders and pick colors, then save changes
             straight to your source files. Zero config, full undo stack, instant
             HMR reload.
@@ -21,7 +21,7 @@ export default function Home() {
               <code>npm install github:SkylarKitchen/redial</code>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+          <div className={styles.ctaRow}>
             <Link
               href="/install"
               className={`${styles.ctaButton} ${styles.ctaPrimary}`}
@@ -38,6 +38,7 @@ export default function Home() {
         </section>
 
         {/* ── How It Works ── */}
+        <hr className={styles.rule} />
         <h2 className={styles.sectionHeading}>How it works</h2>
         <div className={styles.steps}>
           {[
@@ -51,7 +52,7 @@ export default function Home() {
             ],
           ].map(([title, desc], i) => (
             <div key={i} className={styles.step}>
-              <div className={styles.stepNumber}>{i + 1}</div>
+              <span className={styles.stepNumeral}>{i + 1}.</span>
               <div className={styles.stepContent}>
                 <h3>{title}</h3>
                 <p>{desc}</p>
@@ -76,6 +77,7 @@ export default function Home() {
         </div>
 
         {/* ── Feature Highlights ── */}
+        <hr className={styles.rule} />
         <h2 className={styles.sectionHeading}>Feature highlights</h2>
         <div className={styles.featureGrid}>
           {[

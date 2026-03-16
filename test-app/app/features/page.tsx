@@ -102,7 +102,7 @@ export default function FeaturesPage() {
           </p>
 
           <section id="sections" className={styles.featureSection}>
-            <h2>Panel Sections</h2>
+            <h2>§1 Panel Sections</h2>
             <p>
               Eight context-aware sections that adapt their controls based on the
               selected element&apos;s current styles and display type.
@@ -117,8 +117,9 @@ export default function FeaturesPage() {
             </div>
           </section>
 
+          <hr className={styles.rule} />
           <section id="variables" className={styles.featureSection}>
-            <h2>CSS Variables</h2>
+            <h2>§2 CSS Variables</h2>
             <p>
               Automatically discovers --var() tokens used by the selected element
               and groups them into collections. Edit variable values in place,
@@ -126,8 +127,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="scoping" className={styles.featureSection}>
-            <h2>Scoping</h2>
+            <h2>§3 Scoping</h2>
             <p>
               Choose between element scope (inline styles on one node) and class
               scope (affect every element sharing a CSS class). Scope pills in
@@ -136,8 +138,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="state-editing" className={styles.featureSection}>
-            <h2>State Editing</h2>
+            <h2>§4 State Editing</h2>
             <p>
               Preview and edit pseudo-class styles like :hover, :focus, :active,
               and :focus-visible. The panel forces the pseudo-state on the
@@ -145,8 +148,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="undo-redo" className={styles.featureSection}>
-            <h2>Undo / Redo</h2>
+            <h2>§5 Undo / Redo</h2>
             <p>
               Full undo stack for every change. Cmd+Z to undo, Cmd+Shift+Z to
               redo. Each property change is a discrete entry, so you can step
@@ -154,8 +158,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="session" className={styles.featureSection}>
-            <h2>Session Persistence</h2>
+            <h2>§6 Session Persistence</h2>
             <p>
               All unsaved overrides are persisted to localStorage. Your work
               survives page refreshes, HMR reloads, and browser restarts.
@@ -164,8 +169,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="overlays" className={styles.featureSection}>
-            <h2>Visual Overlays</h2>
+            <h2>§7 Visual Overlays</h2>
             <p>
               Toggle visual overlays to inspect layout at a glance: Grid lines,
               Flex gap indicators, Spacing guides (margin + padding), and Box
@@ -173,8 +179,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="commit" className={styles.featureSection}>
-            <h2>Commit Flow</h2>
+            <h2>§8 Commit Flow</h2>
             <p>
               Save changes back to your source files without leaving the browser.
               Supports CSS Modules and Tailwind.
@@ -189,8 +196,9 @@ export default function FeaturesPage() {
             </ol>
           </section>
 
+          <hr className={styles.rule} />
           <section id="copy" className={styles.featureSection}>
-            <h2>Copy / Export</h2>
+            <h2>§9 Copy / Export</h2>
             <p>
               Multiple export formats from the footer dropdown: Copy CSS (raw
               declarations), Copy as Variables (--custom-property format), Copy
@@ -199,8 +207,9 @@ export default function FeaturesPage() {
             </p>
           </section>
 
+          <hr className={styles.rule} />
           <section id="shortcuts" className={styles.featureSection}>
-            <h2>Keyboard Shortcuts</h2>
+            <h2>§10 Keyboard Shortcuts</h2>
             <table className={styles.shortcutsTable}>
               <thead>
                 <tr>
@@ -221,8 +230,9 @@ export default function FeaturesPage() {
             </table>
           </section>
 
+          <hr className={styles.rule} />
           <section id="scrubbing" className={styles.featureSection}>
-            <h2>Label-Drag Scrubbing</h2>
+            <h2>§11 Label-Drag Scrubbing</h2>
             <p>
               Click and drag on any numeric label to scrub its value. Hold Shift
               for 10x speed, or Alt for 0.1x fine-tuning.
