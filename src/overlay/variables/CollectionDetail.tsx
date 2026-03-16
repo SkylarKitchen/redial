@@ -349,6 +349,7 @@ function ModeValueCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cellHovered, setCellHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
 
@@ -375,6 +376,24 @@ function ModeValueCell({
   const editable = mode.source !== "media" && mode.source !== "base";
 
   const isOverridden = isModeOverrideDirty(mode.selector ?? "", varName);
+
+  // Detect if value is a var() reference (linked to another variable)
+  const linkedVarName = value ? parseVarRef(value) : null;
+  const isLinked = !!linkedVarName;
+
+  const handleVarSelect = useCallback((varExpr: string) => {
+    if (mode.selector) {
+      applyModeOverride(mode.selector, varName, varExpr);
+    }
+  }, [mode.selector, varName]);
+
+  const handleUnlink = useCallback(() => {
+    if (!linkedVarName || !mode.selector) return;
+    const resolved = getComputedStyle(document.documentElement).getPropertyValue(linkedVarName).trim();
+    if (resolved) {
+      applyModeOverride(mode.selector, varName, resolved);
+    }
+  }, [linkedVarName, mode.selector, varName]);
 
   if (editing) {
     return (
@@ -409,74 +428,96 @@ function ModeValueCell({
 
   return (
     <div
-      onClick={editable ? () => setEditing(true) : undefined}
+      onMouseEnter={() => setCellHovered(true)}
+      onMouseLeave={() => setCellHovered(false)}
       style={{
         flex: "0 0 106px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        overflow: "hidden",
-        cursor: editable ? "text" : "default",
-        borderRadius: 3,
-        padding: "1px 3px",
-        ...(isOverridden ? {
-          background: labelIndicator.modified.bg,
-          color: labelIndicator.modified.text,
-          ...labelHighlight,
-        } : {}),
+        position: "relative",
       }}
     >
-      {/* Color dot for color-type variables */}
-      {varType === "color" && value && (
-        <div
-          ref={dotRef}
-          onClick={(e) => {
-            if (!editable) return;
-            e.stopPropagation();
-            setPickerOpen(true);
-          }}
-          style={{
-            width: 12, height: 12, borderRadius: 3, flexShrink: 0, marginRight: 4,
-            background: value, border: `1px solid ${border.default}`,
-            cursor: editable ? "pointer" : "default",
-          }}
+      {/* Variable link dot — only for editable cells */}
+      {editable && (
+        <VariableLinkDot
+          rowHovered={cellHovered}
+          isLinked={isLinked}
+          onUnlink={handleUnlink}
+          variableType={varType === "color" ? "color" : "all"}
+          onSelect={handleVarSelect}
+          activeVariable={linkedVarName}
         />
       )}
 
-      {value !== undefined ? (
-        <VariableValue value={value} />
-      ) : (
-        <span style={{ color: text.disabled, fontSize: 11, fontFamily: font.mono }}>
-          {editable ? "+" : "\u2014"}
-        </span>
-      )}
+      {/* Inner content */}
+      <div
+        onClick={editable ? () => setEditing(true) : undefined}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          overflow: "hidden",
+          cursor: editable ? "text" : "default",
+          borderRadius: 3,
+          padding: "1px 3px",
+          height: "100%",
+          ...(isOverridden ? {
+            background: labelIndicator.modified.bg,
+            color: labelIndicator.modified.text,
+            ...labelHighlight,
+          } : {}),
+        }}
+      >
+        {/* Color dot for color-type variables */}
+        {varType === "color" && value && (
+          <div
+            ref={dotRef}
+            onClick={(e) => {
+              if (!editable) return;
+              e.stopPropagation();
+              setPickerOpen(true);
+            }}
+            style={{
+              width: 12, height: 12, borderRadius: 3, flexShrink: 0, marginRight: 4,
+              background: value, border: `1px solid ${border.default}`,
+              cursor: editable ? "pointer" : "default",
+            }}
+          />
+        )}
 
-      {/* Color picker portal */}
-      {pickerOpen && dotRef.current && (() => {
-        const rect = dotRef.current!.getBoundingClientRect();
-        const pickerWidth = 264;
-        const pickerHeight = 300;
-        const gap = 4;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const top = spaceBelow < pickerHeight + gap ? rect.top - pickerHeight - gap : rect.bottom + gap;
-        const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
-        return createPortal(
-          <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
-            <ColorPickerEnhanced
-              color={value ? cssColorToHex(value) : "#000000"}
-              onChange={(hex, opacity) => {
-                if (mode.selector) {
-                  beginModeCoalesce();
-                  const final = opacity < 1 ? hexToRgba(hex, opacity) : hex;
-                  applyModeOverride(mode.selector, varName, final);
-                }
-              }}
-              onClose={() => { endModeCoalesce(); setPickerOpen(false); }}
-            />
-          </div>,
-          document.body,
-        );
-      })()}
+        {value !== undefined ? (
+          <VariableValue value={value} />
+        ) : (
+          <span style={{ color: text.disabled, fontSize: 11, fontFamily: font.mono }}>
+            {editable ? "+" : "\u2014"}
+          </span>
+        )}
+
+        {/* Color picker portal */}
+        {pickerOpen && dotRef.current && (() => {
+          const rect = dotRef.current!.getBoundingClientRect();
+          const pickerWidth = 264;
+          const pickerHeight = 300;
+          const gap = 4;
+          const spaceBelow = window.innerHeight - rect.bottom;
+          const top = spaceBelow < pickerHeight + gap ? rect.top - pickerHeight - gap : rect.bottom + gap;
+          const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
+          return createPortal(
+            <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
+              <ColorPickerEnhanced
+                color={value ? cssColorToHex(value) : "#000000"}
+                onChange={(hex, opacity) => {
+                  if (mode.selector) {
+                    beginModeCoalesce();
+                    const final = opacity < 1 ? hexToRgba(hex, opacity) : hex;
+                    applyModeOverride(mode.selector, varName, final);
+                  }
+                }}
+                onClose={() => { endModeCoalesce(); setPickerOpen(false); }}
+              />
+            </div>,
+            document.body,
+          );
+        })()}
+      </div>
     </div>
   );
 }
