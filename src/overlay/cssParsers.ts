@@ -6,7 +6,6 @@
  */
 
 import type { ShadowValue } from "./sections/ShadowEditor";
-import type { FilterValues } from "./sections/FilterSliders";
 import type { FilterItem, FilterType } from "./sections/FilterSliders";
 import type { TransformValue } from "./sections/TransformEditor";
 import type { TransitionValue } from "./sections/TransitionEditor";
@@ -85,50 +84,6 @@ export function shadowToCSS(shadows: ShadowValue[]): string {
 }
 
 // ─── Filter ──────────────────────────────────────────────────────────
-
-export function parseFilter(raw: string): Partial<FilterValues> {
-  if (!raw || raw === "none") return {};
-  const result: Partial<FilterValues> = {};
-  const regex = /(blur|brightness|contrast|grayscale|hue-rotate|invert|saturate|sepia)\(([^)]+)\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const key = m[1] as keyof FilterValues;
-    let val = parseFloat(m[2]);
-    // Most filter functions come as decimals from computed style, need * 100
-    // (blur uses px and hue-rotate uses deg — those stay as-is from parseFloat)
-    if (key !== "blur" && key !== "hue-rotate") {
-      val = Math.round(val * 100);
-    }
-    result[key] = val;
-  }
-  return result;
-}
-
-const FILTER_DEFAULTS: Record<string, number> = {
-  blur: 0,
-  brightness: 100,
-  contrast: 100,
-  grayscale: 0,
-  "hue-rotate": 0,
-  invert: 0,
-  saturate: 100,
-  sepia: 0,
-};
-
-export function filterToCSS(values: Partial<FilterValues>): string {
-  const parts: string[] = [];
-  for (const [key, val] of Object.entries(values)) {
-    if (val === undefined) continue;
-    if (val === FILTER_DEFAULTS[key]) continue;
-    const k = key as keyof FilterValues;
-    if (k === "blur") parts.push(`blur(${val}px)`);
-    else if (k === "hue-rotate") parts.push(`hue-rotate(${val}deg)`);
-    else parts.push(`${k}(${val / 100})`);
-  }
-  return parts.length > 0 ? parts.join(" ") : "none";
-}
-
-// ─── Filter Items (new array-based API) ──────────────────────────────
 
 export function parseFilterItems(raw: string): FilterItem[] {
   if (!raw || raw === "none") return [];

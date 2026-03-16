@@ -13,7 +13,7 @@ import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "../controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
-import { FilterSliders, type FilterValues } from "./FilterSliders";
+import { FilterEditor, type FilterItem } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
@@ -21,12 +21,12 @@ import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import {
   parseNum,
   parseBoxShadow,
-  parseFilter,
+  parseFilterItems,
   parseTransform,
   parseSelfPerspective,
   parseTransitions,
   shadowToCSS,
-  filterToCSS,
+  filterItemsToCSS,
   transformToCSSWithPerspective,
   transitionsToCSS,
 } from "../cssParsers";
@@ -173,9 +173,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [shadows, setShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.boxShadow));
   const [transforms, setTransforms] = useState<TransformValue[]>(() => parseTransform(cs.transform));
   const [transformOrigin, setTransformOrigin] = useState(() => cs.transformOrigin || "center");
-  const [filterValues, setFilterValues] = useState<Partial<FilterValues>>(() => parseFilter(cs.filter));
-  const [backdropFilterValues, setBackdropFilterValues] = useState<Partial<FilterValues>>(() =>
-    parseFilter(cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "")
+  const [filterItems, setFilterItems] = useState<FilterItem[]>(() => parseFilterItems(cs.filter));
+  const [backdropFilterItems, setBackdropFilterItems] = useState<FilterItem[]>(() =>
+    parseFilterItems(cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "")
   );
   const [transitions, setTransitions] = useState<TransitionValue[]>(() => parseTransitions(cs));
   const [cursor, setCursor] = useState(() => cs.cursor);
@@ -187,16 +187,6 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [transformSettingsOpen, setTransformSettingsOpen] = useState(false);
   const [selfPerspective, setSelfPerspective] = useState(() => parseSelfPerspective(cs.transform));
   const [perspectiveOrigin, setPerspectiveOrigin] = useState(() => cs.getPropertyValue("perspective-origin") || "50% 50%");
-
-  // Collapsed-by-default for filter sub-sections (auto-expand if element has values)
-  const [filtersExpanded, setFiltersExpanded] = useState(() => {
-    const f = cs.filter;
-    return !!f && f !== "none" && f !== "";
-  });
-  const [backdropFiltersExpanded, setBackdropFiltersExpanded] = useState(() => {
-    const f = cs.getPropertyValue("backdrop-filter") || cs.getPropertyValue("-webkit-backdrop-filter") || "";
-    return !!f && f !== "none" && f !== "";
-  });
 
   // ── Reset popover for Outline label ──
   const outlineResetPopover = useResetPopover(ind("outline-style"), () => resetCssStr("outline-style", setOutlineStyle));
@@ -230,21 +220,19 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
     },
     [apply]
   );
-  const handleFilterChange = useCallback(
-    (key: string, value: number) => {
-      const next = { ...filterValues, [key]: value };
-      setFilterValues(next);
-      apply("filter", filterToCSS(next));
+  const handleFiltersChange = useCallback(
+    (items: FilterItem[]) => {
+      setFilterItems(items);
+      apply("filter", filterItemsToCSS(items));
     },
-    [filterValues, apply]
+    [apply]
   );
-  const handleBackdropFilterChange = useCallback(
-    (key: string, value: number) => {
-      const next = { ...backdropFilterValues, [key]: value };
-      setBackdropFilterValues(next);
-      apply("backdrop-filter", filterToCSS(next));
+  const handleBackdropFiltersChange = useCallback(
+    (items: FilterItem[]) => {
+      setBackdropFilterItems(items);
+      apply("backdrop-filter", filterItemsToCSS(items));
     },
-    [backdropFilterValues, apply]
+    [apply]
   );
   const handleTransitionsChange = useCallback(
     (t: TransitionValue[]) => {
@@ -397,18 +385,28 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 7. Filters */}
-      <SubSectionHeader label="Filters" onAdd={() => setFiltersExpanded(true)} indicator={ind("filter")} onReset={() => { resetProp(element, "filter"); setFilterValues(parseFilter(getComputedStyle(element).filter)); }} />
-      {filtersExpanded && (
+      <SubSectionHeader
+        label="Filters"
+        onAdd={() => handleFiltersChange([...filterItems, { type: "blur", values: [0], visible: true, expanded: true }])}
+        indicator={ind("filter")}
+        onReset={() => { resetProp(element, "filter"); setFilterItems(parseFilterItems(getComputedStyle(element).filter)); }}
+      />
+      {filterItems.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
-          <FilterSliders values={filterValues} onChange={handleFilterChange} type="filter" />
+          <FilterEditor items={filterItems} onChange={handleFiltersChange} />
         </div>
       )}
 
       {/* 8. Backdrop filters */}
-      <SubSectionHeader label="Backdrop filters" onAdd={() => setBackdropFiltersExpanded(true)} indicator={ind("backdrop-filter")} onReset={() => { resetProp(element, "backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterValues(parseFilter(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }} />
-      {backdropFiltersExpanded && (
+      <SubSectionHeader
+        label="Backdrop filters"
+        onAdd={() => handleBackdropFiltersChange([...backdropFilterItems, { type: "blur", values: [0], visible: true, expanded: true }])}
+        indicator={ind("backdrop-filter")}
+        onReset={() => { resetProp(element, "backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterItems(parseFilterItems(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }}
+      />
+      {backdropFilterItems.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
-          <FilterSliders values={backdropFilterValues} onChange={handleBackdropFilterChange} type="backdrop-filter" />
+          <FilterEditor items={backdropFilterItems} onChange={handleBackdropFiltersChange} />
         </div>
       )}
 

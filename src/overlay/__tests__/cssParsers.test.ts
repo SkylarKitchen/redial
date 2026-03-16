@@ -4,8 +4,6 @@ import {
   extractUnit,
   parseBoxShadow,
   shadowToCSS,
-  parseFilter,
-  filterToCSS,
   parseFilterItems,
   filterItemsToCSS,
   parseTransform,
@@ -161,70 +159,6 @@ describe("shadowToCSS", () => {
       { x: 0, y: 0, blur: 8, spread: 0, color: "red", inset: false },
     ]);
     expect(css).toBe("1px 1px 2px 0px #000, 0px 0px 8px 0px red");
-  });
-});
-
-// ─── parseFilter ─────────────────────────────────────────────────────
-
-describe("parseFilter", () => {
-  it("returns empty object for 'none'", () => {
-    expect(parseFilter("none")).toEqual({});
-  });
-
-  it("returns empty object for empty string", () => {
-    expect(parseFilter("")).toEqual({});
-  });
-
-  it("parses blur in px", () => {
-    expect(parseFilter("blur(4px)")).toEqual({ blur: 4 });
-  });
-
-  it("scales percentage filters to 0-100", () => {
-    expect(parseFilter("brightness(0.8)")).toEqual({ brightness: 80 });
-  });
-
-  it("parses contrast", () => {
-    expect(parseFilter("contrast(1.2)")).toEqual({ contrast: 120 });
-  });
-
-  it("parses hue-rotate in degrees", () => {
-    expect(parseFilter("hue-rotate(90deg)")).toEqual({ "hue-rotate": 90 });
-  });
-
-  it("parses multiple filters", () => {
-    const result = parseFilter("blur(2px) brightness(0.9) contrast(1.1)");
-    expect(result).toEqual({ blur: 2, brightness: 90, contrast: 110 });
-  });
-
-  it("parses grayscale", () => {
-    expect(parseFilter("grayscale(0.5)")).toEqual({ grayscale: 50 });
-  });
-});
-
-describe("filterToCSS", () => {
-  it("returns 'none' for empty object", () => {
-    expect(filterToCSS({})).toBe("none");
-  });
-
-  it("serializes blur", () => {
-    expect(filterToCSS({ blur: 4 })).toBe("blur(4px)");
-  });
-
-  it("serializes hue-rotate", () => {
-    expect(filterToCSS({ "hue-rotate": 90 })).toBe("hue-rotate(90deg)");
-  });
-
-  it("serializes percentage filter back to decimal", () => {
-    expect(filterToCSS({ brightness: 80 })).toBe("brightness(0.8)");
-  });
-
-  it("serializes multiple filters", () => {
-    // brightness=100 is the default, so only blur should appear
-    const css = filterToCSS({ blur: 2, brightness: 100 });
-    expect(css).toBe("blur(2px)");
-    // Both non-default → both appear
-    const css2 = filterToCSS({ blur: 2, brightness: 80 });
-    expect(css2).toBe("blur(2px) brightness(0.8)");
   });
 });
 
