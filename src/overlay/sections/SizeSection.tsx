@@ -16,7 +16,7 @@ import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "../core/ap
 import { parseNum } from "../cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "../panelUtils";
 import { isAutoSize } from "../getAuthoredValue";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Link, Unlink } from "lucide-react";
 import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIcon, ChevronSmallDownIcon } from "../webflowIcons";
 import { ms } from "../timing";
 import { text, border, surface, font, layout, indicatorStyle } from "../theme";
@@ -91,6 +91,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   });
 
   const [overflow, setOverflow] = useState(() => cs.overflow.split(" ")[0] || "visible");
+  const [overflowLocked, setOverflowLocked] = useState(() => {
+    const ox = cs.overflowX || "visible";
+    const oy = cs.overflowY || "visible";
+    return ox === oy;
+  });
+  const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
+  const [overflowY, setOverflowY] = useState(() => cs.overflowY || "visible");
   const [boxSizing, setBoxSizing] = useState(() => cs.boxSizing || "border-box");
   const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
   const [objectFit, setObjectFit] = useState(() => cs.objectFit);
@@ -160,7 +167,23 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const handleMaxWidthChange = useCallback((v: number) => { setMaxWidth(v); apply("max-width", v === 0 ? "none" : `${v}${safeUnit(maxWidthUnit)}`); }, [apply, maxWidthUnit]);
   const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${safeUnit(minHeightUnit)}`); }, [apply, minHeightUnit]);
   const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${safeUnit(maxHeightUnit)}`); }, [apply, maxHeightUnit]);
-  const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
+  const handleOverflowChange = useCallback((v: string) => {
+    setOverflow(v);
+    setOverflowX(v);
+    setOverflowY(v);
+    apply("overflow", v);
+  }, [apply]);
+  const handleOverflowXChange = useCallback((v: string) => {
+    setOverflowX(v);
+    apply("overflow-x", v);
+  }, [apply]);
+  const handleOverflowYChange = useCallback((v: string) => {
+    setOverflowY(v);
+    apply("overflow-y", v);
+  }, [apply]);
+  const handleOverflowLockToggle = useCallback(() => {
+    setOverflowLocked((prev) => !prev);
+  }, []);
   const handleChildrenModeChange = useCallback((v: string) => {
     setChildrenMode(v);
     if (v === "fill") apply("align-items", "stretch");
@@ -238,7 +261,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   // ─── JSX ────────────────────────────────────────────────────────────
 
   return (
-    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "align-items", "aspect-ratio", "box-sizing", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
+    <Section title="Size" indicator={sectionInd(["width", "height", "min-width", "max-width", "min-height", "max-height", "overflow", "overflow-x", "overflow-y", "align-items", "aspect-ratio", "box-sizing", "object-fit", "object-position"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
       {/* Row 1: Width + Height */}
       <div style={{ ...ROW, gap: layout.compactGap }}>
         <SizeInputCell
@@ -371,23 +394,102 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           onReset={() => { resetCss("max-height", setMaxHeight); setMaxHeightNone(true); setMaxHeightVar(null); }}
         />
       </div>
-      {/* Overflow: Webflow segmented control */}
-      <div style={ROW}>
-        <span style={{ ...LABEL, cursor: "default" }}>
-          Overflow
-        </span>
-        <WebflowSegmentedControl
-          options={[
-            { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
-            { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
-            { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
-            { value: "auto", label: "Auto", title: "Auto" },
-          ]}
-          value={overflow}
-          onChange={handleOverflowChange}
-          aria-label="Overflow"
-        />
-      </div>
+      {/* Overflow: lock/unlock per-axis controls */}
+      {overflowLocked ? (
+        <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
+          <span style={{ ...LABEL, cursor: "default" }}>
+            Overflow
+          </span>
+          <WebflowSegmentedControl
+            options={[
+              { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
+              { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
+              { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
+              { value: "auto", label: "Auto", title: "Auto" },
+            ]}
+            value={overflow}
+            onChange={handleOverflowChange}
+            aria-label="Overflow"
+          />
+          <button
+            onClick={handleOverflowLockToggle}
+            title="Unlock overflow-x/y"
+            style={{
+              width: 20,
+              height: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              fontSize: 10,
+              marginLeft: 4,
+              borderRadius: 3,
+              flexShrink: 0,
+              color: text.disabled,
+            }}
+          >
+            <Link size={12} strokeWidth={1.5} />
+          </button>
+        </div>
+      ) : (
+        <>
+          <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
+            <span style={{ ...LABEL, cursor: "default" }}>
+              Overflow X
+            </span>
+            <WebflowSegmentedControl
+              options={[
+                { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
+                { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
+                { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
+                { value: "auto", label: "Auto", title: "Auto" },
+              ]}
+              value={overflowX}
+              onChange={handleOverflowXChange}
+              aria-label="Overflow X"
+            />
+            <button
+              onClick={handleOverflowLockToggle}
+              title="Lock overflow"
+              style={{
+                width: 20,
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontSize: 10,
+                marginLeft: 4,
+                borderRadius: 3,
+                flexShrink: 0,
+                color: text.disabled,
+              }}
+            >
+              <Unlink size={12} strokeWidth={1.5} />
+            </button>
+          </div>
+          <div style={ROW}>
+            <span style={{ ...LABEL, cursor: "default" }}>
+              Overflow Y
+            </span>
+            <WebflowSegmentedControl
+              options={[
+                { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
+                { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
+                { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
+                { value: "auto", label: "Auto", title: "Auto" },
+              ]}
+              value={overflowY}
+              onChange={handleOverflowYChange}
+              aria-label="Overflow Y"
+            />
+          </div>
+        </>
+      )}
       {/* Children: sizing mode for flex/grid containers */}
       {(display === "flex" || display === "grid" || display === "inline-flex" || display === "inline-grid") && (
         <div style={ROW}>

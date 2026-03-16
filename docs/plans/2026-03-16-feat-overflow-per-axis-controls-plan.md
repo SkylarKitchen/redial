@@ -111,15 +111,15 @@ Use the `Link` / `Unlink` icons from `lucide-react` (same as gap row).
 
 ## Acceptance Criteria
 
-- [ ] `infer.ts` exposes `overflow-x` and `overflow-y` in size config
-- [ ] SizeSection defaults to locked (single overflow control)
-- [ ] Unlocking reveals two independent per-axis controls
-- [ ] Auto-unlocks when computed `overflow-x !== overflow-y`
-- [ ] Lock toggle button uses same visual pattern as gap lock
-- [ ] All existing overflow tests still pass
-- [ ] New per-axis tests pass
-- [ ] `npm run typecheck` clean
-- [ ] `npm test` all green
+- [x] `infer.ts` exposes `overflow-x` and `overflow-y` in size config
+- [x] SizeSection defaults to locked (single overflow control)
+- [x] Unlocking reveals two independent per-axis controls
+- [x] Auto-unlocks when computed `overflow-x !== overflow-y`
+- [x] Lock toggle button uses same visual pattern as gap lock
+- [x] All existing overflow tests still pass
+- [x] New per-axis tests pass
+- [x] `npm run typecheck` clean
+- [x] `npm test` all green
 
 ## Verification
 

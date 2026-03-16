@@ -332,6 +332,26 @@ export function infer(el: Element): InferResult {
       ],
       default: cs.overflow,
     } as SelectConfig,
+    "overflow-x": {
+      type: "select",
+      options: [
+        { value: "visible", label: "Visible" },
+        { value: "hidden", label: "Hidden" },
+        { value: "scroll", label: "Scroll" },
+        { value: "auto", label: "Auto" },
+      ],
+      default: cs.overflowX,
+    } as SelectConfig,
+    "overflow-y": {
+      type: "select",
+      options: [
+        { value: "visible", label: "Visible" },
+        { value: "hidden", label: "Hidden" },
+        { value: "scroll", label: "Scroll" },
+        { value: "auto", label: "Auto" },
+      ],
+      default: cs.overflowY,
+    } as SelectConfig,
   };
 
   if (isMedia) {

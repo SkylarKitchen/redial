@@ -296,23 +296,47 @@ describe("overflow per-axis controls", () => {
     expect(sizeSectionSrc).toMatch(/overflow.*useState.*cs\.overflow/);
   });
 
-  it("overflow is applied as a single shorthand property", () => {
-    // Currently overflow is applied as a shorthand — apply("overflow", v)
-    // This means overflow-x and overflow-y are set together
+  it("overflow locked mode applies as a single shorthand property", () => {
+    // When locked, overflow is applied as a shorthand — apply("overflow", v)
     expect(sizeSectionSrc).toMatch(/apply\(\s*"overflow"\s*,\s*v\s*\)/);
   });
 
-  it("SizeSection does not yet implement per-axis overflow-x/overflow-y unlocking", () => {
-    // Per-axis overflow (overflow-x, overflow-y) is NOT yet implemented.
-    // This test documents the current state: overflow is a single control.
-    // When "unlocked" per-axis support is added, this test should be updated.
-    expect(sizeSectionSrc).not.toMatch(/overflow-x/);
-    expect(sizeSectionSrc).not.toMatch(/overflow-y/);
+  it("overflow defaults to locked when axes match", () => {
+    // overflowLocked initializes to true when overflowX === overflowY
+    expect(sizeSectionSrc).toMatch(/overflowLocked.*useState/);
+    expect(sizeSectionSrc).toMatch(/ox\s*===\s*oy/);
   });
 
-  it("overflow section indicator tracks the overflow property", () => {
+  it("overflow auto-unlocks when overflow-x !== overflow-y on init", () => {
+    // The initializer compares cs.overflowX and cs.overflowY
+    // Returns false (unlocked) when they differ
+    expect(sizeSectionSrc).toMatch(/cs\.overflowX/);
+    expect(sizeSectionSrc).toMatch(/cs\.overflowY/);
+  });
+
+  it("unlock shows overflow-x and overflow-y controls", () => {
+    // When unlocked, two separate WebflowSegmentedControl rows render
+    expect(sizeSectionSrc).toMatch(/aria-label="Overflow X"/);
+    expect(sizeSectionSrc).toMatch(/aria-label="Overflow Y"/);
+  });
+
+  it("per-axis values are independent when unlocked", () => {
+    // Separate handlers apply overflow-x and overflow-y independently
+    expect(sizeSectionSrc).toMatch(/apply\(\s*"overflow-x"\s*,\s*v\s*\)/);
+    expect(sizeSectionSrc).toMatch(/apply\(\s*"overflow-y"\s*,\s*v\s*\)/);
+  });
+
+  it("overflow lock toggle switches between Link and Unlink icons", () => {
+    // Locked shows Link icon, unlocked shows Unlink icon
+    expect(sizeSectionSrc).toMatch(/<Link\s/);
+    expect(sizeSectionSrc).toMatch(/<Unlink\s/);
+  });
+
+  it("section indicator tracks overflow, overflow-x, and overflow-y", () => {
     const sectionIndicator = sizeSectionSrc.match(/sectionInd\(\[[\s\S]*?\]\)/);
     expect(sectionIndicator, "Could not find sectionInd call").toBeTruthy();
     expect(sectionIndicator![0]).toContain('"overflow"');
+    expect(sectionIndicator![0]).toContain('"overflow-x"');
+    expect(sectionIndicator![0]).toContain('"overflow-y"');
   });
 });
