@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect } from "vitest";
-import { inferAutoCollections, type AutoCollection } from "../variables/autoCollections";
+import { inferAutoCollections, inferSubgroups, type AutoCollection } from "../variables/autoCollections";
 import type { CSSVariable, VarType } from "../variables/discoverVariables";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -354,5 +354,63 @@ describe("type-based splitting for large groups (no namespace)", () => {
     const small = findByName(result, "Small");
     expect(small).toBeDefined();
     expect(small!.subgroups).toHaveLength(0);
+  });
+});
+
+// ─── inferSubgroups ───────────────────────────────────────────────────
+
+describe("inferSubgroups", () => {
+  it("groups by first segment after --", () => {
+    const vars = [
+      makeVar("--font-primary-family", "string"),
+      makeVar("--font-primary-medium", "number"),
+      makeVar("--font-mono", "string"),
+      makeVar("--letter-spacing-sm", "length"),
+      makeVar("--letter-spacing-lg", "length"),
+    ];
+    const result = inferSubgroups(vars);
+    expect(result).toHaveLength(2);
+    expect(result.find((g) => g.name === "font")).toBeDefined();
+    expect(result.find((g) => g.name === "letter-spacing")).toBeDefined();
+    expect(result.find((g) => g.name === "font")!.variables).toHaveLength(3);
+    expect(result.find((g) => g.name === "letter-spacing")!.variables).toHaveLength(2);
+  });
+
+  it("uses multi-segment prefix when shared", () => {
+    const vars = [
+      makeVar("--border-width-thin", "length"),
+      makeVar("--border-width-medium", "length"),
+      makeVar("--border-width-thick", "length"),
+      makeVar("--border-color-default", "color"),
+      makeVar("--border-color-accent", "color"),
+    ];
+    const result = inferSubgroups(vars);
+    expect(result.find((g) => g.name === "border-width")).toBeDefined();
+    expect(result.find((g) => g.name === "border-color")).toBeDefined();
+  });
+
+  it("single-segment vars go into unnamed group", () => {
+    const vars = [
+      makeVar("--background", "color"),
+      makeVar("--foreground", "color"),
+    ];
+    const result = inferSubgroups(vars);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("");
+    expect(result[0].variables).toHaveLength(2);
+  });
+
+  it("empty input returns empty", () => {
+    expect(inferSubgroups([])).toEqual([]);
+  });
+
+  it("preserves full variable names", () => {
+    const vars = [
+      makeVar("--space-sm", "length"),
+      makeVar("--space-md", "length"),
+    ];
+    const result = inferSubgroups(vars);
+    const spaceGroup = result.find((g) => g.name === "space")!;
+    expect(spaceGroup.variables[0].name).toBe("--space-md");
   });
 });
