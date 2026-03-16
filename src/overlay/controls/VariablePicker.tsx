@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { discoverVariables, discoverAllVariables, buildAliasGraph, type CSSVariable, type VarType, type AliasTier } from "../variables/discoverVariables";
 import { inferAutoCollections } from "../variables/autoCollections";
 import { useTokenCollections } from "../variables/tokenCollections";
-import { X } from "lucide-react";
+import { Unlink2 } from "lucide-react";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "../theme";
 import { ms } from "../timing";
 
@@ -329,7 +329,7 @@ export function VariablePicker({
               alignItems: "center",
             }}
           >
-            <X size={12} strokeWidth={2} />
+            <Unlink2 size={12} strokeWidth={2} />
           </button>
         )}
       </div>

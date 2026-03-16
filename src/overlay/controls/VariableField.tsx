@@ -261,6 +261,7 @@ export function VariableField({
           alignItems: "center",
           flex: 1,
           minWidth: 0,
+          overflow: "hidden",
           height: 26,
           padding: "0 6px",
           borderRadius: layout.pillRadius,
