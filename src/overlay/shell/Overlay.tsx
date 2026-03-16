@@ -1967,8 +1967,6 @@ export function Overlay() {
         hasSelectedEl={!!selectedEl}
         activePanel={activePanel}
         changesOpen={changesDrawerOpen}
-        navigatorOpen={showNavigator}
-        onToggleNavigator={() => setShowNavigator((v) => !v)}
         onToggleSelecting={() => {
           setSelecting((s) => {
             if (!s) {

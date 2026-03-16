@@ -23,8 +23,6 @@ interface ToolbarProps {
   activePanel: ActivePanel;
   changesOpen: boolean;
   onToggleSelecting: () => void;
-  onToggleNavigator: () => void;
-  navigatorOpen: boolean;
   onOpenVariables: () => void;
   onOpenPrompt: () => void;
   onToggleSession: () => void;
@@ -95,8 +93,6 @@ export function Toolbar({
   activePanel,
   changesOpen,
   onToggleSelecting,
-  onToggleNavigator,
-  navigatorOpen,
   onOpenVariables,
   onOpenPrompt,
   onToggleSession,
@@ -212,12 +208,6 @@ export function Toolbar({
                 shortcut="`"
                 active={selecting || (hasSelectedEl && activePanel.type === "inspector")}
                 onClick={onToggleSelecting}
-              />
-              <ToolButton
-                label="Navigator"
-                shortcut="N"
-                active={navigatorOpen}
-                onClick={onToggleNavigator}
               />
               <ToolButton
                 label="Variables"
