@@ -406,7 +406,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       />
       {backdropFilterItems.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
-          <FilterEditor items={backdropFilterItems} onChange={handleBackdropFiltersChange} />
+          <FilterEditor items={backdropFilterItems} onChange={handleBackdropFiltersChange} type="backdrop-filter" />
         </div>
       )}
 
