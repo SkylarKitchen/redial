@@ -27,6 +27,7 @@ import {
   getModeOverrideSnapshot,
 } from "./modeOverrides";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
+import { cssColorToHex, hexToRgba } from "../colorUtils";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
   text,
@@ -459,12 +460,10 @@ function ModeValueCell({
         return createPortal(
           <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
             <ColorPickerEnhanced
-              color={value?.startsWith("#") ? value : "#000000"}
+              color={value ? cssColorToHex(value) : "#000000"}
               onChange={(hex, opacity) => {
                 if (mode.selector) {
-                  const final = opacity < 1
-                    ? `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${opacity})`
-                    : hex;
+                  const final = opacity < 1 ? hexToRgba(hex, opacity) : hex;
                   applyModeOverride(mode.selector, varName, final);
                 }
               }}

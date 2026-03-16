@@ -16,7 +16,7 @@ import { Link2, Unlink, X } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
-import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover } from "./helpers";
+import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
 
 /** Walk the alias chain for a CSS variable, returning all names in the chain. */
 function resolveAliasChain(varName: string, maxDepth = 5): string[] {
@@ -89,6 +89,7 @@ export function ColorRow({
   const swatchRef = useRef<HTMLDivElement>(null);
   const linkBtnRef = useRef<HTMLButtonElement>(null);
   const resetPopover = useResetPopover(indicator, onReset);
+  const { pressHandlers: swatchPress, pressStyle: swatchPressStyle } = usePressScale(0.92);
 
   // Resolve var() references for display
   const varName = parseVarRef(value);

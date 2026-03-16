@@ -179,8 +179,10 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       const css = formatCleanCSS(element, changes);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
+      const modeCount = getModeOverrideCount();
+      const modeSuffix = modeCount > 0 ? ` + ${modeCount} mode override${modeCount === 1 ? "" : "s"}` : "";
       navigator.clipboard.writeText(fullCSS).then(() => {
-        showMessage(`Copied ${changes.length} propert${changes.length === 1 ? "y" : "ies"} to clipboard`, 3000);
+        showMessage(`Copied ${changes.length} propert${changes.length === 1 ? "y" : "ies"}${modeSuffix} to clipboard`, 3000);
       }).catch(() => {
         showMessage("Clipboard access denied", 2000);
       });
@@ -219,6 +221,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
         }
         onSaved?.();
+        // After successful server save, copy mode overrides to clipboard if any
+        const modeCSS = serializeModeOverrides();
+        if (modeCSS) {
+          navigator.clipboard.writeText(modeCSS).then(() => {
+            const mc = getModeOverrideCount();
+            showMessage(`${mc} mode override${mc === 1 ? "" : "s"} copied to clipboard (not saved to file)`, 4000);
+          }).catch(() => {});
+        }
       }
     } catch {
       // Network error — fall back to clipboard

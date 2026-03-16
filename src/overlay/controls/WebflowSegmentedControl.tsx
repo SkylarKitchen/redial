@@ -5,9 +5,9 @@
  * Used for overflow, box-sizing, and similar multi-option controls.
  */
 
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import { text, font, segment, focusRing } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 
 export interface SegmentOption {
   value: string;

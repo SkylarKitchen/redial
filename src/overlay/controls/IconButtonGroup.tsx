@@ -10,7 +10,7 @@ import { useState, useCallback } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { color, surface, text, border as borderTokens, focusRing, primaryAlpha } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 
 export interface IconButtonGroupProps {
   options: Array<{ value: string; icon: React.ReactNode; title?: string; label?: string }>;
@@ -113,6 +113,7 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
 }) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [pressed, setPressed] = useState(false);
 
   return (
     <ToggleGroupItem
@@ -141,8 +142,10 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
           if (nextOpt != null) handleClick(nextOpt.value);
         }
       }}
+      onMouseDown={() => setPressed(true)}
+      onMouseUp={() => setPressed(false)}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={() => { setHovered(false); setPressed(false); }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       className={cn(
@@ -160,7 +163,8 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
         cursor: "pointer",
         border: `1px solid ${borderTokens.default}`,
         outline: "none",
-        transition: `color ${ms("fast")} ease, background ${ms("fast")} ease`,
+        transform: pressed ? "scale(0.93)" : undefined,
+        transition: `color ${ms("fast")} ease, background ${ms("fast")} ease, ${cssTransition("transform", pressed ? "fast" : "release")}`,
         borderLeftWidth: isFirst ? 1 : 0,
         backgroundColor: !isActive && hovered ? surface.hover : undefined,
         color: !isActive ? color.mutedForeground : undefined,

@@ -7,7 +7,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
-import { type IndicatorType, color as themeColor, primaryAlpha } from "../theme";
+import { type IndicatorType, primaryAlpha } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { beginBatch, endBatch } from "../core/apply";
@@ -146,7 +146,7 @@ export function SliderRow({
             fontSize: 10,
             fontFamily: font.mono,
             color: primaryAlpha(0.8),
-            overflow: "hidden",
+            overflow: "clip",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
             minWidth: 0,

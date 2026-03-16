@@ -6,9 +6,9 @@
  * Align, Justify, and Children controls in the Layout section.
  */
 
-import { useCallback } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import { segment, text, font } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
