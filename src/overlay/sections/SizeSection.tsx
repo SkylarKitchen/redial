@@ -51,6 +51,9 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   /** Tailwind-aware step for spacing-scale px properties */
   const twStep = (unit: string) => ctx.isTailwind && unit === "px" ? 4 : 1;
 
+  /** Guard against "--" placeholder unit (used for keyword values like "none") */
+  const safeUnit = (u: string) => u === "--" ? "px" : u;
+
   // ─── CSS variable discovery (length-type only) ─────────────────────
 
   const varOptions = useMemo(() =>
@@ -153,10 +156,10 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
 
   const handleWidthChange = useCallback((v: number) => { setWidth(v); apply("width", `${v}${widthUnit}`); }, [apply, widthUnit]);
   const handleHeightChange = useCallback((v: number) => { setHeight(v); apply("height", `${v}${heightUnit}`); }, [apply, heightUnit]);
-  const handleMinWidthChange = useCallback((v: number) => { setMinWidth(v); const u = minWidthUnit === "--" ? "px" : minWidthUnit; apply("min-width", `${v}${u}`); }, [apply, minWidthUnit]);
-  const handleMaxWidthChange = useCallback((v: number) => { setMaxWidth(v); const u = maxWidthUnit === "--" ? "px" : maxWidthUnit; apply("max-width", v === 0 ? "none" : `${v}${u}`); }, [apply, maxWidthUnit]);
-  const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); const u = minHeightUnit === "--" ? "px" : minHeightUnit; apply("min-height", `${v}${u}`); }, [apply, minHeightUnit]);
-  const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); const u = maxHeightUnit === "--" ? "px" : maxHeightUnit; apply("max-height", v === 0 ? "none" : `${v}${u}`); }, [apply, maxHeightUnit]);
+  const handleMinWidthChange = useCallback((v: number) => { setMinWidth(v); apply("min-width", `${v}${safeUnit(minWidthUnit)}`); }, [apply, minWidthUnit]);
+  const handleMaxWidthChange = useCallback((v: number) => { setMaxWidth(v); apply("max-width", v === 0 ? "none" : `${v}${safeUnit(maxWidthUnit)}`); }, [apply, maxWidthUnit]);
+  const handleMinHeightChange = useCallback((v: number) => { setMinHeight(v); apply("min-height", `${v}${safeUnit(minHeightUnit)}`); }, [apply, minHeightUnit]);
+  const handleMaxHeightChange = useCallback((v: number) => { setMaxHeight(v); apply("max-height", v === 0 ? "none" : `${v}${safeUnit(maxHeightUnit)}`); }, [apply, maxHeightUnit]);
   const handleOverflowChange = useCallback((v: string) => { setOverflow(v); apply("overflow", v); }, [apply]);
   const handleChildrenModeChange = useCallback((v: string) => {
     setChildrenMode(v);
@@ -185,15 +188,13 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const handleMaxWidthNoneToggle = useCallback(() => {
     const next = !maxWidthNone;
     setMaxWidthNone(next);
-    const u = maxWidthUnit === "--" ? "px" : maxWidthUnit;
-    apply("max-width", next ? "none" : `${maxWidth}${u}`);
+    apply("max-width", next ? "none" : `${maxWidth}${safeUnit(maxWidthUnit)}`);
   }, [maxWidthNone, maxWidth, maxWidthUnit, apply]);
 
   const handleMaxHeightNoneToggle = useCallback(() => {
     const next = !maxHeightNone;
     setMaxHeightNone(next);
-    const u = maxHeightUnit === "--" ? "px" : maxHeightUnit;
-    apply("max-height", next ? "none" : `${maxHeight}${u}`);
+    apply("max-height", next ? "none" : `${maxHeight}${safeUnit(maxHeightUnit)}`);
   }, [maxHeightNone, maxHeight, maxHeightUnit, apply]);
 
   // ─── CSS variable handlers ──────────────────────────────────────────
@@ -335,7 +336,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           keyword={maxWidthNone ? "none" : null}
           onValueChange={handleMaxWidthChange}
           onUnitChange={(u) => { if (maxWidthVar) setMaxWidthVar(null); const ctx = getConversionCtx(); const c = convertUnit(maxWidth, maxWidthUnit, u, ctx, "width"); fireMaxWHint(maxWidth, maxWidthUnit, c, u, ctx, "width"); setMaxWidth(c); setMaxWidthUnit(u); apply("max-width", c === 0 ? "none" : `${c}${u}`); }}
-          onKeywordChange={(k) => { if (maxWidthVar) setMaxWidthVar(null); setMaxWidthNone(k === "none"); const u = maxWidthUnit === "--" ? "px" : maxWidthUnit; apply("max-width", k === "none" ? "none" : `${maxWidth}${u}`); }}
+          onKeywordChange={(k) => { if (maxWidthVar) setMaxWidthVar(null); setMaxWidthNone(k === "none"); apply("max-width", k === "none" ? "none" : `${maxWidth}${safeUnit(maxWidthUnit)}`); }}
           isModified={isDirty(element, "max-width")}
           supportsNone
           min={0}
@@ -356,7 +357,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           keyword={maxHeightNone ? "none" : null}
           onValueChange={handleMaxHeightChange}
           onUnitChange={(u) => { if (maxHeightVar) setMaxHeightVar(null); const ctx = getConversionCtx(); const c = convertUnit(maxHeight, maxHeightUnit, u, ctx, "height"); fireMaxHHint(maxHeight, maxHeightUnit, c, u, ctx, "height"); setMaxHeight(c); setMaxHeightUnit(u); apply("max-height", c === 0 ? "none" : `${c}${u}`); }}
-          onKeywordChange={(k) => { if (maxHeightVar) setMaxHeightVar(null); setMaxHeightNone(k === "none"); const u = maxHeightUnit === "--" ? "px" : maxHeightUnit; apply("max-height", k === "none" ? "none" : `${maxHeight}${u}`); }}
+          onKeywordChange={(k) => { if (maxHeightVar) setMaxHeightVar(null); setMaxHeightNone(k === "none"); apply("max-height", k === "none" ? "none" : `${maxHeight}${safeUnit(maxHeightUnit)}`); }}
           isModified={isDirty(element, "max-height")}
           supportsNone
           min={0}

@@ -790,6 +790,22 @@ describe("undo/reset preserves pre-existing inline styles", () => {
     undo();
     expect(el.style.getPropertyValue("display")).toBe("");
   });
+
+  it("cascade-reset in resetProp restores pre-existing inline style on cascaded props", () => {
+    const el = makeEl();
+    // Pre-existing inline gap (e.g., from JSX style={{ gap: "16px" }})
+    el.style.gap = "16px";
+
+    // User changes display to flex and gap to 24px via the panel
+    applyInlineStyle(el, "display", "flex");
+    applyInlineStyle(el, "gap", "24px");
+
+    // Reset display — reverts to non-flex/non-grid → cascade fires on gap
+    // Gap had a pre-existing inline value, so it should be restored (not removed)
+    resetProp(el, "display");
+    expect(el.style.getPropertyValue("display")).toBe("");
+    expect(el.style.getPropertyValue("gap")).toBe("16px");
+  });
 });
 
 // ─── restoreSession — corrupted localStorage ─────────────────────────

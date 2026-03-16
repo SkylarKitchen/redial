@@ -853,7 +853,11 @@ export function resetProp(el: Element, prop: string): void {
           if (currentOverrides.has(cp)) {
             const cpEntry = currentOverrides.get(cp)!;
             if (cpEntry.initial !== cpEntry.current) dirtyCount--;
-            (el as HTMLElement).style.removeProperty(cp);
+            if (cpEntry.inlineOriginal) {
+              (el as HTMLElement).style.setProperty(cp, cpEntry.inlineOriginal);
+            } else {
+              (el as HTMLElement).style.removeProperty(cp);
+            }
             currentOverrides.delete(cp);
             // Remove undo entries for cascaded prop
             for (let i = undoStack.length - 1; i >= 0; i--) {

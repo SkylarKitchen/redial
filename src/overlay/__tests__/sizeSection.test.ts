@@ -114,70 +114,60 @@ describe("max-width/max-height support none keyword", () => {
   });
 });
 
-// ─── 2b. max-width/max-height handlers guard against "--" placeholder unit ──
+// ─── 2b. min/max handlers use safeUnit to guard against "--" placeholder ──
 
 describe("max-width/max-height handlers guard against invalid unit", () => {
-  it("handleMaxWidthChange guards against '--' unit by defaulting to 'px'", () => {
-    // When maxWidthUnit is "--" (placeholder for keyword values), the handler
-    // should substitute "px" instead of producing invalid CSS like "500--"
+  it("safeUnit helper is defined to guard against '--' placeholder", () => {
+    // The component should have a safeUnit helper that maps "--" → "px"
+    expect(sizeSectionSrc).toMatch(/safeUnit\s*=\s*\(u[^)]*\)\s*=>\s*u\s*===\s*"--"\s*\?\s*"px"\s*:\s*u/);
+  });
+
+  it("handleMaxWidthChange uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMaxWidthChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMaxWidthChange").toBeTruthy();
-    const body = handler![0];
-    // Must contain a guard: maxWidthUnit === "--" ? "px" : maxWidthUnit
-    expect(body).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(maxWidthUnit\)/);
   });
 
-  it("handleMaxHeightChange guards against '--' unit by defaulting to 'px'", () => {
+  it("handleMaxHeightChange uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMaxHeightChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMaxHeightChange").toBeTruthy();
-    const body = handler![0];
-    expect(body).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(maxHeightUnit\)/);
   });
 
-  it("handleMinWidthChange guards against '--' unit by defaulting to 'px'", () => {
+  it("handleMinWidthChange uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMinWidthChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMinWidthChange").toBeTruthy();
-    const body = handler![0];
-    expect(body).toMatch(/minWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*minWidthUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(minWidthUnit\)/);
   });
 
-  it("handleMinHeightChange guards against '--' unit by defaulting to 'px'", () => {
+  it("handleMinHeightChange uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMinHeightChange\s*=\s*useCallback\(\s*\(v[^)]*\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMinHeightChange").toBeTruthy();
-    const body = handler![0];
-    expect(body).toMatch(/minHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*minHeightUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(minHeightUnit\)/);
   });
 
-  it("onKeywordChange for Max W guards against '--' unit when exiting keyword mode", () => {
-    // The onKeywordChange callback on the Max W SizeInputCell should guard
-    // against "--" unit when applying the numeric value after exiting keyword mode
+  it("onKeywordChange for Max W uses safeUnit", () => {
     const maxWBlock = sizeSectionSrc.match(/<SizeInputCell[\s\S]*?label="Max W"[\s\S]*?\/>/);
     expect(maxWBlock, "Could not find Max W SizeInputCell").toBeTruthy();
-    const block = maxWBlock![0];
-    // The onKeywordChange handler must not use raw maxWidthUnit when it could be "--"
-    // It should either guard with a ternary or use a safe unit
-    expect(block).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+    expect(maxWBlock![0]).toMatch(/safeUnit\(maxWidthUnit\)/);
   });
 
-  it("onKeywordChange for Max H guards against '--' unit when exiting keyword mode", () => {
+  it("onKeywordChange for Max H uses safeUnit", () => {
     const maxHBlock = sizeSectionSrc.match(/<SizeInputCell[\s\S]*?label="Max H"[\s\S]*?\/>/);
     expect(maxHBlock, "Could not find Max H SizeInputCell").toBeTruthy();
-    const block = maxHBlock![0];
-    expect(block).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+    expect(maxHBlock![0]).toMatch(/safeUnit\(maxHeightUnit\)/);
   });
 
-  it("handleMaxWidthNoneToggle guards against '--' unit", () => {
+  it("handleMaxWidthNoneToggle uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMaxWidthNoneToggle\s*=\s*useCallback\(\s*\(\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMaxWidthNoneToggle").toBeTruthy();
-    const body = handler![0];
-    expect(body).toMatch(/maxWidthUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxWidthUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(maxWidthUnit\)/);
   });
 
-  it("handleMaxHeightNoneToggle guards against '--' unit", () => {
+  it("handleMaxHeightNoneToggle uses safeUnit", () => {
     const handler = sizeSectionSrc.match(/handleMaxHeightNoneToggle\s*=\s*useCallback\(\s*\(\)\s*=>\s*\{[\s\S]*?\},\s*\[/);
     expect(handler, "Could not find handleMaxHeightNoneToggle").toBeTruthy();
-    const body = handler![0];
-    expect(body).toMatch(/maxHeightUnit\s*===\s*"--"\s*\?\s*"px"\s*:\s*maxHeightUnit/);
+    expect(handler![0]).toMatch(/safeUnit\(maxHeightUnit\)/);
   });
 });
 
