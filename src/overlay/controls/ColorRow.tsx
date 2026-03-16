@@ -12,7 +12,7 @@ import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { parseVarAlias } from "../variables/discoverVariables";
-import { Link2, Unlink } from "lucide-react";
+import { Link2, Unlink, X } from "lucide-react";
 import { VariablePicker } from "./VariablePicker";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
@@ -227,6 +227,32 @@ export function ColorRow({
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
         >
           <Link2 size={11} strokeWidth={2} />
+        </button>
+      )}
+      {indicator === "modified" && onReset && (
+        <button
+          type="button"
+          title="Reset to original value"
+          onClick={(e) => {
+            e.stopPropagation();
+            onReset();
+          }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.5,
+            transition: `opacity ${ms("fast")}`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}
+        >
+          <X size={10} strokeWidth={2.5} />
         </button>
       )}
       {varPickerOpen && linkBtnRef.current && (
