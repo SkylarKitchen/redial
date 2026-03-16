@@ -50,7 +50,7 @@ export default function Home() {
             ],
           ].map(([title, desc], i) => (
             <div key={i} className={styles.step}>
-              <span className={styles.stepNumeral}>{i + 1}.</span>
+              <span className={styles.stepNumeral}>{i + 1}</span>
               <div className={styles.stepContent}>
                 <h3>{title}</h3>
                 <p>{desc}</p>
