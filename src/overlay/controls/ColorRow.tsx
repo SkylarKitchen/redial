@@ -126,6 +126,8 @@ export function ColorRow({
     <div
       onContextMenu={onContextMenu}
       onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}
+      onMouseEnter={() => setRowHovered(true)}
+      onMouseLeave={() => setRowHovered(false)}
       style={{ ...rowStyle, position: "relative", ...compactRowOverrides }}
     >
       {computedProp && computedElement ? (

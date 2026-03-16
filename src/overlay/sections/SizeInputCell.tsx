@@ -17,6 +17,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { LabelScrub } from "../controls/LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "../controls";
+import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { color, text, border, surface, font, primaryAlpha } from "../theme";
 import type { IndicatorType } from "../theme";
 import { parseValueWithUnit } from "../parseValueWithUnit";
@@ -76,6 +77,7 @@ export function SizeInputCell({
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
+  const [rowHovered, setRowHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
   const isVariable = keyword === null && (cssVar ?? null) !== null;

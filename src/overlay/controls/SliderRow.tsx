@@ -233,7 +233,16 @@ export function SliderRow({
       {annotation && (
         <span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, flexShrink: 0, whiteSpace: "nowrap" }}>{annotation}</span>
       )}
-      <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, position: "relative" }}>
+        {onSelectVariable && (
+          <VariableLinkDot
+            rowHovered={rowHovered}
+            variableType={variableType ?? "length"}
+            element={variableElement}
+            onSelect={(varExpr) => { onSelectVariable(varExpr); }}
+            activeVariable={activeVariable}
+          />
+        )}
         <ValueInput value={value} onChange={onChange} onAltClick={onReset} embedded step={step} />
         {units && onUnitChange ? (
           <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
@@ -245,44 +254,8 @@ export function SliderRow({
           </div>
         ) : null}
       </div>
-      {onSelectVariable && (
-        <button
-          ref={linkBtnRef}
-          type="button"
-          title="Link to variable"
-          onClick={(e) => { e.stopPropagation(); setVarPickerOpen(!varPickerOpen); }}
-          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
-          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: text.hint,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            opacity: 0.6,
-            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
-        >
-          <Link2 size={11} strokeWidth={2} />
-        </button>
-      )}
     </div>
     {property && <PresetChips property={property} onSelect={handlePresetSelect} unit={unit} />}
-    {varPickerOpen && linkBtnRef.current && onSelectVariable && (
-      <VariablePicker
-        anchor={linkBtnRef.current}
-        type={variableType ?? "length"}
-        element={variableElement}
-        onSelect={(varExpr) => { onSelectVariable(varExpr); setVarPickerOpen(false); }}
-        onClose={() => setVarPickerOpen(false)}
-        activeVariable={activeVariable}
-      />
-    )}
     {resetPopover.node}
     </>
   );

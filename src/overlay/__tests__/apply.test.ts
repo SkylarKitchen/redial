@@ -900,17 +900,17 @@ describe("undo coalescing", () => {
     expect(el.style.getPropertyValue("width")).toBe("");
   });
 
-  it("three discrete display changes produce three undo steps", () => {
+  it("three discrete same-prop changes produce three undo steps", () => {
     const el = makeEl();
-    applyInlineStyle(el, "display", "block");
-    applyInlineStyle(el, "display", "flex");
-    applyInlineStyle(el, "display", "grid");
+    applyInlineStyle(el, "width", "100px");
+    applyInlineStyle(el, "width", "200px");
+    applyInlineStyle(el, "width", "300px");
 
     undo();
-    expect(el.style.getPropertyValue("display")).toBe("flex");
+    expect(el.style.getPropertyValue("width")).toBe("200px");
     undo();
-    expect(el.style.getPropertyValue("display")).toBe("block");
+    expect(el.style.getPropertyValue("width")).toBe("100px");
     undo();
-    expect(el.style.getPropertyValue("display")).toBe("");
+    expect(el.style.getPropertyValue("width")).toBe("");
   });
 });
