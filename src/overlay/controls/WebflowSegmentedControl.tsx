@@ -36,8 +36,27 @@ export function WebflowSegmentedControl({
     [value, onChange],
   );
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [indicatorPos, setIndicatorPos] = useState<{ left: number; width: number } | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const activeIdx = options.findIndex(o => o.value === value);
+    if (activeIdx < 0) { setIndicatorPos(null); return; }
+    const buttons = containerRef.current.querySelectorAll<HTMLElement>('[role="radio"]');
+    const btn = buttons[activeIdx];
+    if (!btn) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setIndicatorPos({
+      left: btnRect.left - containerRect.left,
+      width: btnRect.width,
+    });
+  }, [value, options]);
+
   return (
     <div
+      ref={containerRef}
       role="radiogroup"
       aria-label={ariaLabel}
       style={{
@@ -49,8 +68,22 @@ export function WebflowSegmentedControl({
         borderRadius: segment.radius,
         padding: segment.padding,
         overflow: "hidden",
+        position: "relative",
       }}
     >
+      {indicatorPos && (
+        <div style={{
+          position: "absolute",
+          left: indicatorPos.left,
+          top: segment.padding,
+          width: indicatorPos.width,
+          height: segment.height,
+          borderRadius: segment.segmentRadius,
+          background: segment.activeBg,
+          transition: cssTransition(["left", "width"], "normal"),
+          pointerEvents: "none" as const,
+        }} />
+      )}
       {options.map((opt) => {
         const isActive = opt.value === value;
         return (
@@ -71,7 +104,9 @@ export function WebflowSegmentedControl({
               border: "none",
               cursor: "pointer",
               padding: "0 8px",
-              background: isActive ? segment.activeBg : "transparent",
+              position: "relative" as const,
+              zIndex: 1,
+              background: "transparent",
               color: isActive ? text.primary : text.label,
               transition: `background ${ms("fast")}, color ${ms("fast")}`,
               outline: "none",

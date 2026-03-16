@@ -13,7 +13,7 @@ import { getReadableName } from "../core/scope";
 import { StateSelector } from "./StateSelector";
 import { X, ChevronRight, Pin } from "lucide-react";
 import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha, focusRing } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 
 type BreadcrumbSegment = { el: Element; tag: string; className: string | null };
 
@@ -135,7 +135,9 @@ export function Header({
             <button
               onClick={onTogglePin}
               onMouseEnter={() => setPinHovered(true)}
-              onMouseLeave={() => setPinHovered(false)}
+              onMouseLeave={(e) => { setPinHovered(false); (e.currentTarget as HTMLElement).style.transform = ""; }}
+              onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+              onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
               onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
               title="Pin element (P)"
@@ -152,7 +154,7 @@ export function Header({
                 background: pinned ? primaryAlpha(0.15) : (pinHovered ? surface.hover : "transparent"),
                 color: pinned ? primaryAlpha(0.95) : (pinHovered ? blackAlpha(0.7) : text.disabled),
                 cursor: "pointer",
-                transition: `color ${ms("normal")}, background ${ms("normal")}`,
+                transition: `color ${ms("normal")}, background ${ms("normal")}, ${cssTransition("transform", "release")}`,
               }}
             >
               <Pin size={12} strokeWidth={2} />
@@ -161,7 +163,9 @@ export function Header({
           <button
             onClick={onClose}
             onMouseEnter={() => setCloseHovered(true)}
-            onMouseLeave={() => setCloseHovered(false)}
+            onMouseLeave={(e) => { setCloseHovered(false); (e.currentTarget as HTMLElement).style.transform = ""; }}
+            onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+            onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
             onFocus={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
             onBlur={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
             title="Close (Esc)"
@@ -178,7 +182,7 @@ export function Header({
               background: closeHovered ? surface.hover : "transparent",
               color: closeHovered ? blackAlpha(0.7) : text.disabled,
               cursor: "pointer",
-              transition: `color ${ms("normal")}, background ${ms("normal")}`,
+              transition: `color ${ms("normal")}, background ${ms("normal")}, ${cssTransition("transform", "release")}`,
             }}
           >
             <X size={12} strokeWidth={2} />
@@ -282,21 +286,22 @@ export function Header({
                     role={isLast ? undefined : "button"}
                     onClick={(e) => { e.stopPropagation(); if (!isLast) onBreadcrumbClick?.(seg.el); }}
                     onKeyDown={isLast ? undefined : (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onBreadcrumbClick?.(seg.el); } }}
-                    onMouseEnter={() => { if (!isLast) { setHoveredBreadcrumbIdx(i); onBreadcrumbHover?.(seg.el); } }}
-                    onMouseLeave={() => { if (!isLast) { setHoveredBreadcrumbIdx(null); onBreadcrumbHover?.(null); } }}
+                    onMouseEnter={(e) => { if (!isLast) { setHoveredBreadcrumbIdx(i); onBreadcrumbHover?.(seg.el); (e.currentTarget as HTMLElement).style.borderColor = blackAlpha(0.2); } }}
+                    onMouseLeave={(e) => { if (!isLast) { setHoveredBreadcrumbIdx(null); onBreadcrumbHover?.(null); (e.currentTarget as HTMLElement).style.borderColor = "transparent"; } }}
                     onFocus={isLast ? undefined : (e) => { (e.currentTarget as HTMLElement).style.boxShadow = focusRing; }}
                     onBlur={isLast ? undefined : (e) => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
                     style={{
                       whiteSpace: "nowrap",
                       borderRadius: 2,
                       outline: "none",
-                      transition: `color ${ms("normal")}, background ${ms("normal")}`,
+                      transition: `color ${ms("normal")}, background ${ms("normal")}, border-color ${ms("normal")}`,
                       ...(isLast
                         ? { cursor: "default", color: text.primary }
                         : {
                             cursor: "pointer",
                             paddingLeft: 2,
                             paddingRight: 2,
+                            borderBottom: "1px solid transparent",
                             color: isBreadcrumbHovered ? blackAlpha(0.7) : text.label,
                             background: isBreadcrumbHovered ? surface.hover : "transparent",
                           }),
@@ -368,7 +373,9 @@ function ScopePill({
     <div
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={(e) => { setHovered(false); (e.currentTarget as HTMLElement).style.transform = ""; }}
+      onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.95)"; }}
+      onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
       style={{
         paddingLeft: 8,
         paddingRight: 8,
@@ -378,7 +385,7 @@ function ScopePill({
         cursor: "pointer",
         lineHeight: "16px",
         whiteSpace: "nowrap",
-        transition: `color ${ms("normal")}, background ${ms("normal")}`,
+        transition: `color ${ms("normal")}, background ${ms("normal")}, ${cssTransition("transform", "release")}`,
         background: active
           ? (hovered ? blackAlpha(0.1) : surface.active)
           : (hovered ? surface.subtle : "transparent"),

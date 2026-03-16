@@ -581,7 +581,7 @@ function DetailVariableRow({
       />
 
       {/* Name cell */}
-      <div style={{ ...(modeValues ? { width: 130, flexShrink: 0 } : { flex: 1 }), minWidth: 0, display: "flex", alignItems: "center" }}>
+      <div style={{ ...(modeValues ? { width: 130, flexShrink: 0 } : { width: 120, flexShrink: 0 }), minWidth: 0, display: "flex", alignItems: "center" }}>
         {renaming ? (
           <input
             ref={renameRef}
@@ -965,8 +965,8 @@ export function CollectionDetail({
             </>
           ) : (
             <>
-              <div style={{ flex: 1, ...COLUMN_HEADER_STYLE }}>Name</div>
-              <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Base mode</div>
+              <div style={{ width: 120, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
+              <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Value</div>
             </>
           )}
           {/* Action spacer for hover buttons */}

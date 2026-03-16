@@ -14,6 +14,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { hexToRgb, rgbToHex, isValidHex } from "../colorUtils";
 import { ms } from "../timing";
 import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
+import { naturalCompare } from "../variables/discoverVariables";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha } from "../theme";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
@@ -155,7 +156,7 @@ function groupByPrefix(vars: ColorVariable[]): ColorVarGroup[] {
           items: subVars.map((cv) => ({
             leaf: cv.name.slice(2).split("-").slice(2).join("-"),
             cv,
-          })).sort((a, b) => a.leaf.localeCompare(b.leaf)),
+          })).sort((a, b) => naturalCompare(a.leaf, b.leaf)),
         });
       }
     } else {
@@ -165,7 +166,7 @@ function groupByPrefix(vars: ColorVariable[]): ColorVarGroup[] {
         items: groupVars.map((cv) => ({
           leaf: cv.name.slice(2).split("-").slice(1).join("-"),
           cv,
-        })).sort((a, b) => a.leaf.localeCompare(b.leaf)),
+        })).sort((a, b) => naturalCompare(a.leaf, b.leaf)),
       });
     }
   }
@@ -177,7 +178,7 @@ function groupByPrefix(vars: ColorVariable[]): ColorVarGroup[] {
     });
   }
 
-  return groups.sort((a, b) => a.name.localeCompare(b.name));
+  return groups.sort((a, b) => naturalCompare(a.name, b.name));
 }
 
 // ─── Component ───────────────────────────────────────────────────
@@ -244,7 +245,7 @@ export function ColorPickerEnhanced({
     const merged = exists
       ? discovered
       : [...discovered, { name, resolvedValue: currentHex }].sort((a, b) =>
-          a.name.localeCompare(b.name),
+          naturalCompare(a.name, b.name),
         );
     setColorVars(merged);
     // Auto-select the new variable

@@ -95,6 +95,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [shaking, setShaking] = useState(false);
   const shakingTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  const { pressHandlers: clipPress, pressStyle: clipPressStyle } = usePressScale(0.97);
+  const { pressHandlers: savePress, pressStyle: savePressStyle } = usePressScale(0.97);
+
   // Clear timers on unmount to prevent stale setState calls
   useEffect(() => {
     return () => {
@@ -291,7 +294,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           <button
             onClick={() => setCopyOpen((o) => !o)}
             onMouseEnter={() => setClipboardHovered(true)}
-            onMouseLeave={() => setClipboardHovered(false)}
+            onMouseDown={clipPress.onMouseDown}
+            onMouseUp={clipPress.onMouseUp}
+            onMouseLeave={() => { clipPress.onMouseLeave(); setClipboardHovered(false); }}
             title="Copy CSS (⌘C)"
             style={{
               display: "inline-flex",
@@ -308,6 +313,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               background: copied ? successMutedAlpha(0.08) : (copyOpen ? surface.active : (clipboardHovered ? surface.active : surface.hover)),
               border: `1px solid ${copied ? successMutedAlpha(0.25) : (copyOpen ? border.hover : border.default)}`,
               transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
+              ...clipPressStyle,
             }}
           >
             {copied ? "\u2713 Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, color: text.disabled }} /></>}
@@ -382,7 +388,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           <button
             onClick={handleSave}
             onMouseEnter={() => setSaveHovered(true)}
-            onMouseLeave={() => setSaveHovered(false)}
+            onMouseDown={savePress.onMouseDown}
+            onMouseUp={savePress.onMouseUp}
+            onMouseLeave={() => { savePress.onMouseLeave(); setSaveHovered(false); }}
             disabled={count === 0 || saving}
             title="Save to source (⌘S)"
             style={{
@@ -402,6 +410,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px ${successAlpha(0.4)}` : `0 1px 3px ${primaryAlpha(0.4)}`,
               opacity: (count === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
               transition: `opacity ${timing.normal}ms, background ${timing.normal}ms, box-shadow ${timing.normal}ms`,
+              ...savePressStyle,
             }}
           >
             {saving ? "..." : saved ? "\u2713 Saved" : count > 0 ? `Save (${count})` : "Save"}
@@ -462,7 +471,9 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
     <button
       onClick={disabled ? undefined : onClick}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseDown={(e) => { if (!disabled) (e.currentTarget as HTMLElement).style.transform = "scale(0.98)"; }}
+      onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+      onMouseLeave={(e) => { setHovered(false); (e.currentTarget as HTMLElement).style.transform = ""; }}
       disabled={disabled}
       style={{
         display: "flex",
@@ -480,7 +491,7 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
         textAlign: "left" as const,
         cursor: disabled ? "default" : "pointer",
         color: disabled ? text.disabled : color.foreground,
-        transition: `background ${timing.fast}ms`,
+        transition: `transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), background ${timing.fast}ms`,
       }}
     >
       <span>{children}</span>

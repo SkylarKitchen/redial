@@ -13,7 +13,7 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { timing, ms } from "../timing";
+import { timing, ms, easeRelease } from "../timing";
 
 interface DragState {
   dragIndex: number;
@@ -189,7 +189,7 @@ export function useDragReorder<T>(
       if (settling) {
         return {
           position: "relative",
-          transition: `transform ${ms("layout")} cubic-bezier(0.34, 1.56, 0.64, 1)`,
+          transition: `transform ${ms("layout")} ${easeRelease}`,
           transform: "translateY(0)",
         };
       }
@@ -214,7 +214,7 @@ export function useDragReorder<T>(
       return {
         position: "relative",
         transform: shift !== 0 ? `translateY(${shift}px)` : undefined,
-        transition: `transform ${ms("layout")} ease`,
+        transition: `transform ${ms("layout")} ${easeRelease}`,
       };
     },
     [dragState, settling],

@@ -219,6 +219,8 @@ export function ColorRow({
             e.stopPropagation();
             setVarPickerOpen(!varPickerOpen);
           }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
           style={{
             background: "none",
             border: "none",
@@ -229,7 +231,7 @@ export function ColorRow({
             display: "flex",
             alignItems: "center",
             opacity: 0.6,
-            transition: `opacity ${ms("fast")}`,
+            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
@@ -245,6 +247,8 @@ export function ColorRow({
             e.stopPropagation();
             onReset();
           }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
           style={{
             background: "none",
             border: "none",
@@ -255,7 +259,7 @@ export function ColorRow({
             display: "flex",
             alignItems: "center",
             opacity: 0.5,
-            transition: `opacity ${ms("fast")}`,
+            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}

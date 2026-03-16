@@ -7,7 +7,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo, createContext
 import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "../panelUtils";
-import { ms, cssTransition } from "../timing";
+import { ms, cssTransition, easeRelease } from "../timing";
 import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, labelHighlight, zIndex } from "../theme";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -41,7 +41,9 @@ export function useValueFlash(value: number) {
     return () => clearTimeout(timer.current);
   }, [value]);
 
-  return flash ? { backgroundColor: primaryAlpha(0.12), transition: `background-color ${ms("layout")}` } : { transition: `background-color ${ms("layout")}` };
+  return flash
+    ? { backgroundColor: primaryAlpha(0.12), transform: "scale(1.02)", transition: `background-color ${ms("layout")}, transform ${ms("fast")} ${easeRelease}` }
+    : { transition: `background-color ${ms("layout")}, transform ${ms("release")} ${easeRelease}` };
 }
 
 // ─── Helper ─────────────────────────────────────────────────────────
@@ -180,12 +182,16 @@ export function PresetChips({ property, onSelect, unit }: {
             padding: "1px 6px",
             cursor: "pointer",
             lineHeight: "16px",
+            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.93)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.background = surface.hover;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.transform = "";
           }}
         >
           {v}

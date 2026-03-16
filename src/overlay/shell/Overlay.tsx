@@ -941,7 +941,7 @@ export function Overlay() {
   // --- Dragging ---
   const SNAP_THRESHOLD = 20;
   const SNAP_MARGIN = 16;
-  const PANEL_WIDTH = activePanel.type === "variables" ? 550 : 300;
+  const PANEL_WIDTH = activePanel.type === "variables" ? 580 : 300;
   const PANEL_HEIGHT_ESTIMATE = 500;
 
   const handleDragStart = useCallback(
@@ -1163,7 +1163,7 @@ export function Overlay() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         // If anchored to an edge, recompute from that edge; otherwise just clamp
-        const pw = activePanel.type === "variables" ? 550 : 300;
+        const pw = activePanel.type === "variables" ? 580 : 300;
         const x = anchor === "right"
           ? vw - pw - MARGIN
           : anchor === "left"
@@ -1179,7 +1179,7 @@ export function Overlay() {
 
   // --- Reposition panel when switching between inspector (300px) and variables (550px) ---
   useEffect(() => {
-    const pw = activePanel.type === "variables" ? 550 : 300;
+    const pw = activePanel.type === "variables" ? 580 : 300;
     setPos((p) => {
       const vw = window.innerWidth;
       const MARGIN = 16;
@@ -1649,7 +1649,7 @@ export function Overlay() {
           style={{
             position: "fixed",
             zIndex: zIndex.max,
-            width: activePanel.type === "variables" ? 550 : 300,
+            width: activePanel.type === "variables" ? 580 : 300,
             height: "85vh",
             maxHeight: "85vh",
             background: color.background,
