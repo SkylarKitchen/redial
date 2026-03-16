@@ -28,6 +28,7 @@ import { useClickOutside } from "../hooks/useClickOutside";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
+import { VariableField } from "../controls/VariableField";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
 import { ROW } from "../panelStyles";
 
@@ -1149,11 +1150,10 @@ export function TypoValueCell({
         ...flashStyle,
       }}
     >
-      {!isKeyword && variableOptions && onCssVarChange && (
+      {!isKeyword && !isVariable && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
-          isLinked={isVariable}
-          onUnlink={() => onCssVarChange?.(null)}
+          isLinked={false}
           variableType="length"
           onSelect={(varExpr) => {
             const match = varExpr.match(/^var\((.+)\)$/);
@@ -1163,26 +1163,15 @@ export function TypoValueCell({
         />
       )}
       {isVariable ? (
-        <span
-          title={`${cssVar}: ${cssVarResolved ?? "?"}`}
-          onClick={() => onCssVarChange?.(null)}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            fontSize: 11,
-            fontFamily: font.mono,
-            paddingLeft: 6,
-            paddingRight: 6,
-            cursor: "pointer",
-            outline: "none",
-            color: color.primary,
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
+        <VariableField
+          variableName={cssVar!}
+          variableType="length"
+          onSelectVariable={(varExpr) => {
+            const match = varExpr.match(/^var\((.+)\)$/);
+            if (match) onCssVarChange?.(match[1]);
           }}
-        >
-          {cssVar?.replace(/^--/, "")}
-        </span>
+          onUnlink={() => onCssVarChange?.(null)}
+        />
       ) : isKeyword ? (
         <span
           tabIndex={0}
@@ -1241,7 +1230,7 @@ export function TypoValueCell({
           {value}
         </span>
       )}
-      <div style={{
+      {!isVariable && <div style={{
         flexShrink: 0,
         paddingRight: 3,
         borderLeft: `1px solid ${blackAlpha(0.07)}`,
@@ -1251,7 +1240,7 @@ export function TypoValueCell({
       }}>
         {units && onUnitChange ? (
           <UnitSelector
-            value={isVariable ? "VAR" : unit}
+            value={unit}
             options={units}
             onChange={(u) => { if (isVariable) onCssVarChange?.(null); onUnitChange(u); }}
             conversionHint={conversionHint}
@@ -1271,7 +1260,7 @@ export function TypoValueCell({
             {unit}
           </span>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

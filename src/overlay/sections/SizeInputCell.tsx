@@ -18,6 +18,7 @@ import { LabelScrub } from "../controls/LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "../controls";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
+import { VariableField } from "../controls/VariableField";
 import { color, text, border, surface, font, primaryAlpha } from "../theme";
 import type { IndicatorType } from "../theme";
 import { parseValueWithUnit } from "../parseValueWithUnit";
@@ -180,7 +181,7 @@ export function SizeInputCell({
         minWidth: 0,
       }}
     >
-      {!isKeyword && variableOptions && onCssVarChange && (
+      {!isKeyword && !isVariable && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
           isLinked={isVariable}
@@ -224,76 +225,80 @@ export function SizeInputCell({
         )}
       </div>
 
-      {/* Value area */}
-      <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "flex-end", paddingRight: 2, minWidth: 0, borderRadius: 2, ...flashStyle }}>
-        {isKeyword ? (
-          <span
-            tabIndex={0}
-            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onKeywordChange?.(null); setEditing(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
-            style={{ fontSize: 10, fontFamily: font.mono, fontStyle: "italic", textTransform: "capitalize", paddingRight: 4, cursor: "text", outline: "none", color: text.disabled }}
-          >
-            {keyword}
-          </span>
-        ) : isVariable ? (
-          <span
-            tabIndex={0}
-            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onCssVarChange?.(null); setEditing(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
-            title={`var(${cssVar}): ${cssVarResolved ?? ""}`}
-            style={{ flex: 1, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 4, cursor: "pointer", outline: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: color.primary, minWidth: 0 }}
-          >
-            {cssVar!.replace(/^--/, "")}
-          </span>
-        ) : editing ? (
-          <input
-            ref={inputRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { e.preventDefault(); onReset(); setEditing(false); } }}
-            onBlur={commit}
-            onKeyDown={handleKeyDown}
-            onDoubleClick={selectAllOnDoubleClick}
-            autoFocus
-            style={{
-              width: "100%",
-              border: `1px solid ${primaryAlpha(0.5)}`,
-              borderRadius: 2,
-              fontSize: 10,
-              fontFamily: font.mono,
-              textAlign: "right",
-              padding: "1px 3px",
-              outline: "none",
-              background: surface.active,
-              color: text.secondary,
-            }}
-          />
-        ) : (
-          <span
-            tabIndex={0}
-            onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
-            style={{ fontSize: 10, fontFamily: font.mono, cursor: "text", paddingRight: 4, outline: "none", minWidth: 16, textAlign: "right", color: value !== 0 ? text.label : text.disabled }}
-          >
-            {value}
-          </span>
-        )}
-      </div>
-
-      {/* Unit / keyword toggle */}
-      <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
-        <UnitSelector
-          value={isVariable ? "VAR" : isKeyword ? "–" : unit}
-          options={units}
-          onChange={handleUnitSelect}
-          specialOptions={specialOptions}
-          onSpecialSelect={handleSpecialSelect}
-          conversionHint={conversionHint}
-          variableOptions={variableOptions}
-          onVariableSelect={(name) => onCssVarChange?.(name)}
-          embedded
+      {isVariable ? (
+        <VariableField
+          variableName={cssVar!}
+          variableType="length"
+          onSelectVariable={(varExpr) => {
+            const match = varExpr.match(/^var\((.+)\)$/);
+            if (match) onCssVarChange?.(match[1]);
+          }}
+          onUnlink={() => onCssVarChange?.(null)}
         />
-      </div>
+      ) : (
+        <>
+        {/* Value area */}
+        <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "flex-end", paddingRight: 2, minWidth: 0, borderRadius: 2, ...flashStyle }}>
+          {isKeyword ? (
+            <span
+              tabIndex={0}
+              onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onKeywordChange?.(null); setEditing(true); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { onKeywordChange?.(null); setEditing(true); } }}
+              style={{ fontSize: 10, fontFamily: font.mono, fontStyle: "italic", textTransform: "capitalize", paddingRight: 4, cursor: "text", outline: "none", color: text.disabled }}
+            >
+              {keyword}
+            </span>
+          ) : editing ? (
+            <input
+              ref={inputRef}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { e.preventDefault(); onReset(); setEditing(false); } }}
+              onBlur={commit}
+              onKeyDown={handleKeyDown}
+              onDoubleClick={selectAllOnDoubleClick}
+              autoFocus
+              style={{
+                width: "100%",
+                border: `1px solid ${primaryAlpha(0.5)}`,
+                borderRadius: 2,
+                fontSize: 10,
+                fontFamily: font.mono,
+                textAlign: "right",
+                padding: "1px 3px",
+                outline: "none",
+                background: surface.active,
+                color: text.secondary,
+              }}
+            />
+          ) : (
+            <span
+              tabIndex={0}
+              onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } setEditing(true); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setEditing(true); } }}
+              style={{ fontSize: 10, fontFamily: font.mono, cursor: "text", paddingRight: 4, outline: "none", minWidth: 16, textAlign: "right", color: value !== 0 ? text.label : text.disabled }}
+            >
+              {value}
+            </span>
+          )}
+        </div>
+
+        {/* Unit / keyword toggle */}
+        <div style={{ borderLeft: `1px solid ${border.default}`, alignSelf: "stretch", display: "flex", alignItems: "center", justifyContent: "center", width: 32, flexShrink: 0 }}>
+          <UnitSelector
+            value={isKeyword ? "–" : unit}
+            options={units}
+            onChange={handleUnitSelect}
+            specialOptions={specialOptions}
+            onSpecialSelect={handleSpecialSelect}
+            conversionHint={conversionHint}
+            variableOptions={variableOptions}
+            onVariableSelect={(name) => onCssVarChange?.(name)}
+            embedded
+          />
+        </div>
+        </>
+      )}
     </div>
     {resetPopover.node}
     </div>
