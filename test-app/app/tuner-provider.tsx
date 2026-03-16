@@ -10,5 +10,5 @@ const Tuner = dynamic(
 
 export function TunerProvider() {
   if (process.env.NODE_ENV !== "development") return null;
-  return <Tuner commitEndpoint="/api/tuner" />;
+  return <Tuner commitEndpoint="/api/tuner/commit" />;
 }

@@ -3,7 +3,7 @@
  * preset chips, and label-drag scrubbing.
  */
 
-import React, { useCallback, useState, useRef } from "react";
+import React, { useCallback, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
@@ -14,8 +14,8 @@ import { beginBatch, endBatch } from "../core/apply";
 import { text, border, surface, font, primaryAlpha } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
-import { VariablePicker } from "./VariablePicker";
-import { Link2, Unlink, X } from "lucide-react";
+import { VariableLinkDot } from "./VariableLinkDot";
+import { Unlink, X } from "lucide-react";
 import { ms } from "../timing";
 
 export function SliderRow({
@@ -100,9 +100,7 @@ export function SliderRow({
     return raw;
   }, [snapPoints, snapThreshold, min, max]);
 
-  // Variable linking state
-  const [varPickerOpen, setVarPickerOpen] = useState(false);
-  const linkBtnRef = useRef<HTMLButtonElement>(null);
+  const [rowHovered, setRowHovered] = useState(false);
 
   const handleUnlink = useCallback(() => {
     if (!variableElement || !computedProp) return;
@@ -135,7 +133,7 @@ export function SliderRow({
   if (activeVariable) {
     return (
       <>
-      <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+      <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} onMouseEnter={() => setRowHovered(true)} onMouseLeave={() => setRowHovered(false)}>
         <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
@@ -212,7 +210,7 @@ export function SliderRow({
   // Numeric mode (default): slider + input + unit + optional link icon
   return (
     <>
-    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+    <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} onMouseEnter={() => setRowHovered(true)} onMouseLeave={() => setRowHovered(false)}>
       <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
         {computedProp && computedElement ? (
           <ComputedTooltip property={computedProp} element={computedElement}>

@@ -37,7 +37,7 @@ export default function InstallPage() {
           </p>
 
           <section id="install" className={styles.contentSection}>
-            <h2>§1 Install</h2>
+            <h2>Install</h2>
             <p>Add Redial to your project from GitHub:</p>
             <pre className={styles.codeBlockMulti}>
               <code>npm install github:SkylarKitchen/redial</code>
@@ -46,7 +46,7 @@ export default function InstallPage() {
 
           <hr className={styles.rule} />
           <section id="next-plugin" className={styles.contentSection}>
-            <h2>§2 Next.js Plugin</h2>
+            <h2>Next.js Plugin</h2>
             <p>
               Wrap your Next.js config with the Redial plugin. This injects the
               necessary Webpack configuration for source-file commits and HMR.
@@ -63,7 +63,7 @@ module.exports = withTuner({
 
           <hr className={styles.rule} />
           <section id="api-route" className={styles.contentSection}>
-            <h2>§3 API Route</h2>
+            <h2>API Route</h2>
             <p>
               Create an API route so Redial can write style changes back to your
               source files.
@@ -76,7 +76,7 @@ export { GET, POST } from "redial/server";`}
 
           <hr className={styles.rule} />
           <section id="component" className={styles.contentSection}>
-            <h2>§4 Component</h2>
+            <h2>Component</h2>
             <p>
               Add the Tuner component to your root layout. It renders the
               floating panel and is only active in development.
@@ -101,7 +101,7 @@ export default function RootLayout({ children }) {
 
           <hr className={styles.rule} />
           <section id="configuration" className={styles.contentSection}>
-            <h2>§5 Configuration</h2>
+            <h2>Configuration</h2>
             <p>Pass props to the Tuner component to customize behavior:</p>
             <pre className={styles.codeBlockMulti}>
 {`<Tuner commitEndpoint="/api/tuner" />`}
@@ -137,7 +137,7 @@ export default function RootLayout({ children }) {
 
           <hr className={styles.rule} />
           <section id="exports" className={styles.contentSection}>
-            <h2>§6 Exports</h2>
+            <h2>Exports</h2>
             <p>Everything Redial exposes:</p>
             <pre className={styles.codeBlockMulti}>
 {`import { Tuner } from "redial";              // React component
@@ -150,7 +150,7 @@ const withTuner = require("redial/next-plugin"); // Webpack plugin`}
 
           <hr className={styles.rule} />
           <section id="requirements" className={styles.contentSection}>
-            <h2>§7 Requirements</h2>
+            <h2>Requirements</h2>
             <table className={styles.propsTable}>
               <thead>
                 <tr>

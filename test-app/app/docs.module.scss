@@ -1,7 +1,7 @@
-// docs.module.scss — Manuscript aesthetic for Redial documentation
+// docs.module.scss — Clean editorial style for Redial documentation
 //
-// Warm parchment palette, Cormorant Garamond serif, thin-rule dividers,
-// no rounded corners, no colored hover states. Print-inspired typography.
+// Warm cream palette, Cormorant Garamond serif, generous whitespace.
+// Inspired by every.to — trust the typography, minimal decoration.
 
 // ── Mixins ──
 
@@ -10,10 +10,8 @@
   font-size: 14px;
 }
 
-@mixin tracked-heading {
+@mixin section-heading {
   font-family: var(--font-cormorant);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   font-weight: 600;
 }
 
@@ -29,26 +27,12 @@
   padding-top: 64px;
   position: relative;
 
-  // Subtle paper grain via SVG noise
-  &::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 256px 256px;
-  }
 }
 
 .docsContent {
   max-width: 860px;
   margin: 0 auto;
   padding: 48px 24px;
-  position: relative;
-  z-index: 1;
 }
 
 .docsContentWithSidebar {
@@ -56,8 +40,6 @@
   margin: 0 auto;
   padding: 48px 24px;
   padding-left: 260px;
-  position: relative;
-  z-index: 1;
 }
 
 // ── Top Navigation ──
@@ -95,9 +77,7 @@
 
   a {
     font-family: var(--font-cormorant);
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
+    font-size: 15px;
     color: #5a5148;
     text-decoration: none;
     transition: color 0.15s ease;
@@ -116,9 +96,7 @@
 
   a {
     font-family: var(--font-cormorant);
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
+    font-size: 15px;
     color: #5a5148;
     text-decoration: none;
     transition: color 0.15s ease;
@@ -159,10 +137,8 @@
 
   h4 {
     font-family: var(--font-cormorant);
-    font-size: 11px;
+    font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
     color: #5a5148;
     margin-bottom: 8px;
   }
@@ -202,8 +178,6 @@
   font-size: 42px;
   font-weight: 300;
   line-height: 1.15;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: #2a2520;
   max-width: 720px;
 }
@@ -230,14 +204,6 @@
     font-weight: 600;
     color: #2a2520;
   }
-}
-
-// ── Thin Rule Divider ──
-
-.rule {
-  border: none;
-  border-top: 1px solid #c4b9a8;
-  margin: 40px 0;
 }
 
 // ── Install Snippet ──
@@ -313,13 +279,11 @@
 // ── Section Heading ──
 
 .sectionHeading {
-  @include tracked-heading;
-  font-size: 16px;
+  @include section-heading;
+  font-size: 22px;
   color: #2a2520;
   text-align: center;
   margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #c4b9a8;
 }
 
 // ── Feature Cards (Landing) ──
@@ -332,14 +296,12 @@
 
 .featureCard {
   padding: 24px 20px;
-  border-radius: 0;
   background: transparent;
-  border: none;
-  border-top: 1px solid #c4b9a8;
 
   h3 {
-    @include tracked-heading;
-    font-size: 13px;
+    font-family: var(--font-cormorant);
+    font-size: 17px;
+    font-weight: 600;
     color: #2a2520;
     margin-bottom: 8px;
   }
@@ -385,8 +347,6 @@
 .statLabel {
   font-family: var(--font-cormorant);
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   color: #5a5148;
 }
 
@@ -406,10 +366,8 @@
   padding: 0 24px;
   border-radius: 0;
   font-family: var(--font-cormorant);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   text-decoration: none;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
@@ -439,12 +397,10 @@
 // ── Content Pages (Install, Features) ──
 
 .pageTitle {
-  @include tracked-heading;
-  font-size: 28px;
+  @include section-heading;
+  font-size: 32px;
   color: #2a2520;
   margin-bottom: 8px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #c4b9a8;
 }
 
 .pageSubtitle {
@@ -460,8 +416,8 @@
   margin-bottom: 48px;
 
   h2 {
-    @include tracked-heading;
-    font-size: 16px;
+    @include section-heading;
+    font-size: 22px;
     color: #2a2520;
     margin-bottom: 16px;
   }
@@ -518,9 +474,7 @@
     font-weight: 600;
     color: #2a2520;
     border-bottom: 2px solid #c4b9a8;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 13px;
   }
 
   td {
@@ -544,8 +498,8 @@
   margin-bottom: 48px;
 
   h2 {
-    @include tracked-heading;
-    font-size: 16px;
+    @include section-heading;
+    font-size: 22px;
     color: #2a2520;
     margin-bottom: 8px;
   }
@@ -567,14 +521,12 @@
 
 .panelSectionCard {
   padding: 20px 16px;
-  border-radius: 0;
   background: transparent;
-  border: none;
-  border-top: 1px solid #c4b9a8;
 
   h4 {
-    @include tracked-heading;
-    font-size: 12px;
+    font-family: var(--font-cormorant);
+    font-size: 14px;
+    font-weight: 600;
     color: #2a2520;
     margin-bottom: 4px;
   }
@@ -602,9 +554,7 @@
     font-weight: 600;
     color: #2a2520;
     border-bottom: 2px solid #c4b9a8;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 13px;
   }
 
   td {
@@ -657,9 +607,7 @@
 
 .pageNavDirection {
   font-family: var(--font-cormorant);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 13px;
   color: #5a5148;
   font-weight: 600;
 }

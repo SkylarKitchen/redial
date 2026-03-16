@@ -38,7 +38,6 @@ export default function Home() {
         </section>
 
         {/* ── How It Works ── */}
-        <hr className={styles.rule} />
         <h2 className={styles.sectionHeading}>How it works</h2>
         <div className={styles.steps}>
           {[
@@ -77,7 +76,6 @@ export default function Home() {
         </div>
 
         {/* ── Feature Highlights ── */}
-        <hr className={styles.rule} />
         <h2 className={styles.sectionHeading}>Feature highlights</h2>
         <div className={styles.featureGrid}>
           {[

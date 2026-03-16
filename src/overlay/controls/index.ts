@@ -19,3 +19,4 @@ export { EditableValue } from "./EditableValue";
 export { SubSectionHeader } from "./SubSectionHeader";
 export { EditorRemoveButton } from "./EditorRemoveButton";
 export { VisibilityToggle } from "./VisibilityToggle";
+export { VariableLinkDot } from "./VariableLinkDot";
