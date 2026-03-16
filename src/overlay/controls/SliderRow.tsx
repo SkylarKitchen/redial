@@ -122,6 +122,85 @@ export function SliderRow({
     else if (onPreset) onPreset(v);
   }, [onChange, onPreset]);
 
+  // Variable mode: show variable name + unlink/reset instead of slider
+  if (activeVariable) {
+    return (
+      <>
+      <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
+        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
+          {computedProp && computedElement ? (
+            <ComputedTooltip property={computedProp} element={computedElement}>
+              {labelContent}
+            </ComputedTooltip>
+          ) : labelContent}
+        </LabelScrub>
+        <span
+          title={`var(${activeVariable})`}
+          style={{
+            flex: 1,
+            fontSize: 11,
+            fontFamily: font.mono,
+            color: primaryAlpha(0.8),
+            overflow: "clip",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
+          }}
+        >
+          {activeVariable.replace(/^--/, "")}
+        </span>
+        <button
+          type="button"
+          title="Unlink variable"
+          onClick={(e) => { e.stopPropagation(); handleUnlink(); }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: primaryAlpha(0.6),
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <Unlink size={11} strokeWidth={2} />
+        </button>
+        {indicator === "modified" && onReset && (
+          <button
+            type="button"
+            title="Reset to original value"
+            onClick={(e) => { e.stopPropagation(); onReset(); }}
+            onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+            onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: text.hint,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              opacity: 0.5,
+              transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}
+          >
+            <X size={10} strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+      {resetPopover.node}
+      </>
+    );
+  }
+
+  // Numeric mode (default): slider + input + unit + optional link icon
   return (
     <>
     <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }}>
@@ -159,8 +238,44 @@ export function SliderRow({
           </div>
         ) : null}
       </div>
+      {onSelectVariable && (
+        <button
+          ref={linkBtnRef}
+          type="button"
+          title="Link to variable"
+          onClick={(e) => { e.stopPropagation(); setVarPickerOpen(!varPickerOpen); }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+          style={{
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            color: text.hint,
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            opacity: 0.6,
+            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.6"; }}
+        >
+          <Link2 size={11} strokeWidth={2} />
+        </button>
+      )}
     </div>
     {property && <PresetChips property={property} onSelect={handlePresetSelect} unit={unit} />}
+    {varPickerOpen && linkBtnRef.current && onSelectVariable && (
+      <VariablePicker
+        anchor={linkBtnRef.current}
+        type="length"
+        element={variableElement}
+        onSelect={(varExpr) => { onSelectVariable(varExpr); setVarPickerOpen(false); }}
+        onClose={() => setVarPickerOpen(false)}
+        activeVariable={activeVariable}
+      />
+    )}
     {resetPopover.node}
     </>
   );

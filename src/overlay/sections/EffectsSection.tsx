@@ -168,6 +168,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   // ── State ──────────────────────────────────────────────────────────
   const [transMenuAnchor, setTransMenuAnchor] = useState<HTMLElement | null>(null);
   const [opacity, setOpacity] = useState(() => parseFloat(cs.opacity) || 1);
+  const [opacityVar, setOpacityVar] = useState<string | null>(null);
   const [mixBlendMode, setMixBlendMode] = useState(() => cs.mixBlendMode);
   const [outlineStyle, setOutlineStyle] = useState(() => cs.outlineStyle || "none");
   const [shadows, setShadows] = useState<ShadowValue[]>(() => parseBoxShadow(cs.boxShadow));
@@ -202,8 +203,12 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
   // ── Handlers ───────────────────────────────────────────────────────
-  const handleOpacityChange = useCallback((v: number) => { setOpacity(v); apply("opacity", String(v)); }, [apply]);
+  const handleOpacityChange = useCallback((v: number) => { setOpacityVar(null); setOpacity(v); apply("opacity", String(v)); }, [apply]);
   const handleOpacitySliderChange = useCallback((v: number) => handleOpacityChange(v / 100), [handleOpacityChange]);
+  const handleOpacitySelectVar = useCallback((varExpr: string) => {
+    setOpacityVar(varExpr.match(/var\((--[\w-]+)\)/)?.[1] ?? null);
+    apply("opacity", varExpr);
+  }, [apply]);
   const handleMixBlendModeChange = useCallback((v: string) => { setMixBlendMode(v); apply("mix-blend-mode", v); }, [apply]);
   const handleOutlineStyleChange = useCallback((v: string) => { setOutlineStyle(v); apply("outline-style", v); }, [apply]);
   const handleShadowsChange = useCallback(
@@ -318,7 +323,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SelectRow label="Blending" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} onReset={() => resetCssStr("mix-blend-mode", setMixBlendMode)} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
       {/* 2. Opacity */}
-      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = typeof v === "number" ? v : parseFloat(String(v)); if (!isNaN(n)) handleOpacityChange(n); }} />
+      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); setOpacityVar(null); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = typeof v === "number" ? v : parseFloat(String(v)); if (!isNaN(n)) handleOpacityChange(n); }} onSelectVariable={handleOpacitySelectVar} activeVariable={opacityVar} variableElement={element} />
 
       {/* 3. Outline */}
       <div style={ROW}>

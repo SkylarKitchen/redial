@@ -40,6 +40,22 @@ export interface SizeSectionProps {
   onToggle?: (title: string) => void;
 }
 
+// ─── Overflow constants ───────────────────────────────────────────────
+
+const OVERFLOW_OPTS = [
+  { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
+  { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
+  { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
+  { value: "auto", label: "Auto", title: "Auto" },
+];
+
+const LOCK_BTN: React.CSSProperties = {
+  width: 20, height: 20, display: "flex", alignItems: "center",
+  justifyContent: "center", background: "transparent", border: "none",
+  cursor: "pointer", fontSize: 10, marginLeft: 4, borderRadius: 3,
+  flexShrink: 0, color: text.disabled,
+};
+
 // ─── Component ────────────────────────────────────────────────────────
 
 export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen, focusOpen, onToggle }: SizeSectionProps) {
@@ -182,8 +198,16 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
     apply("overflow-y", v);
   }, [apply]);
   const handleOverflowLockToggle = useCallback(() => {
-    setOverflowLocked((prev) => !prev);
-  }, []);
+    setOverflowLocked((prev) => {
+      if (!prev) {
+        // Re-locking: use overflowX as the winner, sync Y
+        setOverflow(overflowX);
+        setOverflowY(overflowX);
+        apply("overflow", overflowX);
+      }
+      return !prev;
+    });
+  }, [overflowX, apply]);
   const handleChildrenModeChange = useCallback((v: string) => {
     setChildrenMode(v);
     if (v === "fill") apply("align-items", "stretch");
@@ -397,96 +421,41 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       {/* Overflow: lock/unlock per-axis controls */}
       {overflowLocked ? (
         <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
-          <span style={{ ...LABEL, cursor: "default" }}>
-            Overflow
-          </span>
+          <span style={{ ...LABEL, cursor: "default" }}>Overflow</span>
           <WebflowSegmentedControl
-            options={[
-              { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
-              { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
-              { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
-              { value: "auto", label: "Auto", title: "Auto" },
-            ]}
+            options={OVERFLOW_OPTS}
             value={overflow}
             onChange={handleOverflowChange}
             aria-label="Overflow"
           />
-          <button
-            onClick={handleOverflowLockToggle}
-            title="Unlock overflow-x/y"
-            style={{
-              width: 20,
-              height: 20,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              fontSize: 10,
-              marginLeft: 4,
-              borderRadius: 3,
-              flexShrink: 0,
-              color: text.disabled,
-            }}
-          >
+          <button onClick={handleOverflowLockToggle} title="Unlock overflow-x/y" style={LOCK_BTN}>
             <Link size={12} strokeWidth={1.5} />
           </button>
         </div>
       ) : (
         <>
           <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
-            <span style={{ ...LABEL, cursor: "default" }}>
-              Overflow X
-            </span>
+            <span style={{ ...LABEL, cursor: "default" }}>Overflow X</span>
             <WebflowSegmentedControl
-              options={[
-                { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
-                { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
-                { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
-                { value: "auto", label: "Auto", title: "Auto" },
-              ]}
+              options={OVERFLOW_OPTS}
               value={overflowX}
               onChange={handleOverflowXChange}
               aria-label="Overflow X"
             />
-            <button
-              onClick={handleOverflowLockToggle}
-              title="Lock overflow"
-              style={{
-                width: 20,
-                height: 20,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 10,
-                marginLeft: 4,
-                borderRadius: 3,
-                flexShrink: 0,
-                color: text.disabled,
-              }}
-            >
+            <button onClick={handleOverflowLockToggle} title="Lock overflow" style={LOCK_BTN}>
               <Unlink size={12} strokeWidth={1.5} />
             </button>
           </div>
-          <div style={ROW}>
-            <span style={{ ...LABEL, cursor: "default" }}>
-              Overflow Y
-            </span>
+          <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
+            <span style={{ ...LABEL, cursor: "default" }}>Overflow Y</span>
             <WebflowSegmentedControl
-              options={[
-                { value: "visible", icon: <OverflowVisibleIcon size={16} />, title: "Visible" },
-                { value: "hidden", icon: <OverflowHiddenIcon size={16} />, title: "Hidden" },
-                { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
-                { value: "auto", label: "Auto", title: "Auto" },
-              ]}
+              options={OVERFLOW_OPTS}
               value={overflowY}
               onChange={handleOverflowYChange}
               aria-label="Overflow Y"
             />
+            {/* Spacer matching lock button width for visual alignment */}
+            <div style={{ width: 20, marginLeft: 4, flexShrink: 0 }} />
           </div>
         </>
       )}

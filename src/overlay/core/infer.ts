@@ -171,6 +171,13 @@ export const SPACING_PROPS = [
   "margin-top", "margin-right", "margin-bottom", "margin-left",
 ];
 
+const OVERFLOW_OPTIONS = [
+  { value: "visible", label: "Visible" },
+  { value: "hidden", label: "Hidden" },
+  { value: "scroll", label: "Scroll" },
+  { value: "auto", label: "Auto" },
+];
+
 export function infer(el: Element): InferResult {
   const tag = el.tagName.toLowerCase();
 
@@ -324,32 +331,17 @@ export function infer(el: Element): InferResult {
     "max-height": range(parseNum(cs.maxHeight === "none" ? "0" : cs.maxHeight), { max: 1200 }),
     "overflow": {
       type: "select",
-      options: [
-        { value: "visible", label: "Visible" },
-        { value: "hidden", label: "Hidden" },
-        { value: "scroll", label: "Scroll" },
-        { value: "auto", label: "Auto" },
-      ],
+      options: OVERFLOW_OPTIONS,
       default: cs.overflow,
     } as SelectConfig,
     "overflow-x": {
       type: "select",
-      options: [
-        { value: "visible", label: "Visible" },
-        { value: "hidden", label: "Hidden" },
-        { value: "scroll", label: "Scroll" },
-        { value: "auto", label: "Auto" },
-      ],
+      options: OVERFLOW_OPTIONS,
       default: cs.overflowX,
     } as SelectConfig,
     "overflow-y": {
       type: "select",
-      options: [
-        { value: "visible", label: "Visible" },
-        { value: "hidden", label: "Hidden" },
-        { value: "scroll", label: "Scroll" },
-        { value: "auto", label: "Auto" },
-      ],
+      options: OVERFLOW_OPTIONS,
       default: cs.overflowY,
     } as SelectConfig,
   };

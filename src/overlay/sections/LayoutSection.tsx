@@ -157,6 +157,11 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   const [gapLocked, setGapLocked] = useState(true);
   const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
 
+  // Gap variable linking
+  const [gapVar, setGapVar] = useState<string | null>(null);
+  const [rowGapVar, setRowGapVar] = useState<string | null>(null);
+  const [columnGapVar, setColumnGapVar] = useState<string | null>(null);
+
   // Grid tracks
   const [gridCols, setGridCols] = useState(() => cs.gridTemplateColumns === "none" ? "" : cs.gridTemplateColumns);
   const [gridRows, setGridRows] = useState(() => cs.gridTemplateRows === "none" ? "" : cs.gridTemplateRows);
@@ -265,9 +270,12 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   const handleGapChange = useCallback(
     (v: number) => {
+      setGapVar(null);
       setGap(v);
       apply("gap", `${v}${gapUnit}`);
       if (gapLocked) {
+        setRowGapVar(null);
+        setColumnGapVar(null);
         setRowGap(v);
         onColumnGapChange(v);
         onColumnGapUnitChange(gapUnit);
@@ -277,17 +285,38 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   );
 
   const handleRowGapChange = useCallback(
-    (v: number) => { setRowGap(v); apply("row-gap", `${v}${rowGapUnit}`); },
+    (v: number) => { setRowGapVar(null); setRowGap(v); apply("row-gap", `${v}${rowGapUnit}`); },
     [apply, rowGapUnit],
   );
 
   const handleColumnGapChange = useCallback(
     (v: number) => {
+      setColumnGapVar(null);
       onColumnGapChange(v);
       apply("column-gap", `${v}${columnGapUnit}`);
     },
     [apply, columnGapUnit, onColumnGapChange],
   );
+
+  const handleGapSelectVar = useCallback((varExpr: string) => {
+    const name = varExpr.match(/var\((--[\w-]+)\)/)?.[1] ?? null;
+    setGapVar(name);
+    apply("gap", varExpr);
+    if (gapLocked) {
+      setRowGapVar(name);
+      setColumnGapVar(name);
+    }
+  }, [apply, gapLocked]);
+
+  const handleRowGapSelectVar = useCallback((varExpr: string) => {
+    setRowGapVar(varExpr.match(/var\((--[\w-]+)\)/)?.[1] ?? null);
+    apply("row-gap", varExpr);
+  }, [apply]);
+
+  const handleColumnGapSelectVar = useCallback((varExpr: string) => {
+    setColumnGapVar(varExpr.match(/var\((--[\w-]+)\)/)?.[1] ?? null);
+    apply("column-gap", varExpr);
+  }, [apply]);
 
   const handleGapLockToggle = useCallback(() => {
     setGapLocked(prev => {
@@ -479,7 +508,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     apply("gap", `${c}${u}`);
                   }}
                   onChange={handleGapChange}
-                  onReset={() => resetCss("gap", setGap)}
+                  onReset={() => { resetCss("gap", setGap); setGapVar(null); }}
                   indicator={ind("gap")}
                   conversionHint={gapHint}
                   onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
@@ -487,6 +516,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   computedElement={element}
                   property="gap"
                   annotation={twAnn("gap", gap, gapUnit)}
+                  onSelectVariable={handleGapSelectVar}
+                  activeVariable={gapVar}
+                  variableElement={element}
                 />
               </div>
               <button
@@ -532,13 +564,16 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                       apply("row-gap", `${c}${u}`);
                     }}
                     onChange={handleRowGapChange}
-                    onReset={() => resetCss("row-gap", setRowGap)}
+                    onReset={() => { resetCss("row-gap", setRowGap); setRowGapVar(null); }}
                     indicator={ind("row-gap")}
                     conversionHint={rowGapHint}
                     onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
                     computedProp="row-gap"
                     computedElement={element}
                     annotation={twAnn("row-gap", rowGap, rowGapUnit)}
+                    onSelectVariable={handleRowGapSelectVar}
+                    activeVariable={rowGapVar}
+                    variableElement={element}
                   />
                 </div>
                 <button
@@ -580,13 +615,16 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   apply("column-gap", `${c}${u}`);
                 }}
                 onChange={handleColumnGapChange}
-                onReset={() => resetCss("column-gap", (v) => onColumnGapChange(v))}
+                onReset={() => { resetCss("column-gap", (v) => onColumnGapChange(v)); setColumnGapVar(null); }}
                 indicator={ind("column-gap")}
                 conversionHint={colGapHint}
                 onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
                 computedProp="column-gap"
                 computedElement={element}
                 annotation={twAnn("column-gap", columnGap, columnGapUnit)}
+                onSelectVariable={handleColumnGapSelectVar}
+                activeVariable={columnGapVar}
+                variableElement={element}
               />
             </>
           )}
