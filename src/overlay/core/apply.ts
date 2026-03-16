@@ -259,12 +259,7 @@ export function applyInlineStyle(
         batchEntries.push({ el, prop, prev: existing.current, state: parsed.state, className });
       }
     } else {
-      // Coalesce: if the last undo entry is for the same (el, prop), don't push
-      // another entry — keeps the original `prev` so undo reverts the entire drag
-      const lastUndo = undoStack[undoStack.length - 1];
-      if (!(lastUndo && !isBatch(lastUndo) && !isDomMove(lastUndo) && lastUndo.el === el && lastUndo.prop === prop)) {
-        undoStack.push({ el, prop, prev: existing.current, state: parsed.state, className });
-      }
+      undoStack.push({ el, prop, prev: existing.current, state: parsed.state, className });
     }
     existing.current = value;
 
