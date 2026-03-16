@@ -6,7 +6,7 @@ date: 2026-03-13
 
 # Close Remaining Gaps
 
-**Status: 12 of 13 iterations complete.** Remaining: #11 (package metadata — 3 fields).
+**Status: 13 of 13 iterations complete.** All done.
 
 ## Overview
 
@@ -383,9 +383,9 @@ Five items from the pre-publish checklist.
 
 ### Acceptance criteria
 
-- [ ] `package.json` name is the final decided name
-- [ ] `package.json` author is set
-- [ ] `package.json` repository/homepage/bugs URLs point to real GitHub repo
+- [x] `package.json` name is the final decided name
+- [x] `package.json` author is set
+- [x] `package.json` repository/homepage/bugs URLs point to real GitHub repo
 - [x] `LICENSE` file exists at project root
 - [x] `npm pack --dry-run` output contains only expected files
 - [x] `npm run build` succeeds

@@ -2,7 +2,7 @@
   "name": "redial",
   "version": "0.1.0",
   "description": "A floating CSS tuning panel for Next.js. Click any element, get context-aware controls, drag to tune, save directly to source.",
-  "author": "",
+  "author": "Skylar Kitchen",
   "repository": {
     "type": "git",
     "url": "https://github.com/SkylarKitchen/redial"
