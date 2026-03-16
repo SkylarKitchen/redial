@@ -28,6 +28,7 @@ import { useClickOutside } from "../hooks/useClickOutside";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
+import { VariableField } from "../controls/VariableField";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
 import { ROW } from "../panelStyles";
 
