@@ -328,6 +328,156 @@ function SubgroupAddRow({
   );
 }
 
+// ─── Mode Value Cell ─────────────────────────────────────────────────
+
+function ModeValueCell({
+  varName,
+  mode,
+  value,
+  varType,
+}: {
+  varName: string;
+  mode: InferredMode;
+  value: string | undefined;
+  varType: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!editing) setDraft(value ?? "");
+  }, [value, editing]);
+
+  useEffect(() => {
+    if (editing) {
+      const id = setTimeout(() => inputRef.current?.select(), 0);
+      return () => clearTimeout(id);
+    }
+  }, [editing]);
+
+  const commit = useCallback(() => {
+    const trimmed = draft.trim();
+    if (trimmed && mode.selector) {
+      applyModeOverride(mode.selector, varName, trimmed);
+    }
+    setEditing(false);
+  }, [draft, mode.selector, varName]);
+
+  // Read-only for media query modes and base mode
+  const editable = mode.source !== "media" && mode.source !== "base";
+
+  const isOverridden = isModeOverrideDirty(mode.selector ?? "", varName);
+
+  if (editing) {
+    return (
+      <div style={{ flex: 1, minWidth: 80 }}>
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") { setEditing(false); e.stopPropagation(); }
+          }}
+          onBlur={commit}
+          data-tuner-portal
+          style={{
+            width: "100%",
+            fontSize: 11,
+            fontFamily: font.mono,
+            background: surface.hover,
+            border: `1px solid ${color.primary}`,
+            borderRadius: 3,
+            padding: "1px 4px",
+            outline: "none",
+            color: text.primary,
+            textAlign: "right",
+            boxSizing: "border-box" as const,
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={editable ? () => setEditing(true) : undefined}
+      style={{
+        flex: 1,
+        minWidth: 80,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        overflow: "hidden",
+        cursor: editable ? "text" : "default",
+        borderRadius: 3,
+        padding: "1px 3px",
+        ...(isOverridden ? {
+          background: labelIndicator.modified.bg,
+          color: labelIndicator.modified.text,
+          ...labelHighlight,
+        } : {}),
+      }}
+    >
+      {/* Color dot for color-type variables */}
+      {varType === "color" && value && (
+        <div
+          ref={dotRef}
+          onClick={(e) => {
+            if (!editable) return;
+            e.stopPropagation();
+            setPickerOpen(true);
+          }}
+          style={{
+            width: 12, height: 12, borderRadius: 3, flexShrink: 0, marginRight: 4,
+            background: value, border: `1px solid ${border.default}`,
+            cursor: editable ? "pointer" : "default",
+          }}
+        />
+      )}
+
+      {value !== undefined ? (
+        <VariableValue value={value} />
+      ) : (
+        <span style={{ color: text.disabled, fontSize: 11, fontFamily: font.mono }}>
+          {editable ? "+" : "\u2014"}
+        </span>
+      )}
+
+      {/* Color picker portal */}
+      {pickerOpen && dotRef.current && (() => {
+        const rect = dotRef.current!.getBoundingClientRect();
+        const pickerWidth = 264;
+        const pickerHeight = 300;
+        const gap = 4;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const top = spaceBelow < pickerHeight + gap ? rect.top - pickerHeight - gap : rect.bottom + gap;
+        const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
+        return createPortal(
+          <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
+            <ColorPickerEnhanced
+              color={value?.startsWith("#") ? value : "#000000"}
+              onChange={(hex, opacity) => {
+                if (mode.selector) {
+                  const final = opacity < 1
+                    ? `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${opacity})`
+                    : hex;
+                  applyModeOverride(mode.selector, varName, final);
+                }
+              }}
+              onClose={() => setPickerOpen(false)}
+            />
+          </div>,
+          document.body,
+        );
+      })()}
+    </div>
+  );
+}
+
 // ─── Variable Row ───────────────────────────────────────────────────
 
 function DetailVariableRow({
