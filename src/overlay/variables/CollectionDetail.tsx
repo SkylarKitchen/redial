@@ -29,7 +29,9 @@ import {
   endModeCoalesce,
 } from "./modeOverrides";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
+import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { cssColorToHex, hexToRgba } from "../colorUtils";
+import { parseVarRef } from "./colorVariables";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
   text,
