@@ -332,6 +332,23 @@ describe("overflow per-axis controls", () => {
     expect(sizeSectionSrc).toMatch(/<Unlink\s/);
   });
 
+  it("re-locking reconciles per-axis values using overflow-x as winner", () => {
+    // When toggling back to locked, the handler syncs overflow and overflowY to overflowX
+    expect(sizeSectionSrc).toMatch(/setOverflow\(overflowX\)/);
+    expect(sizeSectionSrc).toMatch(/setOverflowY\(overflowX\)/);
+    expect(sizeSectionSrc).toMatch(/apply\(\s*"overflow"\s*,\s*overflowX\s*\)/);
+  });
+
+  it("overflow options are extracted to a shared constant", () => {
+    // OVERFLOW_OPTS used instead of inline arrays
+    expect(sizeSectionSrc).toMatch(/const OVERFLOW_OPTS/);
+    expect(sizeSectionSrc).toMatch(/options=\{OVERFLOW_OPTS\}/);
+  });
+
+  it("overflow Y row has spacer for visual alignment with lock button", () => {
+    expect(sizeSectionSrc).toMatch(/Overflow Y[\s\S]*?width:\s*20/);
+  });
+
   it("section indicator tracks overflow, overflow-x, and overflow-y", () => {
     const sectionIndicator = sizeSectionSrc.match(/sectionInd\(\[[\s\S]*?\]\)/);
     expect(sectionIndicator, "Could not find sectionInd call").toBeTruthy();

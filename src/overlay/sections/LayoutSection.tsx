@@ -729,7 +729,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                     apply("gap", `${c}${u}`);
                   }}
                   onChange={handleGapChange}
-                  onReset={() => resetCss("gap", setGap)}
+                  onReset={() => { resetCss("gap", setGap); setGapVar(null); }}
                   indicator={ind("gap")}
                   conversionHint={gapHint}
                   onContextMenu={ctxMenu("gap", `${gap}${gapUnit}`)}
@@ -737,6 +737,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   computedElement={element}
                   property="gap"
                   annotation={twAnn("gap", gap, gapUnit)}
+                  onSelectVariable={handleGapSelectVar}
+                  activeVariable={gapVar}
+                  variableElement={element}
                 />
               </div>
               <button
@@ -782,13 +785,16 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                       apply("row-gap", `${c}${u}`);
                     }}
                     onChange={handleRowGapChange}
-                    onReset={() => resetCss("row-gap", setRowGap)}
+                    onReset={() => { resetCss("row-gap", setRowGap); setRowGapVar(null); }}
                     indicator={ind("row-gap")}
                     conversionHint={rowGapHint}
                     onContextMenu={ctxMenu("row-gap", `${rowGap}${rowGapUnit}`)}
                     computedProp="row-gap"
                     computedElement={element}
                     annotation={twAnn("row-gap", rowGap, rowGapUnit)}
+                    onSelectVariable={handleRowGapSelectVar}
+                    activeVariable={rowGapVar}
+                    variableElement={element}
                   />
                 </div>
                 <button
@@ -830,13 +836,16 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   apply("column-gap", `${c}${u}`);
                 }}
                 onChange={handleColumnGapChange}
-                onReset={() => resetCss("column-gap", (v) => onColumnGapChange(v))}
+                onReset={() => { resetCss("column-gap", (v) => onColumnGapChange(v)); setColumnGapVar(null); }}
                 indicator={ind("column-gap")}
                 conversionHint={colGapHint}
                 onContextMenu={ctxMenu("column-gap", `${columnGap}${columnGapUnit}`)}
                 computedProp="column-gap"
                 computedElement={element}
                 annotation={twAnn("column-gap", columnGap, columnGapUnit)}
+                onSelectVariable={handleColumnGapSelectVar}
+                activeVariable={columnGapVar}
+                variableElement={element}
               />
             </>
           )}
