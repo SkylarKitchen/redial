@@ -1621,7 +1621,7 @@ export function Overlay() {
           style={{
             position: "fixed",
             zIndex: zIndex.max,
-            width: 300,
+            width: activePanel.type === "variables" ? 550 : 300,
             height: "85vh",
             maxHeight: "85vh",
             background: color.background,
@@ -1637,8 +1637,8 @@ export function Overlay() {
             left: pos.x,
             transformOrigin: "bottom right",
             transition: snapping
-              ? `top ${ms("expand")} ease, left ${ms("expand")} ease, box-shadow ${ms("expand")}`
-              : `box-shadow ${ms("expand")}`,
+              ? `top ${ms("expand")} ease, left ${ms("expand")} ease, width ${ms("expand")} ease, box-shadow ${ms("expand")}`
+              : `width ${ms("expand")} ease, box-shadow ${ms("expand")}`,
           }}
           initial={{ opacity: 0, scale: 0.96, y: 8 }}
           animate={{ opacity: 1, scale: 1, y: 0, transition: springConfig("panelOpen") }}
