@@ -131,9 +131,45 @@ export const TypographySection = memo(function TypographySection({
   const { conversionHint: textIndentHint, fireConversionHint: fireTextIndentHint } = useConversionHint();
   const { conversionHint: typoColGapHint, fireConversionHint: fireTypoColGapHint } = useConversionHint();
 
+  // ── CSS variable discovery + state ──
+  const varOptions = useMemo(() =>
+    discoverLengthVariables(element).map(v => ({ name: v.name, resolvedValue: v.value })),
+    [element]
+  );
+  const extractVar = (prop: string): string | null => {
+    const authored = getAuthoredValue(element, prop);
+    return authored?.match(/^var\(\s*(--[\w-]+)/)?.[1] ?? null;
+  };
+  const [fontSizeVar, setFontSizeVar] = useState<string | null>(() => extractVar("font-size"));
+  const [lineHeightVar, setLineHeightVar] = useState<string | null>(() => extractVar("line-height"));
+  const [letterSpacingVar, setLetterSpacingVar] = useState<string | null>(() => extractVar("letter-spacing"));
+
+  const resolveVar = (varName: string | null): string | undefined => {
+    if (!varName) return undefined;
+    return getComputedStyle(element).getPropertyValue(varName).trim() || undefined;
+  };
+
+  const handleFontSizeVarChange = useCallback((varName: string | null) => {
+    setFontSizeVar(varName);
+    if (varName) { apply("font-size", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).fontSize); setFontSize(c); apply("font-size", `${c}${fontSizeUnit}`); }
+  }, [apply, element, fontSizeUnit]);
+
+  const handleLineHeightVarChange = useCallback((varName: string | null) => {
+    setLineHeightVar(varName);
+    if (varName) { apply("line-height", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).lineHeight); const fs = parseNum(getComputedStyle(element).fontSize); setLineHeight(fs > 0 ? Math.round((c / fs) * 100) / 100 : 1.4); apply("line-height", `${c}px`); }
+  }, [apply, element]);
+
+  const handleLetterSpacingVarChange = useCallback((varName: string | null) => {
+    setLetterSpacingVar(varName);
+    if (varName) { apply("letter-spacing", `var(${varName})`); }
+    else { const c = parseNum(getComputedStyle(element).letterSpacing); setLetterSpacing(c); apply("letter-spacing", `${c}${letterSpacingUnit}`); }
+  }, [apply, element, letterSpacingUnit]);
+
   // ── Reset popovers for custom labels ──
-  const fontSizeResetPopover = useResetPopover(ind("font-size"), () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); });
-  const lineHeightResetPopover = useResetPopover(ind("line-height"), () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); });
+  const fontSizeResetPopover = useResetPopover(ind("font-size"), () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); });
+  const lineHeightResetPopover = useResetPopover(ind("line-height"), () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); });
 
   // ── Text style scanning ──
   const textStyles = useMemo(() => scanTextStyles(), []);
@@ -242,12 +278,16 @@ export const TypographySection = memo(function TypographySection({
         {fontSizeResetPopover.node}
         <TypoValueCell
           value={fontSize}
-          onChange={handleFontSizeChange}
+          onChange={(v) => { if (fontSizeVar) setFontSizeVar(null); handleFontSizeChange(v); }}
           unit={fontSizeUnit}
           units={TYPO_SIZE_UNITS}
-          onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(fontSize, fontSizeUnit, u, ctx); fireFontSizeHint(fontSize, fontSizeUnit, c, u, ctx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
+          onUnitChange={(u) => { if (fontSizeVar) setFontSizeVar(null); const ctx = getConversionCtx(); const c = convertUnit(fontSize, fontSizeUnit, u, ctx); fireFontSizeHint(fontSize, fontSizeUnit, c, u, ctx); setFontSize(c); setFontSizeUnit(u); apply("font-size", `${c}${u}`); }}
           step={ctx.isTailwind && fontSizeUnit === "px" ? 4 : 1}
           conversionHint={fontSizeHint}
+          cssVar={fontSizeVar}
+          cssVarResolved={resolveVar(fontSizeVar)}
+          onCssVarChange={handleFontSizeVarChange}
+          variableOptions={varOptions}
         />
         <span
           ref={lineHeightResetPopover.anchorRef}
@@ -259,12 +299,16 @@ export const TypographySection = memo(function TypographySection({
         {lineHeightResetPopover.node}
         <TypoValueCell
           value={lineHeight}
-          onChange={handleLineHeightChange}
+          onChange={(v) => { if (lineHeightVar) setLineHeightVar(null); handleLineHeightChange(v); }}
           unit={lineHeightUnit === "\u2014" ? "\u2013" : lineHeightUnit}
           units={LINE_HEIGHT_UNITS}
-          onUnitChange={(u) => { if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const ctx = getConversionCtx(); const c = convertUnit(lineHeight, lineHeightUnit, u, ctx); fireLineHeightHint(lineHeight, lineHeightUnit, c, u, ctx); setLineHeight(c); } setLineHeightUnit(u); }}
+          onUnitChange={(u) => { if (lineHeightVar) setLineHeightVar(null); if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const ctx = getConversionCtx(); const c = convertUnit(lineHeight, lineHeightUnit, u, ctx); fireLineHeightHint(lineHeight, lineHeightUnit, c, u, ctx); setLineHeight(c); } setLineHeightUnit(u); }}
           step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? (ctx.isTailwind ? 4 : 1) : 0.05}
           conversionHint={lineHeightHint}
+          cssVar={lineHeightVar}
+          cssVarResolved={resolveVar(lineHeightVar)}
+          onCssVarChange={handleLineHeightVarChange}
+          variableOptions={varOptions}
         />
       </div>
 
@@ -310,13 +354,17 @@ export const TypographySection = memo(function TypographySection({
             <div className="flex-1">
               <TypoValueCell
                 value={letterSpacing}
-                onChange={handleLetterSpacingChange}
+                onChange={(v) => { if (letterSpacingVar) setLetterSpacingVar(null); handleLetterSpacingChange(v); }}
                 unit={letterSpacingUnit}
                 units={TYPO_SIZE_UNITS}
-                onUnitChange={(u) => { const ctx = getConversionCtx(); const c = convertUnit(letterSpacing, letterSpacingUnit, u, ctx); fireLetterSpacingHint(letterSpacing, letterSpacingUnit, c, u, ctx); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
+                onUnitChange={(u) => { if (letterSpacingVar) setLetterSpacingVar(null); const ctx = getConversionCtx(); const c = convertUnit(letterSpacing, letterSpacingUnit, u, ctx); fireLetterSpacingHint(letterSpacing, letterSpacingUnit, c, u, ctx); setLetterSpacing(c); setLetterSpacingUnit(u); apply("letter-spacing", `${c}${u}`); }}
                 step={0.25}
-                keyword={letterSpacing === 0 ? "Normal" : null}
+                keyword={letterSpacingVar ? null : (letterSpacing === 0 ? "Normal" : null)}
                 conversionHint={letterSpacingHint}
+                cssVar={letterSpacingVar}
+                cssVarResolved={resolveVar(letterSpacingVar)}
+                onCssVarChange={handleLetterSpacingVarChange}
+                variableOptions={varOptions}
               />
               <div style={HINT}>Letter spacing</div>
             </div>
