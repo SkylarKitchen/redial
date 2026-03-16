@@ -1166,6 +1166,7 @@ export function TypoValueCell({
           onClick={() => onCssVarChange?.(null)}
           style={{
             flex: 1,
+            minWidth: 0,
             fontSize: 11,
             fontFamily: font.mono,
             paddingLeft: 6,
@@ -1173,7 +1174,7 @@ export function TypoValueCell({
             cursor: "pointer",
             outline: "none",
             color: color.primary,
-            overflow: "clip",
+            overflow: "hidden",
             whiteSpace: "nowrap",
             textOverflow: "ellipsis",
           }}

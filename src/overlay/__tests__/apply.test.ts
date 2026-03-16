@@ -913,4 +913,34 @@ describe("undo coalescing", () => {
     undo();
     expect(el.style.getPropertyValue("width")).toBe("");
   });
+
+  it("redo restores discrete same-prop changes one at a time", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "display", "flex");
+    applyInlineStyle(el, "display", "grid");
+
+    undo();
+    undo();
+    expect(el.style.getPropertyValue("display")).toBe("");
+
+    redo();
+    expect(el.style.getPropertyValue("display")).toBe("flex");
+    redo();
+    expect(el.style.getPropertyValue("display")).toBe("grid");
+  });
+
+  it("redo restores a batched group in one step", () => {
+    const el = makeEl();
+    beginBatch();
+    applyInlineStyle(el, "width", "10px");
+    applyInlineStyle(el, "width", "50px");
+    applyInlineStyle(el, "width", "100px");
+    endBatch();
+
+    undo();
+    expect(el.style.getPropertyValue("width")).toBe("");
+
+    redo();
+    expect(el.style.getPropertyValue("width")).toBe("100px");
+  });
 });

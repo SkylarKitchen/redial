@@ -272,9 +272,16 @@ export function getVariableDefinitionSource(
           // Found a rule that defines this variable — derive source file
           let file = href;
           try {
-            file = new URL(href).pathname;
+            file = decodeURIComponent(new URL(href).pathname);
           } catch {
             // Not a valid URL — use as-is
+          }
+
+          // Skip Turbopack root bundles — they aggregate all global CSS
+          // and can't be mapped to a specific source file client-side.
+          // Return null so the server can search for the variable definition.
+          if (file.includes("[root-of-the-server]") || file.includes("root-of-the-server")) {
+            continue;
           }
 
           // Turbopack chunk URL decoding
