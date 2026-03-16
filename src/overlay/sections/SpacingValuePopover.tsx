@@ -11,6 +11,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "../controls";
+import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { ms } from "../timing";
 import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "../theme";
 
@@ -42,6 +43,14 @@ export interface SpacingValuePopoverProps {
   onClose: () => void;
   /** True when the element uses Tailwind utility classes */
   isTailwind?: boolean;
+  /** Target element for variable discovery */
+  element?: Element;
+  /** Currently linked variable name (e.g. "--space-4") or null */
+  activeVariable?: string | null;
+  /** Called when user selects a variable — receives "var(--name)" */
+  onSelectVariable?: (varExpr: string) => void;
+  /** Called when user unlinks the variable */
+  onUnlink?: () => void;
 }
 
 export function SpacingValuePopover({
@@ -55,7 +64,12 @@ export function SpacingValuePopover({
   anchorRect,
   onClose,
   isTailwind = false,
+  element,
+  activeVariable,
+  onSelectVariable,
+  onUnlink,
 }: SpacingValuePopoverProps) {
+  const isLinked = !!activeVariable;
   const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(String(value));
@@ -145,7 +159,7 @@ export function SpacingValuePopover({
   );
 
   // --- Positioning: below anchor, centered, clamped to viewport ---
-  const popoverWidth = 220;
+  const popoverWidth = 240;
   const left = Math.max(
     8,
     Math.min(
@@ -205,170 +219,212 @@ export function SpacingValuePopover({
         }}
       />
 
-      {/* Top row: icon, input, slider, unit */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-        {/* Direction indicator */}
-        <div
-          style={{
-            width: "24px",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: surface.hover,
-            borderRadius: "3px",
-            fontSize: "12px",
-            color: text.secondary,
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </div>
-
-        {/* Value input */}
-        <input
-          ref={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={(e) => {
-            commitInput();
-            (e.currentTarget as HTMLElement).style.borderColor = border.default;
-          }}
-          onKeyDown={handleInputKeyDown}
-          onDoubleClick={selectAllOnDoubleClick}
-          style={{
-            width: "36px",
-            height: "24px",
-            background: surface.hover,
-            border: `1px solid ${border.default}`,
-            borderRadius: "3px",
-            color: text.secondary,
-            fontSize: "11px",
-            fontFamily: font.mono,
-            textAlign: "center",
-            padding: "0 2px",
-            outline: "none",
-            flexShrink: 0,
-          }}
-          onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.6);
-          }}
-        />
-
-        {/* Slider */}
-        <div
-          style={{
-            flex: 1,
-            position: "relative",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <input
-            type="range"
-            className="spacing-popover-slider"
-            min={sliderMin}
-            max={sliderMax}
-            step={4}
-            value={value}
-            onChange={(e) => onChange(parseFloat(e.target.value))}
-            style={{
-              width: "100%",
-              height: "3px",
-              appearance: "none",
-              WebkitAppearance: "none",
-              background: `linear-gradient(to right, ${color.primary} ${sliderPct}%, ${border.default} ${sliderPct}%)`,
-              borderRadius: "2px",
-              outline: "none",
-              cursor: "pointer",
-            }}
-          />
-        </div>
-
-        {/* Unit selector */}
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <button
-            type="button"
-            aria-expanded={unitOpen}
-            aria-haspopup="listbox"
-            onClick={() => setUnitOpen(!unitOpen)}
-            style={{
-              height: "24px",
-              padding: "0 6px",
-              background: surface.hover,
-              border: `1px solid ${primaryAlpha(0.4)}`,
-              borderRadius: "3px",
-              color: text.secondary,
-              fontSize: "10px",
-              fontFamily: font.mono,
-              cursor: "pointer",
-              textTransform: "uppercase",
-              outline: "none",
-              minWidth: "32px",
-            }}
-          >
-            {unit}
-          </button>
-          {unitOpen && (
-            <div
-              role="listbox"
-              style={{
-                position: "absolute",
-                top: "calc(100% + 2px)",
-                right: 0,
-                minWidth: "48px",
-                background: color.popover,
-                border: `1px solid ${border.default}`,
-                borderRadius: "4px",
-                boxShadow: shadow.dropdown,
-                zIndex: zIndex.float,
-                padding: "2px 0",
-              }}
-            >
-              {units.map((u) => (
-                <button
-                  key={u}
-                  type="button"
-                  role="option"
-                  aria-selected={u === unit}
-                  onClick={() => {
-                    onUnitChange(u);
-                    setUnitOpen(false);
-                  }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "3px 8px",
-                    fontSize: "10px",
-                    fontFamily: font.mono,
-                    color: u === unit ? "#fff" : text.secondary,
-                    background: u === unit ? color.primary : "transparent",
-                    cursor: "pointer",
-                    textTransform: "uppercase",
-                    textAlign: "left",
-                    border: "none",
-                    outline: "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (u !== unit)
-                      (e.currentTarget as HTMLElement).style.background = surface.hover;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (u !== unit)
-                      (e.currentTarget as HTMLElement).style.background = "transparent";
-                  }}
-                >
-                  {u}
-                </button>
-              ))}
-            </div>
+      {/* Top row: linked variable pill OR icon+input+slider+unit */}
+      {isLinked ? (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+          <div style={{
+            flex: 1, height: 24, display: "flex", alignItems: "center", padding: "0 8px",
+            background: `${color.variable}1a`, borderRadius: 4,
+            border: `1px solid ${color.variable}4d`,
+          }}>
+            <span style={{
+              fontSize: 11, fontFamily: font.mono, color: color.variable,
+              fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
+              {activeVariable!.replace(/^--/, "")}
+            </span>
+          </div>
+          {onSelectVariable && (
+            <VariableLinkDot
+              rowHovered={true}
+              isLinked={true}
+              onUnlink={onUnlink}
+              variableType="length"
+              element={element}
+              onSelect={(varExpr) => onSelectVariable?.(varExpr)}
+              activeVariable={activeVariable}
+              inline
+            />
           )}
         </div>
-      </div>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+          {/* Direction indicator */}
+          <div
+            style={{
+              width: "24px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: surface.hover,
+              borderRadius: "3px",
+              fontSize: "12px",
+              color: text.secondary,
+              flexShrink: 0,
+            }}
+          >
+            {icon}
+          </div>
 
-      {/* Preset grid: 2 rows × 4 columns */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "4px" }}>
+          {/* Value input */}
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={(e) => {
+              commitInput();
+              (e.currentTarget as HTMLElement).style.borderColor = border.default;
+            }}
+            onKeyDown={handleInputKeyDown}
+            onDoubleClick={selectAllOnDoubleClick}
+            style={{
+              width: "36px",
+              height: "24px",
+              background: surface.hover,
+              border: `1px solid ${border.default}`,
+              borderRadius: "3px",
+              color: text.secondary,
+              fontSize: "11px",
+              fontFamily: font.mono,
+              textAlign: "center",
+              padding: "0 2px",
+              outline: "none",
+              flexShrink: 0,
+            }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.6);
+            }}
+          />
+
+          {/* Slider */}
+          <div
+            style={{
+              flex: 1,
+              position: "relative",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <input
+              type="range"
+              className="spacing-popover-slider"
+              min={sliderMin}
+              max={sliderMax}
+              step={4}
+              value={value}
+              onChange={(e) => onChange(parseFloat(e.target.value))}
+              style={{
+                width: "100%",
+                height: "3px",
+                appearance: "none",
+                WebkitAppearance: "none",
+                background: `linear-gradient(to right, ${color.primary} ${sliderPct}%, ${border.default} ${sliderPct}%)`,
+                borderRadius: "2px",
+                outline: "none",
+                cursor: "pointer",
+              }}
+            />
+          </div>
+
+          {/* Unit selector */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              type="button"
+              aria-expanded={unitOpen}
+              aria-haspopup="listbox"
+              onClick={() => setUnitOpen(!unitOpen)}
+              style={{
+                height: "24px",
+                padding: "0 6px",
+                background: surface.hover,
+                border: `1px solid ${primaryAlpha(0.4)}`,
+                borderRadius: "3px",
+                color: text.secondary,
+                fontSize: "10px",
+                fontFamily: font.mono,
+                cursor: "pointer",
+                textTransform: "uppercase",
+                outline: "none",
+                minWidth: "32px",
+              }}
+            >
+              {unit}
+            </button>
+            {unitOpen && (
+              <div
+                role="listbox"
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 2px)",
+                  right: 0,
+                  minWidth: "48px",
+                  background: color.popover,
+                  border: `1px solid ${border.default}`,
+                  borderRadius: "4px",
+                  boxShadow: shadow.dropdown,
+                  zIndex: zIndex.float,
+                  padding: "2px 0",
+                }}
+              >
+                {units.map((u) => (
+                  <button
+                    key={u}
+                    type="button"
+                    role="option"
+                    aria-selected={u === unit}
+                    onClick={() => {
+                      onUnitChange(u);
+                      setUnitOpen(false);
+                    }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      padding: "3px 8px",
+                      fontSize: "10px",
+                      fontFamily: font.mono,
+                      color: u === unit ? "#fff" : text.secondary,
+                      background: u === unit ? color.primary : "transparent",
+                      cursor: "pointer",
+                      textTransform: "uppercase",
+                      textAlign: "left",
+                      border: "none",
+                      outline: "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (u !== unit)
+                        (e.currentTarget as HTMLElement).style.background = surface.hover;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (u !== unit)
+                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Variable link dot (unlinked state) */}
+          {onSelectVariable && (
+            <VariableLinkDot
+              rowHovered={true}
+              isLinked={false}
+              variableType="length"
+              element={element}
+              onSelect={(varExpr) => onSelectVariable?.(varExpr)}
+              activeVariable={activeVariable}
+              inline
+            />
+          )}
+        </div>
+      )}
+
+      {/* Preset grid: 2 rows × 4 columns (hidden when linked to variable) */}
+      {!isLinked && <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "4px" }}>
         {PRESETS.map((preset) => (
           <button
             type="button"
@@ -406,7 +462,7 @@ export function SpacingValuePopover({
             {preset}
           </button>
         ))}
-      </div>
+      </div>}
     </div>,
     document.body,
   );

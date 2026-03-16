@@ -681,6 +681,21 @@ export function SpacingBoxModel({
           anchorRect={popoverState.rect}
           onClose={() => setPopoverState(null)}
           isTailwind={isTailwind}
+          element={element}
+          activeVariable={cssVars[popoverState.prop] ?? null}
+          onSelectVariable={(varExpr) => {
+            const varName = varExpr.match(/^var\(\s*(--[\w-]+)/)?.[1] ?? null;
+            if (varName && onVarChange) {
+              onVarChange(popoverState.prop, varName);
+              setPopoverState(null);
+            }
+          }}
+          onUnlink={() => {
+            if (onVarChange) {
+              onVarChange(popoverState.prop, null);
+              setPopoverState(null);
+            }
+          }}
         />
       )}
     </div>

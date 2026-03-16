@@ -18,6 +18,7 @@ import { LabelScrub } from "../controls/LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "../controls";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
+import { VariableField } from "../controls/VariableField";
 import { color, text, border, surface, font, primaryAlpha } from "../theme";
 import type { IndicatorType } from "../theme";
 import { parseValueWithUnit } from "../parseValueWithUnit";
@@ -180,7 +181,7 @@ export function SizeInputCell({
         minWidth: 0,
       }}
     >
-      {!isKeyword && variableOptions && onCssVarChange && (
+      {!isKeyword && !isVariable && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
           isLinked={isVariable}

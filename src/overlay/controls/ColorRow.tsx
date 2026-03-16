@@ -14,6 +14,7 @@ import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { parseVarAlias } from "../variables/discoverVariables";
 import { X } from "lucide-react";
 import { VariableLinkDot } from "./VariableLinkDot";
+import { VariableField } from "./VariableField";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
