@@ -425,3 +425,41 @@ describe("handleTailwindCommit", () => {
     expect(result.failed).toHaveLength(1);
   });
 });
+
+// ─── Wiring: EnrichedChange shape matches TailwindChange ─────────────
+
+describe("client→server field compatibility", () => {
+  it("EnrichedChange with mode=tailwind has all fields TailwindChange needs", async () => {
+    // Simulate the enriched change shape from commitUtils.ts
+    const enriched = {
+      prop: "display",
+      from: "flex",
+      to: "grid",
+      sourceFile: "src/App.tsx",
+      sourceLine: 2,
+      mode: "tailwind" as const,
+      newClasses: "grid",
+      existingClasses: "flex items-center",
+    };
+
+    const filePath = enriched.sourceFile;
+    await writeFixture(
+      filePath,
+      [
+        "export default function App() {",
+        '  return <div className="flex items-center">Hello</div>;',
+        "}",
+      ].join("\n")
+    );
+
+    // The server handler should accept this shape directly
+    const result = await handleTailwindCommit([enriched], tempDir);
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // mergeClasses keeps non-conflicting existing classes first, then appends new
+    expect(content).toContain("items-center grid");
+    expect(content).not.toContain('"flex items-center"');
+  });
+});

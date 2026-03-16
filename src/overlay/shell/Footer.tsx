@@ -190,7 +190,10 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes: enriched }),
+        body: JSON.stringify({
+          ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
+          changes: enriched,
+        }),
       });
 
       if (!res.ok) {

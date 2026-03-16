@@ -23,7 +23,8 @@ export interface EnrichedChange extends DiffEntry {
   /** Compiled CSS href for server-side source map resolution */
   cssHref?: string;
   mode?: "css" | "tailwind";
-  tailwindClasses?: string;
+  /** Tailwind classes to merge (field name matches TailwindChange.newClasses) */
+  newClasses?: string;
   existingClasses?: string;
 }
 
@@ -63,7 +64,7 @@ export function enrichChangesForCommit(
   // Tailwind path: convert CSS diffs to Tailwind classes and target JSX source
   if (isTailwindElement(element)) {
     const reactSource = getReactSource(element);
-    const tailwindClasses = formatTailwindDiff(changes);
+    const newClasses = formatTailwindDiff(changes);
     const existingClasses = typeof element.className === "string" ? element.className : "";
 
     return changes.map((c) => ({
@@ -71,7 +72,7 @@ export function enrichChangesForCommit(
       sourceFile: reactSource?.file,
       sourceLine: reactSource?.line,
       mode: "tailwind" as const,
-      tailwindClasses,
+      newClasses,
       existingClasses,
     }));
   }
