@@ -69,9 +69,9 @@ function renderStyleTag() {
   el.textContent = serializeModeOverrides();
 }
 
-// ─── Public API ─────────────────────────────────────────────────────
+// ─── Internal mutation helpers (no undo/redo side-effects) ──────────
 
-export function applyModeOverride(
+function applyModeOverrideInternal(
   selector: string,
   varName: string,
   value: string,
@@ -86,7 +86,7 @@ export function applyModeOverride(
   notify();
 }
 
-export function removeModeOverride(
+function removeModeOverrideInternal(
   selector: string,
   varName: string,
 ): void {
@@ -98,6 +98,44 @@ export function removeModeOverride(
   notify();
 }
 
+// ─── Public API ─────────────────────────────────────────────────────
+
+export function applyModeOverride(
+  selector: string,
+  varName: string,
+  value: string,
+): void {
+  const prev = store.get(selector)?.get(varName) ?? null;
+  undoStack.push({ selector, varName, prev, next: value });
+  redoStack.length = 0;
+  applyModeOverrideInternal(selector, varName, value);
+}
+
+export function removeModeOverride(
+  selector: string,
+  varName: string,
+): void {
+  removeModeOverrideInternal(selector, varName);
+}
+
+export function undoModeOverride(): void {
+  const entry = undoStack.pop();
+  if (!entry) return;
+  redoStack.push(entry);
+  if (entry.prev === null) {
+    removeModeOverrideInternal(entry.selector, entry.varName);
+  } else {
+    applyModeOverrideInternal(entry.selector, entry.varName, entry.prev);
+  }
+}
+
+export function redoModeOverride(): void {
+  const entry = redoStack.pop();
+  if (!entry) return;
+  undoStack.push(entry);
+  applyModeOverrideInternal(entry.selector, entry.varName, entry.next);
+}
+
 export function getModeOverrides(
   selector: string,
 ): Record<string, string> | undefined {
@@ -107,6 +145,8 @@ export function getModeOverrides(
 }
 
 export function resetAllModeOverrides(): void {
+  undoStack.length = 0;
+  redoStack.length = 0;
   if (store.size === 0) return;
   store.clear();
   if (styleEl && document.contains(styleEl)) {

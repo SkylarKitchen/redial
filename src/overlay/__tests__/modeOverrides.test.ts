@@ -141,3 +141,15 @@ describe("undo/redo", () => {
     expect(getModeOverrides(".dark")).toBeUndefined();
   });
 });
+
+describe("serializeModeOverrides formatting", () => {
+  it("produces pasteable CSS with proper indentation", () => {
+    applyModeOverride(":root.dark", "--bg-primary", "#1a1a1a");
+    applyModeOverride(":root.dark", "--text-primary", "#f5f5f5");
+    applyModeOverride('[data-theme="ocean"]', "--accent", "#0066cc");
+    const css = serializeModeOverrides();
+    expect(css).toBe(
+      ':root.dark {\n  --bg-primary: #1a1a1a;\n  --text-primary: #f5f5f5;\n}\n\n[data-theme="ocean"] {\n  --accent: #0066cc;\n}'
+    );
+  });
+});
