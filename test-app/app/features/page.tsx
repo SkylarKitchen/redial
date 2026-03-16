@@ -1,4 +1,6 @@
 import DocsNav from "../components/DocsNav";
+import DocsSidebar from "../components/DocsSidebar";
+import PageNav from "../components/PageNav";
 import styles from "../docs.module.scss";
 
 const panelSections = [
@@ -51,53 +53,59 @@ const shortcuts = [
   { key: "Tab", action: "Move between controls" },
 ];
 
+const sidebarSections = [
+  {
+    title: "Panel",
+    links: [
+      { id: "sections", label: "CSS Sections" },
+      { id: "variables", label: "CSS Variables" },
+    ],
+  },
+  {
+    title: "Workflow",
+    links: [
+      { id: "scoping", label: "Scoping" },
+      { id: "state-editing", label: "State Editing" },
+      { id: "undo-redo", label: "Undo/Redo" },
+      { id: "session", label: "Session Persistence" },
+      { id: "overlays", label: "Visual Overlays" },
+    ],
+  },
+  {
+    title: "Output",
+    links: [
+      { id: "commit", label: "Commit Flow" },
+      { id: "copy", label: "Copy/Export" },
+    ],
+  },
+  {
+    title: "Reference",
+    links: [
+      { id: "shortcuts", label: "Keyboard Shortcuts" },
+      { id: "scrubbing", label: "Label-Drag Scrubbing" },
+    ],
+  },
+];
+
 export default function FeaturesPage() {
   return (
     <div className={styles.docsPage}>
       <DocsNav />
       <div className={styles.docsContentWithSidebar}>
-        {/* ── Sidebar ── */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarSection}>
-            <h4>Panel</h4>
-            <a href="#sections" className={styles.sidebarLink}>CSS Sections</a>
-            <a href="#variables" className={styles.sidebarLink}>CSS Variables</a>
-          </div>
-          <div className={styles.sidebarSection}>
-            <h4>Workflow</h4>
-            <a href="#scoping" className={styles.sidebarLink}>Scoping</a>
-            <a href="#state-editing" className={styles.sidebarLink}>State Editing</a>
-            <a href="#undo-redo" className={styles.sidebarLink}>Undo/Redo</a>
-            <a href="#session" className={styles.sidebarLink}>Session Persistence</a>
-            <a href="#overlays" className={styles.sidebarLink}>Visual Overlays</a>
-          </div>
-          <div className={styles.sidebarSection}>
-            <h4>Output</h4>
-            <a href="#commit" className={styles.sidebarLink}>Commit Flow</a>
-            <a href="#copy" className={styles.sidebarLink}>Copy/Export</a>
-          </div>
-          <div className={styles.sidebarSection}>
-            <h4>Reference</h4>
-            <a href="#shortcuts" className={styles.sidebarLink}>Keyboard Shortcuts</a>
-            <a href="#scrubbing" className={styles.sidebarLink}>Label-Drag Scrubbing</a>
-          </div>
-        </aside>
+        <DocsSidebar sections={sidebarSections} />
 
-        {/* ── Content ── */}
-        <div className={styles.withSidebar} style={{ paddingTop: 56 }}>
-          {/* Page Header */}
+        <div className={styles.withSidebar}>
           <h1 className={styles.pageTitle}>Features</h1>
           <p className={styles.pageSubtitle}>
-            Context-aware controls that read your element's computed styles and
-            save changes directly to source files via HMR.
+            Context-aware controls that read your element&apos;s computed styles
+            and save changes directly to source files via HMR.
           </p>
 
-          {/* Panel Sections */}
           <section id="sections" className={styles.featureSection}>
             <h2>Panel Sections</h2>
             <p>
               Eight context-aware sections that adapt their controls based on the
-              selected element's current styles and display type.
+              selected element&apos;s current styles and display type.
             </p>
             <div className={styles.panelSectionGrid}>
               {panelSections.map((s) => (
@@ -109,7 +117,6 @@ export default function FeaturesPage() {
             </div>
           </section>
 
-          {/* CSS Variables */}
           <section id="variables" className={styles.featureSection}>
             <h2>CSS Variables</h2>
             <p>
@@ -119,7 +126,6 @@ export default function FeaturesPage() {
             </p>
           </section>
 
-          {/* Scoping */}
           <section id="scoping" className={styles.featureSection}>
             <h2>Scoping</h2>
             <p>
@@ -130,37 +136,34 @@ export default function FeaturesPage() {
             </p>
           </section>
 
-          {/* State Editing */}
           <section id="state-editing" className={styles.featureSection}>
             <h2>State Editing</h2>
             <p>
-              Preview and edit pseudo-class styles like :hover, :focus,
-              :active, and :focus-visible. The panel forces the pseudo-state on
-              the element so you can tune it visually without holding the mouse.
+              Preview and edit pseudo-class styles like :hover, :focus, :active,
+              and :focus-visible. The panel forces the pseudo-state on the
+              element so you can tune it visually without holding the mouse.
             </p>
           </section>
 
-          {/* Undo/Redo */}
           <section id="undo-redo" className={styles.featureSection}>
             <h2>Undo / Redo</h2>
             <p>
-              Full undo stack for every change. Cmd+Z to undo,
-              Cmd+Shift+Z to redo. Each property change is a discrete entry,
-              so you can step back through granular adjustments.
+              Full undo stack for every change. Cmd+Z to undo, Cmd+Shift+Z to
+              redo. Each property change is a discrete entry, so you can step
+              back through granular adjustments.
             </p>
           </section>
 
-          {/* Session Persistence */}
           <section id="session" className={styles.featureSection}>
             <h2>Session Persistence</h2>
             <p>
               All unsaved overrides are persisted to localStorage. Your work
-              survives page refreshes, HMR reloads, and browser restarts. Changes
-              are restored automatically when you reselect the same element.
+              survives page refreshes, HMR reloads, and browser restarts.
+              Changes are restored automatically when you reselect the same
+              element.
             </p>
           </section>
 
-          {/* Visual Overlays */}
           <section id="overlays" className={styles.featureSection}>
             <h2>Visual Overlays</h2>
             <p>
@@ -170,22 +173,22 @@ export default function FeaturesPage() {
             </p>
           </section>
 
-          {/* Commit Flow */}
           <section id="commit" className={styles.featureSection}>
             <h2>Commit Flow</h2>
             <p>
-              Save changes back to your source files without leaving the
-              browser. Supports CSS Modules and Tailwind.
+              Save changes back to your source files without leaving the browser.
+              Supports CSS Modules and Tailwind.
             </p>
-            <ol style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, paddingLeft: 20, marginBottom: 16 }}>
-              <li>Read source maps to locate the original file and line number</li>
+            <ol className={styles.orderedList}>
+              <li>
+                Read source maps to locate the original file and line number
+              </li>
               <li>Find the matching declaration in the source file</li>
               <li>String-replace the old value with the new one</li>
               <li>Trigger HMR so the browser updates instantly</li>
             </ol>
           </section>
 
-          {/* Copy/Export */}
           <section id="copy" className={styles.featureSection}>
             <h2>Copy / Export</h2>
             <p>
@@ -196,7 +199,6 @@ export default function FeaturesPage() {
             </p>
           </section>
 
-          {/* Keyboard Shortcuts */}
           <section id="shortcuts" className={styles.featureSection}>
             <h2>Keyboard Shortcuts</h2>
             <table className={styles.shortcutsTable}>
@@ -209,7 +211,9 @@ export default function FeaturesPage() {
               <tbody>
                 {shortcuts.map((s) => (
                   <tr key={s.key}>
-                    <td><kbd>{s.key}</kbd></td>
+                    <td>
+                      <kbd>{s.key}</kbd>
+                    </td>
                     <td>{s.action}</td>
                   </tr>
                 ))}
@@ -217,16 +221,16 @@ export default function FeaturesPage() {
             </table>
           </section>
 
-          {/* Label-Drag Scrubbing */}
           <section id="scrubbing" className={styles.featureSection}>
             <h2>Label-Drag Scrubbing</h2>
             <p>
-              Click and drag on any numeric label to scrub its value. Hold
-              Shift for 10x speed, or Alt for 0.1x fine-tuning.
+              Click and drag on any numeric label to scrub its value. Hold Shift
+              for 10x speed, or Alt for 0.1x fine-tuning.
             </p>
           </section>
 
-          {/* Footer */}
+          <PageNav prev={{ href: "/install", label: "Install" }} />
+
           <footer className={styles.docsFooter}>
             <p>
               MIT License{" · "}

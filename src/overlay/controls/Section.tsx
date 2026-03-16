@@ -5,7 +5,7 @@
 import React, { useState, useContext } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 import { color, surface } from "../theme";
 import { ChevronRight } from "lucide-react";
 import { SectionMemoryContext } from "./helpers";
@@ -108,7 +108,7 @@ export function Section({
                 display: "flex",
                 alignItems: "center",
                 color: color.mutedForeground,
-                transition: `transform ${ms("expand")} ease`,
+                transition: cssTransition("transform", "expand"),
                 transform: open ? "rotate(90deg)" : "rotate(0deg)",
               }}
             >

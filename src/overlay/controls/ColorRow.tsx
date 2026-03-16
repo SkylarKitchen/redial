@@ -151,6 +151,9 @@ export function ColorRow({
             setPickerOpen(!pickerOpen);
           }
         }}
+        onMouseDown={swatchPress.onMouseDown}
+        onMouseUp={swatchPress.onMouseUp}
+        onMouseLeave={swatchPress.onMouseLeave}
         style={{
           width: 20,
           height: 20,
@@ -163,6 +166,7 @@ export function ColorRow({
               : displayColor,
           border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
           boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
+          ...swatchPressStyle,
         }}
         title={aliasChainTitle}
       />
@@ -190,6 +194,8 @@ export function ColorRow({
             e.stopPropagation();
             if (resolvedColor) onChange(resolvedColor);
           }}
+          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
+          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
           style={{
             background: "none",
             border: "none",
@@ -199,6 +205,7 @@ export function ColorRow({
             flexShrink: 0,
             display: "flex",
             alignItems: "center",
+            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
           <Unlink size={11} strokeWidth={2} />
