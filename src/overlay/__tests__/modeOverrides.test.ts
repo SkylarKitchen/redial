@@ -8,6 +8,8 @@ import {
   serializeModeOverrides,
   subscribeModeOverrides,
   getModeOverrideSnapshot,
+  undoModeOverride,
+  redoModeOverride,
 } from "../variables/modeOverrides";
 
 afterEach(() => {
