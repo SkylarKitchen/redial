@@ -167,6 +167,11 @@ export function serializeModeOverrides(): string {
   return blocks.join("\n\n");
 }
 
+/** Check if a specific selector + variable has an override applied */
+export function isModeOverrideDirty(selector: string, varName: string): boolean {
+  return store.get(selector)?.has(varName) ?? false;
+}
+
 /** Total number of overridden variable-mode pairs */
 export function getModeOverrideCount(): number {
   let count = 0;

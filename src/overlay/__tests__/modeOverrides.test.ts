@@ -10,6 +10,7 @@ import {
   getModeOverrideSnapshot,
   undoModeOverride,
   redoModeOverride,
+  isModeOverrideDirty,
 } from "../variables/modeOverrides";
 
 afterEach(() => {
@@ -139,6 +140,23 @@ describe("undo/redo", () => {
   it("undo past the beginning is a no-op", () => {
     undoModeOverride();
     expect(getModeOverrides(".dark")).toBeUndefined();
+  });
+});
+
+describe("isModeOverrideDirty", () => {
+  it("returns false when no override for that selector+var", () => {
+    expect(isModeOverrideDirty(".dark", "--bg")).toBe(false);
+  });
+
+  it("returns true after applying override", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    expect(isModeOverrideDirty(".dark", "--bg")).toBe(true);
+  });
+
+  it("returns false after undo", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    undoModeOverride();
+    expect(isModeOverrideDirty(".dark", "--bg")).toBe(false);
   });
 });
 

@@ -6,7 +6,7 @@
  * right-click context menu.
  */
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Copy, Trash2, Plus } from "lucide-react";
 import { inferSubgroups, type Subgroup } from "./autoCollections";
@@ -19,6 +19,14 @@ import {
   applyCustomProperty,
   isCustomPropertyDirty,
 } from "../core/apply";
+import {
+  applyModeOverride,
+  getModeOverrides,
+  isModeOverrideDirty,
+  subscribeModeOverrides,
+  getModeOverrideSnapshot,
+} from "./modeOverrides";
+import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import {
   text,
