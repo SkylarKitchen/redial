@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import styles from "../page.module.css";
+import styles from "../page.module.scss";
 
 /**
  * Demo page — auto-opens the real Tuner panel on a sample element.

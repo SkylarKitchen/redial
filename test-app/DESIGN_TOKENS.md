@@ -30,7 +30,7 @@ test-app/app/
 │   ├── primitives.css    ← Raw scales (colors, spacing, type, radii)
 │   └── semantic.css      ← Meaningful aliases + dark mode remapping
 ├── globals.css           ← Imports both token files
-└── page.module.css       ← Component styles (semantic tokens only)
+└── page.module.scss      ← Component styles (semantic tokens only)
 ```
 
 ---
