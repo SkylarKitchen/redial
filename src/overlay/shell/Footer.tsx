@@ -172,7 +172,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     // Use state-specific diff when a pseudo-class state is active
     const isStateActive = activeState !== "none";
     const changes = isStateActive ? diffState(element, activeState) : diff(element);
-    if (changes.length === 0) { savingRef.current = false; return; }
+    if (changes.length === 0 && getModeOverrideCount() === 0) { savingRef.current = false; return; }
 
     setSaving(true);
     setMessage(null);
@@ -415,7 +415,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               ...savePressStyle,
             }}
           >
-            {saving ? "..." : saved ? "\u2713 Saved" : count > 0 ? `Save (${count})` : "Save"}
+            {saving ? "..." : saved ? "\u2713 Saved" : totalCount > 0 ? `Save (${totalCount})` : "Save"}
           </button>
         </div>
       </div>
