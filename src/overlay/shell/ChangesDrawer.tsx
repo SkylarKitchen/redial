@@ -6,14 +6,13 @@
  * - "History" — chronological log with "Undo to here" (from HistoryDrawer)
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "../util";
 import { resolveSource, getModuleClassInfo } from "../core/sourcemap";
 import { timing, ms } from "../timing";
-import { Button } from "@/components/ui/button";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
 import { getConfig } from "../core/config";
 
@@ -38,6 +37,47 @@ interface ChangesDrawerProps {
   entries: HistoryEntry[];
   onUndoToIndex: (index: number) => void;
   onClose: () => void;
+}
+
+// ─── Inline-hover button (matches overlay convention) ────────────
+
+function ActionButton({
+  children,
+  onClick,
+  disabled,
+  color: textColor = text.label,
+}: {
+  children: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  color?: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        height: 28,
+        paddingLeft: 8,
+        paddingRight: 8,
+        fontSize: 12,
+        fontFamily: font.sans,
+        fontWeight: 400,
+        border: "none",
+        borderRadius: 4,
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        color: textColor,
+        background: hovered && !disabled ? surface.hover : "transparent",
+        transition: `background ${ms("fast")}, opacity ${ms("fast")}`,
+      }}
+    >
+      {children}
+    </button>
+  );
 }
 
 // ─── Main component ──────────────────────────────────────────────
@@ -86,15 +126,7 @@ export function ChangesDrawer({
             <TabPill label="Pending" active={activeTab === "pending"} onClick={() => setTab("pending")} />
             <TabPill label="History" active={activeTab === "history"} onClick={() => setTab("history")} />
             <div style={{ marginLeft: "auto" }}>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="h-6 px-2 text-[11px]"
-                style={{ color: text.label }}
-              >
-                Close
-              </Button>
+              <ActionButton onClick={onClose}>Close</ActionButton>
             </div>
           </div>
 
@@ -243,30 +275,16 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
 
       {/* Action bar */}
       <div className="flex items-center justify-between mt-2 pt-1.5 border-t" style={{ borderColor: border.default }}>
-        <div className="flex gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopyAll}
-            disabled={allDiffs.length === 0}
-            className="h-7 px-2 text-[12px]"
-            style={{ color: text.label }}
-          >
+        <div style={{ display: "flex", gap: 6 }}>
+          <ActionButton onClick={handleCopyAll} disabled={allDiffs.length === 0}>
             Copy All
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSaveAll}
-            disabled={allDiffs.length === 0 || saving}
-            className="h-7 px-2 text-[12px]"
-            style={{ color: text.label }}
-          >
+          </ActionButton>
+          <ActionButton onClick={handleSaveAll} disabled={allDiffs.length === 0 || saving}>
             {saving ? "..." : "Save All"}
-          </Button>
+          </ActionButton>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div role="status" aria-live="polite" className="min-h-[14px]">
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div role="status" aria-live="polite" style={{ minHeight: 14 }}>
             <AnimatePresence mode="wait">
               {message && (
                 <motion.span
@@ -275,24 +293,16 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: timing.expand / 1000 }}
-                  className="text-[10px]"
-                  style={{ color: text.label }}
+                  style={{ fontSize: 10, color: text.label }}
                 >
                   {message}
                 </motion.span>
               )}
             </AnimatePresence>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleResetAll}
-            disabled={allDiffs.length === 0}
-            className="h-7 px-2 text-[12px]"
-            style={{ color: destructiveAlpha(0.8) }}
-          >
+          <ActionButton onClick={handleResetAll} disabled={allDiffs.length === 0} color={destructiveAlpha(0.8)}>
             Reset All
-          </Button>
+          </ActionButton>
         </div>
       </div>
     </div>
@@ -339,15 +349,9 @@ function HistoryContent({
                 <span className="text-[10px] font-mono" style={{ color: text.label }}>
                   {formatTime(entry.timestamp)}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onUndoToIndex(originalIndex)}
-                  className="h-6 px-1.5 text-[11px]"
-                  style={{ color: text.label }}
-                >
+                <ActionButton onClick={() => onUndoToIndex(originalIndex)}>
                   Undo to here
-                </Button>
+                </ActionButton>
               </div>
               <div className="text-[11px] font-medium font-mono mt-0.5" style={{ color: color.foreground }}>
                 {entry.property}
