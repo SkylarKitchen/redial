@@ -28,7 +28,6 @@ import { useClickOutside } from "../hooks/useClickOutside";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
-import { VariableField } from "../controls/VariableField";
 import { LAYOUT_UNITS, DIRECTION_ICONS_SHORT, DIRECTION_MORE_OPTIONS } from "../panelConstants";
 import { ROW } from "../panelStyles";
 
@@ -1150,7 +1149,7 @@ export function TypoValueCell({
         ...flashStyle,
       }}
     >
-      {!isKeyword && !isVariable && variableOptions && onCssVarChange && (
+      {!isKeyword && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
           isLinked={isVariable}
@@ -1164,16 +1163,26 @@ export function TypoValueCell({
         />
       )}
       {isVariable ? (
-        <VariableField
-          variableName={cssVar!}
-          variableType="length"
-          element={undefined}
-          onSelectVariable={(varExpr) => {
-            const match = varExpr.match(/^var\((.+)\)$/);
-            if (match) onCssVarChange?.(match[1]);
+        <span
+          title={`${cssVar}: ${cssVarResolved ?? "?"}`}
+          onClick={() => onCssVarChange?.(null)}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: 11,
+            fontFamily: font.mono,
+            paddingLeft: 6,
+            paddingRight: 6,
+            cursor: "pointer",
+            outline: "none",
+            color: color.primary,
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
           }}
-          onUnlink={() => onCssVarChange?.(null)}
-        />
+        >
+          {cssVar?.replace(/^--/, "")}
+        </span>
       ) : isKeyword ? (
         <span
           tabIndex={0}
@@ -1232,39 +1241,37 @@ export function TypoValueCell({
           {value}
         </span>
       )}
-      {!isVariable && (
-        <div style={{
-          flexShrink: 0,
-          paddingRight: 3,
-          borderLeft: `1px solid ${blackAlpha(0.07)}`,
-          alignSelf: "stretch",
-          display: "flex",
-          alignItems: "center",
-        }}>
-          {units && onUnitChange ? (
-            <UnitSelector
-              value={unit}
-              options={units}
-              onChange={onUnitChange}
-              conversionHint={conversionHint}
-              variableOptions={variableOptions}
-              onVariableSelect={(name) => onCssVarChange?.(name)}
-              embedded
-            />
-          ) : (
-            <span style={{
-              fontSize: 9,
-              textTransform: "uppercase",
-              paddingRight: 4,
-              flexShrink: 0,
-              fontFamily: font.mono,
-              color: text.disabled,
-            }}>
-              {unit}
-            </span>
-          )}
-        </div>
-      )}
+      <div style={{
+        flexShrink: 0,
+        paddingRight: 3,
+        borderLeft: `1px solid ${blackAlpha(0.07)}`,
+        alignSelf: "stretch",
+        display: "flex",
+        alignItems: "center",
+      }}>
+        {units && onUnitChange ? (
+          <UnitSelector
+            value={isVariable ? "VAR" : unit}
+            options={units}
+            onChange={(u) => { if (isVariable) onCssVarChange?.(null); onUnitChange(u); }}
+            conversionHint={conversionHint}
+            variableOptions={variableOptions}
+            onVariableSelect={(name) => onCssVarChange?.(name)}
+            embedded
+          />
+        ) : (
+          <span style={{
+            fontSize: 9,
+            textTransform: "uppercase",
+            paddingRight: 4,
+            flexShrink: 0,
+            fontFamily: font.mono,
+            color: text.disabled,
+          }}>
+            {unit}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

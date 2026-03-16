@@ -15,7 +15,6 @@ import { text, border, surface, font, primaryAlpha } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
 import { VariableLinkDot } from "./VariableLinkDot";
-import { VariableField } from "./VariableField";
 import { X } from "lucide-react";
 import { ms } from "../timing";
 
@@ -142,13 +141,32 @@ export function SliderRow({
             </ComputedTooltip>
           ) : labelContent}
         </LabelScrub>
-        <VariableField
-          variableName={activeVariable}
-          variableType={variableType ?? "length"}
-          element={variableElement}
-          onSelectVariable={(varExpr) => { onSelectVariable?.(varExpr); }}
-          onUnlink={handleUnlink}
-        />
+        <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
+          <VariableLinkDot
+            rowHovered={rowHovered}
+            isLinked
+            onUnlink={handleUnlink}
+            variableType={variableType ?? "length"}
+            element={variableElement}
+            onSelect={(varExpr) => { onSelectVariable?.(varExpr); }}
+            activeVariable={activeVariable}
+          />
+          <span
+            title={`var(${activeVariable})`}
+            style={{
+              flex: 1,
+              fontSize: 11,
+              fontFamily: font.mono,
+              color: primaryAlpha(0.8),
+              overflow: "clip",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              minWidth: 0,
+            }}
+          >
+            {activeVariable.replace(/^--/, "")}
+          </span>
+        </div>
         {indicator === "modified" && onReset && (
           <button
             type="button"

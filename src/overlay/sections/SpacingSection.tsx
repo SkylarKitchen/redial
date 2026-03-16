@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, useRef, memo } from "react";
 import { Section } from "../controls";
 import { SpacingBoxModel } from "./SpacingBoxModel";
 import { buildConversionContext, convertUnit } from "../unitConversion";
@@ -29,6 +29,10 @@ export const SpacingSection = memo(function SpacingSection({
 
   const [marginUnit, setMarginUnit] = useState(() => detectUnit(element, "margin-top"));
   const [paddingUnit, setPaddingUnit] = useState(() => detectUnit(element, "padding-top"));
+  const marginUnitRef = useRef(marginUnit);
+  marginUnitRef.current = marginUnit;
+  const paddingUnitRef = useRef(paddingUnit);
+  paddingUnitRef.current = paddingUnit;
 
   // ─── CSS variable state per spacing property ────────────────────
   const extractVar = (prop: string): string | null => {
@@ -54,10 +58,10 @@ export const SpacingSection = memo(function SpacingSection({
       // Unlink: resolve computed value and apply as numeric
       const computed = parseFloat(getComputedStyle(element).getPropertyValue(prop));
       const isMargin = prop.startsWith("margin");
-      const unit = isMargin ? marginUnit : paddingUnit;
+      const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
       onSpacingChange(prop, isNaN(computed) ? 0 : computed, unit);
     }
-  }, [element, ctx, marginUnit, paddingUnit, onSpacingChange]);
+  }, [element, ctx, onSpacingChange]);
 
   return (
     <Section

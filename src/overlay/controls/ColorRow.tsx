@@ -14,7 +14,6 @@ import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { parseVarAlias } from "../variables/discoverVariables";
 import { X } from "lucide-react";
 import { VariableLinkDot } from "./VariableLinkDot";
-import { VariableField } from "./VariableField";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
@@ -142,67 +141,60 @@ export function ColorRow({
         </div>
       )}
       <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-        {varName ? (
-          <VariableField
-            variableName={varName}
-            variableType="color"
-            onSelectVariable={(varExpr) => onChange(varExpr)}
-            onUnlink={() => { if (resolvedColor) onChange(resolvedColor); }}
-          />
-        ) : (
-          <>
-            <VariableLinkDot
-              rowHovered={rowHovered}
-              isLinked={false}
-              variableType="color"
-              onSelect={(varExpr) => onChange(varExpr)}
-              activeVariable={null}
-            />
-            <div
-              ref={swatchRef}
-              className="tuner-focusable"
-              tabIndex={0}
-              role="button"
-              onClick={() => setPickerOpen(!pickerOpen)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setPickerOpen(!pickerOpen);
-                }
-              }}
-              onMouseDown={swatchPress.onMouseDown}
-              onMouseUp={swatchPress.onMouseUp}
-              onMouseLeave={swatchPress.onMouseLeave}
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 2,
-                cursor: "pointer",
-                flexShrink: 0,
-                background: displayColor === "transparent" ? checkerboard : displayColor,
-                border: `1px solid ${color.border}`,
-                boxShadow: `inset 0 0 0 1px ${blackAlpha(0.06)}`,
-                ...swatchPressStyle,
-              }}
-              title={aliasChainTitle}
-            />
-            <span
-              title={aliasChainTitle}
-              style={{
-                fontSize: 10,
-                fontFamily: font.mono,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap" as const,
-                flex: 1,
-                minWidth: 0,
-                color: color.mutedForeground,
-              }}
-            >
-              {displayLabel}
-            </span>
-          </>
-        )}
+        <VariableLinkDot
+          rowHovered={rowHovered}
+          isLinked={!!varName}
+          onUnlink={() => { if (resolvedColor) onChange(resolvedColor); }}
+          variableType="color"
+          onSelect={(varExpr) => onChange(varExpr)}
+          activeVariable={varName}
+        />
+        <div
+          ref={swatchRef}
+          className="tuner-focusable"
+          tabIndex={0}
+          role="button"
+          onClick={() => setPickerOpen(!pickerOpen)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setPickerOpen(!pickerOpen);
+            }
+          }}
+          onMouseDown={swatchPress.onMouseDown}
+          onMouseUp={swatchPress.onMouseUp}
+          onMouseLeave={swatchPress.onMouseLeave}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 2,
+            cursor: "pointer",
+            flexShrink: 0,
+            background:
+              displayColor === "transparent"
+                ? checkerboard
+                : displayColor,
+            border: varName ? `2px solid ${primaryAlpha(0.6)}` : `1px solid ${color.border}`,
+            boxShadow: varName ? undefined : `inset 0 0 0 1px ${blackAlpha(0.06)}`,
+            ...swatchPressStyle,
+          }}
+          title={aliasChainTitle}
+        />
+        <span
+          title={aliasChainTitle}
+          style={{
+            fontSize: 10,
+            fontFamily: font.mono,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap" as const,
+            flex: 1,
+            minWidth: 0,
+            color: varName ? primaryAlpha(0.8) : color.mutedForeground,
+          }}
+        >
+          {displayLabel}
+        </span>
       </div>
       {indicator === "modified" && onReset && (
         <button

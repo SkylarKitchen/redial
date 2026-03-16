@@ -250,9 +250,9 @@ export function SpacingBoxModel({
             position: "relative",
           }}
           title={`var(${linkedVar}) — click to edit`}
-          onClick={() => {
-            const rect = (document.querySelector(`[data-spacing-prop="${prop}"]`) as HTMLElement)?.getBoundingClientRect();
-            if (rect) setPopoverState({ prop, rect });
+          onClick={(e) => {
+            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            setPopoverState({ prop, rect });
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
