@@ -4,7 +4,7 @@
  * Preserves the existing import API: `import { Section, SliderRow, ... } from "../controls"`
  */
 
-export { useValueFlash, selectAllOnDoubleClick, useResetPopover, PresetChips, usePressScale } from "./helpers";
+export { useValueFlash, selectAllOnDoubleClick, useResetPopover, PresetChips, usePressScale, AnimatedListItem } from "./helpers";
 export { SectionMemoryProvider } from "./helpers";
 export { labelStyle, rowStyle } from "./helpers";
 export type { SpacingSide, SpacingProperty, SpacingUnit, EditableValueProps } from "./helpers";

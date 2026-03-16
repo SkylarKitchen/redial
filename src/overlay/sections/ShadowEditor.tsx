@@ -15,7 +15,7 @@ import { shadowToCSS } from "../cssParsers";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { ms } from "../timing";
 import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "../theme";
-import { EditorRemoveButton, VisibilityToggle } from "../controls";
+import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
 
 export interface ShadowValue {
   x: number;
@@ -365,15 +365,17 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
         const dragProps = handleProps(i);
         return (
           <div key={i} ref={registerRef(i)} style={itemStyle(i)}>
-            <ShadowRow
-              shadow={shadow}
-              index={i}
-              onUpdate={handleUpdate}
-              onDelete={handleDelete}
-              onToggleVisible={handleToggleVisible}
-              dragHandleProps={dragProps}
-              isDragging={isDragging}
-            />
+            <AnimatedListItem>
+              <ShadowRow
+                shadow={shadow}
+                index={i}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+                onToggleVisible={handleToggleVisible}
+                dragHandleProps={dragProps}
+                isDragging={isDragging}
+              />
+            </AnimatedListItem>
           </div>
         );
       })}

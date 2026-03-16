@@ -105,8 +105,14 @@ export function applyModeOverride(
   varName: string,
   value: string,
 ): void {
-  const prev = store.get(selector)?.get(varName) ?? null;
-  undoStack.push({ selector, varName, prev, next: value });
+  // Coalesce consecutive entries for the same selector+varName (e.g., color picker drag)
+  const top = undoStack[undoStack.length - 1];
+  if (top && top.selector === selector && top.varName === varName) {
+    top.next = value;
+  } else {
+    const prev = store.get(selector)?.get(varName) ?? null;
+    undoStack.push({ selector, varName, prev, next: value });
+  }
   redoStack.length = 0;
   applyModeOverrideInternal(selector, varName, value);
 }

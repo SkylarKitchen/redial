@@ -17,7 +17,7 @@ import { DragHandle } from "../shell/DragHandle";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
 import { cssColorToHex, hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
-import { EditorRemoveButton, VisibilityToggle } from "../controls";
+import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
 import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
@@ -642,16 +642,18 @@ export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorP
           const dragProps = handleProps(i);
           return (
             <div key={i} ref={registerRef(i)} style={itemStyle(i)}>
-              <FilterItemRow
-                item={item}
-                index={i}
-                onUpdate={handleUpdate}
-                onRemove={handleRemove}
-                onToggleVisible={handleToggleVisible}
-                onToggleExpanded={handleToggleExpanded}
-                dragHandleProps={dragProps}
-                isDragging={isDragging}
-              />
+              <AnimatedListItem>
+                <FilterItemRow
+                  item={item}
+                  index={i}
+                  onUpdate={handleUpdate}
+                  onRemove={handleRemove}
+                  onToggleVisible={handleToggleVisible}
+                  onToggleExpanded={handleToggleExpanded}
+                  dragHandleProps={dragProps}
+                  isDragging={isDragging}
+                />
+              </AnimatedListItem>
             </div>
           );
         })}

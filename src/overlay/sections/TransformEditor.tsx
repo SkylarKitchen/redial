@@ -8,7 +8,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { TransformOriginPicker } from "./TransformOriginPicker";
-import { EditorRemoveButton, SliderRow } from "../controls";
+import { EditorRemoveButton, SliderRow, AnimatedListItem } from "../controls";
 import { SegmentedControl, type SegmentOption } from "../controls/SegmentedControl";
 import { DragHandle } from "../shell/DragHandle";
 import { useDragReorder } from "../hooks/useDragReorder";
@@ -641,21 +641,23 @@ export function TransformEditor({
           const isExpanded = expandedIndex === index;
           return (
             <div key={index} ref={registerRef(index)} style={{ ...itemStyle(index), marginBottom: 6 }}>
-              <TransformPill
-                transform={t}
-                isExpanded={isExpanded}
-                onClick={() => toggleExpand(index)}
-                onRemove={() => handleRemove(index)}
-                dragHandleProps={dragProps}
-                isDragging={isDragging}
-              />
-              {isExpanded && (
-                <TransformExpanded
+              <AnimatedListItem>
+                <TransformPill
                   transform={t}
-                  onUpdate={(updates) => handleUpdate(index, updates)}
-                  onTypeChange={(type) => handleTypeChange(index, type)}
+                  isExpanded={isExpanded}
+                  onClick={() => toggleExpand(index)}
+                  onRemove={() => handleRemove(index)}
+                  dragHandleProps={dragProps}
+                  isDragging={isDragging}
                 />
-              )}
+                {isExpanded && (
+                  <TransformExpanded
+                    transform={t}
+                    onUpdate={(updates) => handleUpdate(index, updates)}
+                    onTypeChange={(type) => handleTypeChange(index, type)}
+                  />
+                )}
+              </AnimatedListItem>
             </div>
           );
         })}

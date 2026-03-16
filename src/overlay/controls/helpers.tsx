@@ -152,6 +152,27 @@ export function usePressScale(scale = 0.97) {
   return { pressHandlers, pressStyle };
 }
 
+// ─── Animated List Item ──────────────────────────────────────────────
+
+/** Wrapper for list editor items — entrance animation on mount (scale+fade). */
+export function AnimatedListItem({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => setMounted(true));
+  }, []);
+
+  return (
+    <div style={{
+      opacity: mounted ? 1 : 0,
+      transform: mounted ? "scale(1)" : "scale(0.95)",
+      transition: cssTransition(["opacity", "transform"], "expand"),
+    }}>
+      {children}
+    </div>
+  );
+}
+
 // ─── PresetChips ────────────────────────────────────────────────────
 
 export function PresetChips({ property, onSelect, unit }: {

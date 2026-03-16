@@ -63,7 +63,41 @@
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.06);
 }
 
-/* ── Dark Mode — remap semantics, not components ── */
+/* ── Dark Mode (class toggle) — for manual theme switching ── */
+
+.dark {
+  /* Text */
+  --text-primary:    var(--color-neutral-50);
+  --text-secondary:  var(--color-neutral-400);
+  --text-tertiary:   var(--color-neutral-500);
+  --text-disabled:   var(--color-neutral-600);
+  --text-accent:     var(--color-brand-400);
+  --text-inverse:    var(--color-neutral-900);
+
+  /* Surfaces */
+  --surface-page:           var(--color-neutral-900);
+  --surface-primary:        var(--color-neutral-800);
+  --surface-inset:          var(--color-neutral-800);
+  --surface-muted:          var(--color-neutral-700);
+  --surface-elevated:       var(--color-neutral-700);
+  --surface-inverse:        var(--color-neutral-50);
+  --surface-accent-subtle:  var(--color-brand-900);
+
+  /* Borders */
+  --border-default: var(--color-neutral-700);
+  --border-subtle:  var(--color-neutral-800);
+  --border-strong:  var(--color-neutral-500);
+  --border-accent:  var(--color-brand-400);
+
+  /* Interactive */
+  --interactive-default:      var(--color-brand-400);
+  --interactive-hover:        var(--color-brand-300);
+  --interactive-active:       var(--color-brand-200);
+  --interactive-subtle:       var(--color-brand-900);
+  --interactive-subtle-hover: var(--color-brand-800);
+}
+
+/* ── Dark Mode (system preference) — automatic fallback ── */
 
 @media (prefers-color-scheme: dark) {
   :root {

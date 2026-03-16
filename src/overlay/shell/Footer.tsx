@@ -81,6 +81,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [copied, setCopied] = useState(false);
   const copyRef = useRef<HTMLDivElement>(null);
   const count = overrideCount(element);
+  const modeCount = getModeOverrideCount();
+  const totalCount = count + modeCount;
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -265,14 +267,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onReset, scope, activeClassName, activeState]);
 
   const handleResetClick = useCallback(() => {
-    if (count === 0) {
+    if (totalCount === 0) {
       setShaking(true);
       if (shakingTimerRef.current) clearTimeout(shakingTimerRef.current);
       shakingTimerRef.current = setTimeout(() => setShaking(false), timing.slow);
       return;
     }
     handleReset();
-  }, [count, handleReset]);
+  }, [totalCount, handleReset]);
 
   return (
     <div

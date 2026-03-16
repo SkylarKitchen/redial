@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import styles from "../docs.module.scss";
 
 interface SidebarSection {
@@ -15,37 +15,27 @@ export default function DocsSidebar({
 }) {
   const [activeId, setActiveId] = useState<string>("");
 
-  useEffect(() => {
-    const ids = sections.flatMap((s) => s.links.map((l) => l.id));
-    const elements = ids
-      .map((id) => document.getElementById(id))
-      .filter(Boolean) as HTMLElement[];
+  const ids = sections.flatMap((s) => s.links.map((l) => l.id));
 
-    if (elements.length === 0) return;
+  const handleScroll = useCallback(() => {
+    const offset = 120; // nav height + margin
+    let current = ids[0] || "";
 
-    // Set initial active to first section
-    setActiveId(ids[0]);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find the topmost visible entry
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-
-        if (visible.length > 0) {
-          setActiveId(visible[0].target.id);
-        }
-      },
-      {
-        rootMargin: "-80px 0px -60% 0px",
-        threshold: 0,
+    for (const id of ids) {
+      const el = document.getElementById(id);
+      if (el && el.getBoundingClientRect().top <= offset) {
+        current = id;
       }
-    );
+    }
 
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [sections]);
+    setActiveId(current);
+  }, [ids]);
+
+  useEffect(() => {
+    handleScroll(); // set initial
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   return (
     <aside className={styles.sidebar}>

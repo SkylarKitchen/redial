@@ -9,7 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
-import { EditorRemoveButton, VisibilityToggle } from "../controls";
+import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
@@ -221,15 +221,17 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
         const dragProps = handleProps(index);
         return (
           <div key={index} ref={registerRef(index)} style={itemStyle(index)}>
-            <TransitionCard
-              transition={t}
-              onUpdate={(updates) => handleUpdate(index, updates)}
-              onRemove={() => handleRemove(index)}
-              onToggleVisible={() => handleToggleVisible(index)}
-              dragHandleProps={dragProps}
-              isDragging={isDragging}
-              element={element}
-            />
+            <AnimatedListItem>
+              <TransitionCard
+                transition={t}
+                onUpdate={(updates) => handleUpdate(index, updates)}
+                onRemove={() => handleRemove(index)}
+                onToggleVisible={() => handleToggleVisible(index)}
+                dragHandleProps={dragProps}
+                isDragging={isDragging}
+                element={element}
+              />
+            </AnimatedListItem>
           </div>
         );
       })}

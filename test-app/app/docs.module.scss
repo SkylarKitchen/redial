@@ -30,8 +30,7 @@
   max-width: 1080px;
   margin: 0 auto;
   padding: var(--space-12) var(--space-6);
-  display: flex;
-  gap: var(--space-12);
+  padding-left: 260px; // sidebar width + gap
 }
 
 // ── Top Navigation ──
@@ -104,16 +103,14 @@
 // ── Sidebar ──
 
 .withSidebar {
-  flex: 1;
-  min-width: 0;
+  max-width: 760px;
 }
 
 .sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   top: 88px; // nav height + spacing
-  align-self: flex-start;
+  left: max(16px, calc((100vw - 1080px) / 2 + 16px));
+  width: 200px;
   max-height: calc(100vh - 112px);
   overflow-y: auto;
   display: flex;
