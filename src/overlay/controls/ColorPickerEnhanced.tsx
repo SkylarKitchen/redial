@@ -846,194 +846,89 @@ export function ColorPickerEnhanced({
             </div>
           )}
 
-          {colorVars.length > 0 ? (() => {
-            const swatchBtn = (cv: ColorVariable) => {
-              const isActive = activeVariable === cv.name;
-              return (
-                <button
-                  type="button"
-                  key={cv.name}
-                  onClick={() => onSelectVariable?.(`var(${cv.name})`)}
-                  title={`${cv.name}\n${cv.resolvedValue}`}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 3,
-                    border: isActive
-                      ? `2px solid ${primaryAlpha(0.8)}`
-                      : `1px solid ${border.hover}`,
-                    background: cv.resolvedValue,
-                    cursor: "pointer",
-                    padding: 0,
-                    flexShrink: 0,
-                    transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
-                    position: "relative",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
-                    (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) (e.currentTarget as HTMLElement).style.borderColor = border.hover;
-                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                  }}
-                />
-              );
-            };
-
-            // Group by token collection
-            const grouped = new Map<string, { label: string; vars: ColorVariable[] }>();
-            const uncategorized: ColorVariable[] = [];
-            for (const cv of colorVars) {
-              const coll = getCollectionForVariable(cv.name);
-              if (coll) {
-                let g = grouped.get(coll.id);
-                if (!g) { g = { label: coll.name, vars: [] }; grouped.set(coll.id, g); }
-                g.vars.push(cv);
-              } else {
-                uncategorized.push(cv);
-              }
-            }
-
-            // Order groups by collection order
-            const orderedGroups: { label: string; vars: ColorVariable[] }[] = [];
-            for (const c of collections) {
-              const g = grouped.get(c.id);
-              if (g && g.vars.length > 0) orderedGroups.push(g);
-            }
-
-            if (orderedGroups.length === 0) {
-              // No collections — show flat grid as before
-              return (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {colorVars.map(swatchBtn)}
-                </div>
-              );
-            }
-
-            return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {orderedGroups.map((g) => (
-                  <div key={g.label}>
-                    <div style={{ fontSize: 8, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
-                      {g.label}
+          {colorGroups.length > 0 ? (
+            <div style={{ maxHeight: 160, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+              {colorGroups.map((g) => (
+                <div key={g.name || "__ungrouped"}>
+                  {g.name && (
+                    <div style={{
+                      fontSize: 9,
+                      color: text.disabled,
+                      padding: "6px 0 2px",
+                      letterSpacing: "0.02em",
+                    }}>
+                      {g.name}
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {g.vars.map(swatchBtn)}
-                    </div>
-                  </div>
-                ))}
-                {uncategorized.length > 0 && (
-                  <div>
-                    {orderedGroups.length > 0 && (
-                      <div style={{ fontSize: 8, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 3 }}>
-                        Uncategorized
+                  )}
+                  {g.items.map(({ leaf, cv }) => {
+                    const isActive = activeVariable === cv.name;
+                    return (
+                      <div
+                        key={cv.name}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => onSelectVariable?.(`var(${cv.name})`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onSelectVariable?.(`var(${cv.name})`);
+                          }
+                        }}
+                        title={cv.name}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "3px 4px",
+                          borderRadius: 3,
+                          cursor: "pointer",
+                          background: isActive ? primaryAlpha(0.1) : "transparent",
+                          transition: `background ${ms("fast")}`,
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) (e.currentTarget as HTMLElement).style.background = surface.hover;
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.background = isActive ? primaryAlpha(0.1) : "transparent";
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 14,
+                            height: 14,
+                            borderRadius: "50%",
+                            background: cv.resolvedValue,
+                            border: `1px solid ${border.hover}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontFamily: font.mono,
+                            color: isActive ? themeColor.primary : text.primary,
+                            flex: 1,
+                            minWidth: 0,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {leaf}
+                        </span>
                       </div>
-                    )}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                      {uncategorized.map(swatchBtn)}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })() : (
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          ) : (
             <div style={{ fontSize: 10, color: text.hint, fontStyle: "italic" }}>
-              Click + to create a variable
+              No color variables found
             </div>
           )}
         </div>
       )}
-
-      {/* ── Saved Swatches ──────────────────────────────────── */}
-      <div style={{ borderTop: `1px solid ${surface.hover}`, paddingTop: 8 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-          <span style={{ fontSize: 9, color: text.disabled, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-            Swatches
-          </span>
-          <button
-            type="button"
-            onClick={() => addSwatch(currentHex, alpha)}
-            title="Add current color to swatches"
-            style={{
-              background: "none",
-              border: `1px solid ${themeColor.border}`,
-              borderRadius: 3,
-              color: text.label,
-              fontSize: 11,
-              lineHeight: 1,
-              width: 18,
-              height: 18,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 0,
-              transition: `border-color ${ms("fast")}, color ${ms("fast")}`,
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = text.hint;
-              (e.currentTarget as HTMLElement).style.color = text.secondary;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = themeColor.border;
-              (e.currentTarget as HTMLElement).style.color = text.label;
-            }}
-          >
-            +
-          </button>
-        </div>
-
-        {savedSwatches.length > 0 ? (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {savedSwatches.map((sw, i) => (
-              <button
-                type="button"
-                key={`${sw.hex}-${sw.opacity}-${i}`}
-                onClick={() => {
-                  const rgb = hexToRgb(sw.hex);
-                  const hsb = rgbToHsb(rgb.r, rgb.g, rgb.b);
-                  setHue(hsb.h);
-                  setSat(hsb.s);
-                  setBri(hsb.b);
-                  setAlpha(sw.opacity);
-                  emitChange(hsb.h, hsb.s, hsb.b, sw.opacity);
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  removeSwatch(i);
-                }}
-                title={`${sw.hex} ${Math.round(sw.opacity * 100)}%\nRight-click to remove`}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 3,
-                  border: `1px solid ${border.hover}`,
-                  background: sw.opacity < 1
-                    ? `linear-gradient(${sw.hex}${Math.round(sw.opacity * 255).toString(16).padStart(2, "0")}, ${sw.hex}${Math.round(sw.opacity * 255).toString(16).padStart(2, "0")}), ${CHECKER}`
-                    : sw.hex,
-                  cursor: "pointer",
-                  padding: 0,
-                  flexShrink: 0,
-                  transition: `border-color ${ms("fast")}, transform ${ms("fast")}`,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = primaryAlpha(0.5);
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1.1)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = border.hover;
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div style={{ fontSize: 10, color: text.hint, fontStyle: "italic" }}>
-            Click + to save a color
-          </div>
-        )}
-      </div>
     </div>
   );
 }
