@@ -1,11 +1,16 @@
 /**
- * VariableLinkDot.tsx — Webflow-style purple dot that triggers variable linking.
+ * VariableLinkDot.tsx — Webflow-style purple dot for variable link/unlink.
  *
- * Progressive disclosure:
+ * Progressive disclosure (unlinked):
  *   1. Row not hovered → hidden (opacity 0)
  *   2. Row hovered → small purple circle with white dot center
  *   3. Dot hovered → purple circle with white + sign
- *   4. Clicked → opens VariablePicker via onOpen callback
+ *   4. Clicked → opens VariablePicker
+ *
+ * Linked state:
+ *   1. Always visible — purple circle with white dot center
+ *   2. Dot hovered → purple circle with white × sign
+ *   3. Clicked → calls onUnlink
  *
  * Position: absolute top-left corner of parent (parent must be position: relative).
  * Size: 14px circle, shifted -7px top/left to sit on the corner.
@@ -20,8 +25,12 @@ const DOT_SIZE = 14;
 const OFFSET = -(DOT_SIZE / 2); // -7px — center on corner
 
 export interface VariableLinkDotProps {
-  /** Is the parent row currently hovered? Controls visibility. */
+  /** Is the parent row currently hovered? Controls visibility (only matters when unlinked). */
   rowHovered: boolean;
+  /** Is a variable currently linked? When true, dot is always visible and click unlinks. */
+  isLinked?: boolean;
+  /** Called when user clicks the dot while linked — should unlink the variable. */
+  onUnlink?: () => void;
   /** Variable type filter for the picker */
   variableType?: "color" | "length" | "all";
   /** Element for scoped variable discovery */
@@ -34,6 +43,8 @@ export interface VariableLinkDotProps {
 
 export function VariableLinkDot({
   rowHovered,
+  isLinked = false,
+  onUnlink,
   variableType = "length",
   element,
   onSelect,
@@ -46,8 +57,12 @@ export function VariableLinkDot({
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    setPickerOpen((prev) => !prev);
-  }, []);
+    if (isLinked && onUnlink) {
+      onUnlink();
+    } else {
+      setPickerOpen((prev) => !prev);
+    }
+  }, [isLinked, onUnlink]);
 
   const handleSelect = useCallback(
     (varExpr: string) => {
@@ -57,14 +72,14 @@ export function VariableLinkDot({
     [onSelect],
   );
 
-  const visible = rowHovered || pickerOpen;
+  const visible = isLinked || rowHovered || pickerOpen;
 
   return (
     <>
       <button
         ref={dotRef}
         type="button"
-        title="Link to variable"
+        title={isLinked ? "Unlink variable" : "Link to variable"}
         onClick={handleClick}
         onMouseEnter={() => setDotHovered(true)}
         onMouseLeave={() => setDotHovered(false)}
@@ -91,11 +106,21 @@ export function VariableLinkDot({
         }}
       >
         {dotHovered ? (
-          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-            <line x1="4" y1="1" x2="4" y2="7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="1" y1="4" x2="7" y2="4" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          isLinked ? (
+            // × sign for unlink
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <line x1="2" y1="2" x2="6" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="6" y1="2" x2="2" y2="6" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          ) : (
+            // + sign for link
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <line x1="4" y1="1" x2="4" y2="7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+              <line x1="1" y1="4" x2="7" y2="4" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          )
         ) : (
+          // White center dot
           <span
             style={{
               width: 4,
@@ -106,7 +131,7 @@ export function VariableLinkDot({
           />
         )}
       </button>
-      {pickerOpen && dotRef.current && (
+      {!isLinked && pickerOpen && dotRef.current && (
         <VariablePicker
           anchor={dotRef.current}
           type={variableType}

@@ -12,7 +12,7 @@ import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { parseVarAlias } from "../variables/discoverVariables";
-import { Unlink, X } from "lucide-react";
+import { X } from "lucide-react";
 import { VariableLinkDot } from "./VariableLinkDot";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
@@ -141,14 +141,14 @@ export function ColorRow({
         </div>
       )}
       <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
-        {!varName && (
-          <VariableLinkDot
-            rowHovered={rowHovered}
-            variableType="color"
-            onSelect={(varExpr) => onChange(varExpr)}
-            activeVariable={varName}
-          />
-        )}
+        <VariableLinkDot
+          rowHovered={rowHovered}
+          isLinked={!!varName}
+          onUnlink={() => { if (resolvedColor) onChange(resolvedColor); }}
+          variableType="color"
+          onSelect={(varExpr) => onChange(varExpr)}
+          activeVariable={varName}
+        />
         <div
           ref={swatchRef}
           className="tuner-focusable"
@@ -196,32 +196,6 @@ export function ColorRow({
           {displayLabel}
         </span>
       </div>
-      {/* Unlink variable button */}
-      {varName && (
-        <button
-          type="button"
-          title="Unlink variable"
-          onClick={(e) => {
-            e.stopPropagation();
-            if (resolvedColor) onChange(resolvedColor);
-          }}
-          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
-          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: primaryAlpha(0.6),
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}
-        >
-          <Unlink size={11} strokeWidth={2} />
-        </button>
-      )}
       {indicator === "modified" && onReset && (
         <button
           type="button"

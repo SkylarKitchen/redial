@@ -15,7 +15,7 @@ import { text, border, surface, font, primaryAlpha } from "../theme";
 import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
 import { VariableLinkDot } from "./VariableLinkDot";
-import { Unlink, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ms } from "../timing";
 
 export function SliderRow({
@@ -141,41 +141,32 @@ export function SliderRow({
             </ComputedTooltip>
           ) : labelContent}
         </LabelScrub>
-        <span
-          title={`var(${activeVariable})`}
-          style={{
-            flex: 1,
-            fontSize: 11,
-            fontFamily: font.mono,
-            color: primaryAlpha(0.8),
-            overflow: "clip",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            minWidth: 0,
-          }}
-        >
-          {activeVariable.replace(/^--/, "")}
-        </span>
-        <button
-          type="button"
-          title="Unlink variable"
-          onClick={(e) => { e.stopPropagation(); handleUnlink(); }}
-          onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
-          onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
-          style={{
-            background: "none",
-            border: "none",
-            padding: 0,
-            cursor: "pointer",
-            color: primaryAlpha(0.6),
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}
-        >
-          <Unlink size={11} strokeWidth={2} />
-        </button>
+        <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center", minWidth: 0 }}>
+          <VariableLinkDot
+            rowHovered={rowHovered}
+            isLinked
+            onUnlink={handleUnlink}
+            variableType={variableType ?? "length"}
+            element={variableElement}
+            onSelect={(varExpr) => { onSelectVariable?.(varExpr); }}
+            activeVariable={activeVariable}
+          />
+          <span
+            title={`var(${activeVariable})`}
+            style={{
+              flex: 1,
+              fontSize: 11,
+              fontFamily: font.mono,
+              color: primaryAlpha(0.8),
+              overflow: "clip",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              minWidth: 0,
+            }}
+          >
+            {activeVariable.replace(/^--/, "")}
+          </span>
+        </div>
         {indicator === "modified" && onReset && (
           <button
             type="button"

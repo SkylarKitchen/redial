@@ -180,9 +180,11 @@ export function SizeInputCell({
         minWidth: 0,
       }}
     >
-      {!isVariable && !isKeyword && variableOptions && onCssVarChange && (
+      {!isKeyword && variableOptions && onCssVarChange && (
         <VariableLinkDot
           rowHovered={rowHovered}
+          isLinked={isVariable}
+          onUnlink={() => onCssVarChange(null)}
           variableType="length"
           onSelect={(varExpr) => {
             const match = varExpr.match(/^var\((.+)\)$/);
