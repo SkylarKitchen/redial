@@ -13,7 +13,7 @@ import React, { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, zIndex } from "../theme";
+import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, layout, zIndex } from "../theme";
 import { ms } from "../timing";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
 import type { TextStyle } from "../textStyleScanner";
@@ -151,11 +151,11 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
   );
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingLeft: 12, paddingRight: 12, paddingTop: 2, paddingBottom: 2 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: "2px 12px" }}>
       <span
         style={{
           fontSize: 11,
-          width: 70,
+          width: layout.labelWidth,
           flexShrink: 0,
           textTransform: "capitalize",
           color: text.label,
