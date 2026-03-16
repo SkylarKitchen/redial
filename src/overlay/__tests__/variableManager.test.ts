@@ -9,6 +9,7 @@ import {
   undo,
   resetAll,
   totalOverrideCount,
+  getOverrideSnapshot,
 } from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -52,6 +53,15 @@ describe("addCustomProperty", () => {
     expect(() => addCustomProperty(el, "--color/primary", "#ff0000")).toThrow(
       /Invalid custom property name/
     );
+  });
+
+  it("adding a brand-new variable changes the override snapshot", () => {
+    const el = makeEl();
+    const snapshotBefore = getOverrideSnapshot();
+    addCustomProperty(el, "--interactive-test", "fdsa");
+    const snapshotAfter = getOverrideSnapshot();
+    // A new variable must change the snapshot so useMemo re-runs discoverAllVariables
+    expect(snapshotAfter).not.toBe(snapshotBefore);
   });
 });
 

@@ -950,9 +950,8 @@ export function applyCustomProperty(
   if (!overrides.has(scope)) overrides.set(scope, new Map());
   const scopeOverrides = overrides.get(scope)!;
   if (!scopeOverrides.has(name)) {
-    const effectiveInitial = initial || value;
-    scopeOverrides.set(name, { initial: effectiveInitial, current: value, inlineOriginal: null });
-    if (effectiveInitial !== value) dirtyCount++;
+    scopeOverrides.set(name, { initial: initial || "", current: value, inlineOriginal: null });
+    if ((initial || "") !== value) dirtyCount++;
   } else {
     const existing = scopeOverrides.get(name)!;
     const wasDirty = existing.initial !== existing.current;
