@@ -13,6 +13,9 @@ import {
   AlignStartVertical, AlignCenterVertical, AlignEndVertical, MoveVertical,
   AlignHorizontalJustifyStart, AlignHorizontalJustifyCenter, AlignHorizontalJustifyEnd,
   AlignHorizontalSpaceBetween, AlignHorizontalSpaceAround, AlignHorizontalDistributeCenter,
+  AlignVerticalJustifyStart, AlignVerticalJustifyCenter, AlignVerticalJustifyEnd,
+  AlignVerticalSpaceBetween, AlignVerticalSpaceAround, AlignVerticalDistributeCenter,
+  StretchHorizontal, StretchVertical,
 } from "lucide-react";
 import {
   AlignStartIcon, AlignCenterIcon, AlignEndIcon, AlignStretchIcon, AlignBaselineIcon,
@@ -300,6 +303,28 @@ export const GRID_ALIGN_OPTIONS = [
   { value: "start", label: "Start" },
   { value: "center", label: "Center" },
   { value: "end", label: "End" },
+];
+
+// ─── Grid Content Distribution (justify-content / align-content) ────
+
+export const GRID_JUSTIFY_CONTENT_OPTIONS = [
+  { value: "start", icon: <AlignHorizontalJustifyStart size={14} strokeWidth={1.5} />, title: "Start" },
+  { value: "center", icon: <AlignHorizontalJustifyCenter size={14} strokeWidth={1.5} />, title: "Center" },
+  { value: "end", icon: <AlignHorizontalJustifyEnd size={14} strokeWidth={1.5} />, title: "End" },
+  { value: "stretch", icon: <StretchHorizontal size={14} strokeWidth={1.5} />, title: "Stretch" },
+  { value: "space-between", icon: <AlignHorizontalSpaceBetween size={14} strokeWidth={1.5} />, title: "Between" },
+  { value: "space-around", icon: <AlignHorizontalSpaceAround size={14} strokeWidth={1.5} />, title: "Around" },
+  { value: "space-evenly", icon: <AlignHorizontalDistributeCenter size={14} strokeWidth={1.5} />, title: "Evenly" },
+];
+
+export const GRID_ALIGN_CONTENT_OPTIONS = [
+  { value: "start", icon: <AlignVerticalJustifyStart size={14} strokeWidth={1.5} />, title: "Start" },
+  { value: "center", icon: <AlignVerticalJustifyCenter size={14} strokeWidth={1.5} />, title: "Center" },
+  { value: "end", icon: <AlignVerticalJustifyEnd size={14} strokeWidth={1.5} />, title: "End" },
+  { value: "stretch", icon: <StretchVertical size={14} strokeWidth={1.5} />, title: "Stretch" },
+  { value: "space-between", icon: <AlignVerticalSpaceBetween size={14} strokeWidth={1.5} />, title: "Between" },
+  { value: "space-around", icon: <AlignVerticalSpaceAround size={14} strokeWidth={1.5} />, title: "Around" },
+  { value: "space-evenly", icon: <AlignVerticalDistributeCenter size={14} strokeWidth={1.5} />, title: "Evenly" },
 ];
 
 // ─── Flex Options ────────────────────────────────────────────────────

@@ -16,16 +16,16 @@ import type { IndicatorType } from "../theme";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { parseNum } from "../cssParsers";
-import { resetProp, resetAndReadNum, resetAndReadStr, beginBatch, endBatch } from "../core/apply";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { detectUnit, type SectionCtx } from "../panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
-import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS } from "../panelConstants";
+import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, GRID_JUSTIFY_CONTENT_OPTIONS, GRID_ALIGN_CONTENT_OPTIONS } from "../panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
 import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
-import { Link, Unlink, Grid3x3, AlignCenter, Maximize } from "lucide-react";
+import { Link, Unlink, Grid3x3 } from "lucide-react";
 import { cssToTwClass } from "../tailwind";
 import { color, text, border, surface, font, blackAlpha, primaryAlpha, layout, labelIndicator, labelHighlight } from "../theme";
-import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL, PILL_BUTTON } from "../panelStyles";
+import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL } from "../panelStyles";
 
 // ─── Compact label with highlight ─────────────────────────────────────
 
@@ -145,7 +145,10 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   // Grid
   const [justifyItems, setJustifyItems] = useState(() => cs.getPropertyValue("justify-items") || "stretch");
-  const [alignContent, setAlignContent] = useState(() => cs.getPropertyValue("align-content") || "stretch");
+  const [alignContent, setAlignContent] = useState(() => {
+    const v = cs.getPropertyValue("align-content");
+    return (!v || v === "normal") ? "stretch" : v;
+  });
   const [gridAlignItems, setGridAlignItems] = useState(() => cs.getPropertyValue("align-items") || "stretch");
   const [gridAutoFlow, setGridAutoFlow] = useState(() => cs.getPropertyValue("grid-auto-flow") || "row");
 
@@ -342,31 +345,6 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     [apply],
   );
 
-  // ── Quick-action handlers ──
-
-  const handleCenter = useCallback(() => {
-    beginBatch();
-    if (isGrid) {
-      setJustifyItems("center");
-      setGridAlignItems("center");
-      apply("justify-items", "center");
-      apply("align-items", "center");
-    } else {
-      setJustifyContent("center");
-      setAlignItems("center");
-      apply("justify-content", "center");
-      apply("align-items", "center");
-    }
-    endBatch();
-  }, [apply, isGrid]);
-
-  const handleFillParent = useCallback(() => {
-    beginBatch();
-    apply("width", "100%");
-    apply("height", "100%");
-    endBatch();
-  }, [apply]);
-
   // ── JSX ──
 
   return (
@@ -477,6 +455,28 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                 />
               </div>
             </div>
+          </div>
+
+          {/* Columns: justify-content (grid track distribution) */}
+          <div style={ROW}>
+            <RowLabel label="Columns" indicator={ind("justify-content")} onReset={() => resetCssStr("justify-content", setJustifyContent)} />
+            <IconButtonGroup
+              options={GRID_JUSTIFY_CONTENT_OPTIONS}
+              value={justifyContent === "normal" ? "stretch" : justifyContent}
+              onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+              aria-label="Grid justify-content"
+            />
+          </div>
+
+          {/* Rows: align-content (grid track distribution) */}
+          <div style={ROW}>
+            <RowLabel label="Rows" indicator={ind("align-content")} onReset={() => resetCssStr("align-content", setAlignContent)} />
+            <IconButtonGroup
+              options={GRID_ALIGN_CONTENT_OPTIONS}
+              value={alignContent === "normal" ? "stretch" : alignContent}
+              onChange={(v) => { setAlignContent(v); apply("align-content", v); }}
+              aria-label="Grid align-content"
+            />
           </div>
 
           {/* Gap: slider + lock */}
@@ -793,29 +793,6 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </>
           )}
         </>
-      )}
-
-      {/* Quick actions: Center + Fill Parent */}
-      {(isFlex || isGrid) && (
-        <div style={{ ...ROW, gap: 6 }}>
-          <RowLabel label="Quick" indicator="none" />
-          <button
-            title="Center: justify-content + align-items center"
-            onClick={handleCenter}
-            style={{ ...PILL_BUTTON, flex: 1, justifyContent: "center" }}
-          >
-            <AlignCenter size={12} strokeWidth={1.5} />
-            Center
-          </button>
-          <button
-            title="Fill Parent: width 100% + height 100%"
-            onClick={handleFillParent}
-            style={{ ...PILL_BUTTON, flex: 1, justifyContent: "center" }}
-          >
-            <Maximize size={12} strokeWidth={1.5} />
-            Fill Parent
-          </button>
-        </div>
       )}
 
       {hasFlexChildOverride && (
