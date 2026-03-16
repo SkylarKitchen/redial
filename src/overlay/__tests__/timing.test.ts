@@ -5,6 +5,8 @@ import {
   setReducedMotion,
   getReducedMotion,
   ms,
+  easeRelease,
+  cssTransition,
 } from "../timing";
 
 // Reset reduced-motion flag between tests
@@ -18,6 +20,7 @@ describe("timing tokens", () => {
   it("exports all expected keys", () => {
     const keys: TimingKey[] = [
       "instant", "micro", "fast", "normal", "expand", "layout", "slow",
+      "release", "toolbar", "dismissal",
     ];
     for (const k of keys) {
       expect(timing).toHaveProperty(k);
@@ -34,6 +37,7 @@ describe("timing tokens", () => {
   it("tokens are in ascending order", () => {
     const ordered: TimingKey[] = [
       "instant", "micro", "fast", "normal", "expand", "layout", "slow",
+      "toolbar", "dismissal",
     ];
     for (let i = 1; i < ordered.length; i++) {
       expect(timing[ordered[i]]).toBeGreaterThanOrEqual(timing[ordered[i - 1]]);
@@ -44,8 +48,12 @@ describe("timing tokens", () => {
     expect(timing.instant).toBe(50);
   });
 
-  it("slow is the largest", () => {
-    expect(timing.slow).toBe(300);
+  it("dismissal is the largest", () => {
+    expect(timing.dismissal).toBe(1700);
+  });
+
+  it("release is 120", () => {
+    expect(timing.release).toBe(120);
   });
 });
 
@@ -107,6 +115,56 @@ describe("ms()", () => {
   it("output ends with 'ms' suffix", () => {
     for (const k of Object.keys(timing) as TimingKey[]) {
       expect(ms(k)).toMatch(/^\d+ms$/);
+    }
+  });
+});
+
+// ─── easeRelease ─────────────────────────────────────────────────────
+
+describe("easeRelease", () => {
+  it("is a cubic-bezier string", () => {
+    expect(easeRelease).toMatch(/^cubic-bezier\(.+\)$/);
+  });
+
+  it("has the correct value", () => {
+    expect(easeRelease).toBe("cubic-bezier(0.34, 1.56, 0.64, 1)");
+  });
+});
+
+// ─── cssTransition() ─────────────────────────────────────────────────
+
+describe("cssTransition()", () => {
+  it("builds a single-property transition string", () => {
+    expect(cssTransition("transform", "release")).toBe(
+      "transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+    );
+  });
+
+  it("builds a multi-property transition string", () => {
+    expect(cssTransition(["transform", "opacity"], "fast")).toBe(
+      "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 80ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+    );
+  });
+
+  it("returns 0ms durations when reduced motion is active", () => {
+    setReducedMotion(true);
+    expect(cssTransition("transform", "release")).toBe(
+      "transform 0ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+    );
+  });
+
+  it("returns 0ms for multi-property when reduced motion is active", () => {
+    setReducedMotion(true);
+    expect(cssTransition(["transform", "opacity"], "fast")).toBe(
+      "transform 0ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+    );
+  });
+
+  it("works with all timing keys", () => {
+    for (const k of Object.keys(timing) as TimingKey[]) {
+      const result = cssTransition("opacity", k);
+      expect(result).toContain(`${timing[k]}ms`);
+      expect(result).toContain(easeRelease);
     }
   });
 });

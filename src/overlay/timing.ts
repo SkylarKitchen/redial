@@ -12,6 +12,7 @@ export const timing = {
   normal: 100, // text feedback, state transitions
   expand: 150, // section collapse/expand, chevron rotate
   layout: 200, // drag displacement, focus ring transitions
+  release: 120, // press-release spring-back micro-interactions
   slow: 300, // scrollbar fade, complex animations
   toolbar: 400, // toolbar expand/collapse
   dismissal: 1700, // auto-dismiss for hints, tooltips, success messages
@@ -33,6 +34,19 @@ export function getReducedMotion(): boolean {
 
 /** Convert timing token to CSS duration string: ms("fast") → "80ms" (or "0ms" when reduced motion is active) */
 export const ms = (key: TimingKey) => _reducedMotion ? "0ms" : `${timing[key]}ms`;
+
+// ─── Easing & Transition Helpers ─────────────────────────────────────
+
+/** Slight overshoot curve for press-release spring-back feel */
+export const easeRelease = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+/** Build a CSS transition string from property name(s) and a timing token.
+ *  Respects reduced-motion: durations become 0ms when active. */
+export function cssTransition(props: string | string[], duration: TimingKey): string {
+  const dur = _reducedMotion ? "0ms" : `${timing[duration]}ms`;
+  const arr = typeof props === "string" ? [props] : props;
+  return arr.map(p => `${p} ${dur} ${easeRelease}`).join(", ");
+}
 
 // ─── Spring Presets (Motion library) ────────────────────────────────
 
