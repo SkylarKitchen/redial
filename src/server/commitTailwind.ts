@@ -5,8 +5,8 @@
  * using conflict-aware logic (e.g. w-4 + w-6 -> w-6, not w-4 w-6).
  */
 
-import { readFile, writeFile, stat } from "fs/promises";
-import { resolve, normalize } from "path";
+import { readFile, writeFile, stat, readdir } from "fs/promises";
+import { resolve, normalize, join, extname } from "path";
 
 export type TailwindChange = {
   sourceFile: string;
