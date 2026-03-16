@@ -13,13 +13,15 @@
  * Parses incoming CSS values (keywords, percentages, px) to find the active cell.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ms } from "../timing";
-import { color, focusRing } from "../theme";
+import { color, focusRing, font, text, border, surface } from "../theme";
 
 export interface TransformOriginPickerProps {
   value: string;
   onChange: (value: string) => void;
+  /** When true, show Left/Top numeric inputs alongside the grid */
+  showInputs?: boolean;
 }
 
 // ─── Grid mapping ────────────────────────────────────────────────────
@@ -114,9 +116,31 @@ function parseOrigin(value: string): [col: number, row: number] {
   return [-1, -1];
 }
 
+// ─── Origin → percent parsing ────────────────────────────────────────
+
+/** Parse a CSS origin value to [leftPct, topPct]. Returns [50, 50] for unparseable values. */
+function originToPercents(value: string): [number, number] {
+  if (!value) return [50, 50];
+  const parts = value.trim().split(/\s+/);
+  const tokenToPct = (t: string): number => {
+    if (t === "left" || t === "top") return 0;
+    if (t === "center") return 50;
+    if (t === "right" || t === "bottom") return 100;
+    const pct = parseFloat(t);
+    if (!isNaN(pct)) return pct;
+    return 50;
+  };
+  if (parts.length === 1) {
+    const v = tokenToPct(parts[0]);
+    return [v, v];
+  }
+  if (parts.length >= 2) return [tokenToPct(parts[0]), tokenToPct(parts[1])];
+  return [50, 50];
+}
+
 // ─── Component ───────────────────────────────────────────────────────
 
-export function TransformOriginPicker({ value, onChange }: TransformOriginPickerProps) {
+export function TransformOriginPicker({ value, onChange, showInputs }: TransformOriginPickerProps) {
   const [hovered, setHovered] = useState<string | null>(null);
   const [activeCol, activeRow] = parseOrigin(value);
 
@@ -127,7 +151,23 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
     [onChange],
   );
 
-  return (
+  const [leftPct, topPct] = originToPercents(value);
+
+  const handleLeftChange = useCallback(
+    (v: number) => {
+      onChange(`${v}% ${topPct}%`);
+    },
+    [onChange, topPct],
+  );
+
+  const handleTopChange = useCallback(
+    (v: number) => {
+      onChange(`${leftPct}% ${v}%`);
+    },
+    [onChange, leftPct],
+  );
+
+  const grid = (
     <div
       style={{
         display: "grid",
@@ -194,6 +234,112 @@ export function TransformOriginPicker({ value, onChange }: TransformOriginPicker
           );
         }),
       )}
+    </div>
+  );
+
+  if (!showInputs) return grid;
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      {grid}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <OriginInput label="Left" value={leftPct} onChange={handleLeftChange} />
+        <OriginInput label="Top" value={topPct} onChange={handleTopChange} />
+      </div>
+    </div>
+  );
+}
+
+// ─── OriginInput ─────────────────────────────────────────────────────
+
+function OriginInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(Math.round(value)));
+
+  useEffect(() => {
+    setDraft(String(Math.round(value)));
+  }, [value]);
+
+  const commit = useCallback(() => {
+    const parsed = parseFloat(draft);
+    if (isNaN(parsed)) {
+      setDraft(String(Math.round(value)));
+      return;
+    }
+    const clamped = Math.max(0, Math.min(100, Math.round(parsed)));
+    setDraft(String(clamped));
+    onChange(clamped);
+  }, [draft, value, onChange]);
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+      <span
+        style={{
+          width: "24px",
+          fontSize: "10px",
+          color: text.label,
+          fontFamily: font.sans,
+          lineHeight: 1,
+        }}
+      >
+        {label}
+      </span>
+      <input
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const next = Math.min(100, Math.round(value) + 1);
+            onChange(next);
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            const next = Math.max(0, Math.round(value) - 1);
+            onChange(next);
+          }
+        }}
+        style={{
+          width: "36px",
+          height: "20px",
+          fontSize: "10px",
+          fontFamily: font.mono,
+          color: text.primary,
+          background: surface.subtle,
+          border: `1px solid ${border.default}`,
+          borderRadius: "3px",
+          padding: "0 4px",
+          textAlign: "right",
+          outline: "none",
+        }}
+        onFocus={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = color.primary;
+        }}
+        onBlurCapture={(e) => {
+          (e.currentTarget as HTMLElement).style.borderColor = border.default;
+        }}
+      />
+      <span
+        style={{
+          fontSize: "10px",
+          color: text.label,
+          fontFamily: font.sans,
+          lineHeight: 1,
+        }}
+      >
+        %
+      </span>
     </div>
   );
 }
