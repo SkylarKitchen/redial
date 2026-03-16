@@ -383,6 +383,7 @@ export function Overlay() {
     setActivePanel({ type: "none" });
     setActiveModal({ type: "none" });
     setCloseWarning(false);
+    setShowNavigator(false);
     announce("Element deselected");
   }, [announce]);
 
