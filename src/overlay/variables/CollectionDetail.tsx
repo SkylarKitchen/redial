@@ -506,7 +506,7 @@ function DetailVariableRow({
   onRenameCommit: (newName: string) => void;
   onRenameCancel: () => void;
   /** When multi-mode is active, per-mode values for this variable */
-  modeValues?: Array<{ modeName: string; value: string | undefined }>;
+  modeValues?: Array<{ modeName: string; mode: InferredMode; value: string | undefined }>;
 }) {
   const [hovered, setHovered] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -622,28 +622,16 @@ function DetailVariableRow({
 
       {/* Value cell(s) */}
       {modeValues ? (
-        /* Multi-mode: one read-only cell per mode */
+        /* Multi-mode: one editable cell per mode */
         <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 4 }}>
           {modeValues.map((mv) => (
-            <div
+            <ModeValueCell
               key={mv.modeName}
-              style={{
-                flex: 1,
-                minWidth: 80,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "flex-end",
-                overflow: "hidden",
-              }}
-            >
-              {mv.value !== undefined ? (
-                <VariableValue value={mv.value} />
-              ) : (
-                <span style={{ color: text.disabled, fontSize: 11, fontFamily: font.mono }}>
-                  {"\u2014"}
-                </span>
-              )}
-            </div>
+              varName={variable.name}
+              mode={mv.mode}
+              value={mv.value}
+              varType={variable.type}
+            />
           ))}
         </div>
       ) : (
@@ -789,10 +777,15 @@ function SubgroupSection({
 
       {/* Variable rows */}
       {subgroup.variables.map((v) => {
-        const modeValues = modes?.map((m) => ({
-          modeName: m.name,
-          value: m.values[v.name],
-        }));
+        const modeValues = modes?.map((m) => {
+          const overrides = getModeOverrides(m.selector ?? "");
+          const overrideVal = overrides?.[v.name];
+          return {
+            modeName: m.name,
+            mode: m,
+            value: overrideVal ?? m.values[v.name],
+          };
+        });
         return (
           <DetailVariableRow
             key={v.name}
@@ -871,6 +864,9 @@ export function CollectionDetail({
 }: CollectionDetailProps) {
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const [renamingVar, setRenamingVar] = useState<string | null>(null);
+
+  // Subscribe to mode override changes so cells re-render with fresh data
+  const _modeOverrideVersion = useSyncExternalStore(subscribeModeOverrides, getModeOverrideSnapshot);
 
   // Infer subgroups from the variables in this collection
   const subgroups = useMemo(() => inferSubgroups(variables), [variables]);
