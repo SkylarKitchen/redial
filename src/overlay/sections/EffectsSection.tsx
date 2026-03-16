@@ -191,6 +191,13 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   // ── Reset popover for Outline label ──
   const outlineResetPopover = useResetPopover(ind("outline-style"), () => resetCssStr("outline-style", setOutlineStyle));
 
+  // Refs to break cross-dependency between handleTransformsChange ↔ handleSelfPerspectiveChange
+  const selfPerspectiveRef = useRef(selfPerspective);
+  selfPerspectiveRef.current = selfPerspective;
+
+  const transformsRef = useRef(transforms);
+  transformsRef.current = transforms;
+
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
 
@@ -209,9 +216,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const handleTransformsChange = useCallback(
     (t: TransformValue[]) => {
       setTransforms(t);
-      apply("transform", transformToCSSWithPerspective(t, selfPerspective));
+      apply("transform", transformToCSSWithPerspective(t, selfPerspectiveRef.current));
     },
-    [apply, selfPerspective],
+    [apply],
   );
   const handleTransformOriginChange = useCallback(
     (o: string) => {
@@ -251,9 +258,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const handleSelfPerspectiveChange = useCallback(
     (v: number) => {
       setSelfPerspective(v);
-      apply("transform", transformToCSSWithPerspective(transforms, v));
+      apply("transform", transformToCSSWithPerspective(transformsRef.current, v));
     },
-    [apply, transforms],
+    [apply],
   );
 
   const handlePerspectiveOriginChange = useCallback(
