@@ -15,6 +15,7 @@ import { useDragReorder } from "../hooks/useDragReorder";
 import { Slider } from "@/components/ui/slider";
 import { beginBatch, endBatch } from "../core/apply";
 import { color, text, border, surface, font, blackAlpha, focusBorder } from "../theme";
+import { BACKFACE_OPTIONS } from "../panelConstants";
 import { ROW, LABEL, SUB_HEADER } from "../panelStyles";
 import { ms } from "../timing";
 
@@ -100,10 +101,6 @@ const TRANSFORM_TAB_OPTIONS: SegmentOption[] = TRANSFORM_TYPES.map((t) => ({
   label: TRANSFORM_LABELS[t],
 }));
 
-const BACKFACE_OPTIONS: SegmentOption[] = [
-  { value: "visible", label: "Visible" },
-  { value: "hidden", label: "Hidden" },
-];
 
 // ─── SVG Icons (14x14) ──────────────────────────────────────────
 
@@ -305,7 +302,7 @@ function TransformExpanded({
   onTypeChange,
 }: {
   transform: TransformValue;
-  onUpdate: (field: "x" | "y" | "z" | "scaleLocked", value: number | boolean) => void;
+  onUpdate: (updates: Partial<TransformValue>) => void;
   onTypeChange: (type: TransformType) => void;
 }) {
   const { type, x, y, z, scaleLocked } = transform;
@@ -316,12 +313,12 @@ function TransformExpanded({
   const handleAxisChange = useCallback(
     (axis: "x" | "y" | "z") => (v: number) => {
       if (isScale && scaleLocked) {
-        // When locked, update all axes to the same value
-        onUpdate("x", v);
-        onUpdate("y", v);
-        if (hasZ) onUpdate("z", v);
+        // Batch: update all axes at once via a single onUpdate call
+        const updates: Partial<TransformValue> = { x: v, y: v };
+        if (hasZ) updates.z = v;
+        onUpdate(updates);
       } else {
-        onUpdate(axis, v);
+        onUpdate({ [axis]: v });
       }
     },
     [isScale, scaleLocked, hasZ, onUpdate],
@@ -348,7 +345,7 @@ function TransformExpanded({
             </div>
             {isScale && (
               <button
-                onClick={() => onUpdate("scaleLocked", !scaleLocked)}
+                onClick={() => onUpdate({ scaleLocked: !scaleLocked })}
                 title={scaleLocked ? "Unlock axes" : "Lock axes (uniform scale)"}
                 style={{
                   display: "flex",
@@ -608,14 +605,8 @@ export function TransformEditor({
   );
 
   const handleUpdate = useCallback(
-    (index: number, field: "x" | "y" | "z" | "scaleLocked", value: number | boolean) => {
-      const next = transforms.map((t, i) => {
-        if (i !== index) return t;
-        if (field === "scaleLocked") {
-          return { ...t, scaleLocked: value as boolean };
-        }
-        return { ...t, [field]: value as number };
-      });
+    (index: number, updates: Partial<TransformValue>) => {
+      const next = transforms.map((t, i) => (i !== index ? t : { ...t, ...updates }));
       onChange(next);
     },
     [transforms, onChange],
@@ -661,7 +652,7 @@ export function TransformEditor({
               {isExpanded && (
                 <TransformExpanded
                   transform={t}
-                  onUpdate={(field, value) => handleUpdate(index, field, value)}
+                  onUpdate={(updates) => handleUpdate(index, updates)}
                   onTypeChange={(type) => handleTypeChange(index, type)}
                 />
               )}

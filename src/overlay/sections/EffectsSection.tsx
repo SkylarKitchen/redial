@@ -13,7 +13,7 @@ import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "../controls";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
-import { FilterEditor, type FilterItem } from "./FilterSliders";
+import { FilterEditor, createDefaultItem, type FilterItem } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
@@ -387,7 +387,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 7. Filters */}
       <SubSectionHeader
         label="Filters"
-        onAdd={() => handleFiltersChange([...filterItems, { type: "blur", values: [0], visible: true, expanded: true }])}
+        onAdd={() => handleFiltersChange([...filterItems, createDefaultItem("blur")])}
         indicator={ind("filter")}
         onReset={() => { resetProp(element, "filter"); setFilterItems(parseFilterItems(getComputedStyle(element).filter)); }}
       />
@@ -400,7 +400,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 8. Backdrop filters */}
       <SubSectionHeader
         label="Backdrop filters"
-        onAdd={() => handleBackdropFiltersChange([...backdropFilterItems, { type: "blur", values: [0], visible: true, expanded: true }])}
+        onAdd={() => handleBackdropFiltersChange([...backdropFilterItems, createDefaultItem("blur")])}
         indicator={ind("backdrop-filter")}
         onReset={() => { resetProp(element, "backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterItems(parseFilterItems(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }}
       />

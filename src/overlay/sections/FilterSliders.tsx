@@ -10,11 +10,12 @@
  * VisibilityToggle, EditorRemoveButton per item.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
+import { useClickOutside } from "../hooks/useClickOutside";
 import { DragHandle } from "../shell/DragHandle";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
-import { cssColorToHex } from "../colorUtils";
+import { cssColorToHex, hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { EditorRemoveButton, VisibilityToggle } from "../controls";
 import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
@@ -79,9 +80,12 @@ const FILTER_CATEGORIES: FilterCategory[] = [
   { label: "Color Effects", types: ["grayscale", "invert", "sepia"] },
 ];
 
+/** All filter types in category order — for type dropdown options */
+const ALL_FILTER_TYPES: FilterType[] = FILTER_CATEGORIES.flatMap(cat => cat.types);
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
-function createDefaultItem(type: FilterType): FilterItem {
+export function createDefaultItem(type: FilterType): FilterItem {
   const meta = FILTER_META[type];
   return {
     type,
@@ -217,10 +221,7 @@ function FilterItemEditor({
 
   const handleColorChange = useCallback(
     (hex: string, opacity: number) => {
-      const c = opacity < 1
-        ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
-        : hex;
-      onUpdate({ ...item, color: c });
+      onUpdate({ ...item, color: opacity < 1 ? hexToRgba(hex, opacity) : hex });
     },
     [item, onUpdate]
   );
@@ -247,7 +248,7 @@ function FilterItemEditor({
             outline: "none",
           }}
         >
-          {FILTER_CATEGORIES.flatMap(cat => cat.types).map(t => (
+          {ALL_FILTER_TYPES.map(t => (
             <option key={t} value={t}>{FILTER_META[t].label}</option>
           ))}
         </select>
@@ -339,13 +340,13 @@ function FilterItemEditor({
           <div style={{ position: "relative" }}>
             <button
               onClick={() => setPickerOpen(!pickerOpen)}
-              title={`Shadow color: ${item.color || "rgba(0,0,0,0.3)"}`}
+              title={`Shadow color: ${item.color || meta.defaultColor}`}
               style={{
                 width: "16px",
                 height: "16px",
                 borderRadius: "2px",
                 border: `1px solid ${blackAlpha(0.15)}`,
-                background: resolveVarColor(item.color || "") ?? item.color ?? "rgba(0,0,0,0.3)",
+                background: resolveVarColor(item.color || "") ?? item.color ?? meta.defaultColor,
                 cursor: "pointer",
                 padding: 0,
                 flexShrink: 0,
@@ -373,7 +374,7 @@ function FilterItemEditor({
               color: text.hint,
             }}
           >
-            {item.color || "rgba(0,0,0,0.3)"}
+            {item.color || meta.defaultColor}
           </span>
         </div>
       )}
@@ -500,16 +501,7 @@ function CategorizedDropdown({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+  useClickOutside(ref, true, onClose);
 
   return (
     <div
@@ -590,7 +582,7 @@ export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorP
 
   const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(items, onChange);
 
-  const activeTypes = new Set(items.map((i) => i.type));
+  const activeTypes = useMemo(() => new Set(items.map((i) => i.type)), [items]);
 
   const handleAdd = useCallback(
     (type: FilterType) => {
@@ -722,48 +714,3 @@ export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorP
   );
 }
 
-// ─── Deprecated aliases (removed in Task 3) ─────────────────────────
-
-/** @deprecated Use FilterItem[] instead */
-export interface FilterValues {
-  blur: number;
-  brightness: number;
-  contrast: number;
-  grayscale: number;
-  "hue-rotate": number;
-  invert: number;
-  saturate: number;
-  sepia: number;
-}
-
-/** @deprecated Use FilterEditor instead */
-export const FilterSliders = function FilterSliders({
-  values,
-  onChange,
-  type: _type = "filter",
-}: {
-  values: Partial<FilterValues>;
-  onChange: (filter: string, value: number) => void;
-  type?: "filter" | "backdrop-filter";
-}) {
-  // Bridge: convert flat values to FilterItem[], delegate to FilterEditor
-  const items: FilterItem[] = (Object.entries(values) as [string, number | undefined][])
-    .filter(([, v]) => v !== undefined)
-    .map(([key, val]) => ({
-      type: key as FilterType,
-      values: [val!],
-      visible: true,
-      expanded: false,
-    }));
-
-  const handleChange = useCallback(
-    (newItems: FilterItem[]) => {
-      for (const item of newItems) {
-        onChange(item.type, item.values[0] ?? 0);
-      }
-    },
-    [onChange]
-  );
-
-  return <FilterEditor items={items} onChange={handleChange} />;
-};
