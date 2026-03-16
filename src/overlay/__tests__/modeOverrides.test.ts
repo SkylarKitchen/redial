@@ -171,3 +171,25 @@ describe("serializeModeOverrides formatting", () => {
     );
   });
 });
+
+describe("full editing flow", () => {
+  it("apply → serialize → undo → serialize roundtrip", () => {
+    applyModeOverride(".dark", "--bg", "#111");
+    applyModeOverride(".dark", "--text", "#eee");
+    applyModeOverride(".light", "--bg", "#fff");
+
+    const css1 = serializeModeOverrides();
+    expect(css1).toContain("--bg: #111");
+    expect(css1).toContain("--text: #eee");
+    expect(css1).toContain(".light");
+
+    undoModeOverride(); // undo .light --bg
+    expect(serializeModeOverrides()).not.toContain(".light");
+
+    undoModeOverride(); // undo .dark --text
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
+
+    redoModeOverride(); // redo .dark --text
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111", "--text": "#eee" });
+  });
+});
