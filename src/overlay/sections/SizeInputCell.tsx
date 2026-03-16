@@ -177,6 +177,7 @@ export function SizeInputCell({
         borderRadius: 4,
         border: `1px solid ${border.default}`,
         background: surface.subtle,
+        minWidth: 0,
       }}
     >
       {!isVariable && !isKeyword && variableOptions && onCssVarChange && (
@@ -237,17 +238,10 @@ export function SizeInputCell({
             tabIndex={0}
             onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } onCssVarChange?.(null); setEditing(true); }}
             onKeyDown={(e) => { if (e.key === "Enter") { onCssVarChange?.(null); setEditing(true); } }}
-            title={`${cssVar}: ${cssVarResolved ?? ""}`}
-            style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, fontFamily: font.mono, paddingRight: 4, cursor: "text", outline: "none", overflow: "hidden", minWidth: 0 }}
+            title={`var(${cssVar}): ${cssVarResolved ?? ""}`}
+            style={{ flex: 1, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 4, cursor: "pointer", outline: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: color.primary, minWidth: 0 }}
           >
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: color.primary }}>
-              {cssVar!.replace(/^--/, "")}
-            </span>
-            {cssVarResolved && (
-              <span style={{ flexShrink: 0, color: text.hint }}>
-                {parseFloat(cssVarResolved) || cssVarResolved}
-              </span>
-            )}
+            {cssVar!.replace(/^--/, "")}
           </span>
         ) : editing ? (
           <input

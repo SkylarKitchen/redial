@@ -249,6 +249,65 @@ export function getGlobalCSSSource(
 }
 
 /**
+ * Find the source file where a CSS custom property is defined.
+ * Searches all stylesheets for rules that set the given variable name
+ * (e.g., `--font-size-base`). Looks in :root, html, body, and any
+ * selector that defines the property.
+ */
+export function getVariableDefinitionSource(
+  varName: string
+): SourceInfo | null {
+  try {
+    for (const sheet of document.styleSheets) {
+      try {
+        const href = sheet.href;
+        if (!href) continue;
+
+        const rules = sheet.cssRules;
+        for (let i = 0; i < rules.length; i++) {
+          const rule = rules[i];
+          if (!(rule instanceof CSSStyleRule)) continue;
+          if (!rule.style.getPropertyValue(varName)) continue;
+
+          // Found a rule that defines this variable — derive source file
+          let file = href;
+          try {
+            file = new URL(href).pathname;
+          } catch {
+            // Not a valid URL — use as-is
+          }
+
+          // Turbopack chunk URL decoding
+          const turboChunk = file.match(
+            /\/_next\/static\/chunks\/.*?([\w-]+)_module_(scss|css)_module_\w+\.css$/
+          );
+          if (turboChunk) {
+            const baseName = turboChunk[1].replace(/^.*_/, "");
+            file = `${baseName}.module.${turboChunk[2]}`;
+          } else {
+            file = file
+              .replace(/^\/_next\/static\/css\//, "")
+              .replace(/^\/_next\/static\/chunks\//, "")
+              .replace(/^\/assets\//, "")
+              .replace(/^\//, "");
+            file = file.replace(/\.\w{8,}\.css$/, ".css");
+            file = file.replace(/_\w{8}\.css$/, ".css");
+          }
+
+          const displayPath = file.replace(/^.*\/src\//, "src/");
+          return { file, line: undefined, displayPath };
+        }
+      } catch {
+        // CORS or security error — skip
+      }
+    }
+  } catch {
+    // Stylesheet access failed
+  }
+  return null;
+}
+
+/**
  * Best-effort source resolution: try CSS module source first, then global CSS, fall back to React fiber.
  */
 export function resolveSource(el: Element, prop: string): SourceInfo | null {

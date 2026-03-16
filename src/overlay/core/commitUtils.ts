@@ -7,7 +7,7 @@
  */
 
 import type { DiffEntry } from "./apply";
-import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource } from "./sourcemap";
+import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, getVariableDefinitionSource } from "./sourcemap";
 import { getReadableName, isTailwindElement } from "./scope";
 import type { Scope } from "./scope";
 import { getAuthoredValue } from "../getAuthoredValue";
@@ -93,13 +93,15 @@ export function enrichChangesForCommit(
       const currentValue = getComputedStyle(document.documentElement)
         .getPropertyValue(varName)
         .trim();
-      const globalSource = getGlobalCSSSource(element, c.prop);
+      // Find where the variable is DEFINED, not where it's used
+      const varSource = getVariableDefinitionSource(varName)
+        ?? getGlobalCSSSource(element, c.prop);
       return {
         ...c,
         prop: varName,
         from: currentValue || c.from,
-        sourceFile: globalSource?.file,
-        sourceLine: globalSource?.line,
+        sourceFile: varSource?.file,
+        sourceLine: varSource?.line,
         className: undefined,
         componentName: moduleInfo?.componentName,
         state: isStateActive ? opts.activeState : undefined,
