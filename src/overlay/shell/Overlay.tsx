@@ -330,7 +330,10 @@ export function Overlay() {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes: enriched }),
+        body: JSON.stringify({
+          ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
+          changes: enriched,
+        }),
       });
       // Re-read ref after await — selectedEl may have changed during the fetch
       const currentEl = selectedElRef.current;

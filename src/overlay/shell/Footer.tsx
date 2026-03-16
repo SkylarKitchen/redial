@@ -16,6 +16,7 @@ import { timing } from "../timing";
 import type { DiffEntry } from "../core/apply";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
+import { serializeModeOverrides, getModeOverrideCount, resetAllModeOverrides } from "../variables/modeOverrides";
 
 // --- Clean CSS format (no "was" comments) ---
 function formatCleanCSS(el: Element, changes: DiffEntry[]): string {
@@ -176,7 +177,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     const endpoint = getConfig().commitEndpoint;
     if (!endpoint) {
       const css = formatCleanCSS(element, changes);
-      navigator.clipboard.writeText(css).then(() => {
+      const modeCSS = serializeModeOverrides();
+      const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
+      navigator.clipboard.writeText(fullCSS).then(() => {
         showMessage(`Copied ${changes.length} propert${changes.length === 1 ? "y" : "ies"} to clipboard`, 3000);
       }).catch(() => {
         showMessage("Clipboard access denied", 2000);
@@ -220,7 +223,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     } catch {
       // Network error — fall back to clipboard
       const css = formatCleanCSS(element, changes);
-      navigator.clipboard.writeText(css).then(() => {
+      const modeCSS = serializeModeOverrides();
+      const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
+      navigator.clipboard.writeText(fullCSS).then(() => {
         showMessage("No commit endpoint \u2014 copied CSS to clipboard", 3000);
       }).catch(() => {
         showMessage("Save failed", 2000);
@@ -241,6 +246,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         resetClassStyles(activeClassName);
       }
     }
+    resetAllModeOverrides();
     onReset();
   }, [element, onReset, scope, activeClassName, activeState]);
 
