@@ -132,21 +132,40 @@ export function filterToCSS(values: Partial<FilterValues>): string {
 export function parseTransform(raw: string): TransformValue[] {
   if (!raw || raw === "none") return [];
   const transforms: TransformValue[] = [];
-  const regex = /(translate3d|translate|scale|rotate|skew)\(([^)]+)\)/g;
+  const regex = /(perspective|translate3d|translate|scale3d|scale|rotateX|rotateY|rotateZ|rotate|skew)\(([^)]+)\)/g;
   let m;
+  // Accumulator for rotateX/Y/Z merging
+  let rotate: TransformValue | null = null;
   while ((m = regex.exec(raw)) !== null) {
     const fn = m[1];
     const args = m[2].split(",").map((s) => parseFloat(s.trim()));
-    if (fn === "translate3d" || fn === "translate") {
+    if (fn === "perspective") {
+      // Skip — handled by parseSelfPerspective
+      continue;
+    } else if (fn === "translate3d" || fn === "translate") {
       transforms.push({ type: "translate", x: args[0] ?? 0, y: args[1] ?? 0, z: args[2] ?? 0 });
+    } else if (fn === "scale3d") {
+      transforms.push({ type: "scale", x: args[0] ?? 1, y: args[1] ?? args[0] ?? 1, z: args[2] ?? 1 });
     } else if (fn === "scale") {
       transforms.push({ type: "scale", x: args[0] ?? 1, y: args[1] ?? args[0] ?? 1 });
+    } else if (fn === "rotateX") {
+      if (!rotate) rotate = { type: "rotate", x: 0, y: 0, z: 0 };
+      rotate.x = args[0] ?? 0;
+    } else if (fn === "rotateY") {
+      if (!rotate) rotate = { type: "rotate", x: 0, y: 0, z: 0 };
+      rotate.y = args[0] ?? 0;
+    } else if (fn === "rotateZ") {
+      if (!rotate) rotate = { type: "rotate", x: 0, y: 0, z: 0 };
+      rotate.z = args[0] ?? 0;
     } else if (fn === "rotate") {
-      transforms.push({ type: "rotate", x: args[0] ?? 0, y: 0 });
+      // Legacy rotate(Xdeg) is a Z-rotation
+      if (!rotate) rotate = { type: "rotate", x: 0, y: 0, z: 0 };
+      rotate.z = args[0] ?? 0;
     } else if (fn === "skew") {
       transforms.push({ type: "skew", x: args[0] ?? 0, y: args[1] ?? 0 });
     }
   }
+  if (rotate) transforms.push(rotate);
   // Also handle matrix() — extract rough rotation from a 2D matrix
   if (transforms.length === 0 && raw.startsWith("matrix(")) {
     const nums = raw.match(/matrix\(([^)]+)\)/)?.[1]?.split(",").map(Number);
@@ -154,7 +173,7 @@ export function parseTransform(raw: string): TransformValue[] {
       const angle = Math.round(Math.atan2(nums[1], nums[0]) * (180 / Math.PI));
       const scaleX = Math.sqrt(nums[0] * nums[0] + nums[1] * nums[1]);
       const scaleY = Math.sqrt(nums[2] * nums[2] + nums[3] * nums[3]);
-      if (Math.abs(angle) > 0.5) transforms.push({ type: "rotate", x: angle, y: 0 });
+      if (Math.abs(angle) > 0.5) transforms.push({ type: "rotate", x: 0, y: 0, z: angle });
       if (Math.abs(scaleX - 1) > 0.01 || Math.abs(scaleY - 1) > 0.01) {
         transforms.push({ type: "scale", x: Math.round(scaleX * 100) / 100, y: Math.round(scaleY * 100) / 100 });
       }
@@ -174,14 +193,42 @@ export function transformToCSS(transforms: TransformValue[]): string {
         case "translate":
           return t.z ? `translate3d(${t.x}px, ${t.y}px, ${t.z}px)` : `translate(${t.x}px, ${t.y}px)`;
         case "scale":
-          return `scale(${t.x}, ${t.y})`;
-        case "rotate":
-          return `rotate(${t.x}deg)`;
+          return t.z !== undefined && t.z !== 1
+            ? `scale3d(${t.x}, ${t.y}, ${t.z})`
+            : `scale(${t.x}, ${t.y})`;
+        case "rotate": {
+          const rx = t.x || 0;
+          const ry = t.y || 0;
+          const rz = t.z ?? 0;
+          const parts: string[] = [];
+          if (rx) parts.push(`rotateX(${rx}deg)`);
+          if (ry) parts.push(`rotateY(${ry}deg)`);
+          if (rz) parts.push(`rotateZ(${rz}deg)`);
+          if (parts.length === 0) parts.push(`rotateX(0deg)`);
+          return parts.join(" ");
+        }
         case "skew":
           return `skew(${t.x}deg, ${t.y}deg)`;
       }
     })
     .join(" ");
+}
+
+export function parseSelfPerspective(raw: string): number {
+  const match = raw.match(/perspective\(([^)]+)\)/);
+  if (!match) return 0;
+  return parseFloat(match[1]) || 0;
+}
+
+export function transformToCSSWithPerspective(
+  transforms: TransformValue[],
+  selfPerspective: number
+): string {
+  const css = transformToCSS(transforms);
+  if (selfPerspective > 0) {
+    return `perspective(${selfPerspective}px) ${css}`;
+  }
+  return css;
 }
 
 // ─── Transitions ─────────────────────────────────────────────────────

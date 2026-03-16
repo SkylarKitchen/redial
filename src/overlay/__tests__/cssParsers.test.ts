@@ -8,6 +8,8 @@ import {
   filterToCSS,
   parseTransform,
   transformToCSS,
+  parseSelfPerspective,
+  transformToCSSWithPerspective,
 } from "../cssParsers";
 
 // ─── parseNum ────────────────────────────────────────────────────────
@@ -250,9 +252,41 @@ describe("parseTransform", () => {
     expect(result[0]).toMatchObject({ type: "scale", x: 1.5, y: 2 });
   });
 
-  it("parses rotate", () => {
+  it("parses rotate (legacy rotate maps to z-rotation)", () => {
     const result = parseTransform("rotate(45deg)");
-    expect(result[0]).toMatchObject({ type: "rotate", x: 45 });
+    expect(result[0]).toMatchObject({ type: "rotate", x: 0, y: 0, z: 45 });
+  });
+
+  it("parses scale3d", () => {
+    const result = parseTransform("scale3d(1.5, 2, 0.5)");
+    expect(result[0]).toMatchObject({ type: "scale", x: 1.5, y: 2, z: 0.5 });
+  });
+
+  it("parses rotateX", () => {
+    const result = parseTransform("rotateX(45deg)");
+    expect(result[0]).toMatchObject({ type: "rotate", x: 45, y: 0, z: 0 });
+  });
+
+  it("parses rotateY", () => {
+    const result = parseTransform("rotateY(30deg)");
+    expect(result[0]).toMatchObject({ type: "rotate", x: 0, y: 30, z: 0 });
+  });
+
+  it("parses rotateZ", () => {
+    const result = parseTransform("rotateZ(90deg)");
+    expect(result[0]).toMatchObject({ type: "rotate", x: 0, y: 0, z: 90 });
+  });
+
+  it("merges multiple rotateX/Y/Z into one rotate", () => {
+    const result = parseTransform("rotateX(10deg) rotateY(20deg) rotateZ(30deg)");
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ type: "rotate", x: 10, y: 20, z: 30 });
+  });
+
+  it("skips perspective() in parseTransform, only parses rotate", () => {
+    const result = parseTransform("perspective(500px) rotateY(30deg)");
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ type: "rotate", x: 0, y: 30, z: 0 });
   });
 
   it("parses skew", () => {
@@ -264,8 +298,9 @@ describe("parseTransform", () => {
     const result = parseTransform("translate(10px, 20px) rotate(90deg) scale(2, 2)");
     expect(result).toHaveLength(3);
     expect(result[0].type).toBe("translate");
-    expect(result[1].type).toBe("rotate");
-    expect(result[2].type).toBe("scale");
+    // rotate is accumulated and appended after all non-rotate transforms
+    expect(result[1].type).toBe("scale");
+    expect(result[2].type).toBe("rotate");
   });
 
   it("extracts rotation from matrix()", () => {
@@ -276,7 +311,7 @@ describe("parseTransform", () => {
     );
     expect(result).toHaveLength(1);
     expect(result[0].type).toBe("rotate");
-    expect(result[0].x).toBe(45);
+    expect(result[0].z).toBe(45);
   });
 
   it("extracts translation from matrix()", () => {
@@ -303,8 +338,8 @@ describe("transformToCSS", () => {
     );
   });
 
-  it("serializes rotate", () => {
-    expect(transformToCSS([{ type: "rotate", x: 45, y: 0 }])).toBe("rotate(45deg)");
+  it("serializes rotate with x only (legacy, no z)", () => {
+    expect(transformToCSS([{ type: "rotate", x: 45, y: 0 }])).toBe("rotateX(45deg)");
   });
 
   it("serializes scale", () => {
@@ -313,5 +348,57 @@ describe("transformToCSS", () => {
 
   it("serializes skew", () => {
     expect(transformToCSS([{ type: "skew", x: 10, y: 5 }])).toBe("skew(10deg, 5deg)");
+  });
+
+  it("serializes scale3d when z is defined and not 1", () => {
+    expect(transformToCSS([{ type: "scale", x: 1.5, y: 2, z: 0.5 }])).toBe(
+      "scale3d(1.5, 2, 0.5)"
+    );
+  });
+
+  it("serializes scale without z when z is undefined", () => {
+    expect(transformToCSS([{ type: "scale", x: 2, y: 1.5 }])).toBe("scale(2, 1.5)");
+  });
+
+  it("serializes scale without z when z is 1", () => {
+    expect(transformToCSS([{ type: "scale", x: 2, y: 1.5, z: 1 }])).toBe("scale(2, 1.5)");
+  });
+
+  it("serializes rotate with x, y, z axes", () => {
+    expect(transformToCSS([{ type: "rotate", x: 10, y: 20, z: 30 }])).toBe(
+      "rotateX(10deg) rotateY(20deg) rotateZ(30deg)"
+    );
+  });
+
+  it("serializes rotate z-only", () => {
+    expect(transformToCSS([{ type: "rotate", x: 0, y: 0, z: 45 }])).toBe("rotateZ(45deg)");
+  });
+
+  it("serializes rotate x-only", () => {
+    expect(transformToCSS([{ type: "rotate", x: 45, y: 0, z: 0 }])).toBe("rotateX(45deg)");
+  });
+});
+
+describe("parseSelfPerspective", () => {
+  it("extracts perspective value from transform string", () => {
+    expect(parseSelfPerspective("perspective(500px) rotateY(30deg)")).toBe(500);
+  });
+
+  it("returns 0 when no perspective is present", () => {
+    expect(parseSelfPerspective("rotateY(30deg)")).toBe(0);
+  });
+});
+
+describe("transformToCSSWithPerspective", () => {
+  it("prepends perspective when value > 0", () => {
+    expect(
+      transformToCSSWithPerspective([{ type: "rotate", x: 0, y: 30, z: 0 }], 500)
+    ).toBe("perspective(500px) rotateY(30deg)");
+  });
+
+  it("omits perspective when value is 0", () => {
+    expect(
+      transformToCSSWithPerspective([{ type: "rotate", x: 0, y: 30, z: 0 }], 0)
+    ).toBe("rotateY(30deg)");
   });
 });
