@@ -1126,7 +1126,7 @@ export function TypoValueCell({
         minWidth: 0,
         height: 28,
         border: `1px solid ${border.default}`,
-        background: surface.subtle,
+        backgroundColor: surface.subtle,
         ...flashStyle,
       }}
     >
