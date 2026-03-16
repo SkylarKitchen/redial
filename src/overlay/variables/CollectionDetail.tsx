@@ -776,9 +776,10 @@ function DetailVariableRow({
         </div>
       )}
 
-      {/* Hover action buttons */}
+      {/* Action spacer — always reserves space to keep columns aligned with header */}
+      <div style={{ width: 38, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 2 }}>
       {hovered && !renaming && !editing && (
-        <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        <>
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
             title="Duplicate"
@@ -807,8 +808,9 @@ function DetailVariableRow({
           >
             <Trash2 size={11} />
           </button>
-        </div>
+        </>
       )}
+      </div>
     </div>
   );
 }
@@ -1112,8 +1114,8 @@ export function CollectionDetail({
               <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Value</div>
             </>
           )}
-          {/* Action spacer for hover buttons */}
-          <div style={{ width: 20, flexShrink: 0 }} />
+          {/* Action spacer — matches hover button area in data rows */}
+          <div style={{ width: 38, flexShrink: 0 }} />
         </div>
       </div>
 
