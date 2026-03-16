@@ -2,8 +2,8 @@
  * elementContext.ts — Gather rich element context for AI prompts
  *
  * Collects page info, element location, source file, and DOM structure
- * into a concise markdown format (agentation.com-style) that can be
- * pasted into Claude or other AI tools.
+ * into a concise markdown format that can be pasted into Claude
+ * or other AI tools.
  */
 
 import { buildBreadcrumb, getDisplayClass } from "../util";
