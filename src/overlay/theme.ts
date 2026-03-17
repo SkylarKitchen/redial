@@ -361,7 +361,6 @@ export const labelIndicator: Record<IndicatorType, { bg: string; text: string }>
 export const labelHighlight = {
   borderRadius: 3,
   padding: "1px 4px",
-  width: "fit-content",
 } as const;
 
 /** Returns inline style object for a label indicator highlight (or empty object for "none"). */
