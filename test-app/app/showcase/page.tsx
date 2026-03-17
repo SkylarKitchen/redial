@@ -1749,22 +1749,31 @@ export default function ShowcasePage() {
           {/* Panel 3: Variables Panel */}
           <div data-component="VariablesPanel">
             <div className="variant-label" style={{ marginBottom: 8 }}>Variables Panel — Master-Detail</div>
-            <div style={{ ...panelShell, width: 580, display: "flex" }}>
+            <div style={{ ...panelShell, width: 716, display: "flex" }}>
               {/* Left Sidebar */}
               <div style={{ width: 170, borderRight: `1px solid ${border.subtle}`, flexShrink: 0, display: "flex", flexDirection: "column" }}>
-                <div style={{ padding: "8px 8px 6px", borderBottom: `1px solid ${border.subtle}` }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.primary }}>Collections</span>
+                <div style={{ padding: "8px 8px 6px", borderBottom: `1px solid ${border.subtle}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.primary }}>Variables</span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <span style={{ fontSize: 14, color: text.label, cursor: "pointer" }}>+</span>
+                    <span style={{ fontSize: 14, color: text.label, cursor: "pointer" }}>‹</span>
+                  </div>
                 </div>
                 <div style={{ padding: "4px 0", flex: 1 }}>
-                  {["Border", "Color", "Container", "Font", "Spacing"].map((name) => {
-                    const isSelected = name === "Color";
+                  {["Border", "Color", "Container", "Font", "Interactive", "Letter", "Line", "Radius", "Shadow", "Space", "Status", "Surface", "Text"].map((name) => {
+                    const isSelected = name === "Border";
                     return (
                       <div key={name} style={{
                         padding: "4px 8px", margin: "0 4px", borderRadius: 3,
                         fontSize: 11, fontFamily: font.sans, color: text.primary,
                         background: isSelected ? surface.hover : "transparent",
+                        borderLeft: isSelected ? `2px solid ${color.primary}` : "2px solid transparent",
                         lineHeight: "20px", cursor: "pointer",
-                      }}>{name}</div>
+                        display: "flex", justifyContent: "space-between",
+                      }}>
+                        <span>{name}</span>
+                        <span style={{ fontSize: 9, color: text.hint }}>auto</span>
+                      </div>
                     );
                   })}
                 </div>
@@ -1773,65 +1782,77 @@ export default function ShowcasePage() {
               <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
                 {/* Detail Header */}
                 <div style={{ padding: "10px 12px 6px", borderBottom: `1px solid ${border.subtle}`, flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginBottom: 6 }}>Color</div>
-                  {/* Column headers */}
+                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginBottom: 6 }}>Border</div>
+                  {/* Column headers — multi-mode */}
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <div style={{ width: 14, flexShrink: 0 }} />
-                    <div style={{ width: 120, flexShrink: 0, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>Name</div>
-                    <div style={{ flex: 1, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em", textAlign: "right" as const }}>Value</div>
+                    <div style={{ width: 100, flexShrink: 0, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>Name</div>
+                    <div style={{ flex: 1, minWidth: 120, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>Base</div>
+                    <div style={{ flex: 1, minWidth: 120, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>Dark</div>
                     <div style={{ width: 38, flexShrink: 0 }} />
                   </div>
                 </div>
-                {/* Subgroup: primary */}
-                <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>primary</div>
+                {/* Subgroup header */}
+                <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>border</div>
                 {/* Variable rows */}
                 <div style={{ flex: 1, overflowY: "auto" as const, padding: "4px 0" }}>
-                  {[
-                    { name: "default", value: "#3B82F6", colorValue: color.primary, type: "color" as const },
-                    { name: "hover", value: "#2563EB", colorValue: color.primaryHover, type: "color" as const },
-                    { name: "foreground", value: "#FFFFFF", colorValue: "#FFFFFF", type: "color" as const },
-                  ].map((v) => (
+                  {([
+                    { name: "accent", colorValue: color.primary, base: "color-brand-...", dark: "color-brand-...", hasDark: true },
+                    { name: "default", colorValue: blackAlpha(0.15), base: "color-neutra...", dark: "color-neutra...", hasDark: true },
+                    { name: "error", colorValue: color.destructive, base: "color-red-500", dark: null, hasDark: false },
+                    { name: "strong", colorValue: blackAlpha(0.35), base: "color-neutra...", dark: "color-neutra...", hasDark: true },
+                    { name: "subtle", colorValue: blackAlpha(0.08), base: "color-neutra...", dark: "color-neutra...", hasDark: true },
+                    { name: "success", colorValue: color.success, base: "color-green-...", dark: null, hasDark: false },
+                    { name: "warning", colorValue: "#F59E0B", base: "color-amber-...", dark: null, hasDark: false },
+                  ] as const).map((v) => (
                     <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
                         <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
                       </span>
-                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
-                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
+                      <span className="mono" style={{ width: 100, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
+                      {/* Base mode — purple pill */}
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <span style={{
+                          display: "inline-block", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontFamily: font.mono,
+                          background: variableAlpha(0.15), color: color.variable, border: `1px solid ${variableAlpha(0.3)}`,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: "100%",
+                        }}>{v.base}</span>
+                      </div>
+                      {/* Dark mode — purple pill or + */}
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        {v.hasDark ? (
+                          <span style={{
+                            display: "inline-block", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontFamily: font.mono,
+                            background: variableAlpha(0.15), color: color.variable, border: `1px solid ${variableAlpha(0.3)}`,
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const, maxWidth: "100%",
+                          }}>{v.dark}</span>
+                        ) : (
+                          <span style={{ fontSize: 12, color: text.hint, cursor: "pointer" }}>+</span>
+                        )}
+                      </div>
                       <div style={{ width: 38, flexShrink: 0 }} />
                     </div>
                   ))}
-                  {/* Subgroup: surface */}
-                  <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>surface</div>
+                  {/* Length variables (non-color) */}
                   {[
-                    { name: "background", value: "#FFFFFF", colorValue: color.background, type: "color" as const },
-                    { name: "muted", value: "rgba(0,0,0,0.05)", colorValue: color.muted, type: "color" as const },
-                    { name: "hover", value: "rgba(0,0,0,0.05)", colorValue: surface.hover, type: "color" as const },
+                    { name: "width-medium", value: "2px" },
+                    { name: "width-thick", value: "4px" },
+                    { name: "width-thin", value: "1px" },
                   ].map((v) => (
                     <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
-                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
-                        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
-                      </span>
-                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
-                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
+                      <span style={{ width: 14, flexShrink: 0, fontSize: 10, fontFamily: font.mono, color: text.hint, textAlign: "center" as const, lineHeight: 1 }}>↗</span>
+                      <span className="mono" style={{ width: 100, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
+                      <span className="mono" style={{ flex: 1, minWidth: 120, fontSize: 11, color: blackAlpha(0.7) }}>{v.value}</span>
+                      <div style={{ flex: 1, minWidth: 120 }}>
+                        <span style={{ fontSize: 12, color: text.hint, cursor: "pointer" }}>+</span>
+                      </div>
                       <div style={{ width: 38, flexShrink: 0 }} />
                     </div>
                   ))}
-                  {/* Subgroup: text */}
-                  <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>text</div>
-                  {[
-                    { name: "primary", value: "#171717", colorValue: color.foreground },
-                    { name: "secondary", value: "#404040", colorValue: text.secondary },
-                    { name: "muted", value: "#525252", colorValue: text.label },
-                  ].map((v) => (
-                    <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
-                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
-                        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
-                      </span>
-                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
-                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
-                      <div style={{ width: 38, flexShrink: 0 }} />
-                    </div>
-                  ))}
+                  {/* New variable button */}
+                  <div style={{ padding: "6px 12px", display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: text.hint, cursor: "pointer" }}>
+                    <span>+</span> <span>New variable</span>
+                  </div>
                 </div>
               </div>
             </div>
