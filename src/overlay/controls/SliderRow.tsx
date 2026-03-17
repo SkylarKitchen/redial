@@ -135,7 +135,7 @@ export function SliderRow({
     return (
       <>
       <div style={rowStyle} onContextMenu={onContextMenu} onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); } }} onMouseEnter={() => setRowHovered(true)} onMouseLeave={() => setRowHovered(false)}>
-        <LabelScrub value={value} onChange={onChange} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
+        <LabelScrub value={value} onChange={() => {}} step={step} min={min} max={max} onAltClick={onReset} onClick={resetPopover.triggerOpen}>
           {computedProp && computedElement ? (
             <ComputedTooltip property={computedProp} element={computedElement}>
               {labelContent}
