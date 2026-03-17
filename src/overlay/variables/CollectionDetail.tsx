@@ -1100,13 +1100,11 @@ export function CollectionDetail({
           {name}
         </div>
 
-        {/* Column headers */}
+        {/* Column headers — no icon spacer; NAME aligns with row padding, not icon */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {/* Icon spacer */}
-          <div style={{ width: 14, flexShrink: 0 }} />
           {relevantModes ? (
             <>
-              <div style={{ width: 100, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
+              <div style={{ width: 120, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
               <div
                 ref={registerModeScroll}
                 onScroll={handleModeScroll}

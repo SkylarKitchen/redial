@@ -18,6 +18,8 @@ import {
   focusRing,
   checkerboard,
   filledTrackBg,
+  darkToolbar,
+  bgAlpha,
 } from "@/overlay/theme";
 import { timing } from "@/overlay/timing";
 
@@ -1719,11 +1721,12 @@ export default function ShowcasePage() {
                 <InteractiveSelect label="Weight" options={["300 - Light", "400 - Regular", "500 - Medium", "600 - Semi Bold", "700 - Bold"]} initialIndex={1} />
                 <InteractiveSlider label="Size" initialPct={33} maxVal={48} />
                 <InteractiveSlider label="Height" initialPct={50} maxVal={3} unit="em" />
+                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.foreground, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.foreground}</span></div>
                 <div style={{ padding: layout.rowPadding }}><InteractiveIconGroup icons={[<AlignLeftIcon key="l" />, <AlignCenterIcon key="c" />, <AlignRightIcon key="r" />, <AlignJustifyIcon key="j" />]} initialActive={0} /></div>
               </ToggleSection>
 
               <ToggleSection title="Backgrounds">
-                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
+                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.7) }}>#3B82F6</span></div>
               </ToggleSection>
 
               <ToggleSection title="Borders">
@@ -1748,14 +1751,12 @@ export default function ShowcasePage() {
 
           {/* Panel 2: All Collapsed */}
           <div data-component="FullPanel" data-variant="all-collapsed">
-            <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Collapsed — Click to expand</div>
+            <div className="variant-label" style={{ marginBottom: 8 }}>All Sections Collapsed</div>
             <div style={panelShell}>
               <PanelHeader tag="<div>" className=".container" />
               <InteractiveTabBar tabs={["Common", "Custom", "Prompt"]} initialActive={0} />
               {["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].map((s) => (
-                <ToggleSection key={s} title={s}>
-                  <div style={{ padding: "8px 12px", fontSize: 11, color: blackAlpha(0.5) }}>{s} controls would appear here...</div>
-                </ToggleSection>
+                <ToggleSection key={s} title={s} />
               ))}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
                 <HoverButton style={footerBtnStandard} disabled>Clipboard <span style={{ fontSize: 11, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
@@ -1764,13 +1765,144 @@ export default function ShowcasePage() {
             </div>
           </div>
 
-          {/* Panel 3: Search Empty */}
-          <div data-component="FullPanel" data-variant="search-empty">
-            <div className="variant-label" style={{ marginBottom: 8 }}>Search — No Results</div>
-            <div style={panelShell}>
-              <PanelHeader tag="<div>" />
-              <div style={{ height: 8 }} />
-              <div style={{ textAlign: "center", color: blackAlpha(0.55), padding: "40px 20px", fontSize: 12 }}>No matching properties</div>
+          {/* Panel 3: Variables Panel */}
+          <div data-component="VariablesPanel">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Variables Panel — Master-Detail</div>
+            <div style={{ ...panelShell, width: 580, display: "flex" }}>
+              {/* Left Sidebar */}
+              <div style={{ width: 170, borderRight: `1px solid ${border.subtle}`, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "8px 8px 6px", borderBottom: `1px solid ${border.subtle}` }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.primary }}>Collections</span>
+                </div>
+                <div style={{ padding: "4px 0", flex: 1 }}>
+                  {["Border", "Color", "Container", "Font", "Spacing"].map((name) => {
+                    const isSelected = name === "Spacing";
+                    return (
+                      <div key={name} style={{
+                        padding: "4px 8px", margin: "0 4px", borderRadius: 3,
+                        fontSize: 11, fontFamily: font.sans, color: text.primary,
+                        background: isSelected ? surface.hover : "transparent",
+                        lineHeight: "20px", cursor: "pointer",
+                      }}>{name}</div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Right Detail */}
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+                {/* Detail Header */}
+                <div style={{ padding: "10px 12px 6px", borderBottom: `1px solid ${border.subtle}`, flexShrink: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginBottom: 6 }}>Spacing</div>
+                  {/* Column headers */}
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <div style={{ width: 14, flexShrink: 0 }} />
+                    <div style={{ width: 120, flexShrink: 0, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em" }}>Name</div>
+                    <div style={{ flex: 1, fontSize: 10, fontWeight: 500, fontFamily: font.sans, color: text.hint, textTransform: "uppercase" as const, letterSpacing: "0.04em", textAlign: "right" as const }}>Value</div>
+                    <div style={{ width: 38, flexShrink: 0 }} />
+                  </div>
+                </div>
+                {/* Subgroup header */}
+                <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>spacing</div>
+                {/* Variable rows */}
+                <div style={{ flex: 1, overflowY: "auto" as const, padding: "4px 0" }}>
+                  {[
+                    { name: "sm", value: "8px" },
+                    { name: "md", value: "16px" },
+                    { name: "lg", value: "32px" },
+                    { name: "xl", value: "64px" },
+                    { name: "2xl", value: "128px" },
+                  ].map((v) => (
+                    <div key={v.name} style={{
+                      display: "flex", gap: 6, padding: "8px 12px", minHeight: 26,
+                      alignItems: "center",
+                    }}>
+                      <span style={{ width: 14, flexShrink: 0, fontSize: 10, fontFamily: font.mono, color: text.hint, textAlign: "center" as const, lineHeight: 1 }}>↗</span>
+                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
+                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
+                      <div style={{ width: 38, flexShrink: 0 }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Panel 4: Navigator Panel */}
+          <div data-component="NavigatorPanel">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Navigator Panel — DOM Tree</div>
+            <div style={{ ...panelShell, width: 300 }}>
+              {/* Navigator header */}
+              <div style={{ height: 36, display: "flex", alignItems: "center", padding: "0 8px", borderBottom: `1px solid ${border.subtle}`, userSelect: "none" as const }}>
+                <span style={{ fontSize: 12, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginRight: 6 }}>Navigator</span>
+                <span style={{ fontSize: 10, fontFamily: font.sans, color: text.hint }}>134 elements</span>
+                <div style={{ flex: 1 }} />
+                <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: text.label, borderRadius: 4, cursor: "pointer" }}>‹</div>
+              </div>
+              {/* Tree rows */}
+              <div style={{ padding: "2px 0" }}>
+                {[
+                  { tag: "html", cls: null, depth: 0, expanded: true, selected: false },
+                  { tag: "body", cls: null, depth: 1, expanded: true, selected: false },
+                  { tag: "div", cls: "page", depth: 2, expanded: true, selected: false },
+                  { tag: "main", cls: "layout", depth: 3, expanded: true, selected: false },
+                  { tag: "section", cls: "hero", depth: 4, expanded: true, selected: true },
+                  { tag: "h1", cls: "title", depth: 5, expanded: false, selected: false, leaf: true },
+                  { tag: "p", cls: "subtitle", depth: 5, expanded: false, selected: false, leaf: true },
+                  { tag: "div", cls: "cta", depth: 5, expanded: false, selected: false },
+                  { tag: "a", cls: "btn", depth: 6, expanded: false, selected: false, leaf: true },
+                  { tag: "section", cls: "features", depth: 4, expanded: false, selected: false },
+                  { tag: "section", cls: "pricing", depth: 4, expanded: false, selected: false },
+                  { tag: "section", cls: "testimonials", depth: 4, expanded: false, selected: false },
+                  { tag: "footer", cls: "footer", depth: 3, expanded: false, selected: false },
+                ].map((node, i) => (
+                  <div key={i} style={{
+                    display: "flex", alignItems: "center", height: 26,
+                    paddingLeft: node.depth * 16 + 4, paddingRight: 8,
+                    fontSize: 11, fontFamily: font.mono, cursor: "pointer",
+                    color: node.selected ? color.primary : text.primary,
+                    background: node.selected ? primaryAlpha(0.08) : "transparent",
+                    borderLeft: node.selected ? `2px solid ${color.primary}` : "2px solid transparent",
+                  }}>
+                    {/* Expand chevron */}
+                    <span style={{
+                      width: 16, flexShrink: 0, fontSize: 9,
+                      color: node.leaf ? "transparent" : text.label,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transform: node.expanded ? "rotate(90deg)" : "rotate(0deg)",
+                    }}>▶</span>
+                    <span style={{ color: node.selected ? color.primary : text.secondary }}>{node.tag}</span>
+                    {node.cls && <span style={{ color: node.selected ? primaryAlpha(0.7) : text.hint }}>.{node.cls}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Panel 5: Toolbar (Expanded) */}
+          <div data-component="Toolbar">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Toolbar — Expanded Pill</div>
+            <div style={{
+              height: 48, borderRadius: 24, display: "inline-flex", alignItems: "center",
+              background: surface.darkToolbar,
+              border: `1px solid ${darkToolbar.border}`,
+              boxShadow: `0 4px 20px ${blackAlpha(0.25)}, 0 0 0 0.5px ${bgAlpha(0.06)}`,
+              padding: "0 8px", gap: 2,
+            }}>
+              {[
+                { label: "Select", active: true },
+                { label: "Variables", active: false },
+                { label: "AI", active: false },
+                { label: "Changes", active: false },
+              ].map((btn) => (
+                <div key={btn.label} style={{
+                  height: 32, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                  paddingLeft: 10, paddingRight: 10,
+                  fontSize: 12, fontWeight: btn.active ? 500 : 400, fontFamily: font.sans,
+                  color: btn.active ? darkToolbar.text : darkToolbar.textMuted,
+                  background: btn.active ? darkToolbar.active : "transparent",
+                  cursor: "pointer", whiteSpace: "nowrap" as const,
+                }}>{btn.label}</div>
+              ))}
             </div>
           </div>
 
