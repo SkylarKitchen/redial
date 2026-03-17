@@ -16,7 +16,6 @@ import { labelStyle, rowStyle, useResetPopover, PresetChips } from "./helpers";
 import { ValueInput } from "./ValueInput";
 import { VariableLinkDot } from "./VariableLinkDot";
 import { VariableField } from "./VariableField";
-import { X } from "lucide-react";
 import { ms } from "../timing";
 
 export function SliderRow({
@@ -149,31 +148,6 @@ export function SliderRow({
           onSelectVariable={(varExpr) => { onSelectVariable?.(varExpr); }}
           onUnlink={handleUnlink}
         />
-        {indicator === "modified" && onReset && (
-          <button
-            type="button"
-            title="Reset to original value"
-            onClick={(e) => { e.stopPropagation(); onReset(); }}
-            onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.9)"; }}
-            onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              color: text.hint,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              opacity: 0.5,
-              transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}
-          >
-            <X size={10} strokeWidth={2.5} />
-          </button>
-        )}
       </div>
       {resetPopover.node}
       </>
