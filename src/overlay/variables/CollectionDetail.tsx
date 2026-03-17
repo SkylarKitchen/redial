@@ -1081,7 +1081,7 @@ export function CollectionDetail({
         </div>
 
         {/* Column headers */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {/* Icon spacer */}
           <div style={{ width: 14, flexShrink: 0 }} />
           {relevantModes ? (
