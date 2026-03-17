@@ -13,6 +13,7 @@ import {
   labelIndicator,
   spacingZone,
   primaryAlpha,
+  variableAlpha,
   blackAlpha,
   focusRing,
   checkerboard,
@@ -1412,8 +1413,8 @@ export default function ShowcasePage() {
             <div className="variant-col"><div className="variant-label">Keyword (&quot;auto&quot;)</div>
               <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>&ndash;</span></div></div>
             </div>
-            <div className="variant-col"><div className="variant-label">CSS Variable</div>
-              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2, gap: 4, overflow: "hidden", minWidth: 0 }}><span style={{ color: indicatorColor.modified, fontSize: 10, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span><span style={{ color: blackAlpha(0.55), fontSize: 10, fontFamily: font.mono, flexShrink: 0 }}>768</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>VAR</span></div></div>
+            <div className="variant-col"><div className="variant-label">Linked Variable (purple pill)</div>
+              <div style={sizeInputCellBase}><div style={sizeInputLabel}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.15), border: `1px solid ${variableAlpha(0.3)}`, height: 22, minWidth: 0, overflow: "hidden" }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>container-w</span></div></div>
             </div>
             <div className="variant-col"><div className="variant-label">Modified (blue highlight)</div>
               <div style={{ ...sizeInputCellBase, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.25)}` }}><div style={{ ...sizeInputLabel, color: color.primary }}>Width</div><div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>320</span></div><div style={{ flexShrink: 0, paddingRight: 3 }}><span style={sizeInputUnit}>px</span></div></div>
@@ -1475,8 +1476,8 @@ export default function ShowcasePage() {
             <div className="variant-col"><div className="variant-label">Default (hex)</div>
               <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
             </div>
-            <div className="variant-col"><div className="variant-label">CSS Variable</div>
-              <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `2px solid ${primaryAlpha(0.6)}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: primaryAlpha(0.8) }}>brand-primary</span></div>
+            <div className="variant-col"><div className="variant-label">Linked Variable (purple pill)</div>
+              <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ display: "flex", alignItems: "center", padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.15), border: `1px solid ${variableAlpha(0.3)}`, height: 22, minWidth: 0, overflow: "hidden" }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>brand-primary</span></div></div>
             </div>
             <div className="variant-col"><div className="variant-label">Transparent</div>
               <div style={rowStyle}><span style={labelStyle}>BG</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: "repeating-conic-gradient(#333 0% 25%, #555 0% 50%) 50%/8px 8px", border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>transparent</span></div>
