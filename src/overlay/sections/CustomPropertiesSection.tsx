@@ -5,17 +5,33 @@
  * Each entry is a property input + value input row with trash to remove.
  */
 
-import { useState, useCallback, useRef, memo } from "react";
+import { useState, useCallback, useRef, useMemo, useSyncExternalStore, memo } from "react";
 import { Trash2, Plus } from "lucide-react";
 import { Section } from "../controls";
-import { resetProp } from "../core/apply";
+import { resetProp, diff, subscribeOverrides, getOverrideSnapshot } from "../core/apply";
+import type { DiffEntry } from "../core/apply";
 import type { SectionCtx } from "../panelUtils";
+import { SECTION_PROPERTIES } from "../shell/PropertySearch";
 import { text, border, font, color } from "../theme";
 import { ms } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
 type CustomEntry = { id: string; property: string; value: string };
+
+// ─── Auto-population helper ─────────────────────────────────────────
+
+/** All property names covered by the 8 structured sections */
+const STRUCTURED_PROPS = new Set(
+  Object.values(SECTION_PROPERTIES).flat()
+);
+
+/** Filter diff entries to only those NOT covered by structured sections */
+export function getCustomOverrides(diffs: DiffEntry[]): CustomEntry[] {
+  return diffs
+    .filter(d => !d.state && !STRUCTURED_PROPS.has(d.prop))
+    .map(d => ({ id: crypto.randomUUID(), property: d.prop, value: d.to }));
+}
 
 // ─── Props ──────────────────────────────────────────────────────────────
 
@@ -111,7 +127,30 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
   focusOpen,
   onToggle,
 }: Props) {
-  const [entries, setEntries] = useState<CustomEntry[]>([]);
+  // Track override changes reactively
+  const overrideVersion = useSyncExternalStore(subscribeOverrides, getOverrideSnapshot);
+
+  // Auto-populated entries from current overrides
+  const autoEntries = useMemo(() => {
+    // overrideVersion is read to trigger recalculation
+    void overrideVersion;
+    return ctx.element ? getCustomOverrides(diff(ctx.element)) : [];
+  }, [ctx.element, overrideVersion]);
+
+  // Manual entries added via "+ Add"
+  const [manualEntries, setManualEntries] = useState<CustomEntry[]>([]);
+  // Track dismissed auto-populated property names so they don't re-appear
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
+  // Merge auto + manual, filtering out dismissed auto entries
+  const entries = useMemo(() => {
+    const manualProps = new Set(manualEntries.map(e => e.property));
+    const filtered = autoEntries.filter(
+      e => !dismissed.has(e.property) && !manualProps.has(e.property),
+    );
+    return [...filtered, ...manualEntries];
+  }, [autoEntries, manualEntries, dismissed]);
+
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [hoveredTrash, setHoveredTrash] = useState<string | null>(null);
   const [addHovered, setAddHovered] = useState(false);
@@ -121,7 +160,7 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
   const handleAdd = useCallback(() => {
     const id = crypto.randomUUID();
     newEntryRef.current = id;
-    setEntries((prev) => [...prev, { id, property: "", value: "" }]);
+    setManualEntries((prev) => [...prev, { id, property: "", value: "" }]);
     // Focus is set in a microtask after render
     requestAnimationFrame(() => {
       const el = inputRefs.current.get(`${id}-prop`);
@@ -131,17 +170,24 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
 
   const handleRemove = useCallback(
     (entry: CustomEntry) => {
-      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+      // Check if this is a manual entry or auto-populated
+      const isManual = manualEntries.some(e => e.id === entry.id);
+      if (isManual) {
+        setManualEntries((prev) => prev.filter((e) => e.id !== entry.id));
+      } else {
+        // Auto-populated: dismiss it so it doesn't reappear
+        setDismissed((prev) => new Set(prev).add(entry.property));
+      }
       if (entry.property) {
         resetProp(ctx.element, entry.property);
       }
     },
-    [ctx.element],
+    [ctx.element, manualEntries],
   );
 
   const handlePropertyBlur = useCallback(
     (id: string, newProp: string) => {
-      setEntries((prev) =>
+      setManualEntries((prev) =>
         prev.map((e) => (e.id === id ? { ...e, property: newProp } : e)),
       );
     },
@@ -150,17 +196,18 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
 
   const handleValueCommit = useCallback(
     (id: string, newValue: string) => {
-      setEntries((prev) => {
-        const entry = prev.find((e) => e.id === id);
-        if (entry && entry.property) {
-          ctx.apply(entry.property, newValue);
-        }
-        return prev.map((e) =>
+      // Check manual entries first, then auto entries
+      const entry = manualEntries.find((e) => e.id === id) ?? entries.find((e) => e.id === id);
+      if (entry && entry.property) {
+        ctx.apply(entry.property, newValue);
+      }
+      setManualEntries((prev) =>
+        prev.map((e) =>
           e.id === id ? { ...e, value: newValue } : e,
-        );
-      });
+        ),
+      );
     },
-    [ctx],
+    [ctx, manualEntries, entries],
   );
 
   const setInputRef = useCallback(

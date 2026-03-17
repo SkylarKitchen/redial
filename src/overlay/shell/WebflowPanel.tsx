@@ -27,6 +27,7 @@ import { TypographySection } from "../sections/TypographySection";
 import { BackgroundsSection } from "../sections/BackgroundsSection";
 import { BordersSection } from "../sections/BordersSection";
 import { EffectsSection } from "../sections/EffectsSection";
+import { CustomPropertiesSection } from "../sections/CustomPropertiesSection";
 
 
 const EMPTY_MEMORY: Record<string, boolean> = {};
@@ -163,7 +164,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   const isSearching = searchQuery.length > 0;
   const showSection = (name: string) => sectionMatchesQuery(name, searchQuery);
   const forceOpen = isSearching;
-  const noResults = isSearching && !["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects"].some(s => showSection(s));
+  const noResults = isSearching && !["Layout", "Spacing", "Size", "Position", "Typography", "Backgrounds", "Borders", "Effects", "Custom properties"].some(s => showSection(s));
 
   /** Focus-mode props for a named section */
   const focusProps = (name: string) => focusMode && !isSearching ? {
@@ -267,6 +268,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
       {/* 8. Effects */}
       {showSection("Effects") && (
         <EffectsSection ctx={ctx} forceOpen={forceOpen} {...focusProps("Effects")} />
+      )}
+
+      {/* 9. Custom properties */}
+      {showSection("Custom properties") && (
+        <CustomPropertiesSection
+          ctx={ctx}
+          forceOpen={forceOpen}
+          {...focusProps("Custom properties")}
+        />
       )}
 
       {/* Right-click property context menu */}

@@ -291,13 +291,14 @@ describe("palette includes commands for all keyboard shortcuts", () => {
     });
   });
 
-  describe("all 8 CSS sections are searchable", () => {
+  describe("all 9 CSS sections are searchable", () => {
     const expectedSections = [
       "Layout", "Spacing", "Size", "Position",
       "Typography", "Backgrounds", "Borders", "Effects",
+      "Custom properties",
     ];
 
-    it("SECTION_PROPERTIES has all 8 sections", () => {
+    it("SECTION_PROPERTIES has all 9 sections", () => {
       expect(Object.keys(SECTION_PROPERTIES)).toEqual(expectedSections);
     });
 

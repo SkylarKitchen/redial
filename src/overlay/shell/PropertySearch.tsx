@@ -48,6 +48,14 @@ export const SECTION_PROPERTIES: Record<string, string[]> = {
     "filter", "backdrop-filter", "cursor", "pointer-events", "user-select",
     "visibility", "perspective", "backface-visibility",
   ],
+  "Custom properties": [
+    "custom", "property", "css",
+    "cursor", "pointer-events", "user-select", "scroll-snap-type",
+    "scroll-snap-align", "clip-path", "mask", "will-change", "contain",
+    "content-visibility", "accent-color", "caret-color", "touch-action",
+    "scroll-behavior", "overscroll-behavior", "resize", "appearance",
+    "isolation", "writing-mode", "text-orientation",
+  ],
 };
 
 /** Check if a section matches a search query (case-insensitive substring on property names and section title) */
