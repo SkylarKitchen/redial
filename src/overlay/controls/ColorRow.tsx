@@ -147,7 +147,11 @@ export function ColorRow({
             variableName={varName}
             variableType="color"
             onSelectVariable={(varExpr) => onChange(varExpr)}
-            onUnlink={() => { if (resolvedColor) onChange(resolvedColor); }}
+            onUnlink={() => {
+              const fallback = resolvedColor
+                ?? (computedElement ? getComputedStyle(computedElement).getPropertyValue(computedProp ?? "color").trim() : null);
+              if (fallback) onChange(fallback);
+            }}
           />
         ) : (
           <>

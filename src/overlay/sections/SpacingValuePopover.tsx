@@ -12,6 +12,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "../controls";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
+import { VariableField } from "../controls/VariableField";
 import { ms } from "../timing";
 import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "../theme";
 
@@ -222,30 +223,13 @@ export function SpacingValuePopover({
       {/* Top row: linked variable pill OR icon+input+slider+unit */}
       {isLinked ? (
         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-          <div style={{
-            flex: 1, height: 24, display: "flex", alignItems: "center", padding: "0 8px",
-            background: `${color.variable}1a`, borderRadius: 4,
-            border: `1px solid ${color.variable}4d`,
-          }}>
-            <span style={{
-              fontSize: 11, fontFamily: font.mono, color: color.variable,
-              fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>
-              {activeVariable!.replace(/^--/, "")}
-            </span>
-          </div>
-          {onSelectVariable && (
-            <VariableLinkDot
-              rowHovered={true}
-              isLinked={true}
-              onUnlink={onUnlink}
-              variableType="length"
-              element={element}
-              onSelect={(varExpr) => onSelectVariable?.(varExpr)}
-              activeVariable={activeVariable}
-              inline
-            />
-          )}
+          <VariableField
+            variableName={activeVariable!}
+            variableType="length"
+            element={element}
+            onSelectVariable={(varExpr) => onSelectVariable?.(varExpr)}
+            onUnlink={() => onUnlink?.()}
+          />
         </div>
       ) : (
         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>

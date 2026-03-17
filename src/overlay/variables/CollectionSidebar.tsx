@@ -264,6 +264,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose }: ContextMenuProps) {
   return createPortal(
     <div
       ref={ref}
+      data-tuner-portal
       style={{ ...menuStyle, left: adjustedX, top: adjustedY }}
       role="menu"
     >
