@@ -761,6 +761,27 @@ function DetailVariableRow({
               onBlur={() => commitValue(draft)}
               style={{ ...INPUT_STYLE, flex: 1, textAlign: "right" }}
             />
+          ) : variable.aliasOf ? (
+            /* Alias value → purple VariableField pill */
+            <VariableField
+              variableName={variable.aliasOf}
+              variableType={variable.type === "color" ? "color" : "all"}
+              onSelectVariable={(varExpr) => {
+                const m = varExpr.match(/^var\(\s*(--[\w-]+)/);
+                if (m) {
+                  applyCustomProperty(document.documentElement, variable.name, varExpr);
+                  onApply(variable.name, varExpr);
+                }
+              }}
+              onUnlink={() => {
+                const resolved = getComputedStyle(document.documentElement)
+                  .getPropertyValue(variable.aliasOf!).trim();
+                if (resolved) {
+                  applyCustomProperty(document.documentElement, variable.name, resolved);
+                  onApply(variable.name, resolved);
+                }
+              }}
+            />
           ) : (
             <span
               onClick={() => setEditing(true)}
@@ -768,7 +789,6 @@ function DetailVariableRow({
             >
               <VariableValue
                 value={variable.value}
-                aliasOf={variable.aliasOf}
                 resolvedColor={resolvedColor}
               />
             </span>
@@ -1111,7 +1131,7 @@ export function CollectionDetail({
           ) : (
             <>
               <div style={{ width: 120, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
-              <div style={{ flex: 1, textAlign: "left", ...COLUMN_HEADER_STYLE }}>Value</div>
+              <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Value</div>
             </>
           )}
           {/* Action spacer — matches hover button area in data rows */}

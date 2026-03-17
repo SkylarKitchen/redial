@@ -32,15 +32,24 @@ export function VarTypeIcon({
     return (
       <span
         style={{
-          display: "inline-block",
-          width: 10,
-          height: 10,
-          borderRadius: "50%",
-          background: colorValue,
-          border: "1px solid rgba(0,0,0,0.1)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 14,
           flexShrink: 0,
         }}
-      />
+      >
+        <span
+          style={{
+            display: "inline-block",
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: colorValue,
+            border: "1px solid rgba(0,0,0,0.1)",
+          }}
+        />
+      </span>
     );
   }
 
