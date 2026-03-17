@@ -1484,6 +1484,59 @@ export default function ShowcasePage() {
             </div>
           </div>
 
+          {/* VariableField */}
+          <div className="card" style={{ width: 320 }} data-component="VariableField">
+            <div className="card-label">VariableField — Purple Pill</div>
+            <div className="variant-col"><div className="variant-label">Default (linked)</div>
+              <div style={rowStyle}><span style={labelStyle}>Gap</span><div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, overflow: "hidden", height: 26, padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.15), border: `1px solid ${variableAlpha(0.3)}`, cursor: "pointer" }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>space-4</span></div></div>
+            </div>
+            <div className="variant-col"><div className="variant-label">Hovered (with pencil)</div>
+              <div style={rowStyle}><span style={labelStyle}>Gap</span><div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, overflow: "hidden", height: 26, padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.22), border: `1px solid ${variableAlpha(0.3)}`, cursor: "pointer", gap: 4 }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>space-4</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={color.variable} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div></div>
+            </div>
+            <div className="variant-col"><div className="variant-label">Long name (truncated)</div>
+              <div style={rowStyle}><span style={labelStyle}>Height</span><div style={{ display: "flex", alignItems: "center", flex: 1, minWidth: 0, overflow: "hidden", height: 26, padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.15), border: `1px solid ${variableAlpha(0.3)}`, cursor: "pointer" }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>border-width-medium</span></div></div>
+            </div>
+            <div className="variant-col"><div className="variant-label">Color (compact)</div>
+              <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ display: "flex", alignItems: "center", minWidth: 0, overflow: "hidden", height: 26, padding: "0 6px", borderRadius: layout.pillRadius, background: variableAlpha(0.15), border: `1px solid ${variableAlpha(0.3)}`, cursor: "pointer" }}><span style={{ color: color.variable, fontSize: 11, fontFamily: font.mono, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>color-amber-300</span></div></div>
+            </div>
+          </div>
+
+          {/* ConnectPicker */}
+          <div className="card" style={{ width: 240 }} data-component="ConnectPicker">
+            <div className="card-label">Connect Picker</div>
+            <div style={{ background: color.background, border: `1px solid ${border.default}`, borderRadius: 6, boxShadow: shadow.dropdown, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 8px 4px" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: text.primary }}>Connect</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={text.hint} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="2" y1="8" x2="5" y2="8"/><line x1="16" y1="19" x2="16" y2="22"/><line x1="19" y1="16" x2="22" y2="16"/></svg>
+              </div>
+              <div style={{ padding: "6px 6px 4px", borderBottom: `1px solid ${border.subtle}` }}>
+                <div style={{ height: 24, background: surface.subtle, border: `1px solid ${border.default}`, borderRadius: 4, padding: "0 6px", fontSize: 10, fontFamily: font.mono, color: text.hint, display: "flex", alignItems: "center" }}>Search variables...</div>
+              </div>
+              <div style={{ padding: "2px 0" }}>
+                <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: text.disabled, padding: "6px 8px 2px" }}>SPACING</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", borderRadius: 3, background: primaryAlpha(0.1) }}><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, width: 14, textAlign: "center" }}>px</span><span style={{ fontSize: 10, fontFamily: font.mono, color: color.primary, flex: 1 }}>space-4</span><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint }}>16px</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px" }}><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, width: 14, textAlign: "center" }}>px</span><span style={{ fontSize: 10, fontFamily: font.mono, color: text.primary, flex: 1 }}>space-8</span><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint }}>32px</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px" }}><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, width: 14, textAlign: "center" }}>px</span><span style={{ fontSize: 10, fontFamily: font.mono, color: text.primary, flex: 1 }}>space-12</span><span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint }}>48px</span></div>
+              </div>
+            </div>
+          </div>
+
+          {/* EditVariablePopover */}
+          <div className="card" style={{ width: 260 }} data-component="EditVariablePopover">
+            <div className="card-label">Edit Variable Popover</div>
+            <div style={{ background: color.background, border: `1px solid ${border.default}`, borderRadius: 6, boxShadow: shadow.dropdown, padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: text.primary }}>Edit variable</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label }}>Name</span>
+                <div style={{ height: 28, background: surface.subtle, border: `1px solid ${border.default}`, borderRadius: 4, padding: "0 8px", fontSize: 11, fontFamily: font.mono, color: text.primary, display: "flex", alignItems: "center" }}>space-4</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontSize: 10, color: text.label }}>Value</span>
+                <div style={{ height: 28, background: surface.subtle, border: `1px solid ${border.default}`, borderRadius: 4, padding: "0 8px", fontSize: 11, fontFamily: font.mono, color: text.primary, display: "flex", alignItems: "center" }}>16px</div>
+              </div>
+            </div>
+          </div>
+
           {/* StyleIndicator */}
           <div className="card" style={{ width: 320 }} data-component="StyleIndicator">
             <div className="card-label">StyleIndicator — All 5 Types</div>
