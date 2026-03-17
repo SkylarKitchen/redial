@@ -1726,7 +1726,7 @@ export default function ShowcasePage() {
               </ToggleSection>
 
               <ToggleSection title="Backgrounds">
-                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.7) }}>#3B82F6</span></div>
+                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
               </ToggleSection>
 
               <ToggleSection title="Borders">
