@@ -41,3 +41,38 @@ describe("getCustomOverrides", () => {
     expect(getCustomOverrides([])).toEqual([]);
   });
 });
+
+describe("property filtering", () => {
+  it("filters CSS_PROPERTIES by substring match", async () => {
+    const { filterProperties } = await import("../sections/CustomPropertiesSection");
+    const results = filterProperties("flex");
+    expect(results).toContain("flex");
+    expect(results).toContain("flex-direction");
+    expect(results).not.toContain("color");
+  });
+
+  it("returns top 12 results max", async () => {
+    const { filterProperties } = await import("../sections/CustomPropertiesSection");
+    const results = filterProperties("b");
+    expect(results.length).toBeLessThanOrEqual(12);
+  });
+
+  it("returns empty array for empty query", async () => {
+    const { filterProperties } = await import("../sections/CustomPropertiesSection");
+    expect(filterProperties("")).toEqual([]);
+  });
+
+  it("prioritizes startsWith over includes", async () => {
+    const { filterProperties } = await import("../sections/CustomPropertiesSection");
+    const results = filterProperties("border");
+    // "border" itself and "border-*" should come before substring matches
+    expect(results[0]).toBe("border");
+  });
+
+  it("is case-insensitive", async () => {
+    const { filterProperties } = await import("../sections/CustomPropertiesSection");
+    const lower = filterProperties("flex");
+    const upper = filterProperties("FLEX");
+    expect(lower).toEqual(upper);
+  });
+});
