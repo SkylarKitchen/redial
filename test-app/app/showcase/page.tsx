@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   color,
   text,
@@ -22,6 +22,7 @@ import {
   bgAlpha,
 } from "@/overlay/theme";
 import { timing } from "@/overlay/timing";
+import { WebflowPanel } from "@/overlay/shell/WebflowPanel";
 
 // ─── Reusable SVGs ──────────────────────────────────────────────────────────
 
@@ -1252,6 +1253,64 @@ const UnderlineIcon = () => <svg width="12" height="12" viewBox="0 0 24 24" fill
 const RowIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>;
 const ColIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>;
 const WrapIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><path d="M3 12h15a3 3 0 1 1 0 6h-4"/><polyline points="16 16 14 18 16 20"/><line x1="3" y1="18" x2="10" y2="18"/></svg>;
+
+// ─── Live Panel (renders real WebflowPanel against a styled element) ─────────
+
+function ShowcaseLivePanel() {
+  const targetRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+
+  // All sections open by default
+  const sectionMemory = useMemo(() => ({
+    Layout: true, Spacing: true, Size: true, Position: true,
+    Typography: true, Backgrounds: true, Borders: true, Effects: true,
+  }), []);
+
+  const spacing = useMemo(() => ({
+    marginTop: 0, marginRight: 0, marginBottom: 0, marginLeft: 0,
+    paddingTop: 12, paddingRight: 24, paddingBottom: 12, paddingLeft: 24,
+  }), []);
+
+  useEffect(() => { if (targetRef.current) setReady(true); }, []);
+
+  const noop = useCallback(() => {}, []);
+
+  return (
+    <div>
+      {/* Hidden target element — WebflowPanel reads getComputedStyle from this */}
+      <div
+        ref={targetRef}
+        data-showcase-target
+        style={{
+          position: "absolute", left: -9999, top: -9999, width: 200, height: 48,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          padding: "12px 24px", margin: 0,
+          fontFamily: "Inter, system-ui, sans-serif", fontSize: 14, fontWeight: 600,
+          lineHeight: 1.5, letterSpacing: "normal", color: "#ffffff",
+          backgroundColor: "#3B82F6", borderRadius: 8,
+          border: "1px solid rgba(0,0,0,0.1)", borderStyle: "solid",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+          opacity: 1, cursor: "pointer", position: "absolute" as const,
+          overflow: "visible", textAlign: "center" as const,
+        }}
+      >
+        Button
+      </div>
+      {ready && targetRef.current && (
+        <div style={panelShell}>
+          <PanelHeader tag="<button>" className=".btnPrimary" showSource badges={<><ChangesBadgeCount count={9} /></>} />
+          <WebflowPanel
+            element={targetRef.current}
+            spacing={spacing}
+            onSpacingChange={noop as any}
+            sectionMemory={sectionMemory}
+            onSectionMemoryChange={noop as any}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Main Page Component ────────────────────────────────────────────────────
 
