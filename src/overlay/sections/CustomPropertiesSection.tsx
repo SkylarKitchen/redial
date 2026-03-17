@@ -147,7 +147,7 @@ const dropdownStyle: React.CSSProperties = {
   boxShadow: shadow.dropdown,
   maxHeight: 240,
   overflowY: "auto",
-  zIndex: 99999,
+  zIndex: 2147483647,
   padding: "2px 0",
 };
 

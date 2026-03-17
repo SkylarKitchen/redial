@@ -1722,7 +1722,7 @@ export default function ShowcasePage() {
 
       <div style={{ marginBottom: 64 }}>
         <h1 className="section-title">C — Full Panel Compositions</h1>
-        <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
 
           {/* Panel 1: Live Panel (real WebflowPanel against styled element) */}
           <div data-component="FullPanel" data-variant="live">
