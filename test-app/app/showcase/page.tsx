@@ -1267,8 +1267,8 @@ function ShowcaseLivePanel() {
   }), []);
 
   const spacing = useMemo(() => ({
-    marginTop: 0, marginRight: 0, marginBottom: 0, marginLeft: 0,
-    paddingTop: 12, paddingRight: 24, paddingBottom: 12, paddingLeft: 24,
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    padding: { top: 12, right: 24, bottom: 12, left: 24 },
   }), []);
 
   useEffect(() => { if (targetRef.current) setReady(true); }, []);
@@ -1282,15 +1282,15 @@ function ShowcaseLivePanel() {
         ref={targetRef}
         data-showcase-target
         style={{
-          position: "absolute", left: -9999, top: -9999, width: 200, height: 48,
+          position: "fixed", left: -9999, top: 0, width: 200, height: 48,
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           padding: "12px 24px", margin: 0,
           fontFamily: "Inter, system-ui, sans-serif", fontSize: 14, fontWeight: 600,
           lineHeight: 1.5, letterSpacing: "normal", color: "#ffffff",
           backgroundColor: "#3B82F6", borderRadius: 8,
-          border: "1px solid rgba(0,0,0,0.1)", borderStyle: "solid",
+          border: "1px solid rgba(0,0,0,0.1)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-          opacity: 1, cursor: "pointer", position: "absolute" as const,
+          opacity: 1, cursor: "pointer",
           overflow: "visible", textAlign: "center" as const,
         }}
       >
@@ -1724,137 +1724,10 @@ export default function ShowcasePage() {
         <h1 className="section-title">C — Full Panel Compositions</h1>
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap" }}>
 
-          {/* Panel 1: Interactive */}
-          <div data-component="FullPanel" data-variant="interactive">
-            <div className="variant-label" style={{ marginBottom: 8 }}>Interactive Panel — try everything</div>
-            <div style={panelShell}>
-              <PanelHeader tag="<button>" className=".btnPrimary" showSource badges={<><ChangesBadgeCount count={9} /></>} />
-
-              {/* Scope + State toolbar */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 12px 0" }}>
-                <InteractiveScopePills labels={["element", ".btnPrimary"]} initialActive={0} />
-                <InteractiveStateSelector />
-              </div>
-
-              {/* Breadcrumb path */}
-              <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "4px 12px 6px" }}>
-                <span className="mono" style={{ fontSize: 10, color: blackAlpha(0.45) }}>div.page</span>
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke={blackAlpha(0.35)} strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-                <span className="mono" style={{ fontSize: 10, color: blackAlpha(0.55) }}>main.main</span>
-              </div>
-
-              {/* Tab bar */}
-              <InteractiveTabBar tabs={["Common", "Custom", "Prompt"]} initialActive={1} />
-
-              <ToggleSection title="Layout" defaultOpen>
-                <div style={{ padding: layout.rowPadding }}><InteractiveDisplayTabs options={["block", "flex", "grid", "none"]} initialActive={1} /></div>
-                <div style={{ padding: layout.rowPadding }}><InteractiveIconGroup icons={[<RowIcon key="r" />, <ColIcon key="c" />, <WrapIcon key="w" />]} initialActive={0} /></div>
-                <div style={{ padding: "0 8px" }}><InteractiveAlignBox /></div>
-                <InteractiveSlider label="Gap" initialPct={25} maxVal={48} />
-              </ToggleSection>
-
-              <ToggleSection title="Spacing" defaultOpen>
-                <InteractiveSpacingBox />
-              </ToggleSection>
-
-              <ToggleSection title="Size" hasIndicator defaultOpen>
-                <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
-                  <div style={{ flex: 1, ...sizeInputCellBase, background: primaryAlpha(0.10), border: `1px solid ${primaryAlpha(0.25)}` }}>
-                    <div style={{ ...sizeInputLabel, color: color.primary }}>W</div>
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>200</span></div>
-                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>px</span></div>
-                  </div>
-                  <div style={{ flex: 1, ...sizeInputCellBase }}>
-                    <div style={sizeInputLabel}>H</div>
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div>
-                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>&ndash;</span></div>
-                  </div>
-                </div>
-                {/* Min/Max Width & Height */}
-                <div style={{ display: "flex", gap: layout.controlGap, padding: layout.rowPadding }}>
-                  <div style={{ flex: 1, ...sizeInputCellBase }}>
-                    <div style={sizeInputLabel}>Min W</div>
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={{ ...sizeInputValue, textTransform: "capitalize" }}>Auto</span></div>
-                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>&ndash;</span></div>
-                  </div>
-                  <div style={{ flex: 1, ...sizeInputCellBase }}>
-                    <div style={sizeInputLabel}>Max W</div>
-                    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 2 }}><span style={sizeInputValue}>none</span></div>
-                    <div style={{ flexShrink: 0, paddingRight: 3 }}><span className="mono" style={{ fontSize: 10, color: blackAlpha(0.8), padding: "0 4px" }}>&ndash;</span></div>
-                  </div>
-                </div>
-                {/* Overflow */}
-                <InteractiveSelect label="Overflow" options={["visible", "hidden", "scroll", "auto", "clip"]} initialIndex={0} />
-                <div style={{ padding: layout.rowPadding }}><InteractivePresetChips values={["auto", "100%", "fit-content", "min-content"]} /></div>
-              </ToggleSection>
-
-              <ToggleSection title="Position" defaultOpen>
-                <div style={{ padding: layout.rowPadding }}><InteractiveDisplayTabs options={["static", "relative", "absolute", "fixed", "sticky"]} initialActive={0} /></div>
-                <InteractiveSlider label="Z-Index" initialPct={0} maxVal={100} unit="" />
-              </ToggleSection>
-
-              <ToggleSection title="Typography" defaultOpen>
-                <InteractiveSelect label="Family" options={["Inter", "SF Pro", "Roboto", "Menlo"]} initialIndex={0} />
-                <InteractiveSelect label="Weight" options={["300 - Light", "400 - Regular", "500 - Medium", "600 - Semi Bold", "700 - Bold"]} initialIndex={1} />
-                <InteractiveSlider label="Size" initialPct={33} maxVal={48} />
-                <InteractiveSlider label="Height" initialPct={50} maxVal={3} unit="em" />
-                <InteractiveSlider label="Spacing" initialPct={0} maxVal={10} unit="px" />
-                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.foreground, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.foreground}</span></div>
-                <div style={{ padding: layout.rowPadding }}><InteractiveIconGroup icons={[<AlignLeftIcon key="l" />, <AlignCenterIcon key="c" />, <AlignRightIcon key="r" />, <AlignJustifyIcon key="j" />]} initialActive={0} /></div>
-                <InteractiveSelect label="Transform" options={["none", "uppercase", "lowercase", "capitalize"]} initialIndex={0} />
-                <div style={{ padding: layout.rowPadding }}><InteractiveIconGroup icons={[<BoldIcon key="b" />, <UnderlineIcon key="u" />, <StrikeIcon key="s" />]} initialActive={[]} multiSelect /></div>
-              </ToggleSection>
-
-              <ToggleSection title="Backgrounds" defaultOpen>
-                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: color.primary, border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>{color.primary}</span></div>
-                <InteractiveSelect label="Size" options={["auto", "cover", "contain", "custom"]} initialIndex={0} />
-                <InteractiveSelect label="Repeat" options={["repeat", "no-repeat", "repeat-x", "repeat-y"]} initialIndex={1} />
-              </ToggleSection>
-
-              <ToggleSection title="Borders" defaultOpen>
-                <InteractiveSelect label="Style" options={["none", "solid", "dashed", "dotted", "double", "groove"]} initialIndex={1} />
-                <InteractiveSlider label="Width" initialPct={10} maxVal={10} />
-                <div style={rowStyle}><span style={labelStyle}>Color</span><div style={{ width: layout.colorSwatch, height: layout.colorSwatch, borderRadius: 4, background: blackAlpha(0.2), border: `1px solid ${surface.track}`, flexShrink: 0 }} /><span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7) }}>rgba(0,0,0,0.2)</span></div>
-                <InteractiveSlider label="Radius" initialPct={20} maxVal={50} />
-              </ToggleSection>
-
-              <ToggleSection title="Effects" defaultOpen>
-                <InteractiveSlider label="Opacity" initialPct={100} maxVal={100} unit="%" />
-                <InteractiveSelect label="Cursor" options={["auto", "pointer", "grab", "text", "crosshair", "not-allowed"]} initialIndex={0} />
-                {/* Shadow sub-section */}
-                <div style={{ padding: "4px 8px 2px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: text.secondary }}>Shadows</span>
-                  <span style={{ fontSize: 9, color: text.hint, fontFamily: font.mono }}>1 shadow</span>
-                </div>
-                <div style={{ ...rowStyle, background: surface.subtle, marginLeft: 8, marginRight: 8, borderRadius: 4 }}>
-                  <span style={{ fontSize: 10, fontFamily: font.mono, color: blackAlpha(0.7), flex: 1 }}>0px 2px 8px rgba(0,0,0,0.12)</span>
-                </div>
-                {/* Transform sub-section */}
-                <div style={{ padding: "4px 8px 2px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: text.secondary }}>Transforms</span>
-                  <span style={{ fontSize: 9, color: text.hint, fontFamily: font.mono }}>none</span>
-                </div>
-                {/* Transition sub-section */}
-                <div style={{ padding: "4px 8px 2px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: text.secondary }}>Transitions</span>
-                  <span style={{ fontSize: 9, color: text.hint, fontFamily: font.mono }}>none</span>
-                </div>
-                {/* Filter sub-section */}
-                <div style={{ padding: "4px 8px 2px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, fontWeight: 500, color: text.secondary }}>Filters</span>
-                  <span style={{ fontSize: 9, color: text.hint, fontFamily: font.mono }}>none</span>
-                </div>
-              </ToggleSection>
-
-              {/* Footer — matches real panel: Clipboard ▾ | Reset | Save */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: layout.footerPadding, borderTop: `1px solid ${blackAlpha(0.07)}` }}>
-                <HoverButton style={footerBtnStandard} hoverStyle={{ background: surface.active }}>Clipboard <span style={{ fontSize: 11, marginLeft: 2, opacity: 0.6 }}>&#9662;</span></HoverButton>
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  <HoverButton style={{ padding: "4px 8px", fontSize: 12, fontFamily: font.sans, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(239,68,68,0.15)", borderRadius: 6, background: surface.hover, color: "rgba(239,68,68,0.8)", cursor: "pointer" }} hoverStyle={{ background: "rgba(239,68,68,0.1)" }}>Reset</HoverButton>
-                  <HoverButton style={footerBtnPrimary} hoverStyle={{ background: color.primaryHover }}>Save</HoverButton>
-                </div>
-              </div>
-            </div>
+          {/* Panel 1: Live Panel (real WebflowPanel against styled element) */}
+          <div data-component="FullPanel" data-variant="live">
+            <div className="variant-label" style={{ marginBottom: 8 }}>Live Panel — real components, real computed styles</div>
+            <ShowcaseLivePanel />
           </div>
 
           {/* Panel 2: All Collapsed */}
