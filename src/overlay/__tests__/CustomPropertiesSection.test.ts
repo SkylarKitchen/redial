@@ -76,3 +76,30 @@ describe("property filtering", () => {
     expect(lower).toEqual(upper);
   });
 });
+
+describe("isValidProperty", () => {
+  it("accepts known CSS properties", async () => {
+    const { isValidProperty } = await import("../sections/CustomPropertiesSection");
+    expect(isValidProperty("display")).toBe(true);
+    expect(isValidProperty("cursor")).toBe(true);
+    expect(isValidProperty("flex-direction")).toBe(true);
+  });
+
+  it("accepts custom properties (--*)", async () => {
+    const { isValidProperty } = await import("../sections/CustomPropertiesSection");
+    expect(isValidProperty("--my-color")).toBe(true);
+    expect(isValidProperty("--spacing-lg")).toBe(true);
+  });
+
+  it("rejects unknown property names", async () => {
+    const { isValidProperty } = await import("../sections/CustomPropertiesSection");
+    expect(isValidProperty("not-a-real-property")).toBe(false);
+    expect(isValidProperty("foo")).toBe(false);
+    expect(isValidProperty("asdf")).toBe(false);
+  });
+
+  it("treats empty string as neutral (not invalid)", async () => {
+    const { isValidProperty } = await import("../sections/CustomPropertiesSection");
+    expect(isValidProperty("")).toBe(true);
+  });
+});

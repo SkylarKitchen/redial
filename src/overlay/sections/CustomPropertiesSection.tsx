@@ -51,6 +51,28 @@ export function getCustomOverrides(diffs: DiffEntry[]): CustomEntry[] {
     .map(d => ({ id: crypto.randomUUID(), property: d.prop, value: d.to }));
 }
 
+// ─── Validation ──────────────────────────────────────────────────────────
+
+/** Set of all known CSS property names for validation */
+const CSS_PROPERTY_SET = new Set(CSS_PROPERTIES);
+
+/** Check if a property name is valid (known CSS property or custom property --*) */
+export function isValidProperty(prop: string): boolean {
+  if (!prop) return true; // empty is neutral, not invalid
+  if (prop.startsWith("--")) return true; // custom properties always valid
+  return CSS_PROPERTY_SET.has(prop);
+}
+
+/** Safely apply a style, returning true on success or false on error */
+function safeApply(ctx: SectionCtx, prop: string, value: string): boolean {
+  try {
+    ctx.apply(prop, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Props ──────────────────────────────────────────────────────────────
 
 interface Props {
@@ -81,7 +103,9 @@ const inputStyle: React.CSSProperties = {
   flex: 1,
   background: "transparent",
   border: "none",
-  borderBottom: "1px solid transparent",
+  borderBottomWidth: 1,
+  borderBottomStyle: "solid",
+  borderBottomColor: "transparent",
   outline: "none",
   fontSize: 11,
   fontFamily: font.mono,
@@ -93,6 +117,11 @@ const inputStyle: React.CSSProperties = {
 
 const inputFocusStyle: React.CSSProperties = {
   borderBottomColor: border.hover,
+};
+
+const inputErrorStyle: React.CSSProperties = {
+  borderBottomColor: "#e53e3e",
+  color: "#e53e3e",
 };
 
 const separatorStyle: React.CSSProperties = {
@@ -295,6 +324,9 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
     return [...filtered, ...manualEntries];
   }, [autoEntries, manualEntries, dismissed]);
 
+  // Track entries with errors (invalid property name or failed apply)
+  const [errors, setErrors] = useState<Set<string>>(new Set());
+
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [hoveredTrash, setHoveredTrash] = useState<string | null>(null);
   const [addHovered, setAddHovered] = useState(false);
@@ -345,6 +377,12 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
       setManualEntries((prev) =>
         prev.map((e) => (e.id === id ? { ...e, property: newProp } : e)),
       );
+      // Validate property name — mark error if unrecognized
+      if (newProp && !isValidProperty(newProp)) {
+        setErrors((prev) => new Set(prev).add(id));
+      } else {
+        setErrors((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      }
     },
     [],
   );
@@ -354,7 +392,12 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
       // Check manual entries first, then auto entries
       const entry = manualEntries.find((e) => e.id === id) ?? entries.find((e) => e.id === id);
       if (entry && entry.property) {
-        ctx.apply(entry.property, newValue);
+        const ok = safeApply(ctx, entry.property, newValue);
+        if (!ok) {
+          setErrors((prev) => new Set(prev).add(id));
+        } else {
+          setErrors((prev) => { const next = new Set(prev); next.delete(id); return next; });
+        }
       }
       setManualEntries((prev) =>
         prev.map((e) =>
@@ -444,8 +487,10 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
                   style={{
                     ...inputStyle,
                     ...(focusedInput === `${entry.id}-prop` ? inputFocusStyle : {}),
+                    ...(errors.has(entry.id) ? inputErrorStyle : {}),
                   }}
                   placeholder="property"
+                  title={errors.has(entry.id) ? `Unknown CSS property "${propText}"` : undefined}
                   value={propText}
                   onChange={(e) => handlePropInputChange(entry.id, e.target.value)}
                   onFocus={() => handlePropFocus(entry.id)}
