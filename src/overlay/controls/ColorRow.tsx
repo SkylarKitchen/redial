@@ -146,6 +146,7 @@ export function ColorRow({
           <VariableField
             variableName={varName}
             variableType="color"
+            element={computedElement}
             onSelectVariable={(varExpr) => onChange(varExpr)}
             onUnlink={() => {
               const fallback = resolvedColor
