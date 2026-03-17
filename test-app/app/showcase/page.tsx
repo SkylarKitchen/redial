@@ -1757,7 +1757,7 @@ export default function ShowcasePage() {
                 </div>
                 <div style={{ padding: "4px 0", flex: 1 }}>
                   {["Border", "Color", "Container", "Font", "Spacing"].map((name) => {
-                    const isSelected = name === "Spacing";
+                    const isSelected = name === "Color";
                     return (
                       <div key={name} style={{
                         padding: "4px 8px", margin: "0 4px", borderRadius: 3,
@@ -1773,7 +1773,7 @@ export default function ShowcasePage() {
               <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
                 {/* Detail Header */}
                 <div style={{ padding: "10px 12px 6px", borderBottom: `1px solid ${border.subtle}`, flexShrink: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginBottom: 6 }}>Spacing</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, fontFamily: font.sans, color: text.primary, marginBottom: 6 }}>Color</div>
                   {/* Column headers */}
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <div style={{ width: 14, flexShrink: 0 }} />
@@ -1782,22 +1782,51 @@ export default function ShowcasePage() {
                     <div style={{ width: 38, flexShrink: 0 }} />
                   </div>
                 </div>
-                {/* Subgroup header */}
-                <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>spacing</div>
+                {/* Subgroup: primary */}
+                <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>primary</div>
                 {/* Variable rows */}
                 <div style={{ flex: 1, overflowY: "auto" as const, padding: "4px 0" }}>
                   {[
-                    { name: "sm", value: "8px" },
-                    { name: "md", value: "16px" },
-                    { name: "lg", value: "32px" },
-                    { name: "xl", value: "64px" },
-                    { name: "2xl", value: "128px" },
+                    { name: "default", value: "#3B82F6", colorValue: color.primary, type: "color" as const },
+                    { name: "hover", value: "#2563EB", colorValue: color.primaryHover, type: "color" as const },
+                    { name: "foreground", value: "#FFFFFF", colorValue: "#FFFFFF", type: "color" as const },
                   ].map((v) => (
-                    <div key={v.name} style={{
-                      display: "flex", gap: 6, padding: "8px 12px", minHeight: 26,
-                      alignItems: "center",
-                    }}>
-                      <span style={{ width: 14, flexShrink: 0, fontSize: 10, fontFamily: font.mono, color: text.hint, textAlign: "center" as const, lineHeight: 1 }}>↗</span>
+                    <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
+                        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
+                      </span>
+                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
+                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
+                      <div style={{ width: 38, flexShrink: 0 }} />
+                    </div>
+                  ))}
+                  {/* Subgroup: surface */}
+                  <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>surface</div>
+                  {[
+                    { name: "background", value: "#FFFFFF", colorValue: color.background, type: "color" as const },
+                    { name: "muted", value: "rgba(0,0,0,0.05)", colorValue: color.muted, type: "color" as const },
+                    { name: "hover", value: "rgba(0,0,0,0.05)", colorValue: surface.hover, type: "color" as const },
+                  ].map((v) => (
+                    <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
+                        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
+                      </span>
+                      <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
+                      <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
+                      <div style={{ width: 38, flexShrink: 0 }} />
+                    </div>
+                  ))}
+                  {/* Subgroup: text */}
+                  <div style={{ padding: "6px 12px 2px", fontSize: 11, fontWeight: 600, fontFamily: font.sans, color: text.label }}>text</div>
+                  {[
+                    { name: "primary", value: "#171717", colorValue: color.foreground },
+                    { name: "secondary", value: "#404040", colorValue: text.secondary },
+                    { name: "muted", value: "#525252", colorValue: text.label },
+                  ].map((v) => (
+                    <div key={v.name} style={{ display: "flex", gap: 6, padding: "8px 12px", minHeight: 26, alignItems: "center" }}>
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 14, flexShrink: 0 }}>
+                        <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: v.colorValue, border: `1px solid ${blackAlpha(0.1)}` }} />
+                      </span>
                       <span className="mono" style={{ width: 120, flexShrink: 0, fontSize: 11, color: text.primary }}>{v.name}</span>
                       <span className="mono" style={{ flex: 1, fontSize: 11, color: blackAlpha(0.7), textAlign: "right" as const }}>{v.value}</span>
                       <div style={{ width: 38, flexShrink: 0 }} />
