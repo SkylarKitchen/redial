@@ -234,12 +234,26 @@ export function inferModes(declarations: ModeDeclaration[]): InferredMode[] {
     });
   }
 
+  // Deduplicate: drop prefers-color-scheme media modes when a class/data-attr
+  // mode with the same base name already exists (e.g. "Dark" class + "Dark (system)")
+  const nonMediaNames = new Set(
+    modes.filter((m) => m.source === "class" || m.source === "data-attr")
+      .map((m) => m.name.toLowerCase()),
+  );
+  const deduped = modes.filter((m) => {
+    if (m.source !== "media" || !m.mediaCondition) return true;
+    if (!/prefers-color-scheme/i.test(m.mediaCondition)) return true;
+    // Extract base name: "Dark (system)" → "dark"
+    const baseName = m.name.replace(/\s*\(system\)\s*$/i, "").toLowerCase();
+    return !nonMediaNames.has(baseName);
+  });
+
   // Sort: Base first, then alphabetically
-  modes.sort((a, b) => {
+  deduped.sort((a, b) => {
     if (a.source === "base") return -1;
     if (b.source === "base") return 1;
     return a.name.localeCompare(b.name);
   });
 
-  return modes;
+  return deduped;
 }

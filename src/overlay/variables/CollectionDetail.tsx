@@ -373,7 +373,7 @@ function ModeValueCell({
     setEditing(false);
   }, [draft, mode.selector, varName]);
 
-  const editable = mode.source !== "media" && mode.source !== "base";
+  const editable = mode.source !== "media";
   const isOverridden = isModeOverrideDirty(mode.selector ?? "", varName);
   const linkedVarName = value ? parseVarRef(value) : null;
   const isLinked = !!linkedVarName;
@@ -1101,7 +1101,7 @@ export function CollectionDetail({
                 {relevantModes.map((m) => (
                   <div
                     key={m.name}
-                    style={{ flex: 1, minWidth: 120, textAlign: "right", ...COLUMN_HEADER_STYLE }}
+                    style={{ flex: 1, minWidth: 120, textAlign: "left", ...COLUMN_HEADER_STYLE }}
                   >
                     {m.name}
                   </div>
@@ -1111,7 +1111,7 @@ export function CollectionDetail({
           ) : (
             <>
               <div style={{ width: 120, flexShrink: 0, ...COLUMN_HEADER_STYLE }}>Name</div>
-              <div style={{ flex: 1, textAlign: "right", ...COLUMN_HEADER_STYLE }}>Value</div>
+              <div style={{ flex: 1, textAlign: "left", ...COLUMN_HEADER_STYLE }}>Value</div>
             </>
           )}
           {/* Action spacer — matches hover button area in data rows */}

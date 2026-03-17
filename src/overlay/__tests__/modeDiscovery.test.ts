@@ -275,7 +275,7 @@ describe("inferModes", () => {
     expect(dark.values["--radius"]).toBeUndefined();
   });
 
-  it("handles mixed class + media patterns", () => {
+  it("deduplicates prefers-color-scheme media mode when class mode exists", () => {
     const decls: ModeDeclaration[] = [
       { name: "--bg", rawValue: "#fff", selector: ":root" },
       { name: "--bg", rawValue: "#111", selector: ".dark" },
@@ -283,8 +283,20 @@ describe("inferModes", () => {
     ];
 
     const modes = inferModes(decls);
-    // Should produce 3 modes: Base, Dark (class), Dark (system)
-    expect(modes.length).toBe(3);
+    // "Dark (system)" should be dropped because "Dark" class mode covers it
+    expect(modes.length).toBe(2);
+    expect(modes.map((m) => m.name).sort()).toEqual(["Base", "Dark"]);
+  });
+
+  it("keeps prefers-color-scheme media mode when no class mode exists", () => {
+    const decls: ModeDeclaration[] = [
+      { name: "--bg", rawValue: "#fff", selector: ":root" },
+      { name: "--bg", rawValue: "#111", selector: ":root", mediaCondition: "(prefers-color-scheme: dark)" },
+    ];
+
+    const modes = inferModes(decls);
+    expect(modes.length).toBe(2);
+    expect(modes.map((m) => m.name)).toContain("Dark (system)");
   });
 
   it("skips component-scoped selectors (not modes)", () => {
