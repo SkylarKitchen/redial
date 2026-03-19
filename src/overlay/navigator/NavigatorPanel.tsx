@@ -41,8 +41,10 @@ import {
   primaryAlpha,
   layout,
   zIndex,
+  segment,
 } from "../theme";
 import { timing, ms, springConfig } from "../timing";
+import { CSSEditorView } from "./CSSEditorView";
 
 // ─── Props ──────────────────────────────────────────────────────
 
@@ -117,6 +119,9 @@ export function NavigatorPanel({
   // ── Node drag-to-reorder state ──
   const [nodeDragState, setNodeDragState] = useState<NavDragState | null>(null);
   const isDraggingNodeRef = useRef(false);
+
+  // ── Tab state ──
+  const [tab, setTab] = useState<"tree" | "css">("tree");
 
   // ── Collapse state ──
   const [collapsed, setCollapsed] = useState(false);
@@ -610,17 +615,38 @@ export function NavigatorPanel({
                 ))}
               </div>
 
-              {/* Title */}
-              <span
+              {/* Tab pills */}
+              <div
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: text.primary,
+                  display: "flex",
+                  gap: 1,
+                  background: segment.bg,
+                  borderRadius: segment.radius,
+                  padding: segment.padding,
                   marginRight: 6,
                 }}
               >
-                Navigator
-              </span>
+                {(["tree", "css"] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: tab === t ? text.primary : text.label,
+                      background: tab === t ? segment.activeBg : "transparent",
+                      border: "none",
+                      borderRadius: segment.segmentRadius,
+                      padding: "2px 8px",
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      fontFamily: font.sans,
+                    }}
+                  >
+                    {t === "tree" ? "Tree" : "CSS"}
+                  </button>
+                ))}
+              </div>
 
               {/* Element count badge */}
               <span
@@ -629,7 +655,7 @@ export function NavigatorPanel({
                   color: text.hint,
                 }}
               >
-                {totalCount} elements
+                {totalCount}
               </span>
 
               {/* Spacer */}
@@ -666,7 +692,7 @@ export function NavigatorPanel({
 
             </div>
 
-            {/* ── Tree body (virtualized) ── */}
+            {/* ── Tree body (virtualized) — hidden when CSS tab active ── */}
             <div
               ref={scrollRef}
               role="tree"
@@ -674,11 +700,12 @@ export function NavigatorPanel({
               onKeyDown={handleKeyDown}
               onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
               style={{
-                flex: 1,
+                flex: tab === "tree" ? 1 : undefined,
                 minHeight: 0,
                 overflowY: "auto",
                 overflowX: "hidden",
                 outline: "none",
+                display: tab === "tree" ? undefined : "none",
               }}
             >
               {/* Spacer div for total scroll height */}
@@ -737,6 +764,11 @@ export function NavigatorPanel({
                 </div>
               </div>
             </div>
+
+            {/* ── CSS Editor body — shown when CSS tab active ── */}
+            {tab === "css" && (
+              <CSSEditorView selectedEl={selectedEl} />
+            )}
           </>
         )}
       </motion.div>
