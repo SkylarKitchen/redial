@@ -2,8 +2,10 @@
  * CSSEditorView.tsx — DevTools-like CSS rule viewer with inline editing.
  *
  * Displays all CSS rules matching a selected element in monospace code blocks.
- * Values are click-to-edit; edits apply as inline overrides via apply.ts.
- * Inline (element.style) blocks support adding/removing declarations.
+ * - Stylesheet blocks: click-to-edit values (structured, read-only layout)
+ * - element.style block: freeform textarea (type property: value; lines freely)
+ *
+ * Edits apply as inline overrides via apply.ts.
  */
 
 import {
@@ -109,29 +111,143 @@ const editInputStyle: CSSProperties = {
   minWidth: 40,
 };
 
-const addBtnStyle: CSSProperties = {
-  color: text.hint,
-  background: "none",
-  border: "none",
-  cursor: "pointer",
+const inlineTextareaStyle: CSSProperties = {
   fontFamily: font.mono,
   fontSize: 11,
-  paddingLeft: 16,
-  padding: "2px 0 2px 16px",
+  color: text.primary,
+  background: "transparent",
+  border: "none",
+  outline: "none",
+  resize: "none",
+  width: "100%",
+  padding: 0,
+  margin: 0,
+  lineHeight: "20px",
+  overflow: "hidden",
 };
 
-const removeBtnBaseStyle: CSSProperties = {
-  color: text.hint,
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: font.mono,
-  fontSize: 11,
-  marginLeft: 4,
-  padding: "0 2px",
-  opacity: 0,
-  transition: "opacity 0.15s",
-};
+// ---------------------------------------------------------------------------
+// Helpers: declarationsToText / textToDeclarations
+// ---------------------------------------------------------------------------
+
+function declarationsToText(
+  decls: { prop: string; value: string }[],
+): string {
+  return decls.map((d) => `  ${d.prop}: ${d.value};`).join("\n");
+}
+
+function textToDeclarations(
+  text: string,
+): { prop: string; value: string }[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && line.includes(":"))
+    .map((line) => {
+      const clean = line.endsWith(";") ? line.slice(0, -1) : line;
+      const idx = clean.indexOf(":");
+      return {
+        prop: clean.slice(0, idx).trim(),
+        value: clean.slice(idx + 1).trim(),
+      };
+    })
+    .filter((d) => d.prop && d.value);
+}
+
+// ---------------------------------------------------------------------------
+// InlineStyleEditor — freeform textarea for element.style block
+// ---------------------------------------------------------------------------
+
+function InlineStyleEditor({
+  block,
+  selectedEl,
+}: {
+  block: CSSRuleBlock;
+  selectedEl: Element;
+}) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [content, setContent] = useState(() =>
+    declarationsToText(block.declarations),
+  );
+  const prevDeclsRef = useRef(block.declarations);
+
+  // Re-sync when declarations change externally (e.g. override version bump)
+  useEffect(() => {
+    if (block.declarations !== prevDeclsRef.current) {
+      prevDeclsRef.current = block.declarations;
+      // Only re-sync if the textarea is NOT focused (don't clobber mid-edit)
+      if (document.activeElement !== textareaRef.current) {
+        setContent(declarationsToText(block.declarations));
+      }
+    }
+  }, [block.declarations]);
+
+  // Auto-grow textarea height
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = "0";
+      ta.style.height = `${ta.scrollHeight}px`;
+    }
+  }, [content]);
+
+  const handleBlur = useCallback(() => {
+    const newDecls = textToDeclarations(content);
+    const oldProps = new Set(block.declarations.map((d) => d.prop));
+    const newProps = new Set(newDecls.map((d) => d.prop));
+
+    // Apply new/changed properties
+    for (const d of newDecls) {
+      const existing = block.declarations.find((e) => e.prop === d.prop);
+      if (!existing || existing.value !== d.value) {
+        applyInlineStyle(selectedEl, d.prop, d.value);
+      }
+    }
+
+    // Reset deleted properties
+    for (const prop of oldProps) {
+      if (!newProps.has(prop)) {
+        resetProp(selectedEl, prop);
+      }
+    }
+  }, [content, block.declarations, selectedEl]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        textareaRef.current?.blur();
+      }
+    },
+    [],
+  );
+
+  return (
+    <div style={blockStyle} data-testid="inline-style-editor">
+      {/* Selector line: element.style { */}
+      <div style={selectorStyle}>
+        {block.selector}{" "}
+        <span style={punctuationStyle}>{"{"}</span>
+      </div>
+
+      {/* Freeform textarea */}
+      <textarea
+        ref={textareaRef}
+        style={inlineTextareaStyle}
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        spellCheck={false}
+        rows={1}
+        data-testid="inline-textarea"
+      />
+
+      {/* Closing brace */}
+      <div style={punctuationStyle}>{"}"}</div>
+    </div>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // EditInput — auto-selecting inline input
@@ -205,9 +321,10 @@ function RuleBlock({
   selectedEl: Element;
   totalBlocks: number;
 }) {
+  // Inline blocks are rendered by InlineStyleEditor instead
+  if (block.source === "inline") return null;
+
   const [hoveredDecl, setHoveredDecl] = useState<number | null>(null);
-  const [addBtnHovered, setAddBtnHovered] = useState(false);
-  const isInline = block.source === "inline";
 
   // Find the next editable value position (for Tab navigation)
   const advanceEditing = useCallback(
@@ -308,50 +425,12 @@ function RuleBlock({
             )}
 
             <span style={punctuationStyle}>;</span>
-
-            {/* Remove button (inline blocks only) */}
-            {isInline && (
-              <button
-                style={{
-                  ...removeBtnBaseStyle,
-                  opacity: isRowHovered ? 1 : 0,
-                }}
-                onClick={() => resetProp(selectedEl, decl.prop)}
-                aria-label={`Remove ${decl.prop}`}
-              >
-                &times;
-              </button>
-            )}
           </div>
         );
       })}
 
       {/* Closing brace */}
       <div style={punctuationStyle}>{"}"}</div>
-
-      {/* Add button (inline blocks only) */}
-      {isInline && (
-        <button
-          style={{
-            ...addBtnStyle,
-            color: addBtnHovered ? text.primary : text.hint,
-          }}
-          onMouseEnter={() => setAddBtnHovered(true)}
-          onMouseLeave={() => setAddBtnHovered(false)}
-          onClick={() => {
-            // Add a placeholder declaration and enter edit mode on it
-            // The actual addition happens when the user commits a value
-            // We signal this by setting editingKey to the new index
-            setEditingKey({
-              blockIdx,
-              declIdx: block.declarations.length,
-            });
-          }}
-          aria-label="Add declaration"
-        >
-          +
-        </button>
-      )}
     </div>
   );
 }
@@ -401,18 +480,26 @@ export function CSSEditorView({ selectedEl }: CSSEditorViewProps) {
 
   return (
     <div style={containerStyle}>
-      {rules.map((block, blockIdx) => (
-        <RuleBlock
-          key={`${block.source}-${block.selector}-${blockIdx}`}
-          block={block}
-          blockIdx={blockIdx}
-          editingKey={editingKey}
-          setEditingKey={setEditingKey}
-          strikethroughSet={strikethroughSet}
-          selectedEl={selectedEl}
-          totalBlocks={rules.length}
-        />
-      ))}
+      {rules.map((block, blockIdx) =>
+        block.source === "inline" ? (
+          <InlineStyleEditor
+            key="inline"
+            block={block}
+            selectedEl={selectedEl}
+          />
+        ) : (
+          <RuleBlock
+            key={`${block.source}-${block.selector}-${blockIdx}`}
+            block={block}
+            blockIdx={blockIdx}
+            editingKey={editingKey}
+            setEditingKey={setEditingKey}
+            strikethroughSet={strikethroughSet}
+            selectedEl={selectedEl}
+            totalBlocks={rules.length}
+          />
+        ),
+      )}
     </div>
   );
 }

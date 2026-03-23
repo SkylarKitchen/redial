@@ -114,14 +114,8 @@ describe("CSSEditorView", () => {
     expect(screen.getByTestId("value-0-0").textContent).toBe("red");
   });
 
-  it("+ button only appears on inline block", () => {
+  it("inline block renders as textarea", () => {
     vi.mocked(getMatchingRules).mockReturnValue([
-      {
-        selector: ".card",
-        declarations: [{ prop: "color", value: "red" }],
-        source: "main.css",
-        isState: false,
-      },
       {
         selector: "element.style",
         declarations: [{ prop: "margin", value: "10px" }],
@@ -132,8 +126,87 @@ describe("CSSEditorView", () => {
     const div = document.createElement("div");
     render(<CSSEditorView selectedEl={div} />);
 
-    const addButtons = screen.getAllByLabelText("Add declaration");
-    expect(addButtons.length).toBe(1);
+    const editor = screen.getByTestId("inline-style-editor");
+    expect(editor).toBeTruthy();
+
+    const textarea = screen.getByTestId("inline-textarea") as HTMLTextAreaElement;
+    expect(textarea).toBeTruthy();
+    expect(textarea.value).toContain("margin: 10px;");
+  });
+
+  it("textarea blur applies changes", () => {
+    vi.mocked(getMatchingRules).mockReturnValue([
+      {
+        selector: "element.style",
+        declarations: [{ prop: "margin", value: "10px" }],
+        source: "inline",
+        isState: false,
+      },
+    ]);
+    const div = document.createElement("div");
+    render(<CSSEditorView selectedEl={div} />);
+
+    const textarea = screen.getByTestId("inline-textarea") as HTMLTextAreaElement;
+
+    // Change value from 10px to 20px
+    fireEvent.change(textarea, {
+      target: { value: "  margin: 20px;" },
+    });
+    fireEvent.blur(textarea);
+
+    expect(applyInlineStyle).toHaveBeenCalledWith(div, "margin", "20px");
+  });
+
+  it("textarea supports adding new lines", () => {
+    vi.mocked(getMatchingRules).mockReturnValue([
+      {
+        selector: "element.style",
+        declarations: [{ prop: "margin", value: "10px" }],
+        source: "inline",
+        isState: false,
+      },
+    ]);
+    const div = document.createElement("div");
+    render(<CSSEditorView selectedEl={div} />);
+
+    const textarea = screen.getByTestId("inline-textarea") as HTMLTextAreaElement;
+
+    // Add a new line
+    fireEvent.change(textarea, {
+      target: { value: "  margin: 10px;\n  background: red;" },
+    });
+    fireEvent.blur(textarea);
+
+    // margin unchanged, so only background should be applied
+    expect(applyInlineStyle).toHaveBeenCalledWith(div, "background", "red");
+    expect(applyInlineStyle).toHaveBeenCalledTimes(1);
+  });
+
+  it("textarea supports deleting lines (calls resetProp)", () => {
+    vi.mocked(getMatchingRules).mockReturnValue([
+      {
+        selector: "element.style",
+        declarations: [
+          { prop: "margin", value: "10px" },
+          { prop: "color", value: "red" },
+        ],
+        source: "inline",
+        isState: false,
+      },
+    ]);
+    const div = document.createElement("div");
+    render(<CSSEditorView selectedEl={div} />);
+
+    const textarea = screen.getByTestId("inline-textarea") as HTMLTextAreaElement;
+
+    // Remove the color line, keep only margin
+    fireEvent.change(textarea, {
+      target: { value: "  margin: 10px;" },
+    });
+    fireEvent.blur(textarea);
+
+    expect(resetProp).toHaveBeenCalledWith(div, "color");
+    expect(applyInlineStyle).not.toHaveBeenCalled();
   });
 
   it("strikethrough on overridden declarations", () => {
