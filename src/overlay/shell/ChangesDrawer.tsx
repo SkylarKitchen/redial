@@ -11,7 +11,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { diffAll, resetAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "../util";
-import { resolveSource, getModuleClassInfo } from "../core/sourcemap";
+import { enrichChangesForCommit } from "../core/commitUtils";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
 import { getConfig } from "../core/config";
@@ -203,25 +203,21 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     setSaving(true);
     setMessage(null);
 
-    const enriched = allDiffs.flatMap(({ el, changes }) => {
-      const moduleInfo = getModuleClassInfo(el);
-      return changes.map((c) => {
-        const source = resolveSource(el, c.prop);
-        return {
-          ...c,
-          sourceFile: source?.file,
-          sourceLine: source?.line,
-          className: moduleInfo?.className,
-          componentName: moduleInfo?.componentName,
-        };
-      });
-    });
+    // Mirror Footer.tsx / Overlay.tsx: route through enrichChangesForCommit so
+    // Tailwind elements get the correct shape + `mode: "tailwind"` marker.
+    const enriched = allDiffs.flatMap(({ el, changes }) =>
+      enrichChangesForCommit(el, changes, { scope: "element" }),
+    );
+    const mode = enriched.find((c) => c.mode)?.mode;
 
     try {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes: enriched }),
+        body: JSON.stringify({
+          ...(mode ? { mode } : {}),
+          changes: enriched,
+        }),
       });
 
       if (!res.ok) {

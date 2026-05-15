@@ -161,6 +161,94 @@ export function mergeClasses(existing: string, newClasses: string): string {
   return [...kept, ...newList].join(" ");
 }
 
+export type ClassNameMatch = {
+  lineIdx: number;
+  start: number;
+  end: number;
+  quote: string;
+  isCnWrapper: boolean;
+};
+
+/**
+ * Parse a single line for any className attribute and return its location,
+ * or null if no className syntax is present. (One match per line — matches
+ * the original single-line, single-attribute assumption.)
+ */
+function parseClassNameOnLine(line: string, lineIdx: number): ClassNameMatch | null {
+  // className="..."
+  const dqMatch = line.match(/className="([^"]*)"/);
+  if (dqMatch) {
+    const start = line.indexOf('className="') + 'className="'.length;
+    return {
+      lineIdx,
+      start,
+      end: start + dqMatch[1].length,
+      quote: '"',
+      isCnWrapper: false,
+    };
+  }
+
+  // className={'...'}
+  const sqMatch = line.match(/className=\{'([^']*)'\}/);
+  if (sqMatch) {
+    const start = line.indexOf("className={'") + "className={'".length;
+    return {
+      lineIdx,
+      start,
+      end: start + sqMatch[1].length,
+      quote: "'",
+      isCnWrapper: false,
+    };
+  }
+
+  // className={`...`}
+  const btMatch = line.match(/className=\{`([^`]*)`\}/);
+  if (btMatch) {
+    const start = line.indexOf("className={`") + "className={`".length;
+    return {
+      lineIdx,
+      start,
+      end: start + btMatch[1].length,
+      quote: "`",
+      isCnWrapper: false,
+    };
+  }
+
+  // className={cn("...", "...")} or className={clsx("...", "...")}
+  const cnMatch = line.match(/className=\{(?:cn|clsx)\(([^)]*)\)\}/);
+  if (cnMatch) {
+    const inner = cnMatch[1];
+    const firstStr = inner.match(/"([^"]*)"/);
+    if (firstStr) {
+      const cnStart = line.indexOf(cnMatch[0]);
+      const innerStart = cnStart + line.slice(cnStart).indexOf(inner);
+      const strStart = innerStart + inner.indexOf(firstStr[0]) + 1;
+      return {
+        lineIdx,
+        start: strStart,
+        end: strStart + firstStr[1].length,
+        quote: '"',
+        isCnWrapper: true,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Return every className attribute occurrence in the file.
+ * Used to detect ambiguity when the same className string repeats.
+ */
+export function findAllClassNameAttributes(lines: string[]): ClassNameMatch[] {
+  const matches: ClassNameMatch[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = parseClassNameOnLine(lines[i], i);
+    if (m) matches.push(m);
+  }
+  return matches;
+}
+
 /**
  * Find a className attribute in JSX source lines.
  * Supports: className="...", className={'...'}, className={`...`}, className={cn("...", "...")}
@@ -171,13 +259,7 @@ export function mergeClasses(existing: string, newClasses: string): string {
 export function findClassNameAttribute(
   lines: string[],
   targetLine?: number
-): {
-  lineIdx: number;
-  start: number;
-  end: number;
-  quote: string;
-  isCnWrapper: boolean;
-} | null {
+): ClassNameMatch | null {
   // Search near targetLine first, then full file
   const searchOrder: number[] = [];
 
@@ -196,69 +278,73 @@ export function findClassNameAttribute(
   }
 
   for (const i of searchOrder) {
-    const line = lines[i];
-
-    // className="..."
-    const dqMatch = line.match(/className="([^"]*)"/);
-    if (dqMatch) {
-      const start = line.indexOf('className="') + 'className="'.length;
-      return {
-        lineIdx: i,
-        start,
-        end: start + dqMatch[1].length,
-        quote: '"',
-        isCnWrapper: false,
-      };
-    }
-
-    // className={'...'}
-    const sqMatch = line.match(/className=\{'([^']*)'\}/);
-    if (sqMatch) {
-      const start = line.indexOf("className={'") + "className={'".length;
-      return {
-        lineIdx: i,
-        start,
-        end: start + sqMatch[1].length,
-        quote: "'",
-        isCnWrapper: false,
-      };
-    }
-
-    // className={`...`}
-    const btMatch = line.match(/className=\{`([^`]*)`\}/);
-    if (btMatch) {
-      const start = line.indexOf("className={`") + "className={`".length;
-      return {
-        lineIdx: i,
-        start,
-        end: start + btMatch[1].length,
-        quote: "`",
-        isCnWrapper: false,
-      };
-    }
-
-    // className={cn("...", "...")} or className={clsx("...", "...")}
-    const cnMatch = line.match(/className=\{(?:cn|clsx)\(([^)]*)\)\}/);
-    if (cnMatch) {
-      // For cn/clsx wrappers, we find the first string argument
-      const inner = cnMatch[1];
-      const firstStr = inner.match(/"([^"]*)"/);
-      if (firstStr) {
-        const cnStart = line.indexOf(cnMatch[0]);
-        const innerStart = cnStart + line.slice(cnStart).indexOf(inner);
-        const strStart = innerStart + inner.indexOf(firstStr[0]) + 1;
-        return {
-          lineIdx: i,
-          start: strStart,
-          end: strStart + firstStr[1].length,
-          quote: '"',
-          isCnWrapper: true,
-        };
-      }
-    }
+    const m = parseClassNameOnLine(lines[i], i);
+    if (m) return m;
   }
 
   return null;
+}
+
+/**
+ * Locate the className attribute corresponding to a specific change.
+ *
+ * Disambiguation strategy (issue #42):
+ *  1. Restrict to className attributes whose content exactly equals
+ *     `existingClasses` (when provided). Different classNames on
+ *     unrelated elements are never confused with each other.
+ *  2. If `sourceLine` is provided, pick the candidate whose line is
+ *     closest to it (Strategy #1 — React fiber source location).
+ *  3. If no `sourceLine` and >1 candidate matches: refuse with an
+ *     "ambiguous" error rather than silently picking the first
+ *     (Strategy #3 — refuse + clear error).
+ */
+export function findClassNameForChange(
+  lines: string[],
+  existingClasses: string,
+  sourceLine?: number
+):
+  | { ok: true; match: ClassNameMatch }
+  | { ok: false; reason: "not-found" | "ambiguous"; count: number } {
+  const all = findAllClassNameAttributes(lines);
+
+  // When existingClasses is provided, narrow to exact content matches.
+  // (When empty, fall back to any className — preserves the
+  // "first className in file" behaviour used by callers that only want
+  // to verify a file contains a className at all.)
+  const candidates = existingClasses
+    ? all.filter((m) => lines[m.lineIdx].slice(m.start, m.end) === existingClasses)
+    : all;
+
+  if (candidates.length === 0) {
+    // Fallback to the legacy near-line search so callers that pass a
+    // mismatched `existingClasses` (e.g. classes already rewritten by
+    // a prior change in the same commit) still find a target.
+    const legacy = findClassNameAttribute(lines, sourceLine);
+    if (legacy) return { ok: true, match: legacy };
+    return { ok: false, reason: "not-found", count: 0 };
+  }
+
+  if (candidates.length === 1) {
+    return { ok: true, match: candidates[0] };
+  }
+
+  // Multiple candidates — need sourceLine to disambiguate.
+  if (sourceLine == null || sourceLine <= 0) {
+    return { ok: false, reason: "ambiguous", count: candidates.length };
+  }
+
+  // Pick the candidate whose lineIdx is closest to (sourceLine - 1).
+  const target = sourceLine - 1;
+  let best = candidates[0];
+  let bestDist = Math.abs(best.lineIdx - target);
+  for (let i = 1; i < candidates.length; i++) {
+    const d = Math.abs(candidates[i].lineIdx - target);
+    if (d < bestDist) {
+      best = candidates[i];
+      bestDist = d;
+    }
+  }
+  return { ok: true, match: best };
 }
 
 /**
@@ -360,15 +446,21 @@ export async function handleTailwindCommit(
       let modified = false;
 
       for (const change of fileChanges) {
-        const found = findClassNameAttribute(lines, change.sourceLine);
-        if (!found) {
-          result.failed.push({
-            ...change,
-            reason: `className attribute not found in ${sourceFile}`,
-          });
+        const lookup = findClassNameForChange(
+          lines,
+          change.existingClasses,
+          change.sourceLine
+        );
+        if (!lookup.ok) {
+          const reason =
+            lookup.reason === "ambiguous"
+              ? `ambiguous className "${change.existingClasses}" in ${sourceFile}: ${lookup.count} matching elements found and no sourceLine provided to disambiguate — refusing to save to avoid modifying the wrong element`
+              : `className attribute not found in ${sourceFile}`;
+          result.failed.push({ ...change, reason });
           continue;
         }
 
+        const found = lookup.match;
         const currentClasses = lines[found.lineIdx].slice(
           found.start,
           found.end

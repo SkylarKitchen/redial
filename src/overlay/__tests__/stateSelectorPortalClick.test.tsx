@@ -60,6 +60,17 @@ function installPanelHandlers(opts: { withFix: boolean }) {
       radixDismissPending = false;
       return;
     }
+    // Issue #23 (follow-up): also short-circuit when a Radix popper is
+    // currently mounted at *click* time. This catches the "click trigger
+    // to open" flow where the popper opens synchronously during pointerdown
+    // (between capture and bubble) and the click is then retargeted to
+    // <html> by Radix's pointer-capture release.
+    if (
+      opts.withFix &&
+      document.querySelector("[data-radix-popper-content-wrapper]")
+    ) {
+      return;
+    }
     const target = e.target as Element | null;
     if (!target) return;
     if (target.closest(".__tuner-root")) return;
@@ -203,6 +214,116 @@ describe("issue #23: State dropdown dismissal must not reselect <html>", () => {
       removeHandlers();
       panel.remove();
       pageEl.remove();
+    }
+  });
+
+  it("reproduces second failure path: click-trigger-to-OPEN reselects <html> without the click-time check", () => {
+    // This is the live-Chrome-MCP-discovered path that the pointerdown-flag
+    // alone does NOT catch. Sequence (traced via debug listeners on /demo):
+    //   1. pointerdown fires on the State trigger button — popper is NOT yet
+    //      mounted, so the flag-setting check sees no popper and does NOT set
+    //      the flag.
+    //   2. Radix opens the popper synchronously during pointerdown
+    //      (between capture and bubble phases).
+    //   3. click fires with `target = <html>` (Radix's pointer-capture
+    //      release retargets the event). At this moment the popper IS
+    //      mounted.
+    // The flag is still false, so the click handler falls through to the
+    // exemption checks. `<html>` doesn't match any of them → selection
+    // changes.
+    //
+    // We run with the OLD partial fix (pointerdown flag only, no click-time
+    // popper check) by installing handlers identical to the agent's first
+    // fix.
+    const handleSelect = vi.fn();
+    let radixDismissPending = false;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) {
+        radixDismissPending = true;
+      }
+    };
+    const handleClick = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      if (radixDismissPending) {
+        radixDismissPending = false;
+        return;
+      }
+      // NOTE: the click-time popper check is intentionally omitted here.
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (target.closest(".__tuner-root")) return;
+      handleSelect(target);
+    };
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("click", handleClick, true);
+
+    const panel = document.createElement("div");
+    panel.className = "__tuner-root";
+    const trigger = document.createElement("button");
+    trigger.setAttribute("role", "combobox");
+    panel.appendChild(trigger);
+    document.body.appendChild(panel);
+
+    try {
+      // Step 1: pointerdown on trigger — no popper yet
+      trigger.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+      );
+
+      // Step 2: Radix opens the popper synchronously during pointerdown
+      const wrapper = document.createElement("div");
+      wrapper.setAttribute("data-radix-popper-content-wrapper", "");
+      document.body.appendChild(wrapper);
+
+      // Step 3: click fires with target = <html> (Radix retarget)
+      document.documentElement.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, button: 0 }),
+      );
+
+      // The bug: <html> is selected even though the user clicked the State trigger.
+      expect(handleSelect).toHaveBeenCalledTimes(1);
+      expect(handleSelect).toHaveBeenCalledWith(document.documentElement);
+    } finally {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("click", handleClick, true);
+      panel.remove();
+      document
+        .querySelector("[data-radix-popper-content-wrapper]")
+        ?.remove();
+    }
+  });
+
+  it("with full fix: click-trigger-to-OPEN preserves selection", () => {
+    // Same sequence as the previous test, but installPanelHandlers now also
+    // checks at click time whether a Radix popper is mounted.
+    const dom = mountOpenDropdown();
+    const { handleSelect, cleanup: removeHandlers } = installPanelHandlers({
+      withFix: true,
+    });
+    // Reset to the pre-open state: the dropdown is NOT yet mounted at
+    // pointerdown time; we mount it during the sequence to simulate Radix
+    // opening it synchronously.
+    dom.wrapper.remove();
+
+    try {
+      dom.trigger.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+      );
+      // Radix opens popper synchronously
+      document.body.appendChild(dom.wrapper);
+      // Click fires, retargeted to <html>
+      document.documentElement.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, button: 0 }),
+      );
+
+      // With the full fix, the click-time popper check fires and selection
+      // is preserved.
+      expect(handleSelect).not.toHaveBeenCalled();
+    } finally {
+      removeHandlers();
+      dom.teardown();
     }
   });
 
