@@ -632,3 +632,167 @@ describe("safety: findFileByClassName fallback", () => {
     expect(result.failed).toHaveLength(1);
   });
 });
+
+// ─── Issue #42: duplicate className disambiguation ───────────────────
+
+describe("duplicate className disambiguation (issue #42)", () => {
+  it("targets the SECOND div when sourceLine points to it (two identical classNames)", async () => {
+    const filePath = "src/DupTarget.tsx";
+    await writeFixture(
+      filePath,
+      [
+        "export default function DupTarget() {",
+        "  return (",
+        "    <div>",
+        '      <div className="btn-primary">First</div>',
+        '      <div className="btn-primary">Second</div>',
+        "    </div>",
+        "  );",
+        "}",
+      ].join("\n")
+    );
+
+    // sourceLine 5 = the SECOND <div className="btn-primary"> (1-indexed)
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: filePath,
+          sourceLine: 5,
+          existingClasses: "btn-primary",
+          newClasses: "p-6",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(filePath);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    const lines = content.split("\n");
+
+    // FIRST div (line 4 / index 3) must be unchanged
+    expect(lines[3]).toContain('className="btn-primary"');
+    expect(lines[3]).not.toContain("p-6");
+
+    // SECOND div (line 5 / index 4) must have the new classes merged
+    expect(lines[4]).toContain("btn-primary p-6");
+  });
+
+  it("refuses to save (returns error) when className is ambiguous and sourceLine is absent", async () => {
+    const filePath = "src/DupNoLine.tsx";
+    await writeFixture(
+      filePath,
+      [
+        "export default function DupNoLine() {",
+        "  return (",
+        "    <div>",
+        '      <div className="btn-primary">First</div>',
+        '      <div className="btn-primary">Second</div>',
+        "    </div>",
+        "  );",
+        "}",
+      ].join("\n")
+    );
+
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: filePath,
+          // no sourceLine
+          existingClasses: "btn-primary",
+          newClasses: "p-6",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toMatch(/ambiguous/i);
+
+    // File contents must be unchanged
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).not.toContain("p-6");
+  });
+
+  it("picks the closest className occurrence to sourceLine when several duplicates exist", async () => {
+    const filePath = "src/DupClosest.tsx";
+    await writeFixture(
+      filePath,
+      [
+        "export default function DupClosest() {",                       // 1
+        "  return (",                                                    // 2
+        "    <div>",                                                     // 3
+        '      <div className="btn-primary">First</div>',                // 4
+        "      <span>spacer</span>",                                     // 5
+        "      <span>spacer</span>",                                     // 6
+        '      <div className="btn-primary">Second</div>',               // 7
+        "      <span>spacer</span>",                                     // 8
+        "      <span>spacer</span>",                                     // 9
+        '      <div className="btn-primary">Third</div>',                // 10
+        "    </div>",                                                    // 11
+        "  );",                                                          // 12
+        "}",                                                             // 13
+      ].join("\n")
+    );
+
+    // sourceLine 7 targets the MIDDLE className (closest match)
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: filePath,
+          sourceLine: 7,
+          existingClasses: "btn-primary",
+          newClasses: "p-6",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(filePath);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    const lines = content.split("\n");
+
+    // First (index 3) and Third (index 9) unchanged
+    expect(lines[3]).toContain('className="btn-primary"');
+    expect(lines[3]).not.toContain("p-6");
+    expect(lines[9]).toContain('className="btn-primary"');
+    expect(lines[9]).not.toContain("p-6");
+
+    // Middle (index 6) updated
+    expect(lines[6]).toContain("btn-primary p-6");
+  });
+
+  it("baseline: unique className still works when sourceLine is absent (no regression)", async () => {
+    const filePath = "src/UniqueClass.tsx";
+    await writeFixture(
+      filePath,
+      [
+        "export default function UniqueClass() {",
+        '  return <div className="only-one bg-white">Solo</div>;',
+        "}",
+      ].join("\n")
+    );
+
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: filePath,
+          // no sourceLine — single match, must succeed
+          existingClasses: "only-one bg-white",
+          newClasses: "p-4",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(filePath);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain("only-one bg-white p-4");
+  });
+});

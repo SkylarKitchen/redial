@@ -1305,6 +1305,17 @@ export function Overlay() {
         radixDismissPending = false;
         return;
       }
+      // Issue #23 (follow-up): Radix opens its popper synchronously *during*
+      // the trigger's pointerdown (between capture and bubble phases). The
+      // capture-phase pointerdown listener above sees `radixPopperMounted=false`
+      // and never sets the flag, but by the time `click` fires the popper is
+      // mounted AND Radix has retargeted the click event to <html> via its
+      // pointer-capture release. If any Radix popper is currently mounted at
+      // click time, this click is part of a Radix interaction — never a fresh
+      // page selection.
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) {
+        return;
+      }
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;

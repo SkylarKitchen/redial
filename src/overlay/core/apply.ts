@@ -572,6 +572,7 @@ export function resetAll(): void {
   }
   overrides.clear();
   clearedOverrides.clear();
+  customPropertyOverrides.clear();
   dirtyCount = 0;
   // Clear entire undo/redo stack
   undoStack.length = 0;
@@ -806,30 +807,33 @@ export function touchedElementCount(): number {
  */
 export function resetProp(el: Element, prop: string): void {
   const elOverrides = overrides.get(el);
-  if (!elOverrides) return;
-  const entry = elOverrides.get(prop);
+  const entry = elOverrides?.get(prop);
 
   // Save the initial value before deleting — needed for cascade logic below.
   const revertValue = entry?.initial;
 
   if (entry && entry.initial !== entry.current) dirtyCount--;
-  if (!prop.includes("::")) {
+  if (elOverrides && !prop.includes("::")) {
     if (entry?.inlineOriginal) {
       (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
     } else {
       (el as HTMLElement).style.removeProperty(prop);
     }
   }
-  elOverrides.delete(prop);
-  if (elOverrides.size === 0) overrides.delete(el);
-  // Remove undo entries for this prop (handle both single and batch)
-  for (let i = undoStack.length - 1; i >= 0; i--) {
-    const entry = undoStack[i];
-    if (isBatch(entry)) {
-      entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
-      if (entry.entries.length === 0) undoStack.splice(i, 1);
-    } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el && entry.prop === prop) {
-      undoStack.splice(i, 1);
+  if (elOverrides) {
+    elOverrides.delete(prop);
+    if (elOverrides.size === 0) overrides.delete(el);
+  }
+  // Remove undo/redo entries for this prop (handle both single and batch)
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const entry = stack[i];
+      if (isBatch(entry)) {
+        entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
+        if (entry.entries.length === 0) stack.splice(i, 1);
+      } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el && entry.prop === prop) {
+        stack.splice(i, 1);
+      }
     }
   }
 
