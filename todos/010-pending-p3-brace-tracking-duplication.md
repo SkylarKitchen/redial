@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 18
 priority: p3
 issue_id: "010"
 tags: [code-review, duplication, refactor]

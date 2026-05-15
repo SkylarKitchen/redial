@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 20
 priority: p3
 issue_id: "012"
 tags: [code-review, performance, correctness]

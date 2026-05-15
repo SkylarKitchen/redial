@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 16
 priority: p2
 issue_id: "008"
 tags: [code-review, security]

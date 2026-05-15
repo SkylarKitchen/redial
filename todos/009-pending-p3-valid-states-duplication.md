@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 17
 priority: p3
 issue_id: "009"
 tags: [code-review, architecture, duplication]

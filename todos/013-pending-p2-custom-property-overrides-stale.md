@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 21
 priority: p2
 issue_id: "013"
 tags: [code-review, bug, simplification]

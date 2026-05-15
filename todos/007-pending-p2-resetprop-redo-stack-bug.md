@@ -1,5 +1,6 @@
 ---
-status: pending
+status: filed
+github_issue: 15
 priority: p2
 issue_id: "007"
 tags: [code-review, bug, undo-redo]
