@@ -1598,12 +1598,12 @@ export function Overlay() {
           {/* Dimensions badge: W x H below bottom-right */}
           <div
             ref={dimensionsBadgeRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: color.primary, color: color.primaryForeground }}
           />
           {/* Tag label: tag.class above top-left */}
           <div
             ref={tagLabelRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, backdropFilter: "blur(8px)", fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: bgAlpha(0.9), color: text.secondary }}
+            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: color.primary, color: color.primaryForeground }}
           />
           {/* Hover highlight: subtle preview when hovering a different element */}
           <div
