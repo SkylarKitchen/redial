@@ -1282,8 +1282,29 @@ export function Overlay() {
   useEffect(() => {
     if (!selectedEl || selecting || pinned) return;
 
+    // Issue #23: Radix Select / Popover dismiss on pointerdown, then unmount
+    // the portal synchronously. The follow-up click is delivered to <html>
+    // (or whatever is now under the cursor), which would otherwise be picked
+    // up here as a fresh element selection. Mirror Radix's own pattern:
+    // remember when pointerdown happened while a popper was open, and skip
+    // the immediately-following click.
+    let radixDismissPending = false;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      if (document.querySelector("[data-radix-popper-content-wrapper]")) {
+        radixDismissPending = true;
+      }
+    };
+
     const handlePageClick = (e: MouseEvent) => {
       if (e.button !== 0) return; // Only handle left clicks
+      if (radixDismissPending) {
+        // This click closes a Radix popper that was open at pointerdown
+        // time — not a fresh page selection.
+        radixDismissPending = false;
+        return;
+      }
       const target = e.target as Element;
       if (target.closest(".__tuner-root")) return;
       if (target.closest(".__tuner-selected-outline")) return;
@@ -1303,8 +1324,12 @@ export function Overlay() {
       handleSelect(el);
     };
 
+    document.addEventListener("pointerdown", handlePointerDown, true);
     document.addEventListener("click", handlePageClick, true);
-    return () => document.removeEventListener("click", handlePageClick, true);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("click", handlePageClick, true);
+    };
   }, [selectedEl, selecting, pinned, handleSelect]);
 
   // --- Hover highlight: preview which element you'd re-select on click ---

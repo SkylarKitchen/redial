@@ -27,6 +27,8 @@
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 afterEach(() => {
   cleanup();
@@ -202,5 +204,56 @@ describe("issue #23: State dropdown dismissal must not reselect <html>", () => {
       panel.remove();
       pageEl.remove();
     }
+  });
+
+  it("with fix: the suppression flag does not persist across unrelated click pairs", () => {
+    const panel = document.createElement("div");
+    panel.className = "__tuner-root";
+    document.body.appendChild(panel);
+
+    const a = document.createElement("div");
+    const b = document.createElement("div");
+    document.body.appendChild(a);
+    document.body.appendChild(b);
+
+    const { handleSelect, cleanup: removeHandlers } = installPanelHandlers({
+      withFix: true,
+    });
+    try {
+      a.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+      );
+      a.dispatchEvent(new MouseEvent("click", { bubbles: true, button: 0 }));
+
+      b.dispatchEvent(
+        new PointerEvent("pointerdown", { bubbles: true, button: 0 }),
+      );
+      b.dispatchEvent(new MouseEvent("click", { bubbles: true, button: 0 }));
+
+      expect(handleSelect).toHaveBeenCalledTimes(2);
+    } finally {
+      removeHandlers();
+      panel.remove();
+      a.remove();
+      b.remove();
+    }
+  });
+});
+
+describe("issue #23 — source verification: Overlay.tsx contains the fix", () => {
+  const overlaySrc = readFileSync(
+    join(__dirname, "../shell/Overlay.tsx"),
+    "utf-8",
+  );
+
+  it("checks for an open Radix popper-content-wrapper on pointerdown", () => {
+    expect(overlaySrc).toContain("data-radix-popper-content-wrapper");
+  });
+
+  it("uses a pending-dismissal flag to gate the page-click handler", () => {
+    // The fix introduces a per-mount flag (e.g. `radixDismissPending`) that
+    // is set in a pointerdown handler when a Radix popper is mounted, and
+    // consumed by the click handler.
+    expect(overlaySrc).toMatch(/radixDismissPending/);
   });
 });
