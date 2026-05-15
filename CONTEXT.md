@@ -24,7 +24,7 @@ Everything that fails the rubric is either `nice-to-have` (kept) or `wontfix` (r
 
 ## nice-to-have
 
-A backlog item we want to keep but defer past v1.0. Lives as an **open GitHub Issue** assigned to the `v1.0` milestone (used here as the "everything that didn't make v1" bag), with a state label from the canonical triage vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`). Does not live in an in-repo `.md` backlog.
+A backlog item we want to keep but defer past v1.0. Lives as an **open GitHub Issue** carrying the `nice-to-have` and `post-v1` labels, with a state label from the canonical triage vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`). Does not live in an in-repo `.md` backlog. Milestones are not used for the v1 boundary — labels are the canonical cohort primitive here.
 
 ## wontfix
 
