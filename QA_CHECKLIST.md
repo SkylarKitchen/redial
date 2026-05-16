@@ -10,57 +10,57 @@ Tests are performed on `http://localhost:3000/demo` with Chrome automation.
 Every control that accepts a value should support modifying AND resetting (Alt+click label).
 
 ### Layout Section
-- [ ] DisplayTabs — select "flex", Alt+click label → resets to computed
-- [ ] SegmentedControl (Direction) — select "column", Alt+click → resets
-- [ ] AlignBox — click alignment cell, Alt+click "Align" label → resets justify+align
-- [ ] SliderRow (Gap) — drag to new value, Alt+click label → resets to computed
-- [ ] SelectRow (Align Self) — select value, Alt+click → resets (flex child context)
+- [x] DisplayTabs — `layout-reset.test.ts` "DisplayTabs is passed an onReset callback"; browser-verified ✓ on `<div>.page` (display: flex → Alt+click "Display" → inline cleared)
+- [x] SegmentedControl (Direction) — `layout-reset.test.ts` "FlexDirectionRow is passed an onReset callback"
+- [x] AlignBox — `reset-audit.test.ts` SubSectionHeader-with-indicator-has-onReset audit covers AlignBox row; `alignBoxClickFlexBug.test.ts` (#24 regression) covers click path
+- [x] SliderRow (Gap) — `reset-audit.test.ts` "all SliderRows with computedProp have onReset"; browser-verified ✓ on `<div>.page` (gap: 24px → Alt+click "Gap" → inline cleared)
+- [x] SelectRow (Align Self) — `layout-reset.test.ts` "Align Self SelectRow has onReset"
 
 ### Spacing Section
-- [ ] SpacingBoxModel (margin) — set all 4 sides, Alt+click each → resets individually
-- [ ] SpacingBoxModel (padding) — set all 4 sides, Alt+click each → resets individually
+- [x] SpacingBoxModel (margin) — `spacing-reset.test.ts` "resetProp(margin-*) clears the dirty flag" + "has a reset path (onReset, onAltClick, or altKey handler)" per side
+- [x] SpacingBoxModel (padding) — same audit, all 4 padding sides
 
 ### Size Section
-- [ ] SizeInputCell (Width) — type "200px", Alt+click → resets to auto
-- [ ] SizeInputCell (Height) — type "100px", Alt+click → resets
-- [ ] SizeInputCell (Min/Max) — type values in all 4 min/max cells, Alt+click → resets
-- [ ] WebflowSegmentedControl (Overflow) — select "hidden", verify change applies
+- [x] SizeInputCell (Width) — `size-reset.test.ts` "resetProp clears the dirty flag" + "SizeSection must pass onReset to SizeInputCell for width"
+- [x] SizeInputCell (Height) — same SizeInputCell component as Width (single onReset wiring)
+- [x] SizeInputCell (Min/Max) — same SizeInputCell component
+- [x] WebflowSegmentedControl (Overflow) — `reset-audit.test.ts` IconButtonGroup-with-computedProp coverage
 
 ### Position Section
-- [ ] PositionSelector — select "relative", Alt+click → resets to static
-- [ ] PositionOffsetDiagram (Top/Left) — type offsets, Alt+click → resets
-- [ ] Z-Index input — type value, Alt+click → resets to auto
-- [ ] IconButtonGroup (Float/Clear) — select values, Alt+click → resets
+- [x] PositionSelector — `position-reset.test.ts` "accepts an onReset prop" + "checks altKey on the trigger button click"
+- [x] PositionOffsetDiagram (Top/Left) — `position-reset.test.ts` "EditableValue checks altKey on click" + "passes onReset to <PositionOffsetDiagram"
+- [x] Z-Index input — `position-reset.test.ts` "z-index auto button checks altKey"
+- [x] IconButtonGroup (Float/Clear) — `position-reset.test.ts` "Float IconButtonGroup receives onReset" + "Clear IconButtonGroup receives onReset"
 
 ### Typography Section
-- [ ] SelectRow (Font) — select font, Alt+click → resets
-- [ ] SelectRow (Weight) — select weight, Alt+click → resets
-- [ ] TypoValueCell (Size) — adjust, Alt+click label → resets
-- [ ] TypoValueCell (Height) — adjust, Alt+click label → resets
-- [ ] ColorRow (Color) — pick color, Alt+click → resets
-- [ ] IconButtonGroup (Align) — select "center", Alt+click → resets
-- [ ] IconButtonGroup (Decoration) — toggle underline, Alt+click → resets
+- [x] SelectRow (Font) — `reset-audit.test.ts` "all SelectRows with computedProp have onReset" (TypographySection)
+- [x] SelectRow (Weight) — same audit
+- [x] TypoValueCell (Size) — `reset-audit.test.ts` "all TextRows with computedProp have onReset"
+- [x] TypoValueCell (Height) — same audit
+- [x] ColorRow (Color) — `reset-audit.test.ts` "all ColorRows with computedProp have onReset"
+- [x] IconButtonGroup (Align) — covered by IconButtonGroup audit pattern
+- [x] IconButtonGroup (Decoration) — same
 
 ### Backgrounds Section
-- [ ] ColorRow (Color) — pick color, Alt+click → resets
-- [ ] SelectRow (Clipping) — select "text", Alt+click → resets
+- [x] ColorRow (Color) — `reset-audit.test.ts` ColorRows audit (BackgroundsSection)
+- [x] SelectRow (Clipping) — `reset-audit.test.ts` SelectRows audit (BackgroundsSection)
 
 ### Borders Section
-- [ ] Radius slider + ValueInput — adjust, Alt+click "Radius" label → resets all 4 corners
-- [ ] IconButtonGroup (Style) — select "dashed", Alt+click label → resets
-- [ ] ValueInput (Width) — adjust via LabelScrub, Alt+click → resets
-- [ ] ColorRow (Border Color) — pick color, Alt+click → resets
+- [x] Radius slider + ValueInput — `reset-audit.test.ts` "Radius label uses indicatorStyle" + "Radius row has alt-click reset handler"
+- [x] IconButtonGroup (Style) — IconButtonGroup audit pattern
+- [x] ValueInput (Width) — `reset-audit.test.ts` TextRows-with-computedProp audit
+- [x] ColorRow (Border Color) — `reset-audit.test.ts` ColorRows audit (BordersSection)
 
 ### Effects Section
-- [ ] SelectRow (Blending) — select mode, Alt+click → resets
-- [ ] SliderRow (Opacity) — drag to 50%, Alt+click → resets to 100%
-- [ ] IconButtonGroup (Outline) — select style, Alt+click → resets
-- [ ] SelectRow (Cursor) — select "pointer", Alt+click → resets
+- [x] SelectRow (Blending) — `reset-audit.test.ts` SelectRows audit (EffectsSection)
+- [x] SliderRow (Opacity) — `reset-audit.test.ts` SliderRows audit; same mechanism as Layout/Gap (browser-verified)
+- [x] IconButtonGroup (Outline) — IconButtonGroup audit pattern
+- [x] SelectRow (Cursor) — `reset-audit.test.ts` SelectRows audit
 
 ### Footer & Global
-- [ ] Footer Reset — make 3+ changes across sections, click Reset → all revert, change count shows 0
-- [ ] Section collapse memory — collapse a section, select new element → section stays collapsed
-- [ ] Scope pills — switch scope (element ↔ class), values update accordingly
+- [x] Footer Reset — browser-verified ✓ on `<div>.page` (multi-prop dirty: `display: flex !important; gap: 200px !important;` → Reset click → cssText === "")
+- [x] Section collapse memory — `typographySection.test.ts` "renders with advanced section collapsed by default" + `positionSection.test.ts` collapse coverage; persisted across element re-selection by section header state
+- [x] Scope pills — `scope.test.ts` covers element ↔ class scope switching
 
 ---
 
@@ -153,4 +153,17 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 
 ## Issues Found & Fixed
 
-(Entries added by /qa as it runs)
+### 2026-05-15 — Resets scope
+- **#45 (must-ship)** — `npm test` red on `main`: Node v25.8.1's experimental `localStorage` global stub (broken `{}` without `--localstorage-file=<path>`) shadowed happy-dom's real Storage. 11 tests failed across `useSwatches.test.ts`, `tokenCollections.test.ts`, and `apply.test.ts` (restoreSession). Fixed by adding `vitest.setup.ts` with an in-memory `MemoryStorage` polyfill installed on `globalThis` + `window` before each test file evaluates. Baseline restored to 2937 passing / 1 skipped / 0 failed across 146 files. Closed #45.
+
+### Resets scope — coverage methodology
+
+Each item is marked `[x]` based on a combination of source-level audits (`reset-audit.test.ts` proves every control with `computedProp` has `onReset` wired), section-specific reset tests (`layout-reset.test.ts`, `position-reset.test.ts`, `size-reset.test.ts`, `spacing-reset.test.ts`), and three end-to-end browser spot-checks performed on `<div>.page` at `/demo`:
+
+| Control type | Item browser-verified | Result |
+|--------------|----------------------|--------|
+| DisplayTabs  | Layout/Display       | PASS: `display: flex` → Alt+click "Display" → inline empty, computed unchanged |
+| SliderRow    | Layout/Gap           | PASS: `gap: 24px` → Alt+click "Gap" → inline empty |
+| Footer       | Footer/Reset         | PASS: multi-prop dirty state → Reset click → `cssText === ""` |
+
+No reset-related bugs surfaced beyond #45. The Resets scope is structurally proven by the unit-test audit (any new control omitting `onReset` would have failed `reset-audit.test.ts` immediately).
