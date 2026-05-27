@@ -36,8 +36,8 @@ smoke test is step one.
 |---|---|---|
 | Sandbox provider | `docker()` | OrbStack-compatible drop-in; faster bind mounts on macOS than Docker Desktop. |
 | Auth path | bind-mount `~/.claude` | Skylar uses Claude subscription, not API key. |
-| Model default in committed code | `claude-opus-4-5` | Skylar wants opus-4-7 / 4-8, but those identifiers can't be in tracked source for this public repo. |
-| Live model identifier | `.sandcastle/.env` (gitignored) | One-line edit, never committed. Set to `claude-opus-4-7`; change to `4-8` when it ships. |
+| Model default in committed code | `claude-opus-4-5` | Skylar wants a newer opus release than this, but that identifier can't be in tracked source for this public repo. |
+| Live model identifier | `.sandcastle/.env` (gitignored) | One-line edit, never committed. Skylar set it locally to the opus release he's using; update the same line when a newer one ships. |
 | Bash flow (`run-tasks-parallel.sh` etc.) | Kept alongside | Sandcastle adds an option, doesn't replace. |
 | Concurrency in `scripts/run-tasks.ts` | Node semaphore + `AbortController` | Matches bash semantics including the <15s fast-fail-on-auth heuristic. |
 | `branchStrategy` default | `merge-to-head` | Successful runs auto-merge to HEAD. Open question whether to flip to `branch` for review-before-merge — see below. |
@@ -60,7 +60,7 @@ open -a OrbStack
 # 3. Pin the model locally (gitignored)
 cp .sandcastle/.env.example .sandcastle/.env
 # Then edit .sandcastle/.env to a single line:
-#   SANDCASTLE_MODEL=claude-opus-4-7
+#   SANDCASTLE_MODEL=<your preferred opus release ID>
 
 # 4. Build the agent image (~2 min first time, much faster on rebuilds)
 npm run sandcastle:build-image
@@ -192,9 +192,10 @@ Coexists with:
 
 1. **The remote session that created this can't run the code.** No
    Docker engine, no `~/.claude`. All testing has to happen on the Mac.
-2. **`claude-opus-4-7` and any other unreleased model identifier cannot
-   go in committed code on this repo.** The repo is public open-source.
-   Put live model IDs in `.sandcastle/.env` (gitignored) only.
+2. **Unreleased Anthropic model identifiers cannot go in committed code
+   on this repo.** The repo is public open-source. Put live model IDs
+   in `.sandcastle/.env` (gitignored) only — including in any docs you
+   commit (this doc included).
 3. **`await using` is used in `scripts/run-tasks.ts`** for sandbox
    teardown. Requires Node ≥ 20.4. Redial's `engines.node` is `>=18`
    for the published library, but the runner is a dev-time script —
