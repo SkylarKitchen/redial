@@ -22,8 +22,18 @@
  */
 import { createSandbox, claudeCode } from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { argv, exit } from "node:process";
+
+// Load `.sandcastle/.env` (gitignored) so SANDCASTLE_MODEL and
+// ANTHROPIC_API_KEY can be pinned locally without committing them.
+const ENV_FILE = ".sandcastle/.env";
+if (existsSync(ENV_FILE)) {
+  for (const line of readFileSync(ENV_FILE, "utf8").split("\n")) {
+    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+  }
+}
 
 // --- Args ----------------------------------------------------------------
 
@@ -44,8 +54,17 @@ if (!prdFile) {
 
 const workers = Number(flag("--workers") ?? 5);
 const model =
-  flag("--model") ?? process.env.SANDCASTLE_MODEL ?? "claude-sonnet-4-5";
+  flag("--model") ?? process.env.SANDCASTLE_MODEL ?? "claude-opus-4-5";
 const imageName = process.env.SANDCASTLE_IMAGE ?? "redial-sandcastle:local";
+
+// Auth: bind-mount the host's `~/.claude` so the agent reuses your
+// existing Claude subscription / OAuth login. To use an API key instead,
+// remove the `~/.claude` mount in the docker() call below and add
+// `env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! }`.
+const sandboxMounts = [
+  { hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" },
+  { hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" },
+];
 
 // --- PRD I/O -------------------------------------------------------------
 
@@ -153,7 +172,7 @@ async function runOne(task: Task): Promise<void> {
       // tears down the container and worktree. Requires Node ≥ 20.4.
       await using sandbox = await createSandbox({
         branch,
-        sandbox: docker({ imageName }),
+        sandbox: docker({ imageName, mounts: sandboxMounts }),
       });
       await sandbox.run({
         agent: claudeCode(model),

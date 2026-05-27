@@ -30,38 +30,48 @@ Sandcastle uses Docker's standard CLI and socket, so OrbStack is a true
 drop-in — no config change. On Linux, use native `docker`. Sandcastle's
 `podman()` provider is a separate code path; stay on `docker()`.
 
-### Claude Code credentials inside the container
+### Claude credentials inside the container
 
-The Dockerfile installs the `claude` CLI but does not bundle credentials.
-Pick one:
-
-1. **`ANTHROPIC_API_KEY`** (simplest) — export it on the host and pass it
-   through. Edit `.sandcastle/main.ts`:
-
-   ```ts
-   sandbox: docker({
-     imageName: "redial-sandcastle:local",
-     env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! },
-   }),
-   ```
-
-2. **Bind-mount `~/.claude`** (uses your existing login). Higher blast
-   radius — anything the agent runs has access to your Claude creds. Edit
-   `.sandcastle/main.ts`:
-
-   ```ts
-   sandbox: docker({
-     imageName: "redial-sandcastle:local",
-     mounts: [{ hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" }],
-   }),
-   ```
-
-### npm cache (optional, fast first run)
-
-Add an npm cache mount so `npm ci` reuses host-cached tarballs:
+The default (in both `.sandcastle/main.ts` and `scripts/run-tasks.ts`)
+bind-mounts your host `~/.claude` directory so the agent reuses your
+existing Claude subscription / OAuth login:
 
 ```ts
-mounts: [{ hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" }],
+mounts: [
+  { hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" },
+  { hostPath: "~/.npm",    sandboxPath: "/home/agent/.npm" },
+],
+```
+
+Trade-off: the agent has full access to your Claude config and session
+tokens while it runs. For autonomous coding sessions on your own machine
+this is usually the right call — you're already accepting
+`--dangerously-skip-permissions` inside the sandbox.
+
+If you'd rather use an API key (lower blast radius, requires separate
+billing), swap the `~/.claude` mount for:
+
+```ts
+env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! },
+```
+
+### Model + local overrides (`.sandcastle/.env`)
+
+The committed default model is `claude-opus-4-5`. To pin a different
+model — e.g. a newer opus or sonnet release — copy
+`.sandcastle/.env.example` to `.sandcastle/.env` and set:
+
+```sh
+SANDCASTLE_MODEL=claude-opus-4-5     # or whatever you want
+```
+
+`.sandcastle/.env` is gitignored. Both `npm run sandcastle` and
+`npm run tasks` auto-load it before reading `process.env`. You can also
+override per invocation:
+
+```sh
+SANDCASTLE_MODEL=claude-sonnet-4-5 npm run sandcastle
+npm run tasks -- tasks.md --model claude-sonnet-4-5
 ```
 
 ## First run
@@ -111,15 +121,18 @@ reads the PRD checkbox state, doesn't care how tasks are dispatched.
 
 | Env var | Default | What it does |
 |---|---|---|
-| `SANDCASTLE_MODEL` | `claude-sonnet-4-5` | Model passed to `claudeCode(...)`. |
+| `SANDCASTLE_MODEL` | `claude-opus-4-5` | Model passed to `claudeCode(...)`. |
 | `SANDCASTLE_IMAGE` | `redial-sandcastle:local` | Docker image name. Used by `scripts/run-tasks.ts`. |
 | `PROMPT` | — | Override `.sandcastle/prompt.md` with an inline prompt (single-task runs only). |
+
+All of these can live in `.sandcastle/.env` (gitignored) so you don't
+have to re-export them every shell.
 
 CLI flags for `scripts/run-tasks.ts`:
 
 ```sh
 --workers N      # default: 5
---model NAME     # default: $SANDCASTLE_MODEL or claude-sonnet-4-5
+--model NAME     # default: $SANDCASTLE_MODEL or claude-opus-4-5
 ```
 
 ## Differences from `run-tasks-parallel.sh`

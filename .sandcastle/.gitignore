@@ -1,3 +1,6 @@
+# Local-only overrides (model, secrets, etc).
+.env
+
 # Runtime state sandcastle writes locally — sessions, logs, build artifacts.
 state/
 .cache/
