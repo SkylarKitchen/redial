@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": false,
+    "lib": ["esnext"],
+    "types": ["node"]
+  },
+  "include": [".sandcastle/main.ts", "scripts/run-tasks.ts"]
+}

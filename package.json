@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.sandcastle.json",
     "test": "vitest run",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build",
