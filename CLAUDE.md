@@ -1,0 +1,40 @@
+# CLAUDE.md
+
+Project memory for the `redial` repo.
+
+## Repo basics
+
+Redial is a Webflow-style CSS tuning panel for Next.js — see
+[README.md](README.md) for the user-facing description and
+[ARCHITECTURE.md](ARCHITECTURE.md) for the internals.
+
+The published library code lives in `src/`. The Next.js dev playground
+is in `test-app/`. Sandcastle integration (sandboxed autonomous Claude
+runs) lives in `.sandcastle/`, `scripts/run-tasks.ts`, and
+[`docs/sandcastle.md`](docs/sandcastle.md).
+
+## Rules
+
+### Never write unreleased Anthropic model identifiers into tracked files
+
+The repo is public open-source. Do not write
+`claude-opus-4-N`, `claude-sonnet-4-N`, or `claude-haiku-4-N` for any
+version that isn't publicly released into anything that gets committed —
+including code, configs, docs, tests, comments, or commit messages.
+
+The live model identifier for sandcastle lives in `.sandcastle/.env`
+(gitignored). If you need to reference "the model the user is using"
+in committed prose, refer to it abstractly ("the configured opus
+release", "whatever's in `SANDCASTLE_MODEL`").
+
+A defensive `PreToolUse` hook is available at
+[`tools/claude-hooks/block-unreleased-models.sh`](tools/claude-hooks/README.md)
+that catches this automatically when installed globally.
+
+### Source of truth
+
+- Glossary / vocabulary: [`CONTEXT.md`](CONTEXT.md)
+- Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- QA checklist: [`QA_CHECKLIST.md`](QA_CHECKLIST.md)
+- Sandcastle integration: [`docs/sandcastle.md`](docs/sandcastle.md)
+- Handoff between sessions: [`docs/sandcastle-handoff.md`](docs/sandcastle-handoff.md)
