@@ -3,3 +3,8 @@ dist/
 .DS_Store
 *.tgz
 .claude/
+
+# sandcastle runtime artifacts (config files live in .sandcastle/, see .sandcastle/.gitignore)
+.worktrees/
+task-logs/
+task-logs-parallel/

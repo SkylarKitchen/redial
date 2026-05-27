@@ -37,7 +37,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "sandcastle": "npx @ai-hero/sandcastle",
+    "sandcastle:init": "npx @ai-hero/sandcastle init",
+    "sandcastle:build-image": "npx @ai-hero/sandcastle docker build-image",
+    "tasks": "tsx scripts/run-tasks.ts"
   },
   "keywords": [
     "css",
@@ -87,6 +91,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@ai-hero/sandcastle": "^0.6.4",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.4.0",
@@ -99,6 +104,7 @@
     "react-dom": "^19.2.4",
     "tailwindcss": "^4.2.1",
     "tsup": "^8.5.1",
+    "tsx": "^4.20.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
