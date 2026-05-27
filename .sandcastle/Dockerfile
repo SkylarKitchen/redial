@@ -35,9 +35,22 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 # Align the base `node` user to the caller's UID/GID so files written into
 # the bind-mounted workspace come out owned by the host user.
-RUN groupmod -g "${AGENT_GID}" node \
-    && usermod -u "${AGENT_UID}" -l agent -d /home/agent -m node \
-    && groupmod -n agent node
+#
+# On macOS hosts the caller's GID is typically 20 (staff), which collides
+# with the pre-existing `dialout` group inside node:22-bookworm. We can't
+# `groupmod -g 20 node` in that case — instead we reuse the existing group
+# at that GID as the agent's primary group. Net effect is identical:
+# files written by the agent user end up owned by GID=${AGENT_GID} on the
+# host, which is what the bind-mount needs.
+RUN set -eux; \
+    if getent group "${AGENT_GID}" >/dev/null; then \
+        TARGET_GROUP=$(getent group "${AGENT_GID}" | cut -d: -f1); \
+    else \
+        groupmod -g "${AGENT_GID}" node; \
+        groupmod -n agent node; \
+        TARGET_GROUP=agent; \
+    fi; \
+    usermod -u "${AGENT_UID}" -l agent -d /home/agent -m -g "$TARGET_GROUP" node
 
 USER agent
 WORKDIR /home/agent
