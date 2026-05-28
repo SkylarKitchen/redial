@@ -57,12 +57,13 @@ const model =
   flag("--model") ?? process.env.SANDCASTLE_MODEL ?? "claude-opus-4-5";
 const imageName = process.env.SANDCASTLE_IMAGE ?? "redial-sandcastle:local";
 
-// Auth: bind-mount the host's `~/.claude` so the agent reuses your
-// existing Claude subscription / OAuth login. To use an API key instead,
-// remove the `~/.claude` mount in the docker() call below and add
-// `env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! }`.
+// Auth: set CLAUDE_CODE_OAUTH_TOKEN in `.sandcastle/.env` (generate it with
+// `claude setup-token`). Sandcastle's env resolver injects every key declared
+// in `.sandcastle/.env` into each sandbox, so the agent authenticates with
+// your Claude subscription. To use an API key instead, set ANTHROPIC_API_KEY
+// in `.sandcastle/.env`. (Bind-mounting `~/.claude` does NOT work on macOS —
+// the token lives in the Keychain, not the dir.)
 const sandboxMounts = [
-  { hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" },
   { hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" },
 ];
 

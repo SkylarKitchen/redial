@@ -7,11 +7,18 @@
  *   PROMPT="Fix issue #42 …" npm run sandcastle      # ad-hoc prompt
  *   SANDCASTLE_MODEL=claude-opus-4-5 npm run sandcastle
  *
- * Credentials: bind-mounts `~/.claude` from the host so the agent reuses
- * your existing Claude subscription / OAuth login. If you'd rather use an
- * API key, remove the `~/.claude` mount and add:
+ * Credentials (Claude subscription, no API key):
+ *   1. Generate a long-lived OAuth token on the host:
+ *        claude setup-token
+ *   2. Put it in `.sandcastle/.env` (gitignored):
+ *        CLAUDE_CODE_OAUTH_TOKEN=<token>
+ *   Sandcastle's env resolver injects every key declared in
+ *   `.sandcastle/.env` into the sandbox, so the containerized agent
+ *   authenticates with your subscription. (Bind-mounting `~/.claude`
+ *   does NOT work on macOS — the token lives in the Keychain, not the dir.)
  *
- *   env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! },
+ * If you'd rather use an API key, set ANTHROPIC_API_KEY in `.sandcastle/.env`
+ * instead.
  *
  * For batch / parallel runs over a markdown checklist, use the host runner:
  *   npm run tasks tasks.md --workers 5
@@ -36,10 +43,8 @@ const PROMPT = process.env.PROMPT;
 const result = await run({
   agent: claudeCode(MODEL),
   sandbox: docker({
-    imageName: "redial-sandcastle:local",
+    imageName: process.env.SANDCASTLE_IMAGE ?? "redial-sandcastle:local",
     mounts: [
-      // Reuse your host Claude subscription / OAuth login.
-      { hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" },
       // Reuse the host's npm cache so first-run `npm ci` is fast.
       { hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" },
     ],

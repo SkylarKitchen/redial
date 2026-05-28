@@ -38,9 +38,9 @@
     "test": "vitest run",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build",
-    "sandcastle": "npx @ai-hero/sandcastle",
+    "sandcastle": "tsx .sandcastle/main.ts",
     "sandcastle:init": "npx @ai-hero/sandcastle init",
-    "sandcastle:build-image": "npx @ai-hero/sandcastle docker build-image",
+    "sandcastle:build-image": "npx @ai-hero/sandcastle docker build-image --image-name redial-sandcastle:local --dockerfile .sandcastle/Dockerfile",
     "tasks": "tsx scripts/run-tasks.ts"
   },
   "keywords": [
