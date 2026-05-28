@@ -115,45 +115,56 @@ PRD lines flip to `[x]` or `[!]` in place. Branches land as
 
 ## Open questions / next-tier work
 
-These were offered at the end of the remote session and not yet done.
-Address whichever matter once the smoke test confirms the baseline
-works.
+The original "open questions" from this branch have been resolved or
+documented. What remains is genuine future work, not blockers.
 
-1. **`branchStrategy: "branch"` vs `"merge-to-head"`.**
-   Current default auto-merges successful runs to HEAD. If you want
-   review-before-merge, flip to:
-   ```ts
-   branchStrategy: { type: "branch", branch: "agent/<name>" }
-   ```
-   in `.sandcastle/main.ts` and `scripts/run-tasks.ts`. The parallel
-   runner already uses per-task branches; this only affects the
-   single-task entry.
+### Done
 
-2. **Quality gates as completion criteria.** Currently `npm run tasks`
-   marks a task `[x]` whenever the agent exits cleanly. The approach
-   taken is in `.sandcastle/prompt.template.md`: tell the agent to run
-   `npm run typecheck && npm test` before signaling completion, and
-   not to declare success with red gates. (Sandcastle exposes
-   `hooks.host.onSandboxReady`, `hooks.host.onWorktreeReady`, and
-   `hooks.sandbox.onSandboxReady` — but no "post-agent" hook. Verified
-   against `node_modules/@ai-hero/sandcastle/dist/SandboxLifecycle.d.ts`.)
-   If you want deterministic gates from the host side, run the checks
-   after `sandbox.run()` returns in a future runner enhancement.
+- ~~`branchStrategy` switch~~ — documented in `docs/sandcastle.md`
+  "Branch strategy" section. One-line edit to `.sandcastle/main.ts`
+  if you want review-before-merge for single-task runs. The parallel
+  runner already uses per-task branches.
+- ~~Quality gates as completion criteria~~ — sandcastle exposes
+  `hooks.host.onWorktreeReady`, `hooks.host.onSandboxReady`, and
+  `hooks.sandbox.onSandboxReady`, but no "post-agent" hook (verified
+  against `node_modules/@ai-hero/sandcastle/dist/SandboxLifecycle.d.ts`).
+  Approach taken: `.sandcastle/prompt.template.md` tells the agent to
+  run `npm run typecheck && npm test` before signaling completion.
+- ~~TS replacement for `merge-workers.sh`~~ — done.
+  `scripts/sandcastle-merge.ts` handles `sandcastle/*` branches.
+- ~~Auth approach for Claude subscription~~ — done. `~/.claude`
+  bind-mount fails on macOS (token in Keychain). Use
+  `CLAUDE_CODE_OAUTH_TOKEN` via `.sandcastle/.env` after `claude
+  setup-token`.
+- ~~Global hook to block unreleased model IDs~~ — done.
+  `tools/claude-hooks/block-unreleased-models.sh` ships in the repo;
+  install once per machine.
 
-3. **TS replacement for `merge-workers.sh`.** Done —
-   `scripts/sandcastle-merge.ts` handles `sandcastle/*` branches.
-   Targets only that naming convention, so the bash runner's
-   `worker-*` flow is unaffected. Run `npm run sandcastle:merge`.
+### Deferred
 
-4. **CI integration.** Nothing here is wired into CI yet. If you ever
-   want sandcastle to run in GitHub Actions, you'd need a self-hosted
-   runner with Docker access (GitHub-hosted runners have Docker, but
-   bind-mount perf is mediocre and auth gets gnarlier).
+1. **Host-side quality gate enforcement.** Currently a task is marked
+   `[x]` whenever the agent exits cleanly — quality gates are enforced
+   only via prompt instruction. To make them deterministic, modify
+   `scripts/run-tasks.ts` to checkout the resulting branch in a temp
+   worktree post-run, run `npm ci && npm run typecheck && npm test`,
+   and demote `[x]` to `[!]` if they fail. Adds 30-90s per task.
 
-5. **API-key alternative.** If you ever stop using the subscription and
-   switch to an API key, the swap is one block in `.sandcastle/main.ts`:
-   replace the `~/.claude` mount with
-   `env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! }`.
+2. **CI integration.** Sandcastle isn't wired into GitHub Actions yet.
+   Would require a self-hosted runner with Docker access (or pay for
+   GitHub-hosted larger runners with Docker, but bind-mount perf is
+   mediocre and OAuth-token-in-CI is its own can of worms). Out of
+   scope for now.
+
+3. **`scripts/sandcastle-from-issues.ts`.** Fetch open GitHub issues
+   with the `ready-for-agent` label (per CONTEXT.md), convert to a
+   tasks.md. Would close the loop on "issue → autonomous PR" without
+   a human composing the task list. Skipped — keep it simple until
+   the basic loop is exercised in anger.
+
+4. **API-key alternative.** Already documented in
+   [`docs/sandcastle.md`](sandcastle.md). One-line swap in
+   `.sandcastle/.env`: replace `CLAUDE_CODE_OAUTH_TOKEN` with
+   `ANTHROPIC_API_KEY`.
 
 ---
 

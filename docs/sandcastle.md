@@ -98,8 +98,31 @@ npm run sandcastle
 
 The agent runs inside the container, edits the worktree mounted at
 `/home/agent/workspace`, and the result merges back to your current HEAD
-(strategy is `merge-to-head` by default; flip to `branch` in
-`.sandcastle/main.ts` for review-before-merge).
+(strategy is `merge-to-head` by default; see "Branch strategy" below for
+review-before-merge).
+
+### Branch strategy
+
+`.sandcastle/main.ts` ships with `branchStrategy: { type: "merge-to-head" }`
+— the agent's commits land on a temp branch that's merged back to HEAD on
+success, then the temp branch is deleted. Good for solo iteration.
+
+For review-before-merge, edit `.sandcastle/main.ts`:
+
+```ts
+branchStrategy: { type: "branch", branch: "agent/<descriptive-name>" }
+```
+
+Commits stay on `agent/<name>`. Switch and review with `git diff
+HEAD...agent/<name>`, merge manually when satisfied. Use this when
+you don't fully trust the prompt or the agent's track record on the
+task.
+
+The parallel runner (`scripts/run-tasks.ts`) always uses
+`{ type: "branch", branch: "sandcastle/<slug>-<ts>" }` — every task
+gets a per-task branch regardless, because auto-merging N concurrent
+agent branches into one HEAD without review is a recipe for chaos.
+That's what `npm run sandcastle:merge` is for.
 
 ## Parallel runs from a PRD
 
