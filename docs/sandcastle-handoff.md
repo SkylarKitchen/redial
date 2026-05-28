@@ -130,26 +130,20 @@ works.
    single-task entry.
 
 2. **Quality gates as completion criteria.** Currently `npm run tasks`
-   marks a task `[x]` whenever the agent exits cleanly. To gate on
-   typecheck + tests passing, add to `.sandcastle/main.ts`:
-   ```ts
-   hooks: {
-     sandbox: {
-       onSandboxReady: [{ command: "npm ci", timeoutMs: 10 * 60_000 }],
-       // Add a "before commit" / "before complete" hook if sandcastle
-       // exposes one — check the @ai-hero/sandcastle source on disk
-       // after `npm install`.
-     },
-   },
-   ```
-   I didn't confirm the exact hook name for "after agent completes,
-   before merge" — check `node_modules/@ai-hero/sandcastle/dist/*.d.ts`
-   once installed.
+   marks a task `[x]` whenever the agent exits cleanly. The approach
+   taken is in `.sandcastle/prompt.template.md`: tell the agent to run
+   `npm run typecheck && npm test` before signaling completion, and
+   not to declare success with red gates. (Sandcastle exposes
+   `hooks.host.onSandboxReady`, `hooks.host.onWorktreeReady`, and
+   `hooks.sandbox.onSandboxReady` — but no "post-agent" hook. Verified
+   against `node_modules/@ai-hero/sandcastle/dist/SandboxLifecycle.d.ts`.)
+   If you want deterministic gates from the host side, run the checks
+   after `sandbox.run()` returns in a future runner enhancement.
 
-3. **Migrate `merge-workers.sh` / `cleanup-workers.sh` to TS.** Those
-   scripts target the `worker-N-*` branch pattern. If you fully retire
-   the bash flow, they'd need to know about `sandcastle/*` instead.
-   Low priority — they still work for any leftover worker- branches.
+3. **TS replacement for `merge-workers.sh`.** Done —
+   `scripts/sandcastle-merge.ts` handles `sandcastle/*` branches.
+   Targets only that naming convention, so the bash runner's
+   `worker-*` flow is unaffected. Run `npm run sandcastle:merge`.
 
 4. **CI integration.** Nothing here is wired into CI yet. If you ever
    want sandcastle to run in GitHub Actions, you'd need a self-hosted

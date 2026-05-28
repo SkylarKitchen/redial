@@ -32,27 +32,36 @@ drop-in — no config change. On Linux, use native `docker`. Sandcastle's
 
 ### Claude credentials inside the container
 
-The default (in both `.sandcastle/main.ts` and `scripts/run-tasks.ts`)
-bind-mounts your host `~/.claude` directory so the agent reuses your
-existing Claude subscription / OAuth login:
+The agent uses your Claude subscription via a long-lived OAuth token,
+injected into the sandbox as an env var. **Bind-mounting `~/.claude`
+does not work on macOS** — the OAuth token lives in the Keychain, not
+in the directory — so token-via-env is the only path that works on Mac.
 
-```ts
-mounts: [
-  { hostPath: "~/.claude", sandboxPath: "/home/agent/.claude" },
-  { hostPath: "~/.npm",    sandboxPath: "/home/agent/.npm" },
-],
+One-time setup on the host:
+
+```sh
+claude setup-token
+# Paste the printed token into .sandcastle/.env:
+#   CLAUDE_CODE_OAUTH_TOKEN=<token>
 ```
 
-Trade-off: the agent has full access to your Claude config and session
-tokens while it runs. For autonomous coding sessions on your own machine
-this is usually the right call — you're already accepting
-`--dangerously-skip-permissions` inside the sandbox.
+Sandcastle's env resolver injects every key declared in `.sandcastle/.env`
+into the sandbox at launch, so the containerized agent authenticates
+with your subscription.
 
-If you'd rather use an API key (lower blast radius, requires separate
-billing), swap the `~/.claude` mount for:
+To use an API key instead (lower blast radius if compromised, but
+requires separate billing setup), put this in `.sandcastle/.env`
+instead of the OAuth token:
+
+```sh
+ANTHROPIC_API_KEY=<key>
+```
+
+The host `~/.npm` cache is bind-mounted into the sandbox so first-run
+`npm ci` is fast:
 
 ```ts
-env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY! },
+mounts: [{ hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" }],
 ```
 
 ### Model + local overrides (`.sandcastle/.env`)
@@ -111,7 +120,20 @@ npm run tasks -- tasks.md --workers 5
 
 Each task gets its own sandbox + branch (`sandcastle/<slug>-<ts>`). The
 PRD is updated in place: `- [ ]` → `- [x]` on success, `- [!]` on
-failure. Fast-fail-on-auth (< 15 s) aborts the whole fleet and leaves
+failure.
+
+After the fleet finishes, merge the resulting branches back:
+
+```sh
+npm run sandcastle:merge -- --dry-run    # show what would happen
+npm run sandcastle:merge                 # actually merge
+npm run sandcastle:merge -- --branch sandcastle/foo  # one branch
+```
+
+Skips branches with no new commits, skips already-merged branches,
+reports conflicts without leaving the working tree mid-merge.
+
+Fast-fail-on-auth (< 15 s) aborts the whole fleet and leaves
 the line as `- [ ]` so you can rerun.
 
 `./dashboard.sh tasks.md 3` still works for live monitoring — it only
