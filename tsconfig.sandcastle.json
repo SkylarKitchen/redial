@@ -11,5 +11,10 @@
     "lib": ["esnext"],
     "types": ["node"]
   },
-  "include": [".sandcastle/main.ts", "scripts/run-tasks.ts", "scripts/sandcastle-merge.ts"]
+  "include": [
+    ".sandcastle/main.ts",
+    ".sandcastle/runtime.ts",
+    "scripts/run-tasks.ts",
+    "scripts/sandcastle-merge.ts"
+  ]
 }

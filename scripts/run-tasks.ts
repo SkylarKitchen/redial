@@ -21,19 +21,16 @@
  * that line stays `[ ]` (almost certainly auth/rate-limit, not real work).
  */
 import { createSandbox, claudeCode } from "@ai-hero/sandcastle";
-import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { argv, exit } from "node:process";
+import {
+  loadDotEnv,
+  model as defaultModel,
+  imageName,
+  makeSandbox,
+} from "../.sandcastle/runtime";
 
-// Load `.sandcastle/.env` (gitignored) so SANDCASTLE_MODEL and
-// ANTHROPIC_API_KEY can be pinned locally without committing them.
-const ENV_FILE = ".sandcastle/.env";
-if (existsSync(ENV_FILE)) {
-  for (const line of readFileSync(ENV_FILE, "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
-  }
-}
+loadDotEnv();
 
 // --- Args ----------------------------------------------------------------
 
@@ -53,19 +50,16 @@ if (!prdFile) {
 }
 
 const workers = Number(flag("--workers") ?? 5);
-const model =
-  flag("--model") ?? process.env.SANDCASTLE_MODEL ?? "claude-opus-4-5";
-const imageName = process.env.SANDCASTLE_IMAGE ?? "redial-sandcastle:local";
+if (!Number.isInteger(workers) || workers < 1) {
+  console.error(
+    `--workers must be a positive integer (got "${flag("--workers")}").`,
+  );
+  exit(1);
+}
 
-// Auth: set CLAUDE_CODE_OAUTH_TOKEN in `.sandcastle/.env` (generate it with
-// `claude setup-token`). Sandcastle's env resolver injects every key declared
-// in `.sandcastle/.env` into each sandbox, so the agent authenticates with
-// your Claude subscription. To use an API key instead, set ANTHROPIC_API_KEY
-// in `.sandcastle/.env`. (Bind-mounting `~/.claude` does NOT work on macOS —
-// the token lives in the Keychain, not the dir.)
-const sandboxMounts = [
-  { hostPath: "~/.npm", sandboxPath: "/home/agent/.npm" },
-];
+// CLI --model wins; otherwise SANDCASTLE_MODEL / the committed default (see
+// ../.sandcastle/runtime). Sandbox image/mounts/auth all live there too.
+const model = flag("--model") ?? defaultModel();
 
 // --- PRD I/O -------------------------------------------------------------
 
@@ -140,7 +134,7 @@ if (pending.length === 0) {
 
 console.log(`PRD:     ${prdFile}`);
 console.log(`Model:   ${model}`);
-console.log(`Image:   ${imageName}`);
+console.log(`Image:   ${imageName()}`);
 console.log(`Workers: ${workers}`);
 console.log(`Tasks:   ${pending.length}`);
 console.log("");
@@ -173,7 +167,7 @@ async function runOne(task: Task): Promise<void> {
       // tears down the container and worktree. Requires Node ≥ 20.4.
       await using sandbox = await createSandbox({
         branch,
-        sandbox: docker({ imageName, mounts: sandboxMounts }),
+        sandbox: makeSandbox(),
       });
       await sandbox.run({
         agent: claudeCode(model),
@@ -191,6 +185,7 @@ async function runOne(task: Task): Promise<void> {
         );
         console.error(`        ${msg}`);
         fleetAbort.abort();
+        abortedCount++;
         return;
       }
       failedCount++;
