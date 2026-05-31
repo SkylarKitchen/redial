@@ -184,34 +184,45 @@ describe("SelectRow (custom mode) — keyboard accessibility", () => {
 });
 
 // ─── StateSelector accessibility ──────────────────────────────────────
+// StateSelector was refactored off shadcn/Radix Select to the project's
+// portal-dropdown pattern (usePortalDropdown + useDropdownKeyboard +
+// createPortal to document.body), mirroring UnitSelector — see the
+// no-shadcn-in-overlay rule. These tests assert the same keyboard-accessibility
+// contract that pattern provides, now expressed via ARIA + the hook rather than
+// Radix's SelectTrigger/SelectContent/SelectItem.
 
-describe("StateSelector — keyboard accessibility (via Radix Select)", () => {
-  it("uses Radix Select (provides built-in keyboard nav)", () => {
-    expect(stateSelectorSrc).toContain("import");
-    expect(stateSelectorSrc).toMatch(/from\s+["']@\/components\/ui\/select["']/);
+describe("StateSelector — keyboard accessibility (via portal dropdown)", () => {
+  it("uses useDropdownKeyboard hook for navigation", () => {
+    expect(stateSelectorSrc).toContain("useDropdownKeyboard");
   });
 
-  it("imports SelectTrigger (provides Enter/Space open, Escape close)", () => {
-    expect(stateSelectorSrc).toContain("SelectTrigger");
+  it("trigger opens via onTriggerKeyDown (Enter/Space/Arrow) and has combobox role", () => {
+    expect(stateSelectorSrc).toContain("onTriggerKeyDown");
+    expect(stateSelectorSrc).toMatch(/role=["']combobox["']/);
+    expect(stateSelectorSrc).toContain("aria-expanded={open}");
   });
 
-  it("imports SelectContent (provides ArrowUp/Down navigation)", () => {
-    expect(stateSelectorSrc).toContain("SelectContent");
+  it("listbox navigates via onListKeyDown (ArrowUp/Down)", () => {
+    expect(stateSelectorSrc).toMatch(/role=["']listbox["']/);
+    expect(stateSelectorSrc).toContain("onListKeyDown");
+    expect(stateSelectorSrc).toMatch(/ArrowDown.*ArrowUp|ArrowUp.*ArrowDown/);
   });
 
-  it("imports SelectItem (provides Enter to select)", () => {
-    expect(stateSelectorSrc).toContain("SelectItem");
+  it("options are selectable (role='option' + aria-selected)", () => {
+    expect(stateSelectorSrc).toMatch(/role=["']option["']/);
+    expect(stateSelectorSrc).toContain("aria-selected={isActive}");
   });
 
-  it("passes value and onChange for controlled selection", () => {
-    expect(stateSelectorSrc).toContain("value={value}");
-    expect(stateSelectorSrc).toContain("onValueChange={onChange}");
+  it("is a controlled component (value prop + onChange callback for selection)", () => {
+    expect(stateSelectorSrc).toMatch(/onChange:\s*\(state: string\) => void/);
+    // selection routes the chosen state value back through onChange
+    expect(stateSelectorSrc).toContain("onChange(");
   });
 
-  it("renders all 9 state options as SelectItem elements", () => {
-    const itemMatches = stateSelectorSrc.match(/SelectItem/g) || [];
-    // Import (2: named import + closing) + JSX usage + map rendering
-    // We check for the map pattern which renders one per option
-    expect(stateSelectorSrc).toContain("STATES.map((state)");
+  it("renders all state options from the STATES list", () => {
+    expect(stateSelectorSrc).toMatch(/STATES\.map\(\(state/);
+    // STATES drives the option list — spot-check canonical pseudo-states
+    expect(stateSelectorSrc).toContain('value: "hover"');
+    expect(stateSelectorSrc).toContain('value: "focus"');
   });
 });

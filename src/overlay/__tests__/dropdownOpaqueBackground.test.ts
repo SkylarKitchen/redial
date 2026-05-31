@@ -42,20 +42,32 @@ describe("Dropdown opaque background", () => {
     ).toBe(true);
   });
 
-  it("StateSelector.tsx SelectContent must have an explicit backgroundColor in its style", () => {
+  it("StateSelector.tsx dropdown content must have an explicit opaque backgroundColor", () => {
     const src = readSrc(join(OVERLAY_DIR, "shell", "StateSelector.tsx"));
 
-    // Find the SelectContent JSX and check for backgroundColor/background in its style prop
-    const selectContentMatch = src.match(/<SelectContent[\s\S]*?>/);
-    expect(selectContentMatch, "StateSelector.tsx must contain a <SelectContent>").toBeTruthy();
+    // StateSelector was refactored off Radix <SelectContent> to the project's
+    // portal-dropdown pattern (createPortal + role="listbox"), mirroring UnitSelector.
+    // The dropdown content container is now the role="listbox" element; it must still
+    // carry an explicit opaque inline background so it isn't see-through when portaled
+    // to document.body, outside .__tuner-root scope where Tailwind CSS variables
+    // (e.g. bg-popover) may not resolve.
+    const listboxIdx = src.indexOf('role="listbox"');
+    expect(
+      listboxIdx,
+      'StateSelector.tsx must render a role="listbox" dropdown content container.'
+    ).toBeGreaterThan(-1);
 
-    const tag = selectContentMatch![0];
-    const hasStyleBg = /style=\{[\s\S]*?background(?:Color)?\s*:/m.test(tag);
+    // Scope the check to the listbox container's OWN opening tag/style block —
+    // before its mapped option items — so a transparent option background can't
+    // accidentally satisfy the guard.
+    const containerStyle = src.slice(listboxIdx, listboxIdx + 400);
+    const hasStyleBg = /style=\{[\s\S]*?background(?:Color)?\s*:/m.test(containerStyle);
 
     expect(
       hasStyleBg,
-      "StateSelector.tsx: SelectContent has no inline background/backgroundColor. " +
-      "The dropdown appears transparent because bg-popover Tailwind class doesn't resolve in portal context."
+      'StateSelector.tsx: the role="listbox" dropdown container has no inline ' +
+      "background/backgroundColor. The dropdown appears transparent because a " +
+      "bg-popover Tailwind class doesn't resolve in portal context."
     ).toBe(true);
   });
 
