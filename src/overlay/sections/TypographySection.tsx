@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
-import { Section, SelectRow, ColorRow, useResetPopover, SubSectionHeader } from "../controls";
+import { Section, SelectRow, ColorRow, SubSectionHeader, ScrubLabel } from "../controls";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "../unitConversion";
@@ -168,8 +168,8 @@ export const TypographySection = memo(function TypographySection({
   }, [apply, element, letterSpacingUnit]);
 
   // ── Reset popovers for custom labels ──
-  const fontSizeResetPopover = useResetPopover(ind("font-size"), () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); });
-  const lineHeightResetPopover = useResetPopover(ind("line-height"), () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); });
+  const resetFontSize = () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); };
+  const resetLineHeight = () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); };
 
   // ── Text style scanning ──
   const textStyles = useMemo(() => scanTextStyles(), []);
@@ -268,14 +268,17 @@ export const TypographySection = memo(function TypographySection({
 
       {/* Size + Height side-by-side compact cells */}
       <div style={ROW}>
-        <span
-          ref={fontSizeResetPopover.anchorRef}
-          style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3, cursor: ind("font-size") === "modified" ? "pointer" : "default" }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); return; } fontSizeResetPopover.triggerOpen(); }}
+        <ScrubLabel
+          value={fontSize}
+          onChange={(v) => { if (fontSizeVar) setFontSizeVar(null); handleFontSizeChange(v); }}
+          step={ctx.isTailwind && fontSizeUnit === "px" ? 4 : 1}
+          min={0}
+          indicator={ind("font-size")}
+          onReset={resetFontSize}
+          style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 3 }}
         >
-          <span style={indicatorStyle(ind("font-size"))}>Size</span>
-        </span>
-        {fontSizeResetPopover.node}
+          Size
+        </ScrubLabel>
         <TypoValueCell
           value={fontSize}
           onChange={(v) => { if (fontSizeVar) setFontSizeVar(null); handleFontSizeChange(v); }}
@@ -289,14 +292,17 @@ export const TypographySection = memo(function TypographySection({
           onCssVarChange={handleFontSizeVarChange}
           variableOptions={varOptions}
         />
-        <span
-          ref={lineHeightResetPopover.anchorRef}
-          style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3, cursor: ind("line-height") === "modified" ? "pointer" : "default" }}
-          onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height")); return; } lineHeightResetPopover.triggerOpen(); }}
+        <ScrubLabel
+          value={lineHeight}
+          onChange={(v) => { if (lineHeightVar) setLineHeightVar(null); handleLineHeightChange(v); }}
+          step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? (ctx.isTailwind ? 4 : 1) : 0.05}
+          min={0}
+          indicator={ind("line-height")}
+          onReset={resetLineHeight}
+          style={{ ...LABEL_INLINE, display: "inline-flex", alignItems: "center", gap: 3 }}
         >
-          <span style={indicatorStyle(ind("line-height"))}>Height</span>
-        </span>
-        {lineHeightResetPopover.node}
+          Height
+        </ScrubLabel>
         <TypoValueCell
           value={lineHeight}
           onChange={(v) => { if (lineHeightVar) setLineHeightVar(null); handleLineHeightChange(v); }}
@@ -366,7 +372,7 @@ export const TypographySection = memo(function TypographySection({
                 onCssVarChange={handleLetterSpacingVarChange}
                 variableOptions={varOptions}
               />
-              <div style={HINT}>Letter spacing</div>
+              <ScrubLabel value={letterSpacing} onChange={(v) => { if (letterSpacingVar) setLetterSpacingVar(null); handleLetterSpacingChange(v); }} step={0.25} style={{ ...HINT, display: "block" }}>Letter spacing</ScrubLabel>
             </div>
             <div className="flex-1">
               <TypoValueCell
@@ -378,7 +384,7 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 conversionHint={textIndentHint}
               />
-              <div style={HINT}>Text indent</div>
+              <ScrubLabel value={textIndent} onChange={handleTextIndentChange} step={1} style={{ ...HINT, display: "block" }}>Text indent</ScrubLabel>
             </div>
           </div>
 
@@ -392,7 +398,7 @@ export const TypographySection = memo(function TypographySection({
                 step={1}
                 keyword={columnCount <= 1 ? "Auto" : null}
               />
-              <div style={HINT}>Columns</div>
+              <ScrubLabel value={columnCount} onChange={handleColumnCountChange} step={1} min={1} style={{ ...HINT, display: "block" }}>Columns</ScrubLabel>
             </div>
             {columnCount > 1 && (
               <div className="flex-1">
@@ -406,7 +412,7 @@ export const TypographySection = memo(function TypographySection({
                   keyword={columnGap === 0 ? "Normal" : null}
                   conversionHint={typoColGapHint}
                 />
-                <div style={HINT}>Column gap</div>
+                <ScrubLabel value={columnGap} onChange={(v) => { onColumnGapChange(v); apply("column-gap", `${v}${columnGapUnit}`); }} step={1} min={0} style={{ ...HINT, display: "block" }}>Column gap</ScrubLabel>
               </div>
             )}
           </div>
@@ -421,7 +427,7 @@ export const TypographySection = memo(function TypographySection({
                 step={0.5}
                 keyword={wordSpacing === 0 ? "Normal" : null}
               />
-              <div style={HINT}>Word spacing</div>
+              <ScrubLabel value={wordSpacing} onChange={handleWordSpacingChange} step={0.5} style={{ ...HINT, display: "block" }}>Word spacing</ScrubLabel>
             </div>
             <div className="flex-1">
               <MiniDropdown value={hyphens} options={HYPHENS_OPTIONS} onChange={handleHyphensChange} />
@@ -487,7 +493,7 @@ export const TypographySection = memo(function TypographySection({
                 unit="px"
                 step={1}
               />
-              <div style={HINT}>Width</div>
+              <ScrubLabel value={textStrokeWidth} onChange={handleTextStrokeWidthChange} step={1} min={0} style={{ ...HINT, display: "block" }}>Width</ScrubLabel>
             </div>
             <div className="flex-1">
               <div className="flex items-center relative" style={{ height: 28, background: surface.subtle, border: `1px solid ${border.default}`, borderRadius: 4, overflow: "hidden", padding: "0 6px", gap: 6 }}>

@@ -15,6 +15,8 @@ export { SelectRow } from "./SelectRow";
 export { ColorRow } from "./ColorRow";
 export { TextRow } from "./TextRow";
 export { NumberRow } from "./NumberRow";
+export { ScrubLabel } from "./ScrubLabel";
+export type { ScrubLabelProps } from "./ScrubLabel";
 export { EditableValue } from "./EditableValue";
 export { SubSectionHeader } from "./SubSectionHeader";
 export { EditorRemoveButton } from "./EditorRemoveButton";
