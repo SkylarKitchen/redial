@@ -34,7 +34,7 @@ import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
 import { getVariablesPanelWidth } from "../variables/panelWidth";
-import { timing, ms, setReducedMotion, springConfig } from "../timing";
+import { ms, setReducedMotion, springConfig } from "../timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "../core/scrubState";
 import { PropertySearch } from "./PropertySearch";
@@ -44,13 +44,13 @@ import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "../cssImport";
 import { formatTailwindDiff } from "../tailwind";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
-import { useElementTracker } from "../hooks/useElementTracker";
 import { useOverlayDrag } from "../hooks/useOverlayDrag";
 import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { useElementSelection } from "../hooks/useElementSelection";
 import { useInjectedStyles } from "../hooks/useInjectedStyles";
 import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
+import { useSelectionOutline } from "../hooks/useSelectionOutline";
 import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
@@ -527,88 +527,17 @@ export function Overlay() {
     };
   }, [diffMode]);
 
-  // --- Persistent outline for selected element (Phase 2) ---
-  // Event-driven tracking via ResizeObserver + scroll/resize listeners
-  // (replaces infinite RAF loop — only recalculates when something changes)
-
-  // Build tag label text when element changes
-  useEffect(() => {
-    if (!selectedEl || selecting || !tagLabelRef.current) return;
-    const elTag = selectedEl.tagName.toLowerCase();
-    const firstClass = selectedEl.classList.length > 0 ? selectedEl.classList[0] : null;
-    tagLabelRef.current.textContent = firstClass ? `${elTag}.${firstClass}` : elTag;
-  }, [selectedEl, selecting]);
-
-  useElementTracker(
+  // --- Selected-element outline + badge + tag label + ancestor-hover tracking ---
+  useSelectionOutline({
     selectedEl,
-    !selecting && !!selectedOutlineRef.current,
-    useCallback((rect: DOMRect) => {
-      const outline = selectedOutlineRef.current;
-      if (!outline) return;
-      outline.style.top = `${rect.top}px`;
-      outline.style.left = `${rect.left}px`;
-      outline.style.width = `${rect.width}px`;
-      outline.style.height = `${rect.height}px`;
-      outline.style.display = "block";
-
-      const badge = dimensionsBadgeRef.current;
-      if (badge) {
-        const w = Math.round(rect.width);
-        const h = Math.round(rect.height);
-        badge.textContent = `${w} × ${h}`;
-        badge.style.top = `${rect.bottom + 4}px`;
-        badge.style.left = `${rect.right}px`;
-        badge.style.transform = "translateX(-100%)";
-        badge.style.display = "block";
-      }
-
-      const tagEl = tagLabelRef.current;
-      if (tagEl) {
-        tagEl.style.top = `${rect.top - 4}px`;
-        tagEl.style.left = `${rect.left}px`;
-        tagEl.style.transform = "translateY(-100%)";
-        tagEl.style.display = "block";
-      }
-    }, []),
-    useCallback(() => {
-      // Element disconnected (HMR, navigation)
-      const outline = selectedOutlineRef.current;
-      if (outline) outline.style.display = "none";
-      if (dimensionsBadgeRef.current) dimensionsBadgeRef.current.style.display = "none";
-      if (tagLabelRef.current) tagLabelRef.current.style.display = "none";
-    }, []),
-  );
-
-  // --- Outline pulse on new element selection ---
-  useEffect(() => {
-    const outline = selectedOutlineRef.current;
-    if (!outline || !selectedEl || selecting) return;
-    outline.classList.remove("--pulse");
-    // Force reflow so re-adding triggers animation restart
-    void outline.offsetWidth;
-    outline.classList.add("--pulse");
-    const timer = setTimeout(() => outline.classList.remove("--pulse"), timing.toolbar);
-    return () => { clearTimeout(timer); outline.classList.remove("--pulse"); };
-  }, [panelKey, selectedEl, selecting]);
-
-  // --- Breadcrumb ancestor hover outline ---
-  // Event-driven tracking (replaces infinite RAF loop)
-  useElementTracker(
+    selecting,
     hoveredAncestor,
-    !!ancestorOutlineRef.current,
-    useCallback((rect: DOMRect) => {
-      const outline = ancestorOutlineRef.current;
-      if (!outline) return;
-      outline.style.display = "block";
-      outline.style.top = `${rect.top}px`;
-      outline.style.left = `${rect.left}px`;
-      outline.style.width = `${rect.width}px`;
-      outline.style.height = `${rect.height}px`;
-    }, []),
-    useCallback(() => {
-      if (ancestorOutlineRef.current) ancestorOutlineRef.current.style.display = "none";
-    }, []),
-  );
+    panelKey,
+    selectedOutlineRef,
+    dimensionsBadgeRef,
+    tagLabelRef,
+    ancestorOutlineRef,
+  });
 
   // --- Breadcrumb computation (Phase 2) ---
   const breadcrumb = useMemo(() => selectedEl ? buildBreadcrumb(selectedEl) : [], [selectedEl]);
