@@ -266,7 +266,8 @@ describe("R resets current element", () => {
   it("re-infers after reset", () => {
     const rIdx = srcIndex('e.key === "r" && !e.metaKey && !e.ctrlKey');
     const rBlock = overlaySrc.slice(rIdx, rIdx + 300);
-    expect(rBlock).toContain("setInferResult(infer(");
+    // The reset path refreshes the panel (re-infer + remount) via refreshPanel().
+    expect(rBlock).toContain("refreshPanel(");
   });
 });
 
