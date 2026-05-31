@@ -59,6 +59,10 @@ export type ActivePanel =
   | { type: "inspector"; tab: "custom" | "prompt" }
   | { type: "variables" };
 
+// --- Action identifiers (typed dispatch maps below) ---
+type CommandAction = "Save" | "Reset" | "Copy CSS" | "Copy Tailwind" | "Paste Styles" | "Toggle Diff";
+type ContextAction = "copy-styles" | "paste-styles" | "copy-css" | "copy-tailwind" | "select-parent" | "reset-styles";
+
 // --- Error Boundary for Panel resilience ---
 class PanelErrorBoundary extends Component<
   { children: ReactNode; onError?: () => void },
@@ -1229,76 +1233,64 @@ export function Overlay() {
     }
   }, [diffMode, activeState, scope, activeClassName]);
 
-  // --- Command Palette action handler ---
+  // --- Command Palette action handler (typed dispatch map, no inline branching) ---
   const handleCommandAction = useCallback((action: string) => {
-    if (!selectedEl) return;
-    switch (action) {
-      case "Save":
-        handleSaveShortcut();
-        break;
-      case "Reset":
-        if (overrideCount(selectedEl) > 0) {
-          reset(selectedEl);
-          setInferResult(infer(selectedEl));
+    const el = selectedEl;
+    if (!el) return;
+    const dispatch: Record<CommandAction, () => void> = {
+      "Save": () => handleSaveShortcut(),
+      "Reset": () => {
+        if (overrideCount(el) > 0) {
+          reset(el);
+          setInferResult(infer(el));
           setPanelKey((k) => k + 1);
         }
-        break;
-      case "Copy CSS":
-        handleCopyShortcut();
-        break;
-      case "Copy Tailwind": {
-        const changes = diff(selectedEl);
+      },
+      "Copy CSS": () => handleCopyShortcut(),
+      "Copy Tailwind": () => {
+        const changes = diff(el);
         if (changes.length > 0) {
           navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
         }
-        break;
-      }
-      case "Paste Styles":
-        handlePasteStyles();
-        break;
-      case "Toggle Diff":
-        handleToggleDiff();
-        break;
-    }
+      },
+      "Paste Styles": () => handlePasteStyles(),
+      "Toggle Diff": () => handleToggleDiff(),
+    };
+    dispatch[action as CommandAction]?.();
   }, [selectedEl, handleSaveShortcut, handleCopyShortcut, handlePasteStyles, handleToggleDiff]);
 
-  // --- Context Menu action handler ---
+  // --- Context Menu action handler (typed dispatch map, no inline branching) ---
   const handleContextAction = useCallback((action: string) => {
-    if (!selectedEl) return;
-    switch (action) {
-      case "copy-styles": {
-        const count = copyStyles(selectedEl);
+    const el = selectedEl;
+    if (!el) return;
+    const dispatch: Record<ContextAction, () => void> = {
+      "copy-styles": () => {
+        const count = copyStyles(el);
         if (count > 0) setClipboardMessage(`${count} style${count === 1 ? "" : "s"} copied`);
-        break;
-      }
-      case "paste-styles":
-        handlePasteStyles();
-        break;
-      case "copy-css":
-        handleCopyShortcut();
-        break;
-      case "copy-tailwind": {
-        const changes = diff(selectedEl);
+      },
+      "paste-styles": () => handlePasteStyles(),
+      "copy-css": () => handleCopyShortcut(),
+      "copy-tailwind": () => {
+        const changes = diff(el);
         if (changes.length > 0) {
           navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
         }
-        break;
-      }
-      case "select-parent": {
-        const parent = selectedEl.parentElement;
+      },
+      "select-parent": () => {
+        const parent = el.parentElement;
         if (parent && isNavigableElement(parent)) {
           handleSelect(parent);
         }
-        break;
-      }
-      case "reset-styles":
-        if (overrideCount(selectedEl) > 0) {
-          reset(selectedEl);
-          setInferResult(infer(selectedEl));
+      },
+      "reset-styles": () => {
+        if (overrideCount(el) > 0) {
+          reset(el);
+          setInferResult(infer(el));
           setPanelKey((k) => k + 1);
         }
-        break;
-    }
+      },
+    };
+    dispatch[action as ContextAction]?.();
   }, [selectedEl, handlePasteStyles, handleCopyShortcut, handleSelect]);
 
   return (
