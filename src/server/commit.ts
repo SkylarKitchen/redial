@@ -12,6 +12,11 @@
 import { readFile, writeFile, readdir, stat } from "fs/promises";
 import { resolve, join, basename, normalize } from "path";
 import { trySourceMapResolution } from "./sourceMapCache";
+import {
+  isValidCSSProp,
+  isValidCSSClassName,
+  isSafeCSSValue,
+} from "../lib/css";
 
 /**
  * Search the project for a CSS file that defines a custom property.
@@ -93,17 +98,19 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** CSS property name: custom property, or kebab ident (allow vendor `-` prefix). */
-function isValidCSSProp(prop: string): boolean {
-  return /^--[\w-]+$/.test(prop) || /^-?[a-z][a-z-]*$/.test(prop);
-}
-/** CSS class name: a single CSS identifier (no braces/semicolons/whitespace). */
-function isValidCSSClassName(name: string): boolean {
-  return /^-?[_a-zA-Z][\w-]*$/.test(name);
-}
-/** CSS declaration value must not contain block/rule/statement breakers. */
-function isSafeCSSValue(value: string): boolean {
-  return !/[{};<]/.test(value) && !/[\r\n]/.test(value);
+/**
+ * Reject malformed client input before any search or write (issue #16), so a
+ * crafted prop/value/className can't break out of a CSS block. Returns a
+ * failure reason, or null when the change is safe to process.
+ */
+function changeValidationError(change: CommitChange): string | null {
+  if (!isValidCSSProp(change.prop))
+    return `invalid CSS property name: "${change.prop}"`;
+  if (!isSafeCSSValue(change.to))
+    return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
+  if (change.className != null && !isValidCSSClassName(change.className))
+    return `invalid CSS class name: "${change.className}"`;
+  return null;
 }
 
 // --- File resolution ---
@@ -790,28 +797,10 @@ export async function handleCommit(
       let modified = false;
 
       for (const change of fileChanges) {
-        // --- Input validation (issue #16) ---
-        // Reject malformed client input before any search or write, so a
-        // crafted `prop`/`to`/`className` can't break out of a CSS block.
-        if (!isValidCSSProp(change.prop)) {
-          result.failed.push({
-            ...change,
-            reason: `invalid CSS property name: "${change.prop}"`,
-          });
-          continue;
-        }
-        if (!isSafeCSSValue(change.to)) {
-          result.failed.push({
-            ...change,
-            reason: `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`,
-          });
-          continue;
-        }
-        if (change.className != null && !isValidCSSClassName(change.className)) {
-          result.failed.push({
-            ...change,
-            reason: `invalid CSS class name: "${change.className}"`,
-          });
+        // Reject malformed client input up front (issue #16).
+        const invalid = changeValidationError(change);
+        if (invalid) {
+          result.failed.push({ ...change, reason: invalid });
           continue;
         }
 

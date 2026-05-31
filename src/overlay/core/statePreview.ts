@@ -17,6 +17,7 @@
 
 import type { DiffEntry } from "./apply";
 import { onStateChange } from "./apply";
+import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
 
 // --- Valid pseudo-class states (allowlist) ---
 
@@ -55,16 +56,6 @@ function stateKey(el: Element, state: string): StateKey {
 function elAttrSelector(el: Element): string {
   const id = getElId(el);
   return `[data-tuner-state-id="${id}"]`;
-}
-
-/** Validate CSS property name */
-function isValidCSSProp(prop: string): boolean {
-  return /^--[\w-]+$/.test(prop) || /^[a-z][a-z-]*$/.test(prop);
-}
-
-/** Strip dangerous characters from CSS values */
-function sanitizeCSSValue(value: string): string {
-  return value.replace(/[{}]/g, "").replace(/<\/style>/gi, "");
 }
 
 // --- Managed <style> tag ---

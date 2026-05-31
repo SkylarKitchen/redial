@@ -7,6 +7,8 @@
  * - CSS custom properties: detected and editable on their definition scope
  */
 
+import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
+
 export type Scope = "element" | "class";
 
 // --- CSS Custom Property Detection ---
@@ -302,16 +304,6 @@ export function removeClassStyle(className: string, prop: string): void {
 export function resetClassStyles(className: string): void {
   classOverrides.delete(className);
   rebuildClassStyles();
-}
-
-/** Validate a CSS property name: lowercase letters + hyphens, or custom props starting with -- */
-function isValidCSSProp(prop: string): boolean {
-  return /^--[\w-]+$/.test(prop) || /^[a-z][a-z-]*$/.test(prop);
-}
-
-/** Strip characters that could break out of a CSS value context */
-function sanitizeCSSValue(value: string): string {
-  return value.replace(/[{}]/g, "").replace(/<\/style>/gi, "");
 }
 
 /**
