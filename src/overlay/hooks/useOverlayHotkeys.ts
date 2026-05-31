@@ -148,8 +148,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         e.stopPropagation();
         const result = redo();
         if (result) {
-          setInferResult(infer(result.el));
-          setPanelKey((k) => k + 1);
+          refreshPanel(result.el);
           announce("Redo");
         } else {
           redoModeOverride();
@@ -165,8 +164,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         const result = undo();
         if (result) {
           // Re-infer to update panel values
-          setInferResult(infer(result.el));
-          setPanelKey((k) => k + 1);
+          refreshPanel(result.el);
           announce("Undo");
         } else {
           undoModeOverride();
@@ -207,8 +205,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
             }
           }
           endBatch();
-          setInferResult(infer(el));
-          setPanelKey((k) => k + 1);
+          refreshPanel(el);
           setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
         }).catch(() => {
           setClipboardMessage("Clipboard access denied");
@@ -223,8 +220,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         e.stopPropagation();
         const count = pasteStyles(selectedEl);
         if (count > 0) {
-          setInferResult(infer(selectedEl));
-          setPanelKey((k) => k + 1);
+          refreshPanel(selectedEl);
           setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
         }
         return;
@@ -347,8 +343,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         e.preventDefault();
         if (overrideCount(selectedEl) > 0) {
           reset(selectedEl);
-          setInferResult(infer(selectedEl));
-          setPanelKey((k) => k + 1);
+          refreshPanel(selectedEl);
           announce("Reset");
         }
         return;
@@ -483,8 +478,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         e.preventDefault();
         setSelectedEl(next);
         selectedSelectorRef.current = getStableSelector(next);
-        setInferResult(infer(next));
-        setPanelKey((k) => k + 1);
+        refreshPanel(next);
       }
     };
 

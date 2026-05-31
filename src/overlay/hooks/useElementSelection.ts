@@ -29,7 +29,8 @@ export interface ElementSelectionDeps {
   setSelectedEl: React.Dispatch<React.SetStateAction<Element | null>>;
   setPinned: React.Dispatch<React.SetStateAction<boolean>>;
   setInferResult: React.Dispatch<React.SetStateAction<InferResult | null>>;
-  setPanelKey: (updater: (k: number) => number) => void;
+  /** Re-infer the selected element and remount the panel. */
+  refreshPanel: (el: Element) => void;
   setScope: React.Dispatch<React.SetStateAction<Scope>>;
   setActiveClassName: React.Dispatch<React.SetStateAction<string | null>>;
   setActiveState: React.Dispatch<React.SetStateAction<string>>;
@@ -65,7 +66,7 @@ export function useElementSelection({
   setSelectedEl,
   setPinned,
   setInferResult,
-  setPanelKey,
+  refreshPanel,
   setScope,
   setActiveClassName,
   setActiveState,
@@ -114,8 +115,7 @@ export function useElementSelection({
     setSelectedEl(el);
     setPinned(false);
     selectedSelectorRef.current = getStableSelector(el);
-    setInferResult(infer(el));
-    setPanelKey((k) => k + 1);
+    refreshPanel(el);
     // Default to class scope when classes detected, element otherwise
     const classes = getCSSModuleClasses(el);
     if (classes.length > 0) {
@@ -156,8 +156,7 @@ export function useElementSelection({
     setHoveredAncestor(null);
     setSelectedEl(el);
     selectedSelectorRef.current = getStableSelector(el);
-    setInferResult(infer(el));
-    setPanelKey((k) => k + 1);
+    refreshPanel(el);
   }, []);
 
   return { handleSelect, handleCancel, handleBreadcrumbClick, handleClose, handleCloseAttempt };

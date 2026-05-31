@@ -336,8 +336,7 @@ export function Overlay() {
       // Re-read ref after await — selectedEl may have changed during the fetch
       const currentEl = selectedElRef.current;
       if (res.ok && currentEl) {
-        setInferResult(infer(currentEl));
-        setPanelKey((k) => k + 1);
+        refreshPanel(currentEl);
         announce("Saved");
       } else if (!res.ok) {
         console.warn("[Tuner] Save failed:", res.status, res.statusText);
@@ -552,8 +551,7 @@ export function Overlay() {
         const resolved = document.querySelector(selectedSelectorRef.current);
         if (resolved) {
           setSelectedEl(resolved);
-          setInferResult(infer(resolved));
-          setPanelKey((k) => k + 1);
+          refreshPanel(resolved);
           return;
         } else {
           // Element no longer exists after HMR — close panel
@@ -565,8 +563,7 @@ export function Overlay() {
       }
 
       if (cleared > 0 && selectedEl) {
-        setInferResult(infer(selectedEl));
-        setPanelKey((k) => k + 1);
+        refreshPanel(selectedEl);
       }
     });
     return cleanup ?? undefined;
@@ -631,8 +628,7 @@ export function Overlay() {
       }
 
       // Re-infer to update panel
-      setInferResult(infer(el));
-      setPanelKey((k) => k + 1);
+      refreshPanel(el);
       setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
     } catch {
       setClipboardMessage("Clipboard access denied");
@@ -648,8 +644,7 @@ export function Overlay() {
       "Reset": () => {
         if (overrideCount(el) > 0) {
           reset(el);
-          setInferResult(infer(el));
-          setPanelKey((k) => k + 1);
+          refreshPanel(el);
         }
       },
       "Copy CSS": () => handleCopyShortcut(),
@@ -691,8 +686,7 @@ export function Overlay() {
       "reset-styles": () => {
         if (overrideCount(el) > 0) {
           reset(el);
-          setInferResult(infer(el));
-          setPanelKey((k) => k + 1);
+          refreshPanel(el);
         }
       },
     };

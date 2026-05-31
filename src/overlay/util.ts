@@ -191,3 +191,21 @@ export function isNavigableElement(el: Element): boolean {
   if (el instanceof HTMLElement && el.offsetParent === null && getComputedStyle(el).display === "none") return false;
   return true;
 }
+
+/**
+ * Selectors for every node that belongs to redial's own UI: the panel root,
+ * the selection outline, and its portals (tuner / Radix / text-style). The
+ * `[data-feedback-toolbar]` / `[data-annotation-*]` selectors that used to
+ * appear here guarded the removed Agentation toolbar and are intentionally gone.
+ */
+const TUNER_OWNED_SELECTOR =
+  ".__tuner-root,.__tuner-selected-outline,[data-tuner-portal],[data-radix-portal],[data-textstyle-portal]";
+
+/**
+ * True when `el` (or an ancestor) is part of redial's own chrome rather than
+ * the underlying page. Page-interaction listeners use this to ignore events
+ * that originate inside the tool itself.
+ */
+export function isInsideTunerUI(el: Element | null | undefined): boolean {
+  return !!el?.closest(TUNER_OWNED_SELECTOR);
+}

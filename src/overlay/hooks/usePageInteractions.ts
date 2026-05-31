@@ -15,6 +15,7 @@
 
 import { useEffect } from "react";
 import type { ActiveModal } from "../shell/overlayTypes";
+import { isInsideTunerUI } from "../util";
 
 export interface PageInteractionsDeps {
   selectedEl: Element | null;
@@ -72,18 +73,10 @@ export function usePageInteractions({
         return;
       }
       const target = e.target as Element;
-      if (target.closest(".__tuner-root")) return;
-      if (target.closest(".__tuner-selected-outline")) return;
-      if (target.closest("[data-tuner-portal]")) return;
-      if (target.closest("[data-radix-portal]")) return;
-      if (target.closest("[data-textstyle-portal]")) return;
-      if (target.closest("[data-feedback-toolbar]")) return;
-      if (target.closest("[data-annotation-marker]")) return;
-      if (target.closest("[data-annotation-popup]")) return;
+      if (isInsideTunerUI(target)) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]") || el.closest("[data-radix-portal]") || el.closest("[data-textstyle-portal]")) return;
-      if (el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]") || el.closest("[data-annotation-popup]")) return;
+      if (!el || isInsideTunerUI(el)) return;
 
       e.preventDefault();
       e.stopPropagation();
@@ -110,12 +103,7 @@ export function usePageInteractions({
         el === selectedEl ||
         el.contains(selectedEl) ||
         selectedEl.contains(el) ||
-        el.closest(".__tuner-root") ||
-        el.closest(".__tuner-selected-outline") ||
-        el.closest("[data-tuner-portal]") ||
-        el.closest("[data-radix-portal]") ||
-        el.closest("[data-feedback-toolbar]") ||
-        el.closest("[data-annotation-marker]")
+        isInsideTunerUI(el)
       ) {
         highlight.style.display = "none";
         return;
@@ -147,10 +135,7 @@ export function usePageInteractions({
 
     const handleContextMenu = (e: MouseEvent) => {
       const target = e.target as Element;
-      if (target.closest(".__tuner-root")) return;
-      if (target.closest("[data-tuner-portal]")) return;
-      if (target.closest("[data-radix-portal]")) return;
-      if (target.closest("[data-feedback-toolbar]")) return;
+      if (isInsideTunerUI(target)) return;
 
       e.preventDefault();
       setActiveModal({ type: "contextMenu", x: e.clientX, y: e.clientY });

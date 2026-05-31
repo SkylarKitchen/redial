@@ -55,7 +55,8 @@ export interface StyleHandlersDeps {
   diffMode: boolean;
   historyEntries: HistoryEntry[];
   setInferResult: React.Dispatch<React.SetStateAction<InferResult | null>>;
-  setPanelKey: (updater: (k: number) => number) => void;
+  /** Re-infer the selected element and remount the panel. */
+  refreshPanel: (el: Element) => void;
   setClipboardMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setHistoryEntries: React.Dispatch<React.SetStateAction<HistoryEntry[]>>;
 }
@@ -77,7 +78,7 @@ export function useStyleHandlers({
   diffMode,
   historyEntries,
   setInferResult,
-  setPanelKey,
+  refreshPanel,
   setClipboardMessage,
   setHistoryEntries,
 }: StyleHandlersDeps): StyleHandlers {
@@ -87,8 +88,7 @@ export function useStyleHandlers({
     destroyClassStyles();
     destroyStateStyles();
     if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
+      refreshPanel(selectedEl);
     }
   }, [selectedEl]);
 
@@ -97,8 +97,7 @@ export function useStyleHandlers({
     if (!selectedEl || diffMode) return;
     const count = pasteStyles(selectedEl);
     if (count > 0) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
+      refreshPanel(selectedEl);
       setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
     }
   }, [selectedEl, diffMode]);
@@ -106,8 +105,7 @@ export function useStyleHandlers({
   // --- Reset handler: re-infer to get fresh values ---
   const handleReset = useCallback(() => {
     if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
+      refreshPanel(selectedEl);
     }
   }, [selectedEl]);
 
@@ -123,8 +121,7 @@ export function useStyleHandlers({
     setHistoryEntries((prev) => prev.slice(0, targetIndex + 1));
     // Re-infer if we have a selected element
     if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
+      refreshPanel(selectedEl);
     }
   }, [historyEntries.length, selectedEl]);
 
