@@ -17,8 +17,6 @@
 
 import { useEffect } from "react";
 import {
-  undo,
-  redo,
   overrideCount,
   stripAllOverrides,
   restoreAllOverrides,
@@ -29,7 +27,7 @@ import {
   beginBatch,
   endBatch,
 } from "../core/apply";
-import { undoModeOverride, redoModeOverride } from "../variables/modeOverrides";
+import { styleEngine } from "../core/engine";
 import { getStableSelector, isNavigableElement } from "../util";
 import { applyClassStyle, type Scope } from "../core/scope";
 import { applyStateStyle } from "../core/statePreview";
@@ -144,12 +142,11 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         if (diffMode) return;
         e.preventDefault();
         e.stopPropagation();
-        const result = redo();
+        // styleEngine.redo() does the inline→mode fallthrough internally (RFC #14).
+        const result = styleEngine.redo();
         if (result) {
           refreshPanel(result.el);
           announce("Redo");
-        } else {
-          redoModeOverride();
         }
         return;
       }
@@ -159,13 +156,12 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         if (diffMode) return; // Block undo during diff
         e.preventDefault();
         e.stopPropagation(); // prevent DialKit from processing native undo
-        const result = undo();
+        // styleEngine.undo() does the inline→mode fallthrough internally (RFC #14).
+        const result = styleEngine.undo();
         if (result) {
           // Re-infer to update panel values
           refreshPanel(result.el);
           announce("Undo");
-        } else {
-          undoModeOverride();
         }
         return;
       }
