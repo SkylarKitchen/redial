@@ -440,13 +440,15 @@ export const overlay = {
 export const marginWarmAlpha = (a: number) => hexToRgba(color.gridOrange, a);
 
 export const spacingZone = {
-  marginBase: blackAlpha(0.03),
-  marginHover: blackAlpha(0.07),
-  marginBorderBase: blackAlpha(0.12),
-  marginBorderHover: blackAlpha(0.25),
-  paddingBase: blackAlpha(0.04),
-  paddingHover: blackAlpha(0.08),
-  paddingBorderBase: blackAlpha(0.12),
-  paddingBorderHover: blackAlpha(0.25),
-  content: blackAlpha(0.07),
+  // Hued box-model zones (Webflow / DevTools style), matching BoxModelOverlay:
+  // margin = warm/orange, padding = green, content = blue.
+  marginBase: marginWarmAlpha(0.1),
+  marginHover: marginWarmAlpha(0.18),
+  marginBorderBase: marginWarmAlpha(0.3),
+  marginBorderHover: marginWarmAlpha(0.5),
+  paddingBase: greenAlpha(0.1),
+  paddingHover: greenAlpha(0.18),
+  paddingBorderBase: greenAlpha(0.3),
+  paddingBorderHover: greenAlpha(0.5),
+  content: primaryAlpha(0.12),
 } as const;

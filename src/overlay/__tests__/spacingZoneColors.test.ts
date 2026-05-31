@@ -1,9 +1,11 @@
 /**
  * spacingZoneColors.test.ts — Verify spacing zone color design tokens.
  *
- * The spacing zone tokens use blackAlpha at varying opacities to distinguish
- * margin, padding, and content zones. Tests verify tokens exist, have
- * reasonable alpha values, and hover states are stronger than base states.
+ * The spacing zone fills must be HUED (Webflow / DevTools box-model style),
+ * not grey: margin = warm/orange, padding = green, content = blue. This
+ * mirrors the sibling BoxModelOverlay (marginWarmAlpha / greenAlpha /
+ * primaryAlpha). Tests verify hue, visibility, distinctness, and that hover
+ * states are stronger than base states.
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,22 +18,42 @@ function parseRgba(s: string): { r: number; g: number; b: number; a: number } | 
   return { r: +m[1], g: +m[2], b: +m[3], a: m[4] != null ? +m[4] : 1 };
 }
 
+const isGrey = (c: { r: number; g: number; b: number }) => c.r === c.g && c.g === c.b;
+
 describe("spacing zone colors", () => {
-  it("marginBase should be a visible fill (not transparent)", () => {
-    expect(spacingZone.marginBase).not.toBe("transparent");
+  it("marginBase should be warm-hued (orange), not grey", () => {
     const c = parseRgba(spacingZone.marginBase);
     expect(c).not.toBeNull();
     if (c) {
+      expect(isGrey(c)).toBe(false);
+      // Warm/orange: red dominant, blue lowest.
+      expect(c.r).toBeGreaterThan(c.g);
+      expect(c.g).toBeGreaterThan(c.b);
       expect(c.a).toBeGreaterThan(0);
     }
   });
 
-  it("paddingBase should be a visible fill (not transparent)", () => {
-    expect(spacingZone.paddingBase).not.toBe("transparent");
+  it("paddingBase should be green-hued, not grey", () => {
     const c = parseRgba(spacingZone.paddingBase);
     expect(c).not.toBeNull();
     if (c) {
+      expect(isGrey(c)).toBe(false);
+      // Green: green channel dominant.
+      expect(c.g).toBeGreaterThan(c.r);
+      expect(c.g).toBeGreaterThan(c.b);
       expect(c.a).toBeGreaterThan(0);
+    }
+  });
+
+  it("content should be blue-hued, not grey", () => {
+    const c = parseRgba(spacingZone.content);
+    expect(c).not.toBeNull();
+    if (c) {
+      expect(isGrey(c)).toBe(false);
+      // Blue: blue channel dominant.
+      expect(c.b).toBeGreaterThan(c.r);
+      expect(c.b).toBeGreaterThan(c.g);
+      expect(c.a).toBeGreaterThanOrEqual(0.05);
     }
   });
 
@@ -69,25 +91,16 @@ describe("spacing zone colors", () => {
     if (pBase && pHover) expect(pHover.a).toBeGreaterThanOrEqual(pBase.a * 1.5);
   });
 
-  it("content should be a visible darker fill", () => {
-    const c = parseRgba(spacingZone.content);
-    expect(c).not.toBeNull();
-    if (c) {
-      // Should have a meaningful alpha (at least 5%)
-      expect(c.a).toBeGreaterThanOrEqual(0.05);
-    }
-  });
-
-  it("margin and padding base colors should be visually distinct", () => {
+  it("margin and padding base colors should be distinct HUES (not just alpha)", () => {
     const m = parseRgba(spacingZone.marginBase);
     const p = parseRgba(spacingZone.paddingBase);
     expect(m).not.toBeNull();
     expect(p).not.toBeNull();
     if (m && p) {
-      // They should differ — either in hue channels or alpha
+      // Must differ in actual color channels — distinguishing by alpha alone
+      // (the old grey-on-grey behavior) is not enough.
       const channelsDiffer = m.r !== p.r || m.g !== p.g || m.b !== p.b;
-      const alphaDiffers = m.a !== p.a;
-      expect(channelsDiffer || alphaDiffers).toBe(true);
+      expect(channelsDiffer).toBe(true);
     }
   });
 });
