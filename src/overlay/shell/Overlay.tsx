@@ -50,6 +50,7 @@ import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { useElementSelection } from "../hooks/useElementSelection";
 import { useInjectedStyles } from "../hooks/useInjectedStyles";
 import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
+import { usePageInteractions } from "../hooks/usePageInteractions";
 import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
@@ -675,132 +676,15 @@ export function Overlay() {
     };
   }, [selectedEl, getScrollViewport]);
 
-  // --- Click-to-switch: clicking a page element while panel is open re-selects ---
-  useEffect(() => {
-    if (!selectedEl || selecting || pinned) return;
-
-    // Issue #23: Radix Select / Popover dismiss on pointerdown, then unmount
-    // the portal synchronously. The follow-up click is delivered to <html>
-    // (or whatever is now under the cursor), which would otherwise be picked
-    // up here as a fresh element selection. Mirror Radix's own pattern:
-    // remember when pointerdown happened while a popper was open, and skip
-    // the immediately-following click.
-    let radixDismissPending = false;
-
-    const handlePointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return;
-      if (document.querySelector("[data-radix-popper-content-wrapper]")) {
-        radixDismissPending = true;
-      }
-    };
-
-    const handlePageClick = (e: MouseEvent) => {
-      if (e.button !== 0) return; // Only handle left clicks
-      if (radixDismissPending) {
-        // This click closes a Radix popper that was open at pointerdown
-        // time — not a fresh page selection.
-        radixDismissPending = false;
-        return;
-      }
-      // Issue #23 (follow-up): Radix opens its popper synchronously *during*
-      // the trigger's pointerdown (between capture and bubble phases). The
-      // capture-phase pointerdown listener above sees `radixPopperMounted=false`
-      // and never sets the flag, but by the time `click` fires the popper is
-      // mounted AND Radix has retargeted the click event to <html> via its
-      // pointer-capture release. If any Radix popper is currently mounted at
-      // click time, this click is part of a Radix interaction — never a fresh
-      // page selection.
-      if (document.querySelector("[data-radix-popper-content-wrapper]")) {
-        return;
-      }
-      const target = e.target as Element;
-      if (target.closest(".__tuner-root")) return;
-      if (target.closest(".__tuner-selected-outline")) return;
-      if (target.closest("[data-tuner-portal]")) return;
-      if (target.closest("[data-radix-portal]")) return;
-      if (target.closest("[data-textstyle-portal]")) return;
-      if (target.closest("[data-feedback-toolbar]")) return;
-      if (target.closest("[data-annotation-marker]")) return;
-      if (target.closest("[data-annotation-popup]")) return;
-
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root") || el.closest("[data-tuner-portal]") || el.closest("[data-radix-portal]") || el.closest("[data-textstyle-portal]")) return;
-      if (el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]") || el.closest("[data-annotation-popup]")) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-      handleSelect(el);
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown, true);
-    document.addEventListener("click", handlePageClick, true);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown, true);
-      document.removeEventListener("click", handlePageClick, true);
-    };
-  }, [selectedEl, selecting, pinned, handleSelect]);
-
-  // --- Hover highlight: preview which element you'd re-select on click ---
-  useEffect(() => {
-    if (!selectedEl || selecting || pinned || !hoverHighlightRef.current) return;
-    const highlight = hoverHighlightRef.current;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (
-        !el ||
-        el === selectedEl ||
-        el.contains(selectedEl) ||
-        selectedEl.contains(el) ||
-        el.closest(".__tuner-root") ||
-        el.closest(".__tuner-selected-outline") ||
-        el.closest("[data-tuner-portal]") ||
-        el.closest("[data-radix-portal]") ||
-        el.closest("[data-feedback-toolbar]") ||
-        el.closest("[data-annotation-marker]")
-      ) {
-        highlight.style.display = "none";
-        return;
-      }
-      const rect = el.getBoundingClientRect();
-      highlight.style.top = `${rect.top}px`;
-      highlight.style.left = `${rect.left}px`;
-      highlight.style.width = `${rect.width}px`;
-      highlight.style.height = `${rect.height}px`;
-      highlight.style.display = "block";
-    };
-
-    const handleMouseLeave = () => {
-      highlight.style.display = "none";
-    };
-
-    document.addEventListener("mousemove", handleMouseMove, true);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove, true);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      highlight.style.display = "none";
-    };
-  }, [selectedEl, selecting, pinned]);
-
-  // --- Right-click context menu on page elements ---
-  useEffect(() => {
-    if (!selectedEl || selecting) return;
-
-    const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as Element;
-      if (target.closest(".__tuner-root")) return;
-      if (target.closest("[data-tuner-portal]")) return;
-      if (target.closest("[data-radix-portal]")) return;
-      if (target.closest("[data-feedback-toolbar]")) return;
-
-      e.preventDefault();
-      setActiveModal({ type: "contextMenu", x: e.clientX, y: e.clientY });
-    };
-
-    document.addEventListener("contextmenu", handleContextMenu, true);
-    return () => document.removeEventListener("contextmenu", handleContextMenu, true);
-  }, [selectedEl, selecting]);
+  // --- Page-level pointer interactions (click-to-switch, hover highlight, context menu) ---
+  usePageInteractions({
+    selectedEl,
+    selecting,
+    pinned,
+    handleSelect,
+    hoverHighlightRef,
+    setActiveModal,
+  });
 
 
   // --- CSS Import handler (paste CSS text from clipboard) ---

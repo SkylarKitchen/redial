@@ -361,9 +361,10 @@ describe("issue #23: State dropdown dismissal must not reselect <html>", () => {
   });
 });
 
-describe("issue #23 — source verification: Overlay.tsx contains the fix", () => {
+describe("issue #23 — source verification: page-interaction handler contains the fix", () => {
+  // The page-click handler lives in hooks/usePageInteractions.ts (extracted from Overlay.tsx)
   const overlaySrc = readFileSync(
-    join(__dirname, "../shell/Overlay.tsx"),
+    join(__dirname, "../hooks/usePageInteractions.ts"),
     "utf-8",
   );
 

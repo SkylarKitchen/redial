@@ -17,8 +17,9 @@ import { join } from "path";
  */
 
 describe("TextStyleRow portal click-through", () => {
+  // The page-click handler lives in hooks/usePageInteractions.ts (extracted from Overlay.tsx)
   const overlaySource = readFileSync(
-    join(__dirname, "..", "shell", "Overlay.tsx"),
+    join(__dirname, "..", "hooks", "usePageInteractions.ts"),
     "utf-8",
   );
 
