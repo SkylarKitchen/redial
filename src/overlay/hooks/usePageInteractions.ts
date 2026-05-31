@@ -14,12 +14,7 @@
  */
 
 import { useEffect } from "react";
-
-type ActiveModal =
-  | { type: "none" }
-  | { type: "commandPalette" }
-  | { type: "shortcutsHelp" }
-  | { type: "contextMenu"; x: number; y: number };
+import type { ActiveModal } from "../shell/overlayTypes";
 
 export interface PageInteractionsDeps {
   selectedEl: Element | null;

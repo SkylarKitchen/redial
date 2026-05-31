@@ -54,12 +54,9 @@ import { useSelectionOutline } from "../hooks/useSelectionOutline";
 import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
-// --- Panel State Type ---
-
-export type ActivePanel =
-  | { type: "none" }
-  | { type: "inspector"; tab: "custom" | "prompt" }
-  | { type: "variables" };
+// --- Panel State Types (canonical defs in ./overlayTypes) ---
+import type { ActivePanel, ActiveModal } from "./overlayTypes";
+export type { ActivePanel, ActiveModal } from "./overlayTypes";
 
 // --- Action identifiers (typed dispatch maps below) ---
 type CommandAction = "Save" | "Reset" | "Copy CSS" | "Copy Tailwind" | "Paste Styles" | "Toggle Diff";
@@ -171,11 +168,6 @@ export function Overlay() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modal state (discriminated union — only one modal open at a time)
-  type ActiveModal =
-    | { type: "none" }
-    | { type: "commandPalette" }
-    | { type: "shortcutsHelp" }
-    | { type: "contextMenu"; x: number; y: number };
   const [activeModal, setActiveModal] = useState<ActiveModal>({ type: "none" });
 
   // Style clipboard message

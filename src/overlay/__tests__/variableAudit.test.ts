@@ -38,7 +38,8 @@ describe("createPortal wrappers must have data-tuner-portal", () => {
     "sections/PositionSelector.tsx",
     "shell/ContextMenu.tsx",
     "shell/PropertyContextMenu.tsx",
-    "variables/CollectionDetail.tsx",
+    "variables/DetailContextMenu.tsx",
+    "variables/ModeValueCell.tsx",
     "variables/CollectionSidebar.tsx",
   ];
 
@@ -58,9 +59,10 @@ describe("all variable-capable controls use VariableField for linked state", () 
     { file: "controls/ColorRow.tsx", name: "ColorRow" },
     { file: "controls/SliderRow.tsx", name: "SliderRow" },
     { file: "sections/SizeInputCell.tsx", name: "SizeInputCell" },
-    { file: "sections/layoutControls.tsx", name: "TypoValueCell" },
+    { file: "sections/layoutMisc.tsx", name: "TypoValueCell" },
     { file: "sections/SpacingValuePopover.tsx", name: "SpacingValuePopover" },
-    { file: "variables/CollectionDetail.tsx", name: "ModeValueCell/DetailVariableRow" },
+    { file: "variables/ModeValueCell.tsx", name: "ModeValueCell" },
+    { file: "variables/DetailVariableRow.tsx", name: "DetailVariableRow" },
   ];
 
   for (const { file, name } of controls) {
@@ -83,7 +85,7 @@ describe("all variable-capable controls use VariableLinkDot for unlinked state",
     { file: "controls/ColorRow.tsx", name: "ColorRow" },
     { file: "controls/SliderRow.tsx", name: "SliderRow" },
     { file: "sections/SizeInputCell.tsx", name: "SizeInputCell" },
-    { file: "sections/layoutControls.tsx", name: "TypoValueCell" },
+    { file: "sections/layoutMisc.tsx", name: "TypoValueCell" },
     { file: "sections/SpacingValuePopover.tsx", name: "SpacingValuePopover" },
   ];
 
@@ -201,7 +203,7 @@ describe("SizeInputCell variable integration", () => {
 // ─── TypoValueCell variable wiring ────────────────────────────────────
 
 describe("TypoValueCell variable integration", () => {
-  const src = readSrc("sections/layoutControls.tsx");
+  const src = readSrc("sections/layoutMisc.tsx");
 
   it("accepts cssVar and onCssVarChange props", () => {
     const tvCell = src.slice(src.indexOf("function TypoValueCell"));
@@ -303,7 +305,7 @@ describe("section unlink handlers restore computed values", () => {
 // ─── ModeValueCell rendering branches ─────────────────────────────────
 
 describe("ModeValueCell has all 4 rendering branches", () => {
-  const src = readSrc("variables/CollectionDetail.tsx");
+  const src = readSrc("variables/ModeValueCell.tsx");
 
   it("has editing state (text input)", () => {
     // Should have an editing branch with an <input>
@@ -352,7 +354,7 @@ describe("ModeValueCell has all 4 rendering branches", () => {
 // ─── DetailVariableRow alias pill rendering ───────────────────────────
 
 describe("DetailVariableRow alias values use VariableField", () => {
-  const src = readSrc("variables/CollectionDetail.tsx");
+  const src = readSrc("variables/DetailVariableRow.tsx");
 
   it("checks variable.aliasOf for alias detection", () => {
     const row = src.slice(

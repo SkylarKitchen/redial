@@ -18,13 +18,7 @@ import { infer, type InferResult } from "../core/infer";
 import { getStableSelector } from "../util";
 import { getCSSModuleClasses, type Scope } from "../core/scope";
 import { overrideCount } from "../core/apply";
-import type { ActivePanel } from "../shell/Overlay";
-
-type ActiveModal =
-  | { type: "none" }
-  | { type: "commandPalette" }
-  | { type: "shortcutsHelp" }
-  | { type: "contextMenu"; x: number; y: number };
+import type { ActivePanel, ActiveModal } from "../shell/overlayTypes";
 
 export interface ElementSelectionDeps {
   selectedElRef: React.MutableRefObject<Element | null>;

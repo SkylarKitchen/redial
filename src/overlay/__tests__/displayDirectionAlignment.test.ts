@@ -35,13 +35,17 @@ function extractFunctionBody(src: string, fnName: string): string {
 }
 
 describe("Display and Direction row alignment", () => {
-  const layoutControlsSrc = readFileSync(
-    join(overlayDir, "sections", "layoutControls.tsx"),
+  const displayTabsSrc = readFileSync(
+    join(overlayDir, "sections", "DisplayTabs.tsx"),
+    "utf-8",
+  );
+  const directionControlsSrc = readFileSync(
+    join(overlayDir, "sections", "DirectionControls.tsx"),
     "utf-8",
   );
 
-  const displayTabsBody = extractFunctionBody(layoutControlsSrc, "DisplayTabs");
-  const flexDirBody = extractFunctionBody(layoutControlsSrc, "FlexDirectionRow");
+  const displayTabsBody = extractFunctionBody(displayTabsSrc, "DisplayTabs");
+  const flexDirBody = extractFunctionBody(directionControlsSrc, "FlexDirectionRow");
 
   it("DisplayTabs function body is found", () => {
     expect(displayTabsBody.length).toBeGreaterThan(0);

@@ -23,6 +23,30 @@ import { destroyClassStyles, applyClassStyle } from "../core/scope";
 import { applyStateStyle, destroyStateStyles } from "../core/statePreview";
 import type { HistoryEntry } from "../shell/ChangesDrawer";
 
+/**
+ * Merge a single margin/padding side value into inferResult.spacing,
+ * returning a new InferResult (or the input unchanged for non-spacing props).
+ * Pure — shared by the spacing change + reset handlers.
+ */
+function applySpacingValue(
+  prev: InferResult | null,
+  prop: string,
+  value: number,
+): InferResult | null {
+  if (!prev) return prev;
+  const [group, side] = prop.split("-") as [string, string];
+  if ((group === "margin" || group === "padding") && side) {
+    return {
+      ...prev,
+      spacing: {
+        ...prev.spacing,
+        [group]: { ...prev.spacing[group], [side]: value },
+      },
+    };
+  }
+  return prev;
+}
+
 export interface StyleHandlersDeps {
   selectedEl: Element | null;
   scope: string;
@@ -119,40 +143,14 @@ export function useStyleHandlers({
       applyInlineStyle(selectedEl, prop, cssValue);
     }
     // Update inferResult.spacing so the panel receives fresh prop values
-    setInferResult((prev) => {
-      if (!prev) return prev;
-      const [group, side] = prop.split("-") as [string, string];
-      if ((group === "margin" || group === "padding") && side) {
-        return {
-          ...prev,
-          spacing: {
-            ...prev.spacing,
-            [group]: { ...prev.spacing[group], [side]: value },
-          },
-        };
-      }
-      return prev;
-    });
+    setInferResult((prev) => applySpacingValue(prev, prop, value));
   }, [selectedEl, scope, activeClassName, activeState]);
 
   // --- Spacing reset handler (alt+click) ---
   // Only updates inferResult state without re-applying inline styles.
   // The actual DOM reset was already done by resetAndReadNum in SpacingBoxModel.
   const handleSpacingReset = useCallback((prop: string, value: number) => {
-    setInferResult((prev) => {
-      if (!prev) return prev;
-      const [group, side] = prop.split("-") as [string, string];
-      if ((group === "margin" || group === "padding") && side) {
-        return {
-          ...prev,
-          spacing: {
-            ...prev.spacing,
-            [group]: { ...prev.spacing[group], [side]: value },
-          },
-        };
-      }
-      return prev;
-    });
+    setInferResult((prev) => applySpacingValue(prev, prop, value));
   }, []);
 
   return {

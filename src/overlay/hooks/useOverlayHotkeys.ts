@@ -37,13 +37,7 @@ import { applyStateStyle } from "../core/statePreview";
 import { isScrubActive } from "../core/scrubState";
 import { parseCSSText } from "../cssImport";
 import { SECTION_ORDER } from "../panelUtils";
-import type { ActivePanel } from "../shell/Overlay";
-
-type ActiveModal =
-  | { type: "none" }
-  | { type: "commandPalette" }
-  | { type: "shortcutsHelp" }
-  | { type: "contextMenu"; x: number; y: number };
+import type { ActivePanel, ActiveModal } from "../shell/overlayTypes";
 
 export interface OverlayHotkeysDeps {
   // --- Values referenced in the effect (those in the dependency array) ---
