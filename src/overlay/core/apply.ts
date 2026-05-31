@@ -62,11 +62,22 @@ function isDomMove(entry: UndoEntry): entry is DomMoveUndoEntry {
 
 const listeners = new Set<() => void>();
 
+/**
+ * Register a callback to be notified whenever the overrides map changes.
+ * Designed for use with `useSyncExternalStore`.
+ * @param callback - Function invoked on every override mutation.
+ * @returns An unsubscribe function that removes the callback.
+ */
 export function subscribeOverrides(callback: () => void): () => void {
   listeners.add(callback);
   return () => { listeners.delete(callback); };
 }
 
+/**
+ * Return the current count of dirty overrides (where initial !== current) for
+ * elements still in the document. Used as the snapshot value for `useSyncExternalStore`.
+ * @returns The number of active dirty overrides.
+ */
 export function getOverrideSnapshot(): number {
   let count = 0;
   for (const [el, props] of overrides) {
@@ -87,6 +98,13 @@ function notifyListeners() {
 export type ChangeInfo = { el: Element; prop: string; from: string; to: string };
 const changeListeners = new Set<(info: ChangeInfo) => void>();
 
+/**
+ * Register a callback that fires on every individual CSS property change.
+ * Used for history tracking. Receives a `ChangeInfo` with the element, property,
+ * previous value, and new value.
+ * @param callback - Function invoked after each style mutation.
+ * @returns An unsubscribe function that removes the callback.
+ */
 export function subscribeChanges(callback: (info: ChangeInfo) => void): () => void {
   changeListeners.add(callback);
   return () => { changeListeners.delete(callback); };
@@ -192,10 +210,18 @@ const MAX_UNDO = 200;
 let batchDepth = 0;
 let batchEntries: SingleUndoEntry[] = [];
 
+/**
+ * Begin a batch of style changes. All `applyInlineStyle` calls while a batch
+ * is open are grouped into a single undo entry. Batches may be nested.
+ */
 export function beginBatch(): void {
   batchDepth++;
 }
 
+/**
+ * Close the current batch. When the outermost batch is closed, all collected
+ * undo entries are flushed as a single `BatchUndoEntry` onto the undo stack.
+ */
 export function endBatch(): void {
   batchDepth--;
   if (batchDepth <= 0) {
@@ -212,6 +238,17 @@ export function endBatch(): void {
 
 // --- Public API ---
 
+/**
+ * Apply an inline style override to an element.
+ * Records the initial computed value on first touch, pushes an undo entry,
+ * sets the inline style with `!important`, and schedules session persistence.
+ * State-keyed props (e.g. `"hover::color"`) are NOT written to inline style —
+ * they are handled by `statePreview.ts` via a `<style>` tag.
+ * @param el - The target DOM element.
+ * @param prop - CSS property name, or a composite `"state::prop"` key.
+ * @param value - The new CSS value to apply.
+ * @param className - Optional class name for class-scoped undo notifications.
+ */
 export function applyInlineStyle(
   el: Element,
   prop: string,
@@ -284,6 +321,13 @@ export function applyInlineStyle(
   notifyChange(el, cssProp, elOverrides.get(prop)!.initial, value);
 }
 
+/**
+ * Undo the most recent style change or batch of changes.
+ * Pops from the undo stack, restores previous values, and pushes a redo entry.
+ * Handles single overrides, batches, and DOM-move operations.
+ * @returns An object with the affected element (and property for single entries),
+ *          or `null` if the undo stack is empty.
+ */
 export function undo(): { el: Element; prop?: string } | null {
   const last = undoStack.pop();
   if (!last) return null;
@@ -402,6 +446,13 @@ export function undo(): { el: Element; prop?: string } | null {
   return { el, prop };
 }
 
+/**
+ * Redo the most recently undone change or batch of changes.
+ * Pops from the redo stack, re-applies values, and pushes an undo entry.
+ * Handles single overrides, batches, and DOM-move operations.
+ * @returns An object with the affected element (and property for single entries),
+ *          or `null` if the redo stack is empty.
+ */
 export function redo(): { el: Element; prop?: string } | null {
   const last = redoStack.pop();
   if (!last) return null;
@@ -525,6 +576,12 @@ export function resetStateOverrides(el: Element, state: string): void {
   notifyListeners();
 }
 
+/**
+ * Reset all overrides on a single element, restoring inline styles to their
+ * pre-tuning values (or removing them if there was no prior inline value).
+ * Clears all undo/redo entries for the element and schedules session persistence.
+ * @param el - The element whose overrides should be cleared.
+ */
 export function reset(el: Element): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
@@ -558,6 +615,11 @@ export function reset(el: Element): void {
   notifyListeners();
 }
 
+/**
+ * Reset every override across all elements. Removes all inline styles, clears
+ * the overrides map, empties the undo/redo stacks, and wipes the persisted
+ * session from localStorage.
+ */
 export function resetAll(): void {
   for (const [el, props] of overrides) {
     for (const [prop, override] of props) {
@@ -613,10 +675,6 @@ export function diffAll(): Array<{ el: Element; changes: DiffEntry[] }> {
   return result;
 }
 
-/**
- * Check if a specific property on an element has been modified.
- * Used for amber "dirty" highlighting on slider fills.
- */
 /** Check if a CSS value string is numerically zero (e.g. "0px", "0em", "0%", "0"). */
 function isZeroValue(v: string): boolean {
   if (!v || v === "none" || v === "auto" || v === "normal") return false;
@@ -636,6 +694,15 @@ function isDefaultTransition(v: string): boolean {
   return trimmed === "all 0s ease 0s";
 }
 
+/**
+ * Check if a specific CSS property on an element has been modified from its
+ * initial value. Used for amber "dirty" highlighting on slider fills.
+ * Treats semantically-equivalent values (zero lengths, default transitions)
+ * as unchanged.
+ * @param el - The element to inspect.
+ * @param prop - The CSS property name to check.
+ * @returns `true` if the property has a meaningful change from its initial value.
+ */
 export function isDirty(el: Element, prop: string): boolean {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return false;
