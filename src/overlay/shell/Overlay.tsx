@@ -18,11 +18,6 @@ import { WebflowPanel } from "./WebflowPanel";
 
 import { PromptPanel } from "./PromptPanel";
 import { ChangesDrawer, type HistoryEntry, type ChangesTab } from "./ChangesDrawer";
-import { GridOverlay } from "../overlays/GridOverlay";
-import { BoxModelOverlay } from "../overlays/BoxModelOverlay";
-import { FlexGapOverlay } from "../overlays/FlexGapOverlay";
-import { SpacingGuidesOverlay } from "../overlays/SpacingGuidesOverlay";
-import { SpacingPreviewOverlay } from "../overlays/SpacingPreviewOverlay";
 import { infer, type InferResult } from "../core/infer";
 import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
@@ -38,12 +33,13 @@ import { ms, setReducedMotion, springConfig } from "../timing";
 import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "../core/scrubState";
 import { PropertySearch } from "./PropertySearch";
-import { CommandPalette } from "./CommandPalette";
-import { ContextMenu } from "./ContextMenu";
-import { ShortcutsHelp } from "./ShortcutsHelp";
 import { parseCSSText } from "../cssImport";
 import { formatTailwindDiff } from "../tailwind";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
+import { OverlayScrollbarStyles, ReducedMotionStyles } from "./OverlayStyles";
+import { SelectionChrome } from "./SelectionChrome";
+import { VisualOverlays } from "./VisualOverlays";
+import { OverlayModals } from "./OverlayModals";
 import { useOverlayDrag } from "../hooks/useOverlayDrag";
 import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { useElementSelection } from "../hooks/useElementSelection";
@@ -703,105 +699,8 @@ export function Overlay() {
 
   return (
     <>
-      {/* Scoped scrollbar styles for the tuner panel */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .__tuner-root::-webkit-scrollbar,
-        .__tuner-root *::-webkit-scrollbar {
-          width: 6px;
-          height: 6px;
-        }
-        .__tuner-root::-webkit-scrollbar-track,
-        .__tuner-root *::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .__tuner-root::-webkit-scrollbar-thumb,
-        .__tuner-root *::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0);
-          border-radius: 4px;
-          transition: background ${ms("slow")};
-        }
-        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb,
-        .__tuner-root:hover::-webkit-scrollbar-thumb,
-        .__tuner-root *:hover::-webkit-scrollbar-thumb {
-          background: ${surface.track};
-        }
-        .__tuner-root.is-scrolling::-webkit-scrollbar-thumb:hover,
-        .__tuner-root:hover::-webkit-scrollbar-thumb:hover,
-        .__tuner-root *:hover::-webkit-scrollbar-thumb:hover {
-          background: ${blackAlpha(0.2)};
-        }
-        .__tuner-root,
-        .__tuner-root *:not([data-radix-scroll-area-viewport]) {
-          scrollbar-width: thin;
-          scrollbar-color: transparent transparent;
-        }
-        .__tuner-root.is-scrolling,
-        .__tuner-root:hover,
-        .__tuner-root *:not([data-radix-scroll-area-viewport]):hover {
-          scrollbar-color: ${surface.track} transparent;
-        }
-        /* Slider thumb styling — replaces browser defaults with light-theme matching thumb */
-        .__tuner-root input[type="range"] {
-          -webkit-appearance: none;
-          appearance: none;
-          background: transparent;
-          cursor: pointer;
-        }
-        .__tuner-root input[type="range"]::-webkit-slider-runnable-track {
-          height: 3px;
-          background: rgba(0,0,0,0.08);
-          border-radius: 2px;
-          transition: background ${ms("expand")};
-        }
-        .__tuner-root input[type="range"]:hover::-webkit-slider-runnable-track {
-          background: rgba(0,0,0,0.15);
-        }
-        .__tuner-root input[type="range"]::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: ${color.primary};
-          border: 2px solid ${color.background};
-          box-shadow: 0 0 3px rgba(0,0,0,0.15);
-          margin-top: -4.5px;
-          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
-        }
-        .__tuner-root input[type="range"]::-webkit-slider-thumb:hover {
-          transform: scale(1.15);
-          box-shadow: 0 0 0 3px ${primaryAlpha(0.25)};
-        }
-        .__tuner-root input[type="range"]::-webkit-slider-thumb:active {
-          transform: scale(1.1);
-          background: ${color.primaryActive};
-        }
-        .__tuner-root input[type="range"]::-moz-range-track {
-          height: 3px;
-          background: rgba(0,0,0,0.08);
-          border-radius: 2px;
-          transition: background ${ms("expand")};
-        }
-        .__tuner-root input[type="range"]:hover::-moz-range-track {
-          background: rgba(0,0,0,0.15);
-        }
-        .__tuner-root input[type="range"]::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: ${color.primary};
-          border: 2px solid ${color.background};
-          box-shadow: 0 0 3px rgba(0,0,0,0.15);
-          transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
-        }
-        .__tuner-root input[type="range"]::-moz-range-thumb:hover {
-          transform: scale(1.15);
-          box-shadow: 0 0 0 3px ${primaryAlpha(0.25)};
-        }
-        .__tuner-root input[type="range"]::-moz-range-thumb:active {
-          transform: scale(1.1);
-          background: ${color.primaryActive};
-        }
-      `}} />
+      {/* Scoped scrollbar + slider styles for the tuner panel */}
+      <OverlayScrollbarStyles />
 
       {/* Selector overlay (full viewport, invisible until hover) */}
       <Selector
@@ -810,60 +709,27 @@ export function Overlay() {
         onCancel={handleCancel}
       />
 
-      {/* Persistent selected-element outline (Phase 2) */}
+      {/* Persistent selected-element outline + chrome (Phase 2) */}
       {selectedEl && !selecting && (
-        <>
-          <div
-            ref={selectedOutlineRef}
-            className="__tuner-selected-outline"
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: `all ${ms("normal")} ease-out` }}
-          />
-          {/* Breadcrumb ancestor hover outline */}
-          <div
-            ref={ancestorOutlineRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.guide, border: `1.5px dashed ${primaryAlpha(0.5)}`, borderRadius: 2, background: primaryAlpha(0.04) }}
-          />
-          {/* Dimensions badge: W x H below bottom-right */}
-          <div
-            ref={dimensionsBadgeRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: color.primary, color: color.primaryForeground }}
-          />
-          {/* Tag label: tag.class above top-left */}
-          <div
-            ref={tagLabelRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: color.primary, color: color.primaryForeground }}
-          />
-          {/* Hover highlight: subtle preview when hovering a different element */}
-          <div
-            ref={hoverHighlightRef}
-            style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.backdrop, borderRadius: 2, transition: `all ${ms("fast")} ease-out`, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
-          />
-        </>
+        <SelectionChrome
+          selectedOutlineRef={selectedOutlineRef}
+          ancestorOutlineRef={ancestorOutlineRef}
+          dimensionsBadgeRef={dimensionsBadgeRef}
+          tagLabelRef={tagLabelRef}
+          hoverHighlightRef={hoverHighlightRef}
+        />
       )}
 
-      {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}
-      {selectedEl && isGridContainer && showGridOverlay && !selecting && (
-        <GridOverlay element={selectedEl} refreshKey={panelKey} />
-      )}
-
-      {/* Box model overlay (M key) */}
-      {selectedEl && showBoxModel && !selecting && (
-        <BoxModelOverlay element={selectedEl} refreshKey={panelKey} />
-      )}
-
-      {/* Ghosted margin + padding preview — always visible on selection */}
+      {/* On-page measurement overlays (grid / box model / spacing / flex gap) */}
       {selectedEl && !selecting && (
-        <SpacingPreviewOverlay element={selectedEl} refreshKey={panelKey} />
-      )}
-
-      {/* Flex gap overlay — pink dashed hatching between flex children */}
-      {selectedEl && isFlexContainer && !selecting && (
-        <FlexGapOverlay element={selectedEl} refreshKey={panelKey} />
-      )}
-
-      {/* Spacing guides overlay — full intensity during active scrubbing */}
-      {selectedEl && !selecting && (
-        <SpacingGuidesOverlay element={selectedEl} refreshKey={panelKey} />
+        <VisualOverlays
+          element={selectedEl}
+          refreshKey={panelKey}
+          isGridContainer={isGridContainer}
+          isFlexContainer={isFlexContainer}
+          showGridOverlay={showGridOverlay}
+          showBoxModel={showBoxModel}
+        />
       )}
 
       {/* Panel (inspector or global variables) */}
@@ -899,14 +765,7 @@ export function Overlay() {
           exit={{ opacity: 0, scale: 0.97, y: 4, transition: springConfig("panelClose") }}
         >
           {/* Reduced motion: disable transitions/animations when user prefers */}
-          {reducedMotion && (
-            <style dangerouslySetInnerHTML={{ __html: `
-              .__tuner-root *, .__tuner-root *::before, .__tuner-root *::after {
-                transition-duration: 0s !important;
-                animation-duration: 0s !important;
-              }
-            `}} />
-          )}
+          {reducedMotion && <ReducedMotionStyles />}
 
           {activePanel.type === "inspector" && selectedEl && inferResult && (
             <>
@@ -1164,35 +1023,17 @@ export function Overlay() {
         )}
       </AnimatePresence>
 
-      {/* Command Palette modal */}
-      {activeModal.type === "commandPalette" && selectedEl && (
-        <CommandPalette
-          onSelectElement={(el) => { handleSelect(el); setActiveModal({ type: "none" }); }}
-          onScrollToSection={(section) => {
-            setShowSearch(true);
-            setSearchQuery(section);
-            setActiveModal({ type: "none" });
-          }}
-          onAction={(action) => { handleCommandAction(action); setActiveModal({ type: "none" }); }}
-          onClose={() => setActiveModal({ type: "none" })}
-        />
-      )}
-
-      {/* Context Menu */}
-      {activeModal.type === "contextMenu" && selectedEl && (
-        <ContextMenu
-          x={activeModal.x}
-          y={activeModal.y}
-          element={selectedEl}
-          onAction={handleContextAction}
-          onClose={() => setActiveModal({ type: "none" })}
-        />
-      )}
-
-      {/* Shortcuts Help modal */}
-      {activeModal.type === "shortcutsHelp" && (
-        <ShortcutsHelp onClose={() => setActiveModal({ type: "none" })} />
-      )}
+      {/* Transient modals (command palette / context menu / shortcuts help) */}
+      <OverlayModals
+        activeModal={activeModal}
+        selectedEl={selectedEl}
+        setActiveModal={setActiveModal}
+        onSelectElement={handleSelect}
+        setShowSearch={setShowSearch}
+        setSearchQuery={setSearchQuery}
+        onCommandAction={handleCommandAction}
+        onContextAction={handleContextAction}
+      />
 
       {/* Selection mode indicator */}
       {selecting && (

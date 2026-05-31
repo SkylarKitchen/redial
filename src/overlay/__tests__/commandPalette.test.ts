@@ -28,6 +28,11 @@ const hotkeysSrc = readFileSync(
   join(__dirname, "..", "hooks", "useOverlayHotkeys.ts"),
   "utf-8",
 );
+// Modal markup (CommandPalette/ContextMenu/ShortcutsHelp) lives in shell/OverlayModals.tsx
+const modalsSrc = readFileSync(
+  join(__dirname, "..", "shell", "OverlayModals.tsx"),
+  "utf-8",
+);
 
 function expectInPalette(pattern: string) {
   expect(paletteSrc.indexOf(pattern)).toBeGreaterThan(-1);
@@ -39,6 +44,10 @@ function expectInOverlay(pattern: string) {
 
 function expectInHotkeys(pattern: string) {
   expect(hotkeysSrc.indexOf(pattern)).toBeGreaterThan(-1);
+}
+
+function expectInModals(pattern: string) {
+  expect(modalsSrc.indexOf(pattern)).toBeGreaterThan(-1);
 }
 
 // ─── Mirror internal helpers for direct testing ─────────────────────
@@ -95,7 +104,7 @@ describe("Cmd+K opens the command palette", () => {
   });
 
   it("requires a selected element to render the palette", () => {
-    expectInOverlay('activeModal.type === "commandPalette" && selectedEl');
+    expectInModals('activeModal.type === "commandPalette" && selectedEl');
   });
 
   it("toggles off when already open", () => {
@@ -353,10 +362,13 @@ describe("palette includes commands for all keyboard shortcuts", () => {
     });
 
     it("onAction prop calls handleCommandAction", () => {
-      const idx = overlaySrc.indexOf("<CommandPalette");
-      const block = overlaySrc.slice(idx, idx + 500);
+      // Palette markup lives in OverlayModals; its onAction invokes the
+      // onCommandAction prop, which Overlay wires to handleCommandAction.
+      const idx = modalsSrc.indexOf("<CommandPalette");
+      const block = modalsSrc.slice(idx, idx + 500);
       expect(block).toContain("onAction=");
-      expect(block).toContain("handleCommandAction(action)");
+      expect(block).toContain("onCommandAction(action)");
+      expect(overlaySrc).toContain("onCommandAction={handleCommandAction}");
     });
 
     it("handleCommandAction dispatches Save", () => {
