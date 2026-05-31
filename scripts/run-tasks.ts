@@ -29,6 +29,13 @@ import {
   imageName,
   makeSandbox,
 } from "../.sandcastle/runtime";
+import {
+  slugify,
+  branchName,
+  classifyFailure,
+  buildTaskPrompt,
+  resultMark,
+} from "./run-tasks-lib";
 
 loadDotEnv();
 
@@ -93,14 +100,6 @@ function markStatus(lineIdx: number, mark: "x" | "!"): Promise<void> {
   });
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 50);
-}
-
 // --- Semaphore -----------------------------------------------------------
 
 class Semaphore {
@@ -148,7 +147,7 @@ let abortedCount = 0;
 // Abort the entire fleet if we detect auth/rate-limit failures.
 const fleetAbort = new AbortController();
 
-async function runOne(task: Task): Promise<void> {
+async function runOne(task: Task, index: number): Promise<void> {
   const release = await sem.acquire();
   try {
     if (fleetAbort.signal.aborted) {
@@ -156,8 +155,9 @@ async function runOne(task: Task): Promise<void> {
       return;
     }
 
-    const slug = slugify(task.text);
-    const branch = `sandcastle/${slug}-${Math.floor(Date.now() / 1000)}`;
+    // `index` keeps the branch unique even when two tasks share a (truncated)
+    // slug and start in the same millisecond.
+    const branch = branchName(slugify(task.text), index);
     const taskStartedAt = Date.now();
     console.log(`[start] ${branch}`);
     console.log(`        ${task.text.slice(0, 100)}`);
@@ -169,17 +169,29 @@ async function runOne(task: Task): Promise<void> {
         branch,
         sandbox: makeSandbox(),
       });
-      await sandbox.run({
+      const result = await sandbox.run({
         agent: claudeCode(model),
-        prompt: task.text,
+        // sandbox.run() only persists commits, so the prompt tells the agent
+        // to commit its work.
+        prompt: buildTaskPrompt(task.text),
       });
-      await markStatus(task.lineIdx, "x");
-      doneCount++;
-      console.log(`[done]  ${branch}`);
+
+      // A run that produced no commits persisted nothing — mark it failed.
+      const mark = resultMark(result.commits.length);
+      await markStatus(task.lineIdx, mark);
+      if (mark === "x") {
+        doneCount++;
+        console.log(`[done]  ${branch} (${result.commits.length} commit(s))`);
+      } else {
+        failedCount++;
+        console.error(`[fail]  ${branch}: agent produced no commits`);
+      }
     } catch (err) {
       const elapsed = Date.now() - taskStartedAt;
       const msg = err instanceof Error ? err.message : String(err);
-      if (elapsed < 15_000) {
+      // Only genuine auth/rate-limit failures abort the fleet. A branch-name
+      // collision or other git error is a per-task failure.
+      if (classifyFailure(msg, elapsed) === "auth") {
         console.error(
           `[abort] ${branch} failed in ${elapsed}ms — auth/rate limit suspected. Aborting fleet.`,
         );
@@ -197,7 +209,7 @@ async function runOne(task: Task): Promise<void> {
   }
 }
 
-await Promise.all(pending.map(runOne));
+await Promise.all(pending.map((task, index) => runOne(task, index)));
 
 const elapsedMin = ((Date.now() - startedAt) / 60_000).toFixed(1);
 console.log("");
