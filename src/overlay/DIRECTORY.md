@@ -81,7 +81,7 @@ src/overlay/
 
 | File | Purpose |
 |------|---------|
-| `Overlay.tsx` | **Main entry point** — lifecycle orchestrator (1825 lines) |
+| `Overlay.tsx` | **Main entry point** — lifecycle orchestrator (1261 lines; behavior split into hooks under `hooks/`) |
 | `Header.tsx` | Breadcrumb, scope pills, state selector, drag handle |
 | `Footer.tsx` | Save, reset, clipboard dropdown |
 | `Toolbar.tsx` | Mode toggles, AI button |
