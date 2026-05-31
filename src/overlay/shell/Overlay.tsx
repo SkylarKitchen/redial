@@ -47,6 +47,7 @@ import { parseCSSText } from "../cssImport";
 import { formatTailwindDiff } from "../tailwind";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { useElementTracker } from "../hooks/useElementTracker";
+import { useOverlayDrag } from "../hooks/useOverlayDrag";
 import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
@@ -302,14 +303,9 @@ export function Overlay() {
   // Queued tab to open after selector picks an element (e.g. AI button clicked with no selection)
   const pendingTabRef = useRef<"prompt" | null>(null);
 
-  // Panel position (draggable)
-  // anchor tracks which horizontal edge the panel is snapped to so resize keeps it pinned
-  const [pos, setPos] = useState({ x: window.innerWidth - 300 - 16, y: 16 });
-  const [anchor, setAnchor] = useState<"left" | "right" | null>("right");
-  const [snapping, setSnapping] = useState(false);
-  const [panelDragging, setPanelDragging] = useState(false);
-  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
-  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Panel position (draggable) — owns pos/anchor/snap state + drag interaction
+  const { pos, setPos, anchor, setAnchor, snapping, panelDragging, handleDragStart } =
+    useOverlayDrag(activePanel.type, variablesModeCount);
 
   const handleScopeChange = useCallback((newScope: Scope, cls?: string) => {
     setScope(newScope);
@@ -940,94 +936,6 @@ export function Overlay() {
     });
   }, []);
 
-  // --- Dragging ---
-  const SNAP_THRESHOLD = 20;
-  const SNAP_MARGIN = 16;
-  const PANEL_WIDTH = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
-  const PANEL_HEIGHT_ESTIMATE = 500;
-
-  const handleDragStart = useCallback(
-    (e: React.MouseEvent) => {
-      // Clear any pending snap timer when starting a new drag
-      if (snapTimerRef.current) {
-        clearTimeout(snapTimerRef.current);
-        snapTimerRef.current = null;
-      }
-      setSnapping(false);
-      setPanelDragging(true);
-
-      dragRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        originX: pos.x,
-        originY: pos.y,
-      };
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!dragRef.current) return;
-        const dx = e.clientX - dragRef.current.startX;
-        const dy = e.clientY - dragRef.current.startY;
-        // Clamp to viewport so panel can't drift off-screen
-        const x = Math.max(0, Math.min(window.innerWidth - PANEL_WIDTH, dragRef.current.originX + dx));
-        const y = Math.max(0, Math.min(window.innerHeight - 100, dragRef.current.originY + dy));
-        setPos({ x, y });
-      };
-
-      const handleMouseUp = () => {
-        dragRef.current = null;
-        setPanelDragging(false);
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-
-        // Snap to nearest edge if within threshold, and track which edge we're anchored to
-        setPos((current) => {
-          const vw = window.innerWidth;
-          const vh = window.innerHeight;
-          let x = current.x;
-          let y = current.y;
-          let didSnap = false;
-          let newAnchor: "left" | "right" | null = null;
-
-          // Horizontal snap
-          if (x <= SNAP_THRESHOLD) {
-            x = SNAP_MARGIN;
-            newAnchor = "left";
-            didSnap = true;
-          } else if (x >= vw - PANEL_WIDTH - SNAP_THRESHOLD) {
-            x = vw - PANEL_WIDTH - SNAP_MARGIN;
-            newAnchor = "right";
-            didSnap = true;
-          }
-
-          // Vertical snap
-          if (y <= SNAP_THRESHOLD) {
-            y = SNAP_MARGIN;
-            didSnap = true;
-          } else if (y >= vh - PANEL_HEIGHT_ESTIMATE - SNAP_THRESHOLD) {
-            y = vh - PANEL_HEIGHT_ESTIMATE - SNAP_MARGIN;
-            didSnap = true;
-          }
-
-          setAnchor(newAnchor);
-
-          if (didSnap) {
-            setSnapping(true);
-            snapTimerRef.current = setTimeout(() => {
-              setSnapping(false);
-              snapTimerRef.current = null;
-            }, 150);
-          }
-
-          return { x, y };
-        });
-      };
-
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    },
-    [pos]
-  );
-
   // --- Diff toggle (button click) ---
   const handleToggleDiff = useCallback(() => {
     if (!selectedEl || overrideCount(selectedEl) === 0) return;
@@ -1156,46 +1064,6 @@ export function Overlay() {
   useEffect(() => {
     restoreSession();
   }, []);
-
-  // --- Re-anchor panel position on window resize ---
-  useEffect(() => {
-    const handleResize = () => {
-      setPos((p) => {
-        const MARGIN = 16;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        // If anchored to an edge, recompute from that edge; otherwise just clamp
-        const pw = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
-        const x = anchor === "right"
-          ? vw - pw - MARGIN
-          : anchor === "left"
-            ? MARGIN
-            : Math.max(0, Math.min(vw - pw, p.x));
-        const y = Math.max(0, Math.min(vh - 100, p.y));
-        return { x, y };
-      });
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [anchor, activePanel.type, variablesModeCount]);
-
-  // --- Reposition panel when switching between inspector (300px) and variables (dynamic) ---
-  useEffect(() => {
-    const pw = activePanel.type === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
-    setPos((p) => {
-      const vw = window.innerWidth;
-      const MARGIN = 16;
-      // If panel would overflow right edge, clamp it
-      if (p.x + pw > vw - MARGIN) {
-        return { x: Math.max(MARGIN, vw - pw - MARGIN), y: p.y };
-      }
-      // If anchored right, snap to right edge with new width
-      if (anchor === "right") {
-        return { x: vw - pw - MARGIN, y: p.y };
-      }
-      return p;
-    });
-  }, [activePanel.type, anchor, variablesModeCount]);
 
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
   useEffect(() => {
