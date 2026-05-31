@@ -23,6 +23,11 @@ const overlaySrc = readFileSync(
   join(__dirname, "..", "shell", "Overlay.tsx"),
   "utf-8",
 );
+// Keyboard handler lives in hooks/useOverlayHotkeys.ts (extracted from Overlay.tsx)
+const hotkeysSrc = readFileSync(
+  join(__dirname, "..", "hooks", "useOverlayHotkeys.ts"),
+  "utf-8",
+);
 
 function expectInPalette(pattern: string) {
   expect(paletteSrc.indexOf(pattern)).toBeGreaterThan(-1);
@@ -30,6 +35,10 @@ function expectInPalette(pattern: string) {
 
 function expectInOverlay(pattern: string) {
   expect(overlaySrc.indexOf(pattern)).toBeGreaterThan(-1);
+}
+
+function expectInHotkeys(pattern: string) {
+  expect(hotkeysSrc.indexOf(pattern)).toBeGreaterThan(-1);
 }
 
 // ─── Mirror internal helpers for direct testing ─────────────────────
@@ -63,25 +72,25 @@ function searchActions(query: string): string[] {
 
 describe("Cmd+K opens the command palette", () => {
   it("Overlay checks for meta+k", () => {
-    expectInOverlay('(e.metaKey || e.ctrlKey) && e.key === "k"');
+    expectInHotkeys('(e.metaKey || e.ctrlKey) && e.key === "k"');
   });
 
   it("toggles the commandPalette modal state", () => {
-    const metaKIdx = overlaySrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
-    const block = overlaySrc.slice(metaKIdx, metaKIdx + 300);
+    const metaKIdx = hotkeysSrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
+    const block = hotkeysSrc.slice(metaKIdx, metaKIdx + 300);
     expect(block).toContain("commandPalette");
     expect(block).toContain("setActiveModal");
   });
 
   it("prevents default to avoid browser shortcut conflicts", () => {
-    const metaKIdx = overlaySrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
-    const block = overlaySrc.slice(metaKIdx, metaKIdx + 200);
+    const metaKIdx = hotkeysSrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
+    const block = hotkeysSrc.slice(metaKIdx, metaKIdx + 200);
     expect(block).toContain("e.preventDefault()");
   });
 
   it("stops propagation", () => {
-    const metaKIdx = overlaySrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
-    const block = overlaySrc.slice(metaKIdx, metaKIdx + 200);
+    const metaKIdx = hotkeysSrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
+    const block = hotkeysSrc.slice(metaKIdx, metaKIdx + 200);
     expect(block).toContain("e.stopPropagation()");
   });
 
@@ -90,8 +99,8 @@ describe("Cmd+K opens the command palette", () => {
   });
 
   it("toggles off when already open", () => {
-    const metaKIdx = overlaySrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
-    const block = overlaySrc.slice(metaKIdx, metaKIdx + 300);
+    const metaKIdx = hotkeysSrc.indexOf('(e.metaKey || e.ctrlKey) && e.key === "k"');
+    const block = hotkeysSrc.slice(metaKIdx, metaKIdx + 300);
     // Should toggle: if commandPalette → none, else → commandPalette
     expect(block).toContain('prev.type === "commandPalette"');
     expect(block).toContain('{ type: "none" }');
@@ -254,15 +263,15 @@ describe("escape closes the palette", () => {
   });
 
   it("Overlay dismisses active modal on Escape before closing panel", () => {
-    const escIdx = overlaySrc.indexOf('e.key === "Escape"');
-    const block = overlaySrc.slice(escIdx, escIdx + 500);
+    const escIdx = hotkeysSrc.indexOf('e.key === "Escape"');
+    const block = hotkeysSrc.slice(escIdx, escIdx + 500);
     expect(block).toContain("activeModal");
     expect(block).toContain('{ type: "none" }');
   });
 
   it("modal dismiss happens before panel close (priority order)", () => {
-    const escIdx = overlaySrc.indexOf('e.key === "Escape"');
-    const block = overlaySrc.slice(escIdx, escIdx + 500);
+    const escIdx = hotkeysSrc.indexOf('e.key === "Escape"');
+    const block = hotkeysSrc.slice(escIdx, escIdx + 500);
     const modalIdx = block.indexOf("activeModal");
     const closeIdx = block.indexOf("handleCloseAttempt()");
     expect(modalIdx).toBeGreaterThan(-1);
@@ -328,12 +337,12 @@ describe("palette includes commands for all keyboard shortcuts", () => {
     });
 
     it("diff shortcut (D) has palette equivalent 'Toggle Diff'", () => {
-      expectInOverlay('e.key === "d"');
+      expectInHotkeys('e.key === "d"');
       expectInPalette('"Toggle Diff"');
     });
 
     it("reset shortcut (R) has palette equivalent 'Reset'", () => {
-      expectInOverlay('e.key === "r"');
+      expectInHotkeys('e.key === "r"');
       expectInPalette('"Reset"');
     });
   });

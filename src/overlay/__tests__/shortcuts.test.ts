@@ -161,7 +161,8 @@ describe("portal keyboard guard", () => {
   it("Overlay.tsx keyboard guard checks data-tuner-portal", () => {
     const { readFileSync } = require("fs");
     const { join } = require("path");
-    const src = readFileSync(join(__dirname, "..", "shell", "Overlay.tsx"), "utf-8");
+    // Keyboard handler lives in hooks/useOverlayHotkeys.ts (extracted from Overlay.tsx)
+    const src = readFileSync(join(__dirname, "..", "hooks", "useOverlayHotkeys.ts"), "utf-8");
 
     // Find the guard block (between "skip when typing" and the first plain-key shortcut "N to toggle")
     const guardStart = src.indexOf("skip when typing in inputs");
@@ -283,7 +284,8 @@ describe("arrow key element navigation", () => {
     // reach the React onKeyDown handler instead of being stolen for element nav.
     const { readFileSync } = require("fs");
     const { join } = require("path");
-    const overlaySrc = readFileSync(join(__dirname, "..", "shell", "Overlay.tsx"), "utf-8");
+    // Keyboard handler lives in hooks/useOverlayHotkeys.ts (extracted from Overlay.tsx)
+    const overlaySrc = readFileSync(join(__dirname, "..", "hooks", "useOverlayHotkeys.ts"), "utf-8");
 
     // Find the arrow key handler block
     const arrowBlockStart = overlaySrc.indexOf("Arrow key element navigation");

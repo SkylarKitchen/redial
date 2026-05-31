@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 /**
  * keyboardShortcuts.test.ts — Verifies all 12 keyboard shortcuts from the spec,
- * plus input-focus suppression, against the actual Overlay.tsx source.
+ * plus input-focus suppression, against the actual keyboard-handler source.
+ *
+ * The keydown/keyup handler lives in hooks/useOverlayHotkeys.ts (extracted from
+ * Overlay.tsx); these source-introspection assertions read that file.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
@@ -9,9 +12,9 @@ import { join } from "path";
 import { isScrubActive, setScrubActive } from "../core/scrubState";
 import { getNextFocusTarget } from "../hooks/useFocusTrap";
 
-// ─── Read Overlay source once ────────────────────────────────────────
+// ─── Read keyboard-handler source once ───────────────────────────────
 const overlaySrc = readFileSync(
-  join(__dirname, "..", "shell", "Overlay.tsx"),
+  join(__dirname, "..", "hooks", "useOverlayHotkeys.ts"),
   "utf-8",
 );
 
@@ -213,9 +216,13 @@ describe("D hold strips overrides temporarily", () => {
   });
 
   it("cleans up pending timer on unmount", () => {
-    // The cleanup effect should clear diffTimerRef if pending
-    const cleanupIdx = srcIndex("Cleanup: restore overrides if component unmounts");
-    const cleanupBlock = overlaySrc.slice(cleanupIdx, cleanupIdx + 400);
+    // The diff-cleanup effect lives in Overlay.tsx (not the hotkey hook).
+    const shellSrc = readFileSync(
+      join(__dirname, "..", "shell", "Overlay.tsx"),
+      "utf-8",
+    );
+    const cleanupIdx = shellSrc.indexOf("Cleanup: restore overrides if component unmounts");
+    const cleanupBlock = shellSrc.slice(cleanupIdx, cleanupIdx + 400);
     expect(cleanupBlock).toContain("diffTimerRef");
   });
 });
