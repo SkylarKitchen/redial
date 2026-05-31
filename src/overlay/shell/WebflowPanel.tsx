@@ -8,9 +8,8 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { SpacingValues } from "../core/infer";
-import { applyInlineStyle, stateKey } from "../core/apply";
-import { applyClassStyle, isTailwindElement, type Scope } from "../core/scope";
-import { applyStateStyle } from "../core/statePreview";
+import { isTailwindElement, type Scope } from "../core/scope";
+import { styleEngine, type OverrideTarget } from "../core/engine";
 import { buildConversionContext } from "../unitConversion";
 import type { IndicatorType } from "../theme";
 import { parseNum } from "../cssParsers";
@@ -108,19 +107,20 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   );
 
   // ── Apply helper (scope-aware + state-aware) ──
+  // Routes through the unified StyleEngine (RFC #14, Phase 2). The OverrideTarget
+  // union folds the old (scope, activeClassName, activeState) triple into one typed
+  // dispatch; the engine owns the per-scope side effects that used to live inline here.
+  // Order matters: state takes priority, then class-with-name, else a plain element edit
+  // (which also covers scope === "class" with no active class name — a bare inline write).
   const apply = useCallback(
     (prop: string, value: string) => {
-      if (activeState && activeState !== "none") {
-        // Pseudo-class state: inject via <style> tag for immediate preview
-        applyStateStyle(element, activeState, prop, value);
-        // Also track in apply.ts overrides map using composite key (for undo/diff)
-        applyInlineStyle(element, stateKey(activeState, prop), value);
-        return;
-      }
-      if (scope === "class" && activeClassName) {
-        applyClassStyle(activeClassName, prop, value);
-      }
-      applyInlineStyle(element, prop, value, scope === "class" ? activeClassName ?? undefined : undefined);
+      const target: OverrideTarget =
+        activeState && activeState !== "none"
+          ? { scope: "state", el: element, state: activeState }
+          : scope === "class" && activeClassName
+            ? { scope: "class", el: element, className: activeClassName }
+            : { scope: "element", el: element };
+      styleEngine.apply(target, prop, value);
     },
     [element, scope, activeClassName, activeState]
   );
