@@ -5,7 +5,7 @@
  * Doubles as the drag handle for moving the panel.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getDisplayClass } from "../util";
 import { getReactSource } from "../core/sourcemap";
 import type { Scope } from "../core/scope";
@@ -74,6 +74,22 @@ export function Header({
   const sourceFile = reactSource?.displayPath ?? null;
 
   const hasToolbar = (cssClasses.length > 0 && onScopeChange) || (state !== undefined && onStateChange);
+
+  // How many elements on the page use each class — surfaced as a Webflow-style
+  // "used by N elements" reuse signal on the class scope pills. Keyed on the
+  // DOM class token (not the readable display name).
+  const classReuseCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    for (const cls of cssClasses) {
+      try {
+        counts[cls] = document.querySelectorAll(`.${CSS.escape(cls)}`).length;
+      } catch {
+        counts[cls] = 0;
+      }
+    }
+    return counts;
+    // `element` is included so the count refreshes when selection changes.
+  }, [element, cssClasses]);
 
   return (
     <div
@@ -330,6 +346,7 @@ export function Header({
                     label={`.${readable}`}
                     active={scope === "class" && activeClassName === cls}
                     onClick={() => onScopeChange("class", cls)}
+                    count={classReuseCounts[cls]}
                   />
                 );
               })}
@@ -363,12 +380,20 @@ function ScopePill({
   label,
   active,
   onClick,
+  count,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
+  count?: number;
 }) {
   const [hovered, setHovered] = useState(false);
+  // Webflow-style reuse signal: tooltip always reports the count, and when the
+  // class is shared by more than one element we show a faint "· N" suffix.
+  const hasCount = typeof count === "number";
+  const tooltip = hasCount
+    ? `used by ${count} element${count === 1 ? "" : "s"}`
+    : undefined;
   return (
     <div
       onClick={(e) => { e.stopPropagation(); onClick(); }}
@@ -376,6 +401,7 @@ function ScopePill({
       onMouseLeave={(e) => { setHovered(false); (e.currentTarget as HTMLElement).style.transform = ""; }}
       onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.95)"; }}
       onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
+      title={tooltip}
       style={{
         paddingLeft: 8,
         paddingRight: 8,
@@ -395,6 +421,9 @@ function ScopePill({
       }}
     >
       {label}
+      {hasCount && count > 1 && (
+        <span style={{ marginLeft: 4, color: text.disabled }}>· {count}</span>
+      )}
     </div>
   );
 }

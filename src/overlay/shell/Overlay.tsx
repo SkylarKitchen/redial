@@ -123,6 +123,15 @@ export function Overlay() {
     setPanelKeyRaw(v);
   }, [getScrollViewport]);
 
+  /**
+   * Re-infer `el` and force a panel remount — the canonical "refresh the panel
+   * from this element" op shared by every handler/hook that mutates styles.
+   */
+  const refreshPanel = useCallback((el: Element) => {
+    setInferResult(infer(el));
+    setPanelKey((k) => k + 1);
+  }, [setPanelKey]);
+
   // Unified panel state — discriminated union prevents impossible states
   const [activePanel, setActivePanel] = useState<ActivePanel>({ type: "none" });
   const [variablesModeCount, setVariablesModeCount] = useState(0);
@@ -376,7 +385,7 @@ export function Overlay() {
     diffMode,
     historyEntries,
     setInferResult,
-    setPanelKey,
+    refreshPanel,
     setClipboardMessage,
     setHistoryEntries,
   });
@@ -399,7 +408,7 @@ export function Overlay() {
     setSelectedEl,
     setPinned,
     setInferResult,
-    setPanelKey,
+    refreshPanel,
     setScope,
     setActiveClassName,
     setActiveState,
@@ -438,12 +447,11 @@ export function Overlay() {
     announce,
     handleResetAll,
     handleCloseAttempt,
+    refreshPanel,
     selectedElRef,
     selectedSelectorRef,
     diffHoldRef,
     diffTimerRef,
-    setInferResult,
-    setPanelKey,
     setClipboardMessage,
     setSelecting,
     setSelectedEl,

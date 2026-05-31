@@ -1,13 +1,19 @@
 /**
  * Selector.tsx — click-to-inspect element selection
  *
- * Activated by backtick hotkey. Shows an indigo outline on hover.
- * Click captures the element and passes it up via onSelect callback.
+ * Activated by the `+` FAB (modal `active` mode) OR additively while the
+ * Alt/Option key is held. Shows an indigo outline on hover. Click captures
+ * the element and passes it up via onSelect callback.
+ *
+ * The Alt path is intentionally lightweight: it shares the hover-outline +
+ * label + tuner-UI guards, but does NOT set the crosshair body cursor and
+ * does NOT build the Tab candidate list — those belong to explicit (modal)
+ * selecting mode only.
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ms } from "../timing";
-import { isNavigableElement, getDisplayClass } from "../util";
+import { isNavigableElement, getDisplayClass, isInsideTunerUI } from "../util";
 import { color, primaryAlpha, font, zIndex } from "../theme";
 
 interface SelectorProps {
@@ -18,14 +24,42 @@ interface SelectorProps {
 
 export function Selector({ active, onSelect, onCancel }: SelectorProps) {
   const [hovered, setHovered] = useState<Element | null>(null);
+  const [altHeld, setAltHeld] = useState(false);
   const outlineRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLDivElement>(null);
   const candidatesRef = useRef<Element[]>([]);
   const focusIdxRef = useRef(-1);
 
+  // The Selector activates either through explicit (modal) selecting mode or
+  // additively while Alt is held — the latter works even when the panel is
+  // pinned and a different element is already selected.
+  const effectiveActive = active || altHeld;
+
+  // Track Alt/Option key globally so the additive selection path can engage
+  // regardless of `active`. Released on keyup, blur, and when the window loses
+  // focus (e.g. Cmd+Tab) so we never get stuck in a held state.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Alt") setAltHeld(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Alt") setAltHeld(false);
+    };
+    const onBlur = () => setAltHeld(false);
+
+    document.addEventListener("keydown", onKeyDown, true);
+    document.addEventListener("keyup", onKeyUp, true);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+      document.removeEventListener("keyup", onKeyUp, true);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
+
   // Position the outline over the hovered element (updates on scroll/resize)
   useEffect(() => {
-    if (!active || !hovered || !outlineRef.current) return;
+    if (!effectiveActive || !hovered || !outlineRef.current) return;
 
     const outline = outlineRef.current;
 
@@ -64,9 +98,11 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       outline.style.display = "none";
       if (labelRef.current) labelRef.current.style.display = "none";
     };
-  }, [active, hovered]);
+  }, [effectiveActive, hovered]);
 
-  // Build candidate list for keyboard selection when active
+  // Build candidate list for keyboard selection when active.
+  // Gated on `active` only — the Tab candidate list belongs to explicit
+  // (modal) selecting mode, not the lightweight Alt path.
   useEffect(() => {
     if (!active) {
       candidatesRef.current = [];
@@ -79,37 +115,44 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     );
   }, [active]);
 
-  // Mouse tracking + keyboard selection
+  // Mouse tracking + click selection (shared by modal `active` and Alt path)
   useEffect(() => {
-    if (!active) return;
+    if (!effectiveActive) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el) return;
-
-      // Don't select our own UI elements or third-party tool overlays
-      if (
-        el.closest(".__tuner-root") ||
-        el.closest(".__tuner-selector-outline") ||
-        el.closest("[data-feedback-toolbar]") ||
-        el.closest("[data-annotation-marker]")
-      ) {
-        return;
-      }
-
+      // Don't preview our own UI elements or portals.
+      if (!el || isInsideTunerUI(el)) return;
       setHovered(el);
     };
 
     const handleClick = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el.closest(".__tuner-root") || el.closest("[data-feedback-toolbar]") || el.closest("[data-annotation-marker]")) return;
+      // Tuner UI clicks (FAB, panel) must bubble through to React handlers.
+      if (!el || isInsideTunerUI(el)) return;
 
-      // Only suppress propagation for actual page element clicks —
-      // tuner UI clicks (FAB, panel) must bubble through to React handlers
+      // Only suppress propagation for actual page element clicks so the
+      // underlying app doesn't also receive the click.
       e.preventDefault();
       e.stopPropagation();
       onSelect(el);
     };
+
+    document.addEventListener("mousemove", handleMouseMove, true);
+    document.addEventListener("click", handleClick, true);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove, true);
+      document.removeEventListener("click", handleClick, true);
+      setHovered(null);
+    };
+  }, [effectiveActive, onSelect]);
+
+  // Keyboard selection (Escape / Tab / Enter) + crosshair cursor.
+  // Gated on `active` only — these belong to explicit (modal) selecting mode,
+  // not the lightweight Alt path.
+  useEffect(() => {
+    if (!active) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -140,8 +183,6 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       }
     };
 
-    document.addEventListener("mousemove", handleMouseMove, true);
-    document.addEventListener("click", handleClick, true);
     document.addEventListener("keydown", handleKeyDown, true);
 
     // Set cursor (save original to restore later)
@@ -149,15 +190,12 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     document.body.style.cursor = "crosshair";
 
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove, true);
-      document.removeEventListener("click", handleClick, true);
       document.removeEventListener("keydown", handleKeyDown, true);
       document.body.style.cursor = prevCursor;
-      setHovered(null);
     };
   }, [active, onSelect, onCancel]);
 
-  if (!active) return null;
+  if (!effectiveActive) return null;
 
   return (
     // Indigo outline that follows the hovered element.

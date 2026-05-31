@@ -52,10 +52,23 @@ describe("StateSelector — static structure", () => {
     }
   });
 
-  it("passes value and onChange to Radix Select", () => {
-    // <Select value={value} onValueChange={onChange}>
-    expect(stateSelectorSrc).toContain("value={value}");
-    expect(stateSelectorSrc).toContain("onValueChange={onChange}");
+  it("does not contain first-child / last-child structural selectors", () => {
+    // Webflow does not treat these as states — they were removed from STATES.
+    expect(stateSelectorSrc).not.toContain("first-child");
+    expect(stateSelectorSrc).not.toContain("last-child");
+  });
+
+  it("wires value/onChange through the portal-dropdown pattern (no shadcn Select)", () => {
+    // Reimplemented on usePortalDropdown — must not import the shadcn Select.
+    expect(stateSelectorSrc).not.toContain("@/components/ui/select");
+    expect(stateSelectorSrc).toContain("usePortalDropdown");
+    // value drives the active option; onChange fires on select.
+    expect(stateSelectorSrc).toContain("onChange(");
+  });
+
+  it("portal carries data-tuner-portal and max z-index", () => {
+    expect(stateSelectorSrc).toContain("data-tuner-portal");
+    expect(stateSelectorSrc).toContain("zIndex: zIndex.max");
   });
 
   it("shows 'State' label when value is base (none)", () => {

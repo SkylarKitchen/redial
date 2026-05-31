@@ -16,7 +16,6 @@
  */
 
 import { useEffect } from "react";
-import { infer, type InferResult } from "../core/infer";
 import {
   undo,
   redo,
@@ -61,14 +60,14 @@ export interface OverlayHotkeysDeps {
   announce: (message: string) => void;
   handleResetAll: () => void;
   handleCloseAttempt: () => void;
+  /** Re-infer the selected element and remount the panel. */
+  refreshPanel: (el: Element) => void;
   // --- Refs ---
   selectedElRef: React.MutableRefObject<Element | null>;
   selectedSelectorRef: React.MutableRefObject<string | null>;
   diffHoldRef: React.MutableRefObject<boolean>;
   diffTimerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
   // --- Setters ---
-  setInferResult: React.Dispatch<React.SetStateAction<InferResult | null>>;
-  setPanelKey: (updater: (k: number) => number) => void;
   setClipboardMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setSelecting: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedEl: React.Dispatch<React.SetStateAction<Element | null>>;
@@ -107,12 +106,11 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
     announce,
     handleResetAll,
     handleCloseAttempt,
+    refreshPanel,
     selectedElRef,
     selectedSelectorRef,
     diffHoldRef,
     diffTimerRef,
-    setInferResult,
-    setPanelKey,
     setClipboardMessage,
     setSelecting,
     setSelectedEl,
