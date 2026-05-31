@@ -35,6 +35,27 @@ A backlog item we have considered and decided not to do. Two dispositions:
 
 The choice between the two is per-item judgment, not a category rule.
 
+## Panel
+
+The floating Webflow-style tuning surface Redial injects into the host page. It is **not** centered, blocking, or backdropped.
+_Avoid_: modal, dialog, modal window — these imply a centered blocking overlay Redial does not have. When someone says "the modal," they mean the **Panel**.
+
+## Measurable visual bug
+
+A visual defect computable from geometry alone — overflow (a child's rect exceeds its parent's), clipping (`scrollWidth > clientWidth`), off-viewport (bounding rect falls outside the window), or wrong z-index stacking. Has an **automatic oracle**: a `getBoundingClientRect()` assertion, so it can be caught autonomously and locked with a regression test.
+_Avoid_: conflating with **aesthetic visual bug**.
+
+## Aesthetic visual bug
+
+A visual defect that geometry can't decide — misalignment, inconsistent spacing, "looks wrong." Its oracle is **human judgment against Webflow's UI/UX** (the [`webflow-style-panel-spec.md`](webflow-style-panel-spec.md) is the in-repo reference). Cannot be reduced to a passing/failing assertion, so it follows a review-and-ratify flow, not the test-then-fix loop.
+
 ## Ship Blocker
 
 > ⚠️ **Deprecated.** Pre-dates the `must-ship` rubric. `AUDIT_BACKLOG.md` uses this label under an older, fuzzier definition that conflated architectural improvements with release-gating bugs. When reading existing docs, treat the "Ship Blocker" label as a *suggestion to re-triage under the current rubric*, not as evidence the item gates v1.0.
+
+---
+
+## Flagged ambiguities
+
+- **"modal"** was used to mean the floating tuning surface — resolved: the canonical term is **Panel**. Redial has no modal (nothing centered, blocking, or backdropped).
+- **"visual bug"** was used for two different things — resolved into **measurable visual bug** (geometric, auto-oracle, test-locked) vs **aesthetic visual bug** (judgment against Webflow, review-ratified).
