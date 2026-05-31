@@ -1,0 +1,20 @@
+
+--- Run started: 2026-05-28T18:22:09.641Z ---
+Sandcastle Run
+  Agent: claude-code
+  Sandbox: docker
+  Max iterations: 1
+  Branch: sandcastle/20260528-142209
+Iteration 1/1
+Setting up sandbox
+  npm ci
+Setting up sandbox done (16.1s)
+Agent started
+**Redial** is a floating, Webflow-style CSS tuning panel for Next.js that lets you click any element and drag controls to visually adjust styles, writing changes directly back to your source files.
+Agent stopped
+Capturing session
+Collecting commits
+Collecting commits done (0.0s)
+Reached max iterations (1).
+Run complete: reached 1 iteration(s) without completion signal.
+Context window: 21k
