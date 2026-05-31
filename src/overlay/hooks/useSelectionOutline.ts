@@ -54,7 +54,7 @@ export function useSelectionOutline({
 
   useElementTracker(
     selectedEl,
-    !selecting && !!selectedOutlineRef.current,
+    !selecting && !!selectedEl,
     useCallback((rect: DOMRect) => {
       const outline = selectedOutlineRef.current;
       if (!outline) return;
@@ -108,7 +108,7 @@ export function useSelectionOutline({
   // Event-driven tracking (replaces infinite RAF loop)
   useElementTracker(
     hoveredAncestor,
-    !!ancestorOutlineRef.current,
+    !!hoveredAncestor,
     useCallback((rect: DOMRect) => {
       const outline = ancestorOutlineRef.current;
       if (!outline) return;
