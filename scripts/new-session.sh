@@ -57,12 +57,9 @@ fi
 echo "Creating worktree '$name' on branch '$branch' (off main)…"
 git worktree add "$path" -b "$branch" main
 
-# Share the main checkout's node_modules (528MB) instead of reinstalling.
-# Relative link so it resolves from inside .worktrees/<name>/.
-if [ -d "$ROOT/node_modules" ] && [ ! -e "$path/node_modules" ]; then
-  ln -s ../../node_modules "$path/node_modules"
-  echo "  linked node_modules -> shared main install"
-fi
+# No dependency setup needed: the worktree lives inside the repo root, so
+# Node's module resolution and npm's script PATH both walk up and find the
+# main checkout's node_modules (528MB) automatically. No symlink, no reinstall.
 
 cat <<EOF
 
@@ -77,9 +74,9 @@ When the work is green, merge it back from a main-checkout session:
     scripts/new-session.sh remove $name
 
 Notes:
- - Shared node_modules is read-only-safe. If THIS session changes
-   dependencies, run \`rm node_modules && npm install\` in the worktree first
-   so you don't write into the main install.
+ - node_modules is shared automatically (resolved up-tree from the repo
+   root) — nothing to install. If THIS session changes dependencies, run
+   \`npm install\` inside the worktree to get a local node_modules.
  - Baseline tests are intentionally skipped here (main is CI-gated). Run
    \`npm test\` in the worktree if you want to confirm before starting.
 EOF
