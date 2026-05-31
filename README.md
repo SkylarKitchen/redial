@@ -252,6 +252,13 @@ The `test-app/` directory contains a full Next.js app for development:
 - `http://localhost:3000/demo` — Auto-opens the panel on sample content
 - `http://localhost:3000/showcase` — Visual component showcase (imports live design tokens from `theme.ts`)
 
+### Autonomous runs (sandcastle)
+
+For sandboxed Claude Code runs — single tasks via `npm run sandcastle`, or
+parallel checklist runs via `npm run tasks -- tasks.md` — see
+[`docs/sandcastle.md`](docs/sandcastle.md). Replaces / complements the
+existing `run-tasks-parallel.sh` flow with Docker isolation.
+
 ---
 
 ## License
