@@ -93,6 +93,19 @@ function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** CSS property name: custom property, or kebab ident (allow vendor `-` prefix). */
+function isValidCSSProp(prop: string): boolean {
+  return /^--[\w-]+$/.test(prop) || /^-?[a-z][a-z-]*$/.test(prop);
+}
+/** CSS class name: a single CSS identifier (no braces/semicolons/whitespace). */
+function isValidCSSClassName(name: string): boolean {
+  return /^-?[_a-zA-Z][\w-]*$/.test(name);
+}
+/** CSS declaration value must not contain block/rule/statement breakers. */
+function isSafeCSSValue(value: string): boolean {
+  return !/[{};<]/.test(value) && !/[\r\n]/.test(value);
+}
+
 // --- File resolution ---
 
 const EXCLUDE_DIRS = new Set([
@@ -777,6 +790,31 @@ export async function handleCommit(
       let modified = false;
 
       for (const change of fileChanges) {
+        // --- Input validation (issue #16) ---
+        // Reject malformed client input before any search or write, so a
+        // crafted `prop`/`to`/`className` can't break out of a CSS block.
+        if (!isValidCSSProp(change.prop)) {
+          result.failed.push({
+            ...change,
+            reason: `invalid CSS property name: "${change.prop}"`,
+          });
+          continue;
+        }
+        if (!isSafeCSSValue(change.to)) {
+          result.failed.push({
+            ...change,
+            reason: `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`,
+          });
+          continue;
+        }
+        if (change.className != null && !isValidCSSClassName(change.className)) {
+          result.failed.push({
+            ...change,
+            reason: `invalid CSS class name: "${change.className}"`,
+          });
+          continue;
+        }
+
         // --- Pseudo-class state handling ---
         // When a state like "hover" is provided, target the `.className:hover { }` block
         if (change.state && change.className) {
