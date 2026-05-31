@@ -40,6 +40,9 @@ import { OverlayScrollbarStyles, ReducedMotionStyles } from "./OverlayStyles";
 import { SelectionChrome } from "./SelectionChrome";
 import { VisualOverlays } from "./VisualOverlays";
 import { OverlayModals } from "./OverlayModals";
+import { InspectorTabBar } from "./InspectorTabBar";
+import { CloseWarningBar } from "./CloseWarningBar";
+import { HintBar } from "./HintBar";
 import { useOverlayDrag } from "../hooks/useOverlayDrag";
 import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { useElementSelection } from "../hooks/useElementSelection";
@@ -798,48 +801,12 @@ export function Overlay() {
                 pinned={pinned}
                 onTogglePin={handleTogglePin}
               />
-              {focusMode && (
-                <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
-                  <span
-                    onClick={() => setFocusMode(false)}
-                    style={{ fontSize: 9, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
-                  >
-                    Focus Mode
-                  </span>
-                </div>
-              )}
-              {/* -- Style / AI tab bar -- */}
-              <div style={{ display: "flex", borderBottom: `1px solid ${border.subtle}`, paddingLeft: 12, paddingRight: 12, flexShrink: 0 }}>
-                {(["custom", "prompt"] as const).map((tab) => {
-                  const isActive = activePanel.type === "inspector" && activePanel.tab === tab;
-                  const label = tab === "custom" ? "Style" : "AI";
-                  return (
-                    <button
-                      key={tab}
-                      onClick={() => setActivePanel({ type: "inspector", tab })}
-                      style={{
-                        background: "transparent",
-                        borderTop: "none",
-                        borderLeft: "none",
-                        borderRight: "none",
-                        borderBottom: `2px solid ${isActive ? color.primary : "transparent"}`,
-                        paddingLeft: 10,
-                        paddingRight: 10,
-                        paddingTop: 7,
-                        paddingBottom: 5,
-                        fontSize: 11,
-                        fontFamily: font.sans,
-                        fontWeight: isActive ? 600 : 400,
-                        cursor: "pointer",
-                        color: isActive ? text.primary : text.label,
-                        transition: `color ${ms("normal")}, border-color ${ms("normal")}`,
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <InspectorTabBar
+                activePanel={activePanel}
+                onSelectTab={(tab) => setActivePanel({ type: "inspector", tab })}
+                focusMode={focusMode}
+                onExitFocus={() => setFocusMode(false)}
+              />
               <div
                 ref={panelScrollRef}
                 className="__tuner-root"
@@ -909,94 +876,20 @@ export function Overlay() {
                 hasClipboard={hasClipboardStyles()}
                 onPasteStyles={handlePasteStyles}
               />
-              <AnimatePresence>
-                {closeWarning && (() => {
-                  const count = selectedElRef.current ? overrideCount(selectedElRef.current) : 0;
-                  return (
-                    <motion.div
-                      key="close-warning"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      style={{
-                        background: destructiveAlpha(0.08),
-                        fontSize: 12,
-                        fontFamily: font.sans,
-                        color: text.label,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "6px 10px",
-                        borderTop: `1px solid ${border.default}`,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <span>{count} unsaved change{count === 1 ? "" : "s"}</span>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button
-                          onClick={() => { handleClose(); setCloseWarning(false); }}
-                          style={{
-                            background: surface.hover,
-                            border: `1px solid ${border.default}`,
-                            borderRadius: 4,
-                            padding: "2px 8px",
-                            fontSize: 11,
-                            fontFamily: font.sans,
-                            color: text.label,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Discard
-                        </button>
-                        <button
-                          onClick={() => setCloseWarning(false)}
-                          style={{
-                            background: surface.hover,
-                            border: `1px solid ${border.default}`,
-                            borderRadius: 4,
-                            padding: "2px 8px",
-                            fontSize: 11,
-                            fontFamily: font.sans,
-                            color: text.label,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Keep Editing
-                        </button>
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
+              <CloseWarningBar
+                open={closeWarning}
+                selectedElRef={selectedElRef}
+                onDiscard={() => { handleClose(); setCloseWarning(false); }}
+                onKeepEditing={() => setCloseWarning(false)}
+              />
               {/* First-use hint bar */}
-              <AnimatePresence>
-                {showHintBar && (
-                  <motion.div
-                    key="hint-bar"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={() => {
-                      setShowHintBar(false);
-                      try { localStorage.setItem("redial:hintDismissed", "true"); } catch {}
-                    }}
-                    style={{
-                      fontSize: 10,
-                      fontFamily: font.sans,
-                      color: text.disabled,
-                      background: surface.subtle,
-                      textAlign: "center",
-                      padding: "5px 12px",
-                      borderTop: `1px solid ${border.subtle}`,
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                  >
-                    {"\u2318S save \u00b7 \u2318Z undo \u00b7 ? all shortcuts"}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <HintBar
+                show={showHintBar}
+                onDismiss={() => {
+                  setShowHintBar(false);
+                  try { localStorage.setItem("redial:hintDismissed", "true"); } catch {}
+                }}
+              />
             </>
           )}
 
