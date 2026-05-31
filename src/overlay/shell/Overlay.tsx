@@ -25,13 +25,13 @@ import { FlexGapOverlay } from "../overlays/FlexGapOverlay";
 import { SpacingGuidesOverlay } from "../overlays/SpacingGuidesOverlay";
 import { SpacingPreviewOverlay } from "../overlays/SpacingPreviewOverlay";
 import { infer, type InferResult } from "../core/infer";
-import { undo, redo, clearRedundantOverrides, resetAll, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "../core/apply";
+import { undo, redo, clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, beginBatch, endBatch, subscribeChanges } from "../core/apply";
 import { undoModeOverride, redoModeOverride } from "../variables/modeOverrides";
 import { buildBreadcrumb, getStableSelector, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
-import { getCSSModuleClasses, destroyClassStyles, applyClassStyle, type Scope } from "../core/scope";
-import { applyStateStyle, diffState, destroyStateStyles, syncWithApplyUndoRedo } from "../core/statePreview";
+import { getCSSModuleClasses, applyClassStyle, type Scope } from "../core/scope";
+import { applyStateStyle, diffState, syncWithApplyUndoRedo } from "../core/statePreview";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
@@ -48,6 +48,7 @@ import { formatTailwindDiff } from "../tailwind";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { useElementTracker } from "../hooks/useElementTracker";
 import { useOverlayDrag } from "../hooks/useOverlayDrag";
+import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
 
@@ -361,16 +362,27 @@ export function Overlay() {
     });
   }, [selectedEl, announce]);
 
-  // --- Session-wide reset (must be before hotkey useEffect that references it) ---
-  const handleResetAll = useCallback(() => {
-    resetAll();
-    destroyClassStyles();
-    destroyStateStyles();
-    if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-    }
-  }, [selectedEl]);
+  // --- Style-mutation handlers (reset / paste / undo-to-index / spacing) ---
+  // Must be before the hotkey useEffect that references handleResetAll.
+  const {
+    handleResetAll,
+    handlePasteStyles,
+    handleReset,
+    handleUndoToIndex,
+    handleSpacingChange,
+    handleSpacingReset,
+  } = useStyleHandlers({
+    selectedEl,
+    scope,
+    activeClassName,
+    activeState,
+    diffMode,
+    historyEntries,
+    setInferResult,
+    setPanelKey,
+    setClipboardMessage,
+    setHistoryEntries,
+  });
 
   // --- Close handlers (must be before hotkey useEffect that references them) ---
   const handleClose = useCallback(() => {
@@ -785,17 +797,6 @@ export function Overlay() {
     return () => clearTimeout(timer);
   }, [clipboardMessage]);
 
-  // --- Paste handler for Footer ---
-  const handlePasteStyles = useCallback(() => {
-    if (!selectedEl || diffMode) return;
-    const count = pasteStyles(selectedEl);
-    if (count > 0) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-      setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
-    }
-  }, [selectedEl, diffMode]);
-
   // --- Element selection ---
   const handleSelect = useCallback((el: Element) => {
     setSelecting(false);
@@ -853,87 +854,10 @@ export function Overlay() {
 
   const handleTogglePin = useCallback(() => setPinned(p => !p), []);
 
-  // --- Reset handler: re-infer to get fresh values ---
-  const handleReset = useCallback(() => {
-    if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-    }
-  }, [selectedEl]);
-
-
   const handleToggleSession = useCallback(() => {
     setSelecting(false);
     setChangesDrawerTab("pending");
     setChangesDrawerOpen((v) => !v);
-  }, []);
-
-  // --- History: undo to a specific index ---
-  const handleUndoToIndex = useCallback((targetIndex: number) => {
-    // Undo repeatedly until we've removed all entries after targetIndex
-    const count = historyEntries.length - 1 - targetIndex;
-    for (let i = 0; i < count; i++) {
-      const result = undo();
-      if (!result) break;
-    }
-    // Truncate history to targetIndex + 1
-    setHistoryEntries((prev) => prev.slice(0, targetIndex + 1));
-    // Re-infer if we have a selected element
-    if (selectedEl) {
-      setInferResult(infer(selectedEl));
-      setPanelKey((k) => k + 1);
-    }
-  }, [historyEntries.length, selectedEl]);
-
-  // --- Spacing box model change handler ---
-  // Updates both the DOM (via applyInlineStyle) and the inferResult.spacing
-  // so the panel re-renders with fresh values during drag-scrub.
-  const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
-    if (!selectedEl) return;
-    const cssValue = `${value}${unit}`;
-    if (activeState !== "none") {
-      applyStateStyle(selectedEl, activeState, prop, cssValue);
-    } else {
-      if (scope === "class" && activeClassName) {
-        applyClassStyle(activeClassName, prop, cssValue);
-      }
-      applyInlineStyle(selectedEl, prop, cssValue);
-    }
-    // Update inferResult.spacing so the panel receives fresh prop values
-    setInferResult((prev) => {
-      if (!prev) return prev;
-      const [group, side] = prop.split("-") as [string, string];
-      if ((group === "margin" || group === "padding") && side) {
-        return {
-          ...prev,
-          spacing: {
-            ...prev.spacing,
-            [group]: { ...prev.spacing[group], [side]: value },
-          },
-        };
-      }
-      return prev;
-    });
-  }, [selectedEl, scope, activeClassName, activeState]);
-
-  // --- Spacing reset handler (alt+click) ---
-  // Only updates inferResult state without re-applying inline styles.
-  // The actual DOM reset was already done by resetAndReadNum in SpacingBoxModel.
-  const handleSpacingReset = useCallback((prop: string, value: number) => {
-    setInferResult((prev) => {
-      if (!prev) return prev;
-      const [group, side] = prop.split("-") as [string, string];
-      if ((group === "margin" || group === "padding") && side) {
-        return {
-          ...prev,
-          spacing: {
-            ...prev.spacing,
-            [group]: { ...prev.spacing[group], [side]: value },
-          },
-        };
-      }
-      return prev;
-    });
   }, []);
 
   // --- Diff toggle (button click) ---
