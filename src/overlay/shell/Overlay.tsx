@@ -19,7 +19,7 @@ import { WebflowPanel } from "./WebflowPanel";
 import { PromptPanel } from "./PromptPanel";
 import { ChangesDrawer, type HistoryEntry, type ChangesTab } from "./ChangesDrawer";
 import { infer, type InferResult } from "../core/infer";
-import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, pasteStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
+import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
@@ -51,7 +51,7 @@ import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 import { useSelectionOutline } from "../hooks/useSelectionOutline";
 import { getConfig } from "../core/config";
-import { color, text, border, surface, font, shadow, blackAlpha, bgAlpha, primaryAlpha, destructiveAlpha, layout, zIndex } from "../theme";
+import { color, text, border, surface, font, shadow, blackAlpha, layout, zIndex } from "../theme";
 
 // --- Panel State Types (canonical defs in ./overlayTypes) ---
 import type { ActivePanel, ActiveModal } from "./overlayTypes";

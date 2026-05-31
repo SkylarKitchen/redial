@@ -81,11 +81,19 @@ src/overlay/
 
 | File | Purpose |
 |------|---------|
-| `Overlay.tsx` | **Main entry point** — lifecycle orchestrator (1261 lines; behavior split into hooks under `hooks/`) |
+| `Overlay.tsx` | **Main entry point** — lifecycle orchestrator (989 lines; logic split into `hooks/`, render tree split into the shell subcomponents below) |
+| `overlayTypes.ts` | Canonical `ActivePanel` / `ActiveModal` discriminated unions (shared by Overlay + hooks) |
 | `Header.tsx` | Breadcrumb, scope pills, state selector, drag handle |
 | `Footer.tsx` | Save, reset, clipboard dropdown |
 | `Toolbar.tsx` | Mode toggles, AI button |
 | `WebflowPanel.tsx` | Section orchestrator — renders all 8 sections |
+| `OverlayStyles.tsx` | Static `<style>` tags: scrollbar/slider theming + reduced-motion |
+| `SelectionChrome.tsx` | Selected-element outline, dimensions badge, tag label, hover/ancestor highlights (ref-driven) |
+| `VisualOverlays.tsx` | On-page measurement overlays (grid / box model / spacing / flex gap) |
+| `OverlayModals.tsx` | Transient modals: command palette, context menu, shortcuts help |
+| `InspectorTabBar.tsx` | Inspector sub-header: Focus Mode pill + Style/AI tabs |
+| `CloseWarningBar.tsx` | "N unsaved changes" close-confirmation strip |
+| `HintBar.tsx` | First-use keyboard-hint strip |
 | `CommandPalette.tsx` | Cmd+K command palette |
 | `PropertySearch.tsx` | Property search within panel |
 | `ShortcutsHelp.tsx` | Keyboard shortcuts help overlay |
