@@ -36,6 +36,8 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.sandcastle.json",
     "test": "vitest run",
+    "test:visual": "bash scripts/visual-test.sh",
+    "test:visual:ci": "playwright test",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build",
     "sandcastle": "tsx .sandcastle/main.ts",
@@ -93,6 +95,7 @@
   },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.6.4",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.4.0",

@@ -8,3 +8,9 @@ dist/
 .worktrees/
 task-logs/
 task-logs-parallel/
+
+# Playwright visual-regression artifacts (see tests/visual/README.md)
+test-results/
+playwright-report/
+blob-report/
+.playwright/

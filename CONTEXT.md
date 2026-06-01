@@ -42,7 +42,13 @@ _Avoid_: modal, dialog, modal window — these imply a centered blocking overlay
 
 ## Measurable visual bug
 
-A visual defect computable from geometry alone — overflow (a child's rect exceeds its parent's), clipping (`scrollWidth > clientWidth`), off-viewport (bounding rect falls outside the window), or wrong z-index stacking. Has an **automatic oracle**: a `getBoundingClientRect()` assertion, so it can be caught autonomously and locked with a regression test.
+A visual defect computable from geometry alone, with an **automatic oracle** (a `getBoundingClientRect()` / `scrollWidth` assertion), so it can be caught autonomously and locked with a regression test. The calibrated oracle lives in [`tests/visual/sweep.ts`](tests/visual/sweep.ts) and flags exactly three things:
+
+- **surface-offviewport** — a panel/popover whose rect escapes the viewport,
+- **h-spill** — a descendant pokes out past its surface *with no clipping ancestor in between* (truly sticks out),
+- **h-content-clipped** — content hard-cut by `overflow-x:hidden` with no ellipsis affordance.
+
+Crucial calibration (learned the hard way — naive checks over-flag): a raw `scrollWidth > clientWidth` is **not** a bug when it is *intentional containment* — `overflow:visible` content that stays within the surface, the style-panel root's own `overflow-x:hidden` edge clip, `overflow:auto/scroll` scroll regions (the breadcrumb), `text-overflow:ellipsis` truncation (variable pills), or the 1px screen-reader-only clip. An inner element overflowing its own box is only a *visible* defect if it escapes the surface unclipped.
 _Avoid_: conflating with **aesthetic visual bug**.
 
 ## Aesthetic visual bug
