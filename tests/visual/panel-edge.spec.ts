@@ -16,6 +16,7 @@ const SHORT = [
 
 for (const sz of SHORT) {
   test(`open dropdowns don't escape the viewport @${sz.name}`, async ({ page }) => {
+    test.setTimeout(90_000); // ~15 comboboxes × open+sweep+close per viewport
     await page.setViewportSize({ width: sz.w, height: sz.h });
     await openDemo(page);
 
