@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openDemo } from "./helpers";
+import { openDemo, sweepEachDropdown } from "./helpers";
 import { geometricSweep } from "./sweep";
 
 /**
@@ -24,26 +24,8 @@ for (const sz of SHORT) {
     const base = (await geometricSweep(page)).filter((f) => f.type === "surface-offviewport");
     expect(base, `[${sz.name}] panel escapes viewport at rest:\n${JSON.stringify(base, null, 2)}`).toEqual([]);
 
-    const comboboxes = page.locator('.__tuner-root [role="combobox"]');
-    const count = await comboboxes.count();
-    const problems: Array<{ index: number; label: string; findings: unknown }> = [];
-
-    for (let i = 0; i < count; i++) {
-      const cb = comboboxes.nth(i);
-      if (!(await cb.isVisible())) continue;
-      const label = ((await cb.getAttribute("aria-label")) || (await cb.textContent()) || "")
-        .trim()
-        .slice(0, 24);
-      await cb.scrollIntoViewIfNeeded();
-      await cb.click();
-      await page.waitForTimeout(220);
-      // any open popover escaping the viewport is the bug we're hunting here
-      const findings = (await geometricSweep(page)).filter((f) => f.type === "surface-offviewport");
-      if (findings.length) problems.push({ index: i, label, findings });
-      await cb.click().catch(() => {}); // toggle closed (not Escape — that dismisses the panel)
-      await page.waitForTimeout(120);
-    }
-
+    // Any OPEN popover escaping the viewport is the bug we're hunting here.
+    const problems = await sweepEachDropdown(page, { onlyOffviewport: true });
     expect(problems, `[${sz.name}] dropdowns escaping viewport:\n${JSON.stringify(problems, null, 2)}`).toEqual([]);
   });
 }
