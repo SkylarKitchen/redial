@@ -50,9 +50,9 @@ _Avoid_: conflating with **aesthetic visual bug**.
 A visual defect that geometry can't decide — misalignment, inconsistent spacing, "looks wrong." Cannot be reduced to a passing/failing assertion, so it follows a review-and-ratify flow, not the test-then-fix loop.
 
 Its oracle, in priority order:
-1. **The live Webflow Designer** (the canonical reference; panel is dark-charcoal — Redial's dark theme is a correct match, not a bug).
+1. **The live Webflow Designer** (canonical for *structure, ordering, control patterns, interaction*). Note a deliberate divergence: Webflow's panel is **dark-charcoal**, but Redial is **intentionally light** (`theme.ts` `background:"#FFFFFF"`). "Follow Webflow UI/UX" therefore means structural/interaction fidelity — **not** the dark color scheme — unless the user decides otherwise.
 2. The user's own recorded decisions (memory / GitHub issues) where they revise Webflow — these **override** the spec.
-3. [`webflow-style-panel-spec.md`](webflow-style-panel-spec.md) — useful for *section ordering and control structure* (verified to match live Webflow), but **stale on §11 Style Indicators**: it prescribes a blue/orange/green/pink system that was later cut to blue/green-only (orange/pink reopened in issue #46). Do not treat §11 as authoritative.
+3. [`webflow-style-panel-spec.md`](webflow-style-panel-spec.md) — useful for *section ordering and control structure* (verified to match live Webflow), but **stale on**: §1 Panel Shell (prescribes dark `#1e1e1e`; Redial is now light) and §11 Style Indicators (prescribes blue/orange/green/pink; later cut to blue/green-only, orange/pink reopened in issue #46). Do not treat §1 or §11 as authoritative.
 
 ## Ship Blocker
 
