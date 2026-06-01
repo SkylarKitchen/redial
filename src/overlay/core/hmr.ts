@@ -6,6 +6,16 @@
  * when HMR batches multiple file updates.
  */
 
+/**
+ * Subscribes to HMR (Hot Module Replacement) update events across Turbopack,
+ * Vite, and webpack runtimes. The provided callback is invoked (debounced at
+ * 100 ms) whenever a module update is applied, allowing consumers to
+ * re-synchronise state after a hot reload.
+ *
+ * @param callback - Zero-argument function called after each debounced HMR update.
+ * @returns A cleanup function that unsubscribes the listener and cancels any
+ *   pending debounce timer, or `null` if no supported HMR runtime was detected.
+ */
 export function onHmrUpdate(callback: () => void): (() => void) | null {
   let timer: ReturnType<typeof setTimeout> | null = null;
 
