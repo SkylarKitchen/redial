@@ -177,6 +177,8 @@ export function LabelScrub({
         cursor: "ew-resize",
         userSelect: "none",
         flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
         color: scrubbing ? color.primary : text.label,
         fontSize: "11px",
         fontFamily: font.sans,

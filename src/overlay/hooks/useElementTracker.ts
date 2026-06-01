@@ -61,8 +61,10 @@ export function useElementTracker(
     const ro = new ResizeObserver(scheduleSync);
     ro.observe(element);
 
-    // Track scroll (capture phase catches nested scrollables)
-    document.addEventListener("scroll", scheduleSync, { capture: true, passive: true });
+    // Track scroll synchronously — scroll fires after layout and before paint,
+    // so reading rect + writing outline position here lands in the SAME frame
+    // the content scrolled, eliminating the one-frame visual lag.
+    document.addEventListener("scroll", sync, { capture: true, passive: true });
     // Track window resize
     window.addEventListener("resize", scheduleSync, { passive: true });
 
@@ -70,7 +72,7 @@ export function useElementTracker(
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();
-      document.removeEventListener("scroll", scheduleSync, true);
+      document.removeEventListener("scroll", sync, true);
       window.removeEventListener("resize", scheduleSync);
       // Hide outlines when tracking stops (element changed, disabled, or unmount)
       onDisconnectRef.current?.();
