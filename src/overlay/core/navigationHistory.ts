@@ -9,20 +9,36 @@
 export class NavigationHistory {
   private stack: Element[] = [];
 
+  /**
+   * Push an element onto the history stack.
+   * Consecutive duplicate entries are ignored.
+   * @param el - the DOM element to record as the previous navigation target
+   */
   push(el: Element): void {
     // Don't push duplicate consecutive elements
     if (this.stack.length > 0 && this.stack[this.stack.length - 1] === el) return;
     this.stack.push(el);
   }
 
+  /**
+   * Pop and return the most recently pushed element.
+   * @returns the previous element, or `null` if the stack is empty
+   */
   goBack(): Element | null {
     return this.stack.pop() ?? null;
   }
 
+  /**
+   * Whether there is at least one entry to navigate back to.
+   * @returns `true` when the history stack is non-empty
+   */
   canGoBack(): boolean {
     return this.stack.length > 0;
   }
 
+  /**
+   * Remove all entries from the history stack.
+   */
   clear(): void {
     this.stack = [];
   }
