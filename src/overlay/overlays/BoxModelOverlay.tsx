@@ -107,8 +107,12 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
     // Initial paint
     scheduleUpdate();
 
-    // Re-sync on scroll, window resize, and element layout changes
-    window.addEventListener("scroll", scheduleUpdate, true);
+    // Track scroll synchronously — the scroll event fires after layout and
+    // before paint, so reading the rect + writing styles in the handler lands
+    // in the same frame the content moved. Deferring to rAF would put the boxes
+    // one frame behind the GPU-composited scroll (visible lag). Size changes
+    // (resize / ResizeObserver) stay rAF-coalesced.
+    window.addEventListener("scroll", update, { capture: true, passive: true });
     window.addEventListener("resize", scheduleUpdate);
     let ro: ResizeObserver | undefined;
     try {
@@ -121,7 +125,7 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", scheduleUpdate, true);
+      window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", scheduleUpdate);
       ro?.disconnect();
       // Clean up child nodes
