@@ -57,7 +57,12 @@ export const TOGGLE_CSS: Record<string, { on: string; off: string }> = {
   visibility: { on: "visible", off: "hidden" },
 };
 
-/** Convert a resolved dialkit value back to a CSS string */
+/**
+ * Convert a resolved dialkit value back to a CSS string.
+ * @param prop - The CSS property name (e.g. `"font-size"`, `"color"`).
+ * @param value - The resolved dialkit value (number, boolean, or string).
+ * @returns A CSS-ready string, or `null` if the value type has no CSS representation (e.g. SpringConfig).
+ */
 export function toCSSValue(prop: string, value: unknown): string | null {
   if (typeof value === "number") {
     if (PX_PROPS.has(prop)) return `${value}px`;
@@ -74,7 +79,11 @@ export function toCSSValue(prop: string, value: unknown): string | null {
   return null;
 }
 
-/** Flatten nested resolved values to a flat { cssProp: value } map */
+/**
+ * Flatten nested resolved dialkit values into a single-level `{ cssProp: value }` map.
+ * @param obj - A potentially nested object of resolved dialkit values where leaf keys are CSS property names.
+ * @returns A flat record mapping every CSS property name to its resolved value.
+ */
 export function flattenValues(
   obj: Record<string, unknown>
 ): Record<string, unknown> {
@@ -178,6 +187,13 @@ const OVERFLOW_OPTIONS = [
   { value: "auto", label: "Auto" },
 ];
 
+/**
+ * Inspect a DOM element and produce a dialkit `DialConfig` that represents its
+ * current computed styles as interactive controls.
+ * @param el - The DOM element to inspect via `getComputedStyle`.
+ * @returns An `InferResult` containing the generated `DialConfig`, a display name,
+ *   a map of CSS custom-property units, and extracted spacing values.
+ */
 export function infer(el: Element): InferResult {
   const tag = el.tagName.toLowerCase();
 
