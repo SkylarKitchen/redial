@@ -125,7 +125,15 @@ export async function geometricSweep(page: Page): Promise<Finding[]> {
         //  - auto/scroll regions scroll on purpose (e.g. the breadcrumb)
         //  - text-overflow:ellipsis truncates on purpose (variable pills, class names)
         //  - clientWidth <= 8 is the 1px screen-reader-only clip
+        //  - REQUIRE text content: this class targets "text chopped with no
+        //    affordance". A no-text box whose only overflow is a decorative,
+        //    out-of-flow position marker (e.g. the color picker's saturation/
+        //    hue/opacity handle, centred on the selected value and thus half
+        //    outside its overflow:hidden track at the extremes) is intentional
+        //    containment, not chopped content — don't flag it.
+        const hasText = (el.textContent || "").replace(/\s+/g, " ").trim().length > 0;
         if (
+          hasText &&
           el.clientWidth > 8 &&
           cs.overflowX === "hidden" &&
           cs.textOverflow !== "ellipsis" &&

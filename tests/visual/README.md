@@ -27,6 +27,8 @@ truncation (variable pills), and the 1px screen-reader-only clip.
 - `panel-states.spec.ts` — 11 element archetypes (text/flex/grid/image/button/…) + every dropdown opened
 - `panel-rich-content.spec.ts` — multi-shadow / multi-stop gradient / multi-fn transform/filter/transition
 - `panel-viewport.spec.ts` — common editor window sizes (down to 960×700)
+- `panel-edge.spec.ts` — every dropdown opened on SHORT viewports (downward popover must flip up, not escape)
+- `panel-popovers.spec.ts` — the color-picker portal (its own positioned surface): opened from every swatch, default + short viewports
 
 **Add a state here and it is swept on every run.**
 

@@ -18,6 +18,7 @@ import { VariableField } from "./VariableField";
 import { ms } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
+import { computeColorPickerPosition } from "./colorPickerPosition";
 
 /** Walk the alias chain for a CSS variable, returning all names in the chain. */
 function resolveAliasChain(varName: string, maxDepth = 5): string[] {
@@ -241,18 +242,15 @@ export function ColorRow({
         </button>
       )}
       {pickerOpen && swatchRef.current && (() => {
-        const pickerWidth = 240 + 24; // width + padding
-        const pickerHeight = 300;
-        const gap = 4;
-        const rect = swatchRef.current!.getBoundingClientRect();
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const placeAbove = spaceBelow < pickerHeight + gap;
-        const top = placeAbove
-          ? rect.top - pickerHeight - gap
-          : rect.bottom + gap;
-        const left = Math.min(rect.left, window.innerWidth - pickerWidth - gap);
+        const { top, left, maxHeight } = computeColorPickerPosition(
+          swatchRef.current!.getBoundingClientRect(),
+          { width: window.innerWidth, height: window.innerHeight }
+        );
         return createPortal(
-          <div data-tuner-portal style={{ position: "fixed", top, left, zIndex: zIndex.max }}>
+          <div
+            data-tuner-portal
+            style={{ position: "fixed", top, left, maxHeight, overflowY: "auto", zIndex: zIndex.max }}
+          >
             <ColorPickerEnhanced
               color={pickerColor}
               onChange={(hex, opacity) => {
