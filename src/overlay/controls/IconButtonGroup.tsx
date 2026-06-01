@@ -149,7 +149,7 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       className={cn(
-        "h-7 min-w-7 px-1.5 text-[13px] leading-none rounded-none",
+        "h-7 min-w-0 px-1.5 text-[13px] leading-none rounded-none",
         isFirst && !isLast && "rounded-l",
         isLast && !isFirst && "rounded-r",
         isFirst && isLast && "rounded",
