@@ -197,18 +197,12 @@ describe("object-fit and object-position only appear for media elements", () => 
   });
 
   it("isMedia is determined by tag name: img, video, canvas", () => {
-    // Check both infer.ts and WebflowPanel.tsx for the isMedia definition
-    const inferSrc = fs.readFileSync(
-      path.resolve(__dirname, "../core/infer.ts"),
-      "utf-8"
-    );
+    // WebflowPanel.tsx is the live consumer that gates object-fit/position.
     const panelSrc = fs.readFileSync(
       path.resolve(__dirname, "../shell/WebflowPanel.tsx"),
       "utf-8"
     );
 
-    // infer.ts checks tag
-    expect(inferSrc).toMatch(/isMedia\s*=.*img.*video.*canvas/);
     // WebflowPanel.tsx checks tagName
     expect(panelSrc).toMatch(/isMedia\s*=.*img.*video.*canvas/);
   });

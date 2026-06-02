@@ -251,7 +251,7 @@ export function SpacingGuidesOverlay({
   };
 
   return (
-    <div style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
+    <div className="__tuner-overlay" style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
       {snap.group === "margin" ? (
         <>
           {/* Margin-box boundary */}

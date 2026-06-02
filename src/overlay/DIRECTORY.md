@@ -75,7 +75,6 @@ src/overlay/
 | `BackgroundsSection.tsx` | Backgrounds (color, gradient, image) | `BackgroundLayerList.tsx`, `GradientEditor.tsx` |
 | `BordersSection.tsx` | Borders (width, style, color, radius) | `CornerRadiusEditor.tsx` |
 | `EffectsSection.tsx` | Effects (shadow, transform, transition, filter) | `ShadowEditor.tsx`, `TransformEditor.tsx`, `TransformOriginPicker.tsx`, `TransitionEditor.tsx`, `BezierEditor.tsx`, `FilterSliders.tsx` |
-| `CSSVariablesSection.tsx` | CSS Variables | (uses variables/) |
 
 ## shell/ — Panel Frame
 
@@ -104,7 +103,6 @@ src/overlay/
 | `PromptPanel.tsx` | AI prompt panel |
 | `Selector.tsx` | Element selector overlay |
 | `StateSelector.tsx` | Pseudo-state (:hover/:focus) selector |
-| `ViewportBar.tsx` | Viewport size bar |
 | `DragHandle.tsx` | Drag handle component (used by list editors) |
 
 ## variables/ — Variable/Token System

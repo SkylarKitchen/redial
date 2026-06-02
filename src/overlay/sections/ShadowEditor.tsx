@@ -30,15 +30,28 @@ export interface ShadowEditorProps {
   onChange: (shadows: ShadowValue[]) => void;
 }
 
-const DEFAULT_SHADOW: ShadowValue = {
+/** Canonical default box-shadow value. */
+export const DEFAULT_SHADOW: ShadowValue = {
   x: 0,
   y: 2,
   blur: 4,
   spread: 0,
-  color: "rgba(0,0,0,0.1)",
+  color: blackAlpha(0.1),
   inset: false,
   visible: true,
 };
+
+/**
+ * Create a fresh ShadowValue from the canonical default, optionally
+ * overriding fields. Pass a string to override just the color
+ * (the common case), or a partial object for finer control.
+ */
+export function makeShadow(overrides?: string | Partial<ShadowValue>): ShadowValue {
+  if (typeof overrides === "string") {
+    return { ...DEFAULT_SHADOW, color: overrides };
+  }
+  return { ...DEFAULT_SHADOW, ...overrides };
+}
 
 function NumericInput({
   value,
@@ -285,7 +298,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
   const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(shadows, onChange);
 
   const handleAdd = useCallback(() => {
-    onChange([...shadows, { ...DEFAULT_SHADOW }]);
+    onChange([...shadows, makeShadow()]);
   }, [shadows, onChange]);
 
   const handleUpdate = useCallback(

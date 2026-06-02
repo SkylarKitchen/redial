@@ -231,7 +231,8 @@ Visual nested-rectangle box model. Click any value to edit. Drag to adjust. Alwa
 ### Interactions
 - **Click value:** enters edit mode (input replaces text)
 - **Arrow Up/Down:** increment/decrement by 1px (or 10 with Shift)
-- **Alt+click side label:** applies value to both complementary sides (left+right or top+bottom)
+- **Alt(Option)+click value:** resets that property to its authored/inherited value — matches the panel-wide "⌥ click to reset" gesture used by every other control
+- **Alt(Option)+drag value:** adjusts the complementary axis pair together (left+right or top+bottom)
 - **Alt+click corner:** applies value to all 4 sides
 - **Hover:** highlight the corresponding side of the box model diagram
 - **Tab:** moves between values in order (top → right → bottom → left)
@@ -244,7 +245,7 @@ Visual nested-rectangle box model. Click any value to edit. Drag to adjust. Alwa
 ### Redial Mapping
 - **Existing:** `SpacingBoxModel.tsx` with `EditableValue` components
 - **Enhance:** Add drag-to-scrub on values (mousedown + mousemove changes value)
-- **Enhance:** Add complementary-side and all-sides shortcuts
+- **Enhance:** Alt+click resets a value; complementary-axis editing via Alt+drag; all-sides via corner Alt+click
 - **Enhance:** Add color differentiation between margin/padding zones
 - **Enhance:** Add hover highlighting for sides
 

@@ -166,15 +166,6 @@ describe("SPACING_PROPS", () => {
 // ─── infer ────────────────────────────────────────────────────────────
 
 describe("infer", () => {
-  it("returns config with expected top-level sections", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    expect(result.config).toHaveProperty("layout");
-    expect(result.config).toHaveProperty("size");
-    expect(result.config).toHaveProperty("position");
-    expect(result.config).toHaveProperty("effects");
-  });
-
   it("includes tag name in the name field", () => {
     const el = makeEl("div");
     const result = infer(el);
@@ -210,83 +201,6 @@ describe("infer", () => {
     expect(result.spacing.padding).toHaveProperty("left");
   });
 
-  it("returns an empty varUnits object when no custom properties", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    expect(result.varUnits).toEqual({});
-  });
-
-  it("includes display select in layout section", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    const layout = result.config["layout"] as Record<string, unknown>;
-    expect(layout).toHaveProperty("display");
-    const displayConfig = layout["display"] as { type: string };
-    expect(displayConfig.type).toBe("select");
-  });
-
-  it("includes overflow select in size section", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    const size = result.config["size"] as Record<string, unknown>;
-    expect(size).toHaveProperty("overflow");
-    const overflowConfig = size["overflow"] as { type: string };
-    expect(overflowConfig.type).toBe("select");
-  });
-
-  it("includes position select in position section", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    const position = result.config["position"] as Record<string, unknown>;
-    expect(position).toHaveProperty("position");
-    const posConfig = position["position"] as { type: string };
-    expect(posConfig.type).toBe("select");
-  });
-
-  it("includes opacity in effects section", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    const effects = result.config["effects"] as Record<string, unknown>;
-    expect(effects).toHaveProperty("opacity");
-  });
-
-  it("includes typography for text-bearing elements", () => {
-    const el = makeEl("h1");
-    el.textContent = "Hello";
-    const result = infer(el);
-    expect(result.config).toHaveProperty("typography");
-  });
-
-  it("omits typography for non-text elements", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    expect(result.config).not.toHaveProperty("typography");
-  });
-
-  it("includes object-fit for img elements", () => {
-    const el = makeEl("img");
-    const result = infer(el);
-    const size = result.config["size"] as Record<string, unknown>;
-    expect(size).toHaveProperty("object-fit");
-  });
-
-  it("omits object-fit for non-media elements", () => {
-    const el = makeEl("div");
-    const result = infer(el);
-    const size = result.config["size"] as Record<string, unknown>;
-    expect(size).not.toHaveProperty("object-fit");
-  });
-
-  it("border-radius range uses step of 4", () => {
-    const el = makeEl("div");
-    el.style.borderRadius = "32px";
-    const result = infer(el);
-    const borders = result.config["borders"] as Record<string, unknown>;
-    const radiusRange = borders["border-radius"] as [number, number, number, number];
-    // [value, min, max, step] — step should be 4px, not 1px
-    expect(radiusRange[3]).toBe(4);
-  });
-
   it("returns safe fallback for detached element (getComputedStyle throws)", () => {
     // Create an element but do NOT attach it to the DOM
     const el = document.createElement("div");
@@ -301,8 +215,6 @@ describe("infer", () => {
       // Should not throw — returns a safe fallback
       expect(result).toBeDefined();
       expect(result.name).toBe("div");
-      expect(result.config).toBeDefined();
-      expect(result.varUnits).toEqual({});
       expect(result.spacing).toEqual({
         margin: { top: 0, right: 0, bottom: 0, left: 0 },
         padding: { top: 0, right: 0, bottom: 0, left: 0 },

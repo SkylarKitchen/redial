@@ -187,7 +187,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     >
     <div className="font-sans">
       {noResults && (
-        <div className="text-center text-[rgba(0,0,0,0.25)] px-5 py-10 text-xs">
+        <div className="text-center px-5 py-10 text-xs" style={{ color: text.disabled }}>
           No matching properties
         </div>
       )}

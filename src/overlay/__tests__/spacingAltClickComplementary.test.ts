@@ -2,13 +2,17 @@
 /**
  * spacingAltClickComplementary.test.ts
  *
- * Spec (webflow-style-panel-spec.md §4 lines 234–235):
- *   - Alt+click side label: applies value to both complementary sides
- *     (left+right or top+bottom)
- *   - Alt+click corner: applies value to all 4 sides
+ * Box-model Alt(Option) gesture contract (webflow-style-panel-spec.md §4,
+ * resolved 2026-06-02 in favour of the panel-wide reset convention + the
+ * box-model's own "⌥ click to reset" tooltip):
+ *   - Alt+click on a VALUE cell → RESETS that property (it must NOT copy the
+ *     value to the complementary side — that was the reported bug).
+ *   - Alt+DRAG a value → adjusts the complementary axis pair together.
+ *   - Alt+click on a CORNER zone → applies that side's value to all 4 sides.
  *
- * Current behavior (BUG): Alt+click resets to default instead of copying.
- * Corner zones don't exist at all.
+ * The full reset behaviour is covered by spacingBoxModelAltClickReset.test.tsx;
+ * PART 1 here is an anti-regression guard that the old "copy to complementary"
+ * gesture is gone. PART 2 verifies the corner-zone all-sides shortcut survives.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -16,6 +20,7 @@ import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { SpacingBoxModel } from "../sections/SpacingBoxModel";
+import { applyInlineStyle, resetAll } from "../core/apply";
 
 describe("SpacingBoxModel Alt+click complementary-side shortcut", () => {
   let container: HTMLDivElement;
@@ -40,6 +45,8 @@ describe("SpacingBoxModel Alt+click complementary-side shortcut", () => {
     overrides?: {
       margin?: { top: number; right: number; bottom: number; left: number };
       padding?: { top: number; right: number; bottom: number; left: number };
+      element?: Element;
+      onReset?: ReturnType<typeof vi.fn>;
     },
   ) {
     act(() => {
@@ -54,8 +61,9 @@ describe("SpacingBoxModel Alt+click complementary-side shortcut", () => {
           paddingUnits: ["px", "%", "em", "rem"],
           onMarginUnitChange: vi.fn(),
           onPaddingUnitChange: vi.fn(),
-          element: stubElement,
+          element: overrides?.element ?? stubElement,
           ind: stubInd,
+          onReset: overrides?.onReset,
         }),
       );
     });
@@ -85,68 +93,53 @@ describe("SpacingBoxModel Alt+click complementary-side shortcut", () => {
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // PART 1: Alt+click on side label → complementary sides
+  // PART 1: Alt+click on a value cell RESETS (must NOT copy to complementary)
+  // Anti-regression for the 2026-06-02 bug where Alt+click copied the value
+  // to the opposite side instead of resetting.
   // ═══════════════════════════════════════════════════════════════════
 
-  it("Alt+click margin-left copies its value to margin-right", () => {
+  afterEach(() => { resetAll(); });
+
+  it("Alt+click margin-left resets it and does NOT copy to margin-right", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    applyInlineStyle(el, "margin-left", "24px");
     const onChange = vi.fn();
+    const onReset = vi.fn();
     renderBoxModel(onChange, {
       margin: { top: 0, right: 0, bottom: 0, left: 24 },
+      element: el,
+      onReset,
     });
 
     altClick(findCell("margin-left"));
 
-    // Should call onChange for BOTH margin-left and margin-right with left's value (24)
-    const calls = onChange.mock.calls;
-    const props = calls.map((c: unknown[]) => c[0]);
-
-    expect(props).toContain("margin-right");
-    // The value applied to margin-right should be margin-left's value (24)
-    const rightCall = calls.find((c: unknown[]) => c[0] === "margin-right");
-    expect(rightCall).toBeTruthy();
-    expect(rightCall![1]).toBe(24);
+    expect(onReset).toHaveBeenCalledWith("margin-left", expect.any(Number));
+    expect(el.style.marginLeft).toBe("");
+    const props = onChange.mock.calls.map((c: unknown[]) => c[0]);
+    expect(props).not.toContain("margin-right");
+    el.remove();
   });
 
-  it("Alt+click margin-top copies its value to margin-bottom", () => {
+  it("Alt+click padding-bottom resets it and does NOT copy to padding-top", () => {
+    const el = document.createElement("div");
+    document.body.appendChild(el);
+    applyInlineStyle(el, "padding-bottom", "12px");
     const onChange = vi.fn();
-    renderBoxModel(onChange, {
-      margin: { top: 16, right: 0, bottom: 0, left: 0 },
-    });
-
-    altClick(findCell("margin-top"));
-
-    const calls = onChange.mock.calls;
-    const bottomCall = calls.find((c: unknown[]) => c[0] === "margin-bottom");
-    expect(bottomCall).toBeTruthy();
-    expect(bottomCall![1]).toBe(16);
-  });
-
-  it("Alt+click padding-right copies its value to padding-left", () => {
-    const onChange = vi.fn();
-    renderBoxModel(onChange, {
-      padding: { top: 0, right: 8, bottom: 0, left: 0 },
-    });
-
-    altClick(findCell("padding-right"));
-
-    const calls = onChange.mock.calls;
-    const leftCall = calls.find((c: unknown[]) => c[0] === "padding-left");
-    expect(leftCall).toBeTruthy();
-    expect(leftCall![1]).toBe(8);
-  });
-
-  it("Alt+click padding-bottom copies its value to padding-top", () => {
-    const onChange = vi.fn();
+    const onReset = vi.fn();
     renderBoxModel(onChange, {
       padding: { top: 0, right: 0, bottom: 12, left: 0 },
+      element: el,
+      onReset,
     });
 
     altClick(findCell("padding-bottom"));
 
-    const calls = onChange.mock.calls;
-    const topCall = calls.find((c: unknown[]) => c[0] === "padding-top");
-    expect(topCall).toBeTruthy();
-    expect(topCall![1]).toBe(12);
+    expect(onReset).toHaveBeenCalledWith("padding-bottom", expect.any(Number));
+    expect(el.style.paddingBottom).toBe("");
+    const props = onChange.mock.calls.map((c: unknown[]) => c[0]);
+    expect(props).not.toContain("padding-top");
+    el.remove();
   });
 
   // ═══════════════════════════════════════════════════════════════════

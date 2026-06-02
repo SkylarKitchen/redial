@@ -153,6 +153,33 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 
 ## Issues Found & Fixed
 
+### 2026-06-02 — UX/a11y/cleanliness pass (browser-verified in Chrome)
+
+User-reported bug + a 7-dimension static audit (52 findings) driven to fixes. All verified: typecheck clean, full suite green (167 files), `npm run build` green.
+
+**Bugs fixed (browser-verified on `/demo`):**
+- **SpacingBoxModel Option(Alt)+click reset** — the box-model value cells *copied the value to the opposite side* instead of resetting, despite a "⌥ click to reset" tooltip. `onReset`/`resetAndReadNum` were imported but never called. Now resets correctly (`spacingBoxModelAltClickReset.test.tsx`, behavioral). Spec §4 realigned: alt+click = reset; complementary editing moved to **alt+drag**; corner alt+click → all 4 sides retained. The old `spacingAltClickComplementary.test.ts` PART 1 (which encoded the bug) was rewritten as an anti-regression guard.
+- **Color pickers clipped by panel `overflow:hidden`** — ShadowEditor / GradientEditor / FilterSliders mounted `ColorPickerEnhanced` with `position:absolute`. Extracted a portaled `controls/SwatchColorPicker` (rect-anchored, viewport-clamped, flip-above, `data-tuner-portal`). Verified: picker is a direct `document.body` child, fully in viewport.
+- **Navigator listed Redial's own injected chrome** (`__tuner-selected-outline`, overlay/portal divs, `next-route-announcer`) as selectable tree nodes. `navigatorFilter.shouldSkipEntirely` hardened (skip `__tuner*` classes, `data-tuner-*`, `next-route-announcer`) + all body-level overlays/selection-chrome now marked. Tree verified clean.
+- **SpacingValuePopover selected preset** showed white text on a pale-blue bg (unreadable) → `color.primary`. Verified readable.
+- **VisibilityToggle** opacity transition was silently overridden by the press-scale spread (spread-order bug) → composed transitions.
+
+**Accessibility (Keyboard scope — source + unit-test verified):**
+- [x] SegmentedControl — visible keyboard focus ring added
+- [x] WebflowSegmentedControl — roving tabindex + arrow-key nav (`webflowSegmentedKeyboard.test.tsx`)
+- [x] ColorPickerEnhanced — hue/opacity/saturation now `role="slider"` + arrow-key operable (`colorPickerKeyboard.test.tsx`)
+- [x] Footer clipboard dropdown — `aria-haspopup`/`aria-expanded`, `role="menu"`/`menuitem`, Escape-to-close (`footerClipboardA11y.test.tsx`)
+- [x] Footer status — live region always mounted (first message announced); Reset button `aria-disabled`
+
+**Overflow scope (browser-verified):**
+- [x] SelectRow dropdown — portal, opens upward, not clipped
+- [x] ColorPicker popup — portaled, fully visible, flips above near bottom
+- [x] SpacingValuePopover — portaled, not clipped
+
+**Cleanliness / architecture:**
+- ~15 hardcoded color/timing literals → `theme.ts`/`timing.ts` tokens (added `color.warning`/`warningAlpha`)
+- Deleted dead code: `CSSVariablesSection.tsx`, `ViewportBar.tsx`, `getIndicatorColor`; removed ~415 dead lines from `infer.ts` (the unused DialKit `DialConfig` — only `.spacing` is consumed); deduped `DEFAULT_SHADOW`
+
 ### 2026-05-15 — Resets scope
 - **#45 (must-ship)** — `npm test` red on `main`: Node v25.8.1's experimental `localStorage` global stub (broken `{}` without `--localstorage-file=<path>`) shadowed happy-dom's real Storage. 11 tests failed across `useSwatches.test.ts`, `tokenCollections.test.ts`, and `apply.test.ts` (restoreSession). Fixed by adding `vitest.setup.ts` with an in-memory `MemoryStorage` polyfill installed on `globalThis` + `window` before each test file evaluates. Baseline restored to 2937 passing / 1 skipped / 0 failed across 146 files. Closed #45.
 

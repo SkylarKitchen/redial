@@ -219,6 +219,7 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       />
       <div
         ref={labelRef}
+        className="__tuner-overlay"
         style={{
           position: "fixed",
           display: "none",

@@ -44,9 +44,26 @@ export function shouldSkipEntirely(el: Element): boolean {
   const tag = el.tagName.toLowerCase();
   if (SKIP_TAGS.has(tag)) return true;
 
+  // Skip framework chrome that is not user content. Conservative: only
+  // Next.js's <next-route-announcer> by name, not all hyphenated tags.
+  if (tag === "next-route-announcer") return true;
+
   // Skip Redial's own UI
   if ((el as HTMLElement).closest?.(".__tuner-root")) return true;
   if ((el as HTMLElement).closest?.("[data-tuner-portal]")) return true;
+
+  // Skip any element whose class contains "__tuner" (covers
+  // __tuner-selected-outline, __tuner-overlay, and any __tuner-* chrome),
+  // including elements nested inside such chrome.
+  const cls = el.getAttribute("class");
+  if (cls && cls.includes("__tuner")) return true;
+  if ((el as HTMLElement).closest?.('[class*="__tuner"]')) return true;
+
+  // Skip any element carrying a data-tuner-* attribute (e.g. data-tuner-portal
+  // on its own host, or other tuner markers).
+  for (const attr of el.attributes) {
+    if (attr.name.startsWith("data-tuner")) return true;
+  }
 
   // Skip invisible elements (display: none or visibility: hidden)
   if (el instanceof HTMLElement) {

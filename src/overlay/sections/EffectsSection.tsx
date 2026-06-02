@@ -12,7 +12,7 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { Section, SliderRow, SelectRow, NumberRow, useResetPopover, SubSectionHeader } from "../controls";
-import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
+import { ShadowEditor, makeShadow, type ShadowValue } from "./ShadowEditor";
 import { FilterEditor, createDefaultItem, type FilterItem } from "./FilterSliders";
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
@@ -275,7 +275,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
 
   // ── Add shortcuts (for sub-section "+" buttons) ────────────────────
   const handleAddShadow = useCallback(() => {
-    handleShadowsChange([...shadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.1)", inset: false, visible: true }]);
+    handleShadowsChange([...shadows, makeShadow()]);
   }, [shadows, handleShadowsChange]);
 
   const handleAddTransform = useCallback(() => {

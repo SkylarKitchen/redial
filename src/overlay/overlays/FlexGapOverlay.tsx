@@ -197,6 +197,7 @@ export function FlexGapOverlay({
 
   return (
     <div
+      className="__tuner-overlay"
       style={{
         position: "fixed",
         top: 0,

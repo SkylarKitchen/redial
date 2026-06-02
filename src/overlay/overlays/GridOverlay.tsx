@@ -250,6 +250,7 @@ export function GridOverlay({
 
   return (
     <div
+      className="__tuner-overlay"
       style={{
         position: "fixed",
         top: 0,

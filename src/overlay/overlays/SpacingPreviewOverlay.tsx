@@ -207,7 +207,7 @@ export function SpacingPreviewOverlay({
   const paddingBorder = paddingHovered ? PADDING_BORDER_HOVER : PADDING_BORDER_BASE;
 
   return (
-    <div style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
+    <div className="__tuner-overlay" style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
       {/* Ghosted margin zones (blue) */}
       {marginZones.map((z, i) => (
         <div

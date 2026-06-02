@@ -38,21 +38,25 @@ export function SelectionChrome({
       {/* Breadcrumb ancestor hover outline */}
       <div
         ref={ancestorOutlineRef}
+        className="__tuner-overlay"
         style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.guide, border: `1.5px dashed ${primaryAlpha(0.5)}`, borderRadius: 2, background: primaryAlpha(0.04) }}
       />
       {/* Dimensions badge: W x H below bottom-right */}
       <div
         ref={dimensionsBadgeRef}
+        className="__tuner-overlay"
         style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", background: color.primary, color: color.primaryForeground }}
       />
       {/* Tag label: tag.class above top-left */}
       <div
         ref={tagLabelRef}
+        className="__tuner-overlay"
         style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, fontSize: 10, fontFamily: font.mono, paddingLeft: 6, paddingRight: 6, paddingTop: 2, paddingBottom: 2, borderRadius: 3, whiteSpace: "nowrap", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", background: color.primary, color: color.primaryForeground }}
       />
       {/* Hover highlight: subtle preview when hovering a different element */}
       <div
         ref={hoverHighlightRef}
+        className="__tuner-overlay"
         style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.backdrop, borderRadius: 2, transition: `all ${ms("fast")} ease-out`, background: primaryAlpha(0.06), border: `1px solid ${primaryAlpha(0.2)}` }}
       />
     </>

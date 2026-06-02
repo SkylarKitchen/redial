@@ -136,6 +136,7 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
   return (
     <div
       ref={containerRef}
+      className="__tuner-overlay"
       style={{
         position: "fixed",
         top: 0,

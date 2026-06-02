@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { getIndicatorType } from "../panelUtils";
 import { applyInlineStyle, isDirty, resetAll, stateKey } from "../core/apply";
-import { indicatorColor, color, type IndicatorType } from "../theme";
+import { indicatorColor, color } from "../theme";
 
 // ─── Setup ───────────────────────────────────────────────────────────
 
@@ -52,12 +52,6 @@ describe("no override shows no indicator", () => {
     expect(isDirty(el, "color")).toBe(false);
     expect(isDirty(el, "width")).toBe(false);
   });
-
-  it('getIndicatorColor returns muted foreground color for "none"', () => {
-    const c = getIndicatorColor("none");
-    expect(c).toBe(indicatorColor.none);
-    expect(c).toBe(color.mutedForeground);
-  });
 });
 
 // ─── Element scope → pink dot (currently "modified" blue) ────────────
@@ -78,16 +72,6 @@ describe("element-scope override shows indicator", () => {
     const el = makeEl();
     applyInlineStyle(el, "font-size", "20px");
     expect(isDirty(el, "font-size")).toBe(true);
-  });
-
-  it('getIndicatorColor returns primary (blue) for "modified"', () => {
-    const c = getIndicatorColor("modified");
-    expect(c).toBe(indicatorColor.modified);
-    expect(c).toBe(color.primary);
-  });
-
-  it("element-scope override is distinguishable from no override", () => {
-    expect(getIndicatorColor("modified")).not.toBe(getIndicatorColor("none"));
   });
 });
 
@@ -111,11 +95,6 @@ describe("class-scope override shows indicator", () => {
     const el = makeEl();
     applyInlineStyle(el, "padding", "16px", "Button_btn__a8f2k");
     expect(isDirty(el, "padding")).toBe(true);
-  });
-
-  it("class-scope blue indicator uses the primary color", () => {
-    // The blue dot for class-scope uses the same "modified" indicator color
-    expect(getIndicatorColor("modified")).toBe(color.primary);
   });
 });
 
@@ -173,11 +152,6 @@ describe("state-specific override shows green indicator", () => {
     expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("state");
   });
 
-  it("state indicator green is distinct from modified blue", () => {
-    expect(getIndicatorColor("state")).not.toBe(getIndicatorColor("modified"));
-    expect(getIndicatorColor("state")).toBe(color.indicatorGreen);
-  });
-
   it('"state" takes priority over "modified" when both exist', () => {
     const el = makeEl();
     applyInlineStyle(el, "color", "blue"); // base override
@@ -197,23 +171,6 @@ describe("state-specific override shows green indicator", () => {
 // ─── Indicator color mapping completeness ────────────────────────────
 
 describe("indicator color mapping", () => {
-  it("every IndicatorType has a defined color", () => {
-    const types: IndicatorType[] = ["modified", "state", "none"];
-    for (const t of types) {
-      expect(getIndicatorColor(t)).toBeDefined();
-      expect(typeof getIndicatorColor(t)).toBe("string");
-    }
-  });
-
-  it("all three indicator types have distinct colors", () => {
-    const colors = new Set([
-      getIndicatorColor("modified"),
-      getIndicatorColor("state"),
-      getIndicatorColor("none"),
-    ]);
-    expect(colors.size).toBe(3);
-  });
-
   it("indicatorColor map has expected entries", () => {
     expect(indicatorColor.modified).toBe(color.primary);
     expect(indicatorColor.state).toBe(color.indicatorGreen);

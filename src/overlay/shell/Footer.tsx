@@ -430,7 +430,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               color: color.primaryForeground,
               boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px ${successAlpha(0.4)}` : `0 1px 3px ${primaryAlpha(0.4)}`,
               opacity: (count === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
-              transition: `opacity ${timing.normal}ms, background ${timing.normal}ms, box-shadow ${timing.normal}ms`,
+              transition: `opacity ${ms("normal")}, background ${ms("normal")}, box-shadow ${ms("normal")}`,
               ...savePressStyle,
             }}
           >
@@ -439,10 +439,11 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         </div>
       </div>
 
-      {/* Status message row */}
-      {(clipboardMessage || message) && (
-        <div role="status" aria-live="polite">
-          <AnimatePresence mode="wait">
+      {/* Status message row — wrapper is always mounted so the live region
+          is present before the first message, ensuring it gets announced. */}
+      <div role="status" aria-live="polite">
+        <AnimatePresence mode="wait">
+          {(clipboardMessage || message) && (
             <motion.span
               key={`${clipboardMessage || message}-${messageCounterRef.current}`}
               initial={{ opacity: 0, y: 4 }}
@@ -453,9 +454,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             >
               {clipboardMessage || message}
             </motion.span>
-          </AnimatePresence>
-        </div>
-      )}
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -490,6 +491,7 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
   const [hovered, setHovered] = useState(false);
   return (
     <button
+      role="menuitem"
       onClick={disabled ? undefined : onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseDown={(e) => { if (!disabled) (e.currentTarget as HTMLElement).style.transform = "scale(0.98)"; }}
@@ -512,7 +514,7 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
         textAlign: "left" as const,
         cursor: disabled ? "default" : "pointer",
         color: disabled ? text.disabled : color.foreground,
-        transition: `transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), background ${timing.fast}ms`,
+        transition: `transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), background ${ms("fast")}`,
       }}
     >
       <span>{children}</span>

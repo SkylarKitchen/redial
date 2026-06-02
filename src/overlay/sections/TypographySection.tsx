@@ -10,7 +10,7 @@
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import { Section, SelectRow, ColorRow, SubSectionHeader, ScrubLabel } from "../controls";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
-import { ShadowEditor, type ShadowValue } from "./ShadowEditor";
+import { ShadowEditor, makeShadow, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { parseNum, shadowToCSS } from "../cssParsers";
@@ -22,7 +22,7 @@ import { scanTextStyles, matchTextStyle, type TextStyle } from "../textStyleScan
 import { TextStyleRow } from "./TextStyleRow";
 import { beginBatch, endBatch, resetProp, resetAndReadStr } from "../core/apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, INLINE_SWATCH } from "../panelStyles";
-import { text, border, surface, font, indicatorStyle, layout } from "../theme";
+import { text, border, surface, font, indicatorStyle, layout, blackAlpha } from "../theme";
 import { ms } from "../timing";
 import {
   TEXT_ALIGN_OPTIONS, TEXT_DECORATION_OPTIONS, CAPITALIZE_OPTIONS,
@@ -514,7 +514,7 @@ export const TypographySection = memo(function TypographySection({
           </div>
 
           {/* Text shadows */}
-          <SubSectionHeader label="Text shadows" onAdd={() => handleTextShadowsChange([...textShadows, { x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0,0,0,0.25)", inset: false, visible: true }])} />
+          <SubSectionHeader label="Text shadows" onAdd={() => handleTextShadowsChange([...textShadows, makeShadow(blackAlpha(0.25))])} />
           {textShadows.length > 0 && <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />}
         </>
       )}

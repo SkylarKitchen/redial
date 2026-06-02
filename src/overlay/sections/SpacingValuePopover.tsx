@@ -423,7 +423,7 @@ export function SpacingValuePopover({
                   ? `1px solid ${primaryAlpha(0.4)}`
                   : `1px solid ${blackAlpha(0.07)}`,
               borderRadius: "4px",
-              color: value === preset ? "#fff" : text.secondary,
+              color: value === preset ? color.primary : text.secondary,
               fontSize: "11px",
               fontFamily: font.mono,
               cursor: "pointer",

@@ -6,11 +6,11 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
-import { cssColorToHex, hexToRgba } from "../colorUtils";
-import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
+import { SwatchColorPicker } from "../controls/SwatchColorPicker";
+import { hexToRgba } from "../colorUtils";
+import { parseVarRef } from "../variables/colorVariables";
 import { ms } from "../timing";
-import { color, text, surface, font, blackAlpha, border, primaryAlpha, zIndex } from "../theme";
+import { color, text, surface, font, blackAlpha, border, primaryAlpha } from "../theme";
 
 export interface GradientStop {
   color: string;
@@ -43,10 +43,6 @@ function clamp(v: number, lo: number, hi: number) {
 export function GradientEditor({ type, angle, stops, onChange }: GradientEditorProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
-
-  // Close picker when a different stop is selected
-  useEffect(() => { setPickerOpen(false); }, [selectedIndex]);
 
   const barRef = useRef<HTMLDivElement>(null);
   const dragIndexRef = useRef<number | null>(null);
@@ -248,47 +244,32 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
       {selected && selectedIndex !== null && (
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {/* Color swatch + picker */}
-          <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setPickerOpen(!pickerOpen)}
-              title={`Stop color: ${selected.color}`}
-              style={{
-                width: "24px",
-                height: "24px",
-                borderRadius: "4px",
-                border: parseVarRef(selected.color)
-                  ? `2px solid ${primaryAlpha(0.6)}`
-                  : `1px solid ${border.default}`,
-                background: resolveVarColor(selected.color) ?? selected.color,
-                cursor: "pointer",
-                padding: 0,
-                flexShrink: 0,
-              }}
-            />
-            {pickerOpen && (
-              <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
-                <ColorPickerEnhanced
-                  color={cssColorToHex(resolveVarColor(selected.color) ?? selected.color)}
-                  onChange={(hex, opacity) => {
-                    const c = opacity < 1 ? hexToRgba(hex, opacity) : hex;
-                    const next = stops.map((s, i) =>
-                      i === selectedIndex ? { ...s, color: c } : s
-                    );
-                    emit({ stops: next });
-                  }}
-                  onClose={() => setPickerOpen(false)}
-                  onSelectVariable={(varExpr) => {
-                    const next = stops.map((s, i) =>
-                      i === selectedIndex ? { ...s, color: varExpr } : s
-                    );
-                    emit({ stops: next });
-                    setPickerOpen(false);
-                  }}
-                  activeVariable={parseVarRef(selected.color)}
-                />
-              </div>
-            )}
-          </div>
+          <SwatchColorPicker
+            key={selectedIndex}
+            value={selected.color}
+            title={`Stop color: ${selected.color}`}
+            swatchStyle={{
+              width: "24px",
+              height: "24px",
+              borderRadius: "4px",
+              border: parseVarRef(selected.color)
+                ? `2px solid ${primaryAlpha(0.6)}`
+                : `1px solid ${border.default}`,
+            }}
+            onChange={(hex, opacity) => {
+              const c = opacity < 1 ? hexToRgba(hex, opacity) : hex;
+              const next = stops.map((s, i) =>
+                i === selectedIndex ? { ...s, color: c } : s
+              );
+              emit({ stops: next });
+            }}
+            onSelectVariable={(varExpr) => {
+              const next = stops.map((s, i) =>
+                i === selectedIndex ? { ...s, color: varExpr } : s
+              );
+              emit({ stops: next });
+            }}
+          />
 
           {/* Position */}
           <input

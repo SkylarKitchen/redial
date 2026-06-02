@@ -14,9 +14,8 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { DragHandle } from "../shell/DragHandle";
-import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
-import { cssColorToHex, hexToRgba } from "../colorUtils";
-import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
+import { SwatchColorPicker } from "../controls/SwatchColorPicker";
+import { hexToRgba } from "../colorUtils";
 import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
 import { color, text, surface, font, shadow, zIndex, border, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
@@ -217,8 +216,6 @@ function FilterItemEditor({
     });
   }, [item, onUpdate]);
 
-  const [pickerOpen, setPickerOpen] = useState(false);
-
   const handleColorChange = useCallback(
     (hex: string, opacity: number) => {
       onUpdate({ ...item, color: opacity < 1 ? hexToRgba(hex, opacity) : hex });
@@ -337,36 +334,21 @@ function FilterItemEditor({
           >
             Color
           </span>
-          <div style={{ position: "relative" }}>
-            <button
-              onClick={() => setPickerOpen(!pickerOpen)}
-              title={`Shadow color: ${item.color || meta.defaultColor}`}
-              style={{
-                width: "16px",
-                height: "16px",
-                borderRadius: "2px",
-                border: `1px solid ${blackAlpha(0.15)}`,
-                background: resolveVarColor(item.color || "") ?? item.color ?? meta.defaultColor,
-                cursor: "pointer",
-                padding: 0,
-                flexShrink: 0,
-              }}
-            />
-            {pickerOpen && (
-              <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
-                <ColorPickerEnhanced
-                  color={cssColorToHex(resolveVarColor(item.color || "") ?? item.color ?? "#000000")}
-                  onChange={handleColorChange}
-                  onClose={() => setPickerOpen(false)}
-                  onSelectVariable={(varExpr) => {
-                    onUpdate({ ...item, color: varExpr });
-                    setPickerOpen(false);
-                  }}
-                  activeVariable={parseVarRef(item.color || "")}
-                />
-              </div>
-            )}
-          </div>
+          <SwatchColorPicker
+            value={item.color || meta.defaultColor || ""}
+            fallbackColor="#000000"
+            title={`Shadow color: ${item.color || meta.defaultColor}`}
+            swatchStyle={{
+              width: "16px",
+              height: "16px",
+              borderRadius: "2px",
+              border: `1px solid ${blackAlpha(0.15)}`,
+            }}
+            onChange={handleColorChange}
+            onSelectVariable={(varExpr) => {
+              onUpdate({ ...item, color: varExpr });
+            }}
+          />
           <span
             style={{
               fontSize: "9px",
