@@ -12,6 +12,8 @@ export { Section } from "./Section";
 export { ValueInput } from "./ValueInput";
 export { SliderRow } from "./SliderRow";
 export { SelectRow } from "./SelectRow";
+export { MiniSelect, MINI_SELECT_CARET } from "./MiniSelect";
+export type { MiniSelectProps } from "./MiniSelect";
 export { ColorRow } from "./ColorRow";
 export { TextRow } from "./TextRow";
 export { NumberRow } from "./NumberRow";

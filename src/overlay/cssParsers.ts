@@ -10,6 +10,14 @@ import type { FilterItem, FilterType } from "./sections/FilterSliders";
 import type { TransformValue } from "./sections/TransformEditor";
 import type { TransitionValue } from "./sections/TransitionEditor";
 
+const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,.*)?\)$/;
+
+/** Extract the custom property name from a `var(--foo)` expression. */
+export function parseVarRef(value: string): string | null {
+  const m = value.match(VAR_RE);
+  return m ? m[1] : null;
+}
+
 /** Parse a numeric CSS value, returning 0 for non-numeric inputs. */
 export function parseNum(val: string): number {
   const n = parseFloat(val);

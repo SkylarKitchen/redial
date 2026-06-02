@@ -8,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { LabelScrub } from "../controls/LabelScrub";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
-import { resetProp, resetAndReadNum, beginBatch, endBatch } from "../core/apply";
+import { beginBatch, endBatch } from "../core/apply";
 import { parseNum } from "../cssParsers";
 import { detectUnit, type SectionCtx } from "../panelUtils";
 import { cssColorToHex as rgbToHex } from "../colorUtils";
@@ -96,7 +96,7 @@ export const BordersSection = memo(function BordersSection({
   focusOpen,
   onToggle,
 }: BordersSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu, reset, resetRead } = ctx;
 
   // ── Border state ──
   const [borderSide, setBorderSide] = useState<"all" | "top" | "right" | "bottom" | "left">("all");
@@ -159,7 +159,7 @@ export const BordersSection = memo(function BordersSection({
     }
   }, [borderSide, element]);
 
-  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
 
   // ── Helpers ──
   const borderProp = (suffix: string) =>
@@ -179,17 +179,17 @@ export const BordersSection = memo(function BordersSection({
   // ── Radius reset (batch all 4 corners) ──
   const handleRadiusReset = useCallback(() => {
     beginBatch();
-    setRadiusTL(resetAndReadNum(element, "border-top-left-radius"));
-    setRadiusTR(resetAndReadNum(element, "border-top-right-radius"));
-    setRadiusBR(resetAndReadNum(element, "border-bottom-right-radius"));
-    setRadiusBL(resetAndReadNum(element, "border-bottom-left-radius"));
+    setRadiusTL(resetRead("border-top-left-radius"));
+    setRadiusTR(resetRead("border-top-right-radius"));
+    setRadiusBR(resetRead("border-bottom-right-radius"));
+    setRadiusBL(resetRead("border-bottom-left-radius"));
     endBatch();
   }, [element]);
 
   const handleStyleReset = useCallback(() => {
-    resetProp(element, borderProp("style"));
+    reset(borderProp("style"));
     setBorderStyle(getComputedStyle(element).getPropertyValue(borderProp("style")).split(" ")[0] || "none");
-  }, [element, borderSide]);
+  }, [element, borderSide, reset]);
 
   const handleWidthReset = useCallback(() => {
     resetCss(borderProp("width"), setBorderWidth);
@@ -197,7 +197,7 @@ export const BordersSection = memo(function BordersSection({
 
   // ── Corner reset (individual) ──
   const handleCornerReset = useCallback((corner: string) => {
-    const v = resetAndReadNum(element, corner);
+    const v = resetRead(corner);
     if (corner === "border-top-left-radius") setRadiusTL(v);
     else if (corner === "border-top-right-radius") setRadiusTR(v);
     else if (corner === "border-bottom-right-radius") setRadiusBR(v);
@@ -375,7 +375,7 @@ export const BordersSection = memo(function BordersSection({
           </div>
 
           {/* ── Color ── */}
-          <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { resetProp(element, borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} compact />
+          <ColorRow label="Color" value={borderColor} onChange={handleBorderColorChange} onReset={() => { reset(borderProp("color")); setBorderColor(rgbToHex(getComputedStyle(element).getPropertyValue(borderProp("color")))); }} indicator={ind(borderProp("color"))} onContextMenu={ctxMenu(borderProp("color"), borderColor)} computedProp={borderProp("color")} computedElement={element} compact />
         </div>
       </div>
     </Section>

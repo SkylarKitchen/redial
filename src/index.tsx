@@ -43,7 +43,7 @@ export function Tuner({ commitEndpoint }: TunerProps = {}) {
 
 // Re-export types and utilities for consumers
 export type { InferResult } from "./overlay/core/infer";
-export { infer, PX_PROPS, TOGGLE_CSS, toCSSValue, flattenValues } from "./overlay/core/infer";
+export { infer } from "./overlay/core/infer";
 export type { Scope } from "./overlay/core/scope";
 export type { SourceInfo } from "./overlay/core/sourcemap";
 export { configure } from "./overlay/core/config";

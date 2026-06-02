@@ -14,7 +14,7 @@ import type { InferredMode } from "./modeDiscovery";
 import {
   subscribeModeOverrides,
   getModeOverrideSnapshot,
-} from "./modeOverrides";
+} from "../core/modeOverrides";
 import {
   text,
   border,

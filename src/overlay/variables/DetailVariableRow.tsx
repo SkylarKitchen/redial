@@ -17,7 +17,7 @@ import {
 } from "../core/apply";
 import {
   getModeOverrides,
-} from "./modeOverrides";
+} from "../core/modeOverrides";
 import { VariableField } from "../controls/VariableField";
 import {
   text,

@@ -45,7 +45,6 @@ const KEY_COMPONENT_FILES = [
   "controls/ColorRow.tsx",
   "controls/TextRow.tsx",
   "controls/NumberRow.tsx",
-  "controls/EditableValue.tsx",
   "controls/SubSectionHeader.tsx",
   "controls/EditorRemoveButton.tsx",
   "controls/VisibilityToggle.tsx",

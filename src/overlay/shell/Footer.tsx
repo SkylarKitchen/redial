@@ -16,7 +16,7 @@ import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/apply";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
-import { serializeModeOverrides, getModeOverrideCount, resetAllModeOverrides } from "../variables/modeOverrides";
+import { serializeModeOverrides, getModeOverrideCount, resetAllModeOverrides } from "../core/modeOverrides";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---

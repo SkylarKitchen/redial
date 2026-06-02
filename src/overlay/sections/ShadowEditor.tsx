@@ -5,7 +5,8 @@
  * color swatch, inset toggle, and delete.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
@@ -63,44 +64,21 @@ function NumericInput({
   onChange: (value: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
-
-  const commit = useCallback(() => {
-    setEditing(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed !== value) {
-      onChange(parsed);
-    }
-  }, [draft, value, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-      } else if (e.key === "Escape") {
-        setDraft(String(value));
-        setEditing(false);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = value + step;
-        setDraft(String(next));
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = value - step;
-        setDraft(String(next));
-        onChange(next);
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !editing,
+    revertOnEscape: true,
+    stepUpdatesDraft: true,
+    onEscape: () => setEditing(false),
+    onCommit: (d) => {
+      setEditing(false);
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed) && parsed !== value) {
+        onChange(parsed);
       }
     },
-    [commit, value, onChange]
-  );
+    onStep: (next) => onChange(next),
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -117,11 +95,8 @@ function NumericInput({
       </span>
       {editing ? (
         <input
-          ref={inputRef}
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={handleKeyDown}
+          {...inputProps}
           autoFocus
           style={{
             width: "36px",

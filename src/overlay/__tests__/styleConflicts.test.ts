@@ -176,7 +176,6 @@ describe("no shorthand/non-shorthand CSS conflicts in inline styles", () => {
     "controls/ColorRow.tsx",
     "controls/TextRow.tsx",
     "controls/NumberRow.tsx",
-    "controls/EditableValue.tsx",
     "controls/SubSectionHeader.tsx",
     "controls/EditorRemoveButton.tsx",
     "controls/VisibilityToggle.tsx",

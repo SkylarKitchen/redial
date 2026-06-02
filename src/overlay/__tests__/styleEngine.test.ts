@@ -16,7 +16,7 @@ import {
   getModeOverrideCount,
   resetAllModeOverrides,
   isModeOverrideDirty,
-} from "../variables/modeOverrides";
+} from "../core/modeOverrides";
 
 function makeEl(tag = "div"): HTMLElement {
   const el = document.createElement(tag);

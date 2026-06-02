@@ -11,7 +11,6 @@ import { Section, SelectRow, ColorRow, SubSectionHeader } from "../controls";
 import { BackgroundLayerList, type BackgroundLayer } from "./BackgroundLayerList";
 import { buildGradientCSS } from "./GradientEditor";
 import { cssColorToHex as rgbToHex } from "../colorUtils";
-import { resetProp, resetAndReadStr } from "../core/apply";
 import type { SectionCtx } from "../panelUtils";
 import { BG_CLIP_OPTIONS, BG_SIZE_OPTIONS, BG_POSITION_OPTIONS, BG_REPEAT_OPTIONS, BG_ATTACHMENT_OPTIONS } from "../panelConstants";
 // ─── Props ────────────────────────────────────────────────────────────
@@ -26,9 +25,9 @@ export interface BackgroundsSectionProps {
 // ─── Component ────────────────────────────────────────────────────────
 
 export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceOpen, focusOpen, onToggle }: BackgroundsSectionProps) {
-  const { cs, apply, ind, sectionInd, element, ctxMenu } = ctx;
+  const { cs, apply, ind, sectionInd, element, ctxMenu, reset, resetReadStr } = ctx;
 
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
   // ── State ──
   const [bgColor, setBgColor] = useState(() => rgbToHex(cs.backgroundColor));
@@ -178,7 +177,7 @@ export const BackgroundsSection = memo(function BackgroundsSection({ ctx, forceO
         computedProp="background-color"
         computedElement={element}
         onReset={() => {
-          resetProp(element, "background-color");
+          reset("background-color");
           setBgColor(rgbToHex(getComputedStyle(element).backgroundColor));
         }}
       />

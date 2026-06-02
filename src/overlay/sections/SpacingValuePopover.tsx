@@ -30,6 +30,19 @@ const SIDE_ICONS: Record<string, string> = {
 // Estimated popover height for vertical clamping
 const POPOVER_HEIGHT = 110;
 
+/**
+ * Decide whether the unit dropdown should open upward instead of downward —
+ * true when opening below the button would overflow the viewport bottom.
+ * Pure for testability (jsdom can't exercise real getBoundingClientRect geometry).
+ */
+export function unitMenuOpensUpward(
+  buttonBottom: number,
+  menuHeight: number,
+  viewportHeight: number,
+): boolean {
+  return buttonBottom + menuHeight > viewportHeight;
+}
+
 export interface SpacingValuePopoverProps {
   value: number;
   onChange: (value: number) => void;
@@ -75,6 +88,8 @@ export function SpacingValuePopover({
   const inputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState(String(value));
   const [unitOpen, setUnitOpen] = useState(false);
+  const [unitMenuUp, setUnitMenuUp] = useState(false);
+  const unitBtnRef = useRef<HTMLButtonElement>(null);
 
   // Stable ref for onClose to avoid re-registering global listeners on every render
   const onCloseRef = useRef(onClose);
@@ -315,10 +330,18 @@ export function SpacingValuePopover({
           {/* Unit selector */}
           <div style={{ position: "relative", flexShrink: 0 }}>
             <button
+              ref={unitBtnRef}
               type="button"
               aria-expanded={unitOpen}
               aria-haspopup="listbox"
-              onClick={() => setUnitOpen(!unitOpen)}
+              onClick={() => {
+                if (!unitOpen) {
+                  const r = unitBtnRef.current?.getBoundingClientRect();
+                  const menuHeight = units.length * 24 + 6;
+                  setUnitMenuUp(!!r && unitMenuOpensUpward(r.bottom, menuHeight, window.innerHeight));
+                }
+                setUnitOpen(!unitOpen);
+              }}
               style={{
                 height: "24px",
                 padding: "0 6px",
@@ -341,7 +364,9 @@ export function SpacingValuePopover({
                 role="listbox"
                 style={{
                   position: "absolute",
-                  top: "calc(100% + 2px)",
+                  ...(unitMenuUp
+                    ? { bottom: "calc(100% + 2px)" }
+                    : { top: "calc(100% + 2px)" }),
                   right: 0,
                   minWidth: "48px",
                   background: color.popover,

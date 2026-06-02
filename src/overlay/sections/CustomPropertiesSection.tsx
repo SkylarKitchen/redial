@@ -10,7 +10,7 @@ import { useState, useCallback, useRef, useEffect, useMemo, useSyncExternalStore
 import { createPortal } from "react-dom";
 import { Trash2, Plus } from "lucide-react";
 import { Section } from "../controls";
-import { resetProp, diff, subscribeOverrides, getOverrideSnapshot } from "../core/apply";
+import { diff, subscribeOverrides, getOverrideSnapshot } from "../core/apply";
 import type { DiffEntry } from "../core/apply";
 import type { SectionCtx } from "../panelUtils";
 import { SECTION_PROPERTIES } from "../shell/PropertySearch";
@@ -360,7 +360,7 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
         setDismissed((prev) => new Set(prev).add(entry.property));
       }
       if (entry.property) {
-        resetProp(ctx.element, entry.property);
+        ctx.reset(entry.property);
       }
       // Clean up propTexts
       setPropTexts((prev) => {

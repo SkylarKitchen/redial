@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { SpacingValues } from "../core/infer";
 import { isTailwindElement, type Scope } from "../core/scope";
 import { styleEngine, type OverrideTarget } from "../core/engine";
+import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { buildConversionContext } from "../unitConversion";
 import { type IndicatorType, focusRing, text } from "../theme";
 import { parseNum } from "../cssParsers";
@@ -125,6 +126,14 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     [element, scope, activeClassName, activeState]
   );
 
+  // ── Reset helpers (mirror `apply` so sections don't reach into core/apply) ──
+  // Resets are element-direct (not scope/state-routed) to preserve existing
+  // section behavior; sections call ctx.reset / ctx.resetRead instead of
+  // importing resetProp / resetAndRead* themselves.
+  const reset = useCallback((prop: string) => resetProp(element, prop), [element]);
+  const resetRead = useCallback((prop: string) => resetAndReadNum(element, prop), [element]);
+  const resetReadStr = useCallback((prop: string) => resetAndReadStr(element, prop), [element]);
+
   // ── Context menu state (right-click property menu) ──
   const [ctxMenuState, setCtxMenuState] = useState<ContextMenuState | null>(null);
 
@@ -157,8 +166,8 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
 
   // ── SectionCtx bundle ──
   const ctx: SectionCtx = useMemo(() => ({
-    element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind,
-  }), [element, apply, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind]);
+    element, apply, reset, resetRead, resetReadStr, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind,
+  }), [element, apply, reset, resetRead, resetReadStr, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind]);
 
   // ── Search helpers ──
   const isSearching = searchQuery.length > 0;

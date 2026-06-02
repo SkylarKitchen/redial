@@ -11,7 +11,7 @@ import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, 
 import { getReadableName, isTailwindElement } from "./scope";
 import type { Scope } from "./scope";
 import { getAuthoredValue } from "../getAuthoredValue";
-import { parseVarRef } from "../variables/colorVariables";
+import { parseVarRef } from "../cssParsers";
 import { formatTailwindDiff } from "../tailwind";
 
 export interface EnrichedChange extends DiffEntry {

@@ -16,7 +16,6 @@ import type { IndicatorType } from "../theme";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { parseNum } from "../cssParsers";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { detectUnit, type SectionCtx } from "../panelUtils";
 import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, GRID_JUSTIFY_CONTENT_OPTIONS, GRID_ALIGN_CONTENT_OPTIONS } from "../panelConstants";
@@ -130,7 +129,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
     onToggle,
   } = props;
 
-  const { apply, ind, sectionInd, cs, element, getConversionCtx, ctxMenu } = ctx;
+  const { apply, ind, sectionInd, cs, element, getConversionCtx, ctxMenu, reset, resetRead, resetReadStr } = ctx;
   const twAnn = (prop: string, val: number, unit: string) =>
     ctx.isTailwind ? cssToTwClass(prop, `${val}${unit}`) ?? undefined : undefined;
   const parentIsFlexOrGrid = parentIsFlex || parentIsGrid;
@@ -199,9 +198,9 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   // ── Helpers ──
 
-  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
 
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
   // ── Handlers ──
 
@@ -402,8 +401,8 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             linked={gridTrackLinked}
             onLinkedChange={setGridTrackLinked}
             onReset={() => {
-              const cols = resetAndReadStr(element, "grid-template-columns");
-              const rows = resetAndReadStr(element, "grid-template-rows");
+              const cols = resetReadStr("grid-template-columns");
+              const rows = resetReadStr("grid-template-rows");
               setGridCols(cols);
               setGridRows(rows);
               setGridColCount(parseTrackCount(cols));

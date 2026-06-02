@@ -10,8 +10,9 @@
  * VisibilityToggle, EditorRemoveButton per item.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useDragReorder } from "../hooks/useDragReorder";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { useClickOutside } from "../hooks/useClickOutside";
 import { DragHandle } from "../shell/DragHandle";
 import { SwatchColorPicker } from "../controls/SwatchColorPicker";
@@ -127,48 +128,26 @@ function NumberInput({
   step: number;
   onChange: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) {
-      onChange(Math.min(max, Math.max(min, parsed)));
-    }
-  }, [draft, min, max, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const inc = e.shiftKey ? step * 10 : step;
-        const next = Math.min(max, value + inc);
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const inc = e.shiftKey ? step * 10 : step;
-        const next = Math.max(min, value - inc);
-        onChange(next);
-      }
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !focused,
+    step,
+    min,
+    max,
+    blurOnEnter: true,
+    onCommit: (d) => {
+      setFocused(false);
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed)) onChange(Math.min(max, Math.max(min, parsed)));
     },
-    [commit, value, min, max, step, onChange]
-  );
-
+    onStep: (next) => onChange(next),
+  });
   return (
     <input
       value={focused ? draft : String(value)}
-      onChange={(e) => setDraft(e.target.value)}
+      {...inputProps}
       onFocus={() => setFocused(true)}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
       style={{
         width: "36px",
         background: color.input,

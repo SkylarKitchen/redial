@@ -46,7 +46,6 @@ src/overlay/
 | `ColorRow.tsx` | Color swatch + picker + variable linking | `ColorRow` | Typography, Backgrounds, Borders, Effects |
 | `TextRow.tsx` | Text input row | `TextRow` | Size, Layout |
 | `NumberRow.tsx` | Number-only input row | `NumberRow` | Position, Effects |
-| `EditableValue.tsx` | Inline editable number (memo) | `EditableValue` | SpacingBoxModel, PositionOffsetDiagram |
 | `SubSectionHeader.tsx` | Section sub-header with indicator | `SubSectionHeader` | Effects, Backgrounds, Typography |
 | `EditorRemoveButton.tsx` | Remove button for list editors | `EditorRemoveButton` | Shadow, Transform, Transition, Filter |
 | `VisibilityToggle.tsx` | Eye toggle for list items | `VisibilityToggle` | Shadow, Filter, Transition, BackgroundLayer |

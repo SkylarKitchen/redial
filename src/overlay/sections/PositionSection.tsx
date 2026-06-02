@@ -6,7 +6,6 @@ import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { RowLabel } from "./layoutControls";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
-import { resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { parseNum } from "../cssParsers";
 import { isAutoSize } from "../getAuthoredValue";
 import { detectUnit, type SectionCtx } from "../panelUtils";
@@ -67,7 +66,7 @@ export const PositionSection = memo(function PositionSection({
   focusOpen,
   onToggle,
 }: PositionSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu, resetRead, resetReadStr } = ctx;
 
   // ── Position state ──
   const [position, setPosition] = useState(() => cs.position);
@@ -97,7 +96,7 @@ export const PositionSection = memo(function PositionSection({
 
   const { conversionHint: posHint, fireConversionHint: firePosHint } = useConversionHint();
 
-  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
 
   // ── Handlers ──
   const handlePositionChange = useCallback((v: string) => { setPosition(v); apply("position", v); }, [apply]);
@@ -132,7 +131,7 @@ export const PositionSection = memo(function PositionSection({
 
   return (
     <Section title="Position" collapsed={position === "static"} indicator={sectionInd(["position", "top", "right", "bottom", "left", "z-index", "float", "clear"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
-      <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} onReset={() => { const v = resetAndReadStr(element, "position"); setPosition(v); }} />
+      <PositionSelector value={position} onChange={handlePositionChange} indicator={ind("position")} onReset={() => { const v = resetReadStr("position"); setPosition(v); }} />
       {position !== "static" && (
         <>
           {/* Pin preset icons — horizontal row matching Figma */}
@@ -223,7 +222,7 @@ export const PositionSection = memo(function PositionSection({
             padding: layout.rowPadding,
           }}>
             {/* Label area */}
-            <RowLabel label="Z-Index" indicator={ind("z-index")} onReset={() => { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); }} />
+            <RowLabel label="Z-Index" indicator={ind("z-index")} onReset={() => { const v = resetReadStr("z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); }} />
 
             {/* "Itself" context dropdown — shows which element z-index is relative to */}
             <div
@@ -269,7 +268,7 @@ export const PositionSection = memo(function PositionSection({
             >
               {zIndexAuto ? (
                 <button
-                  onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); return; } handleZIndexAutoToggle(); }}
+                  onClick={(e) => { if (e.altKey) { const v = resetReadStr("z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); return; } handleZIndexAutoToggle(); }}
                   style={{
                     flex: 1,
                     height: "100%",
@@ -289,7 +288,7 @@ export const PositionSection = memo(function PositionSection({
                 <input
                   type="text"
                   value={zIndex}
-                  onClick={(e) => { if (e.altKey) { const v = resetAndReadStr(element, "z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); } }}
+                  onClick={(e) => { if (e.altKey) { const v = resetReadStr("z-index"); setZIndex(parseInt(v) || 0); setZIndexAuto(v === "auto" || !v); } }}
                   onChange={(e) => {
                     const v = parseInt(e.target.value);
                     if (!isNaN(v)) handleZIndexChange(v);
@@ -400,16 +399,16 @@ export const PositionSection = memo(function PositionSection({
         <div style={{ padding: "2px 7px 6px" }}>
           {/* Float row */}
           <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: "4px 0" }}>
-            <RowLabel label="Float" indicator={ind("float")} onReset={() => { const v = resetAndReadStr(element, "float"); setFloat(v || "none"); }} />
+            <RowLabel label="Float" indicator={ind("float")} onReset={() => { const v = resetReadStr("float"); setFloat(v || "none"); }} />
             <div style={{ flex: 1 }}>
-              <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" onReset={() => { const v = resetAndReadStr(element, "float"); setFloat(v || "none"); }} />
+              <IconButtonGroup options={FLOAT_ICON_OPTIONS} value={float_} onChange={handleFloatChange} aria-label="Float" onReset={() => { const v = resetReadStr("float"); setFloat(v || "none"); }} />
             </div>
           </div>
           {/* Clear row */}
           <div style={{ display: "flex", alignItems: "center", gap: layout.controlGap, padding: "4px 0" }}>
-            <RowLabel label="Clear" indicator={ind("clear")} onReset={() => { const v = resetAndReadStr(element, "clear"); setClear(v || "none"); }} />
+            <RowLabel label="Clear" indicator={ind("clear")} onReset={() => { const v = resetReadStr("clear"); setClear(v || "none"); }} />
             <div style={{ flex: 1 }}>
-              <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" onReset={() => { const v = resetAndReadStr(element, "clear"); setClear(v || "none"); }} />
+              <IconButtonGroup options={CLEAR_ICON_OPTIONS} value={clear_} onChange={handleClearChange} aria-label="Clear" onReset={() => { const v = resetReadStr("clear"); setClear(v || "none"); }} />
             </div>
           </div>
         </div>

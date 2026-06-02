@@ -26,6 +26,12 @@ export const SECTION_ORDER = [
 export interface SectionCtx {
   element: Element;
   apply: (prop: string, value: string) => void;
+  /** Reset (clear the inline override for) a property — mirrors `apply`. */
+  reset: (prop: string) => void;
+  /** Reset a property and read back its fresh computed numeric value. */
+  resetRead: (prop: string) => number;
+  /** Reset a property and read back its fresh computed string value. */
+  resetReadStr: (prop: string) => string;
   ind: (prop: string) => IndicatorType;
   sectionInd: (props: string[]) => IndicatorType;
   cs: CSSStyleDeclaration;

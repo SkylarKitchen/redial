@@ -6,10 +6,11 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { BezierEditor } from "./BezierEditor";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
-import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
+import { EditorRemoveButton, VisibilityToggle, AnimatedListItem, MiniSelect } from "../controls";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha, filledTrackBg, focusBorder } from "../theme";
 import { ms } from "../timing";
 
@@ -601,36 +602,7 @@ function SelectDropdown({
   options: string[];
   onChange: (v: string) => void;
 }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      style={{
-        background: color.input,
-        border: `1px solid ${border.input}`,
-        borderRadius: "2px",
-        color: text.secondary,
-        fontSize: "10px",
-        fontFamily: font.mono,
-        padding: "2px 4px",
-        outline: "none",
-        cursor: "pointer",
-        appearance: "none",
-        WebkitAppearance: "none",
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg width='6' height='4' viewBox='0 0 6 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4L0 0h6L3 4z' fill='rgba(0,0,0,0.35)'/%3E%3C/svg%3E\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 4px center",
-        paddingRight: "14px",
-      }}
-    >
-      {options.map((opt) => (
-        <option key={opt} value={opt}>
-          {opt}
-        </option>
-      ))}
-    </select>
-  );
+  return <MiniSelect value={value} onChange={onChange} options={options} />;
 }
 
 /** Grouped easing select with presets + custom option */
@@ -639,33 +611,14 @@ function EasingSelect({ value, onChange }: { value: string; onChange: (css: stri
   const selectValue = isKnown ? value : "custom";
 
   return (
-    <select
+    <MiniSelect
       value={selectValue}
-      onChange={(e) => {
-        const v = e.target.value;
+      onChange={(v) => {
         if (v === "custom") {
           onChange("cubic-bezier(0.25, 0.1, 0.25, 1)");
         } else {
           onChange(v);
         }
-      }}
-      style={{
-        background: color.input,
-        border: `1px solid ${border.input}`,
-        borderRadius: "2px",
-        color: text.secondary,
-        fontSize: "10px",
-        fontFamily: font.mono,
-        padding: "2px 4px",
-        outline: "none",
-        cursor: "pointer",
-        appearance: "none",
-        WebkitAppearance: "none",
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg width='6' height='4' viewBox='0 0 6 4' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4L0 0h6L3 4z' fill='rgba(0,0,0,0.35)'/%3E%3C/svg%3E\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 4px center",
-        paddingRight: "14px",
       }}
     >
       {EASING_GROUPS.map((group) => (
@@ -680,52 +633,32 @@ function EasingSelect({ value, onChange }: { value: string; onChange: (css: stri
       <optgroup label="Custom">
         <option value="custom">cubic-bezier(...)</option>
       </optgroup>
-    </select>
+    </MiniSelect>
   );
 }
 
 /** Millisecond number input */
 function MsInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
-
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseInt(draft);
-    if (!isNaN(parsed)) {
-      onChange(Math.max(0, Math.min(5000, parsed)));
-    }
-  }, [draft, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const step = e.shiftKey ? 500 : 50;
-        onChange(Math.min(5000, value + step));
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.shiftKey ? 500 : 50;
-        onChange(Math.max(0, value - step));
-      }
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !focused,
+    step: 50,
+    min: 0,
+    max: 5000,
+    blurOnEnter: true,
+    onCommit: (d) => {
+      setFocused(false);
+      const parsed = parseInt(d);
+      if (!isNaN(parsed)) onChange(Math.max(0, Math.min(5000, parsed)));
     },
-    [commit, value, onChange]
-  );
-
+    onStep: (next) => onChange(next),
+  });
   return (
     <input
       value={focused ? draft : String(value)}
-      onChange={(e) => setDraft(e.target.value)}
+      {...inputProps}
       onFocus={() => setFocused(true)}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
       style={{
         width: "36px",
         background: color.input,

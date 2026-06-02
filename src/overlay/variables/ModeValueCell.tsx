@@ -11,7 +11,7 @@ import {
   isModeOverrideDirty,
   beginModeCoalesce,
   endModeCoalesce,
-} from "./modeOverrides";
+} from "../core/modeOverrides";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { VariableField } from "../controls/VariableField";

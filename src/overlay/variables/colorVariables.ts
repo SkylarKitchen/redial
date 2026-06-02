@@ -5,6 +5,9 @@
  */
 
 import { naturalCompare } from "./discoverVariables";
+// `parseVarRef` is a pure CSS-var parser; it lives in the shared cssParsers
+// module so core/ can use it without importing up into the variables domain.
+import { parseVarRef } from "../cssParsers";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -77,13 +80,8 @@ export function discoverColorVariables(): ColorVariable[] {
 
 // ─── Resolve a var() reference ──────────────────────────────────────
 
-const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,.*)?\)$/;
-
-/** Extract the custom property name from a `var(--foo)` expression. */
-export function parseVarRef(value: string): string | null {
-  const m = value.match(VAR_RE);
-  return m ? m[1] : null;
-}
+// Re-exported for the color-variable consumers that already import it from here.
+export { parseVarRef };
 
 /** Resolve a `var(--foo)` expression to its computed color value. */
 export function resolveVarColor(value: string): string | null {

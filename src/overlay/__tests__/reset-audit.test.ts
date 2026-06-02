@@ -267,9 +267,11 @@ describe("CornerRadiusEditor has indicator + reset props", () => {
   });
 });
 
-// ── Import-level check: resetProp and resetAndReadNum must be imported ──
+// ── Reset wiring check: every section must support Option+Click reset ──
+// Either via the legacy direct core/apply import (resetProp/resetAndReadNum)
+// or via the SectionCtx reset path (ctx.reset / resetRead / resetReadStr).
 
-describe("All sections import reset functions", () => {
+describe("All sections wire up reset", () => {
   const sectionFiles = [
     "PositionSection.tsx",
     "TypographySection.tsx",
@@ -279,13 +281,16 @@ describe("All sections import reset functions", () => {
   ];
 
   for (const file of sectionFiles) {
-    it(`${file} imports resetProp or resetAndReadNum`, () => {
+    it(`${file} supports Option+Click reset`, () => {
       const src = readSection(file);
-      const hasResetImport =
-        src.includes("resetProp") || src.includes("resetAndReadNum");
+      const hasReset =
+        src.includes("resetProp") ||
+        src.includes("resetAndReadNum") ||
+        // ctx.reset(...) / resetRead(...) / resetReadStr(...)
+        /\breset(Read(Str)?)?\(/.test(src);
       expect(
-        hasResetImport,
-        `${file} must import resetProp or resetAndReadNum from "./apply" to support Option+Click reset`
+        hasReset,
+        `${file} must support Option+Click reset (resetProp/resetAndReadNum or the ctx.reset/resetRead path)`
       ).toBe(true);
     });
   }

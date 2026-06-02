@@ -12,7 +12,7 @@ import { WebflowSegmentedControl } from "../controls/WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
-import { isDirty, resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
+import { isDirty } from "../core/apply";
 import { parseNum } from "../cssParsers";
 import { getAuthoredValue, detectUnit, type SectionCtx } from "../panelUtils";
 import { isAutoSize } from "../getAuthoredValue";
@@ -59,10 +59,10 @@ const LOCK_BTN: React.CSSProperties = {
 // ─── Component ────────────────────────────────────────────────────────
 
 export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, forceOpen, focusOpen, onToggle }: SizeSectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu, reset, resetRead, resetReadStr } = ctx;
 
-  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
   /** Tailwind-aware step for spacing-scale px properties */
   const twStep = (unit: string) => ctx.isTailwind && unit === "px" ? 4 : 1;

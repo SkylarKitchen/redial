@@ -17,7 +17,6 @@ import { FilterEditor, createDefaultItem, type FilterItem } from "./FilterSlider
 import { TransformEditor, type TransformValue } from "./TransformEditor";
 import { TransitionEditor, type TransitionValue } from "./TransitionEditor";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
-import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import {
   parseNum,
   parseBoxShadow,
@@ -163,7 +162,7 @@ interface EffectsSectionProps {
 // ─── Component ───────────────────────────────────────────────────────
 
 export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, focusOpen, onToggle }: EffectsSectionProps) {
-  const { element, apply, ind, sectionInd, cs, ctxMenu } = ctx;
+  const { element, apply, ind, sectionInd, cs, ctxMenu, reset, resetRead, resetReadStr } = ctx;
 
   // ── State ──────────────────────────────────────────────────────────
   const [transMenuAnchor, setTransMenuAnchor] = useState<HTMLElement | null>(null);
@@ -199,8 +198,8 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const transformsRef = useRef(transforms);
   transformsRef.current = transforms;
 
-  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetAndReadNum(element, prop));
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
+  const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
   // ── Handlers ───────────────────────────────────────────────────────
   const handleOpacityChange = useCallback((v: number) => { setOpacityVar(null); setOpacity(v); apply("opacity", String(v)); }, [apply]);
@@ -323,7 +322,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       <SelectRow label="Blending" value={mixBlendMode} options={BLEND_MODE_OPTIONS} onChange={handleMixBlendModeChange} onReset={() => resetCssStr("mix-blend-mode", setMixBlendMode)} indicator={ind("mix-blend-mode")} onContextMenu={ctxMenu("mix-blend-mode", mixBlendMode)} computedProp="mix-blend-mode" computedElement={element} />
 
       {/* 2. Opacity */}
-      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { resetProp(element, "opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); setOpacityVar(null); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = typeof v === "number" ? v : parseFloat(String(v)); if (!isNaN(n)) handleOpacityChange(n); }} onSelectVariable={handleOpacitySelectVar} activeVariable={opacityVar} variableElement={element} onUnlink={handleOpacityChange} variableType="all" />
+      <SliderRow label="Opacity" value={Math.round(opacity * 100)} min={0} max={100} step={1} unit="%" onChange={handleOpacitySliderChange} onReset={() => { reset("opacity"); const fresh = parseFloat(getComputedStyle(element).opacity) || 1; setOpacity(fresh); setOpacityVar(null); }} indicator={ind("opacity")} onContextMenu={ctxMenu("opacity", String(opacity))} computedProp="opacity" computedElement={element} property="opacity" onPreset={(v) => { const n = typeof v === "number" ? v : parseFloat(String(v)); if (!isNaN(n)) handleOpacityChange(n); }} onSelectVariable={handleOpacitySelectVar} activeVariable={opacityVar} variableElement={element} onUnlink={handleOpacityChange} variableType="all" />
 
       {/* 3. Outline */}
       <div style={ROW}>
@@ -342,7 +341,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       </div>
 
       {/* 4. Box shadows */}
-      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} indicator={ind("box-shadow")} onReset={() => { resetProp(element, "box-shadow"); setShadows(parseBoxShadow(getComputedStyle(element).boxShadow)); }} />
+      <SubSectionHeader label="Box shadows" onAdd={handleAddShadow} indicator={ind("box-shadow")} onReset={() => { reset("box-shadow"); setShadows(parseBoxShadow(getComputedStyle(element).boxShadow)); }} />
       {shadows.length > 0 && (
         <ShadowEditor shadows={shadows} onChange={handleShadowsChange} />
       )}
@@ -354,11 +353,11 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
         onMenu={() => setTransformSettingsOpen((o) => !o)}
         indicator={ind("transform")}
         onReset={() => {
-          resetProp(element, "transform");
-          resetProp(element, "transform-origin");
-          resetProp(element, "perspective");
-          resetProp(element, "backface-visibility");
-          resetProp(element, "perspective-origin");
+          reset("transform");
+          reset("transform-origin");
+          reset("perspective");
+          reset("backface-visibility");
+          reset("perspective-origin");
           const fresh = getComputedStyle(element);
           setTransforms(parseTransform(fresh.transform));
           setTransformOrigin(fresh.transformOrigin || "center");
@@ -389,7 +388,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       )}
 
       {/* 6. Transitions */}
-      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={(e) => setTransMenuAnchor(e.currentTarget)} indicator={ind("transition")} onReset={() => { resetProp(element, "transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />
+      <SubSectionHeader label="Transitions" onAdd={handleAddTransition} onMenu={(e) => setTransMenuAnchor(e.currentTarget)} indicator={ind("transition")} onReset={() => { reset("transition"); setTransitions(parseTransitions(getComputedStyle(element))); }} />
       {transitions.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
           <TransitionEditor transitions={transitions} onChange={handleTransitionsChange} element={element} />
@@ -401,7 +400,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
         label="Filters"
         onAdd={() => handleFiltersChange([...filterItems, createDefaultItem("blur")])}
         indicator={ind("filter")}
-        onReset={() => { resetProp(element, "filter"); setFilterItems(parseFilterItems(getComputedStyle(element).filter)); }}
+        onReset={() => { reset("filter"); setFilterItems(parseFilterItems(getComputedStyle(element).filter)); }}
       />
       {filterItems.length > 0 && (
         <div style={{ padding: "4px 12px" }}>
@@ -414,7 +413,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
         label="Backdrop filters"
         onAdd={() => handleBackdropFiltersChange([...backdropFilterItems, createDefaultItem("blur")])}
         indicator={ind("backdrop-filter")}
-        onReset={() => { resetProp(element, "backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterItems(parseFilterItems(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }}
+        onReset={() => { reset("backdrop-filter"); const fresh = getComputedStyle(element); setBackdropFilterItems(parseFilterItems(fresh.getPropertyValue("backdrop-filter") || fresh.getPropertyValue("-webkit-backdrop-filter") || "")); }}
       />
       {backdropFilterItems.length > 0 && (
         <div style={{ padding: "4px 12px" }}>

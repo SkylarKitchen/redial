@@ -173,10 +173,15 @@ function readSrc(filename: string): string {
  *   - altKey check near the prop name (SpacingBoxModel pattern)
  */
 function hasResetPath(src: string, prop: string): boolean {
-  // Direct reset call with quoted property name
+  // Direct reset call with quoted property name (legacy core/apply path)
   if (src.includes(`resetProp(element, "${prop}")`)) return true;
   if (src.includes(`resetAndReadNum(element, "${prop}")`)) return true;
   if (src.includes(`resetAndReadStr(element, "${prop}")`)) return true;
+
+  // SectionCtx reset path (ctx.reset / resetRead / resetReadStr)
+  if (src.includes(`reset("${prop}")`)) return true;
+  if (src.includes(`resetRead("${prop}")`)) return true;
+  if (src.includes(`resetReadStr("${prop}")`)) return true;
 
   // resetCss / resetCssStr helpers with quoted property name
   if (src.includes(`resetCss("${prop}"`)) return true;
@@ -192,6 +197,9 @@ function hasResetPath(src: string, prop: string): boolean {
       if (src.includes(`resetCss(borderProp("${suffix}")`)) return true;
       if (src.includes(`resetProp(element, borderProp("${suffix}")`)) return true;
       if (src.includes(`resetAndReadNum(element, borderProp("${suffix}")`)) return true;
+      // SectionCtx reset path
+      if (src.includes(`reset(borderProp("${suffix}")`)) return true;
+      if (src.includes(`resetRead(borderProp("${suffix}")`)) return true;
     }
   }
 
@@ -364,7 +372,7 @@ describe("SpacingBoxModel alt+click reset propagates value to parent", () => {
 // PART 4: All section files import reset functions
 // ═══════════════════════════════════════════════════════════════════════
 
-describe("All section files import reset functions from apply.ts", () => {
+describe("All section files wire up reset", () => {
   const sectionFiles = [
     "SpacingBoxModel.tsx",
     "LayoutSection.tsx",
@@ -377,15 +385,18 @@ describe("All section files import reset functions from apply.ts", () => {
   ];
 
   for (const file of sectionFiles) {
-    it(`${file} imports at least one reset function`, () => {
+    it(`${file} supports reset`, () => {
       const src = readSrc(file);
       const hasReset =
+        // legacy direct core/apply imports (sub-components like SpacingBoxModel)
         src.includes("resetProp") ||
         src.includes("resetAndReadNum") ||
-        src.includes("resetAndReadStr");
+        src.includes("resetAndReadStr") ||
+        // SectionCtx reset path: ctx.reset(...) / resetRead(...) / resetReadStr(...)
+        /\breset(Read(Str)?)?\(/.test(src);
       expect(
         hasReset,
-        `${file} must import resetProp, resetAndReadNum, or resetAndReadStr from "./apply"`
+        `${file} must support reset (resetProp/resetAndReadNum/resetAndReadStr or the ctx.reset/resetRead path)`
       ).toBe(true);
     });
   }

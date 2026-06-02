@@ -20,7 +20,7 @@ import { detectUnit, type SectionCtx } from "../panelUtils";
 import { ChevronRight } from "lucide-react";
 import { scanTextStyles, matchTextStyle, type TextStyle } from "../textStyleScanner";
 import { TextStyleRow } from "./TextStyleRow";
-import { beginBatch, endBatch, resetProp, resetAndReadStr } from "../core/apply";
+import { beginBatch, endBatch } from "../core/apply";
 import { ROW, LABEL, LABEL_INLINE, HINT, EXPAND_BUTTON, SEGMENT_GROUP, segmentButton, INLINE_SWATCH } from "../panelStyles";
 import { text, border, surface, font, indicatorStyle, layout, blackAlpha } from "../theme";
 import { ms } from "../timing";
@@ -61,7 +61,7 @@ export const TypographySection = memo(function TypographySection({
   focusOpen,
   onToggle,
 }: TypographySectionProps) {
-  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu } = ctx;
+  const { element, apply, ind, sectionInd, cs, getConversionCtx, ctxMenu, reset, resetReadStr } = ctx;
 
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
@@ -168,8 +168,8 @@ export const TypographySection = memo(function TypographySection({
   }, [apply, element, letterSpacingUnit]);
 
   // ── Reset popovers for custom labels ──
-  const resetFontSize = () => { const v = resetAndReadStr(element, "font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); };
-  const resetLineHeight = () => { const v = resetAndReadStr(element, "line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); };
+  const resetFontSize = () => { const v = resetReadStr("font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); };
+  const resetLineHeight = () => { const v = resetReadStr("line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); };
 
   // ── Text style scanning ──
   const textStyles = useMemo(() => scanTextStyles(), []);
@@ -244,7 +244,7 @@ export const TypographySection = memo(function TypographySection({
     apply("direction", val);
   }, [apply]);
 
-  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetAndReadStr(element, prop));
+  const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
   return (
     <Section
@@ -319,7 +319,7 @@ export const TypographySection = memo(function TypographySection({
       </div>
 
       {/* Color */}
-      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} onReset={() => { resetProp(element, "color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
+      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} onReset={() => { reset("color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
 
       {/* Align */}
       <div style={ROW}>

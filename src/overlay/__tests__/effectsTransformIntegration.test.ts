@@ -100,7 +100,8 @@ describe("EffectsSection transform SubSectionHeader", () => {
 
 describe("EffectsSection transform reset", () => {
   it("resets all 5 transform-related CSS properties", () => {
-    const resetCalls = effectsSrc.match(/resetProp\(element,\s*"[^"]+"\)/g) ?? [];
+    // Sections reset via the SectionCtx path: ctx.reset("prop") (was resetProp(element, "prop")).
+    const resetCalls = effectsSrc.match(/\breset\("[^"]+"\)/g) ?? [];
     const resetProps = resetCalls.map((c) => c.match(/"([^"]+)"/)![1]);
     expect(resetProps).toContain("transform");
     expect(resetProps).toContain("transform-origin");

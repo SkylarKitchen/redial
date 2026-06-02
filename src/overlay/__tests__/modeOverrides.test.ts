@@ -11,7 +11,7 @@ import {
   undoModeOverride,
   redoModeOverride,
   isModeOverrideDirty,
-} from "../variables/modeOverrides";
+} from "../core/modeOverrides";
 
 afterEach(() => {
   resetAllModeOverrides();

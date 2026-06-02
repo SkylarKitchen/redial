@@ -153,6 +153,29 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 
 ## Issues Found & Fixed
 
+### 2026-06-02 — Reusability & architecture refactor pass
+
+Executed the deferred reusability/architecture items from the prior session's handoff. All **byte-identical pure refactors** unless noted; verified by typecheck clean, `npm run build` green (public `index.d.ts` 3.96 KB → 2.88 KB), full suite **3103 pass / 1 skip / 0 fail across 175 files** (+8 new behavioral test files), and a 6-area adversarial behavior-preservation review (**0 findings**). Out of scope (own sessions): engine-facade #14, Overlay reducer.
+
+**Reusability extractions (TDD'd, behavioral tests added where coverage was absent):**
+- `hooks/useDraftNumber.ts` — draft state + gated resync + Enter/Escape/Arrow + Shift/Alt step math + clamp/round; parse/clamp delegated to caller `onCommit`/`onStep` (no boolean-soup). 16 contract tests. Migrated the 3 handoff-named near-identical inputs (ShadowEditor `NumericInput`, FilterSliders `NumberInput`, TransitionEditor `MsInput`), each guarded by a **new fired-event** characterization test (these had zero behavioral coverage). The audit found **14** draft-number sites across ~11 files (8 axes of variation) — the other ~11 (SizeInputCell, CornerRadiusEditor, PositionOffsetDiagram, SpacingValuePopover, layoutMisc, GapControls, GridControls, TransformOriginPicker, ValueInput, AxisSliderRow) are ready-to-adopt **follow-ups**.
+- `controls/MiniSelect.tsx` + `MINI_SELECT_CARET` — removed the doubly-pasted caret data-URI; backs the 2 TransitionEditor selects. Made all-longhand (`backgroundColor`/explicit paddings) per the no-shorthand-mixing rule — pixel-identical, removes a latent shorthand-reset fragility. The 3 native-arrow selects (SizeSection icon-arrow, FilterSliders, BackgroundLayerList) deliberately **not** migrated (forcing the caret = a design change).
+- `useDragReorder` now returns `dropLine: ReactNode` (+ exported `computeDropLineStyle`); replaced the byte-identical drop-line IIFE in **5** editors (audit said 4 — missed TransformEditor). New harness test drives the real pointer drag (the gesture was untested). Skipped a generic `ReorderableList` (doesn't cleanly fit BackgroundLayerList).
+
+**Architecture:**
+- Layering inversion fixed (no `core/` → `variables/` imports): moved `modeOverrides.ts` (zero-dep runtime state) into `core/`; moved `parseVarRef`/`VAR_RE` into shared `cssParsers.ts` (colorVariables re-exports for its consumers; `core/commitUtils` imports the canonical source).
+- `SectionCtx.reset/resetRead/resetReadStr` added + wired in WebflowPanel (element-direct wrappers, matching prior section behavior); all **8** section components migrated off direct `core/apply` reset imports (`SpacingBoxModel` sub-component correctly stays direct). Updated 3 source-string audits (`reset-audit`, `spacing-reset`, `effectsTransformIntegration`) that hard-coded `resetProp(element,…)` to recognize the `ctx.reset` path **by intent**.
+
+**Minor:**
+- **Bug fixed (TDD):** `SegmentedControl` arrow-key handler indexed `parentElement.children` without filtering the absolute indicator `<div>` → off-by-one + could focus the non-focusable indicator. Copied `WebflowSegmentedControl`'s `role="radio"` sibling filter.
+- Deleted dead `controls/EditableValue.tsx` (+ `EditableValueProps`, barrel, stale test/DIRECTORY entries) — zero importers (PositionOffsetDiagram has its own local copy).
+- Removed dead public exports `PX_PROPS`/`TOGGLE_CSS`/`toCSSValue`/`flattenValues` from `infer.ts` + the `src/index.tsx` barrel (audit-confirmed zero consumers).
+- `SpacingValuePopover` unit menu now flips upward when opening below would overflow the viewport (pure `unitMenuOpensUpward` helper, unit-tested).
+
+**Latent bug surfaced (preserved, not fixed — would break the byte-identical mandate):** FilterSliders `NumberInput` & TransitionEditor `MsInput` (always-input variants) don't `setDraft` on Arrow-step, so while focused the displayed number stays stale until blur even though the value updates. ShadowEditor's `NumericInput` is unaffected (it does setDraft on step). Candidate for a separate one-line fix (`stepUpdatesDraft: true`).
+
+**Not done:** Chrome MCP visual spot-check (dev-server port flakiness; covered by behavioral tests + adversarial review). Did **not** touch the three "modified" blues (tracked design question #46).
+
 ### 2026-06-02 — UX/a11y/cleanliness pass (browser-verified in Chrome)
 
 User-reported bug + a 7-dimension static audit (52 findings) driven to fixes. All verified: typecheck clean, full suite green (167 files), `npm run build` green.

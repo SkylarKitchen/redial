@@ -5,7 +5,7 @@
  *   - core/apply.ts              inline + state-keyed overrides, undo/redo, diff
  *   - core/scope.ts              class-scope <style> rules
  *   - core/statePreview.ts       pseudo-state (:hover/:focus) <style> preview
- *   - variables/modeOverrides.ts CSS-variable theme-mode overrides
+ *   - core/modeOverrides.ts      CSS-variable theme-mode overrides
  *
  * Phase 1 introduces the unified surface — `StyleEngine` + the `OverrideTarget`
  * discriminated union — WITHOUT touching any caller. Every method delegates to
@@ -47,7 +47,7 @@ import {
   getModeOverrideCount,
   subscribeModeOverrides,
   getModeOverrideSnapshot,
-} from "../variables/modeOverrides";
+} from "./modeOverrides";
 
 // ─── Unified target model ────────────────────────────────────────────────────
 
