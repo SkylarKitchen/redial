@@ -42,7 +42,7 @@ export function VariableValue({
               height: 8,
               borderRadius: "50%",
               background: resolvedColor,
-              border: "1px solid rgba(0,0,0,0.1)",
+              border: `1px solid ${border.default}`,
               flexShrink: 0,
             }}
           />

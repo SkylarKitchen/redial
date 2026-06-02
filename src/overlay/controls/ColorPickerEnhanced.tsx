@@ -15,7 +15,7 @@ import { hexToRgb, rgbToHex, isValidHex } from "../colorUtils";
 import { ms } from "../timing";
 import { discoverColorVariables, type ColorVariable } from "../variables/colorVariables";
 import { naturalCompare } from "../variables/discoverVariables";
-import { color as themeColor, text, border, surface, font, shadow, primaryAlpha } from "../theme";
+import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, focusRing } from "../theme";
 import { beginBatch, endBatch } from "../core/apply";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
@@ -439,6 +439,69 @@ export function ColorPickerEnhanced({
     [hue, sat, bri, startDrag, emitChange],
   );
 
+  // ─── Keyboard interaction (arrow-key adjustment) ──────────────
+  // Mirrors the drag setters above so color editing is keyboard-operable.
+
+  const handleHueKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      let delta = 0;
+      if (e.key === "ArrowRight" || e.key === "ArrowUp") delta = 1;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") delta = -1;
+      else return;
+      e.preventDefault();
+      if (e.shiftKey) delta *= 10;
+      const h = Math.max(0, Math.min(360, hue + delta));
+      setHue(h);
+      emitChange(h, sat, bri, alpha);
+    },
+    [hue, sat, bri, alpha, emitChange],
+  );
+
+  const handleOpacityKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      let delta = 0;
+      if (e.key === "ArrowRight" || e.key === "ArrowUp") delta = 1;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowDown") delta = -1;
+      else return;
+      e.preventDefault();
+      if (e.shiftKey) delta *= 10;
+      // alpha is 0..1, arrows step in whole percent
+      const a = Math.max(0, Math.min(1, alpha + delta / 100));
+      setAlpha(a);
+      emitChange(hue, sat, bri, a);
+    },
+    [hue, sat, bri, alpha, emitChange],
+  );
+
+  const handleCanvasKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      let ds = 0;
+      let db = 0;
+      if (e.key === "ArrowRight") ds = 1;
+      else if (e.key === "ArrowLeft") ds = -1;
+      else if (e.key === "ArrowUp") db = 1;
+      else if (e.key === "ArrowDown") db = -1;
+      else return;
+      e.preventDefault();
+      const step = e.shiftKey ? 10 : 1;
+      // sat/bri are 0..1, arrows step in whole percent
+      const s = Math.max(0, Math.min(1, sat + (ds * step) / 100));
+      const b = Math.max(0, Math.min(1, bri + (db * step) / 100));
+      setSat(s);
+      setBri(b);
+      emitChange(hue, s, b, alpha);
+    },
+    [hue, sat, bri, alpha, emitChange],
+  );
+
+  // Focus-ring helpers (visual cue without changing layout/colors)
+  const showFocusRing = useCallback((e: React.FocusEvent) => {
+    (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
+  }, []);
+  const hideFocusRing = useCallback((e: React.FocusEvent) => {
+    (e.currentTarget as HTMLElement).style.boxShadow = "";
+  }, []);
+
   // ─── Hex input handler ────────────────────────────────────────
 
   const applyHexInput = useCallback(() => {
@@ -538,7 +601,13 @@ export function ColorPickerEnhanced({
     >
       {/* ── 2D Saturation / Brightness Canvas ──────────────── */}
       <div
+        role="slider"
+        tabIndex={0}
         aria-label="Saturation and brightness"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(sat * 100)}
+        aria-valuetext={`Saturation ${Math.round(sat * 100)}%, brightness ${Math.round(bri * 100)}%`}
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -546,8 +615,12 @@ export function ColorPickerEnhanced({
           borderRadius: 4,
           overflow: "hidden",
           cursor: "crosshair",
+          outline: "none",
         }}
         onMouseDown={handleCanvasMouseDown}
+        onKeyDown={handleCanvasKeyDown}
+        onFocus={showFocusRing}
+        onBlur={hideFocusRing}
       >
         <canvas
           ref={canvasRef}
@@ -568,7 +641,12 @@ export function ColorPickerEnhanced({
 
       {/* ── Hue Slider ─────────────────────────────────────── */}
       <div
+        role="slider"
+        tabIndex={0}
         aria-label="Hue"
+        aria-valuemin={0}
+        aria-valuemax={360}
+        aria-valuenow={Math.round(hue)}
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -577,8 +655,12 @@ export function ColorPickerEnhanced({
           background:
             "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
           cursor: "pointer",
+          outline: "none",
         }}
         onMouseDown={handleHueMouseDown}
+        onKeyDown={handleHueKeyDown}
+        onFocus={showFocusRing}
+        onBlur={hideFocusRing}
       >
         <div
           style={{
@@ -591,7 +673,12 @@ export function ColorPickerEnhanced({
 
       {/* ── Opacity Slider ─────────────────────────────────── */}
       <div
+        role="slider"
+        tabIndex={0}
         aria-label="Opacity"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(alpha * 100)}
         style={{
           position: "relative",
           width: CANVAS_W,
@@ -602,6 +689,9 @@ export function ColorPickerEnhanced({
           overflow: "hidden",
         }}
         onMouseDown={handleOpacityMouseDown}
+        onKeyDown={handleOpacityKeyDown}
+        onFocus={showFocusRing}
+        onBlur={hideFocusRing}
       >
         {/* Color gradient overlay */}
         <div

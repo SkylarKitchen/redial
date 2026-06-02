@@ -14,6 +14,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import { timing, ms, easeRelease } from "../timing";
+import { color, blackAlpha } from "../theme";
 
 interface DragState {
   dragIndex: number;
@@ -203,7 +204,7 @@ export function useDragReorder<T>(
           position: "relative",
           zIndex: 50,
           transform: `translateY(${offsetY}px)`,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+          boxShadow: `0 4px 16px ${blackAlpha(0.1)}`,
           opacity: 0.95,
         };
       }
@@ -241,7 +242,7 @@ export function useDragReorder<T>(
       right: 0,
       top: `${top}px`,
       height: "2px",
-      background: "#3B82F6",
+      background: color.primary,
       borderRadius: "1px",
       zIndex: 51,
       pointerEvents: "none",

@@ -6,6 +6,7 @@ import React from "react";
 import { text } from "../theme";
 import { Eye, EyeOff } from "lucide-react";
 import { usePressScale } from "./helpers";
+import { ms } from "../timing";
 
 export function VisibilityToggle({ visible, onToggle, title }: {
   visible: boolean;
@@ -13,6 +14,10 @@ export function VisibilityToggle({ visible, onToggle, title }: {
   title?: string;
 }) {
   const { pressHandlers, pressStyle } = usePressScale(0.93);
+  // pressStyle carries its own `transition` (transform spring). Spread it first
+  // for the press `transform`, then merge both transitions so the opacity fade
+  // survives instead of being clobbered by the later spread.
+  const { transition: pressTransition, ...pressRest } = pressStyle;
   return (
     <button
       onClick={onToggle}
@@ -24,8 +29,8 @@ export function VisibilityToggle({ visible, onToggle, title }: {
         padding: "2px",
         color: visible ? text.label : text.hint,
         flexShrink: 0,
-        transition: "opacity 80ms ease",
-        ...pressStyle,
+        ...pressRest,
+        transition: `opacity ${ms("fast")}, ${pressTransition}`,
       }}
       title={title ?? (visible ? "Hide layer" : "Show layer")}
     >

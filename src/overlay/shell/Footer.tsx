@@ -12,7 +12,7 @@ import { enrichChangesForCommit } from "../core/commitUtils";
 import type { Scope } from "../core/scope";
 import { formatCSSDiff, getSelector } from "../util";
 import { formatTailwindDiff } from "../tailwind";
-import { timing } from "../timing";
+import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/apply";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
@@ -80,6 +80,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [copyOpen, setCopyOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyRef = useRef<HTMLDivElement>(null);
+  const copyTriggerRef = useRef<HTMLButtonElement>(null);
   const count = overrideCount(element);
   const modeCount = getModeOverrideCount();
   const totalCount = count + modeCount;
@@ -120,6 +121,20 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     };
     document.addEventListener("mousedown", handleClick, true);
     return () => document.removeEventListener("mousedown", handleClick, true);
+  }, [copyOpen]);
+
+  // Close dropdown on Escape, returning focus to the trigger
+  useEffect(() => {
+    if (!copyOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setCopyOpen(false);
+        copyTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [copyOpen]);
 
   const showMessage = useCallback((text: string, duration: number) => {
@@ -294,12 +309,15 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
         {/* Left: Clipboard dropdown */}
         <div ref={copyRef} style={{ position: "relative" as const }}>
           <button
+            ref={copyTriggerRef}
             onClick={() => setCopyOpen((o) => !o)}
             onMouseEnter={() => setClipboardHovered(true)}
             onMouseDown={clipPress.onMouseDown}
             onMouseUp={clipPress.onMouseUp}
             onMouseLeave={() => { clipPress.onMouseLeave(); setClipboardHovered(false); }}
             title="Copy CSS (⌘C)"
+            aria-haspopup="menu"
+            aria-expanded={copyOpen}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -314,14 +332,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               color: copied ? color.successMuted : (clipboardHovered ? blackAlpha(0.7) : text.label),
               background: copied ? successMutedAlpha(0.08) : (copyOpen ? surface.active : (clipboardHovered ? surface.active : surface.hover)),
               border: `1px solid ${copied ? successMutedAlpha(0.25) : (copyOpen ? border.hover : border.default)}`,
-              transition: `color ${timing.normal}ms, background ${timing.normal}ms, border-color ${timing.normal}ms`,
+              transition: `color ${ms("normal")}, background ${ms("normal")}, border-color ${ms("normal")}`,
               ...clipPressStyle,
             }}
           >
             {copied ? "\u2713 Copied" : <>Clipboard <ChevronDown size={12} strokeWidth={2} style={{ marginLeft: 4, flexShrink: 0, color: text.disabled }} /></>}
           </button>
           {copyOpen && (
-            <div style={{
+            <div role="menu" style={{
               position: "absolute" as const,
               bottom: "calc(100% + 4px)",
               left: 0,
@@ -367,6 +385,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             animate={shaking ? { x: [0, -2, 2, -2, 2, -2, 2, 0] } : { x: 0 }}
             transition={shaking ? { duration: timing.slow / 1000 } : { duration: 0 }}
             title="Reset element (R)"
+            aria-disabled={totalCount === 0}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -382,7 +401,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
               border: `1px solid ${destructiveAlpha(0.15)}`,
               background: resetHovered && count > 0 ? surface.hover : surface.subtle,
               opacity: count === 0 ? 0.5 : 1,
-              transition: `background ${timing.normal}ms`,
+              transition: `background ${ms("normal")}`,
             }}
           >
             Reset

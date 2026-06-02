@@ -1,6 +1,6 @@
 import React from "react";
 import type { VarType } from "./discoverVariables";
-import { text, font } from "../theme";
+import { text, font, border } from "../theme";
 
 const FONT_RE = /font/i;
 
@@ -46,7 +46,7 @@ export function VarTypeIcon({
             height: 10,
             borderRadius: "50%",
             background: colorValue,
-            border: "1px solid rgba(0,0,0,0.1)",
+            border: `1px solid ${border.default}`,
           }}
         />
       </span>

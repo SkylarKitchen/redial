@@ -13,7 +13,7 @@
  * webflow-style-panel-spec.md (Section 11: Style Indicators).
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { getIndicatorType, getIndicatorColor } from "../panelUtils";
+import { getIndicatorType } from "../panelUtils";
 import { applyInlineStyle, isDirty, resetAll, stateKey } from "../core/apply";
 import { indicatorColor, color, type IndicatorType } from "../theme";
 

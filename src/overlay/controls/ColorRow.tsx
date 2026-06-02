@@ -15,7 +15,7 @@ import { parseVarAlias } from "../variables/discoverVariables";
 import { X } from "lucide-react";
 import { VariableLinkDot } from "./VariableLinkDot";
 import { VariableField } from "./VariableField";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
 import { computeColorPickerPosition } from "./colorPickerPosition";
@@ -233,7 +233,7 @@ export function ColorRow({
             display: "flex",
             alignItems: "center",
             opacity: 0.5,
-            transition: `opacity ${ms("fast")}, transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+            transition: `${cssTransition("transform", "release")}, opacity ${ms("normal")}`,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = "0.5"; }}

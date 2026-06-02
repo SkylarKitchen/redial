@@ -78,6 +78,8 @@ export const color = {
   success: "#22c55e",
   /** Success green — muted/darker (copy confirmed) */
   successMuted: "#16a34a",
+  /** Warning / diff-mode amber — used for diff-mode panel border + warning affordances */
+  warning: "#FACC15",
 
   // ── Variable linking ──
   /** Purple accent — variable link affordance */
@@ -133,6 +135,9 @@ export const primaryAlpha = (a: number) => hexToRgba(color.primary, a);
 
 /** Destructive red at a given alpha — derived from color.destructive */
 export const destructiveAlpha = (a: number) => hexToRgba(color.destructive, a);
+
+/** Warning amber at a given alpha — derived from color.warning */
+export const warningAlpha = (a: number) => hexToRgba(color.warning, a);
 
 /** Black at a given alpha. e.g. blackAlpha(0.12) → "rgba(0,0,0,0.12)" */
 export const blackAlpha = (a: number) => `rgba(0,0,0,${a})`;

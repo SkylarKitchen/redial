@@ -93,7 +93,33 @@ export function WebflowSegmentedControl({
             aria-checked={isActive}
             aria-label={opt.title ?? opt.label ?? opt.value}
             title={opt.title ?? opt.label ?? opt.value}
+            tabIndex={isActive ? 0 : -1}
             onClick={() => handleClick(opt.value)}
+            onKeyDown={(e) => {
+              if (
+                e.key === "ArrowRight" ||
+                e.key === "ArrowDown" ||
+                e.key === "ArrowLeft" ||
+                e.key === "ArrowUp"
+              ) {
+                e.preventDefault();
+                const siblings = Array.from(
+                  e.currentTarget.parentElement?.children ?? [],
+                ).filter(
+                  (el): el is HTMLElement =>
+                    el instanceof HTMLElement &&
+                    el.getAttribute("role") === "radio",
+                );
+                const idx = siblings.indexOf(e.currentTarget);
+                const forward = e.key === "ArrowRight" || e.key === "ArrowDown";
+                const next = forward
+                  ? siblings[(idx + 1) % siblings.length]
+                  : siblings[(idx - 1 + siblings.length) % siblings.length];
+                next.focus();
+                const nextOpt = options[siblings.indexOf(next)];
+                if (nextOpt != null) handleClick(nextOpt.value);
+              }
+            }}
             style={{
               flex: 1,
               display: "flex",

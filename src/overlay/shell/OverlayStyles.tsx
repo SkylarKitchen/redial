@@ -28,7 +28,7 @@ export function OverlayScrollbarStyles() {
         }
         .__tuner-root::-webkit-scrollbar-thumb,
         .__tuner-root *::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0);
+          background: transparent;
           border-radius: 4px;
           transition: background ${ms("slow")};
         }
@@ -61,12 +61,12 @@ export function OverlayScrollbarStyles() {
         }
         .__tuner-root input[type="range"]::-webkit-slider-runnable-track {
           height: 3px;
-          background: rgba(0,0,0,0.08);
+          background: ${surface.active};
           border-radius: 2px;
           transition: background ${ms("expand")};
         }
         .__tuner-root input[type="range"]:hover::-webkit-slider-runnable-track {
-          background: rgba(0,0,0,0.15);
+          background: ${blackAlpha(0.15)};
         }
         .__tuner-root input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -75,7 +75,7 @@ export function OverlayScrollbarStyles() {
           border-radius: 50%;
           background: ${color.primary};
           border: 2px solid ${color.background};
-          box-shadow: 0 0 3px rgba(0,0,0,0.15);
+          box-shadow: 0 0 3px ${blackAlpha(0.15)};
           margin-top: -4.5px;
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
@@ -89,12 +89,12 @@ export function OverlayScrollbarStyles() {
         }
         .__tuner-root input[type="range"]::-moz-range-track {
           height: 3px;
-          background: rgba(0,0,0,0.08);
+          background: ${surface.active};
           border-radius: 2px;
           transition: background ${ms("expand")};
         }
         .__tuner-root input[type="range"]:hover::-moz-range-track {
-          background: rgba(0,0,0,0.15);
+          background: ${blackAlpha(0.15)};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb {
           width: 12px;
@@ -102,7 +102,7 @@ export function OverlayScrollbarStyles() {
           border-radius: 50%;
           background: ${color.primary};
           border: 2px solid ${color.background};
-          box-shadow: 0 0 3px rgba(0,0,0,0.15);
+          box-shadow: 0 0 3px ${blackAlpha(0.15)};
           transition: transform ${ms("fast")}, box-shadow ${ms("fast")};
         }
         .__tuner-root input[type="range"]::-moz-range-thumb:hover {

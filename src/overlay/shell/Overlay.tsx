@@ -51,7 +51,7 @@ import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 import { useSelectionOutline } from "../hooks/useSelectionOutline";
 import { getConfig } from "../core/config";
-import { color, text, border, surface, font, shadow, blackAlpha, layout, zIndex } from "../theme";
+import { color, text, border, surface, font, shadow, blackAlpha, warningAlpha, layout, zIndex } from "../theme";
 
 // --- Panel State Types (canonical defs in ./overlayTypes) ---
 import type { ActivePanel, ActiveModal } from "./overlayTypes";
@@ -754,7 +754,7 @@ export function Overlay() {
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            border: diffMode ? "1px solid rgba(250,204,21,0.3)" : `1px solid ${blackAlpha(0.07)}`,
+            border: diffMode ? `1px solid ${warningAlpha(0.3)}` : `1px solid ${blackAlpha(0.07)}`,
             pointerEvents: selecting ? "none" : ((selectedEl || activePanel.type === "variables") ? undefined : "none"),
             top: pos.y,
             left: pos.x,

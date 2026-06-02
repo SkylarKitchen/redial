@@ -323,7 +323,7 @@ export function CommandPalette({
                         <span
                           style={{
                             fontSize: 13,
-                            color: "rgba(0,0,0,0.9)",
+                            color: text.primary,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",

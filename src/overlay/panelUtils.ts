@@ -10,7 +10,6 @@ import type React from "react";
 import { isDirty, stateKey } from "./core/apply";
 import { extractUnit } from "./cssParsers";
 import type { IndicatorType } from "./theme";
-import { indicatorColor } from "./theme";
 import type { UnitConversionContext } from "./unitConversion";
 
 // ─── Section Order ────────────────────────────────────────────────────────
@@ -55,10 +54,6 @@ export function getIndicatorType(
   }
   if (isDirty(el, prop)) return "modified";
   return "none";
-}
-
-export function getIndicatorColor(type: IndicatorType): string {
-  return indicatorColor[type] ?? indicatorColor.none;
 }
 
 export function getIndicatorTitle(type: IndicatorType): string | undefined {

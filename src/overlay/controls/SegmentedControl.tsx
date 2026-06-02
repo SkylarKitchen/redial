@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useRef, useEffect, useState } from "react";
-import { segment, text, font } from "../theme";
+import { segment, text, font, focusRing } from "../theme";
 import { ms, cssTransition } from "../timing";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -120,6 +120,12 @@ export function SegmentedControl({
                 const nextOpt = options[siblings.indexOf(next)];
                 if (nextOpt != null) handleClick(nextOpt.value);
               }
+            }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
+            }}
+            onBlur={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow = "none";
             }}
             style={{
               display: "flex",

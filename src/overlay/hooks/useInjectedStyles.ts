@@ -12,6 +12,7 @@
  */
 
 import { useEffect } from "react";
+import { color, gridAlpha } from "../theme";
 
 export function useInjectedStyles() {
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
@@ -34,7 +35,7 @@ export function useInjectedStyles() {
 
     const style = document.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = ".__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; } @keyframes tuner-outline-pulse { 0% { box-shadow: 0 0 0 0 rgba(217,119,87,0.4); } 50% { box-shadow: 0 0 0 4px rgba(217,119,87,0.15); } 100% { box-shadow: 0 0 0 0 rgba(217,119,87,0); } } .__tuner-selected-outline.--pulse { animation: tuner-outline-pulse 400ms ease-out; }";
+    style.textContent = `.__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px ${color.ring}; } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; } @keyframes tuner-outline-pulse { 0% { box-shadow: 0 0 0 0 ${gridAlpha(0.4)}; } 50% { box-shadow: 0 0 0 4px ${gridAlpha(0.15)}; } 100% { box-shadow: 0 0 0 0 ${gridAlpha(0)}; } } .__tuner-selected-outline.--pulse { animation: tuner-outline-pulse 400ms ease-out; }`;
     document.head.appendChild(style);
 
     return () => { document.getElementById(STYLE_ID)?.remove(); };

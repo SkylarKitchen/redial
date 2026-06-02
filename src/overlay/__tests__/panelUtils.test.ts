@@ -2,7 +2,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   getIndicatorType,
-  getIndicatorColor,
   getIndicatorTitle,
   getAuthoredValue,
   detectUnit,
@@ -211,25 +210,6 @@ describe("isTextBearing", () => {
     const el = makeEl("div");
     el.setAttribute("role", "heading");
     expect(isTextBearing(el)).toBe(true);
-  });
-});
-
-// ─── getIndicatorColor ────────────────────────────────────────────────────
-
-describe("getIndicatorColor", () => {
-  it("returns a color string for each indicator type", () => {
-    expect(typeof getIndicatorColor("modified")).toBe("string");
-    expect(typeof getIndicatorColor("state")).toBe("string");
-    expect(typeof getIndicatorColor("none")).toBe("string");
-  });
-
-  it("returns distinct colors for modified vs none", () => {
-    expect(getIndicatorColor("modified")).not.toBe(getIndicatorColor("none"));
-  });
-
-  it("returns a green color for state type (distinct from modified blue)", () => {
-    expect(getIndicatorColor("state")).not.toBe(getIndicatorColor("modified"));
-    expect(getIndicatorColor("state")).not.toBe(getIndicatorColor("none"));
   });
 });
 

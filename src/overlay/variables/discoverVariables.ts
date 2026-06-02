@@ -1,8 +1,9 @@
 /**
  * discoverVariables.ts — Shared CSS custom property discovery logic.
  *
- * Extracts variable discovery from CSSVariablesSection so it can be
- * reused by SizeSection (for variable picker in UnitSelector).
+ * Centralized variable discovery consumed across the panel: the unit/value
+ * pickers in SizeSection and TypographySection, ColorRow's variable picker,
+ * and the GlobalVariablesPanel.
  */
 
 // ─── Types ───────────────────────────────────────────────────────────

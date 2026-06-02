@@ -125,7 +125,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  ...(isActive ? { background: color.primary, color: "#fff" } : {}),
+                  ...(isActive ? { background: color.primary, color: color.primaryForeground } : {}),
                 }}
               >
                 <span style={{ fontWeight: style.fontWeight }}>

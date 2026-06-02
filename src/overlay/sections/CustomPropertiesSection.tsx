@@ -120,8 +120,8 @@ const inputFocusStyle: React.CSSProperties = {
 };
 
 const inputErrorStyle: React.CSSProperties = {
-  borderBottomColor: "#e53e3e",
-  color: "#e53e3e",
+  borderBottomColor: color.destructive,
+  color: color.destructive,
 };
 
 const separatorStyle: React.CSSProperties = {

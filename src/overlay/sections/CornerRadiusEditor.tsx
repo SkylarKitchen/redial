@@ -130,7 +130,7 @@ function CornerCell({
     >
       {/* Corner icon — tinted when modified, alt-click to reset */}
       <div
-        style={{ padding: "0 4px 0 6px", color: indicator === "modified" ? "#3b82f6" : text.disabled, display: "flex", alignItems: "center", cursor: onReset ? "default" : undefined }}
+        style={{ padding: "0 4px 0 6px", color: indicator === "modified" ? color.primary : text.disabled, display: "flex", alignItems: "center", cursor: onReset ? "default" : undefined }}
         title={indicator === "modified" ? "Modified — Option+Click to reset" : label}
         onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
       >

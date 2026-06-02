@@ -11,7 +11,7 @@ import type { SpacingValues } from "../core/infer";
 import { isTailwindElement, type Scope } from "../core/scope";
 import { styleEngine, type OverrideTarget } from "../core/engine";
 import { buildConversionContext } from "../unitConversion";
-import type { IndicatorType } from "../theme";
+import { type IndicatorType, focusRing, text } from "../theme";
 import { parseNum } from "../cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "../panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";
@@ -85,7 +85,7 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
     if (!document.getElementById(id)) {
       const style = document.createElement('style');
       style.id = id;
-      style.textContent = `.tuner-focusable:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.3); }`;
+      style.textContent = `.tuner-focusable:focus-visible { outline: none; box-shadow: ${focusRing}; }`;
       document.head.appendChild(style);
     }
     return () => { document.getElementById(id)?.remove(); };

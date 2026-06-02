@@ -18,7 +18,7 @@
  * - Drag-to-scrub with optimistic local state (real-time text updates)
  * - Shift+drag updates all 4 sides uniformly
  * - Alt(Option)+drag updates axis pair (left+right or top+bottom)
- * - Alt(Option)+click copies value to complementary (opposite) side
+ * - Alt(Option)+click resets the value (matches the panel-wide reset gesture)
  * - Alt(Option)+click on a corner zone applies value to all 4 sides
  * - Tab/Shift+Tab navigation in visual order
  */
@@ -27,7 +27,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitSelector } from "../controls/UnitSelector";
 import { SpacingValuePopover } from "./SpacingValuePopover";
-import { beginBatch, endBatch, resetProp, resetAndReadNum } from "../core/apply";
+import { beginBatch, endBatch, resetAndReadNum } from "../core/apply";
 import { ms } from "../timing";
 import { setScrubGroup, setHoverGroup } from "../core/scrubState";
 import { stepForUnit, precisionForStep } from "../panelUtils";
@@ -129,6 +129,8 @@ export function SpacingBoxModel({
   // --- Refs to avoid stale closures in pointer handlers ---
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onResetRef = useRef(onReset);
+  onResetRef.current = onReset;
   const marginUnitRef = useRef(marginUnit);
   marginUnitRef.current = marginUnit;
   const paddingUnitRef = useRef(paddingUnit);
@@ -409,15 +411,13 @@ export function SpacingBoxModel({
             if (wasClick && ev.type === "pointerup") {
               const pev = ev as PointerEvent;
               if (pev.altKey) {
-                // Alt(Option)+click: copy this side's value to its complementary (opposite) side
-                const side = prop.split("-")[1]; // e.g. "left"
-                const partner = AXIS_PARTNER[side]; // e.g. "right"
-                const prefix = isMargin ? "margin" : "padding";
-                const unit = isMargin ? marginUnitRef.current : paddingUnitRef.current;
-                const partnerProp = [prefix, partner].join("-");
-                // Apply this side's value to both this side and its complement
-                onChangeRef.current(prop, value, unit);
-                onChangeRef.current(partnerProp, value, unit);
+                // Alt(Option)+click: reset this property to its authored/inherited
+                // value, matching the panel-wide "⌥ click to reset" gesture that
+                // every label-based control already uses. resetAndReadNum clears
+                // the inline override and returns the resulting computed value so
+                // the parent can update its displayed state.
+                const resetVal = resetAndReadNum(element, prop);
+                onResetRef.current?.(prop, resetVal);
               } else {
                 // Regular click: open popover
                 const rect = el.getBoundingClientRect();

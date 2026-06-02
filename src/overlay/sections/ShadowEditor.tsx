@@ -9,12 +9,10 @@ import { useState, useCallback, useRef, useEffect } from "react";
 
 import { useDragReorder } from "../hooks/useDragReorder";
 import { DragHandle } from "../shell/DragHandle";
-import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
-import { cssColorToHex } from "../colorUtils";
+import { SwatchColorPicker } from "../controls/SwatchColorPicker";
 import { shadowToCSS } from "../cssParsers";
-import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
 import { ms } from "../timing";
-import { color, text, font, border, surface, zIndex, primaryAlpha, blackAlpha } from "../theme";
+import { color, text, font, border, surface, primaryAlpha, blackAlpha } from "../theme";
 import { EditorRemoveButton, VisibilityToggle, AnimatedListItem } from "../controls";
 
 export interface ShadowValue {
@@ -176,7 +174,6 @@ function ShadowRow({
   dragHandleProps?: { onPointerDown: (e: React.PointerEvent) => void; style: React.CSSProperties };
   isDragging?: boolean;
 }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
   const updateField = useCallback(
     (field: keyof ShadowValue) => (val: number | boolean) => {
       onUpdate(index, { ...shadow, [field]: val });
@@ -228,41 +225,25 @@ function ShadowRow({
       {/* Row 2: color, inset, delete */}
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         {/* Color swatch */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setPickerOpen(!pickerOpen)}
-            title={`Shadow color: ${shadow.color}`}
-            style={{
-              width: "16px",
-              height: "16px",
-              borderRadius: "2px",
-              border: `1px solid ${blackAlpha(0.15)}`,
-              background: resolveVarColor(shadow.color) ?? shadow.color,
-              cursor: "pointer",
-              padding: 0,
-              flexShrink: 0,
-            }}
-          />
-          {pickerOpen && (
-            <div style={{ position: "absolute", top: "100%", left: 0, zIndex: zIndex.max, marginTop: "4px" }}>
-              <ColorPickerEnhanced
-                color={cssColorToHex(resolveVarColor(shadow.color) ?? shadow.color)}
-                onChange={(hex, opacity) => {
-                  const color = opacity < 1
-                    ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
-                    : hex;
-                  onUpdate(index, { ...shadow, color });
-                }}
-                onClose={() => setPickerOpen(false)}
-                onSelectVariable={(varExpr) => {
-                  onUpdate(index, { ...shadow, color: varExpr });
-                  setPickerOpen(false);
-                }}
-                activeVariable={parseVarRef(shadow.color)}
-              />
-            </div>
-          )}
-        </div>
+        <SwatchColorPicker
+          value={shadow.color}
+          title={`Shadow color: ${shadow.color}`}
+          swatchStyle={{
+            width: "16px",
+            height: "16px",
+            borderRadius: "2px",
+            border: `1px solid ${blackAlpha(0.15)}`,
+          }}
+          onChange={(hex, opacity) => {
+            const color = opacity < 1
+              ? `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${opacity})`
+              : hex;
+            onUpdate(index, { ...shadow, color });
+          }}
+          onSelectVariable={(varExpr) => {
+            onUpdate(index, { ...shadow, color: varExpr });
+          }}
+        />
 
         {/* Inset toggle */}
         <button
@@ -385,20 +366,6 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
         const style = dropLineStyle();
         return style ? <div style={style} /> : null;
       })()}
-
-      {shadows.length === 0 && (
-        <div
-          style={{
-            padding: "8px 0",
-            fontSize: "10px",
-            color: text.hint,
-            textAlign: "center",
-            fontFamily: font.sans,
-          }}
-        >
-          No shadows
-        </div>
-      )}
     </div>
   );
 }
