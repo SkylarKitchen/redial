@@ -110,7 +110,11 @@ export function SegmentedControl({
                 e.preventDefault();
                 const siblings = Array.from(
                   e.currentTarget.parentElement?.children ?? [],
-                ) as HTMLElement[];
+                ).filter(
+                  (el): el is HTMLElement =>
+                    el instanceof HTMLElement &&
+                    el.getAttribute("role") === "radio",
+                );
                 const idx = siblings.indexOf(e.currentTarget);
                 const next =
                   e.key === "ArrowRight"

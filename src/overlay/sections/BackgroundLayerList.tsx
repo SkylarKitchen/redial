@@ -138,7 +138,7 @@ export function BackgroundLayerList({
   onChange,
   onEditColor,
 }: BackgroundLayerListProps) {
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(layers, onChange);
+  const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(layers, onChange);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const addRef = useRef<HTMLDivElement>(null);
@@ -604,10 +604,7 @@ export function BackgroundLayerList({
       })}
 
       {/* Drop indicator line */}
-      {(() => {
-        const style = dropLineStyle();
-        return style ? <div style={style} /> : null;
-      })()}
+      {dropLine}
       </div>
     </div>
   );

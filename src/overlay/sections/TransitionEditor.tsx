@@ -181,7 +181,7 @@ const DEFAULT_TRANSITION: TransitionValue = {
 };
 
 export function TransitionEditor({ transitions, onChange, element }: TransitionEditorProps) {
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transitions, onChange);
+  const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(transitions, onChange);
 
   const handleAdd = useCallback(() => {
     onChange([...transitions, { ...DEFAULT_TRANSITION }]);
@@ -237,10 +237,7 @@ export function TransitionEditor({ transitions, onChange, element }: TransitionE
       })}
 
       {/* Drop indicator line */}
-      {(() => {
-        const style = dropLineStyle();
-        return style ? <div style={style} /> : null;
-      })()}
+      {dropLine}
 
       {/* Add button */}
       <button

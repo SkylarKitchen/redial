@@ -578,7 +578,7 @@ export function TransformEditor({
   onPerspectiveOriginChange,
   settingsOpen,
 }: TransformEditorProps) {
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(transforms, onChange);
+  const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(transforms, onChange);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const prevLengthRef = useRef(transforms.length);
 
@@ -662,10 +662,7 @@ export function TransformEditor({
           );
         })}
         {/* Drop indicator line */}
-        {(() => {
-          const style = dropLineStyle();
-          return style ? <div style={style} /> : null;
-        })()}
+        {dropLine}
       </div>
 
       {/* Settings panel (toggled by parent's "..." button) */}

@@ -12,7 +12,7 @@
  * - Drop indicator: 2px indigo line between items
  */
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo, createElement } from "react";
 import { timing, ms, easeRelease } from "../timing";
 import { color, blackAlpha } from "../theme";
 
@@ -35,7 +35,9 @@ export function useDragReorder<T>(
     style: React.CSSProperties;
   };
   itemStyle: (index: number) => React.CSSProperties;
-  dropLineStyle: () => React.CSSProperties | null;
+  /** Ready-to-render drop indicator line (null when not dragging). Render it
+   *  as the last child of a `position: relative` list container. */
+  dropLine: React.ReactNode;
   isDragging: boolean;
 } {
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -221,40 +223,54 @@ export function useDragReorder<T>(
     [dragState, settling],
   );
 
-  const dropLineStyle = useCallback((): React.CSSProperties | null => {
-    if (!dragState || dragState.dragIndex === dragState.overIndex) return null;
-
-    const { overIndex, dragIndex, tops, heights } = dragState;
-
-    // Position the drop line at the boundary where the item will be inserted
-    let top: number;
-    if (dragIndex < overIndex) {
-      // Dragging down: line at bottom of overIndex item
-      top = tops[overIndex] + heights[overIndex] - tops[0];
-    } else {
-      // Dragging up: line at top of overIndex item
-      top = tops[overIndex] - tops[0];
-    }
-
-    return {
-      position: "absolute",
-      left: 0,
-      right: 0,
-      top: `${top}px`,
-      height: "2px",
-      background: color.primary,
-      borderRadius: "1px",
-      zIndex: 51,
-      pointerEvents: "none",
-    };
+  const dropLine = useMemo((): React.ReactNode => {
+    const style = computeDropLineStyle(dragState);
+    return style ? createElement("div", { style }) : null;
   }, [dragState]);
 
   return {
     registerRef,
     handleProps,
     itemStyle,
-    dropLineStyle,
+    dropLine,
     isDragging: dragState !== null || settling,
+  };
+}
+
+/**
+ * Pure computation: the absolutely-positioned style for the drop-indicator
+ * line, or null when no drop should be shown. Exported for testing.
+ *
+ * The line anchors to the list container (top measured relative to the first
+ * item), so the container must be `position: relative`.
+ */
+export function computeDropLineStyle(
+  dragState: DragState | null,
+): React.CSSProperties | null {
+  if (!dragState || dragState.dragIndex === dragState.overIndex) return null;
+
+  const { overIndex, dragIndex, tops, heights } = dragState;
+
+  // Position the drop line at the boundary where the item will be inserted
+  let top: number;
+  if (dragIndex < overIndex) {
+    // Dragging down: line at bottom of overIndex item
+    top = tops[overIndex] + heights[overIndex] - tops[0];
+  } else {
+    // Dragging up: line at top of overIndex item
+    top = tops[overIndex] - tops[0];
+  }
+
+  return {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: `${top}px`,
+    height: "2px",
+    background: color.primary,
+    borderRadius: "1px",
+    zIndex: 51,
+    pointerEvents: "none",
   };
 }
 

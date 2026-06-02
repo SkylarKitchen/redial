@@ -295,7 +295,7 @@ function ShadowRow({
 }
 
 export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(shadows, onChange);
+  const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(shadows, onChange);
 
   const handleAdd = useCallback(() => {
     onChange([...shadows, makeShadow()]);
@@ -375,10 +375,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
       })}
 
       {/* Drop indicator line */}
-      {(() => {
-        const style = dropLineStyle();
-        return style ? <div style={style} /> : null;
-      })()}
+      {dropLine}
     </div>
   );
 }

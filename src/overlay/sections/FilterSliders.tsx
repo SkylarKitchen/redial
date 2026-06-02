@@ -562,7 +562,7 @@ function CategorizedDropdown({
 export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const { registerRef, handleProps, itemStyle, dropLineStyle, isDragging } = useDragReorder(items, onChange);
+  const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(items, onChange);
 
   const activeTypes = useMemo(() => new Set(items.map((i) => i.type)), [items]);
 
@@ -641,10 +641,7 @@ export function FilterEditor({ items, onChange, type = "filter" }: FilterEditorP
         })}
 
         {/* Drop indicator line */}
-        {(() => {
-          const style = dropLineStyle();
-          return style ? <div style={style} /> : null;
-        })()}
+        {dropLine}
       </div>
 
       {items.length === 0 && (

@@ -16,13 +16,6 @@ export type SpacingSide = 'top' | 'right' | 'bottom' | 'left';
 export type SpacingProperty = `margin-${SpacingSide}` | `padding-${SpacingSide}`;
 export type SpacingUnit = 'px' | '%' | 'em' | 'rem' | 'vw' | 'vh';
 
-export interface EditableValueProps {
-  value: number;
-  onChange: (value: number) => void;
-  onAltClick?: () => void;
-  'data-spacing-index'?: number;
-}
-
 // ─── Value Flash Hook ───────────────────────────────────────────────
 
 /** Brief background flash when a numeric value changes — confirms the change registered. */
