@@ -213,7 +213,16 @@ export const BordersSection = memo(function BordersSection({
   const handleBorderStyleChange = useCallback((v: string) => {
     setBorderStyle(v);
     apply(borderProp("style"), v);
-  }, [apply, borderSide]);
+    // A border style with width 0 renders nothing. When the user picks a
+    // visible style (solid/dotted/dashed) and there's no width yet, give it a
+    // 1px default so the border actually appears (Webflow parity). This is the
+    // common case under Tailwind Preflight, where border-style defaults to
+    // "solid" but border-width is 0.
+    if (v !== "none" && borderWidth === 0) {
+      setBorderWidth(1);
+      apply(borderProp("width"), `1${borderWidthUnit}`);
+    }
+  }, [apply, borderSide, borderWidth, borderWidthUnit]);
 
   const handleBorderWidthChange = useCallback((v: number) => {
     setBorderWidth(v);
@@ -341,6 +350,7 @@ export const BordersSection = memo(function BordersSection({
               options={BORDER_STYLE_ICON_OPTIONS}
               value={borderStyle}
               onChange={handleBorderStyleChange}
+              allowDeselect={false}
               aria-label="Border style"
             />
           </div>

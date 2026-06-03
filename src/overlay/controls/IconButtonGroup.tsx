@@ -18,10 +18,18 @@ export interface IconButtonGroupProps {
   onChange: (value: string) => void;
   multi?: boolean;
   onReset?: () => void;
+  /**
+   * When true (default), clicking the already-active single-select option
+   * toggles it back to "none". Set false for true radio behavior where a
+   * dedicated "none" option is the only way to clear — e.g. border-style,
+   * whose inherited value is often "solid" (Tailwind Preflight) so a toggle
+   * would silently remove the border the user is trying to add.
+   */
+  allowDeselect?: boolean;
   "aria-label"?: string;
 }
 
-export function IconButtonGroup({ options, value, onChange, multi = false, onReset, "aria-label": ariaLabel }: IconButtonGroupProps) {
+export function IconButtonGroup({ options, value, onChange, multi = false, allowDeselect = true, onReset, "aria-label": ariaLabel }: IconButtonGroupProps) {
   const activeValues = multi ? new Set(value.split(" ").filter(Boolean)) : new Set([value]);
 
   const handleClick = useCallback(
@@ -41,12 +49,17 @@ export function IconButtonGroup({ options, value, onChange, multi = false, onRes
         }
         const result = Array.from(current).join(" ");
         onChange(result || "none");
+      } else if (!allowDeselect) {
+        // True radio: re-clicking the active option re-affirms it (never
+        // deselects to "none"). Re-affirming still fires onChange so coupled
+        // side effects (e.g. setting a visible border-width) can run.
+        onChange(optValue);
       } else {
         // Toggle-deselect: clicking active option returns to "none"
         onChange(optValue === value ? "none" : optValue);
       }
     },
-    [value, onChange, multi]
+    [value, onChange, multi, allowDeselect]
   );
 
   const items = options.map((opt, i) => {
