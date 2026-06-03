@@ -61,6 +61,16 @@ export function useElementTracker(
     const ro = new ResizeObserver(scheduleSync);
     ro.observe(element);
 
+    // Track inline-style / class edits applied by the panel. A panel edit that
+    // MOVES the element without changing its border-box size (e.g. margin-top or
+    // a position/top/left offset) never triggers ResizeObserver, so without this
+    // the outline would stay on the element's stale position. We watch the PAGE
+    // element (not our outline) and the tracker never mutates its style/class, so
+    // there is no feedback loop. Coalesce via scheduleSync — a slider drag fires
+    // many mutations and must read the rect at most once per frame.
+    const mo = new MutationObserver(scheduleSync);
+    mo.observe(element, { attributes: true, attributeFilter: ["style", "class"] });
+
     // Track scroll synchronously — scroll fires after layout and before paint,
     // so reading rect + writing outline position here lands in the SAME frame
     // the content scrolled, eliminating the one-frame visual lag.
@@ -72,6 +82,7 @@ export function useElementTracker(
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
       ro.disconnect();
+      mo.disconnect();
       document.removeEventListener("scroll", sync, true);
       window.removeEventListener("resize", scheduleSync);
       // Hide outlines when tracking stops (element changed, disabled, or unmount)
