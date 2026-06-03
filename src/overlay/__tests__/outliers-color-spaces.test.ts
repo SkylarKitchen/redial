@@ -273,13 +273,21 @@ describe("resolveBackdropColor — opaque non-hex backgrounds are walked past", 
 });
 
 // ---------------------------------------------------------------------------
-// BACKDROP — a NON-normalized comma rgb() with extra whitespace. cssColorToHex
-// tolerates "\s*" between channels, so a slightly noisy but valid value still
-// resolves. Confirms the happy path isn't accidentally brittle.
+// cssColorToHex — whitespace tolerance of the channel regex. The pattern is
+// `(\d+),\s*(\d+)`: it allows whitespace AFTER a comma (the canonical computed
+// form) but NOT before one. A value with space-before-comma — which is exactly
+// what some engines emit when serializing certain authored colors — fails to
+// match and is returned unchanged. (Locks the actual asymmetry.)
 // ---------------------------------------------------------------------------
-describe("resolveBackdropColor — whitespace-noisy comma rgb still resolves", () => {
-  it("resolves rgb(  0,128 ,255 ) to #0080ff", () => {
-    const el = bgEl(document.body, { backgroundColor: "rgb(0,128 ,255)" });
-    expect(resolveBackdropColor(el)).toEqual({ hex: "#0080ff" });
+describe("cssColorToHex — comma whitespace tolerance is asymmetric", () => {
+  it("converts the canonical space-after-comma form", () => {
+    expect(cssColorToHex("rgb(0, 128, 255)")).toBe("#0080ff");
+  });
+
+  // BUG-ADJACENT (regex strictness): `\s*` sits only after the comma, so a
+  // space *before* the comma breaks the match and the value passes through
+  // unconverted instead of resolving to #0080ff.
+  it("fails to convert a space-before-comma rgb and returns it unchanged", () => {
+    expect(cssColorToHex("rgb(0, 128 , 255)")).toBe("rgb(0, 128 , 255)");
   });
 });

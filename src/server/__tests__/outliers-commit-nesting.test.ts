@@ -38,39 +38,49 @@ async function writeFixture(relativePath: string, content: string): Promise<stri
 // -------------------------------------------------------------------------
 
 describe("brace literals inside values vs. brace-depth counters", () => {
-  // BUG: searchClassBlock counts every '{' / '}' char regardless of string
-  // context, so a `content: "{"` (unbalanced brace literal) before the target
-  // property pushes depth to 2 and the block-extent logic mis-tracks. The
-  // counter has no concept of CSS strings.
-  it.fails("finds a later property in a block that contains content: \"{\"", () => {
+  // searchClassBlock counts every '{' / '}' char regardless of string context,
+  // so `content: "}"` closes the .tag block early in the counter's view and the
+  // real `color: red` on line 6 becomes unreachable to the class-scoped search.
+  // The tiered fallback then runs a full-file search by value, which picks the
+  // FIRST `color: red` in the file — the unrelated .decoy block on line 1.
+  // RESULT: a class-scoped edit silently lands in the WRONG class.
+  // BUG: stray closing-brace literal in a value defeats class scoping, so the
+  // edit is misattributed to an earlier block with the same prop+value.
+  it.fails("scopes color:red to .tag (not earlier .decoy) despite a content: \"}\" literal", () => {
     const lines = [
-      ".tag {",                       // 0  depth->1
-      '  content: "{";',              // 1  depth->2 (stray '{' in string)
-      "  color: red;",                // 2  depth still 2
-      "}",                            // 3  depth->1  (block NOT closed in counter's view)
-      "",                             // 4
-      ".other { z-index: 5; }",       // 5
+      ".decoy {",                     // 0
+      "  color: red;",                // 1  full-file picks THIS (wrong block)
+      "}",                            // 2
+      "",                             // 3
+      ".tag {",                       // 4  depth->1
+      '  content: "}";',              // 5  stray '}' closes .tag early in counter
+      "  color: red;",                // 6  the CORRECT target line
+      "}",                            // 7
     ];
-    // We ask for color:red scoped to .tag — it is genuinely on line 2.
     const result = findPropertyInFile(lines, "color", "red", undefined, "tag");
     expect(result).not.toBeNull();
-    expect(result!.lineIdx).toBe(2);
+    expect(result!.lineIdx).toBe(6); // must be .tag's color, not .decoy's
   });
 
-  // The mirror image: a stray closing brace in a string ends the block early,
-  // so a real later property is invisible to the class-scoped search.
-  // BUG: `content: "}"` decrements depth to 0 -> block considered closed at
-  // line 1, the real `color: red` on line 2 is never searched.
-  it.fails("finds color after a content: \"}\" line in the same block", () => {
+  // Mirror of the above with an opening-brace literal. `content: "{"` pushes the
+  // counter to depth 2 inside .tag; the block never appears to close, but the
+  // class search still passes over the right line here because depth stays > 0.
+  // This variant DOES resolve correctly via class-block search — lock it green.
+  it("scopes a property correctly even when the block contains content: \"{\"", () => {
     const lines = [
-      ".tag {",                       // 0  depth->1
-      '  content: "}";',              // 1  depth->0 (stray '}' closes block early)
-      "  color: red;",                // 2  unreachable for class search
-      "}",                            // 3
+      ".decoy {",                     // 0
+      "  color: red;",                // 1
+      "}",                            // 2
+      "",                             // 3
+      ".tag {",                       // 4
+      '  content: "{";',              // 5  stray '{' -> depth 2 (block stays open)
+      "  color: red;",                // 6  target, still reachable (depth > 0)
+      "}",                            // 7
     ];
     const result = findPropertyInFile(lines, "color", "red", undefined, "tag");
     expect(result).not.toBeNull();
-    expect(result!.lineIdx).toBe(2);
+    expect(result!.lineIdx).toBe(6);
+    expect(result!.strategy).toBe("class-block");
   });
 
   // A data-URI value containing braces in handleCommit. The brace counter sees
@@ -342,23 +352,30 @@ describe("multi-line selector lists", () => {
     expect(content).toContain("color: red");
   });
 
-  // BUG: when the selector list pushes the opening brace MORE than 2 lines
-  // below the matched selector (window is `j < i + 3`, i.e. i, i+1, i+2),
-  // blockStart stays on the selector line, the brace is never seen, depth
-  // never rises, and `depth <= 0 && j > blockStart` breaks immediately —
-  // the property is missed.
-  it.fails("finds a property when the opening brace is 3 lines below the selector", () => {
+  // BUG: searchClassBlock only looks for the opening brace within i..i+2
+  // (`for (j = i; j < i + 3 ...)`). When a selector list pushes the opening
+  // brace 3+ lines below the matched selector, blockStart stays on the
+  // selector line, the brace is never counted, depth never rises, and the
+  // `depth <= 0 && j > blockStart` guard breaks the scan immediately. The
+  // class-scoped search finds nothing, so the tiered fallback runs full-file
+  // by value and lands on an earlier .decoy block with the same prop+value —
+  // the edit is misattributed.
+  it.fails("scopes color:blue to .btn when its opening brace is 3 lines below the selector", () => {
     const lines = [
-      ".btn,",        // 0  matched selector
-      ".alt,",        // 1
-      ".extra,",      // 2
-      ".more {",      // 3  opening brace — outside the i..i+2 window
-      "  color: blue;", // 4
-      "}",            // 5
+      ".decoy {",     // 0
+      "  color: blue;", // 1  full-file picks THIS (wrong block)
+      "}",            // 2
+      "",             // 3
+      ".btn,",        // 4  matched selector
+      ".alt,",        // 5
+      ".extra,",      // 6
+      ".more {",      // 7  opening brace — outside the i..i+2 window
+      "  color: blue;", // 8  the CORRECT target line
+      "}",            // 9
     ];
     const result = findPropertyInFile(lines, "color", "blue", undefined, "btn");
     expect(result).not.toBeNull();
-    expect(result!.lineIdx).toBe(4);
+    expect(result!.lineIdx).toBe(8); // must be .btn's block, not .decoy's
   });
 });
 
@@ -460,19 +477,15 @@ describe("vendor-prefixed properties", () => {
 });
 
 // -------------------------------------------------------------------------
-// 8. Pseudo-class create path inside an @media-wrapped class.
-//    findClassBlockEnd must return the correct closing brace.
+// 8. findClassBlockEnd vs. brace literals when CREATING a new :hover block.
+//    The same char-by-char counter decides where the new state block goes.
 // -------------------------------------------------------------------------
 
-describe("findClassBlockEnd / pseudo create with wrappers", () => {
-  // BUG: findClassBlockEnd starts the depth counter at the SELECTOR line i,
-  // but only the line containing `{` actually increments depth. When the class
-  // is inside @media, the inner `.card {` selector line is line i; the counter
-  // works there. But the create-block path inserts a *flat* `.card:hover {}`
-  // block after the inner closing brace, breaking it out of the @media wrapper
-  // and nesting it incorrectly. We assert the created hover rule is INSIDE the
-  // @media block (nested), which the flat-insert path does not guarantee.
-  it.fails("creates the :hover rule inside the @media wrapper, not after it", async () => {
+describe("findClassBlockEnd / pseudo-create with brace literals", () => {
+  // findClassBlockEnd inside an @media wrapper works positionally because the
+  // inner `.card {` is where depth first rises. Lock the (correct) behavior:
+  // the new flat .card:hover rule is created as a sibling INSIDE the @media.
+  it("creates a :hover sibling inside an @media-wrapped class", async () => {
     const filePath = "src/MediaCreate.module.css";
     await writeFixture(filePath, [
       "@media (min-width: 768px) {",
@@ -496,12 +509,78 @@ describe("findClassBlockEnd / pseudo create with wrappers", () => {
 
     expect(result.written).toContain(filePath);
     const content = await readFile(join(tempDir, filePath), "utf-8");
-    // The new hover rule must live INSIDE the @media block (it is a responsive
-    // override). Assert the closing of @media comes AFTER the hover rule.
     const hoverIdx = content.indexOf(":hover");
-    const mediaCloseIdx = content.lastIndexOf("}");
+    const lastBrace = content.lastIndexOf("}");
     expect(hoverIdx).toBeGreaterThan(-1);
-    expect(hoverIdx).toBeLessThan(mediaCloseIdx);
+    // The hover rule lives before the final closing brace (inside @media).
+    expect(hoverIdx).toBeLessThan(lastBrace);
+  });
+
+  // BUG: findClassBlockEnd uses the same naive brace counter. An unbalanced
+  // opening-brace literal (`content: "{"`) means depth never returns to 0, so
+  // it returns null. handleCommit then reports the base class "not found" and
+  // REFUSES to create the :hover block — the user cannot add any state to a
+  // class whose block contains a brace-literal value.
+  it.fails("creates a :hover block for a class whose value contains content: \"{\"", async () => {
+    const filePath = "src/StrayOpen.module.css";
+    await writeFixture(filePath, [
+      ".card {",
+      '  content: "{";',
+      "  color: blue;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "blue",
+        to: "red",
+        sourceFile: filePath,
+        className: "card",
+        state: "hover",
+      }],
+      tempDir,
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toContain(".card:hover");
+  });
+
+  // BUG: the mirror case. `content: "}"` makes findClassBlockEnd return early
+  // (depth hits 0 at the content line), so the new .card:hover block is spliced
+  // into the MIDDLE of the .card block — producing structurally broken CSS with
+  // a rule nested inside another rule and an orphaned declaration.
+  it.fails("creates a valid (non-nested) :hover block when value contains content: \"}\"", async () => {
+    const filePath = "src/StrayClose.module.css";
+    await writeFixture(filePath, [
+      ".card {",
+      '  content: "}";',
+      "  color: blue;",
+      "}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{
+        prop: "color",
+        from: "blue",
+        to: "red",
+        sourceFile: filePath,
+        className: "card",
+        state: "hover",
+      }],
+      tempDir,
+    );
+
+    expect(result.written).toContain(filePath);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // The created hover rule must come AFTER the base block fully closes —
+    // i.e. after the `color: blue` declaration, not spliced before it.
+    const colorBlueIdx = content.indexOf("color: blue");
+    const hoverIdx = content.indexOf(".card:hover");
+    expect(hoverIdx).toBeGreaterThan(-1);
+    expect(hoverIdx).toBeGreaterThan(colorBlueIdx);
   });
 });
 

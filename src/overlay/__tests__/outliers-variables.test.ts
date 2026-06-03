@@ -199,14 +199,19 @@ describe("replaceVarReferences — prefix safety & whitespace", () => {
     document.body.removeChild(el);
   });
 
-  it("renames both occurrences in a nested fallback var(--a, var(--a))", () => {
+  it("renames every occurrence across multiple properties and reports the count", () => {
+    // happy-dom rejects var() values that carry a fallback (e.g. "var(--a, red)"),
+    // so we exercise the multi-occurrence path with two simple var() refs.
     const el = document.createElement("div");
-    el.style.setProperty("color", "var(--a, var(--a))");
+    el.style.setProperty("color", "var(--a)");
+    el.style.setProperty("background", "var(--a)");
     document.body.appendChild(el);
 
-    replaceVarReferences("--a", "--x");
+    const count = replaceVarReferences("--a", "--x");
 
-    expect(el.style.getPropertyValue("color")).toBe("var(--x, var(--x))");
+    expect(el.style.getPropertyValue("color")).toBe("var(--x)");
+    expect(el.style.getPropertyValue("background")).toBe("var(--x)");
+    expect(count).toBe(2);
 
     document.body.removeChild(el);
   });
@@ -263,13 +268,14 @@ describe("resolveVarColor — :root resolution edge cases", () => {
     expect(resolveVarColor("var(--definitely-not-set-xyz)")).toBeNull();
   });
 
-  it("resolves a var() whose definition is itself another var() (no second hop)", () => {
-    // happy-dom returns the raw inline value verbatim; the resolver does a
-    // single getPropertyValue lookup and does NOT recursively resolve.
+  it("returns null for a var() whose definition is itself another var() (no recursion)", () => {
+    // resolveVarColor does a single getPropertyValue lookup and does NOT chase a
+    // second hop. (Note: happy-dom additionally refuses to store a var()-valued
+    // custom property, so the lookup yields "" → null. In a real browser this
+    // would resolve to the leaf color; the no-recursion contract still holds.)
     document.documentElement.style.setProperty("--alias", "var(--target)");
     const result = resolveVarColor("var(--alias)");
-    // One-hop only: returns the literal "var(--target)" string, unresolved.
-    expect(result).toBe("var(--target)");
+    expect(result).toBeNull();
     document.documentElement.style.removeProperty("--alias");
   });
 
