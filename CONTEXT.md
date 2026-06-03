@@ -88,6 +88,19 @@ A theme-mode override of a CSS variable, keyed by `(selector, varName)` and **gl
 A responsive viewport band an **override** can belong to (its `@media` context), e.g. the base/un-mediated styles vs. `≥768px`. A breakpoint is an **orthogonal dimension** that **composes with** the element/class/state **override target** rather than replacing it — a `:hover` edit *at* `≥768px` is a state edit **and** a breakpoint edit at once. The **base breakpoint** is the un-mediated default (no `@media`). A **mode override** carries no breakpoint (modes are their own dimension). Reset is per-breakpoint: a Footer Reset clears only the active breakpoint's cell, while session-wide "Reset all" spans every breakpoint (see ADR-0005).
 _Avoid_: conflating a breakpoint with a **mode** — a mode is a CSS-variable theme (Dark, Compact); a breakpoint is a viewport width. `modeDiscovery` surfaces both as "modes" on the read side, but they are distinct override dimensions.
 
+## Element tracker
+
+The deep, event-driven module (`useElementTracker`) that reports when a page element's position or size changes, so on-page chrome can follow it without polling. A single small interface (element, enabled, an update callback, an optional disconnect/invalidate, and `observeChildren`) hides a ResizeObserver, a synchronous capture-phase scroll listener, a `style`/`class` (and optionally `childList`) MutationObserver, a window-resize listener, an external invalidate subscription, and rАF coalescing. The **scroll path is synchronous on purpose** (read rect + reposition in the scroll event's own frame) to avoid a one-frame lag behind GPU-composited scrolling. It is the single seam every selection outline and measurement overlay shares.
+_Avoid_: "RAF loop" / "poll" — those name the *old* per-overlay implementation the tracker replaced.
+
+## Tracked overlay
+
+A page overlay whose geometry is recomputed through the **element tracker** rather than a perpetual rАF poll. `useTrackedOverlay` is the state-returning adapter the declarative overlays (grid, flex-gap, spacing preview/guides) use: it owns the React state and the change-key skip-render, auto-wires the style engine's override signal, and accepts one extra invalidate source (the spacing overlays pass the scrub/hover signal). The box-model overlay and selection outline are the *imperative* adapters of the same tracker — two real adapters at one seam.
+
+## Box geometry
+
+The pure box-model math (`boxGeometry.ts`) shared by the box-model and spacing overlays: `parseBoxModel` (read the twelve margin/padding/border edges), `boxRects` (the margin/padding/content rectangles), and `buildZones` (the per-side spacing zones). No DOM beyond the one `getComputedStyle` read in `parseBoxModel`, so the geometry — where the real bugs hide (corner tiling, inner-box insets) — is tested without a DOM.
+
 ## Flagged ambiguities
 
 - **"modal"** was used to mean the floating tuning surface — resolved: the canonical term is **Panel**. Redial has no modal (nothing centered, blocking, or backdropped).

@@ -10,11 +10,26 @@
  *
  * Visibility is driven by getScrubGroup() — the component self-hides
  * when no scrub is active, so it can be rendered unconditionally.
+ *
+ * Position/size tracking goes through the shared `useTrackedOverlay` hook (the
+ * event-driven element tracker): scroll is synchronous, size/style/class edits
+ * are rAF-coalesced, and `subscribeScrubState` is passed as an extra invalidate
+ * source so the guides re-measure when the active scrub/hover group changes
+ * (those flags fire no DOM event). Box parsing and per-side zone math are the
+ * shared `parseBoxModel` / `buildZones` geometry utils.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React from "react";
 import { color, font, zIndex, overlay, blackAlpha } from "../theme";
-import { getScrubGroup } from "../core/scrubState";
+import { getScrubGroup, subscribeScrubState } from "../core/scrubState";
+import { useTrackedOverlay } from "../hooks/useTrackedOverlay";
+import {
+  parseBoxModel,
+  buildZones,
+  type BoxModel,
+  type BoxRect,
+  type Zone,
+} from "../util/boxGeometry";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,125 +42,33 @@ const PADDING_FILL = overlay.spacing.paddingFill;
 const LABEL_FONT = font.mono;
 
 // ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-interface Snapshot {
-  group: "margin" | "padding";
-  top: number; left: number; width: number; height: number;
-  right: number; bottom: number;
-  mt: number; mr: number; mb: number; ml: number;
-  pt: number; pr: number; pb: number; pl: number;
-  bt: number; br: number; bb: number; bl: number;
-}
-
-interface ZoneRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  value: number;
-  side: "top" | "right" | "bottom" | "left";
-}
-
-// ---------------------------------------------------------------------------
 // Metrics
 // ---------------------------------------------------------------------------
 
-function px(v: string): number {
-  return parseFloat(v) || 0;
+interface Metrics {
+  group: "margin" | "padding";
+  rect: BoxRect;
+  box: BoxModel;
 }
 
-function computeSnapshot(el: Element): Snapshot | null {
+function measure(el: Element): Metrics | null {
   const group = getScrubGroup();
   if (!group || !el.isConnected) return null;
-  const cs = getComputedStyle(el);
   const r = el.getBoundingClientRect();
-  return {
-    group,
-    top: r.top, left: r.left, width: r.width, height: r.height,
-    right: r.right, bottom: r.bottom,
-    mt: px(cs.marginTop), mr: px(cs.marginRight),
-    mb: px(cs.marginBottom), ml: px(cs.marginLeft),
-    pt: px(cs.paddingTop), pr: px(cs.paddingRight),
-    pb: px(cs.paddingBottom), pl: px(cs.paddingLeft),
-    bt: px(cs.borderTopWidth), br: px(cs.borderRightWidth),
-    bb: px(cs.borderBottomWidth), bl: px(cs.borderLeftWidth),
+  const rect: BoxRect = {
+    top: r.top,
+    left: r.left,
+    width: r.width,
+    height: r.height,
+    right: r.right,
+    bottom: r.bottom,
   };
+  return { group, rect, box: parseBoxModel(el) };
 }
 
-function snapshotKey(s: Snapshot): string {
-  return `${s.group},${s.top},${s.left},${s.width},${s.height},${s.mt},${s.mr},${s.mb},${s.ml},${s.pt},${s.pr},${s.pb},${s.pl}`;
-}
-
-// ---------------------------------------------------------------------------
-// Zone computation
-// ---------------------------------------------------------------------------
-
-function buildZones(snap: Snapshot): ZoneRect[] {
-  const zones: ZoneRect[] = [];
-
-  if (snap.group === "margin") {
-    // Top margin — full outer width
-    if (snap.mt > 0) zones.push({
-      x: snap.left - snap.ml, y: snap.top - snap.mt,
-      w: snap.width + snap.ml + snap.mr, h: snap.mt,
-      value: snap.mt, side: "top",
-    });
-    // Bottom margin — full outer width
-    if (snap.mb > 0) zones.push({
-      x: snap.left - snap.ml, y: snap.bottom,
-      w: snap.width + snap.ml + snap.mr, h: snap.mb,
-      value: snap.mb, side: "bottom",
-    });
-    // Left margin — excludes top/bottom corners
-    if (snap.ml > 0) zones.push({
-      x: snap.left - snap.ml, y: snap.top,
-      w: snap.ml, h: snap.height,
-      value: snap.ml, side: "left",
-    });
-    // Right margin — excludes top/bottom corners
-    if (snap.mr > 0) zones.push({
-      x: snap.right, y: snap.top,
-      w: snap.mr, h: snap.height,
-      value: snap.mr, side: "right",
-    });
-  } else {
-    // Padding zones — inside the border box
-    const iT = snap.top + snap.bt;
-    const iR = snap.right - snap.br;
-    const iB = snap.bottom - snap.bb;
-    const iL = snap.left + snap.bl;
-    const innerW = iR - iL;
-    const innerH = iB - iT;
-
-    // Top padding — full inner width
-    if (snap.pt > 0) zones.push({
-      x: iL, y: iT,
-      w: innerW, h: snap.pt,
-      value: snap.pt, side: "top",
-    });
-    // Bottom padding — full inner width
-    if (snap.pb > 0) zones.push({
-      x: iL, y: iB - snap.pb,
-      w: innerW, h: snap.pb,
-      value: snap.pb, side: "bottom",
-    });
-    // Left padding — excludes top/bottom corners
-    if (snap.pl > 0) zones.push({
-      x: iL, y: iT + snap.pt,
-      w: snap.pl, h: Math.max(0, innerH - snap.pt - snap.pb),
-      value: snap.pl, side: "left",
-    });
-    // Right padding — excludes top/bottom corners
-    if (snap.pr > 0) zones.push({
-      x: iR - snap.pr, y: iT + snap.pt,
-      w: snap.pr, h: Math.max(0, innerH - snap.pt - snap.pb),
-      value: snap.pr, side: "right",
-    });
-  }
-
-  return zones;
+function changeKey(m: Metrics): string {
+  const { group, rect: r, box: b } = m;
+  return `${group},${r.top},${r.left},${r.width},${r.height},${b.mt},${b.mr},${b.mb},${b.ml},${b.pt},${b.pr},${b.pb},${b.pl}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,71 +111,37 @@ const BADGE_BASE: React.CSSProperties = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function SpacingGuidesOverlay({
-  element,
-  refreshKey,
-}: {
-  element: Element;
-  refreshKey?: number;
-}) {
-  const [snap, setSnap] = useState<Snapshot | null>(null);
-  const rafRef = useRef(0);
-  const prevRef = useRef("");
-
-  const measure = useCallback(() => {
-    const s = computeSnapshot(element);
-    const key = s ? snapshotKey(s) : "";
-    if (key !== prevRef.current) {
-      prevRef.current = key;
-      setSnap(s);
-    }
-  }, [element]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loop = () => {
-      if (cancelled) return;
-      measure();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-
-    const ro = new ResizeObserver(() => {
-      if (!cancelled) measure();
-    });
-    ro.observe(element);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafRef.current);
-      ro.disconnect();
-    };
-  }, [element, refreshKey, measure]);
+export function SpacingGuidesOverlay({ element }: { element: Element }) {
+  const m = useTrackedOverlay(element, true, measure, changeKey, {
+    extraInvalidate: subscribeScrubState,
+  });
 
   // Nothing to show when no scrub is active
-  if (!snap) return null;
+  if (!m) return null;
 
-  const zones = buildZones(snap);
+  const { group, rect, box } = m;
+
+  const zones = buildZones(box, rect, group);
   if (zones.length === 0) return null;
 
   // Boundary boxes for visual context
   const marginBox = {
-    top: snap.top - snap.mt,
-    left: snap.left - snap.ml,
-    width: snap.width + snap.ml + snap.mr,
-    height: snap.height + snap.mt + snap.mb,
+    top: rect.top - box.mt,
+    left: rect.left - box.ml,
+    width: rect.width + box.ml + box.mr,
+    height: rect.height + box.mt + box.mb,
   };
 
   const contentBox = {
-    top: snap.top + snap.bt + snap.pt,
-    left: snap.left + snap.bl + snap.pl,
-    width: Math.max(0, snap.width - snap.bl - snap.br - snap.pl - snap.pr),
-    height: Math.max(0, snap.height - snap.bt - snap.bb - snap.pt - snap.pb),
+    top: rect.top + box.bt + box.pt,
+    left: rect.left + box.bl + box.pl,
+    width: Math.max(0, rect.width - box.bl - box.br - box.pl - box.pr),
+    height: Math.max(0, rect.height - box.bt - box.bb - box.pt - box.pb),
   };
 
   return (
     <div className="__tuner-overlay" style={{ ...BASE, top: 0, left: 0, width: "100vw", height: "100vh" }}>
-      {snap.group === "margin" ? (
+      {group === "margin" ? (
         <>
           {/* Margin-box boundary */}
           <div style={{
@@ -264,8 +153,8 @@ export function SpacingGuidesOverlay({
           {/* Border-box boundary */}
           <div style={{
             ...BOX_LINE,
-            top: snap.top, left: snap.left,
-            width: snap.width, height: snap.height,
+            top: rect.top, left: rect.left,
+            width: rect.width, height: rect.height,
             border: `1px solid ${MARGIN_COLOR}`, opacity: 0.4,
           }} />
         </>
@@ -274,8 +163,8 @@ export function SpacingGuidesOverlay({
           {/* Border-box boundary */}
           <div style={{
             ...BOX_LINE,
-            top: snap.top, left: snap.left,
-            width: snap.width, height: snap.height,
+            top: rect.top, left: rect.left,
+            width: rect.width, height: rect.height,
             border: `1px solid ${PADDING_COLOR}`, opacity: 0.4,
           }} />
           {/* Content-box dashed outline */}
@@ -290,7 +179,7 @@ export function SpacingGuidesOverlay({
 
       {/* Filled hatched zones + dimension badges */}
       {zones.map((z, i) => (
-        <SpacingZone key={`${z.side}-${i}`} zone={z} group={snap.group} />
+        <SpacingZone key={`${z.side}-${i}`} zone={z} group={group} />
       ))}
     </div>
   );
@@ -300,7 +189,7 @@ export function SpacingGuidesOverlay({
 // Per-side hatched zone with centered badge
 // ---------------------------------------------------------------------------
 
-function SpacingZone({ zone: z, group }: { zone: ZoneRect; group: "margin" | "padding" }) {
+function SpacingZone({ zone: z, group }: { zone: Zone; group: "margin" | "padding" }) {
   const label = Math.round(z.value);
   const color = guideColor(group);
 

@@ -15,7 +15,6 @@ import { SpacingPreviewOverlay } from "../overlays/SpacingPreviewOverlay";
 
 export interface VisualOverlaysProps {
   element: Element;
-  refreshKey: number;
   isGridContainer: boolean;
   isFlexContainer: boolean;
   showGridOverlay: boolean;
@@ -24,7 +23,6 @@ export interface VisualOverlaysProps {
 
 export function VisualOverlays({
   element,
-  refreshKey,
   isGridContainer,
   isFlexContainer,
   showGridOverlay,
@@ -34,24 +32,24 @@ export function VisualOverlays({
     <>
       {/* Grid overlay (only when selected element is a grid container and overlay is enabled) */}
       {isGridContainer && showGridOverlay && (
-        <GridOverlay element={element} refreshKey={refreshKey} />
+        <GridOverlay element={element} />
       )}
 
       {/* Box model overlay (M key) */}
       {showBoxModel && (
-        <BoxModelOverlay element={element} refreshKey={refreshKey} />
+        <BoxModelOverlay element={element} />
       )}
 
       {/* Ghosted margin + padding preview — always visible on selection */}
-      <SpacingPreviewOverlay element={element} refreshKey={refreshKey} />
+      <SpacingPreviewOverlay element={element} />
 
       {/* Flex gap overlay — pink dashed hatching between flex children */}
       {isFlexContainer && (
-        <FlexGapOverlay element={element} refreshKey={refreshKey} />
+        <FlexGapOverlay element={element} />
       )}
 
       {/* Spacing guides overlay — full intensity during active scrubbing */}
-      <SpacingGuidesOverlay element={element} refreshKey={refreshKey} />
+      <SpacingGuidesOverlay element={element} />
     </>
   );
 }

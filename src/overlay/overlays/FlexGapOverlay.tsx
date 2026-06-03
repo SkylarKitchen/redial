@@ -5,12 +5,14 @@
  * in the gap spaces between direct children. Measures child bounding rects
  * and computes gap regions along the main axis (row or column).
  *
- * Uses a RAF loop + ResizeObserver to stay in sync with layout changes,
- * following the same pattern as GridOverlay and SpacingGuidesOverlay.
+ * Stays in sync with layout changes through the shared useTrackedOverlay hook,
+ * following the same pattern as GridOverlay and SpacingGuidesOverlay. Because it
+ * measures the CHILDREN (not the container), it observes children too.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React from "react";
 import { color, font, overlay, zIndex } from "../theme";
+import { useTrackedOverlay } from "../hooks/useTrackedOverlay";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -152,46 +154,13 @@ const BADGE_STYLE: React.CSSProperties = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function FlexGapOverlay({
-  element,
-  refreshKey,
-}: {
-  element: Element;
-  refreshKey?: number;
-}) {
-  const [metrics, setMetrics] = useState<FlexMetrics | null>(null);
-  const rafRef = useRef(0);
-  const prevRef = useRef("");
-
-  const measure = useCallback(() => {
-    const m = computeMetrics(element);
-    const key = m ? metricsKey(m) : "";
-    if (key !== prevRef.current) {
-      prevRef.current = key;
-      setMetrics(m);
-    }
-  }, [element]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loop = () => {
-      if (cancelled) return;
-      measure();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-
-    const ro = new ResizeObserver(() => {
-      if (!cancelled) measure();
-    });
-    ro.observe(element);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafRef.current);
-      ro.disconnect();
-    };
-  }, [element, refreshKey, measure]);
+export function FlexGapOverlay({ element }: { element: Element }) {
+  // This overlay measures the gaps between the container's direct children, so
+  // it must observe the children too (a child can resize without resizing the
+  // container).
+  const metrics = useTrackedOverlay(element, true, computeMetrics, metricsKey, {
+    observeChildren: true,
+  });
 
   if (!metrics || metrics.gaps.length === 0) return null;
 

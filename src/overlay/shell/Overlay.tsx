@@ -721,7 +721,6 @@ export function Overlay() {
       {selectedEl && !selecting && (
         <VisualOverlays
           element={selectedEl}
-          refreshKey={panelKey}
           isGridContainer={isGridContainer}
           isFlexContainer={isFlexContainer}
           showGridOverlay={showGridOverlay}

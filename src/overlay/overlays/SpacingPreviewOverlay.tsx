@@ -7,10 +7,21 @@
  *
  * No dimension badges — those only appear during active scrubbing
  * via SpacingGuidesOverlay.
+ *
+ * Tracking is delegated to the shared `useTrackedOverlay` hook (the single home
+ * for the old per-overlay requestAnimationFrame poll + ResizeObserver + skip-
+ * render pattern): scroll is synchronous, size/style/class edits are rAF-
+ * coalesced, and engine overrides re-measure for free. The hover group lives
+ * inside the tracked metrics object (folded into `changeKey`), and
+ * `subscribeScrubState` is passed as the extra invalidate source so a hover/
+ * scrub change — which fires no DOM event — still triggers a re-measure. Zone
+ * geometry comes from the shared `boxGeometry.buildZones` util.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { getHoverGroup, getScrubGroup } from "../core/scrubState";
+import React from "react";
+import { getHoverGroup, getScrubGroup, subscribeScrubState } from "../core/scrubState";
+import { useTrackedOverlay } from "../hooks/useTrackedOverlay";
+import { parseBoxModel, buildZones, type BoxModel, type BoxRect } from "../util/boxGeometry";
 import { spacingZone, zIndex } from "../theme";
 
 // ---------------------------------------------------------------------------
@@ -29,98 +40,37 @@ const PADDING_BORDER_HOVER = spacingZone.paddingBorderHover;
 
 
 // ---------------------------------------------------------------------------
-// Types
+// Types & measurement
 // ---------------------------------------------------------------------------
 
+/** Tracked metrics: border-box rect, parsed box model, and the hovered group. */
 interface SpacingMetrics {
-  top: number; left: number; width: number; height: number;
-  right: number; bottom: number;
-  mt: number; mr: number; mb: number; ml: number;
-  pt: number; pr: number; pb: number; pl: number;
-  bt: number; br: number; bb: number; bl: number;
+  rect: BoxRect;
+  box: BoxModel;
+  hover: "margin" | "padding" | null;
 }
 
-interface ZoneRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  side: "top" | "right" | "bottom" | "left";
-}
-
-// ---------------------------------------------------------------------------
-// Measurement
-// ---------------------------------------------------------------------------
-
-function px(v: string): number {
-  return parseFloat(v) || 0;
-}
-
-function computeMetrics(el: Element): SpacingMetrics | null {
+function measure(el: Element): SpacingMetrics | null {
   if (!el.isConnected) return null;
-  const cs = getComputedStyle(el);
   const r = el.getBoundingClientRect();
-  return {
+  const rect: BoxRect = {
     top: r.top, left: r.left, width: r.width, height: r.height,
     right: r.right, bottom: r.bottom,
-    mt: px(cs.marginTop), mr: px(cs.marginRight),
-    mb: px(cs.marginBottom), ml: px(cs.marginLeft),
-    pt: px(cs.paddingTop), pr: px(cs.paddingRight),
-    pb: px(cs.paddingBottom), pl: px(cs.paddingLeft),
-    bt: px(cs.borderTopWidth), br: px(cs.borderRightWidth),
-    bb: px(cs.borderBottomWidth), bl: px(cs.borderLeftWidth),
   };
+  const box = parseBoxModel(el);
+  // While scrubbing, suppress hover intensify (the scrub guides take over).
+  const hover = getScrubGroup() ? null : getHoverGroup();
+  return { rect, box, hover };
 }
 
-// ---------------------------------------------------------------------------
-// Zone builders
-// ---------------------------------------------------------------------------
-
-function buildMarginZones(m: SpacingMetrics): ZoneRect[] {
-  const zones: ZoneRect[] = [];
-  if (m.mt > 0) zones.push({
-    x: m.left - m.ml, y: m.top - m.mt,
-    w: m.width + m.ml + m.mr, h: m.mt, side: "top",
-  });
-  if (m.mb > 0) zones.push({
-    x: m.left - m.ml, y: m.bottom,
-    w: m.width + m.ml + m.mr, h: m.mb, side: "bottom",
-  });
-  if (m.ml > 0) zones.push({
-    x: m.left - m.ml, y: m.top,
-    w: m.ml, h: m.height, side: "left",
-  });
-  if (m.mr > 0) zones.push({
-    x: m.right, y: m.top,
-    w: m.mr, h: m.height, side: "right",
-  });
-  return zones;
-}
-
-function buildPaddingZones(m: SpacingMetrics): ZoneRect[] {
-  const iT = m.top + m.bt;
-  const iR = m.right - m.br;
-  const iB = m.bottom - m.bb;
-  const iL = m.left + m.bl;
-  const innerW = iR - iL;
-  const innerH = iB - iT;
-
-  const zones: ZoneRect[] = [];
-  if (m.pt > 0) zones.push({
-    x: iL, y: iT, w: innerW, h: m.pt, side: "top",
-  });
-  if (m.pb > 0) zones.push({
-    x: iL, y: iB - m.pb, w: innerW, h: m.pb, side: "bottom",
-  });
-  if (m.pl > 0) zones.push({
-    x: iL, y: iT + m.pt,
-    w: m.pl, h: Math.max(0, innerH - m.pt - m.pb), side: "left",
-  });
-  if (m.pr > 0) zones.push({
-    x: iR - m.pr, y: iT + m.pt,
-    w: m.pr, h: Math.max(0, innerH - m.pt - m.pb), side: "right",
-  });
-  return zones;
+/**
+ * Collapse metrics to a string so identical layout + hover doesn't re-render.
+ * Mirrors the old metricsKey (rect top/left/width/height + the eight margin/
+ * padding edges) and folds in the hover group so a hover change triggers a render.
+ */
+function changeKey(m: SpacingMetrics): string {
+  const { rect, box } = m;
+  return `${rect.top},${rect.left},${rect.width},${rect.height},${box.mt},${box.mr},${box.mb},${box.ml},${box.pt},${box.pr},${box.pb},${box.pl}|${m.hover}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -137,69 +87,20 @@ const BASE: React.CSSProperties = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function SpacingPreviewOverlay({
-  element,
-  refreshKey,
-}: {
-  element: Element;
-  refreshKey?: number;
-}) {
-  const [metrics, setMetrics] = useState<SpacingMetrics | null>(null);
-  const [hoveredGroup, setHoveredGroup] = useState<"margin" | "padding" | null>(null);
-  const rafRef = useRef(0);
-  const prevMetricsRef = useRef("");
-  const prevHoverRef = useRef<"margin" | "padding" | null>(null);
+export function SpacingPreviewOverlay({ element }: { element: Element }) {
+  const m = useTrackedOverlay(element, true, measure, changeKey, {
+    extraInvalidate: subscribeScrubState,
+  });
 
-  const measure = useCallback(() => {
-    const m = computeMetrics(element);
-    const metricsKey = m
-      ? `${m.top},${m.left},${m.width},${m.height},${m.mt},${m.mr},${m.mb},${m.ml},${m.pt},${m.pr},${m.pb},${m.pl}`
-      : "";
-    const hover = getScrubGroup() ? null : getHoverGroup();
+  if (!m) return null;
 
-    const metricsChanged = metricsKey !== prevMetricsRef.current;
-    const hoverChanged = hover !== prevHoverRef.current;
-
-    if (metricsChanged) {
-      prevMetricsRef.current = metricsKey;
-      setMetrics(m);
-    }
-    if (hoverChanged) {
-      prevHoverRef.current = hover;
-      setHoveredGroup(hover);
-    }
-  }, [element]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loop = () => {
-      if (cancelled) return;
-      measure();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-
-    const ro = new ResizeObserver(() => {
-      if (!cancelled) measure();
-    });
-    ro.observe(element);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafRef.current);
-      ro.disconnect();
-    };
-  }, [element, refreshKey, measure]);
-
-  if (!metrics) return null;
-
-  const marginZones = buildMarginZones(metrics);
-  const paddingZones = buildPaddingZones(metrics);
+  const marginZones = buildZones(m.box, m.rect, "margin");
+  const paddingZones = buildZones(m.box, m.rect, "padding");
 
   if (marginZones.length === 0 && paddingZones.length === 0) return null;
 
-  const marginHovered = hoveredGroup === "margin";
-  const paddingHovered = hoveredGroup === "padding";
+  const marginHovered = m.hover === "margin";
+  const paddingHovered = m.hover === "padding";
 
   const marginFill = marginHovered ? MARGIN_FILL_HOVER : MARGIN_FILL_BASE;
   const marginBorder = marginHovered ? MARGIN_BORDER_HOVER : MARGIN_BORDER_BASE;
