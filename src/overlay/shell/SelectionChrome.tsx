@@ -33,7 +33,13 @@ export function SelectionChrome({
       <div
         ref={selectedOutlineRef}
         className="__tuner-selected-outline"
-        style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: `all ${ms("normal")} ease-out` }}
+        // No transition on geometry: useElementTracker writes top/left/width/height
+        // synchronously on every scroll frame and live edit, so animating those
+        // writes would make the box trail the content (scroll lag) and glide toward
+        // each new size instead of snapping. Mirror BoxModelOverlay's transition:"none".
+        // The "--pulse" attention cue is a separate @keyframes *animation*
+        // (see useInjectedStyles.ts), not a transition, so it is unaffected.
+        style={{ display: 'none', position: "fixed", pointerEvents: "none", zIndex: zIndex.overlay, border: `1.5px solid ${color.primary}`, borderRadius: 2, transition: "none" }}
       />
       {/* Breadcrumb ancestor hover outline */}
       <div
