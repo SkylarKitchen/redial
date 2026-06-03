@@ -181,15 +181,6 @@ describe("sanitizeCSSValue — live-preview <style> escaping", () => {
     document.body.innerHTML = `<style>.x { content: "${sanitized}"; }</style>`;
     expect(document.querySelectorAll("img").length).toBe(0);
   });
-
-  // Confirms the breakout is real (this is the same vector, asserted as the
-  // ACTUAL buggy behavior so the file stays green): the padded close tag
-  // currently DOES escape the <style> element.
-  it("documents the current breakout: padded close tag escapes the <style>", () => {
-    const sanitized = sanitizeCSSValue('</style\t><img src=x>');
-    document.body.innerHTML = `<style>.x { content: "${sanitized}"; }</style>`;
-    expect(document.querySelectorAll("img").length).toBe(1);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -247,7 +238,7 @@ describe("handleCommit — class/prop name escaping & substring collisions", () 
   // searchClassBlock returns the FIRST line containing both substrings — which
   // is `background-color: blue` — and the rewrite corrupts background-color
   // while leaving the intended `color` declaration untouched.
-  it.fails("targets `color` without corrupting an earlier `background-color`", async () => {
+  it("targets `color` without corrupting an earlier `background-color`", async () => {
     const F = "src/Collide.module.scss";
     await writeFixture(
       F,

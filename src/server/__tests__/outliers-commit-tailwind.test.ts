@@ -153,7 +153,7 @@ describe("mergeClasses — exotic value conflict resolution", () => {
   // group, see getUtilityGroup bug), so it does NOT replace an existing
   // plain "mt-4" — both end up in the output. Desired: !mt-2 replaces mt-4
   // (same margin-top property; !important just raises specificity).
-  it.fails("important-prefixed margin replaces plain margin", () => {
+  it("important-prefixed margin replaces plain margin", () => {
     expect(mergeClasses("mt-4 flex", "!mt-2")).toBe("flex !mt-2");
   });
 
@@ -181,7 +181,7 @@ describe("template literal & cn() parsing edge cases", () => {
   // mergeClasses as if it were a utility. Here we assert the parser refuses to
   // treat an interpolated template as a plain editable string (returns null)
   // — it does NOT, so this fails.
-  it.fails(
+  it(
     "does not parse an interpolated template literal as a plain class string",
     () => {
       const lines = [
@@ -202,7 +202,7 @@ describe("template literal & cn() parsing edge cases", () => {
   // "))}" — the inner ")" breaks the anchor and the WHOLE pattern fails to
   // match. So a perfectly valid className with a nested call inside cn() is not
   // detected at all (returns null), and any edit to that element silently fails.
-  it.fails(
+  it(
     "locates first literal in cn() even with a nested call inside",
     () => {
       const lines = [
@@ -314,10 +314,10 @@ describe("handleTailwindCommit — exotic round trips", () => {
   // BUG: regex-special characters in existingClasses. findClassNameForChange
   // does an exact STRING slice comparison (not regex) so brackets/parens in
   // the class should be safe. Verify a className containing regex-meta chars
-  // (arbitrary value with parens like bg-[url(/x.png)]) round-trips.
+  // (arbitrary value with parens like bg-[url(https://x.test/x.png)]) round-trips.
   it("handles a className containing regex-special chars (url arbitrary value)", async () => {
     const filePath = "src/Url.tsx";
-    const cls = "bg-[url(/x.png)] flex";
+    const cls = "bg-[url(https://x.test/x.png)] flex";
     await writeFixture(
       filePath,
       [
@@ -341,7 +341,7 @@ describe("handleTailwindCommit — exotic round trips", () => {
 
     expect(result.failed).toHaveLength(0);
     const content = await readFile(join(tempDir, filePath), "utf-8");
-    expect(content).toContain("bg-[url(/x.png)] flex p-4");
+    expect(content).toContain("bg-[url(https://x.test/x.png)] flex p-4");
   });
 
   // BUG: A className whose existing string is the EMPTY string ("") on a real
@@ -424,7 +424,7 @@ describe("handleTailwindCommit — exotic round trips", () => {
   // BUG: important-prefixed NEW class fails to replace the existing plain
   // utility at the file level (mirrors the unit-level !mt bug). Asserts the
   // desired source outcome: mt-4 removed, !mt-2 present.
-  it.fails(
+  it(
     "important-prefixed new class replaces plain utility in source",
     async () => {
       const filePath = "src/Imp.tsx";

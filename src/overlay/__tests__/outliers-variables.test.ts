@@ -60,13 +60,13 @@ describe("parseVarAlias — outlier inputs", () => {
   // BUG: parseVarAlias is case-sensitive on the "var(" keyword, but CSS keywords
   // are case-insensitive — VAR(--a) / Var(--a) are valid var() references the
   // resolver fails to recognize, so an uppercase-authored alias never redirects.
-  it.fails("recognizes uppercase VAR(--a) as a var() alias (CSS keywords are case-insensitive)", () => {
+  it("recognizes uppercase VAR(--a) as a var() alias (CSS keywords are case-insensitive)", () => {
     expect(parseVarAlias("VAR(--a)")).toEqual({ target: "--a", fallback: undefined });
   });
 
   // BUG: a var()-valued property carrying !important is not recognized as an
   // alias because the trailing "!important" defeats the end-anchored regex.
-  it.fails("recognizes var(--a) !important as an alias to --a", () => {
+  it("recognizes var(--a) !important as an alias to --a", () => {
     expect(parseVarAlias("var(--a) !important")).toEqual({
       target: "--a",
       fallback: undefined,
@@ -103,7 +103,7 @@ describe("parseVarRef — outlier inputs", () => {
 
   // BUG: uppercase VAR( is a valid CSS var() reference but parseVarRef's regex
   // is case-sensitive, so the color picker can't resolve an uppercase ref.
-  it.fails("extracts the name from an uppercase VAR(--brand) reference", () => {
+  it("extracts the name from an uppercase VAR(--brand) reference", () => {
     expect(parseVarRef("VAR(--brand)")).toBe("--brand");
   });
 });
@@ -335,7 +335,7 @@ describe("findPropertyInFile — custom property definition search", () => {
   // test. When the exact --accent is absent but --accent-dark is present, it
   // wrongly reports the --accent-dark line as the --accent definition — a
   // commit here would silently rewrite the WRONG variable.
-  it.fails("does NOT match --accent-dark when searching for --accent (no exact --accent exists)", () => {
+  it("does NOT match --accent-dark when searching for --accent (no exact --accent exists)", () => {
     const lines = [
       ":root {",
       "  --accent-dark: #111111;",
@@ -350,7 +350,7 @@ describe("findPropertyInFile — custom property definition search", () => {
   // BUG: a comment that mentions the property name is matched before the real
   // declaration, because includes() does not distinguish a declaration from a
   // comment. The reported line is the comment, not the actual definition.
-  it.fails("skips a comment mentioning --accent and lands on the real declaration", () => {
+  it("skips a comment mentioning --accent and lands on the real declaration", () => {
     const lines = [
       ":root {",
       "  /* --accent is our brand color */",
@@ -365,7 +365,7 @@ describe("findPropertyInFile — custom property definition search", () => {
   // BUG: with light + dark :root blocks both defining --accent, the search
   // ignores the `value` argument entirely and always returns the FIRST block's
   // line. Tuning the dark-theme value would rewrite the light-theme definition.
-  it.fails("targets the dark-theme --accent by value when two :root-like blocks define it", () => {
+  it("targets the dark-theme --accent by value when two :root-like blocks define it", () => {
     const lines = [
       ":root {",
       "  --accent: #6366f1;",       // light

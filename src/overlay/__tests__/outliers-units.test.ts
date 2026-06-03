@@ -58,14 +58,14 @@ describe("convertUnit — modern / unrecognized units", () => {
   // BUG: vmin/vmax are real, common viewport units but unitConversion.ts has no
   // case for them — they fall through to the px passthrough. 50vmin on a
   // 1920x1080 viewport should be 0.5 * min(1920,1080) = 540px, not 50px.
-  it.fails("converts vmin using the smaller viewport dimension", () => {
+  it("converts vmin using the smaller viewport dimension", () => {
     // min(1920, 1080) = 1080 → 50vmin = 540px
     expect(convertUnit(50, "vmin", "px", ctx)).toBe(540);
   });
 
   // BUG: vmax has no conversion case either. 50vmax should be
   // 0.5 * max(1920,1080) = 960px, not the 50px passthrough.
-  it.fails("converts vmax using the larger viewport dimension", () => {
+  it("converts vmax using the larger viewport dimension", () => {
     expect(convertUnit(50, "vmax", "px", ctx)).toBe(960);
   });
 });
@@ -120,7 +120,7 @@ describe("parseNum — numeric coercion edge cases", () => {
   // BUG: parseNum guards NaN → 0 but NOT Infinity. parseFloat("Infinity") is
   // Infinity, which sails straight through, so a CSS value can become a
   // non-finite number that downstream serializers will emit verbatim.
-  it.fails("clamps the literal string 'Infinity' to a finite 0", () => {
+  it("clamps the literal string 'Infinity' to a finite 0", () => {
     expect(parseNum("Infinity")).toBe(0);
   });
 
@@ -154,14 +154,14 @@ describe("extractUnit — suffix detection edge cases", () => {
   // as a px value (parseNum agrees it's 100px), but the [\d.]+ class stops at
   // the 'e', the whole regex fails to match, and the fallback "px" is returned
   // only by luck. For "1e2rem" the unit is silently lost the same way.
-  it.fails("extracts the unit from a value in scientific notation", () => {
+  it("extracts the unit from a value in scientific notation", () => {
     expect(extractUnit("1e2rem")).toBe("rem");
   });
 
   // BUG: a space between the number and the unit defeats the anchored regex, so
   // the real unit is dropped in favor of the px fallback. "50 %" is a value a
   // user can type (and some serializers emit), but it is read as plain px.
-  it.fails("extracts '%' from a space-separated value '50 %'", () => {
+  it("extracts '%' from a space-separated value '50 %'", () => {
     expect(extractUnit("50 %")).toBe("%");
   });
 
@@ -185,7 +185,7 @@ describe("parseValueWithUnit — modern units & exotic input", () => {
   // BUG: the new viewport units (svh/dvh/lvh) and container units (cqw/cqi) are
   // valid CSS but absent from KNOWN_UNITS, so a perfectly good "50svh" is
   // rejected as NaN with a null unit — the value is thrown away entirely.
-  it.fails("accepts the dynamic-viewport-height unit '50dvh'", () => {
+  it("accepts the dynamic-viewport-height unit '50dvh'", () => {
     expect(parseValueWithUnit("50dvh", SIZE_UNITS)).toEqual({
       value: 50,
       unit: "dvh",
@@ -193,7 +193,7 @@ describe("parseValueWithUnit — modern units & exotic input", () => {
   });
 
   // BUG: container query units are dropped the same way.
-  it.fails("accepts a container-query-width unit '10cqw'", () => {
+  it("accepts a container-query-width unit '10cqw'", () => {
     expect(parseValueWithUnit("10cqw", SIZE_UNITS)).toEqual({
       value: 10,
       unit: "cqw",
@@ -254,7 +254,7 @@ describe("parseFilterItems — percentage vs decimal amount notation", () => {
   // ("80%") forms — they mean the same thing. parseFilterItems blindly does
   // `parseFloat(arg) * 100`, so "brightness(80%)" becomes 80*100 = 8000 (i.e.
   // 8000% brightness) instead of 80.
-  it.fails("treats brightness(80%) the same as brightness(0.8)", () => {
+  it("treats brightness(80%) the same as brightness(0.8)", () => {
     expect(parseFilterItems("brightness(80%)")).toEqual([
       { type: "brightness", values: [80], visible: true, expanded: false },
     ]);
@@ -263,7 +263,7 @@ describe("parseFilterItems — percentage vs decimal amount notation", () => {
   // BUG: the percentage-form misparse round-trips into a wildly wrong CSS
   // string. brightness(150%) → parsed values:[15000] → serialized
   // "brightness(150)" which is 15000%, a 100x amplification of the original.
-  it.fails("round-trips brightness(150%) back to an equivalent value", () => {
+  it("round-trips brightness(150%) back to an equivalent value", () => {
     const parsed = parseFilterItems("brightness(150%)");
     const css = filterItemsToCSS(parsed);
     // Equivalent forms: "brightness(1.5)" (decimal) is what 150% means.

@@ -46,7 +46,7 @@ describe("brace literals inside values vs. brace-depth counters", () => {
   // RESULT: a class-scoped edit silently lands in the WRONG class.
   // BUG: stray closing-brace literal in a value defeats class scoping, so the
   // edit is misattributed to an earlier block with the same prop+value.
-  it.fails("scopes color:red to .tag (not earlier .decoy) despite a content: \"}\" literal", () => {
+  it("scopes color:red to .tag (not earlier .decoy) despite a content: \"}\" literal", () => {
     const lines = [
       ".decoy {",                     // 0
       "  color: red;",                // 1  full-file picks THIS (wrong block)
@@ -360,7 +360,7 @@ describe("multi-line selector lists", () => {
   // class-scoped search finds nothing, so the tiered fallback runs full-file
   // by value and lands on an earlier .decoy block with the same prop+value —
   // the edit is misattributed.
-  it.fails("scopes color:blue to .btn when its opening brace is 3 lines below the selector", () => {
+  it("scopes color:blue to .btn when its opening brace is 3 lines below the selector", () => {
     const lines = [
       ".decoy {",     // 0
       "  color: blue;", // 1  full-file picks THIS (wrong block)
@@ -521,7 +521,7 @@ describe("findClassBlockEnd / pseudo-create with brace literals", () => {
   // it returns null. handleCommit then reports the base class "not found" and
   // REFUSES to create the :hover block — the user cannot add any state to a
   // class whose block contains a brace-literal value.
-  it.fails("creates a :hover block for a class whose value contains content: \"{\"", async () => {
+  it("creates a :hover block for a class whose value contains content: \"{\"", async () => {
     const filePath = "src/StrayOpen.module.css";
     await writeFixture(filePath, [
       ".card {",
@@ -552,7 +552,7 @@ describe("findClassBlockEnd / pseudo-create with brace literals", () => {
   // (depth hits 0 at the content line), so the new .card:hover block is spliced
   // into the MIDDLE of the .card block — producing structurally broken CSS with
   // a rule nested inside another rule and an orphaned declaration.
-  it.fails("creates a valid (non-nested) :hover block when value contains content: \"}\"", async () => {
+  it("creates a valid (non-nested) :hover block when value contains content: \"}\"", async () => {
     const filePath = "src/StrayClose.module.css";
     await writeFixture(filePath, [
       ".card {",

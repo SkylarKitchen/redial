@@ -112,27 +112,16 @@ describe("isValidHex — alpha-bearing & shorthand hex are rejected", () => {
 describe("hexToRgb / hexToRgba — unguarded shorthand handling", () => {
   // BUG: hexToRgb does no validation/expansion. "#fff" should expand to
   // {r:255,g:255,b:255}; instead it slices "ff"/"f"/"" → blue is NaN.
-  it.fails("expands 3-digit shorthand #fff to white", () => {
+  it("expands 3-digit shorthand #fff to white", () => {
     expect(hexToRgb("#fff")).toEqual({ r: 255, g: 255, b: 255 });
-  });
-
-  it("documents the actual (broken) 3-digit slicing: blue channel is NaN", () => {
-    const { r, g, b } = hexToRgb("#fff");
-    expect(r).toBe(255); // "ff"
-    expect(g).toBe(15); // "f"  → 0x0f
-    expect(Number.isNaN(b)).toBe(true); // "" → NaN
   });
 
   // BUG: hexToRgba calls hexToRgb with no validation, so a shorthand hex
   // produces an rgba() string containing a literal "NaN" channel — an invalid
   // CSS color that would silently break any style it's written into.
-  it.fails("produces a valid rgba() string for shorthand #fff", () => {
+  it("produces a valid rgba() string for shorthand #fff", () => {
     const out = hexToRgba("#fff", 0.5);
     expect(out).not.toMatch(/NaN/);
-  });
-
-  it("documents that hexToRgba('#fff', .5) emits a NaN channel", () => {
-    expect(hexToRgba("#fff", 0.5)).toBe("rgba(255, 15, NaN, 0.5)");
   });
 
   // 8-digit hex happens to slice cleanly for r/g/b (alpha pair ignored), so
@@ -153,20 +142,13 @@ describe("evaluateContrast — translucent text via slash syntax", () => {
   // BUG: colorAlpha() splits on "," — "rgb(0 0 0 / 0.5)" has zero commas, so
   // parts.length === 1 → alpha defaults to 1 (opaque). 50%-translucent text is
   // mis-judged fully opaque and rated AAA instead of "unknown".
-  it.fails(
+  it(
     "treats slash-syntax translucent text as unknown (parity with rgba comma form)",
     () => {
       const el = textEl({ color: "rgb(0 0 0 / 0.5)" });
       expect(evaluateContrast(el, "#000000").kind).toBe("unknown");
     },
   );
-
-  it("documents the actual bug: slash-translucent text is rated AAA opaque", () => {
-    const el = textEl({ color: "rgb(0 0 0 / 0.5)" });
-    const result = evaluateContrast(el, "#000000");
-    expect(result.kind).toBe("ok");
-    if (result.kind === "ok") expect(result.level).toBe("AAA");
-  });
 
   it("still correctly flags the comma form as unknown (regression lock)", () => {
     const el = textEl({ color: "rgba(0, 0, 0, 0.5)" });
@@ -225,14 +207,9 @@ describe("resolveBackdropColor — translucent slash-syntax background", () => {
   // BUG: parseAlpha("rgba(0 0 0 / 0.4)") → 1 (split on "," gives length 1).
   // The translucent layer is treated as opaque-but-unparseable, skipped, and
   // the backdrop resolves to white instead of "unknown" (needs compositing).
-  it.fails("reports a translucent slash background as unknown", () => {
+  it("reports a translucent slash background as unknown", () => {
     const el = bgEl(document.body, { backgroundColor: "rgba(0 0 0 / 0.4)" });
     expect(resolveBackdropColor(el)).toHaveProperty("unknown", true);
-  });
-
-  it("documents the actual bug: slash-translucent backdrop resolves to white", () => {
-    const el = bgEl(document.body, { backgroundColor: "rgba(0 0 0 / 0.4)" });
-    expect(resolveBackdropColor(el)).toEqual({ hex: "#ffffff" });
   });
 
   it("still correctly flags the comma form as unknown (regression lock)", () => {

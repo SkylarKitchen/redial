@@ -81,12 +81,6 @@ describe("infer — SVG elements", () => {
     expect(infer(svg).name).toBe("svg.logo");
   });
 
-  it("honestly degrades SVG-with-animated-className name to the bare tag (documents current behavior)", () => {
-    // The flip side of the bug above, asserted as the ACTUAL output so the file
-    // stays green and the behavior is pinned until the bug is fixed.
-    const svg = makeSvgWithAnimatedClassName("svg", "logo");
-    expect(infer(svg).name).toBe("svg");
-  });
 });
 
 // ─── className whitespace edge cases ──────────────────────────────────
@@ -95,16 +89,10 @@ describe("infer — className whitespace", () => {
   // BUG: a class attribute with leading whitespace ("   card primary") splits to
   // ["", "card", ...]; the loop finds no CSS-module match and the fallback
   // `list[0] || null` is the empty leading token -> null, so the class is lost.
-  it.fails("should pick the first real class when the attribute has leading whitespace", () => {
+  it("should pick the first real class when the attribute has leading whitespace", () => {
     const el = makeEl("div");
     el.setAttribute("class", "   card primary");
     expect(infer(el).name).toBe("div.card");
-  });
-
-  it("honestly drops the class to a bare tag when className has leading whitespace (documents current behavior)", () => {
-    const el = makeEl("div");
-    el.setAttribute("class", "   card primary");
-    expect(infer(el).name).toBe("div");
   });
 
   it("interior collapsed whitespace between two plain classes still names the first", () => {

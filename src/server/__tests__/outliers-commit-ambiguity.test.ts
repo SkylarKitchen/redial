@@ -48,7 +48,7 @@ describe("commit ambiguity — comments", () => {
   // BUG: a `/* color: blue */` comment above the real `color: blue;` is rewritten
   // instead of the real declaration. searchClassBlock scans the block top-down
   // and `.includes("color") && .includes("blue")` matches the comment line first.
-  it.fails("does NOT rewrite a comment that mentions prop+value above the real declaration", async () => {
+  it("does NOT rewrite a comment that mentions prop+value above the real declaration", async () => {
     const filePath = "src/Card.module.css";
     await writeFixture(filePath, [
       ".card {",
@@ -72,7 +72,7 @@ describe("commit ambiguity — comments", () => {
   // BUG: when only a comment mentions the property (no real declaration exists),
   // handleCommit reports written/success and silently edits the COMMENT body,
   // changing nothing functional. It should fail("property not found") instead.
-  it.fails("fails (not silently edits a comment) when only a comment mentions the property", async () => {
+  it("fails (not silently edits a comment) when only a comment mentions the property", async () => {
     const filePath = "src/Ghost.module.css";
     const original = await writeFixture(filePath, [
       ".ghost {",
@@ -94,7 +94,7 @@ describe("commit ambiguity — comments", () => {
   // BUG: even with an accurate sourceLine pointing AT the real declaration, the
   // window search scans the whole ±5 window top-down and returns the earlier
   // comment line (which also contains prop+value) before reaching sourceLine.
-  it.fails("window search at the exact sourceLine still skips an earlier matching comment", async () => {
+  it("window search at the exact sourceLine still skips an earlier matching comment", async () => {
     const filePath = "src/Win.module.css";
     await writeFixture(filePath, [
       ".win {",          // 0
@@ -227,7 +227,7 @@ describe("commit ambiguity — shorthand fallback vs comments", () => {
   // `padding:` substring inside a comment, then expands the comment's value and
   // rewrites it — producing garbage like `/* padding: 12px legacy */` while the
   // real `padding: 16px 24px;` is left unchanged.
-  it.fails("padding-top fallback must skip a comment containing `padding:` and edit the real shorthand", async () => {
+  it("padding-top fallback must skip a comment containing `padding:` and edit the real shorthand", async () => {
     const filePath = "src/Pad.module.css";
     await writeFixture(filePath, [
       ".pad {",
@@ -243,7 +243,8 @@ describe("commit ambiguity — shorthand fallback vs comments", () => {
 
     const content = await readFile(join(tempDir, filePath), "utf-8");
     expect(content).toContain("/* padding: 16px legacy */"); // comment intact
-    expect(content).toContain("padding: 12px 24px;");        // real shorthand edited
+    // [16,24,16,24] with top→12 = [12,24,16,24] → right===left → 3-value form.
+    expect(content).toContain("padding: 12px 24px 16px;");   // real shorthand edited
   });
 
   // Regression lock: the normal shorthand fallback (no comment) still works.
@@ -464,7 +465,7 @@ describe("commit ambiguity — duplicate filename across directories", () => {
 describe("findPropertyInFile — comment confusion (unit)", () => {
   // BUG: findPropertyInFile points at the comment line (1) rather than the real
   // declaration (2) because both lines contain the prop and the value substring.
-  it.fails("class-block search points at the real declaration line, not the comment", () => {
+  it("class-block search points at the real declaration line, not the comment", () => {
     const lines = [
       ".x {",                 // 0
       "  /* color: blue */",  // 1
