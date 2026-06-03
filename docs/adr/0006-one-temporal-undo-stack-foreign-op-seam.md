@@ -53,12 +53,23 @@ closure-pair, structurally the `dom-move` entry generalized — registered throu
   history scrub (`handleUndoToIndex`, which loops `apply.ts`'s `undo()` and halts
   on a falsy result) keeps stepping past it — the behavior `dom-move` already
   relied on.
-- **ADR-0004 upheld.** No style-panel reset clears mode overrides. The five
+- **ADR-0004 upheld, and mode stays undoable across a reset (ADR-0006's own
+  promise).** No style-panel reset clears mode overrides. The five
   element-filtering stack loops (`reset`/`resetProp`/`resetStateOverrides`/
-  `resetElementBreakpoint`) now also guard `!isForeign(entry)`, so a reset never
-  splices a mode step out of the stack. `resetAllModeOverrides` purges mode's
-  unified-stack footprint via `clearForeignUndo()` (which removes **only**
-  foreign entries, leaving inline/state/class/dom-move entries intact).
+  `resetElementBreakpoint`) guard `!isForeign(entry)`, so a reset never splices a
+  mode step out of the stack. Crucially, `resetAll()` (session-wide style reset)
+  no longer blanks the whole stack — it removes only **non-foreign** entries and
+  **preserves** foreign (mode) ones, so a mode override that survives `resetAll`
+  remains clearable via undo (the foreign revert closures act on the mode store,
+  not the cleared inline map, so they stay valid). `resetAllModeOverrides` is the
+  inverse: it purges mode's unified-stack footprint via `clearForeignUndo()`
+  (foreign-only), leaving inline/state/class/dom-move entries intact.
+- **Coalescing is per-session.** `pushForeignUndo` merges a step into the top
+  foreign entry only when that entry was pushed earlier in the SAME
+  `beginForeignCoalesce`/`endForeignCoalesce` session (a `foreignCoalesceFresh`
+  latch cuts the chain at each `begin`). Two separate drags of the same
+  `(selector,varName)` therefore stay two undo steps — fixing a latent flaw the
+  pre-4a mode stack also had.
 
 ## Consequences
 

@@ -401,9 +401,12 @@ Expected: ALL PASS (including the Task-1 RED tests — now GREEN).
 
 ---
 
-## Task 7: Adversarial verification (ultracode)
+## Task 7: Adversarial verification (ultracode) ✅ DONE — 5 upheld, 2 fixed
 
-- [ ] Dispatch a verification workflow: independent skeptics each try to break ONE invariant — (a) temporal ordering across N-way interleave, (b) coalesce boundary between two drags of the same var, (c) ADR-0004 survival across `resetScope`/`resetElement`/`resetProp`/`resetAll`, (d) redo after partial undo, (e) `clearForeignUndo` isolation across tests, (f) no import cycle / no stale-closure in revert. Fold confirmed findings back as new RED tests.
+- [x] 7-skeptic workflow run. **5 invariants upheld** (temporal ordering, redo-invalidation, `clearForeignUndo` isolation, MAX_UNDO/batch, snapshot subscription). **2 medium catches, both RED-proven then fixed:**
+  - **resetAll wiped the surviving mode's undo step** (TRUE 4a regression). Fix: `resetAll()` removes only non-foreign entries, preserving mode's foreign undo (upholds ADR-0006).
+  - **two coalesce drags of the same key merged into one undo** (pre-existing latent flaw, faithfully ported — not a 4a regression). Fix: `foreignCoalesceFresh` latch so each `begin…/end…` session is its own entry.
+  - Locked by 3 tests appended to `unifiedUndoOrdering.test.ts` (now 9 total, all green).
 
 ---
 

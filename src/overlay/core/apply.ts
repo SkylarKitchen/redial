@@ -787,9 +787,17 @@ export function resetAll(): void {
   clearedOverrides.clear();
   customPropertyOverrides.clear();
   dirtyCount = 0;
-  // Clear entire undo/redo stack
-  undoStack.length = 0;
-  redoStack.length = 0;
+  // Clear the undo/redo stacks of every dimension this reset actually clears
+  // (inline/state/class/batch/dom-move/custom-prop) — but PRESERVE foreign (mode)
+  // entries. A session-wide style reset does NOT clear mode overrides (ADR-0004),
+  // so their undo steps must survive too, else a surviving mode override would be
+  // permanently un-undoable (ADR-0006). Foreign revert closures act on the mode
+  // store, not the now-cleared inline map, so they stay valid.
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (!isForeign(stack[i])) stack.splice(i, 1);
+    }
+  }
   clearPersistedSession();
   notifyListeners();
 }
@@ -1312,11 +1320,20 @@ export function pushDomMove(result: { undo: () => void; redo: () => void }): voi
 // import cycle). RFC #14 Increment 4a — see ADR-0006.
 
 /** When true, consecutive `pushForeignUndo` calls with the same `coalesceKey`
- *  merge into the last foreign entry (one undo step per drag). */
+ *  merge into the last foreign entry (one undo step per drag/session). */
 let foreignCoalescing = false;
+/** True until the FIRST push of the current coalesce session lands. Without it,
+ *  a new drag's first push would merge into the PREVIOUS drag's entry whenever
+ *  they share a `coalesceKey` (same selector+var) — collapsing two separate
+ *  drags into one undo step, and (worse) reverting through the earlier drag's
+ *  captured `prev`. Resetting it per `beginForeignCoalesce` cuts the chain. */
+let foreignCoalesceFresh = false;
 
 /** Begin coalescing foreign undo steps (call before a rapid-fire drag). */
-export function beginForeignCoalesce(): void { foreignCoalescing = true; }
+export function beginForeignCoalesce(): void {
+  foreignCoalescing = true;
+  foreignCoalesceFresh = true;
+}
 
 /** End coalescing foreign undo steps. */
 export function endForeignCoalesce(): void { foreignCoalescing = false; }
@@ -1324,19 +1341,22 @@ export function endForeignCoalesce(): void { foreignCoalescing = false; }
 /**
  * Register a foreign subsystem's undo step on the ONE temporal stack. `revert`
  * undoes the step, `reapply` redoes it. While coalescing, a step whose
- * `coalesceKey` matches the top foreign entry merges into it (keeps the original
- * `revert`, advances `reapply`) so a whole drag is one undo. A fresh step clears
- * the redo stack (standard undo semantics).
+ * `coalesceKey` matches the top foreign entry — AND that was pushed earlier in
+ * the SAME coalesce session — merges into it (keeps the original `revert`,
+ * advances `reapply`) so a whole drag is one undo. The first push of a session
+ * never merges (so separate drags stay separate). A fresh step clears the redo
+ * stack (standard undo semantics).
  */
 export function pushForeignUndo(step: { revert: () => void; reapply: () => void; coalesceKey?: string }): void {
   const top = undoStack[undoStack.length - 1];
   if (
-    foreignCoalescing && step.coalesceKey != null &&
+    foreignCoalescing && !foreignCoalesceFresh && step.coalesceKey != null &&
     top && isForeign(top) && top.coalesceKey === step.coalesceKey
   ) {
     top.reapply = step.reapply; // keep the original revert; advance the forward value
     return;
   }
+  foreignCoalesceFresh = false; // the first push of this coalesce session has landed
   if (redoStack.length > 0) redoStack.length = 0;
   undoStack.push({ type: 'foreign', revert: step.revert, reapply: step.reapply, coalesceKey: step.coalesceKey });
   if (undoStack.length > MAX_UNDO) {

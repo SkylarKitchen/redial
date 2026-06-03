@@ -103,4 +103,54 @@ describe("unified temporal undo (RFC #14 Increment 4a)", () => {
     styleEngine.redo();
     expect(getModeOverrideCount()).toBe(1);
   });
+
+  // --- Adversarial-verification catches (RFC #14 4a, 2026-06-03) ---
+
+  it("two SEPARATE drags of the same (selector,varName) are two undo steps", () => {
+    // Each coalesce session is its own undo step — a fresh drag must NOT merge
+    // into the previous drag's entry just because the key matches.
+    beginModeCoalesce();
+    applyModeOverride(".dark", "--bg", "#100");
+    applyModeOverride(".dark", "--bg", "#200");
+    endModeCoalesce();
+
+    beginModeCoalesce();
+    applyModeOverride(".dark", "--bg", "#300");
+    applyModeOverride(".dark", "--bg", "#400");
+    endModeCoalesce();
+
+    // First Cmd+Z reverts ONLY drag 2, back to drag-1's final value.
+    styleEngine.undo();
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#200" });
+
+    // Second Cmd+Z reverts drag 1.
+    styleEngine.undo();
+    expect(getModeOverrides(".dark")).toBeUndefined();
+  });
+
+  it("a coalesced drag does NOT merge into a pre-existing non-drag entry of the same key", () => {
+    applyModeOverride(".dark", "--bg", "#base"); // standalone edit (no drag)
+    beginModeCoalesce();
+    applyModeOverride(".dark", "--bg", "#v1");
+    applyModeOverride(".dark", "--bg", "#v2");
+    endModeCoalesce();
+
+    // Undo the drag → restores the standalone value, NOT removal.
+    styleEngine.undo();
+    expect(getModeOverrides(".dark")).toEqual({ "--bg": "#base" });
+  });
+
+  it("ADR-0006: a mode override that survives resetAll stays clearable via undo", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    applyModeOverride(".dark", "--bg", "#111");
+
+    styleEngine.resetAll();
+    expect(getModeOverrideCount()).toBe(1); // ADR-0004: mode survives the style reset
+
+    // ADR-0006: the surviving mode's undo step must survive too.
+    const r = styleEngine.undo();
+    expect(r).not.toBeNull();
+    expect(getModeOverrideCount()).toBe(0);
+  });
 });
