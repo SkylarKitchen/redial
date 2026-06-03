@@ -28,17 +28,27 @@ import {
   redo as redoInline,
   beginBatch as beginInlineBatch,
   endBatch as endInlineBatch,
+  diff as diffElementInline,
   diffAll,
+  overrideCount as overrideCountInline,
   resetProp as resetInlineProp,
   reset as resetElementInline,
+  resetStateOverrides,
   resetAll as resetAllInline,
   totalOverrideCount,
   subscribeOverrides,
   getOverrideSnapshot,
   type DiffEntry,
 } from "./apply";
-import { applyClassStyle, destroyClassStyles } from "./scope";
-import { applyStateStyle, destroyStateStyles } from "./statePreview";
+import { applyClassStyle, destroyClassStyles, resetClassStyles } from "./scope";
+import {
+  applyStateStyle,
+  destroyStateStyles,
+  diffState as diffStateInline,
+  resetStateStyles,
+} from "./statePreview";
+
+export type { DiffEntry } from "./apply";
 import {
   applyModeOverride,
   undoModeOverride,
@@ -118,8 +128,21 @@ export interface StyleEngine {
   endBatch(): void;
   diff(): UnifiedDiff;
   dirtyCount(): number;
+  /** Number of tracked overrides on a single element (the Footer's per-element
+   *  Save/Reset enablement keys off this; counts state-keyed entries too). */
+  overrideCount(el: Element): number;
+  /** Per-element diff — base + state-keyed changes (the Footer reads this for
+   *  Copy, and for Save when no pseudo-state is active). */
+  diffElement(el: Element): DiffEntry[];
+  /** Per-element, per-state diff — the pseudo-state preview map (the Footer's
+   *  Save path when a pseudo-state is active). */
+  diffState(el: Element, state: string): DiffEntry[];
   resetProp(el: Element, prop: string): void;
   resetElement(el: Element): void;
+  /** Reset ONE element's overrides for its active scope/state. State-first
+   *  precedence, mirroring the legacy Footer reset — but does NOT touch global
+   *  mode overrides (see `resetScope` impl). */
+  resetScope(el: Element, ctx: ScopeContext): void;
   resetAll(): void;
   subscribe(cb: () => void): () => void;
   getSnapshot(): number;
@@ -194,6 +217,51 @@ function resetAll(): void {
   destroyStateStyles();
 }
 
+// ─── Per-element / per-state surface (the Footer "wall", Phase 3) ───────────────
+
+/** Tracked override count for one element (includes state-keyed entries). */
+function overrideCount(el: Element): number {
+  return overrideCountInline(el);
+}
+
+/** Per-element diff: base + state-keyed changes from apply.ts's map. */
+function diffElement(el: Element): DiffEntry[] {
+  return diffElementInline(el);
+}
+
+/** Per-element, per-state diff from the pseudo-state preview map. */
+function diffState(el: Element, state: string): DiffEntry[] {
+  return diffStateInline(el, state);
+}
+
+/**
+ * Reset the overrides on ONE element in its active scope/state. Mirrors the
+ * legacy Footer `handleReset` precedence — a pseudo-state edit resets only that
+ * state (in both the preview <style> and apply.ts's mirror map); otherwise the
+ * element's inline overrides reset, plus the shared class rule when in class
+ * scope.
+ *
+ * ONE deliberate divergence from the legacy code: this does **not** clear global
+ * CSS-variable mode overrides. A mode override is a separate dimension (keyed by
+ * `selector + varName`, created in the Variables panel, not attached to this
+ * element), so wiping every mode override when resetting one element was an
+ * over-clear bug — resetting an element's `:hover` could silently destroy
+ * unrelated theme edits. Mode overrides stay clearable via undo (Cmd/Ctrl+Z
+ * falls through to the mode stack) and their own Variables-panel path.
+ * See https://github.com/SkylarKitchen/redial/issues/14.
+ */
+function resetScope(el: Element, ctx: ScopeContext): void {
+  if (ctx.activeState !== "none") {
+    resetStateStyles(el, ctx.activeState);
+    resetStateOverrides(el, ctx.activeState); // keep apply.ts's mirror map in sync
+    return;
+  }
+  resetElementInline(el);
+  if (ctx.scope === "class" && ctx.activeClassName) {
+    resetClassStyles(ctx.activeClassName);
+  }
+}
+
 function subscribe(cb: () => void): () => void {
   const unsubOverrides = subscribeOverrides(cb);
   const unsubModes = subscribeModeOverrides(cb);
@@ -225,8 +293,12 @@ export const styleEngine: StyleEngine = {
   endBatch: endInlineBatch,
   diff,
   dirtyCount,
+  overrideCount,
+  diffElement,
+  diffState,
   resetProp: resetInlineProp,
   resetElement: resetElementInline,
+  resetScope,
   resetAll,
   subscribe,
   getSnapshot,

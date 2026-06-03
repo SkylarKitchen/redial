@@ -5,18 +5,16 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { diff, reset, overrideCount, resetStateOverrides } from "../core/apply";
-import { diffState, resetStateStyles } from "../core/statePreview";
-import { resetClassStyles } from "../core/scope";
+import { styleEngine } from "../core/engine";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import type { Scope } from "../core/scope";
 import { formatCSSDiff, getSelector } from "../util";
 import { formatTailwindDiff } from "../tailwind";
 import { timing, ms } from "../timing";
-import type { DiffEntry } from "../core/apply";
+import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
-import { serializeModeOverrides, getModeOverrideCount, resetAllModeOverrides } from "../core/modeOverrides";
+import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -81,7 +79,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const [copied, setCopied] = useState(false);
   const copyRef = useRef<HTMLDivElement>(null);
   const copyTriggerRef = useRef<HTMLButtonElement>(null);
-  const count = overrideCount(element);
+  const count = styleEngine.overrideCount(element);
   const modeCount = getModeOverrideCount();
   const totalCount = count + modeCount;
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -157,25 +155,25 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [showMessage]);
 
   const handleCopy = useCallback(() => {
-    const changes = diff(element);
+    const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
     copyAndClose(formatCSSDiff(element, changes), "SCSS");
   }, [element, copyAndClose]);
 
   const handleCopyCleanCSS = useCallback(() => {
-    const changes = diff(element);
+    const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
     copyAndClose(formatCleanCSS(element, changes), "CSS");
   }, [element, copyAndClose]);
 
   const handleCopyTailwind = useCallback(() => {
-    const changes = diff(element);
+    const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
     copyAndClose(formatTailwindDiff(changes), "Tailwind");
   }, [element, copyAndClose]);
 
   const handleCopyVars = useCallback(() => {
-    const changes = diff(element);
+    const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
     copyAndClose(formatCSSVars(changes), "vars");
   }, [element, copyAndClose]);
@@ -186,7 +184,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
 
     // Use state-specific diff when a pseudo-class state is active
     const isStateActive = activeState !== "none";
-    const changes = isStateActive ? diffState(element, activeState) : diff(element);
+    const changes = isStateActive ? styleEngine.diffState(element, activeState) : styleEngine.diffElement(element);
     if (changes.length === 0 && getModeOverrideCount() === 0) { savingRef.current = false; return; }
 
     setSaving(true);
@@ -268,28 +266,24 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   }, [element, onSaved, showMessage, scope, activeClassName, activeState]);
 
   const handleReset = useCallback(() => {
-    if (activeState !== "none") {
-      resetStateStyles(element, activeState);
-      resetStateOverrides(element, activeState);  // sync apply.ts
-    } else {
-      reset(element);
-      if (scope === "class" && activeClassName) {
-        resetClassStyles(activeClassName);
-      }
-    }
-    resetAllModeOverrides();
+    // Reset only the selected element's overrides for the active scope/state.
+    // Global mode overrides are a separate dimension and are intentionally NOT
+    // cleared here (they were over-cleared before — see resetScope / issue #14);
+    // they stay clearable via undo and the Variables panel.
+    styleEngine.resetScope(element, { scope, activeClassName: activeClassName ?? null, activeState });
     onReset();
   }, [element, onReset, scope, activeClassName, activeState]);
 
   const handleResetClick = useCallback(() => {
-    if (totalCount === 0) {
+    // Reset reflects the element's own overrides only (it no longer clears modes).
+    if (count === 0) {
       setShaking(true);
       if (shakingTimerRef.current) clearTimeout(shakingTimerRef.current);
       shakingTimerRef.current = setTimeout(() => setShaking(false), timing.slow);
       return;
     }
     handleReset();
-  }, [totalCount, handleReset]);
+  }, [count, handleReset]);
 
   return (
     <div
@@ -385,7 +379,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
             animate={shaking ? { x: [0, -2, 2, -2, 2, -2, 2, 0] } : { x: 0 }}
             transition={shaking ? { duration: timing.slow / 1000 } : { duration: 0 }}
             title="Reset element (R)"
-            aria-disabled={totalCount === 0}
+            aria-disabled={count === 0}
             style={{
               display: "inline-flex",
               alignItems: "center",
