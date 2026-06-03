@@ -281,7 +281,7 @@ function SelectRowCustom({
                       fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
                       cursor: "pointer",
                       lineHeight: "16px",
-                      ...(opt.value === value ? { backgroundColor: color.primary, color: "#fff" } : {}),
+                      ...(opt.value === value ? { backgroundColor: color.primary, color: color.primaryForeground } : {}),
                     }}
                   >
                     {opt.label}

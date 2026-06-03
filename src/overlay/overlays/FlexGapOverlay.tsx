@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, overlay, zIndex } from "../theme";
+import { color, font, overlay, zIndex } from "../theme";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -136,7 +136,7 @@ const BADGE_STYLE: React.CSSProperties = {
   position: "fixed",
   pointerEvents: "none",
   zIndex: zIndex.guide,
-  color: "#fff",
+  color: color.primaryForeground,
   fontSize: 10,
   fontFamily: LABEL_FONT,
   fontWeight: 600,

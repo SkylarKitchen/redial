@@ -217,7 +217,7 @@ export function SpacingValuePopover({
           width: 12px; height: 12px;
           border-radius: 50%;
           background: ${color.primary};
-          border: 2px solid #fff;
+          border: 2px solid ${color.primaryForeground};
           cursor: pointer;
           margin-top: -4.5px;
         }
@@ -225,7 +225,7 @@ export function SpacingValuePopover({
           width: 12px; height: 12px;
           border-radius: 50%;
           background: ${color.primary};
-          border: 2px solid #fff;
+          border: 2px solid ${color.primaryForeground};
           cursor: pointer;
         }
       `,
@@ -390,7 +390,7 @@ export function SpacingValuePopover({
                       padding: "3px 8px",
                       fontSize: "10px",
                       fontFamily: font.mono,
-                      color: u === unit ? "#fff" : text.secondary,
+                      color: u === unit ? color.primaryForeground : text.secondary,
                       background: u === unit ? color.primary : "transparent",
                       cursor: "pointer",
                       textTransform: "uppercase",

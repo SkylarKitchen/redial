@@ -13,7 +13,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { font, zIndex, overlay, blackAlpha } from "../theme";
+import { color, font, zIndex, overlay, blackAlpha } from "../theme";
 import { getScrubGroup } from "../core/scrubState";
 
 // ---------------------------------------------------------------------------
@@ -173,7 +173,7 @@ function guideColor(group: "margin" | "padding") {
 
 const BADGE_BASE: React.CSSProperties = {
   ...BASE,
-  color: "#fff",
+  color: color.primaryForeground,
   fontSize: 10,
   fontFamily: LABEL_FONT,
   fontWeight: 600,
