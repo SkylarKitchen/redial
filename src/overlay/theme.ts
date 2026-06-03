@@ -128,6 +128,19 @@ export const color = {
   warmWhite: "#FAF9F5",
 } as const;
 
+/**
+ * Text-contrast badge colors — derived from existing semantic tokens so the
+ * gauge stays in sync with the rest of the status palette.
+ */
+export const contrast = {
+  /** Meets WCAG AA/AAA */
+  pass: color.successMuted,
+  /** Below WCAG AA */
+  fail: color.destructive,
+  /** Backdrop unknowable — neutral, never alarming */
+  unknown: color.mutedForeground,
+} as const;
+
 // ─── Opacity Variants ────────────────────────────────────────────
 
 /** Accent blue at a given alpha — derived from color.primary */

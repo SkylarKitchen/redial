@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { cssColorToHex, rgbToHex, hexToRgb, isValidHex, hexToRgba } from "../colorUtils";
+import {
+  cssColorToHex,
+  rgbToHex,
+  hexToRgb,
+  isValidHex,
+  hexToRgba,
+  relativeLuminance,
+  contrastRatio,
+  wcagAssessment,
+} from "../colorUtils";
 
 describe("cssColorToHex", () => {
   it("converts rgb() to hex", () => {
@@ -114,6 +123,68 @@ describe("hexToRgba", () => {
 
   it("converts hex + zero opacity", () => {
     expect(hexToRgba("#000000", 0)).toBe("rgba(0, 0, 0, 0)");
+  });
+});
+
+describe("relativeLuminance", () => {
+  it("white is 1", () => {
+    expect(relativeLuminance({ r: 255, g: 255, b: 255 })).toBeCloseTo(1, 5);
+  });
+
+  it("black is 0", () => {
+    expect(relativeLuminance({ r: 0, g: 0, b: 0 })).toBeCloseTo(0, 5);
+  });
+
+  it("mid gray (#808080) is ~0.216", () => {
+    expect(relativeLuminance({ r: 128, g: 128, b: 128 })).toBeCloseTo(0.216, 2);
+  });
+
+  it("weights green above red above blue", () => {
+    const green = relativeLuminance({ r: 0, g: 255, b: 0 });
+    const red = relativeLuminance({ r: 255, g: 0, b: 0 });
+    const blue = relativeLuminance({ r: 0, g: 0, b: 255 });
+    expect(green).toBeGreaterThan(red);
+    expect(red).toBeGreaterThan(blue);
+  });
+});
+
+describe("contrastRatio", () => {
+  it("black on white is 21:1", () => {
+    expect(
+      contrastRatio({ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }),
+    ).toBeCloseTo(21, 5);
+  });
+
+  it("is symmetric (order independent)", () => {
+    const a = { r: 0, g: 0, b: 0 };
+    const b = { r: 255, g: 255, b: 255 };
+    expect(contrastRatio(a, b)).toBeCloseTo(contrastRatio(b, a), 5);
+  });
+
+  it("identical colors are 1:1", () => {
+    expect(
+      contrastRatio({ r: 18, g: 52, b: 86 }, { r: 18, g: 52, b: 86 }),
+    ).toBeCloseTo(1, 5);
+  });
+
+  it("mid-gray #777 on white is ~4.48 (just above AA normal)", () => {
+    expect(
+      contrastRatio({ r: 119, g: 119, b: 119 }, { r: 255, g: 255, b: 255 }),
+    ).toBeCloseTo(4.48, 1);
+  });
+});
+
+describe("wcagAssessment", () => {
+  it("normal text: 4.5 → AA, 7 → AAA, below 4.5 → fail", () => {
+    expect(wcagAssessment(4.5, false)).toBe("AA");
+    expect(wcagAssessment(7, false)).toBe("AAA");
+    expect(wcagAssessment(4.49, false)).toBe("fail");
+  });
+
+  it("large text relaxes thresholds: 3 → AA, 4.5 → AAA, below 3 → fail", () => {
+    expect(wcagAssessment(3, true)).toBe("AA");
+    expect(wcagAssessment(4.5, true)).toBe("AAA");
+    expect(wcagAssessment(2.99, true)).toBe("fail");
   });
 });
 

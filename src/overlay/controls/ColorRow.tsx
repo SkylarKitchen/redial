@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
+import { ContrastBadge } from "./ContrastBadge";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
 import { hexToRgba } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
@@ -67,6 +68,7 @@ export function ColorRow({
   compact,
   labelWidth,
   actions,
+  showContrast,
 }: {
   label: string;
   value: string;
@@ -85,6 +87,8 @@ export function ColorRow({
   labelWidth?: number;
   /** Optional action buttons rendered between label and swatch */
   actions?: React.ReactNode;
+  /** Show a live WCAG contrast gauge (text-color rows only) */
+  showContrast?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [rowHovered, setRowHovered] = useState(false);
@@ -213,6 +217,9 @@ export function ColorRow({
           </>
         )}
       </div>
+      {showContrast && computedElement && (
+        <ContrastBadge element={computedElement} value={displayColor} />
+      )}
       {!varName && indicator === "modified" && onReset && (
         <button
           type="button"

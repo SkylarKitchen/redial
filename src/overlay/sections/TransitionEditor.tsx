@@ -647,6 +647,7 @@ function MsInput({ value, onChange }: { value: number; onChange: (v: number) => 
     min: 0,
     max: 5000,
     blurOnEnter: true,
+    stepUpdatesDraft: true,
     onCommit: (d) => {
       setFocused(false);
       const parsed = parseInt(d);

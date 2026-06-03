@@ -3,10 +3,11 @@
  * math expression support, and scroll-to-adjust.
  */
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { evaluateMathExpr } from "../inputMath";
 import { color, font } from "../theme";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { selectAllOnDoubleClick, useValueFlash } from "./helpers";
 
 export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywordCommit, embedded, step: stepProp }: {
@@ -23,65 +24,56 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
   /** Base step for arrow key increments (default 1). Shift multiplies x10, Alt x0.1 */
   step?: number;
 }) {
-  const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const flashStyle = useValueFlash(value);
   useWheelAdjust(inputRef, value, onChange);
 
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    if (draft.trim() === '' && emptyKeyword && onKeywordCommit) {
-      onKeywordCommit(emptyKeyword);
-      return;
-    }
-    const mathResult = evaluateMathExpr(draft, value);
-    if (mathResult !== null) { onChange(mathResult); return; }
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) onChange(parsed);
-  }, [draft, value, onChange, emptyKeyword, onKeywordCommit]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "Escape") {
-        e.stopPropagation();
-        setDraft(String(value));
-        setFocused(false);
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        e.stopPropagation();
-        const base = stepProp ?? 1;
-        const inc = e.altKey ? base * 0.1 : e.shiftKey ? base * 10 : base;
-        onChange(Math.round((value + inc) * 10) / 10);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        e.stopPropagation();
-        const base = stepProp ?? 1;
-        const inc = e.altKey ? base * 0.1 : e.shiftKey ? base * 10 : base;
-        onChange(Math.round((value - inc) * 10) / 10);
+  const base = stepProp ?? 1;
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !focused,
+    step: base,
+    shiftStep: base * 10,
+    altStep: base * 0.1,
+    round: 1,
+    blurOnEnter: true,
+    revertOnEscape: true,
+    onCommit: (d) => {
+      setFocused(false);
+      if (d.trim() === "" && emptyKeyword && onKeywordCommit) {
+        onKeywordCommit(emptyKeyword);
+        return;
       }
+      const mathResult = evaluateMathExpr(d, value);
+      if (mathResult !== null) { onChange(mathResult); return; }
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed)) onChange(parsed);
     },
-    [commit, value, onChange, stepProp]
-  );
+    onStep: (next) => onChange(next),
+    onEscape: () => {
+      setFocused(false);
+      inputRef.current?.blur();
+    },
+  });
 
   return (
     <input
       ref={inputRef}
       aria-label="Value"
       value={focused ? draft : String(value)}
-      onChange={(e) => setDraft(e.target.value)}
+      onChange={inputProps.onChange}
       onClick={(e) => { if (e.altKey && onAltClick) { e.preventDefault(); onAltClick(); } }}
       onFocus={() => setFocused(true)}
-      onBlur={commit}
-      onKeyDown={handleKeyDown}
+      onBlur={inputProps.onBlur}
+      onKeyDown={(e) => {
+        // Preserve the original's event isolation: Escape/arrows must not bubble
+        // to panel-level hotkeys. The hook only calls preventDefault on arrows.
+        if (e.key === "Escape" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+          e.stopPropagation();
+        }
+        inputProps.onKeyDown(e);
+      }}
       onDoubleClick={selectAllOnDoubleClick}
       className="tuner-focusable"
       style={{

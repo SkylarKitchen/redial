@@ -319,7 +319,7 @@ export const TypographySection = memo(function TypographySection({
       </div>
 
       {/* Color */}
-      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} onReset={() => { reset("color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
+      <ColorRow label="Color" value={color} onChange={handleColorChange} indicator={ind("color")} onContextMenu={ctxMenu("color", color)} computedProp="color" computedElement={element} showContrast onReset={() => { reset("color"); setColor(rgbToHex(getComputedStyle(element).color)); }} />
 
       {/* Align */}
       <div style={ROW}>

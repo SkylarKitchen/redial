@@ -136,6 +136,7 @@ function NumberInput({
     min,
     max,
     blurOnEnter: true,
+    stepUpdatesDraft: true,
     onCommit: (d) => {
       setFocused(false);
       const parsed = parseFloat(d);
