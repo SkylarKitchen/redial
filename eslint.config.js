@@ -14,6 +14,18 @@
 
 import tseslint from "typescript-eslint";
 
+// No-op stub for the `react-hooks` namespace. We do NOT enforce react-hooks here
+// (out of scope for this convention pass), but a few legacy files carry
+// `// eslint-disable-next-line react-hooks/exhaustive-deps` directives left over
+// from a prior Next.js lint setup. ESLint hard-errors on directives that name an
+// unknown rule, so we register the rule as a defined-but-off no-op to keep them valid.
+const reactHooksStub = {
+  rules: {
+    "exhaustive-deps": { create: () => ({}) },
+    "rules-of-hooks": { create: () => ({}) },
+  },
+};
+
 // Hex literals as string values, e.g. "#fff" or "2px solid #ff0000".
 const HEX_LITERAL = {
   selector: "Literal[value=/#[0-9a-fA-F]{3,8}/]",
@@ -46,6 +58,11 @@ export default [
   {
     files: ["src/overlay/**/*.{ts,tsx}"],
     ignores: ["src/overlay/**/__tests__/**"],
+    plugins: { "react-hooks": reactHooksStub },
+    // We don't enforce react-hooks, so the legacy directives above are "unused"
+    // by our ruleset. Don't flag them — they encode deliberate developer intent
+    // (intentional partial dep arrays) and aren't ours to remove.
+    linterOptions: { reportUnusedDisableDirectives: "off" },
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {

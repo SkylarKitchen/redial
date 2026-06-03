@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useElementTracker } from "./useElementTracker";
+import { subscribeOverrides } from "../core/apply";
 import { timing } from "../timing";
 
 export interface SelectionOutlineDeps {
@@ -90,6 +91,10 @@ export function useSelectionOutline({
       if (dimensionsBadgeRef.current) dimensionsBadgeRef.current.style.display = "none";
       if (tagLabelRef.current) tagLabelRef.current.style.display = "none";
     }, []),
+    // Re-sync after engine edits that don't mutate the selected element's own
+    // style/class attribute — e.g. a CSS variable on :root that drives one of
+    // its layout properties, a stylesheet-rule/class edit, or undo/redo.
+    subscribeOverrides,
   );
 
   // --- Outline pulse on new element selection ---
