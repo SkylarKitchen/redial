@@ -23,7 +23,8 @@
 
 import {
   applyInlineStyle,
-  stateKey,
+  compositeKey,
+  BASE_BREAKPOINT,
   undo as undoInline,
   redo as redoInline,
   beginBatch as beginInlineBatch,
@@ -33,6 +34,7 @@ import {
   overrideCount as overrideCountInline,
   resetProp as resetInlineProp,
   reset as resetElementInline,
+  resetElementBreakpoint,
   resetStateOverrides,
   resetAll as resetAllInline,
   totalOverrideCount,
@@ -65,22 +67,31 @@ import {
  * Where a style mutation lands. This discriminated union replaces today's
  * scattered `(scope, activeClassName, activeState)` triple plus the separate
  * mode-override call path with a single typed dispatch surface.
+ *
+ * `breakpoint` is an ORTHOGONAL composition dimension (RFC #14 Increment C,
+ * ADR-0005): it rides on the element/class/state arms rather than being a 5th
+ * arm, because a responsive edit composes WITH those (a `:hover` at `≥768px` is
+ * a state edit AND a breakpoint edit). Absent / `"base"` means the un-mediated
+ * base styles. Mode overrides are a separate dimension and carry no breakpoint.
  */
 export type OverrideTarget =
-  | { scope: "element"; el: Element }
-  | { scope: "class"; el: Element; className: string }
-  | { scope: "state"; el: Element; state: string }
+  | { scope: "element"; el: Element; breakpoint?: string }
+  | { scope: "class"; el: Element; className: string; breakpoint?: string }
+  | { scope: "state"; el: Element; state: string; breakpoint?: string }
   | { scope: "mode"; selector: string; varName: string };
 
 /**
  * The panel's current scoping state: which scope is active, the active class
- * (when in class scope), and the active pseudo-state. `resolveTarget` collapses
- * this triple onto an `OverrideTarget`.
+ * (when in class scope), the active pseudo-state, and the active responsive
+ * breakpoint. `resolveTarget` collapses this onto an `OverrideTarget`.
  */
 export interface ScopeContext {
   scope: string; // "element" | "class"
   activeClassName: string | null;
   activeState: string; // "none" | a pseudo-state like "hover"
+  /** Active responsive breakpoint; absent / "base" = the un-mediated base
+   *  styles. Optional so pre-Increment-C callers compile unchanged. */
+  activeBreakpoint?: string;
 }
 
 /**
@@ -94,13 +105,19 @@ export interface ScopeContext {
  * a `class` target; otherwise it's a plain `element` target.
  */
 export function resolveTarget(el: Element, ctx: ScopeContext): OverrideTarget {
+  // Carry the active breakpoint onto whichever arm we resolve to (omitted at the
+  // base breakpoint so base targets stay shape-identical to pre-Increment-C).
+  const bp =
+    ctx.activeBreakpoint && ctx.activeBreakpoint !== BASE_BREAKPOINT
+      ? { breakpoint: ctx.activeBreakpoint }
+      : undefined;
   if (ctx.activeState !== "none") {
-    return { scope: "state", el, state: ctx.activeState };
+    return { scope: "state", el, state: ctx.activeState, ...bp };
   }
   if (ctx.scope === "class" && ctx.activeClassName) {
-    return { scope: "class", el, className: ctx.activeClassName };
+    return { scope: "class", el, className: ctx.activeClassName, ...bp };
   }
-  return { scope: "element", el };
+  return { scope: "element", el, ...bp };
 }
 
 /** Result of an undo/redo step over inline/class/state. Mode steps return null. */
@@ -157,20 +174,33 @@ export interface StyleEngine {
  */
 function apply(target: OverrideTarget, prop: string, value: string): void {
   switch (target.scope) {
-    case "state":
-      // Preview via the state <style> tag, and mirror into apply.ts's override
-      // map under a composite key so undo/redo/diff observe the state edit.
-      applyStateStyle(target.el, target.state, prop, value);
-      applyInlineStyle(target.el, stateKey(target.state, prop), value);
+    case "state": {
+      const bp = target.breakpoint ?? BASE_BREAKPOINT;
+      // Live pseudo-state preview (the <style> tag) is base-only today; a
+      // breakpoint pseudo-state is tracked under its composite key, with its
+      // media-gated render deferred to #35. Always mirror into apply.ts's map
+      // (keyed by breakpoint ▸ state ▸ prop) so undo/redo/diff observe the edit.
+      if (bp === BASE_BREAKPOINT) applyStateStyle(target.el, target.state, prop, value);
+      applyInlineStyle(target.el, compositeKey(bp, target.state, prop), value);
       return;
-    case "class":
-      // The class rule is the persisted form; the inline write is the live preview.
-      applyClassStyle(target.className, prop, value);
-      applyInlineStyle(target.el, prop, value, target.className);
+    }
+    case "class": {
+      const bp = target.breakpoint ?? BASE_BREAKPOINT;
+      if (bp === BASE_BREAKPOINT) {
+        // The class rule is the persisted form; the inline write is the live preview.
+        applyClassStyle(target.className, prop, value);
+        applyInlineStyle(target.el, prop, value, target.className);
+      } else {
+        // Breakpoint class edit: tracked only (per-breakpoint class rule = #35).
+        applyInlineStyle(target.el, compositeKey(bp, "none", prop), value);
+      }
       return;
-    case "element":
-      applyInlineStyle(target.el, prop, value);
+    }
+    case "element": {
+      const bp = target.breakpoint ?? BASE_BREAKPOINT;
+      applyInlineStyle(target.el, compositeKey(bp, "none", prop), value);
       return;
+    }
     case "mode":
       applyModeOverride(target.selector, target.varName, value);
       return;
@@ -252,13 +282,18 @@ function diffState(el: Element, state: string): DiffEntry[] {
  * See https://github.com/SkylarKitchen/redial/issues/14.
  */
 function resetScope(el: Element, ctx: ScopeContext): void {
+  const bp = ctx.activeBreakpoint ?? BASE_BREAKPOINT;
   if (ctx.activeState !== "none") {
-    resetStateStyles(el, ctx.activeState);
-    resetStateOverrides(el, ctx.activeState); // keep apply.ts's mirror map in sync
+    // Live state <style> is base-only; clear it only at the base breakpoint.
+    if (bp === BASE_BREAKPOINT) resetStateStyles(el, ctx.activeState);
+    resetStateOverrides(el, ctx.activeState, bp); // mirror map, scoped to this breakpoint
     return;
   }
-  resetElementInline(el);
-  if (ctx.scope === "class" && ctx.activeClassName) {
+  // Surgical (ADR-0005): clear only the ACTIVE breakpoint's cell, leaving other
+  // breakpoints intact. At the base breakpoint this matches the legacy full
+  // element reset (the only breakpoint that exists pre-#35).
+  resetElementBreakpoint(el, bp);
+  if (bp === BASE_BREAKPOINT && ctx.scope === "class" && ctx.activeClassName) {
     resetClassStyles(ctx.activeClassName);
   }
 }

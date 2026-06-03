@@ -2,12 +2,15 @@
  * GridOverlay.tsx — Visual grid overlay for CSS Grid containers
  *
  * Renders grid lines, gap bands, and column/row number labels on top of
- * any element with display: grid or inline-grid. Uses a RAF loop +
- * ResizeObserver to stay in sync with layout changes.
+ * any element with display: grid or inline-grid. Tracking is delegated to the
+ * shared `useTrackedOverlay` hook, which provides synchronous scroll tracking,
+ * a style/class MutationObserver, ResizeObserver, and the engine-invalidate
+ * signal — replacing the old perpetual requestAnimationFrame poll.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React from "react";
 import { font, overlay, zIndex } from "../theme";
+import { useTrackedOverlay } from "../hooks/useTrackedOverlay";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,6 +99,11 @@ function computeMetrics(el: Element): GridMetrics | null {
   };
 }
 
+/** Collapse metrics to a string so identical layout doesn't trigger a render. */
+function metricsKey(m: GridMetrics): string {
+  return `${m.contentTop},${m.contentLeft},${m.contentWidth},${m.contentHeight},${m.cols.join(",")},${m.rows.join(",")},${m.colGap},${m.rowGap}`;
+}
+
 // ---------------------------------------------------------------------------
 // Styles (constants)
 // ---------------------------------------------------------------------------
@@ -123,51 +131,8 @@ const LABEL_STYLE: React.CSSProperties = {
 // Component
 // ---------------------------------------------------------------------------
 
-export function GridOverlay({
-  element,
-  refreshKey,
-}: {
-  element: Element;
-  refreshKey?: number;
-}) {
-  const [metrics, setMetrics] = useState<GridMetrics | null>(null);
-  const rafRef = useRef(0);
-  const observerRef = useRef<ResizeObserver | null>(null);
-  const prevMetricsRef = useRef<string>("");
-
-  const measure = useCallback(() => {
-    const m = computeMetrics(element);
-    // Only update state when metrics actually change to avoid 60fps React reconciliation
-    const key = m ? `${m.contentTop},${m.contentLeft},${m.contentWidth},${m.contentHeight},${m.cols.join(",")},${m.rows.join(",")},${m.colGap},${m.rowGap}` : "";
-    if (key !== prevMetricsRef.current) {
-      prevMetricsRef.current = key;
-      setMetrics(m);
-    }
-  }, [element]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loop = () => {
-      if (cancelled) return;
-      measure();
-      rafRef.current = requestAnimationFrame(loop);
-    };
-
-    rafRef.current = requestAnimationFrame(loop);
-
-    // ResizeObserver for immediate response to size changes
-    observerRef.current = new ResizeObserver(() => {
-      if (!cancelled) measure();
-    });
-    observerRef.current.observe(element);
-
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafRef.current);
-      observerRef.current?.disconnect();
-    };
-  }, [element, refreshKey, measure]);
+export function GridOverlay({ element }: { element: Element }) {
+  const metrics = useTrackedOverlay(element, true, computeMetrics, metricsKey);
 
   if (!metrics) return null;
   if (metrics.cols.length === 0 && metrics.rows.length === 0) return null;

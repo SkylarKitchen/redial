@@ -61,6 +61,12 @@ export function enrichChangesForCommit(
     activeState?: string;
   },
 ): EnrichedChange[] {
+  // #35: breakpoint (@media) overrides need a dedicated save path that emits
+  // `@media` blocks. Until that lands, never write one as an un-mediated base
+  // style — drop any breakpoint-tagged change here. No-op today: Increment C
+  // (RFC #14, ADR-0005) ships no breakpoint UI, so none can reach commit yet.
+  changes = changes.filter((c) => !c.breakpoint);
+
   // Tailwind path: convert CSS diffs to Tailwind classes and target JSX source
   if (isTailwindElement(element)) {
     const reactSource = getReactSource(element);

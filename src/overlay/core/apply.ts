@@ -535,8 +535,9 @@ export function redo(): { el: Element; prop?: string } | null {
     const undoEntries: SingleUndoEntry[] = [];
     let result: { el: Element; prop: string } | null = null;
     for (const { el, prop, prev: redoValue, state, className } of last.entries) {
-      const isState = state !== "none";
-      const cssProp = isState ? parseStateKey(prop).prop : prop;
+      const { breakpoint: bpK, state: stK, prop: cssProp } = parseKey(prop);
+      const writeInline = bpK === BASE_BREAKPOINT && stK === "none";
+      const notifyState = bpK === BASE_BREAKPOINT && stK !== "none";
       if (!overrides.has(el)) overrides.set(el, new Map());
       const elOverrides = overrides.get(el)!;
       const entry = elOverrides.get(prop);
@@ -555,10 +556,10 @@ export function redo(): { el: Element; prop?: string } | null {
         elOverrides.set(prop, { initial, current: redoValue, inlineOriginal: null });
         if (initial !== redoValue) dirtyCount++;
       }
-      if (!isState) {
+      if (writeInline) {
         (el as HTMLElement).style.setProperty(prop, redoValue, "important");
-      } else {
-        notifyStateChange(el, state, cssProp, redoValue);
+      } else if (notifyState) {
+        notifyStateChange(el, stK, cssProp, redoValue);
       }
       if (className) notifyClassChange(className, prop, redoValue);
       result = { el, prop };
@@ -572,8 +573,9 @@ export function redo(): { el: Element; prop?: string } | null {
   }
 
   const { el, prop, prev: redoValue, state, className } = last as SingleUndoEntry;
-  const isState = state !== "none";
-  const cssProp = isState ? parseStateKey(prop).prop : prop;
+  const { breakpoint: bpK, state: stK, prop: cssProp } = parseKey(prop);
+  const writeInline = bpK === BASE_BREAKPOINT && stK === "none";
+  const notifyState = bpK === BASE_BREAKPOINT && stK !== "none";
   if (!overrides.has(el)) overrides.set(el, new Map());
   const elOverrides = overrides.get(el)!;
   const entry = elOverrides.get(prop);
@@ -593,10 +595,10 @@ export function redo(): { el: Element; prop?: string } | null {
     elOverrides.set(prop, { initial, current: redoValue, inlineOriginal: null });
     if (initial !== redoValue) dirtyCount++;
   }
-  if (!isState) {
+  if (writeInline) {
     (el as HTMLElement).style.setProperty(prop, redoValue, "important");
-  } else {
-    notifyStateChange(el, state, cssProp, redoValue);
+  } else if (notifyState) {
+    notifyStateChange(el, stK, cssProp, redoValue);
   }
   if (className) notifyClassChange(className, prop, redoValue);
 
@@ -609,14 +611,21 @@ export function redo(): { el: Element; prop?: string } | null {
  * Clear all composite-keyed overrides for a specific state on an element.
  * Called by Footer.tsx handleReset to keep apply.ts in sync with statePreview.ts.
  */
-export function resetStateOverrides(el: Element, state: string): void {
+export function resetStateOverrides(el: Element, state: string, breakpoint: string = BASE_BREAKPOINT): void {
   const elOverrides = overrides.get(el);
   if (!elOverrides) return;
 
+  // Match by both dimensions so a per-breakpoint reset clears only that
+  // breakpoint's state cell. Defaults to the base breakpoint → byte-identical
+  // for every pre-Increment-C caller (RFC #14, ADR-0005).
+  const matches = (key: string) => {
+    const parsed = parseKey(key);
+    return parsed.state === state && parsed.breakpoint === breakpoint;
+  };
+
   const keysToRemove: string[] = [];
   for (const [key, override] of elOverrides) {
-    const parsed = parseStateKey(key);
-    if (parsed.state === state) {
+    if (matches(key)) {
       keysToRemove.push(key);
       if (override.initial !== override.current) dirtyCount--;
     }
@@ -626,19 +635,69 @@ export function resetStateOverrides(el: Element, state: string): void {
   }
   if (elOverrides.size === 0) overrides.delete(el);
 
-  // Also remove undo/redo entries for this element+state
+  // Also remove undo/redo entries for this element + state + breakpoint
   for (const stack of [undoStack, redoStack]) {
     for (let i = stack.length - 1; i >= 0; i--) {
       const entry = stack[i];
       if (isBatch(entry)) {
-        entry.entries = entry.entries.filter(e => !(e.el === el && e.state === state));
+        entry.entries = entry.entries.filter(e => !(e.el === el && matches(e.prop)));
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (!isDomMove(entry) && entry.el === el && entry.state === state) {
+      } else if (!isDomMove(entry) && entry.el === el && matches(entry.prop)) {
         stack.splice(i, 1);
       }
     }
   }
 
+  notifyListeners();
+}
+
+/**
+ * Reset only the overrides on an element that belong to ONE breakpoint, leaving
+ * other breakpoints intact — the surgical partner to the engine's per-breakpoint
+ * Footer reset (RFC #14 Increment C, ADR-0005). At the base breakpoint this
+ * matches {@link reset}'s effect on the override map (clearing the element's
+ * un-mediated keys, including its base pseudo-state keys, and restoring inline
+ * styles); non-base breakpoints are tracked-only today, so their keys are simply
+ * dropped (no inline render to revert until #35).
+ */
+export function resetElementBreakpoint(el: Element, breakpoint: string): void {
+  const elOverrides = overrides.get(el);
+  if (!elOverrides) return;
+
+  const keysToRemove: string[] = [];
+  for (const [prop, override] of elOverrides) {
+    if (parseKey(prop).breakpoint !== breakpoint) continue;
+    keysToRemove.push(prop);
+    if (override.initial !== override.current) dirtyCount--;
+    if (isInlineWritable(prop)) {
+      if (override.inlineOriginal) {
+        (el as HTMLElement).style.setProperty(prop, override.inlineOriginal);
+      } else {
+        (el as HTMLElement).style.removeProperty(prop);
+      }
+    }
+  }
+  for (const key of keysToRemove) elOverrides.delete(key);
+  if (elOverrides.size === 0) overrides.delete(el);
+
+  // Remove undo/redo entries for this element + breakpoint
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      const entry = stack[i];
+      if (isBatch(entry)) {
+        entry.entries = entry.entries.filter(
+          (e) => !(e.el === el && parseKey(e.prop).breakpoint === breakpoint),
+        );
+        if (entry.entries.length === 0) stack.splice(i, 1);
+      } else if (
+        !isBatch(entry) && !isDomMove(entry) &&
+        entry.el === el && parseKey(entry.prop).breakpoint === breakpoint
+      ) {
+        stack.splice(i, 1);
+      }
+    }
+  }
+  schedulePersist();
   notifyListeners();
 }
 
@@ -654,8 +713,8 @@ export function reset(el: Element): void {
 
   for (const [prop, override] of elOverrides) {
     if (override.initial !== override.current) dirtyCount--;
-    // Only remove inline style for non-state-keyed properties
-    if (!prop.includes("::")) {
+    // Only revert inline style for live (base-breakpoint, no-state) keys.
+    if (isInlineWritable(prop)) {
       if (override.inlineOriginal) {
         (el as HTMLElement).style.setProperty(prop, override.inlineOriginal);
       } else {
@@ -689,7 +748,7 @@ export function reset(el: Element): void {
 export function resetAll(): void {
   for (const [el, props] of overrides) {
     for (const [prop, override] of props) {
-      if (!prop.includes("::")) {
+      if (isInlineWritable(prop)) {
         if (override.inlineOriginal) {
           (el as HTMLElement).style.setProperty(prop, override.inlineOriginal);
         } else {
@@ -720,8 +779,14 @@ export function diff(el: Element): DiffEntry[] {
   const entries: DiffEntry[] = [];
   for (const [key, { initial, current }] of elOverrides) {
     if (initial !== current) {
-      const { state, prop } = parseStateKey(key);
-      entries.push({ prop, from: initial, to: current, state: state === "none" ? undefined : state });
+      const { breakpoint, state, prop } = parseKey(key);
+      entries.push({
+        prop,
+        from: initial,
+        to: current,
+        state: state === "none" ? undefined : state,
+        breakpoint: breakpoint === BASE_BREAKPOINT ? undefined : breakpoint,
+      });
     }
   }
   return entries;
@@ -809,7 +874,7 @@ export function clearRedundantOverrides(): number {
   const entries: Array<{ el: Element; prop: string; current: string }> = [];
   for (const [el, props] of overrides) {
     for (const [prop, { current }] of props) {
-      if (prop.includes("::")) continue; // skip state-keyed
+      if (!isInlineWritable(prop)) continue; // skip state- and breakpoint-keyed (not inline)
       entries.push({ el, prop, current });
     }
   }
@@ -875,7 +940,7 @@ export function stripAllOverrides(): boolean {
   let stripped = false;
   for (const [el, props] of overrides) {
     for (const [prop] of props) {
-      if (!prop.includes("::")) {
+      if (isInlineWritable(prop)) {
         (el as HTMLElement).style.removeProperty(prop);
       }
       stripped = true;
@@ -891,7 +956,7 @@ export function stripAllOverrides(): boolean {
 export function restoreAllOverrides(): void {
   for (const [el, props] of overrides) {
     for (const [prop, { current }] of props) {
-      if (!prop.includes("::")) {
+      if (isInlineWritable(prop)) {
         (el as HTMLElement).style.setProperty(prop, current, "important");
       }
     }
@@ -946,7 +1011,7 @@ export function resetProp(el: Element, prop: string): void {
   const revertValue = entry?.initial;
 
   if (entry && entry.initial !== entry.current) dirtyCount--;
-  if (elOverrides && !prop.includes("::")) {
+  if (elOverrides && isInlineWritable(prop)) {
     if (entry?.inlineOriginal) {
       (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
     } else {
@@ -1296,8 +1361,11 @@ export function restoreSession(): number {
         elOverrides.set(prop, { initial: override.initial, current: override.current, inlineOriginal: null });
         if (override.initial !== override.current) dirtyCount++;
 
-        const parsed = parseStateKey(prop);
-        if (parsed.state !== "none") {
+        const parsed = parseKey(prop);
+        if (parsed.breakpoint !== BASE_BREAKPOINT) {
+          // Non-base breakpoint: tracked in the map only — its media-gated render
+          // lands with #35, so nothing to write to the live DOM here.
+        } else if (parsed.state !== "none") {
           // State-keyed: notify listeners so statePreview.ts can rebuild <style> tag
           notifyStateChange(el, parsed.state, parsed.prop, override.current);
         } else {

@@ -6,11 +6,21 @@
  * - Padding (green): extends inward from border-box
  * - Content (blue): innermost content area
  *
- * Uses a RAF loop + ResizeObserver for live position tracking.
+ * Positions the three boxes via the shared `useElementTracker` hook (the same
+ * event-driven tracker the selection outline uses): scroll is synchronous,
+ * size/style/class changes are rAF-coalesced via ResizeObserver + a
+ * MutationObserver, and `subscribeOverrides` re-syncs after engine edits that
+ * don't mutate the element's own attributes (CSS vars on :root, undo/redo). The
+ * three rectangles are computed by the shared `boxRects(parseBoxModel(el), rect)`
+ * geometry util; the DOM nodes themselves are still created and positioned
+ * imperatively.
  */
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { marginWarmAlpha, greenAlpha, primaryAlpha, zIndex } from "../theme";
+import { useElementTracker } from "../hooks/useElementTracker";
+import { subscribeOverrides } from "../core/apply";
+import { parseBoxModel, boxRects } from "../util/boxGeometry";
 
 const MARGIN_COLOR = marginWarmAlpha(0.15);
 const PADDING_COLOR = greenAlpha(0.15);
@@ -18,20 +28,20 @@ const CONTENT_COLOR = primaryAlpha(0.15);
 
 interface BoxModelOverlayProps {
   element: Element;
-  refreshKey?: number;
 }
 
-export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
+export function BoxModelOverlay({ element }: BoxModelOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const marginRef = useRef<HTMLDivElement | null>(null);
+  const paddingRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
+  // Create the three colored boxes once into the container; tear them down on
+  // unmount. Positioning happens in the tracker's onUpdate below.
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !element.isConnected) return;
+    if (!container) return;
 
-    let rafId: number;
-    let cancelled = false;
-
-    // Create overlay elements
     const marginDiv = document.createElement("div");
     const paddingDiv = document.createElement("div");
     const contentDiv = document.createElement("div");
@@ -52,86 +62,63 @@ export function BoxModelOverlay({ element, refreshKey }: BoxModelOverlayProps) {
     paddingDiv.style.background = PADDING_COLOR;
     contentDiv.style.background = CONTENT_COLOR;
 
-    function update() {
-      if (cancelled || !element.isConnected) {
-        container!.style.display = "none";
-        return;
-      }
-
-      const cs = getComputedStyle(element);
-      const rect = element.getBoundingClientRect();
-
-      // Parse all box model values
-      const mt = parseFloat(cs.marginTop) || 0;
-      const mr = parseFloat(cs.marginRight) || 0;
-      const mb = parseFloat(cs.marginBottom) || 0;
-      const ml = parseFloat(cs.marginLeft) || 0;
-
-      const pt = parseFloat(cs.paddingTop) || 0;
-      const pr = parseFloat(cs.paddingRight) || 0;
-      const pb = parseFloat(cs.paddingBottom) || 0;
-      const pl = parseFloat(cs.paddingLeft) || 0;
-
-      const bt = parseFloat(cs.borderTopWidth) || 0;
-      const br = parseFloat(cs.borderRightWidth) || 0;
-      const bb = parseFloat(cs.borderBottomWidth) || 0;
-      const bl = parseFloat(cs.borderLeftWidth) || 0;
-
-      // Margin box: border-box expanded outward by margin
-      marginDiv.style.top = `${rect.top - mt}px`;
-      marginDiv.style.left = `${rect.left - ml}px`;
-      marginDiv.style.width = `${rect.width + ml + mr}px`;
-      marginDiv.style.height = `${rect.height + mt + mb}px`;
-
-      // Padding box: inside the border (border-box minus border widths)
-      paddingDiv.style.top = `${rect.top + bt}px`;
-      paddingDiv.style.left = `${rect.left + bl}px`;
-      paddingDiv.style.width = `${rect.width - bl - br}px`;
-      paddingDiv.style.height = `${rect.height - bt - bb}px`;
-
-      // Content box: inside padding
-      contentDiv.style.top = `${rect.top + bt + pt}px`;
-      contentDiv.style.left = `${rect.left + bl + pl}px`;
-      contentDiv.style.width = `${rect.width - bl - br - pl - pr}px`;
-      contentDiv.style.height = `${rect.height - bt - bb - pt - pb}px`;
-
-      container!.style.display = "block";
-    }
-
-    // Event-driven updates instead of perpetual RAF loop
-    function scheduleUpdate() {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(update);
-    }
-
-    // Initial paint
-    scheduleUpdate();
-
-    // Track scroll synchronously — the scroll event fires after layout and
-    // before paint, so reading the rect + writing styles in the handler lands
-    // in the same frame the content moved. Deferring to rAF would put the boxes
-    // one frame behind the GPU-composited scroll (visible lag). Size changes
-    // (resize / ResizeObserver) stay rAF-coalesced.
-    window.addEventListener("scroll", update, { capture: true, passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    let ro: ResizeObserver | undefined;
-    try {
-      ro = new ResizeObserver(scheduleUpdate);
-      ro.observe(element);
-    } catch {
-      // ResizeObserver not available
-    }
+    marginRef.current = marginDiv;
+    paddingRef.current = paddingDiv;
+    contentRef.current = contentDiv;
 
     return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", scheduleUpdate);
-      ro?.disconnect();
-      // Clean up child nodes
       while (container.firstChild) container.removeChild(container.firstChild);
+      marginRef.current = null;
+      paddingRef.current = null;
+      contentRef.current = null;
     };
-  }, [element, refreshKey]);
+  }, []);
+
+  useElementTracker(
+    element,
+    true,
+    useCallback(
+      (rect: DOMRect) => {
+        const marginDiv = marginRef.current;
+        const paddingDiv = paddingRef.current;
+        const contentDiv = contentRef.current;
+        if (!marginDiv || !paddingDiv || !contentDiv) return;
+
+        const { margin, padding, content } = boxRects(parseBoxModel(element), rect);
+
+        // Margin box: border-box expanded outward by margin
+        marginDiv.style.top = `${margin.top}px`;
+        marginDiv.style.left = `${margin.left}px`;
+        marginDiv.style.width = `${margin.width}px`;
+        marginDiv.style.height = `${margin.height}px`;
+
+        // Padding box: inside the border (border-box minus border widths)
+        paddingDiv.style.top = `${padding.top}px`;
+        paddingDiv.style.left = `${padding.left}px`;
+        paddingDiv.style.width = `${padding.width}px`;
+        paddingDiv.style.height = `${padding.height}px`;
+
+        // Content box: inside padding
+        contentDiv.style.top = `${content.top}px`;
+        contentDiv.style.left = `${content.left}px`;
+        contentDiv.style.width = `${content.width}px`;
+        contentDiv.style.height = `${content.height}px`;
+
+        const container = containerRef.current;
+        if (container) container.style.display = "block";
+      },
+      [element],
+    ),
+    useCallback(() => {
+      // Element disconnected (HMR, navigation) — hide the whole group.
+      const container = containerRef.current;
+      if (container) container.style.display = "none";
+    }, []),
+    // Re-sync after engine edits that don't mutate the element's own style/class
+    // attribute — e.g. a CSS variable on :root, a stylesheet-rule/class edit, or
+    // undo/redo. Mirrors useSelectionOutline.
+    subscribeOverrides,
+  );
 
   return (
     <div

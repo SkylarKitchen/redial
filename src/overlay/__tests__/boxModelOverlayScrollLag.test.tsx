@@ -44,8 +44,11 @@ describe("BoxModelOverlay — no frame lag on scroll", () => {
     const gbcr = vi.spyOn(el, "getBoundingClientRect");
     const before = gbcr.mock.calls.length;
 
-    // Dispatch a scroll. Capture-phase listener on window catches it.
-    window.dispatchEvent(new Event("scroll"));
+    // Dispatch a scroll. The shared useElementTracker registers its
+    // capture-phase scroll listener on `document` (a window-targeted event does
+    // not propagate to a document-capturing listener), matching the sibling
+    // elementTrackerScrollLag / gridOverlayScrollLag tests.
+    document.dispatchEvent(new Event("scroll"));
 
     // Must have re-read layout synchronously — WITHOUT needing an animation frame.
     expect(gbcr.mock.calls.length).toBeGreaterThan(before);

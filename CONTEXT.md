@@ -83,6 +83,11 @@ _Avoid_: bare "scope" for this — see Flagged ambiguities.
 
 A theme-mode override of a CSS variable, keyed by `(selector, varName)` and **global** — it is not attached to the selected element. A distinct dimension from element/class/state **overrides**: created in the Variables panel and cleared on its own path (undo today), **never** as a side effect of any style-panel **Reset** — neither the per-element Footer Reset nor the session-wide "Reset all" (see ADR-0004).
 
+## Breakpoint
+
+A responsive viewport band an **override** can belong to (its `@media` context), e.g. the base/un-mediated styles vs. `≥768px`. A breakpoint is an **orthogonal dimension** that **composes with** the element/class/state **override target** rather than replacing it — a `:hover` edit *at* `≥768px` is a state edit **and** a breakpoint edit at once. The **base breakpoint** is the un-mediated default (no `@media`). A **mode override** carries no breakpoint (modes are their own dimension). Reset is per-breakpoint: a Footer Reset clears only the active breakpoint's cell, while session-wide "Reset all" spans every breakpoint (see ADR-0005).
+_Avoid_: conflating a breakpoint with a **mode** — a mode is a CSS-variable theme (Dark, Compact); a breakpoint is a viewport width. `modeDiscovery` surfaces both as "modes" on the read side, but they are distinct override dimensions.
+
 ## Flagged ambiguities
 
 - **"modal"** was used to mean the floating tuning surface — resolved: the canonical term is **Panel**. Redial has no modal (nothing centered, blocking, or backdropped).
