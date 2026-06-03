@@ -100,24 +100,10 @@ export default [
     rules: { "no-restricted-syntax": "off" },
   },
 
-  // ── Grandfathered shadcn imports (ratchet) ──
-  // These 9 files predate the rule. They keep the CSS-import ban but are exempt
-  // from the shadcn ban so CI stays green. DO NOT add new shadcn imports — any
-  // file NOT in this list still errors. Migrate these to inline controls over time.
-  {
-    files: [
-      "src/overlay/sections/TextStyleRow.tsx",
-      "src/overlay/sections/TransformEditor.tsx",
-      "src/overlay/sections/BordersSection.tsx",
-      "src/overlay/shell/CommandPalette.tsx",
-      "src/overlay/shell/ShortcutsHelp.tsx",
-      "src/overlay/controls/IconButtonGroup.tsx",
-      "src/overlay/controls/Section.tsx",
-      "src/overlay/controls/SliderRow.tsx",
-      "src/overlay/controls/SelectRow.tsx",
-    ],
-    rules: {
-      "no-restricted-imports": ["error", { patterns: [NO_CSS_IMPORT] }],
-    },
-  },
+  // ── No shadcn grandfather list ──
+  // The 9 files that once imported shadcn/Radix (@/components/ui/*) were all
+  // migrated to inline-styled controls on 2026-06-03, so the ratchet is fully
+  // paid down: the NO_SHADCN_IMPORT ban in the base config now applies to the
+  // entire overlay with zero exemptions. Do not re-introduce a grandfather list —
+  // migrate any new control to an inline implementation instead.
 ];

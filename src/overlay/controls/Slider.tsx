@@ -1,7 +1,7 @@
 /**
  * controls/Slider.tsx — Inline range slider (no shadcn/Radix).
  *
- * Drop-in replacement for the former `@/components/ui/slider` (Radix) Slider:
+ * Drop-in replacement for the former shadcn/Radix slider control:
  * it keeps the same array-based value API (`value={[n]}` /
  * `onValueChange={([v]) => ...}`) so the call sites (SliderRow, BordersSection,
  * TransformEditor) only had to change their import, not their JSX.

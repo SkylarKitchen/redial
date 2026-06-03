@@ -17,11 +17,13 @@
  * `data-radix-popper-content-wrapper` guards in usePageInteractions.ts
  * remain necessary — the final block verifies they are still present.
  */
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { useRef } from "react";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { StateSelector } from "../shell/StateSelector";
+import { usePageInteractions } from "../hooks/usePageInteractions";
 
 afterEach(() => {
   cleanup();
@@ -127,14 +129,89 @@ describe("issue #23 — source verification: page-interaction handler keeps Radi
     expect(pageInteractionsSrc).toMatch(/radixDismissPending/);
   });
 
-  it("exempts tuner-owned clicks via isInsideTunerUI (covers [data-tuner-portal])", () => {
-    // The page-click handler delegates portal exemption to isInsideTunerUI,
-    // whose selector list includes [data-tuner-portal] (see util.ts). That is
-    // what keeps clicks inside StateSelector's portal from reselecting a page
-    // element.
-    expect(pageInteractionsSrc).toContain("isInsideTunerUI");
+  // NOTE: the portal-exemption contract (clicks inside [data-tuner-portal] not
+  // hijacked) is now covered BEHAVIORALLY below — see "page-click handler …".
+  // A source `.toContain("isInsideTunerUI")` scan stayed green even after BOTH
+  // real guards (usePageInteractions.ts:76,79) were deleted (the import line
+  // alone satisfied it), so it could never catch a regression of issue #23.
+});
 
-    const utilSrc = readFileSync(join(__dirname, "../util.ts"), "utf-8");
-    expect(utilSrc).toContain("[data-tuner-portal]");
+// ── Behavioral coverage for the page-click portal exemption (issue #23) ──────
+//
+// Mounts the REAL usePageInteractions hook and dispatches real clicks. This is
+// the test the source-scan above could not be: deleting either guard
+// (usePageInteractions.ts:76 target / :79 resolved-element) makes a case below
+// fail, because elementFromPoint is stubbed to a NON-tuner element so only the
+// isInsideTunerUI guards stand between a portal click and handleSelect.
+
+function PageInteractionsHarness({
+  selectedEl,
+  handleSelect,
+}: {
+  selectedEl: Element;
+  handleSelect: (el: Element) => void;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  usePageInteractions({
+    selectedEl,
+    selecting: false,
+    pinned: false,
+    handleSelect,
+    hoverHighlightRef: ref,
+    setActiveModal: () => {},
+  });
+  return <div ref={ref} />;
+}
+
+describe("page-click handler exempts tuner-owned portals (issue #23, behavioral)", () => {
+  let selectedDiv: HTMLDivElement;
+  let pageTarget: HTMLDivElement;
+  let portal: HTMLDivElement;
+  let portalChild: HTMLButtonElement;
+
+  beforeEach(() => {
+    selectedDiv = document.createElement("div");
+    pageTarget = document.createElement("div");
+    portal = document.createElement("div");
+    portal.setAttribute("data-tuner-portal", "");
+    portalChild = document.createElement("button");
+    portal.appendChild(portalChild);
+    document.body.append(selectedDiv, pageTarget, portal);
+  });
+
+  afterEach(() => {
+    [selectedDiv, pageTarget, portal].forEach((n) => n.remove());
+    vi.restoreAllMocks();
+  });
+
+  it("re-selects when a normal page element is clicked (handler is live)", () => {
+    document.elementFromPoint = vi.fn(() => pageTarget);
+    const handleSelect = vi.fn();
+    render(<PageInteractionsHarness selectedEl={selectedDiv} handleSelect={handleSelect} />);
+
+    fireEvent.click(pageTarget);
+    expect(handleSelect).toHaveBeenCalledWith(pageTarget);
+  });
+
+  it("does NOT re-select when the click TARGET is inside a [data-tuner-portal]", () => {
+    // elementFromPoint resolves to a non-tuner element on purpose: only the
+    // target guard (line 76) can prevent the hijack here.
+    document.elementFromPoint = vi.fn(() => pageTarget);
+    const handleSelect = vi.fn();
+    render(<PageInteractionsHarness selectedEl={selectedDiv} handleSelect={handleSelect} />);
+
+    fireEvent.click(portalChild);
+    expect(handleSelect).not.toHaveBeenCalled();
+  });
+
+  it("does NOT re-select when elementFromPoint resolves inside a tuner portal", () => {
+    // Target is a normal element (passes line 76); only the resolved-element
+    // guard (line 79) can prevent the hijack here.
+    document.elementFromPoint = vi.fn(() => portalChild);
+    const handleSelect = vi.fn();
+    render(<PageInteractionsHarness selectedEl={selectedDiv} handleSelect={handleSelect} />);
+
+    fireEvent.click(pageTarget);
+    expect(handleSelect).not.toHaveBeenCalled();
   });
 });

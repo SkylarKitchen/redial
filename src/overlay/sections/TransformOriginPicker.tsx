@@ -23,6 +23,12 @@ export interface TransformOriginPickerProps {
   onChange: (value: string) => void;
   /** When true, show Left/Top numeric inputs alongside the grid */
   showInputs?: boolean;
+  /**
+   * The element's box size (used pixel box). getComputedStyle resolves
+   * transform-origin to absolute px ("100px 50px" on a 200×100 box), so the
+   * picker needs the box dimensions to convert px → % before mapping to a cell.
+   */
+  elementSize?: { width: number; height: number };
 }
 
 // ─── Grid mapping ────────────────────────────────────────────────────
@@ -41,8 +47,23 @@ const ORIGIN_LABELS = [
 
 // ─── Value → cell parsing ────────────────────────────────────────────
 
-/** Map a single axis token to its 0/1/2 index (col or row) */
-function tokenToIndex(token: string): number {
+/** Apply the grid thresholds to a percentage (returns -1 if it lands between cells) */
+function pctToIndex(pct: number): number {
+  if (pct <= 5) return 0;
+  if (pct >= 45 && pct <= 55) return 1;
+  if (pct >= 95) return 2;
+  return -1;
+}
+
+/**
+ * Map a single axis token to its 0/1/2 index (col or row).
+ *
+ * `axisSize` is the relevant axis dimension (width for X, height for Y). When a
+ * px token is supplied AND a usable axis size is known, the px is converted to a
+ * percentage and the same thresholds apply. Without a usable size, px tokens
+ * return -1 (graceful: no highlight on collapsed/unknown elements).
+ */
+function tokenToIndex(token: string, axisSize?: number): number {
   const t = token.trim().toLowerCase();
   // Keywords
   if (t === "left" || t === "top") return 0;
@@ -51,12 +72,13 @@ function tokenToIndex(token: string): number {
   // Percentages
   const pctMatch = t.match(/^([\d.]+)%$/);
   if (pctMatch) {
-    const pct = parseFloat(pctMatch[1]);
-    if (pct <= 5) return 0;
-    if (pct >= 45 && pct <= 55) return 1;
-    if (pct >= 95) return 2;
+    return pctToIndex(parseFloat(pctMatch[1]));
   }
-  // px values — can't reliably map without element size, treat as unknown
+  // px values — convert to % when the axis size is known, else unknown
+  const pxMatch = t.match(/^(-?[\d.]+)px$/);
+  if (pxMatch && axisSize && axisSize > 0) {
+    return pctToIndex((parseFloat(pxMatch[1]) / axisSize) * 100);
+  }
   return -1;
 }
 
@@ -68,9 +90,14 @@ function tokenToIndex(token: string): number {
  *
  * Returns [-1, -1] if the value doesn't map to a grid cell.
  */
-function parseOrigin(value: string): [col: number, row: number] {
+export function parseOrigin(
+  value: string,
+  size?: { width: number; height: number },
+): [col: number, row: number] {
   if (!value) return [-1, -1];
   const v = value.trim().toLowerCase();
+  const w = size?.width;
+  const h = size?.height;
 
   // Exact keyword match first (fast path)
   for (let row = 0; row < 3; row++) {
@@ -84,9 +111,8 @@ function parseOrigin(value: string): [col: number, row: number] {
   const parts = v.split(/\s+/);
 
   if (parts.length === 1) {
-    // Single value: used for both X and Y
-    const idx = tokenToIndex(parts[0]);
-    return [idx, idx];
+    // Single value: applies to both axes with their respective dimensions
+    return [tokenToIndex(parts[0], w), tokenToIndex(parts[0], h)];
   }
 
   if (parts.length >= 2) {
@@ -103,12 +129,12 @@ function parseOrigin(value: string): [col: number, row: number] {
 
     if (isYKeyword(parts[0]) && (isXKeyword(parts[1]) || parts[1] === "center")) {
       // Swapped order: "top left" means Y=top, X=left
-      xIdx = tokenToIndex(parts[1]);
-      yIdx = tokenToIndex(parts[0]);
+      xIdx = tokenToIndex(parts[1], w);
+      yIdx = tokenToIndex(parts[0], h);
     } else {
       // Normal order: X Y
-      xIdx = tokenToIndex(parts[0]);
-      yIdx = tokenToIndex(parts[1]);
+      xIdx = tokenToIndex(parts[0], w);
+      yIdx = tokenToIndex(parts[1], h);
     }
 
     return [xIdx, yIdx];
@@ -119,31 +145,45 @@ function parseOrigin(value: string): [col: number, row: number] {
 
 // ─── Origin → percent parsing ────────────────────────────────────────
 
-/** Parse a CSS origin value to [leftPct, topPct]. Returns [50, 50] for unparseable values. */
-function originToPercents(value: string): [number, number] {
+/**
+ * Parse a CSS origin value to [leftPct, topPct]. Returns [50, 50] for
+ * unparseable values.
+ *
+ * When `size` is supplied, px tokens are converted to true percentages using
+ * the relevant axis dimension (getComputedStyle resolves origins to px).
+ */
+export function originToPercents(
+  value: string,
+  size?: { width: number; height: number },
+): [number, number] {
   if (!value) return [50, 50];
   const parts = value.trim().split(/\s+/);
-  const tokenToPct = (t: string): number => {
-    if (t === "left" || t === "top") return 0;
-    if (t === "center") return 50;
-    if (t === "right" || t === "bottom") return 100;
+  const tokenToPct = (t: string, axisSize?: number): number => {
+    const lower = t.toLowerCase();
+    if (lower === "left" || lower === "top") return 0;
+    if (lower === "center") return 50;
+    if (lower === "right" || lower === "bottom") return 100;
+    const pxMatch = lower.match(/^(-?[\d.]+)px$/);
+    if (pxMatch && axisSize && axisSize > 0) {
+      return (parseFloat(pxMatch[1]) / axisSize) * 100;
+    }
     const pct = parseFloat(t);
     if (!isNaN(pct)) return pct;
     return 50;
   };
   if (parts.length === 1) {
-    const v = tokenToPct(parts[0]);
-    return [v, v];
+    return [tokenToPct(parts[0], size?.width), tokenToPct(parts[0], size?.height)];
   }
-  if (parts.length >= 2) return [tokenToPct(parts[0]), tokenToPct(parts[1])];
+  if (parts.length >= 2)
+    return [tokenToPct(parts[0], size?.width), tokenToPct(parts[1], size?.height)];
   return [50, 50];
 }
 
 // ─── Component ───────────────────────────────────────────────────────
 
-export function TransformOriginPicker({ value, onChange, showInputs }: TransformOriginPickerProps) {
+export function TransformOriginPicker({ value, onChange, showInputs, elementSize }: TransformOriginPickerProps) {
   const [hovered, setHovered] = useState<string | null>(null);
-  const [activeCol, activeRow] = parseOrigin(value);
+  const [activeCol, activeRow] = parseOrigin(value, elementSize);
 
   const handleClick = useCallback(
     (origin: string) => {
@@ -152,7 +192,7 @@ export function TransformOriginPicker({ value, onChange, showInputs }: Transform
     [onChange],
   );
 
-  const [leftPct, topPct] = originToPercents(value);
+  const [leftPct, topPct] = originToPercents(value, elementSize);
 
   const handleLeftChange = useCallback(
     (v: number) => {

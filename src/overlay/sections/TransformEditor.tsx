@@ -45,6 +45,8 @@ export interface TransformEditorProps {
   perspectiveOrigin: string;
   onPerspectiveOriginChange: (v: string) => void;
   settingsOpen: boolean;
+  /** Selected element's used pixel box — lets the origin picker convert computed px → %. */
+  elementSize?: { width: number; height: number };
 }
 
 // ─── Constants & Helpers ─────────────────────────────────────────
@@ -479,6 +481,7 @@ interface TransformSettingsProps {
   onChildrenPerspectiveChange: (v: number) => void;
   perspectiveOrigin: string;
   onPerspectiveOriginChange: (v: string) => void;
+  elementSize?: { width: number; height: number };
 }
 
 function TransformSettings({
@@ -492,6 +495,7 @@ function TransformSettings({
   onChildrenPerspectiveChange,
   perspectiveOrigin,
   onPerspectiveOriginChange,
+  elementSize,
 }: TransformSettingsProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -501,7 +505,7 @@ function TransformSettings({
       {/* Origin */}
       <div style={{ ...ROW, gap: 8 }}>
         <span style={LABEL}>Origin</span>
-        <TransformOriginPicker value={origin} onChange={onOriginChange} showInputs />
+        <TransformOriginPicker value={origin} onChange={onOriginChange} showInputs elementSize={elementSize} />
       </div>
 
       {/* Backface */}
@@ -542,7 +546,7 @@ function TransformSettings({
       {/* Children perspective origin */}
       <div style={{ ...ROW, gap: 8 }}>
         <span style={LABEL}>Origin</span>
-        <TransformOriginPicker value={perspectiveOrigin} onChange={onPerspectiveOriginChange} showInputs />
+        <TransformOriginPicker value={perspectiveOrigin} onChange={onPerspectiveOriginChange} showInputs elementSize={elementSize} />
       </div>
     </div>
   );
@@ -564,6 +568,7 @@ export function TransformEditor({
   perspectiveOrigin,
   onPerspectiveOriginChange,
   settingsOpen,
+  elementSize,
 }: TransformEditorProps) {
   const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(transforms, onChange);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
@@ -665,6 +670,7 @@ export function TransformEditor({
           onChildrenPerspectiveChange={onChildrenPerspectiveChange}
           perspectiveOrigin={perspectiveOrigin}
           onPerspectiveOriginChange={onPerspectiveOriginChange}
+          elementSize={elementSize}
         />
       )}
     </div>

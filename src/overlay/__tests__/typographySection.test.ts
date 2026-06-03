@@ -170,8 +170,10 @@ describe("Text-align radio behavior", () => {
     expect(alignMatch![0]).not.toContain("multi");
   });
 
-  it("IconButtonGroup uses type='single' when multi is false", () => {
-    expect(iconButtonGroupSrc).toContain('type="single"');
+  it("IconButtonGroup container is a radiogroup when multi is false", () => {
+    // Inline migration (2026-06-03): the old shadcn <ToggleGroup type="single">
+    // is now a plain div with role radiogroup for single-select.
+    expect(iconButtonGroupSrc).toMatch(/role=\{multi \? "group" : "radiogroup"\}/);
   });
 
   it("IconButtonGroup items get role='radio' in single mode", () => {
@@ -206,8 +208,11 @@ describe("Text-decoration multi-toggle behavior", () => {
     expect(iconButtonGroupSrc).toContain("Array.from(current).join(\" \")");
   });
 
-  it("IconButtonGroup uses type='multiple' when multi is true", () => {
-    expect(iconButtonGroupSrc).toContain('type="multiple"');
+  it("IconButtonGroup container is a generic group when multi is true", () => {
+    // Inline migration (2026-06-03): the old shadcn <ToggleGroup type="multiple">
+    // is now a plain div with role group for multi-select.
+    expect(iconButtonGroupSrc).toMatch(/role=\{multi \? "group" : "radiogroup"\}/);
+    expect(iconButtonGroupSrc).toContain('"group"');
   });
 
   it("IconButtonGroup items get aria-pressed in multi mode", () => {

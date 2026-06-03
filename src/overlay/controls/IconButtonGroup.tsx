@@ -108,12 +108,10 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
   const [focused, setFocused] = useState(false);
   const [pressed, setPressed] = useState(false);
 
-  // Active styling replaces the old Tailwind overrides
-  // (data-[state=on]:bg-primary / data-[state=on]:text-primary-foreground)
-  // with inline theme tokens. Computed up front so the style object stays flat.
-  const activeBg = color.primary;
-  const hoverBg = surface.hover;
-  const bg = isActive ? activeBg : (hovered ? hoverBg : undefined);
+  // Active/hover backgrounds via inline theme tokens (the panel no longer uses
+  // shadcn/Radix, so there is no !important Tailwind class to fight). Computed up
+  // front so the style object below stays flat.
+  const bg = isActive ? color.primary : hovered ? surface.hover : undefined;
   const fg = isActive ? color.primaryForeground : color.mutedForeground;
 
   // rounded-l / rounded-r / rounded (4px) — first/last corners only.

@@ -267,9 +267,9 @@ describe("enter executes selected command", () => {
 // ─── 4. Escape closes the palette ───────────────────────────────────
 
 describe("escape closes the palette", () => {
-  it("Dialog onOpenChange calls onClose when dialog closes", () => {
-    expectInPalette("onOpenChange");
-    expectInPalette("if (!open) onClose()");
+  it("Modal onClose wires to the palette's onClose (Esc + backdrop close)", () => {
+    expectInPalette("<Modal");
+    expectInPalette("onClose={onClose}");
   });
 
   it("Overlay dismisses active modal on Escape before closing panel", () => {

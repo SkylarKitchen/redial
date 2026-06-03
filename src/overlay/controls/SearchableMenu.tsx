@@ -1,7 +1,7 @@
 /**
  * controls/SearchableMenu.tsx — Inline searchable dropdown box (no shadcn/cmdk).
  *
- * Replaces the `@/components/ui/command` (cmdk) box that TextStyleRow and
+ * Replaces the shadcn command (cmdk) box that TextStyleRow and
  * SelectRowCustom rendered inside their portals. It is *just the content box*
  * (search input + filtered, keyboard-navigable list) — the trigger button and
  * the portal positioning stay with each caller (they already use

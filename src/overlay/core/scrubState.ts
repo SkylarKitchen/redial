@@ -14,6 +14,30 @@ let scrubActive = false;
 let scrubGroup: "margin" | "padding" | null = null;
 let hoverGroup: "margin" | "padding" | null = null;
 
+// Subscribers notified whenever any scrub/hover flag changes. This turns the
+// module-level flags — which fire no DOM event — into an event source the
+// spacing overlays can plug into their element tracker's invalidate signal, so
+// they re-measure on hover/scrub changes without polling every frame.
+const listeners = new Set<() => void>();
+
+function notify(): void {
+  for (const cb of listeners) cb();
+}
+
+/**
+ * Subscribe to scrub/hover state changes. The callback fires after any of
+ * setScrubActive / setScrubGroup / setHoverGroup runs.
+ *
+ * @param cb - invoked on every change (no arguments; read the getters).
+ * @returns an unsubscribe function.
+ */
+export function subscribeScrubState(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+
 /**
  * Returns whether a LabelScrub drag is currently in progress.
  *
@@ -32,6 +56,7 @@ export function isScrubActive(): boolean {
  */
 export function setScrubActive(active: boolean): void {
   scrubActive = active;
+  notify();
 }
 
 /**
@@ -52,6 +77,7 @@ export function getScrubGroup(): "margin" | "padding" | null {
  */
 export function setScrubGroup(group: "margin" | "padding" | null): void {
   scrubGroup = group;
+  notify();
 }
 
 /**
@@ -72,4 +98,5 @@ export function getHoverGroup(): "margin" | "padding" | null {
  */
 export function setHoverGroup(group: "margin" | "padding" | null): void {
   hoverGroup = group;
+  notify();
 }

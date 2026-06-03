@@ -28,6 +28,13 @@ const dropdownHookSrc = readFileSync(
   join(overlayDir, "hooks", "useDropdownKeyboard.ts"),
   "utf-8",
 );
+// SelectRowCustom's searchable dropdown is now the inline SearchableMenu
+// (shadcn/cmdk migration, 2026-06-03). The search input's Escape-to-close and
+// autofocus moved into that component; SelectRowCustom wires them via onClose.
+const searchableMenuSrc = readFileSync(
+  join(overlayDir, "controls", "SearchableMenu.tsx"),
+  "utf-8",
+);
 
 // ─── UnitSelector accessibility ───────────────────────────────────────
 
@@ -167,19 +174,23 @@ describe("SelectRow (custom mode) — keyboard accessibility", () => {
     expect(keydownChunk).toContain("setOpen(true)");
   });
 
-  it("Escape on CommandInput closes dropdown", () => {
-    expect(customBody).toContain("e.key === \"Escape\"");
-    const escIdx = customBody.indexOf("e.key === \"Escape\"");
-    const escChunk = customBody.slice(escIdx, escIdx + 100);
-    expect(escChunk).toContain("setOpen(false)");
+  it("Escape closes the dropdown (SelectRowCustom wires onClose -> setOpen(false); SearchableMenu fires it on Escape)", () => {
+    // SelectRowCustom delegates the searchable list to SearchableMenu and passes
+    // an onClose that closes the dropdown.
+    expect(customBody).toContain("onClose={() => setOpen(false)}");
+    // SearchableMenu is where the search input handles Escape -> onClose().
+    expect(searchableMenuSrc).toContain('e.key === "Escape"');
+    const escIdx = searchableMenuSrc.indexOf('e.key === "Escape"');
+    const escChunk = searchableMenuSrc.slice(escIdx, escIdx + 120);
+    expect(escChunk).toContain("onClose()");
   });
 
   it("trigger has tabIndex=0 for focus", () => {
     expect(customBody).toContain("tabIndex={0}");
   });
 
-  it("CommandInput autofocuses when opened", () => {
-    expect(customBody).toContain("autoFocus");
+  it("search input autofocuses when opened (now inside SearchableMenu)", () => {
+    expect(searchableMenuSrc).toContain("autoFocus");
   });
 });
 

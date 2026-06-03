@@ -29,6 +29,19 @@ export function parseNum(val: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Convert a computed line-height + font-size into a unitless multiplier.
+ * getComputedStyle returns "normal" (not px) for the default line-height, which
+ * has no numeric ratio — return the CSS-`normal` approximation (~1.2) rather
+ * than 0 (which would imply collapsed lines). Also guards fs<=0.
+ */
+export function lineHeightToMultiplier(lineHeightRaw: string, fontSizeRaw: string): number {
+  if (lineHeightRaw.trim() === "normal") return 1.2;
+  const lh = parseNum(lineHeightRaw);
+  const fs = parseNum(fontSizeRaw);
+  return fs > 0 ? Math.round((lh / fs) * 100) / 100 : 1.2;
+}
+
 /** Extract the CSS unit suffix from a value string (e.g., "16px" → "px", "50%" → "%"). */
 export function extractUnit(value: string, fallback: string = "px"): string {
   // Numeric portion allows an optional exponent (1e2rem) and trimmed inner

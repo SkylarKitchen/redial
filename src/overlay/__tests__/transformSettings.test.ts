@@ -57,13 +57,18 @@ describe("TransformSettings header", () => {
 
 describe("TransformSettings origin picker", () => {
   it("passes showInputs to TransformOriginPicker", () => {
-    // Source: <TransformOriginPicker value={origin} onChange={onOriginChange} showInputs />
+    // Source: <TransformOriginPicker value={origin} onChange={onOriginChange} showInputs elementSize={elementSize} />
     const settingsBlock = editorSrc.match(
       /function TransformSettings[\s\S]*?^\}/m,
     );
     expect(settingsBlock).toBeTruthy();
     expect(editorSrc).toMatch(
-      /<TransformOriginPicker\s+value=\{origin\}\s+onChange=\{onOriginChange\}\s+showInputs\s*\/>/,
+      /<TransformOriginPicker\s+value=\{origin\}\s+onChange=\{onOriginChange\}\s+showInputs(\s+[^>]*?)?\s*\/>/,
+    );
+    // The picker is also handed the element's box size so it can convert
+    // getComputedStyle's px-resolved origin into the correct grid cell / %.
+    expect(editorSrc).toMatch(
+      /<TransformOriginPicker\s+value=\{origin\}[\s\S]*?elementSize=\{elementSize\}/,
     );
   });
 
@@ -159,9 +164,14 @@ describe("TransformSettings children perspective", () => {
 describe("TransformSettings children perspective origin", () => {
   it("children perspective origin picker has showInputs", () => {
     // Source: second TransformOriginPicker in TransformSettings
-    // <TransformOriginPicker value={perspectiveOrigin} onChange={onPerspectiveOriginChange} showInputs />
+    // <TransformOriginPicker value={perspectiveOrigin} onChange={onPerspectiveOriginChange} showInputs elementSize={elementSize} />
     expect(editorSrc).toMatch(
-      /<TransformOriginPicker\s+value=\{perspectiveOrigin\}\s+onChange=\{onPerspectiveOriginChange\}\s+showInputs\s*\/>/,
+      /<TransformOriginPicker\s+value=\{perspectiveOrigin\}\s+onChange=\{onPerspectiveOriginChange\}\s+showInputs(\s+[^>]*?)?\s*\/>/,
+    );
+    // Perspective-origin also resolves to px under getComputedStyle, so the
+    // picker needs the box size to convert px → % here too.
+    expect(editorSrc).toMatch(
+      /<TransformOriginPicker\s+value=\{perspectiveOrigin\}[\s\S]*?elementSize=\{elementSize\}/,
     );
   });
 

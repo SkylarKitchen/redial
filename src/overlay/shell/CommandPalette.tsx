@@ -257,6 +257,13 @@ export function CommandPalette({
         autoFocus
         placeholder="Search properties, actions, or elements..."
         aria-label="Search properties, actions, or elements"
+        // Combobox ARIA the old cmdk Command provided: announces the open list and
+        // the keyboard-highlighted option to assistive tech.
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls="tuner-cmdk-listbox"
+        aria-expanded={results.length > 0}
+        aria-activedescendant={nav.activeIndex >= 0 ? `tuner-cmdk-opt-${nav.activeIndex}` : undefined}
         style={{
           width: "100%",
           boxSizing: "border-box",
@@ -271,7 +278,7 @@ export function CommandPalette({
         }}
       />
 
-      <div role="listbox" style={{ maxHeight: 360, overflowY: "auto" }}>
+      <div id="tuner-cmdk-listbox" role="listbox" style={{ maxHeight: 360, overflowY: "auto" }}>
         {query && results.length === 0 && (
           <div
             style={{
@@ -320,6 +327,7 @@ export function CommandPalette({
                 return (
                   <div
                     key={`${r.category}-${r.label}-${i}`}
+                    id={`tuner-cmdk-opt-${flatIndex}`}
                     role="option"
                     aria-selected={highlighted}
                     onMouseEnter={() => nav.setActiveIndex(flatIndex)}

@@ -28,6 +28,12 @@ type InvalidateSource = (callback: () => void) => () => void;
  * neither ResizeObserver nor the element's own MutationObserver can see (a CSS
  * variable on :root, a stylesheet-rule/class edit, undo/redo). Coalesced via
  * the same rAF as every other non-scroll trigger.
+ *
+ * `observeChildren` extends the ResizeObserver to also watch the element's
+ * direct children, and the MutationObserver to watch `childList`. A caller that
+ * measures something *between* children (e.g. flex-gap hatching) needs this:
+ * a child can resize without resizing the container, so container-only
+ * observation would leave its measurement stale.
  */
 export function useElementTracker(
   element: Element | null,
@@ -35,6 +41,7 @@ export function useElementTracker(
   onUpdate: TrackerCallback,
   onDisconnect?: () => void,
   onInvalidate?: InvalidateSource,
+  observeChildren = false,
 ) {
   const rafRef = useRef(0);
   const onUpdateRef = useRef(onUpdate);
@@ -70,9 +77,19 @@ export function useElementTracker(
     // Initial sync
     sync();
 
-    // Track element size changes
+    // Track element size changes. When observeChildren is set, also watch each
+    // direct child so a child resizing (without resizing the container) still
+    // triggers a re-measure. observeTargets() is re-runnable so we can refresh
+    // the child set when children are added/removed.
     const ro = new ResizeObserver(scheduleSync);
-    ro.observe(element);
+    const observeTargets = () => {
+      ro.disconnect();
+      ro.observe(element);
+      if (observeChildren) {
+        for (const child of element.children) ro.observe(child);
+      }
+    };
+    observeTargets();
 
     // Track inline-style / class edits applied by the panel. A panel edit that
     // MOVES the element without changing its border-box size (e.g. margin-top or
@@ -81,8 +98,21 @@ export function useElementTracker(
     // element (not our outline) and the tracker never mutates its style/class, so
     // there is no feedback loop. Coalesce via scheduleSync — a slider drag fires
     // many mutations and must read the rect at most once per frame.
-    const mo = new MutationObserver(scheduleSync);
-    mo.observe(element, { attributes: true, attributeFilter: ["style", "class"] });
+    //
+    // With observeChildren we also watch childList: when a child is added or
+    // removed we re-run observeTargets() so the new child set is observed, then
+    // re-measure.
+    const mo = new MutationObserver((records) => {
+      if (observeChildren && records.some((r) => r.type === "childList")) {
+        observeTargets();
+      }
+      scheduleSync();
+    });
+    mo.observe(element, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+      childList: observeChildren,
+    });
 
     // Re-sync on engine edits the observers above can't see: a CSS variable on
     // :root, a stylesheet-rule/class edit, or undo/redo all change the element's
@@ -109,5 +139,5 @@ export function useElementTracker(
       // Hide outlines when tracking stops (element changed, disabled, or unmount)
       onDisconnectRef.current?.();
     };
-  }, [element, enabled]);
+  }, [element, enabled, observeChildren]);
 }

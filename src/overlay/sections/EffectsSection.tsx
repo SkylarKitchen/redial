@@ -383,6 +383,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
             perspectiveOrigin={perspectiveOrigin}
             onPerspectiveOriginChange={handlePerspectiveOriginChange}
             settingsOpen={transformSettingsOpen}
+            elementSize={{ width: (element as HTMLElement).offsetWidth, height: (element as HTMLElement).offsetHeight }}
           />
         </div>
       )}

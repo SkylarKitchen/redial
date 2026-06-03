@@ -87,7 +87,10 @@ describe("Shadcn portal components must not use z-50 (important: true conflict)"
 describe("createPortal components must have at least one zIndex >= panel z-index", () => {
   const portalFiles = tsxFiles(OVERLAY_DIR).filter((f) => {
     const src = readSrc(f);
-    return src.includes("createPortal");
+    // Match an actual createPortal CALL, not the bare word in a doc comment —
+    // e.g. SearchableMenu documents that its callers use createPortal but does
+    // not portal itself, so it must not be flagged as a portal root.
+    return src.includes("createPortal(");
   });
 
   it.each(portalFiles)("%s has portal-level zIndex >= 2147483647", (file) => {

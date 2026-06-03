@@ -13,7 +13,7 @@ import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { ShadowEditor, makeShadow, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
-import { parseNum, shadowToCSS } from "../cssParsers";
+import { parseNum, shadowToCSS, lineHeightToMultiplier } from "../cssParsers";
 import { cssColorToHex as rgbToHex } from "../colorUtils";
 import { MiniDropdown, TypoValueCell } from "./layoutControls";
 import { detectUnit, type SectionCtx } from "../panelUtils";
@@ -66,11 +66,7 @@ export const TypographySection = memo(function TypographySection({
   // ── Typography state ──
   const [fontSize, setFontSize] = useState(() => parseNum(cs.fontSize));
   const [fontWeight, setFontWeight] = useState(() => cs.fontWeight);
-  const [lineHeight, setLineHeight] = useState(() => {
-    const lh = parseNum(cs.lineHeight);
-    const fs = parseNum(cs.fontSize);
-    return fs > 0 ? Math.round((lh / fs) * 100) / 100 : 1.4;
-  });
+  const [lineHeight, setLineHeight] = useState(() => lineHeightToMultiplier(cs.lineHeight, cs.fontSize));
   const [letterSpacing, setLetterSpacing] = useState(() => parseNum(cs.letterSpacing));
   const [fontSizeUnit, setFontSizeUnit] = useState(() => detectUnit(element, "font-size"));
   const [letterSpacingUnit, setLetterSpacingUnit] = useState(() => detectUnit(element, "letter-spacing"));
@@ -158,7 +154,7 @@ export const TypographySection = memo(function TypographySection({
   const handleLineHeightVarChange = useCallback((varName: string | null) => {
     setLineHeightVar(varName);
     if (varName) { apply("line-height", `var(${varName})`); }
-    else { const c = parseNum(getComputedStyle(element).lineHeight); const fs = parseNum(getComputedStyle(element).fontSize); setLineHeight(fs > 0 ? Math.round((c / fs) * 100) / 100 : 1.4); apply("line-height", `${c}px`); }
+    else { const cs2 = getComputedStyle(element); const c = parseNum(cs2.lineHeight); setLineHeight(lineHeightToMultiplier(cs2.lineHeight, cs2.fontSize)); apply("line-height", `${c}px`); }
   }, [apply, element]);
 
   const handleLetterSpacingVarChange = useCallback((varName: string | null) => {
@@ -169,7 +165,16 @@ export const TypographySection = memo(function TypographySection({
 
   // ── Reset popovers for custom labels ──
   const resetFontSize = () => { const v = resetReadStr("font-size"); setFontSize(parseNum(v)); setFontSizeUnit(detectUnit(element, "font-size")); setFontSizeVar(null); };
-  const resetLineHeight = () => { const v = resetReadStr("line-height"); setLineHeight(parseNum(v)); setLineHeightUnit(detectUnit(element, "line-height", "\u2014")); setLineHeightVar(null); };
+  const resetLineHeight = () => {
+    const v = resetReadStr("line-height");
+    // `getComputedStyle`/reset can yield the literal "normal" (the default), which
+    // has no numeric value \u2014 show the unitless multiplier (~1.2) instead of 0.
+    // For a resolved px reset value keep the raw px so it matches the px unit.
+    const n = parseNum(v);
+    setLineHeight(v.trim() === "normal" || !Number.isFinite(parseFloat(v)) ? lineHeightToMultiplier(v, getComputedStyle(element).fontSize) : n);
+    setLineHeightUnit(detectUnit(element, "line-height", "\u2014"));
+    setLineHeightVar(null);
+  };
 
   // ── Text style scanning ──
   const textStyles = useMemo(() => scanTextStyles(), []);
@@ -193,9 +198,7 @@ export const TypographySection = memo(function TypographySection({
     setFontFamily(style.fontFamily.replace(/['"]/g, ""));
     setFontWeight(style.fontWeight);
     setFontSize(parseNum(style.fontSize));
-    const lhPx = parseNum(style.lineHeight);
-    const fsPx = parseNum(style.fontSize);
-    setLineHeight(fsPx > 0 ? Math.round((lhPx / fsPx) * 100) / 100 : 1.4);
+    setLineHeight(lineHeightToMultiplier(style.lineHeight, style.fontSize));
     setLetterSpacing(parseNum(style.letterSpacing));
     setColor(rgbToHex(style.color));
     setTextTransform(style.textTransform);

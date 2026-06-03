@@ -26,9 +26,24 @@ export type DiffEntry = {
   from: string;
   to: string;
   state?: string;
+  /** Responsive breakpoint this change belongs to; absent = the base breakpoint
+   *  (no `@media`). RFC #14 Increment C — see ADR-0005. */
+  breakpoint?: string;
 };
 
-// --- Composite state key helpers ---
+// --- Composite key helpers (breakpoint ▸ state ▸ prop) ---
+//
+// The override map keys everything by a single composite string so diff/undo/
+// reset/persistence all share one shape. Two orthogonal dimensions namespace the
+// bare CSS property: a pseudo-state (`hover`) and a responsive breakpoint (`768`).
+// The cascade reads breakpoint-OUTER, state-INNER — `@media(≥768px){ :hover{…} }` —
+// so the key is `<breakpoint>@@<state>::<prop>`. The BASE breakpoint and the
+// "none" state are elided, which keeps base keys BYTE-IDENTICAL to the legacy
+// `state::prop` form (backward-compatible with persisted sessions + undo entries).
+
+/** Sentinel for "no responsive breakpoint" (the un-mediated base styles). */
+export const BASE_BREAKPOINT = "base";
+const BP_DELIM = "@@";
 
 /**
  * Build a composite key encoding pseudo-class state + CSS property.
@@ -39,11 +54,49 @@ export function stateKey(state: string, prop: string): string {
 }
 
 /**
- * Parse a composite key back into { state, prop }.
+ * Parse a composite key back into { state, prop } (breakpoint-agnostic — kept for
+ * the many callers that only care about the state dimension). For the full triple,
+ * use {@link parseKey}.
  */
 export function parseStateKey(key: string): { state: string; prop: string } {
   const idx = key.indexOf("::");
   return idx < 0 ? { state: "none", prop: key } : { state: key.slice(0, idx), prop: key.slice(idx + 2) };
+}
+
+/**
+ * Build the full composite key for a (breakpoint, state, prop) triple. The base
+ * breakpoint elides its prefix so the result equals {@link stateKey}.
+ */
+export function compositeKey(breakpoint: string, state: string, prop: string): string {
+  const sk = stateKey(state, prop);
+  return breakpoint === BASE_BREAKPOINT ? sk : `${breakpoint}${BP_DELIM}${sk}`;
+}
+
+/**
+ * Parse a composite key back into { breakpoint, state, prop }. Splits the
+ * breakpoint prefix first, then defers to {@link parseStateKey} for the rest.
+ */
+export function parseKey(key: string): { breakpoint: string; state: string; prop: string } {
+  const idx = key.indexOf(BP_DELIM);
+  if (idx < 0) {
+    const { state, prop } = parseStateKey(key);
+    return { breakpoint: BASE_BREAKPOINT, state, prop };
+  }
+  const breakpoint = key.slice(0, idx);
+  const { state, prop } = parseStateKey(key.slice(idx + BP_DELIM.length));
+  return { breakpoint, state, prop };
+}
+
+/**
+ * Whether a composite key maps to the element's LIVE inline style. Only base-
+ * breakpoint, no-state keys do — pseudo-state keys render through statePreview's
+ * `<style>` tag, and breakpoint keys are media-gated (rendered by #35, not inline).
+ * This replaces the scattered `prop.includes("::")` guard, which is blind to the
+ * breakpoint dimension (a key like `768@@color` has no `::` but is NOT inline).
+ */
+function isInlineWritable(key: string): boolean {
+  const { breakpoint, state } = parseKey(key);
+  return breakpoint === BASE_BREAKPOINT && state === "none";
 }
 
 type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string; className?: string };
@@ -258,9 +311,11 @@ export function applyInlineStyle(
 ): void {
   if (!(el as HTMLElement).isConnected) return;
 
-  // Determine if this is a state-keyed property (e.g. "hover::color")
-  const parsed = parseStateKey(prop);
-  const isStateKeyed = parsed.state !== "none";
+  // Decompose the composite key (breakpoint ▸ state ▸ prop). Only base-breakpoint,
+  // no-state keys touch the live inline style; state keys render via statePreview
+  // and breakpoint keys are media-gated (tracked here, rendered by #35).
+  const parsed = parseKey(prop);
+  const writeInline = parsed.breakpoint === BASE_BREAKPOINT && parsed.state === "none";
   const cssProp = parsed.prop; // the real CSS property name
 
   // Semantic-validity guard (defense-in-depth for the toggle-deselect bug
@@ -279,7 +334,7 @@ export function applyInlineStyle(
   if (!elOverrides.has(prop)) {
     // First time touching this prop — capture the original computed value
     // Also capture pre-existing inline value so undo/reset can restore it
-    const inlineOriginal = isStateKeyed ? null : ((el as HTMLElement).style.getPropertyValue(cssProp) || null);
+    const inlineOriginal = writeInline ? ((el as HTMLElement).style.getPropertyValue(cssProp) || null) : null;
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
     elOverrides.set(prop, { initial, current: value, inlineOriginal });
 
@@ -319,9 +374,10 @@ export function applyInlineStyle(
     undoStack.splice(0, undoStack.length - MAX_UNDO);
   }
 
-  // Only apply to inline style for non-state properties.
-  // State-keyed props are applied via the <style> tag in statePreview.ts.
-  if (!isStateKeyed) {
+  // Only base-breakpoint, no-state props apply to the live inline style.
+  // State-keyed props render via the <style> tag in statePreview.ts; breakpoint
+  // props are media-gated and tracked here (their live render lands with #35).
+  if (writeInline) {
     (el as HTMLElement).style.setProperty(prop, value, "important");
   }
   schedulePersist();
@@ -353,8 +409,9 @@ export function undo(): { el: Element; prop?: string } | null {
     let result: { el: Element; prop: string } | null = null;
     for (let i = last.entries.length - 1; i >= 0; i--) {
       const { el, prop, prev, state, className } = last.entries[i];
-      const isState = state !== "none";
-      const cssProp = isState ? parseStateKey(prop).prop : prop;
+      const { breakpoint: bpK, state: stK, prop: cssProp } = parseKey(prop);
+      const writeInline = bpK === BASE_BREAKPOINT && stK === "none";
+      const notifyState = bpK === BASE_BREAKPOINT && stK !== "none";
       if (!overrides.has(el)) overrides.set(el, new Map());
       const elOverrides = overrides.get(el)!;
       let entry = elOverrides.get(prop);
@@ -372,7 +429,7 @@ export function undo(): { el: Element; prop?: string } | null {
       const wasDirty = entry.initial !== entry.current;
 
       if (prev === entry.initial) {
-        if (!isState) {
+        if (writeInline) {
           if (entry.inlineOriginal) {
             (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
           } else {
@@ -381,13 +438,13 @@ export function undo(): { el: Element; prop?: string } | null {
         }
         elOverrides.delete(prop);
         if (elOverrides.size === 0) overrides.delete(el);
-        if (isState) notifyStateChange(el, state, cssProp, null);
+        if (notifyState) notifyStateChange(el, stK, cssProp, null);
         if (className) notifyClassChange(className, prop, null);
         if (wasDirty) dirtyCount--;
       } else {
-        if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
+        if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, "important");
         entry.current = prev;
-        if (isState) notifyStateChange(el, state, cssProp, prev);
+        if (notifyState) notifyStateChange(el, stK, cssProp, prev);
         if (className) notifyClassChange(className, prop, prev);
         const isDirtyNow = entry.initial !== prev;
         if (!wasDirty && isDirtyNow) dirtyCount++;
@@ -405,8 +462,9 @@ export function undo(): { el: Element; prop?: string } | null {
 
   const single = last as SingleUndoEntry;
   const { el, prop, prev, state, className } = single;
-  const isState = state !== "none";
-  const cssProp = isState ? parseStateKey(prop).prop : prop;
+  const { breakpoint: bpK, state: stK, prop: cssProp } = parseKey(prop);
+  const writeInline = bpK === BASE_BREAKPOINT && stK === "none";
+  const notifyState = bpK === BASE_BREAKPOINT && stK !== "none";
   if (!overrides.has(el)) overrides.set(el, new Map());
   const elOverrides = overrides.get(el)!;
 
@@ -427,7 +485,7 @@ export function undo(): { el: Element; prop?: string } | null {
 
   if (prev === entry.initial) {
     // Undoing back to original — restore pre-existing inline value or remove
-    if (!isState) {
+    if (writeInline) {
       if (entry.inlineOriginal) {
         (el as HTMLElement).style.setProperty(prop, entry.inlineOriginal);
       } else {
@@ -436,13 +494,13 @@ export function undo(): { el: Element; prop?: string } | null {
     }
     elOverrides.delete(prop);
     if (elOverrides.size === 0) overrides.delete(el);
-    if (isState) notifyStateChange(el, state, cssProp, null);
+    if (notifyState) notifyStateChange(el, stK, cssProp, null);
     if (className) notifyClassChange(className, prop, null);
     if (wasDirty) dirtyCount--;
   } else {
-    if (!isState) (el as HTMLElement).style.setProperty(prop, prev, "important");
+    if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, "important");
     entry.current = prev;
-    if (isState) notifyStateChange(el, state, cssProp, prev);
+    if (notifyState) notifyStateChange(el, stK, cssProp, prev);
     if (className) notifyClassChange(className, prop, prev);
     const isDirtyNow = entry.initial !== prev;
     if (!wasDirty && isDirtyNow) dirtyCount++;
