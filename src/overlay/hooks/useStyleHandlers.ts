@@ -1,26 +1,27 @@
 /**
  * useStyleHandlers.ts — style-mutation callbacks for the overlay
  *
- * Bundles the cluster of Overlay callbacks that mutate styles (via
- * core/apply.ts) and/or re-infer the panel: session-wide reset, paste,
- * per-element reset, undo-to-history-index, and the spacing box-model
- * change/reset handlers.
+ * Bundles the cluster of Overlay callbacks that mutate styles and/or re-infer
+ * the panel: session-wide reset, paste, per-element reset, undo-to-history-index,
+ * and the spacing box-model change/reset handlers.
  *
- * Extracted verbatim from Overlay.tsx — behavior and dependency arrays are
- * preserved exactly. The hook receives the values/setters each callback
- * closes over so nothing reaches back into Overlay's scope via globals.
+ * Scope-routing dispatch (element / class / state) and the session-wide reset
+ * go through `styleEngine` (RFC #14) rather than calling apply.ts/scope.ts/
+ * statePreview.ts directly — so the routing rule lives in exactly one place and
+ * cannot drift. (`handleUndoToIndex` still uses apply.ts's inline-only `undo`
+ * deliberately: `styleEngine.undo` falls through to the mode stack, which is the
+ * wrong semantics for replaying the inline history. Merging the undo stacks is
+ * Phase 3 of #14.)
+ *
+ * Extracted from Overlay.tsx — dependency arrays are preserved exactly. The hook
+ * receives the values/setters each callback closes over so nothing reaches back
+ * into Overlay's scope via globals.
  */
 
 import { useCallback } from "react";
 import { infer, type InferResult } from "../core/infer";
-import {
-  resetAll,
-  pasteStyles,
-  applyInlineStyle,
-  undo,
-} from "../core/apply";
-import { destroyClassStyles, applyClassStyle } from "../core/scope";
-import { applyStateStyle, destroyStateStyles } from "../core/statePreview";
+import { pasteStyles, undo } from "../core/apply";
+import { styleEngine, type OverrideTarget } from "../core/engine";
 import type { HistoryEntry } from "../shell/ChangesDrawer";
 
 /**
@@ -84,9 +85,7 @@ export function useStyleHandlers({
 }: StyleHandlersDeps): StyleHandlers {
   // --- Session-wide reset ---
   const handleResetAll = useCallback(() => {
-    resetAll();
-    destroyClassStyles();
-    destroyStateStyles();
+    styleEngine.resetAll();
     if (selectedEl) {
       refreshPanel(selectedEl);
     }
@@ -126,19 +125,22 @@ export function useStyleHandlers({
   }, [historyEntries.length, selectedEl]);
 
   // --- Spacing box model change handler ---
-  // Updates both the DOM (via applyInlineStyle) and the inferResult.spacing
-  // so the panel re-renders with fresh values during drag-scrub.
+  // Routes through styleEngine (same dispatch as every other panel edit) so the
+  // change lands in the DOM AND is tracked for diff/undo/save. Previously this
+  // re-implemented the routing inline, and its state branch skipped the
+  // composite-key mirror — so pseudo-state spacing edits were silently lost on
+  // save and un-undoable (RFC #14, crux #1). Also updates inferResult.spacing so
+  // the panel re-renders with fresh values during drag-scrub.
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
     const cssValue = `${value}${unit}`;
-    if (activeState !== "none") {
-      applyStateStyle(selectedEl, activeState, prop, cssValue);
-    } else {
-      if (scope === "class" && activeClassName) {
-        applyClassStyle(activeClassName, prop, cssValue);
-      }
-      applyInlineStyle(selectedEl, prop, cssValue);
-    }
+    const target: OverrideTarget =
+      activeState !== "none"
+        ? { scope: "state", el: selectedEl, state: activeState }
+        : scope === "class" && activeClassName
+          ? { scope: "class", el: selectedEl, className: activeClassName }
+          : { scope: "element", el: selectedEl };
+    styleEngine.apply(target, prop, cssValue);
     // Update inferResult.spacing so the panel receives fresh prop values
     setInferResult((prev) => applySpacingValue(prev, prop, value));
   }, [selectedEl, scope, activeClassName, activeState]);
