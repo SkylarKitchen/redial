@@ -13,6 +13,7 @@
  */
 
 import { getStableSelector } from "../util";
+import { isInvalidDeclaration } from "../../lib/css";
 
 export type Override = {
   initial: string;
@@ -261,6 +262,13 @@ export function applyInlineStyle(
   const parsed = parseStateKey(prop);
   const isStateKeyed = parsed.state !== "none";
   const cssProp = parsed.prop; // the real CSS property name
+
+  // Semantic-validity guard (defense-in-depth for the toggle-deselect bug
+  // class): a single-select toggle's deselect emits `none`, which is invalid
+  // CSS for some props (box-sizing, text-align, …). The browser silently
+  // rejects the inline write, but recording it here would still leak the
+  // invalid value into diff() → localStorage → the source commit path. Drop it.
+  if (isInvalidDeclaration(cssProp, value)) return;
 
   // New action invalidates redo history (standard undo/redo semantics)
   if (redoStack.length > 0) redoStack.length = 0;

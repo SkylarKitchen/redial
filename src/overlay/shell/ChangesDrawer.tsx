@@ -8,7 +8,7 @@
 
 import { useState, useCallback, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { diffAll, resetAll, type DiffEntry } from "../core/apply";
+import { diffAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "../util";
 import { enrichChangesForCommit } from "../core/commitUtils";
@@ -242,7 +242,11 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
   }, [allDiffs, onSaved]);
 
   const handleResetAll = useCallback(() => {
-    resetAll();
+    // Route the session-wide reset SOLELY through onResetAll (Overlay →
+    // useStyleHandlers.handleResetAll → styleEngine.resetAll). The engine path
+    // already clears inline + class + state; a direct apply.ts resetAll() here
+    // was redundant drift (RFC #14 item B). Mode overrides stay intact by design
+    // (ADR-0004).
     setExpanded(new Set());
     onResetAll();
   }, [onResetAll]);

@@ -13,6 +13,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
+import { fireEvent } from "@testing-library/react";
 import { Slider } from "../controls/Slider";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -59,8 +60,7 @@ describe("inline Slider", () => {
     });
     const input = getInput();
     act(() => {
-      input.value = "73";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
+      fireEvent.change(input, { target: { value: "73" } });
     });
     expect(onValueChange).toHaveBeenCalledWith([73]);
   });
@@ -84,7 +84,8 @@ describe("inline Slider", () => {
     const { readFileSync } = await import("fs");
     const { join } = await import("path");
     const src = readFileSync(join(__dirname, "../controls/Slider.tsx"), "utf-8");
-    expect(src).not.toMatch(/@\/components\/ui/);
-    expect(src).not.toMatch(/radix-ui/);
+    // Match import statements, not prose in the file's doc comment.
+    expect(src).not.toMatch(/from\s+["']@\/components\/ui/);
+    expect(src).not.toMatch(/from\s+["']@?radix-ui/);
   });
 });

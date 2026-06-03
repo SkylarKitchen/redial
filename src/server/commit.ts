@@ -16,6 +16,7 @@ import {
   isValidCSSProp,
   isValidCSSClassName,
   isSafeCSSValue,
+  isInvalidDeclaration,
 } from "../lib/css";
 
 /**
@@ -187,6 +188,11 @@ function changeValidationError(change: CommitChange): string | null {
     return `invalid CSS property name: "${change.prop}"`;
   if (!isSafeCSSValue(change.to))
     return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
+  // Semantic validity: reject `none` for props whose grammar has no `none`
+  // (toggle-deselect sentinel). Shares the predicate with the live preview so
+  // client and server can't drift apart.
+  if (isInvalidDeclaration(change.prop, change.to))
+    return `semantically invalid value "${change.to}" for property "${change.prop}"`;
   if (change.className != null && !isValidCSSClassName(change.className))
     return `invalid CSS class name: "${change.className}"`;
   return null;

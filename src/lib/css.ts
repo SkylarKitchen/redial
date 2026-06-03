@@ -30,6 +30,45 @@ export function isSafeCSSValue(value: string): boolean {
 }
 
 /**
+ * CSS properties whose value grammar does NOT accept the keyword `none`.
+ *
+ * The panel's single-select toggle controls (IconButtonGroup) use `none` as a
+ * deselect sentinel — clicking the already-active option emits onChange("none").
+ * For these properties that sentinel is INVALID CSS, so the write layer must
+ * drop it rather than persist `box-sizing: none` etc. to source. See the
+ * toggle-deselect bug class (toggleDeselectGuard.test.tsx, resolved-bugs memory).
+ *
+ * This is a DENY-list by design: a missing entry merely means a future toggle
+ * bug is not auto-caught (degrades to the status quo), whereas an allow-list
+ * could wrongly reject a legitimate `none` (`display:none`, `border:none`,
+ * `transform:none`, …) — a worse failure than the bug it guards against. Add a
+ * property here only when `none` is genuinely not part of its CSS grammar.
+ */
+export const PROPS_REJECTING_NONE: ReadonlySet<string> = new Set([
+  "box-sizing", // content-box | border-box
+  "text-align", // start | end | left | right | center | justify | match-parent
+  "justify-content", // normal | <content-distribution> | <content-position>
+  "align-content", //   (same family — no `none`)
+  "align-items", //     normal | stretch | <baseline-position> | <self-position>
+  "justify-items", //   (same family + legacy — no `none`)
+  "flex-direction", //  row | row-reverse | column | column-reverse
+  "flex-wrap", //       nowrap | wrap | wrap-reverse
+]);
+
+/**
+ * Semantic-validity guard — distinct from `isSafeCSSValue` (which is the
+ * injection/syntax check). Returns true when `value` is grammatically invalid
+ * for `prop` and therefore must not be applied to the DOM or written to source.
+ *
+ * Currently encodes the `none`-sentinel toggle-deselect class (see
+ * PROPS_REJECTING_NONE); extend here as new known-invalid combinations surface.
+ * Custom properties (`--*`) accept any value and are never flagged.
+ */
+export function isInvalidDeclaration(prop: string, value: string): boolean {
+  return value.trim() === "none" && PROPS_REJECTING_NONE.has(prop);
+}
+
+/**
  * Strip characters that could break out of a CSS value context. Used by the
  * live-preview `<style>` writer, which mutates rather than rejects.
  */

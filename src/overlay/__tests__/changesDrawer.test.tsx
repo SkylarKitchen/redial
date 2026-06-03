@@ -10,12 +10,27 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { ChangesDrawer, type HistoryEntry } from "../shell/ChangesDrawer";
-import { applyInlineStyle, resetAll, diffAll } from "../core/apply";
+import { applyInlineStyle, diffAll } from "../core/apply";
+import { styleEngine } from "../core/engine";
+import { diffState } from "../core/statePreview";
+import {
+  getModeOverrideCount,
+  isModeOverrideDirty,
+  resetAllModeOverrides,
+} from "../core/modeOverrides";
 
 let writeText: ReturnType<typeof vi.fn>;
 
+// Full isolation: styleEngine.resetAll() is a superset of apply.ts resetAll()
+// (it also destroys class + state <style> rules); resetAllModeOverrides() clears
+// the separate mode dimension so a mode override from one test can't leak.
+function resetEverything() {
+  styleEngine.resetAll();
+  resetAllModeOverrides();
+}
+
 beforeEach(() => {
-  resetAll();
+  resetEverything();
   document.body.innerHTML = "";
   writeText = vi.fn().mockResolvedValue(undefined);
   // happy-dom may not implement navigator.clipboard — define a spyable stub.
@@ -27,7 +42,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  resetAll();
+  resetEverything();
 });
 
 function makeEl(id: string): HTMLElement {
@@ -79,9 +94,13 @@ describe("ChangesDrawer — pending tab", () => {
     expect(screen.getByText("Copied!")).toBeTruthy();
   });
 
-  it("Reset All clears every override and calls onResetAll", () => {
+  it("delegates the reset entirely to onResetAll — it does not reset on its own", () => {
+    // RFC #14 item B: the drawer must route the session-wide reset SOLELY through
+    // onResetAll() (Overlay → useStyleHandlers → styleEngine.resetAll), with no
+    // redundant direct apply.ts resetAll() call. With a no-op onResetAll, clicking
+    // Reset All must leave the override state untouched — the drawer delegates.
     applyInlineStyle(makeEl("a"), "color", "red");
-    const onResetAll = vi.fn();
+    const onResetAll = vi.fn(); // does NOT reset — it is the sole reset owner
 
     render(<ChangesDrawer {...baseProps} tab="pending" onResetAll={onResetAll} />);
     expect(diffAll().length).toBe(1);
@@ -89,7 +108,43 @@ describe("ChangesDrawer — pending tab", () => {
     fireEvent.click(screen.getByText("Reset All"));
 
     expect(onResetAll).toHaveBeenCalledTimes(1);
+    // The drawer mutated nothing itself; only onResetAll (a no-op here) is responsible.
+    expect(diffAll().length).toBe(1);
+  });
+
+  it("Reset All (wired to the engine) clears element overrides but LEAVES mode overrides intact", () => {
+    // Integrated lock mirroring production wiring (onResetAll → styleEngine.resetAll).
+    // This is the inverse-of-over-clear contract (ADR-0004) at session scope: the
+    // session-wide reset clears inline + class + state, but mode overrides — a
+    // separate dimension created in the Variables panel — must SURVIVE.
+    const el = makeEl("a");
+    styleEngine.apply({ scope: "element", el }, "color", "red"); // inline
+    styleEngine.apply({ scope: "class", el, className: "card" }, "display", "flex"); // class
+    styleEngine.apply({ scope: "state", el, state: "hover" }, "color", "blue"); // state
+    styleEngine.apply(
+      { scope: "mode", selector: ".dark", varName: "--brand" },
+      "",
+      "#000",
+    ); // unrelated global theme-mode override
+
+    expect(diffAll().length).toBeGreaterThan(0);
+    expect(getModeOverrideCount()).toBe(1);
+
+    render(
+      <ChangesDrawer
+        {...baseProps}
+        tab="pending"
+        onResetAll={() => styleEngine.resetAll()}
+      />,
+    );
+    fireEvent.click(screen.getByText("Reset All"));
+
+    // Element-side overrides (inline + class mirror + state) are gone...
     expect(diffAll().length).toBe(0);
+    expect(diffState(el, "hover")).toHaveLength(0);
+    // ...but the global mode override SURVIVES (ADR-0004 — not-a-bug, by design).
+    expect(getModeOverrideCount()).toBe(1);
+    expect(isModeOverrideDirty(".dark", "--brand")).toBe(true);
   });
 
   it("disables Copy All and Reset All when there are no changes", () => {
