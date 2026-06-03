@@ -21,7 +21,7 @@
 import { useCallback } from "react";
 import { infer, type InferResult } from "../core/infer";
 import { pasteStyles, undo } from "../core/apply";
-import { styleEngine, type OverrideTarget } from "../core/engine";
+import { styleEngine, resolveTarget } from "../core/engine";
 import type { HistoryEntry } from "../shell/ChangesDrawer";
 
 /**
@@ -134,12 +134,7 @@ export function useStyleHandlers({
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
     const cssValue = `${value}${unit}`;
-    const target: OverrideTarget =
-      activeState !== "none"
-        ? { scope: "state", el: selectedEl, state: activeState }
-        : scope === "class" && activeClassName
-          ? { scope: "class", el: selectedEl, className: activeClassName }
-          : { scope: "element", el: selectedEl };
+    const target = resolveTarget(selectedEl, { scope, activeClassName, activeState });
     styleEngine.apply(target, prop, cssValue);
     // Update inferResult.spacing so the panel receives fresh prop values
     setInferResult((prev) => applySpacingValue(prev, prop, value));

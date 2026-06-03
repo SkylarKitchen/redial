@@ -62,6 +62,37 @@ export type OverrideTarget =
   | { scope: "state"; el: Element; state: string }
   | { scope: "mode"; selector: string; varName: string };
 
+/**
+ * The panel's current scoping state: which scope is active, the active class
+ * (when in class scope), and the active pseudo-state. `resolveTarget` collapses
+ * this triple onto an `OverrideTarget`.
+ */
+export interface ScopeContext {
+  scope: string; // "element" | "class"
+  activeClassName: string | null;
+  activeState: string; // "none" | a pseudo-state like "hover"
+}
+
+/**
+ * Build the `OverrideTarget` for an edit on `el` given the panel's scoping
+ * state. This is the SINGLE source of truth for the
+ * `(scope, activeClassName, activeState)` → target mapping that callers used to
+ * re-implement inline (spacing box model, CSS import, the CSS-import hotkey).
+ *
+ * Precedence matches every legacy copy: a pseudo-state edit is always a `state`
+ * target (even on a class); otherwise a class scope with an active class name is
+ * a `class` target; otherwise it's a plain `element` target.
+ */
+export function resolveTarget(el: Element, ctx: ScopeContext): OverrideTarget {
+  if (ctx.activeState !== "none") {
+    return { scope: "state", el, state: ctx.activeState };
+  }
+  if (ctx.scope === "class" && ctx.activeClassName) {
+    return { scope: "class", el, className: ctx.activeClassName };
+  }
+  return { scope: "element", el };
+}
+
 /** Result of an undo/redo step over inline/class/state. Mode steps return null. */
 export type UndoResult = { el: Element; prop?: string };
 

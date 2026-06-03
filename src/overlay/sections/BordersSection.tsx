@@ -316,7 +316,10 @@ export const BordersSection = memo(function BordersSection({
       </div>
 
       {/* ── Two-column: cross side selector (left) + controls (right) ── */}
-      <div style={{ display: "flex", gap: 10, padding: "0 12px 4px" }}>
+      {/* No right padding: the control column extends to the panel's right edge so
+          the Style buttons (which size to their 4-button content width) align flush
+          with the Width input and Color row below them. */}
+      <div style={{ display: "flex", gap: 10, padding: "0 0 4px 12px" }}>
 
         {/* Left: cross-pattern side selector */}
         <SideSelector value={borderSide} onChange={setBorderSide} cross />

@@ -20,17 +20,13 @@ import {
   overrideCount,
   stripAllOverrides,
   restoreAllOverrides,
-  applyInlineStyle,
   reset,
   copyStyles,
   pasteStyles,
-  beginBatch,
-  endBatch,
 } from "../core/apply";
-import { styleEngine } from "../core/engine";
+import { styleEngine, resolveTarget } from "../core/engine";
 import { getStableSelector, isNavigableElement } from "../util";
-import { applyClassStyle, type Scope } from "../core/scope";
-import { applyStateStyle } from "../core/statePreview";
+import { type Scope } from "../core/scope";
 import { isScrubActive } from "../core/scrubState";
 import { parseCSSText } from "../cssImport";
 import { SECTION_ORDER } from "../panelUtils";
@@ -187,18 +183,11 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
           if (!el) return;
           const declarations = parseCSSText(text);
           if (declarations.length === 0) return;
-          beginBatch();
+          styleEngine.beginBatch();
           for (const { prop, value } of declarations) {
-            if (activeState !== "none") {
-              applyStateStyle(el, activeState, prop, value);
-            } else {
-              if (scope === "class" && activeClassName) {
-                applyClassStyle(activeClassName, prop, value);
-              }
-              applyInlineStyle(el, prop, value);
-            }
+            styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState }), prop, value);
           }
-          endBatch();
+          styleEngine.endBatch();
           refreshPanel(el);
           setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
         }).catch(() => {

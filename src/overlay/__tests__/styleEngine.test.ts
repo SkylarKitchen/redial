@@ -10,7 +10,7 @@
  * modeOverrides.ts, which have their own deeper suites.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { styleEngine, type OverrideTarget } from "../core/engine";
+import { styleEngine, resolveTarget, type OverrideTarget } from "../core/engine";
 import { isDirty, totalOverrideCount } from "../core/apply";
 import {
   getModeOverrideCount,
@@ -34,6 +34,47 @@ beforeEach(() => {
   styleEngine.resetAll();
   resetAllModeOverrides();
   document.body.innerHTML = "";
+});
+
+describe("resolveTarget()", () => {
+  // The single source of truth for the (scope, activeClassName, activeState)
+  // → OverrideTarget mapping. Every caller (spacing box model, CSS import,
+  // CSS-import hotkey, WebflowPanel) builds its target through this so the
+  // routing rule lives in exactly one place (RFC #14, crux #1).
+  it("maps a plain element edit to an element target", () => {
+    const el = makeEl();
+    expect(
+      resolveTarget(el, { scope: "element", activeClassName: null, activeState: "none" }),
+    ).toEqual({ scope: "element", el });
+  });
+
+  it("maps a class scope with an active class name to a class target", () => {
+    const el = makeEl();
+    expect(
+      resolveTarget(el, { scope: "class", activeClassName: "box", activeState: "none" }),
+    ).toEqual({ scope: "class", el, className: "box" });
+  });
+
+  it("falls back to element when class scope has no active class name", () => {
+    const el = makeEl();
+    expect(
+      resolveTarget(el, { scope: "class", activeClassName: null, activeState: "none" }),
+    ).toEqual({ scope: "element", el });
+  });
+
+  it("maps a pseudo-state edit to a state target", () => {
+    const el = makeEl();
+    expect(
+      resolveTarget(el, { scope: "element", activeClassName: null, activeState: "hover" }),
+    ).toEqual({ scope: "state", el, state: "hover" });
+  });
+
+  it("state takes precedence over class (a pseudo-state edit on a class is a state edit)", () => {
+    const el = makeEl();
+    expect(
+      resolveTarget(el, { scope: "class", activeClassName: "box", activeState: "focus" }),
+    ).toEqual({ scope: "state", el, state: "focus" });
+  });
 });
 
 describe("apply() dispatch", () => {

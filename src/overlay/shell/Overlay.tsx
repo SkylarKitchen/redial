@@ -19,12 +19,13 @@ import { WebflowPanel } from "./WebflowPanel";
 import { PromptPanel } from "./PromptPanel";
 import { ChangesDrawer, type HistoryEntry, type ChangesTab } from "./ChangesDrawer";
 import { infer, type InferResult } from "../core/infer";
-import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, applyInlineStyle, diff, reset, copyStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
+import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, diff, reset, copyStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
+import { styleEngine, resolveTarget } from "../core/engine";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
-import { getCSSModuleClasses, applyClassStyle, type Scope } from "../core/scope";
-import { applyStateStyle, diffState, syncWithApplyUndoRedo } from "../core/statePreview";
+import { getCSSModuleClasses, type Scope } from "../core/scope";
+import { diffState, syncWithApplyUndoRedo } from "../core/statePreview";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
@@ -624,14 +625,7 @@ export function Overlay() {
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
-        if (activeState !== "none") {
-          applyStateStyle(el, activeState, prop, value);
-        } else {
-          if (scope === "class" && activeClassName) {
-            applyClassStyle(activeClassName, prop, value);
-          }
-          applyInlineStyle(el, prop, value);
-        }
+        styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState }), prop, value);
       }
 
       // Re-infer to update panel
