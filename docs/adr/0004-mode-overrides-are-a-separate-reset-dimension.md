@@ -1,4 +1,4 @@
-# ADR-0004: Mode overrides are a separate dimension; element Reset never clears them
+# ADR-0004: Mode overrides are a separate dimension; the style panel's reset surface never clears them
 
 **Status:** Accepted
 **Date:** 2026-06-03
@@ -23,9 +23,20 @@ to decide whether to preserve this behavior (faithful migration) or fix it.
 
 ## Decision
 
-**Mode overrides are a distinct reset dimension.** `resetScope(el, ctx)` clears
-only the selected element's overrides for the active scope/state and **never**
-touches mode overrides. The Footer's Reset count is element-only.
+**Mode overrides are a distinct reset dimension. No reset on the style-panel
+side clears them** — neither the per-element Footer Reset nor the session-wide
+"Reset all".
+
+- `resetScope(el, ctx)` (Footer Reset) clears only the selected element's
+  overrides for the active scope/state; the Footer's Reset count is element-only.
+- `styleEngine.resetAll()` (the session-wide "Reset all **elements**" — Shift+R
+  and the ChangesDrawer "Reset All") clears inline + class + state overrides but
+  **leaves mode overrides intact**. This was previously flagged as a possible bug
+  ("Reset all leaves mode overrides behind", RFC #14 Phase-1 comment); it is
+  **resolved here as not-a-bug, by design** — the affordance is labelled "Reset
+  all elements", the ChangesDrawer only displays element diffs, and clearing
+  modes from it would reintroduce the over-clear's hidden side-effect at session
+  scope.
 
 Mode overrides remain clearable through their own lifecycle: **undo**
 (Cmd/Ctrl+Z falls through to the mode stack) today, and a dedicated
@@ -49,6 +60,11 @@ Variables-panel affordance tracked in issue #52.
   byte-identical migration.
 - **Also build the Variables-panel mode-reset now.** Deferred to #52 to keep this
   increment scoped to the engine surface + the bugfix.
+- **Make session-wide "Reset all" clear modes** (resolve the Phase-1 caveat in the
+  "Reset all means everything" direction). Rejected: it reintroduces the
+  over-clear's hidden side-effect at session scope (the ChangesDrawer shows only
+  element diffs and the hotkey is labelled "Reset all elements"), and it conflicts
+  with the single principle that the style-panel reset surface never touches modes.
 
 ## Related
 
