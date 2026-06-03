@@ -162,7 +162,7 @@ describe("undo() / redo()", () => {
     expect(isDirty(el, "color")).toBe(true);
   });
 
-  it("falls through to the mode stack when there is no inline edit to undo", () => {
+  it("reverts a mode-only edit via the unified stack (returns the body sentinel)", () => {
     styleEngine.apply(
       { scope: "mode", selector: ":root", varName: "--brand" },
       "",
@@ -170,9 +170,10 @@ describe("undo() / redo()", () => {
     );
     expect(getModeOverrideCount()).toBe(1);
 
-    // No inline overrides exist, so undo() should return null and pop the mode stack
+    // Mode rides apply.ts's foreign-op seam (RFC #14 4a): undo() reverts it and
+    // returns the document.body sentinel (not null), so a history scrub keeps stepping.
     const result = styleEngine.undo();
-    expect(result).toBeNull();
+    expect(result?.el).toBe(document.body);
     expect(getModeOverrideCount()).toBe(0);
   });
 });
@@ -290,25 +291,25 @@ describe("resetScope() — scoped reset (RFC #14 Phase 3)", () => {
 });
 
 describe("undo() reaches every override dimension (RFC #14)", () => {
-  it("undoes the element edit first, then falls through to the mode edit", () => {
+  it("reverts in reverse-time order — inline (applied last) first, then mode", () => {
     const el = makeEl();
     styleEngine.apply(
       { scope: "mode", selector: ".dark", varName: "--brand" },
       "",
       "#000",
-    );
-    styleEngine.apply({ scope: "element", el }, "color", "red");
+    ); // applied FIRST
+    styleEngine.apply({ scope: "element", el }, "color", "red"); // applied LAST
     expect(getModeOverrideCount()).toBe(1);
     expect(isDirty(el, "color")).toBe(true);
 
     const r1 = styleEngine.undo();
     expect(r1?.el).toBe(el);
     expect(isDirty(el, "color")).toBe(false);
-    expect(getModeOverrideCount()).toBe(1); // mode untouched by the inline undo
+    expect(getModeOverrideCount()).toBe(1); // mode untouched — it was applied earlier
 
     const r2 = styleEngine.undo();
-    expect(r2).toBeNull();
-    expect(getModeOverrideCount()).toBe(0); // mode cleared via the undo fallthrough
+    expect(r2?.el).toBe(document.body); // mode step returns the body sentinel
+    expect(getModeOverrideCount()).toBe(0); // mode cleared via the unified stack
   });
 });
 

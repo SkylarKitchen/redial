@@ -4,7 +4,20 @@
  * Manages a <style id="redial-mode-overrides"> element that holds
  * per-selector overrides for CSS custom properties in specific modes.
  * Integrates with the panel's undo/save system via subscription API.
+ *
+ * Undo is NOT owned here: every mode edit registers a revert/reapply closure on
+ * apply.ts's ONE temporal stack via `pushForeignUndo`, so Cmd+Z reverses mode
+ * edits interleaved with inline/state/class edits in true reverse-time order
+ * (RFC #14 Increment 4a — see ADR-0006). Dependency is one-way (modeOverrides →
+ * apply); apply never imports this module, so there is no cycle.
  */
+
+import {
+  pushForeignUndo,
+  clearForeignUndo,
+  beginForeignCoalesce,
+  endForeignCoalesce,
+} from "./apply";
 
 // ─── Store ──────────────────────────────────────────────────────────
 
@@ -13,18 +26,6 @@ const store = new Map<string, Map<string, string>>();
 
 /** Monotonic counter for useSyncExternalStore snapshot */
 let version = 0;
-
-// ─── Undo / Redo ────────────────────────────────────────────────────
-
-interface UndoEntry {
-  selector: string;
-  varName: string;
-  prev: string | null; // null = variable didn't exist
-  next: string;
-}
-
-const undoStack: UndoEntry[] = [];
-const redoStack: UndoEntry[] = [];
 
 /** Style element reference */
 let styleEl: HTMLStyleElement | null = null;
@@ -100,28 +101,31 @@ function removeModeOverrideInternal(
 
 // ─── Public API ─────────────────────────────────────────────────────
 
-/** When true, consecutive applies for the same selector+varName merge into one undo entry */
-let coalescing = false;
+/** Enable undo coalescing (call before rapid-fire updates like color picker drag).
+ *  Delegates to apply.ts's unified stack — consecutive applies for the same
+ *  selector+varName merge into one undo step (RFC #14 Increment 4a). */
+export function beginModeCoalesce(): void { beginForeignCoalesce(); }
 
-/** Enable undo coalescing (call before rapid-fire updates like color picker drag) */
-export function beginModeCoalesce(): void { coalescing = true; }
-
-/** Disable undo coalescing */
-export function endModeCoalesce(): void { coalescing = false; }
+/** Disable undo coalescing. */
+export function endModeCoalesce(): void { endForeignCoalesce(); }
 
 export function applyModeOverride(
   selector: string,
   varName: string,
   value: string,
 ): void {
-  const top = undoStack[undoStack.length - 1];
-  if (coalescing && top && top.selector === selector && top.varName === varName) {
-    top.next = value;
-  } else {
-    const prev = store.get(selector)?.get(varName) ?? null;
-    undoStack.push({ selector, varName, prev, next: value });
-  }
-  redoStack.length = 0;
+  // Snapshot the prior value so the revert closure restores it (or removes the
+  // variable if it didn't exist). The step lands on apply.ts's ONE temporal
+  // stack; coalescing merges consecutive same-key drags into one undo.
+  const prev = store.get(selector)?.get(varName) ?? null;
+  pushForeignUndo({
+    revert: () =>
+      prev === null
+        ? removeModeOverrideInternal(selector, varName)
+        : applyModeOverrideInternal(selector, varName, prev),
+    reapply: () => applyModeOverrideInternal(selector, varName, value),
+    coalesceKey: `${selector} ${varName}`,
+  });
   applyModeOverrideInternal(selector, varName, value);
 }
 
@@ -130,24 +134,6 @@ export function removeModeOverride(
   varName: string,
 ): void {
   removeModeOverrideInternal(selector, varName);
-}
-
-export function undoModeOverride(): void {
-  const entry = undoStack.pop();
-  if (!entry) return;
-  redoStack.push(entry);
-  if (entry.prev === null) {
-    removeModeOverrideInternal(entry.selector, entry.varName);
-  } else {
-    applyModeOverrideInternal(entry.selector, entry.varName, entry.prev);
-  }
-}
-
-export function redoModeOverride(): void {
-  const entry = redoStack.pop();
-  if (!entry) return;
-  undoStack.push(entry);
-  applyModeOverrideInternal(entry.selector, entry.varName, entry.next);
 }
 
 export function getModeOverrides(
@@ -159,8 +145,8 @@ export function getModeOverrides(
 }
 
 export function resetAllModeOverrides(): void {
-  undoStack.length = 0;
-  redoStack.length = 0;
+  // Mode's undo footprint lives on apply.ts's unified stack now — purge it there.
+  clearForeignUndo();
   if (store.size === 0) return;
   store.clear();
   if (styleEl && document.contains(styleEl)) {

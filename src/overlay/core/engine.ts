@@ -53,8 +53,6 @@ import {
 export type { DiffEntry } from "./apply";
 import {
   applyModeOverride,
-  undoModeOverride,
-  redoModeOverride,
   serializeModeOverrides,
   getModeOverrideCount,
   subscribeModeOverrides,
@@ -208,22 +206,21 @@ function apply(target: OverrideTarget, prop: string, value: string): void {
 }
 
 /**
- * Unified undo. Mirrors Overlay's current fallthrough: try the inline/class/state
- * stack first, and only fall back to the mode stack when it has nothing to undo.
- * Returns the affected element (for re-inference) or null for a mode-only step.
+ * Unified undo over the ONE temporal stack — inline, state, class, batch,
+ * dom-move, AND mode (which rides apply.ts's `pushForeignUndo` seam since RFC #14
+ * Increment 4a, ADR-0006). Steps revert in true reverse-time order regardless of
+ * dimension, so the legacy inline→mode fallthrough — which always undid every
+ * inline edit before any mode edit, ignoring when each happened — is gone.
+ * Returns the affected element, or the `document.body` sentinel for a non-element
+ * step (mode / dom-move). Mode/dom-move return a truthy result (not null) so the
+ * ChangesDrawer history scrub keeps stepping past them.
  */
 function undo(): UndoResult | null {
-  const result = undoInline();
-  if (result) return result;
-  undoModeOverride();
-  return null;
+  return undoInline();
 }
 
 function redo(): UndoResult | null {
-  const result = redoInline();
-  if (result) return result;
-  redoModeOverride();
-  return null;
+  return redoInline();
 }
 
 function diff(): UnifiedDiff {
@@ -276,9 +273,9 @@ function diffState(el: Element, state: string): DiffEntry[] {
  * `selector + varName`, created in the Variables panel, not attached to this
  * element), so wiping every mode override when resetting one element was an
  * over-clear bug — resetting an element's `:hover` could silently destroy
- * unrelated theme edits. Mode overrides stay clearable via undo (Cmd/Ctrl+Z
- * falls through to the mode stack); a dedicated Variables-panel clear affordance
- * is tracked in issue #52.
+ * unrelated theme edits. Mode overrides stay clearable via undo (Cmd/Ctrl+Z, now
+ * on the ONE unified temporal stack — ADR-0006); a dedicated Variables-panel
+ * clear affordance is tracked in issue #52.
  * See https://github.com/SkylarKitchen/redial/issues/14.
  */
 function resetScope(el: Element, ctx: ScopeContext): void {

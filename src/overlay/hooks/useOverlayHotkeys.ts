@@ -138,7 +138,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         if (diffMode) return;
         e.preventDefault();
         e.stopPropagation();
-        // styleEngine.redo() does the inline→mode fallthrough internally (RFC #14).
+        // styleEngine.redo() steps the ONE unified temporal stack (RFC #14 4a).
         const result = styleEngine.redo();
         if (result) {
           refreshPanel(result.el);
@@ -152,7 +152,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         if (diffMode) return; // Block undo during diff
         e.preventDefault();
         e.stopPropagation(); // prevent DialKit from processing native undo
-        // styleEngine.undo() does the inline→mode fallthrough internally (RFC #14).
+        // styleEngine.undo() steps the ONE unified temporal stack (RFC #14 4a).
         const result = styleEngine.undo();
         if (result) {
           // Re-infer to update panel values

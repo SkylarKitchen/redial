@@ -8,10 +8,11 @@
  * Scope-routing dispatch (element / class / state) and the session-wide reset
  * go through `styleEngine` (RFC #14) rather than calling apply.ts/scope.ts/
  * statePreview.ts directly — so the routing rule lives in exactly one place and
- * cannot drift. (`handleUndoToIndex` still uses apply.ts's inline-only `undo`
- * deliberately: `styleEngine.undo` falls through to the mode stack, which is the
- * wrong semantics for replaying the inline history. Merging the undo stacks is
- * Phase 3 of #14.)
+ * cannot drift. (`handleUndoToIndex` still calls apply.ts's `undo` directly: the
+ * undo stacks were unified in Increment 4a, so it now also steps mode/dom-move
+ * entries — which return the `document.body` sentinel and so don't halt the loop,
+ * exactly as dom-move already did. Migrating this to `styleEngine.undo` with
+ * history-row-aware scrub semantics is Increment 4b of #14.)
  *
  * Extracted from Overlay.tsx — dependency arrays are preserved exactly. The hook
  * receives the values/setters each callback closes over so nothing reaches back

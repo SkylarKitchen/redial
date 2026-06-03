@@ -8,10 +8,11 @@ import {
   serializeModeOverrides,
   subscribeModeOverrides,
   getModeOverrideSnapshot,
-  undoModeOverride,
-  redoModeOverride,
   isModeOverrideDirty,
 } from "../core/modeOverrides";
+// Undo/redo were unified onto apply.ts's ONE temporal stack in RFC #14 4a;
+// modeOverrides no longer owns its own undo functions (ADR-0006).
+import { undo, redo } from "../core/apply";
 
 afterEach(() => {
   resetAllModeOverrides();
@@ -112,33 +113,33 @@ describe("undo/redo", () => {
   it("undo reverts the last applyModeOverride", () => {
     applyModeOverride(".dark", "--bg", "#111");
     applyModeOverride(".dark", "--bg", "#222");
-    undoModeOverride();
+    undo();
     expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
   });
 
   it("undo removes variable if it was newly added", () => {
     applyModeOverride(".dark", "--bg", "#111");
-    undoModeOverride();
+    undo();
     expect(getModeOverrides(".dark")).toBeUndefined();
   });
 
   it("redo re-applies after undo", () => {
     applyModeOverride(".dark", "--bg", "#111");
-    undoModeOverride();
-    redoModeOverride();
+    undo();
+    redo();
     expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
   });
 
   it("new apply after undo clears redo stack", () => {
     applyModeOverride(".dark", "--bg", "#111");
-    undoModeOverride();
+    undo();
     applyModeOverride(".dark", "--bg", "#333");
-    redoModeOverride(); // no-op
+    redo(); // no-op
     expect(getModeOverrides(".dark")).toEqual({ "--bg": "#333" });
   });
 
   it("undo past the beginning is a no-op", () => {
-    undoModeOverride();
+    undo();
     expect(getModeOverrides(".dark")).toBeUndefined();
   });
 });
@@ -155,7 +156,7 @@ describe("isModeOverrideDirty", () => {
 
   it("returns false after undo", () => {
     applyModeOverride(".dark", "--bg", "#111");
-    undoModeOverride();
+    undo();
     expect(isModeOverrideDirty(".dark", "--bg")).toBe(false);
   });
 });
@@ -183,13 +184,13 @@ describe("full editing flow", () => {
     expect(css1).toContain("--text: #eee");
     expect(css1).toContain(".light");
 
-    undoModeOverride(); // undo .light --bg
+    undo(); // undo .light --bg
     expect(serializeModeOverrides()).not.toContain(".light");
 
-    undoModeOverride(); // undo .dark --text
+    undo(); // undo .dark --text
     expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111" });
 
-    redoModeOverride(); // redo .dark --text
+    redo(); // redo .dark --text
     expect(getModeOverrides(".dark")).toEqual({ "--bg": "#111", "--text": "#eee" });
   });
 });

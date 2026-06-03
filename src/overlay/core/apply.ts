@@ -102,7 +102,15 @@ function isInlineWritable(key: string): boolean {
 type SingleUndoEntry = { el: Element; prop: string; prev: string; state: string; className?: string };
 type BatchUndoEntry = { type: 'batch'; entries: SingleUndoEntry[] };
 type DomMoveUndoEntry = { type: 'dom-move'; undo: () => void; redo: () => void };
-type UndoEntry = SingleUndoEntry | BatchUndoEntry | DomMoveUndoEntry;
+/**
+ * A foreign subsystem's undo step in the ONE temporal stack — a generic
+ * closure-pair entry (structurally like dom-move) that apply.ts reverts/reapplies
+ * without knowing the subsystem. modeOverrides.ts registers through
+ * `pushForeignUndo`. `coalesceKey` enables drag-coalescing (consecutive
+ * same-key steps merge into one undo). RFC #14 Increment 4a — see ADR-0006.
+ */
+type ForeignUndoEntry = { type: 'foreign'; revert: () => void; reapply: () => void; coalesceKey?: string };
+type UndoEntry = SingleUndoEntry | BatchUndoEntry | DomMoveUndoEntry | ForeignUndoEntry;
 
 function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
   return 'type' in entry && entry.type === 'batch';
@@ -110,6 +118,10 @@ function isBatch(entry: UndoEntry): entry is BatchUndoEntry {
 
 function isDomMove(entry: UndoEntry): entry is DomMoveUndoEntry {
   return 'type' in entry && entry.type === 'dom-move';
+}
+
+function isForeign(entry: UndoEntry): entry is ForeignUndoEntry {
+  return 'type' in entry && entry.type === 'foreign';
 }
 
 // --- Subscription API for useSyncExternalStore ---
@@ -403,6 +415,13 @@ export function undo(): { el: Element; prop?: string } | null {
     return { el: document.body };
   }
 
+  if (isForeign(last)) {
+    last.revert();
+    redoStack.push(last);
+    notifyListeners();
+    return { el: document.body };
+  }
+
   if (isBatch(last)) {
     // Build redo batch: capture current values before restoring
     const redoEntries: SingleUndoEntry[] = [];
@@ -530,6 +549,13 @@ export function redo(): { el: Element; prop?: string } | null {
     return { el: document.body };
   }
 
+  if (isForeign(last)) {
+    last.reapply();
+    undoStack.push(last);
+    notifyListeners();
+    return { el: document.body };
+  }
+
   if (isBatch(last)) {
     // Re-apply batch entries and push an undo batch
     const undoEntries: SingleUndoEntry[] = [];
@@ -642,7 +668,7 @@ export function resetStateOverrides(el: Element, state: string, breakpoint: stri
       if (isBatch(entry)) {
         entry.entries = entry.entries.filter(e => !(e.el === el && matches(e.prop)));
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (!isDomMove(entry) && entry.el === el && matches(entry.prop)) {
+      } else if (!isDomMove(entry) && !isForeign(entry) && entry.el === el && matches(entry.prop)) {
         stack.splice(i, 1);
       }
     }
@@ -690,7 +716,7 @@ export function resetElementBreakpoint(el: Element, breakpoint: string): void {
         );
         if (entry.entries.length === 0) stack.splice(i, 1);
       } else if (
-        !isBatch(entry) && !isDomMove(entry) &&
+        !isBatch(entry) && !isDomMove(entry) && !isForeign(entry) &&
         entry.el === el && parseKey(entry.prop).breakpoint === breakpoint
       ) {
         stack.splice(i, 1);
@@ -731,7 +757,7 @@ export function reset(el: Element): void {
       if (isBatch(entry)) {
         entry.entries = entry.entries.filter((e) => e.el !== el);
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el) {
+      } else if (!isBatch(entry) && !isDomMove(entry) && !isForeign(entry) && entry.el === el) {
         stack.splice(i, 1);
       }
     }
@@ -1029,7 +1055,7 @@ export function resetProp(el: Element, prop: string): void {
       if (isBatch(entry)) {
         entry.entries = entry.entries.filter((e) => !(e.el === el && e.prop === prop));
         if (entry.entries.length === 0) stack.splice(i, 1);
-      } else if (!isBatch(entry) && !isDomMove(entry) && entry.el === el && entry.prop === prop) {
+      } else if (!isBatch(entry) && !isDomMove(entry) && !isForeign(entry) && entry.el === el && entry.prop === prop) {
         stack.splice(i, 1);
       }
     }
@@ -1062,7 +1088,7 @@ export function resetProp(el: Element, prop: string): void {
               if (isBatch(ue)) {
                 ue.entries = ue.entries.filter((e) => !(e.el === el && e.prop === cp));
                 if (ue.entries.length === 0) undoStack.splice(i, 1);
-              } else if (!isBatch(ue) && !isDomMove(ue) && ue.el === el && ue.prop === cp) {
+              } else if (!isBatch(ue) && !isDomMove(ue) && !isForeign(ue) && ue.el === el && ue.prop === cp) {
                 undoStack.splice(i, 1);
               }
             }
@@ -1275,6 +1301,57 @@ export function pushDomMove(result: { undo: () => void; redo: () => void }): voi
     undoStack.splice(0, undoStack.length - MAX_UNDO);
   }
   notifyListeners();
+}
+
+// --- Foreign-op undo seam (modeOverrides registers through this) ---
+//
+// A foreign subsystem (today: CSS-variable mode overrides) records its undo steps
+// on apply.ts's ONE temporal stack instead of running a parallel stack, so Cmd+Z
+// reverses edits across every dimension in true reverse-time order. apply.ts stays
+// the single owner of temporal order; modeOverrides depends on apply (one-way — no
+// import cycle). RFC #14 Increment 4a — see ADR-0006.
+
+/** When true, consecutive `pushForeignUndo` calls with the same `coalesceKey`
+ *  merge into the last foreign entry (one undo step per drag). */
+let foreignCoalescing = false;
+
+/** Begin coalescing foreign undo steps (call before a rapid-fire drag). */
+export function beginForeignCoalesce(): void { foreignCoalescing = true; }
+
+/** End coalescing foreign undo steps. */
+export function endForeignCoalesce(): void { foreignCoalescing = false; }
+
+/**
+ * Register a foreign subsystem's undo step on the ONE temporal stack. `revert`
+ * undoes the step, `reapply` redoes it. While coalescing, a step whose
+ * `coalesceKey` matches the top foreign entry merges into it (keeps the original
+ * `revert`, advances `reapply`) so a whole drag is one undo. A fresh step clears
+ * the redo stack (standard undo semantics).
+ */
+export function pushForeignUndo(step: { revert: () => void; reapply: () => void; coalesceKey?: string }): void {
+  const top = undoStack[undoStack.length - 1];
+  if (
+    foreignCoalescing && step.coalesceKey != null &&
+    top && isForeign(top) && top.coalesceKey === step.coalesceKey
+  ) {
+    top.reapply = step.reapply; // keep the original revert; advance the forward value
+    return;
+  }
+  if (redoStack.length > 0) redoStack.length = 0;
+  undoStack.push({ type: 'foreign', revert: step.revert, reapply: step.reapply, coalesceKey: step.coalesceKey });
+  if (undoStack.length > MAX_UNDO) {
+    undoStack.splice(0, undoStack.length - MAX_UNDO);
+  }
+}
+
+/** Drop every foreign entry from both stacks — used when a foreign subsystem
+ *  resets all of its state (today only modeOverrides via resetAllModeOverrides). */
+export function clearForeignUndo(): void {
+  for (const stack of [undoStack, redoStack]) {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (isForeign(stack[i])) stack.splice(i, 1);
+    }
+  }
 }
 
 // --- Session Persistence ---
