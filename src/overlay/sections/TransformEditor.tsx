@@ -13,7 +13,7 @@ import { SegmentedControl, type SegmentOption } from "../controls/SegmentedContr
 import { DragHandle } from "../shell/DragHandle";
 import { useDragReorder } from "../hooks/useDragReorder";
 import { useDraftNumber } from "../hooks/useDraftNumber";
-import { Slider } from "@/components/ui/slider";
+import { Slider } from "../controls/Slider";
 import { beginBatch, endBatch } from "../core/apply";
 import { color, text, border, surface, font, blackAlpha, focusBorder } from "../theme";
 import { BACKFACE_OPTIONS } from "../panelConstants";

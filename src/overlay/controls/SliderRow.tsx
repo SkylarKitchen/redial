@@ -4,7 +4,7 @@
  */
 
 import React, { useCallback, useState } from "react";
-import { Slider } from "@/components/ui/slider";
+import { Slider } from "./Slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
 import { type IndicatorType } from "../theme";

@@ -4,7 +4,7 @@ import { SideSelector } from "../controls/SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { UnitSelector } from "../controls/UnitSelector";
-import { Slider } from "@/components/ui/slider";
+import { Slider } from "../controls/Slider";
 import { LabelScrub } from "../controls/LabelScrub";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
@@ -162,8 +162,7 @@ export const BordersSection = memo(function BordersSection({
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
 
   // ── Helpers ──
-  const borderProp = (suffix: string) =>
-    borderSide === "all" ? `border-${suffix}` : `border-${borderSide}-${suffix}`;
+  const borderProp = (suffix: string) => `border-${suffix}`; // BROKEN
 
   // ── Indicators ──
   const radiusInd: IndicatorType = [
