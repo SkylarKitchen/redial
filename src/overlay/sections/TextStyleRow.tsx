@@ -11,11 +11,11 @@
 
 import React, { useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { ChevronDown } from "lucide-react";
-import { text, blackAlpha, color, border as borderTokens, shadow, surface, focusRing, font, layout, zIndex } from "../theme";
+import { text, color, border as borderTokens, surface, focusRing, font, layout, zIndex } from "../theme";
 import { ms } from "../timing";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { SearchableMenu } from "../controls/SearchableMenu";
 import type { TextStyle } from "../textStyleScanner";
 
 export interface TextStyleRowProps {
@@ -64,88 +64,52 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
         zIndex: zIndex.max,
       }}
     >
-      <Command
-        style={{
-          minWidth: "100%",
-          borderRadius: 4,
-          border: `1px solid ${borderTokens.default}`,
-          background: color.popover,
-          boxShadow: shadow.dropdown,
+      <SearchableMenu<TextStyle>
+        items={styles}
+        getKey={(s) => s.tag}
+        getSearchText={(s) => s.name}
+        activeKey={matchedStyle?.tag}
+        onSelect={(style) => {
+          onApply(style);
+          setOpen(false);
         }}
-        filter={(value, search) => {
-          const style = styles.find((s) => s.tag === value);
-          if (!style) return 0;
-          return style.name.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-        }}
-      >
-        <CommandInput
-          placeholder="Search styles..."
-          className="h-7"
-          style={{ fontSize: 11, fontFamily: font.sans }}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              e.stopPropagation();
-              setOpen(false);
-            }
-          }}
-          autoFocus
-        />
-        <CommandList className="max-h-[180px]">
-          <CommandEmpty
+        onClose={() => setOpen(false)}
+        placeholder="Search styles..."
+        searchFontFamily={font.sans}
+        style={{ minWidth: "100%" }}
+        renderItem={(style, state) => (
+          <div
             style={{
-              paddingTop: 6,
-              paddingBottom: 6,
-              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "4px 8px",
               fontSize: 11,
-              fontStyle: "italic",
-              color: text.label,
+              fontFamily: font.mono,
+              lineHeight: "16px",
             }}
           >
-            No matches
-          </CommandEmpty>
-          {styles.map((style) => {
-            const isActive = matchedStyle?.tag === style.tag;
-            return (
-              <CommandItem
-                key={style.tag}
-                value={style.tag}
-                onSelect={() => {
-                  onApply(style);
-                  setOpen(false);
-                }}
-                style={{
-                  paddingLeft: 8,
-                  paddingRight: 8,
-                  paddingTop: 4,
-                  paddingBottom: 4,
-                  fontSize: 11,
-                  fontFamily: font.mono,
-                  cursor: "pointer",
-                  lineHeight: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  ...(isActive ? { background: color.primary, color: color.primaryForeground } : {}),
-                }}
-              >
-                <span style={{ fontWeight: style.fontWeight }}>
-                  {style.name}
-                </span>
-                <span
-                  style={{
-                    fontSize: 10,
-                    marginLeft: 8,
-                    flexShrink: 0,
-                    color: isActive ? color.primaryForegroundMuted : text.label,
-                  }}
-                >
-                  {formatSize(style.fontSize)}
-                </span>
-              </CommandItem>
-            );
-          })}
-        </CommandList>
-      </Command>
+            <span
+              style={{
+                fontWeight: style.fontWeight,
+                color: state.active ? color.primaryForeground : undefined,
+              }}
+            >
+              {style.name}
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                marginLeft: 8,
+                flexShrink: 0,
+                color: state.active ? color.primaryForegroundMuted : text.label,
+              }}
+            >
+              {formatSize(style.fontSize)}
+            </span>
+          </div>
+        )}
+      />
     </div>,
     document.body,
   );

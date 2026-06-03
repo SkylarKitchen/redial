@@ -3,21 +3,18 @@
  *
  * Searches across CSS properties/sections, actions, and DOM elements.
  * Fuzzy substring matching with keyboard navigation and debounced element search.
+ *
+ * Rendered inside the inline `Modal` (portal + focus-trap + Esc/backdrop close);
+ * the grouped, keyboard-navigable result list is plain inline-styled markup driven
+ * by `useListKeyboardNav` (no shadcn/Radix Dialog, no cmdk).
  */
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Modal } from "./Modal";
+import { useListKeyboardNav } from "../hooks/useListKeyboardNav";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "../util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
-import { color, text, border, surface, font, primaryAlpha, shadow, badge } from "../theme";
+import { color, text, border, surface, font, primaryAlpha, badge } from "../theme";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -75,7 +72,7 @@ function getElementLabel(el: Element): string {
 function getElementDetail(el: Element): string {
   const text = el.textContent?.trim() ?? "";
   if (text.length > 0) {
-    return text.length > 60 ? text.slice(0, 60) + "\u2026" : text;
+    return text.length > 60 ? text.slice(0, 60) + "…" : text;
   }
   // Fall back to breadcrumb
   const crumbs = buildBreadcrumb(el, 3);
@@ -180,7 +177,7 @@ export function CommandPalette({
         all.push({
           category: "Property",
           label: section,
-          detail: SECTION_PROPERTIES[section]?.slice(0, 5).join(", ") + "\u2026",
+          detail: SECTION_PROPERTIES[section]?.slice(0, 5).join(", ") + "…",
           action: () => onScrollToSection(section),
         });
       } else {
@@ -237,127 +234,162 @@ export function CommandPalette({
     [onClose],
   );
 
+  // Keyboard navigation over the flat `results` array (cmdk replacement).
+  const nav = useListKeyboardNav({
+    itemCount: results.length,
+    onSelect: (i) => {
+      const r = results[i];
+      if (r) executeResult(r);
+    },
+  });
+
   return (
-    <div className="__tuner-root">
-      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-        <DialogContent
-          style={{
-            overflow: "hidden",
-            padding: 0,
-            maxWidth: 500,
-            background: color.background,
-            border: `1px solid ${border.default}`,
-          }}
-        >
-          <style>{`
-            .tuner-cmd [cmdk-group-heading] { padding: 0 8px; font-weight: 500; color: ${text.label}; }
-            .tuner-cmd [cmdk-group]:not([hidden]) ~ [cmdk-group] { padding-top: 0; }
-            .tuner-cmd [cmdk-group] { padding: 0 8px; }
-            .tuner-cmd [cmdk-input-wrapper] svg { height: 20px; width: 20px; }
-            .tuner-cmd [cmdk-input] { height: 48px; }
-            .tuner-cmd [cmdk-item] { padding: 6px 8px; }
-            .tuner-cmd [cmdk-item] svg { height: 20px; width: 20px; }
-          `}</style>
-          <Command
-            shouldFilter={false}
-            className="tuner-cmd"
+    <Modal
+      onClose={onClose}
+      maxWidth={500}
+      ariaLabel="Command palette"
+      contentStyle={{ padding: 0, overflow: "hidden", background: color.background }}
+    >
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={nav.handleKeyDown}
+        autoFocus
+        placeholder="Search properties, actions, or elements..."
+        aria-label="Search properties, actions, or elements"
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          height: 48,
+          padding: "0 12px",
+          fontSize: 14,
+          border: "none",
+          borderBottom: `1px solid ${border.default}`,
+          background: "transparent",
+          color: text.primary,
+          outline: "none",
+        }}
+      />
+
+      <div role="listbox" style={{ maxHeight: 360, overflowY: "auto" }}>
+        {query && results.length === 0 && (
+          <div
+            style={{
+              padding: "24px 0",
+              textAlign: "center",
+              fontSize: 13,
+              color: text.label,
+            }}
           >
-            <CommandInput
-              placeholder="Search properties, actions, or elements..."
-              value={query}
-              onValueChange={(value) => setQuery(value)}
-            />
-            <CommandList className="max-h-[360px]">
-              {query && results.length === 0 && (
-                <CommandEmpty>
-                  No results for &ldquo;{query}&rdquo;
-                </CommandEmpty>
-              )}
+            No results for &ldquo;{query}&rdquo;
+          </div>
+        )}
 
-              {!query && (
-                <div style={{
-                  padding: "24px 0",
-                  textAlign: "center",
-                  fontSize: 13,
+        {!query && (
+          <div
+            style={{
+              padding: "24px 0",
+              textAlign: "center",
+              fontSize: 13,
+              color: text.label,
+            }}
+          >
+            Type to search properties, actions, or elements
+          </div>
+        )}
+
+        {(["Property", "Action", "Element"] as const).map((category) => {
+          const items = grouped[category];
+          if (!items || items.length === 0) return null;
+          return (
+            <div key={category} style={{ padding: "0 8px" }}>
+              <span
+                style={{
+                  display: "block",
+                  padding: "4px 8px",
+                  fontWeight: 500,
+                  fontSize: 11,
                   color: text.label,
-                }}>
-                  Type to search properties, actions, or elements
-                </div>
-              )}
-
-              {(["Property", "Action", "Element"] as const).map((category) => {
-                const items = grouped[category];
-                if (!items || items.length === 0) return null;
+                }}
+              >
+                {category}
+              </span>
+              {items.map((r, i) => {
+                const flatIndex = results.indexOf(r);
+                const highlighted = flatIndex === nav.activeIndex;
                 return (
-                  <CommandGroup key={category} heading={category}>
-                    {items.map((r, i) => (
-                      <CommandItem
-                        key={`${r.category}-${r.label}-${i}`}
-                        value={`${r.category}-${r.label}-${i}`}
-                        onSelect={() => executeResult(r)}
+                  <div
+                    key={`${r.category}-${r.label}-${i}`}
+                    role="option"
+                    aria-selected={highlighted}
+                    onMouseEnter={() => nav.setActiveIndex(flatIndex)}
+                    onClick={() => executeResult(r)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "6px 8px",
+                      borderRadius: 4,
+                      cursor: "pointer",
+                      background: highlighted ? surface.hover : "transparent",
+                    }}
+                  >
+                    {/* Category badge */}
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        padding: "2px 6px",
+                        borderRadius: 2,
+                        flexShrink: 0,
+                        lineHeight: 1.2,
+                        ...CATEGORY_BADGE_STYLES[r.category],
+                      }}
+                    >
+                      {r.category}
+                    </span>
+
+                    {/* Label */}
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: text.primary,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        flexShrink: 0,
+                        fontFamily: r.category === "Property" ? font.mono : undefined,
+                      }}
+                    >
+                      {r.label}
+                    </span>
+
+                    {/* Detail */}
+                    {r.detail && (
+                      <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8,
-                          cursor: "pointer",
+                          fontSize: 11,
+                          color: text.label,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          marginLeft: "auto",
+                          flexShrink: 1,
+                          minWidth: 0,
                         }}
                       >
-                        {/* Category badge */}
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            padding: "2px 6px",
-                            borderRadius: 2,
-                            flexShrink: 0,
-                            lineHeight: 1.2,
-                            ...CATEGORY_BADGE_STYLES[r.category],
-                          }}
-                        >
-                          {r.category}
-                        </span>
-
-                        {/* Label */}
-                        <span
-                          style={{
-                            fontSize: 13,
-                            color: text.primary,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            flexShrink: 0,
-                            fontFamily: r.category === "Property" ? font.mono : undefined,
-                          }}
-                        >
-                          {r.label}
-                        </span>
-
-                        {/* Detail */}
-                        {r.detail && (
-                          <span style={{
-                            fontSize: 11,
-                            color: text.label,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            marginLeft: "auto",
-                            flexShrink: 1,
-                            minWidth: 0,
-                          }}>
-                            {r.detail}
-                          </span>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                        {r.detail}
+                      </span>
+                    )}
+                  </div>
                 );
               })}
-            </CommandList>
-          </Command>
-        </DialogContent>
-      </Dialog>
-    </div>
+            </div>
+          );
+        })}
+      </div>
+    </Modal>
   );
 }

@@ -3,13 +3,11 @@
  *
  * Used for text-align, text-decoration, text-transform, etc.
  * Supports single-select (radio) and multi-select (toggle) modes.
- * Pure inline styles with theme.ts tokens.
+ * Pure inline styles with theme.ts tokens (no shadcn / Radix).
  */
 
 import { useState, useCallback } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
-import { color, surface, text, border as borderTokens, focusRing, primaryAlpha } from "../theme";
+import { color, surface, border as borderTokens, focusRing } from "../theme";
 import { ms, cssTransition } from "../timing";
 
 export interface IconButtonGroupProps {
@@ -82,34 +80,16 @@ export function IconButtonGroup({ options, value, onChange, multi = false, allow
     );
   });
 
-  // Radix ToggleGroup requires separate JSX for single vs multiple
-  // to satisfy the discriminated union types
-  if (multi) {
-    return (
-      <ToggleGroup
-        type="multiple"
-        value={value.split(" ").filter(Boolean)}
-        onValueChange={() => { /* handled via onClick */ }}
-        aria-label={ariaLabel}
-        className="inline-flex gap-0"
-        style={{ flex: 1 }}
-      >
-        {items}
-      </ToggleGroup>
-    );
-  }
-
+  // Single wrapper div replaces the old Radix ToggleGroup. Single-select is a
+  // "radiogroup"; multi-select is a generic "group".
   return (
-    <ToggleGroup
-      type="single"
-      value={value}
-      onValueChange={() => { /* handled via onClick */ }}
+    <div
+      role={multi ? "group" : "radiogroup"}
       aria-label={ariaLabel}
-      className="inline-flex gap-0"
-      style={{ flex: 1 }}
+      style={{ display: "inline-flex", gap: 0, flex: 1 }}
     >
       {items}
-    </ToggleGroup>
+    </div>
   );
 }
 
@@ -128,9 +108,20 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
   const [focused, setFocused] = useState(false);
   const [pressed, setPressed] = useState(false);
 
+  // Active styling replaces the old Tailwind overrides
+  // (data-[state=on]:bg-primary / data-[state=on]:text-primary-foreground)
+  // with inline theme tokens. Computed up front so the style object stays flat.
+  const activeBg = color.primary;
+  const hoverBg = surface.hover;
+  const bg = isActive ? activeBg : (hovered ? hoverBg : undefined);
+  const fg = isActive ? color.primaryForeground : color.mutedForeground;
+
+  // rounded-l / rounded-r / rounded (4px) — first/last corners only.
+  const borderRadius = isFirst && isLast ? 4 : isFirst ? "4px 0 0 4px" : isLast ? "0 4px 4px 0" : 0;
+
   return (
-    <ToggleGroupItem
-      value={opt.value}
+    <button
+      type="button"
       role={multi ? undefined : "radio"}
       aria-checked={multi ? undefined : isActive}
       aria-pressed={multi ? isActive : undefined}
@@ -161,31 +152,30 @@ function IconButtonItem({ opt, isActive, isFirst, isLast, multi, onReset, handle
       onMouseLeave={() => { setHovered(false); setPressed(false); }}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
-      className={cn(
-        "h-7 min-w-0 px-1.5 text-[13px] leading-none rounded-none",
-        isFirst && !isLast && "rounded-l",
-        isLast && !isFirst && "rounded-r",
-        isFirst && isLast && "rounded",
-        "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground",
-      )}
       style={{
         flex: 1,
+        height: 28,
+        minWidth: 0,
+        padding: "0 6px",
+        fontSize: 13,
+        lineHeight: 1,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         cursor: "pointer",
         border: `1px solid ${borderTokens.default}`,
+        borderRadius,
         outline: "none",
         transform: pressed ? "scale(0.93)" : undefined,
         transition: `color ${ms("fast")} ease, background ${ms("fast")} ease, ${cssTransition("transform", pressed ? "fast" : "release")}`,
         borderLeftWidth: isFirst ? 1 : 0,
-        backgroundColor: !isActive && hovered ? surface.hover : undefined,
-        color: !isActive ? color.mutedForeground : undefined,
+        backgroundColor: bg,
+        color: fg,
         fontWeight: isActive ? 500 : 400,
         boxShadow: focused ? focusRing : "none",
       }}
     >
       {opt.icon}
-    </ToggleGroupItem>
+    </button>
   );
 }

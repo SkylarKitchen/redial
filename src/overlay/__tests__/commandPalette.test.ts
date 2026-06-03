@@ -216,8 +216,9 @@ describe("typing filters commands", () => {
       expectInPalette("MAX_ELEMENT_RESULTS = 10");
     });
 
-    it("disables cmdk built-in filter (uses custom fuzzy search)", () => {
-      expectInPalette("shouldFilter={false}");
+    it("does not import cmdk and does its own filtering", () => {
+      expect(paletteSrc).not.toMatch(/@\/components\/ui\/command/);
+      expectInPalette("fuzzyMatch(");
     });
   });
 });
@@ -246,8 +247,8 @@ describe("enter executes selected command", () => {
     expect(actionIdx).toBeLessThan(closeIdx);
   });
 
-  it("CommandItem onSelect wires to executeResult", () => {
-    expectInPalette("onSelect={() => executeResult(r)}");
+  it("result item onClick wires to executeResult", () => {
+    expectInPalette("onClick={() => executeResult(r)}");
   });
 
   it("property results dispatch onScrollToSection", () => {

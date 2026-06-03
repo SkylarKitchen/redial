@@ -2,16 +2,16 @@
  * controls/SelectRow.tsx — Dropdown select row with optional searchable/font-preview mode.
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useId } from "react";
 import { createPortal } from "react-dom";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Command, CommandInput, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command";
 import { type IndicatorType } from "../theme";
 import { getIndicatorTitle } from "../panelUtils";
 import { ComputedTooltip } from "./ComputedTooltip";
 import { ChevronDown } from "lucide-react";
 import { color, font, shadow, surface, blackAlpha, zIndex } from "../theme";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
+import { SearchableMenu } from "./SearchableMenu";
 import { labelStyle, rowStyle, useResetPopover } from "./helpers";
 
 export function SelectRow({
@@ -47,8 +47,37 @@ export function SelectRow({
   /** Target element for computed tooltip */
   computedElement?: Element;
 }) {
+  const [open, setOpen] = useState(false);
+  const [btnHovered, setBtnHovered] = useState(false);
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const id = useId();
+
+  const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
+    open,
+    setOpen,
+    triggerRef,
+    containerRef,
+    estimatedHeight: 200,
+  });
+
+  const selectedIndex = options.findIndex((o) => o.value === value);
+  const { highlightedIndex, onTriggerKeyDown, onListKeyDown, optionRefCallback } = useDropdownKeyboard({
+    open,
+    setOpen,
+    optionCount: options.length,
+    selectedIndex,
+    onSelect: (i) => {
+      onChange(options[i].value);
+      setOpen(false);
+    },
+    labels: options.map((o) => o.label),
+  });
+
   const resetPopover = useResetPopover(indicator, onReset);
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
+  const current = options.find((o) => o.value === value);
   const labelContent = (
     <span
       ref={resetPopover.anchorRef}
@@ -85,48 +114,116 @@ export function SelectRow({
           {labelContent}
         </ComputedTooltip>
       ) : labelContent}
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger
-          className="tuner-focusable flex-1"
+      <div ref={containerRef} style={{ position: "relative", flex: 1 }}>
+        <button
+          ref={triggerRef}
+          className="tuner-focusable"
+          tabIndex={0}
+          role="combobox"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          aria-controls={`${id}-listbox`}
+          aria-activedescendant={open && highlightedIndex >= 0 ? `${id}-opt-${highlightedIndex}` : undefined}
+          onClick={() => {
+            if (!open) updateDropdownPos();
+            setOpen((o) => !o);
+          }}
+          onMouseEnter={() => setBtnHovered(true)}
+          onMouseLeave={() => setBtnHovered(false)}
+          onKeyDown={(e) => {
+            if (!open && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+              updateDropdownPos();
+            }
+            onTriggerKeyDown(e);
+          }}
           style={{
+            width: "100%",
+            height: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderRadius: 2,
+            fontSize: 11,
             fontFamily: font.mono,
-            backgroundColor: color.input,
+            padding: "0 6px",
+            cursor: "pointer",
+            outline: "none",
+            backgroundColor: open ? blackAlpha(0.07) : btnHovered ? surface.hover : color.input,
             border: `1px solid ${color.border}`,
             color: color.foreground,
           }}
         >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent
-          className="max-h-[180px] rounded"
-          style={{
-            boxShadow: shadow.dropdown,
-            backgroundColor: color.popover,
-            border: `1px solid ${color.border}`,
-          }}
-        >
-          {options.map((opt) => (
-            <SelectItem
-              key={opt.value}
-              value={opt.value}
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+            {current?.label ?? value}
+          </span>
+          <ChevronDown size={12} strokeWidth={2} style={{ flexShrink: 0, marginLeft: 4, color: color.mutedForeground }} />
+        </button>
+
+        {open && dropdownPos && createPortal(
+          <div
+            ref={portalRef}
+            data-tuner-portal
+            data-select-portal
+            style={{
+              position: "fixed",
+              top: dropdownPos.top,
+              left: dropdownPos.left,
+              zIndex: zIndex.max,
+            }}
+          >
+            <div
+              id={`${id}-listbox`}
+              role="listbox"
+              onKeyDown={onListKeyDown}
               style={{
-                fontSize: 11,
-                fontFamily: font.mono,
-                fontWeight: weightPreview ? opt.value : undefined,
-                cursor: "pointer",
+                minWidth: Math.max(dropdownPos.width, 80),
+                backgroundColor: color.popover,
+                border: `1px solid ${color.border}`,
+                borderRadius: 4,
+                boxShadow: shadow.dropdown,
+                maxHeight: 180,
+                overflowY: "auto" as const,
               }}
             >
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+              {options.map((opt, idx) => {
+                const isActive = opt.value === value;
+                const isHl = idx === highlightedIndex || idx === hoveredIdx;
+                return (
+                  <div
+                    key={opt.value}
+                    id={`${id}-opt-${idx}`}
+                    ref={idx === highlightedIndex ? optionRefCallback : undefined}
+                    role="option"
+                    aria-selected={isActive}
+                    onClick={() => { onChange(opt.value); setOpen(false); }}
+                    onMouseEnter={() => setHoveredIdx(idx)}
+                    onMouseLeave={() => setHoveredIdx(null)}
+                    style={{
+                      padding: "4px 8px",
+                      fontSize: 11,
+                      fontFamily: font.mono,
+                      fontWeight: weightPreview ? opt.value : undefined,
+                      cursor: "pointer",
+                      lineHeight: "16px",
+                      backgroundColor: isActive ? color.primary : isHl ? surface.hover : "transparent",
+                      color: isActive ? color.primaryForeground : color.foreground,
+                    }}
+                  >
+                    {opt.label}
+                  </div>
+                );
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
       {resetPopover.node}
     </div>
   );
 }
 
-/** Internal: searchable/fontPreview dropdown using shadcn Command (cmdk) */
+/** Internal: searchable/fontPreview dropdown using inline SearchableMenu */
 function SelectRowCustom({
   label,
   value,
@@ -237,58 +334,31 @@ function SelectRowCustom({
               zIndex: zIndex.max,
             }}
           >
-            <Command
-              style={{
-                minWidth: Math.max(dropdownPos.width, 200),
-                borderRadius: 4,
-                boxShadow: shadow.dropdown,
-                backgroundColor: color.popover,
-                border: `1px solid ${color.border}`,
+            <SearchableMenu
+              items={options}
+              getKey={(o) => o.value}
+              getSearchText={(o) => o.label}
+              activeKey={value}
+              onSelect={(o) => {
+                onChange(o.value);
+                setOpen(false);
               }}
-              filter={(value, search) => {
-                const opt = options.find((o) => o.value === value);
-                if (!opt) return 0;
-                return opt.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
-              }}
-            >
-              <CommandInput
-                placeholder="Search..."
-                className="h-7 text-[11px]"
-                style={{ fontFamily: font.sans }}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") {
-                    e.stopPropagation();
-                    setOpen(false);
-                  }
-                }}
-                autoFocus
-              />
-              <CommandList className="max-h-[180px]">
-                <CommandEmpty style={{ padding: "6px 0", textAlign: "center" as const, fontSize: 11, fontStyle: "italic", color: color.mutedForeground }}>
-                  No matches
-                </CommandEmpty>
-                {options.map((opt) => (
-                  <CommandItem
-                    key={opt.value}
-                    value={opt.value}
-                    onSelect={() => {
-                      onChange(opt.value);
-                      setOpen(false);
-                    }}
-                    style={{
-                      padding: "4px 8px",
-                      fontSize: 11,
-                      fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
-                      cursor: "pointer",
-                      lineHeight: "16px",
-                      ...(opt.value === value ? { backgroundColor: color.primary, color: color.primaryForeground } : {}),
-                    }}
-                  >
-                    {opt.label}
-                  </CommandItem>
-                ))}
-              </CommandList>
-            </Command>
+              onClose={() => setOpen(false)}
+              style={{ minWidth: Math.max(dropdownPos.width, 200) }}
+              renderItem={(opt, state) => (
+                <div
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: 11,
+                    lineHeight: "16px",
+                    fontFamily: fontPreview ? `${opt.value}, ui-monospace, 'SF Mono', monospace` : font.mono,
+                    color: state.active ? color.primaryForeground : color.foreground,
+                  }}
+                >
+                  {opt.label}
+                </div>
+              )}
+            />
           </div>,
           document.body
         )}

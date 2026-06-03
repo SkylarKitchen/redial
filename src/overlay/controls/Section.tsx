@@ -3,7 +3,6 @@
  */
 
 import React, { useState, useContext } from "react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
 import { ms, cssTransition } from "../timing";
 import { color, surface } from "../theme";
@@ -44,82 +43,73 @@ export function Section({
   const [headerHovered, setHeaderHovered] = useState(false);
   const open = forceOpen || (focusOpen !== undefined ? focusOpen : ownOpen);
 
+  const toggle = () => {
+    if (onToggle) onToggle(titleStr);
+    else {
+      const next = !open;
+      setOwnOpen(next);
+      if (titleStr && sectionMemory) sectionMemory.update(titleStr, next);
+    }
+  };
+
   if (hidden) return null;
   return (
-    <Collapsible
-      open={open}
-      onOpenChange={(isOpen) => {
-        if (onToggle) onToggle(titleStr);
-        else {
-          setOwnOpen(isOpen);
-          if (titleStr && sectionMemory) sectionMemory.update(titleStr, isOpen);
-        }
-      }}
-      style={{ borderBottom: open ? "1px solid transparent" : `1px solid ${color.border}` }}
-    >
-      <CollapsibleTrigger asChild>
-        <div
-          tabIndex={0}
-          role="button"
-          aria-expanded={open}
-          onMouseEnter={() => setHeaderHovered(true)}
-          onMouseLeave={() => setHeaderHovered(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              if (onToggle) onToggle(titleStr);
-              else {
-                const next = !open;
-                setOwnOpen(next);
-                if (titleStr && sectionMemory) sectionMemory.update(titleStr, next);
-              }
-            }
-          }}
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            cursor: "pointer",
-            borderRadius: 2,
-            outline: "none",
-            padding: "10px 12px 6px",
-            transition: `background ${ms("fast")}`,
-            ...(open
-              ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background }
-              : { background: headerHovered ? surface.hover : "transparent" }),
-          }}
+    <div style={{ borderBottom: open ? "1px solid transparent" : `1px solid ${color.border}` }}>
+      <div
+        tabIndex={0}
+        role="button"
+        aria-expanded={open}
+        onClick={toggle}
+        onMouseEnter={() => setHeaderHovered(true)}
+        onMouseLeave={() => setHeaderHovered(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        }}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          cursor: "pointer",
+          borderRadius: 2,
+          outline: "none",
+          padding: "10px 12px 6px",
+          transition: `background ${ms("fast")}`,
+          ...(open
+            ? { position: "sticky" as const, top: 0, zIndex: 2, background: color.background }
+            : { background: headerHovered ? surface.hover : "transparent" }),
+        }}
+      >
+        <span
+          style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}
+          onClick={altClickReset(onReset)}
         >
-          <span
-            style={{ fontSize: 13, fontWeight: 500, display: "flex", alignItems: "center", gap: 6, color: color.foreground }}
-            onClick={altClickReset(onReset)}
-          >
-            <span style={indicatorStyle(indicator)}>
-              {title}
-            </span>
+          <span style={indicatorStyle(indicator)}>
+            {title}
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            {headerAction && (
-              <span onClick={(e) => e.stopPropagation()}>
-                {headerAction}
-              </span>
-            )}
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                color: color.mutedForeground,
-                transition: cssTransition("transform", "expand"),
-                transform: open ? "rotate(90deg)" : "rotate(0deg)",
-              }}
-            >
-              <ChevronRight size={12} strokeWidth={2} />
+        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {headerAction && (
+            <span onClick={(e) => e.stopPropagation()}>
+              {headerAction}
             </span>
-          </div>
+          )}
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              color: color.mutedForeground,
+              transition: cssTransition("transform", "expand"),
+              transform: open ? "rotate(90deg)" : "rotate(0deg)",
+            }}
+          >
+            <ChevronRight size={12} strokeWidth={2} />
+          </span>
         </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div style={{ paddingBottom: 8 }}>{children}</div>
-      </CollapsibleContent>
-    </Collapsible>
+      </div>
+      {open ? <div style={{ paddingBottom: 8 }}>{children}</div> : null}
+    </div>
   );
 }

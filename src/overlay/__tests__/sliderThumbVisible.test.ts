@@ -1,67 +1,62 @@
 /**
  * sliderThumbVisible.test.ts — Ensure the slider thumb (knob) is visible.
  *
- * Bug: The Radix Slider Thumb had `bg-transparent border-transparent`,
- * making the draggable knob completely invisible. The track shows but
- * there's no affordance to grab.
+ * Bug (historical): the Radix Slider Thumb had `bg-transparent border-transparent`,
+ * making the draggable knob invisible — track shows but nothing to grab.
+ *
+ * As of the shadcn migration (2026-06-03) the panel's sliders are native
+ * `<input type="range">` (controls/Slider.tsx) and the thumb is styled globally
+ * in shell/OverlayStyles.tsx via the `::-webkit-slider-thumb` / `::-moz-range-thumb`
+ * pseudo-elements. So the "knob must be visible" guard now reads OverlayStyles and
+ * asserts the thumb has a real (non-transparent) background, a visible border, and
+ * a non-zero size.
  */
 
 import { readFileSync } from "fs";
 import { join } from "path";
 import { describe, it, expect } from "vitest";
 
-const sliderPath = join(__dirname, "../../components/ui/slider.tsx");
+const overlayStylesPath = join(__dirname, "../shell/OverlayStyles.tsx");
+const content = readFileSync(overlayStylesPath, "utf-8");
+
+/**
+ * Capture the base (non-:hover/:active) thumb rule body for a given pseudo.
+ * Slices from the selector to the next rule — a regex `\{([^}]*)\}` would stop
+ * at the `}` inside a `${token}` template interpolation, truncating the body.
+ */
+function thumbBody(pseudo: "-webkit-slider-thumb" | "-moz-range-thumb"): string {
+  const selector = `::${pseudo} {`;
+  const start = content.indexOf(selector);
+  expect(start, `Could not find base ::${pseudo} rule in OverlayStyles.tsx`).toBeGreaterThanOrEqual(0);
+  const next = content.indexOf(".__tuner-root", start + selector.length);
+  return content.slice(start + selector.length, next === -1 ? undefined : next);
+}
 
 describe("slider thumb visibility", () => {
-  const content = readFileSync(sliderPath, "utf-8");
-
-  it("Thumb should not have bg-transparent (knob must be visible)", () => {
-    // Extract the Thumb className
-    const thumbMatch = content.match(/Thumb\s+className="([^"]+)"/);
-    expect(thumbMatch, "Could not find SliderPrimitive.Thumb className").toBeTruthy();
-    const thumbClasses = thumbMatch![1];
-    expect(thumbClasses).not.toMatch(/\bbg-transparent\b/);
+  it("webkit thumb has a visible (non-transparent) background", () => {
+    const body = thumbBody("-webkit-slider-thumb");
+    expect(body).toMatch(/background:/);
+    expect(body).not.toMatch(/background:\s*(transparent|none)/);
+    // The default fill is the primary token, not a transparent value.
+    expect(body).toContain("color.primary");
   });
 
-  it("Thumb should not have border-transparent (knob must be visible)", () => {
-    const thumbMatch = content.match(/Thumb\s+className="([^"]+)"/);
-    expect(thumbMatch).toBeTruthy();
-    const thumbClasses = thumbMatch![1];
-    expect(thumbClasses).not.toMatch(/\bborder-transparent\b/);
+  it("webkit thumb has a visible border", () => {
+    const body = thumbBody("-webkit-slider-thumb");
+    expect(body).toMatch(/border:/);
+    expect(body).not.toMatch(/border:[^;]*transparent/);
   });
 
-  it("Thumb should have a visible default background color (not just on focus)", () => {
-    const thumbMatch = content.match(/Thumb\s+className="([^"]+)"/);
-    expect(thumbMatch).toBeTruthy();
-    const thumbClasses = thumbMatch![1];
-    // Extract non-prefixed bg- classes (no focus-visible:, hover:, etc.)
-    const defaultBgClasses = thumbClasses
-      .split(/\s+/)
-      .filter((c) => c.startsWith("bg-") && !c.includes(":"));
-    // Should have a visible default bg (not transparent)
-    const hasVisibleBg = defaultBgClasses.some(
-      (c) => c !== "bg-transparent" && c !== "bg-none",
-    );
-    expect(
-      hasVisibleBg,
-      `Default bg classes are: ${defaultBgClasses.join(", ") || "(none)"}`,
-    ).toBe(true);
+  it("webkit thumb has a non-zero size", () => {
+    const body = thumbBody("-webkit-slider-thumb");
+    expect(body).toMatch(/width:\s*\d/);
+    expect(body).toMatch(/height:\s*\d/);
   });
 
-  it("Thumb should have a visible default border (not just on focus)", () => {
-    const thumbMatch = content.match(/Thumb\s+className="([^"]+)"/);
-    expect(thumbMatch).toBeTruthy();
-    const thumbClasses = thumbMatch![1];
-    // Extract non-prefixed border- classes
-    const defaultBorderClasses = thumbClasses
-      .split(/\s+/)
-      .filter((c) => c.startsWith("border-") && !c.includes(":"));
-    const hasVisibleBorder = defaultBorderClasses.some(
-      (c) => c !== "border-transparent" && c !== "border-none",
-    );
-    expect(
-      hasVisibleBorder,
-      `Default border classes are: ${defaultBorderClasses.join(", ") || "(none)"}`,
-    ).toBe(true);
+  it("firefox thumb is also styled visibly (cross-browser parity)", () => {
+    const body = thumbBody("-moz-range-thumb");
+    expect(body).toContain("color.primary");
+    expect(body).not.toMatch(/background:\s*(transparent|none)/);
+    expect(body).toMatch(/width:\s*\d/);
   });
 });
