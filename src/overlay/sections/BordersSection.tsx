@@ -162,7 +162,8 @@ export const BordersSection = memo(function BordersSection({
   const resetCss = (prop: string, setter: (v: number) => void) => setter(resetRead(prop));
 
   // ── Helpers ──
-  const borderProp = (suffix: string) => `border-${suffix}`; // BROKEN
+  const borderProp = (suffix: string) =>
+    borderSide === "all" ? `border-${suffix}` : `border-${borderSide}-${suffix}`;
 
   // ── Indicators ──
   const radiusInd: IndicatorType = [

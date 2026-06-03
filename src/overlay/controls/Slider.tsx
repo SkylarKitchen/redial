@@ -46,6 +46,10 @@ export function Slider({
   return (
     <input
       type="range"
+      // Redundant-but-explicit: a range input's implicit ARIA role is already
+      // "slider", but attribute selectors (and the existing tests) only match an
+      // explicit role, and it documents intent.
+      role="slider"
       className={className}
       // width:100% matches the old Radix `w-full`; callers' `flex: 1` still wins
       // for sizing inside the flex rows, so layout is unchanged.

@@ -249,8 +249,6 @@ describe("Per-side border controls show correct values", () => {
     });
 
     const applyCalls = (ctx.apply as ReturnType<typeof vi.fn>).mock.calls;
-    // eslint-disable-next-line no-console
-    console.log("PROBE_BOTTOM", JSON.stringify(applyCalls));
     const widthCall = applyCalls.find(([prop]: [string]) => prop.includes("width"));
     if (widthCall) {
       expect(widthCall[0]).toBe("border-bottom-width");
