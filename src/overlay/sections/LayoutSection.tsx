@@ -642,6 +642,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   options={GRID_JUSTIFY_CONTENT_OPTIONS}
                   value={justifyContent === "normal" ? "stretch" : justifyContent}
                   onChange={(v) => { setJustifyContent(v); apply("justify-content", v); }}
+                  allowDeselect={false}
                   aria-label="Grid justify-content"
                 />
               </div>
@@ -653,6 +654,7 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
                   options={GRID_ALIGN_CONTENT_OPTIONS}
                   value={alignContent === "normal" ? "stretch" : alignContent}
                   onChange={(v) => { setAlignContent(v); apply("align-content", v); }}
+                  allowDeselect={false}
                   aria-label="Grid align-content"
                 />
               </div>

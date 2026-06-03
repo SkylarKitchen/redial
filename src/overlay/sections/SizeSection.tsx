@@ -544,6 +544,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
               options={BOX_SIZING_OPTIONS}
               value={boxSizing}
               onChange={handleBoxSizingChange}
+              allowDeselect={false}
             />
           </div>
           {isMedia && (

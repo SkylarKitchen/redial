@@ -324,7 +324,7 @@ export const TypographySection = memo(function TypographySection({
       {/* Align */}
       <div style={ROW}>
         <span style={LABEL}>Align</span>
-        <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} />
+        <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} allowDeselect={false} />
       </div>
 
       {/* Style — Italicize + Decoration side by side with sub-labels */}
