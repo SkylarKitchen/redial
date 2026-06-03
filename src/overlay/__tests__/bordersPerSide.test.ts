@@ -240,16 +240,27 @@ describe("Per-side border controls show correct values", () => {
     act(() => { sideButton(container, "bottom").click(); });
 
     const widthInput = getBorderWidthInput(container);
+    // eslint-disable-next-line no-console
+    console.log("AFTER_SWITCH calls=", JSON.stringify((ctx.apply as ReturnType<typeof vi.fn>).mock.calls), "inputValue=", widthInput.value);
     act(() => {
       widthInput.focus();
       (widthInput as any).value = "4";
       widthInput.dispatchEvent(new Event("input", { bubbles: true }));
+      // eslint-disable-next-line no-console
+      console.log("AFTER_INPUT inputValue=", widthInput.value, "calls=", JSON.stringify((ctx.apply as ReturnType<typeof vi.fn>).mock.calls));
       widthInput.dispatchEvent(new Event("change", { bubbles: true }));
       widthInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+      // eslint-disable-next-line no-console
+      console.log("AFTER_ENTER calls=", JSON.stringify((ctx.apply as ReturnType<typeof vi.fn>).mock.calls));
     });
 
     const applyCalls = (ctx.apply as ReturnType<typeof vi.fn>).mock.calls;
+    // INSTRUMENTATION: dump all apply calls to verify whether apply fired at all
+    // eslint-disable-next-line no-console
+    console.log("BOTTOM_APPLY_CALLS", JSON.stringify(applyCalls));
     const widthCall = applyCalls.find(([prop]: [string]) => prop.includes("width"));
+    // INSTRUMENTATION: hard-assert widthCall exists to prove the guard body runs
+    expect(widthCall, "apply() was never called with a width prop").toBeTruthy();
     if (widthCall) {
       expect(widthCall[0]).toBe("border-bottom-width");
     }
