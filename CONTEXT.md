@@ -81,7 +81,7 @@ _Avoid_: bare "scope" for this — see Flagged ambiguities.
 
 ## Mode override
 
-A theme-mode override of a CSS variable, keyed by `(selector, varName)` and **global** — it is not attached to the selected element. A distinct dimension from element/class/state **overrides**: created in the Variables panel and cleared on its own path (undo today), **never** as a side effect of an element/state/class **Reset**.
+A theme-mode override of a CSS variable, keyed by `(selector, varName)` and **global** — it is not attached to the selected element. A distinct dimension from element/class/state **overrides**: created in the Variables panel and cleared on its own path (undo today), **never** as a side effect of an element/state/class **Reset** (see ADR-0004).
 
 ## Flagged ambiguities
 

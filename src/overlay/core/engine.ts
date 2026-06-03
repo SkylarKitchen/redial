@@ -247,7 +247,8 @@ function diffState(el: Element, state: string): DiffEntry[] {
  * element), so wiping every mode override when resetting one element was an
  * over-clear bug — resetting an element's `:hover` could silently destroy
  * unrelated theme edits. Mode overrides stay clearable via undo (Cmd/Ctrl+Z
- * falls through to the mode stack) and their own Variables-panel path.
+ * falls through to the mode stack); a dedicated Variables-panel clear affordance
+ * is tracked in issue #52.
  * See https://github.com/SkylarKitchen/redial/issues/14.
  */
 function resetScope(el: Element, ctx: ScopeContext): void {
