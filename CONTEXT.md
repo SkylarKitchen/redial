@@ -66,7 +66,25 @@ Its oracle, in priority order:
 
 ---
 
+## Override
+
+A tracked style change Redial holds for one **override target**: a property's new value alongside its initial value, so the change can be diffed, saved, and undone.
+
+## Override target
+
+Where a resolved style change lands — one of **element** (inline style), **class** (a shared class rule), **state** (a pseudo-state like `:hover`), or **mode** (a theme-mode CSS variable). Produced from a **scoping context** by `resolveTarget`.
+
+## Scoping context
+
+The panel's current selection an edit is interpreted against: the scope toggle (**element** or **class**), the active class name, and the active pseudo-state. `resolveTarget` collapses these onto an **override target**.
+_Avoid_: bare "scope" for this — see Flagged ambiguities.
+
+## Mode override
+
+A theme-mode override of a CSS variable, keyed by `(selector, varName)` and **global** — it is not attached to the selected element. A distinct dimension from element/class/state **overrides**: created in the Variables panel and cleared on its own path (undo today), **never** as a side effect of an element/state/class **Reset**.
+
 ## Flagged ambiguities
 
 - **"modal"** was used to mean the floating tuning surface — resolved: the canonical term is **Panel**. Redial has no modal (nothing centered, blocking, or backdropped).
 - **"visual bug"** was used for two different things — resolved into **measurable visual bug** (geometric, auto-oracle, test-locked) vs **aesthetic visual bug** (judgment against Webflow, review-ratified).
+- **"scope"** was used for both the panel's element/class toggle and the resolved override dimension (element/class/state/mode) — resolved: the panel selection is the **scoping context**; the resolved dimension is the **override target**.

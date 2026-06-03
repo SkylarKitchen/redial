@@ -10,7 +10,12 @@
  * modeOverrides.ts, which have their own deeper suites.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import { styleEngine, resolveTarget, type OverrideTarget } from "../core/engine";
+import {
+  styleEngine,
+  resolveTarget,
+  type OverrideTarget,
+  type ScopeContext,
+} from "../core/engine";
 import { isDirty, totalOverrideCount } from "../core/apply";
 import {
   getModeOverrideCount,
@@ -200,6 +205,110 @@ describe("resetAll()", () => {
     expect(totalOverrideCount()).toBe(0);
     expect(classStyleText()).toBe("");
     expect(styleEngine.diff().elements).toHaveLength(0);
+  });
+});
+
+// ─── Phase 3: per-element / per-state surface (the Footer "wall") ──────────────
+
+describe("per-element / per-state surface (Footer, RFC #14 Phase 3)", () => {
+  it("overrideCount(el) counts tracked keys for one element", () => {
+    const el = makeEl();
+    expect(styleEngine.overrideCount(el)).toBe(0);
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    styleEngine.apply({ scope: "element", el }, "display", "flex");
+    expect(styleEngine.overrideCount(el)).toBe(2);
+  });
+
+  it("diffElement(el) returns that element's changed properties", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    const changes = styleEngine.diffElement(el);
+    expect(changes.find((c) => c.prop === "color")?.to).toBe("red");
+  });
+
+  it("diffState(el, state) returns only that state's overrides", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red"); // base
+    styleEngine.apply({ scope: "state", el, state: "hover" }, "color", "blue");
+    const changes = styleEngine.diffState(el, "hover");
+    expect(changes).toHaveLength(1);
+    expect(changes[0].prop).toBe("color");
+    expect(changes[0].to).toBe("blue");
+  });
+});
+
+describe("resetScope() — scoped reset (RFC #14 Phase 3)", () => {
+  const ctx = (over: Partial<ScopeContext> = {}): ScopeContext => ({
+    scope: "element",
+    activeClassName: null,
+    activeState: "none",
+    ...over,
+  });
+
+  it("element scope clears the element's inline overrides", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    styleEngine.resetScope(el, ctx());
+    expect(styleEngine.overrideCount(el)).toBe(0);
+    expect(el.style.getPropertyValue("color")).toBe("");
+  });
+
+  it("class scope clears element inline AND the class rule", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "class", el, className: "box" }, "color", "red");
+    expect(classStyleText()).toContain(".box");
+    styleEngine.resetScope(el, ctx({ scope: "class", activeClassName: "box" }));
+    expect(styleEngine.overrideCount(el)).toBe(0);
+    expect(classStyleText()).not.toContain(".box");
+  });
+
+  it("state scope clears only that state — base survives", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red"); // base
+    styleEngine.apply({ scope: "state", el, state: "hover" }, "color", "blue");
+    styleEngine.resetScope(el, ctx({ activeState: "hover" }));
+    expect(styleEngine.diffState(el, "hover")).toHaveLength(0);
+    expect(el.style.getPropertyValue("color")).toBe("red");
+  });
+
+  it("does NOT clear global mode overrides (over-clear fix)", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    styleEngine.apply(
+      { scope: "mode", selector: ".dark", varName: "--brand" },
+      "",
+      "#000",
+    );
+    expect(getModeOverrideCount()).toBe(1);
+
+    styleEngine.resetScope(el, ctx());
+
+    expect(styleEngine.overrideCount(el)).toBe(0);
+    expect(getModeOverrideCount()).toBe(1);
+    expect(isModeOverrideDirty(".dark", "--brand")).toBe(true);
+  });
+});
+
+describe("undo() reaches every override dimension (RFC #14)", () => {
+  it("undoes the element edit first, then falls through to the mode edit", () => {
+    const el = makeEl();
+    styleEngine.apply(
+      { scope: "mode", selector: ".dark", varName: "--brand" },
+      "",
+      "#000",
+    );
+    styleEngine.apply({ scope: "element", el }, "color", "red");
+    expect(getModeOverrideCount()).toBe(1);
+    expect(isDirty(el, "color")).toBe(true);
+
+    const r1 = styleEngine.undo();
+    expect(r1?.el).toBe(el);
+    expect(isDirty(el, "color")).toBe(false);
+    expect(getModeOverrideCount()).toBe(1); // mode untouched by the inline undo
+
+    const r2 = styleEngine.undo();
+    expect(r2).toBeNull();
+    expect(getModeOverrideCount()).toBe(0); // mode cleared via the undo fallthrough
   });
 });
 
