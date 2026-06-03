@@ -9,6 +9,7 @@
 import { useState, useEffect } from "react";
 import { useValueFlash } from "../controls";
 import { evaluateMathExpr } from "../inputMath";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { color, text, border, font, segment, layout } from "../theme";
 import { UnlockIcon, LockIcon } from "../webflowIcons";
 import { type IndicatorType } from "../theme";
@@ -23,27 +24,34 @@ function GapInput({ value, unit, onChange }: {
   onChange: (v: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
   const flashStyle = useValueFlash(value);
+
+  const { draft, setDraft, inputProps } = useDraftNumber({
+    value,
+    // resync handled by the effect below to preserve the original's 2-decimal
+    // rounding of the edit-draft seed (hook's built-in resync writes the raw value).
+    resync: false,
+    step: 1,
+    shiftStep: 10,
+    min: 0,
+    revertOnEscape: true,
+    onCommit: (d) => {
+      setEditing(false);
+      const mathResult = evaluateMathExpr(d, value);
+      if (mathResult !== null) { onChange(mathResult); return; }
+      const n = parseFloat(d);
+      if (!isNaN(n) && n !== value) onChange(n);
+    },
+    onStep: (next) => onChange(next),
+    onEscape: () => setEditing(false),
+  });
 
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
-  }, [value, editing]);
+  }, [value, editing, setDraft]);
 
-  const commit = () => {
-    setEditing(false);
-    const mathResult = evaluateMathExpr(draft, value);
-    if (mathResult !== null) { onChange(mathResult); return; }
-    const n = parseFloat(draft);
-    if (!isNaN(n) && n !== value) onChange(n);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") commit();
-    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); onChange(value + (e.shiftKey ? 10 : 1)); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(0, value - (e.shiftKey ? 10 : 1))); }
-  };
+  const commit = inputProps.onBlur;
+  const handleKeyDown = inputProps.onKeyDown;
 
   return (
     <div style={{
@@ -70,7 +78,7 @@ function GapInput({ value, unit, onChange }: {
         {editing ? (
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={inputProps.onChange}
             onBlur={commit}
             onKeyDown={handleKeyDown}
             autoFocus

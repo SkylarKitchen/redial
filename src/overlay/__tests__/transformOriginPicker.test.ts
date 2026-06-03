@@ -11,11 +11,14 @@
  * - OriginInput clamping and ArrowUp/Down behavior
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { createElement } from "react";
+import { createElement, useState } from "react";
 import { renderToString } from "react-dom/server";
+import { render, fireEvent, cleanup } from "@testing-library/react";
+
+afterEach(() => cleanup());
 
 const originSrc = readFileSync(
   join(__dirname, "../sections/TransformOriginPicker.tsx"),
@@ -199,17 +202,55 @@ describe("OriginInput clamping and keyboard", () => {
   });
 
   // P5-15: ArrowUp increments by 1
-  it("ArrowUp increments value by 1, clamped to 100", () => {
-    // Source: Math.min(100, Math.round(value) + 1)
-    expect(originSrc).toMatch(
-      /Math\.min\(100,\s*Math\.round\(value\)\s*\+\s*1\)/,
+  // (behavioral — arrow-step math moved into useDraftNumber on migration)
+  it("ArrowUp increments value by 1, clamped to 100", async () => {
+    const { TransformOriginPicker } = await import(
+      "../sections/TransformOriginPicker"
     );
+    const onChangeSpy = vi.fn();
+    function Spy() {
+      const [value, setValue] = useState("50% 50%");
+      return createElement(TransformOriginPicker, {
+        value,
+        onChange: (v: string) => {
+          setValue(v);
+          onChangeSpy(v);
+        },
+        showInputs: true,
+      });
+    }
+    render(createElement(Spy));
+    const left = document.querySelectorAll("input")[0] as HTMLInputElement;
+    fireEvent.keyDown(left, { key: "ArrowUp" });
+    expect(onChangeSpy).toHaveBeenCalledWith("51% 50%");
   });
 
-  it("ArrowDown decrements value by 1, clamped to 0", () => {
-    // Source: Math.max(0, Math.round(value) - 1)
-    expect(originSrc).toMatch(
-      /Math\.max\(0,\s*Math\.round\(value\)\s*-\s*1\)/,
+  it("ArrowDown decrements value by 1, clamped to 0", async () => {
+    const { TransformOriginPicker } = await import(
+      "../sections/TransformOriginPicker"
     );
+    const onChangeSpy = vi.fn();
+    function Spy() {
+      const [value, setValue] = useState("1% 50%");
+      return createElement(TransformOriginPicker, {
+        value,
+        onChange: (v: string) => {
+          setValue(v);
+          onChangeSpy(v);
+        },
+        showInputs: true,
+      });
+    }
+    render(createElement(Spy));
+    const left = document.querySelectorAll("input")[0] as HTMLInputElement;
+    // 1 → 0
+    fireEvent.keyDown(left, { key: "ArrowDown" });
+    expect(onChangeSpy).toHaveBeenCalledWith("0% 50%");
+    // From 0, ArrowDown clamps to 0.
+    fireEvent.keyDown(
+      document.querySelectorAll("input")[0] as HTMLInputElement,
+      { key: "ArrowDown" },
+    );
+    expect(onChangeSpy).toHaveBeenLastCalledWith("0% 50%");
   });
 });

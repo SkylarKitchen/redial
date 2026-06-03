@@ -6,10 +6,11 @@
  * Pure inline styles with theme.ts tokens — no Tailwind or CSS variables.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Link, Settings } from "lucide-react";
 import { GridSettingsPopup } from "./GridSettingsPopup";
 import { useValueFlash } from "../controls";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { color, text, border, font, primaryAlpha, segment, layout, type IndicatorType } from "../theme";
 import { ms } from "../timing";
 import { RowLabel } from "./layoutPrimitives";
@@ -22,25 +23,24 @@ function TrackCountInput({ value, onChange }: {
   onChange: (v: number) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
   const flashStyle = useValueFlash(value);
 
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
-
-  const commit = () => {
-    setEditing(false);
-    const n = parseInt(draft, 10);
-    if (!isNaN(n) && n >= 1 && n !== value) onChange(n);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") commit();
-    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); onChange(value + 1); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); onChange(Math.max(1, value - 1)); }
-  };
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !editing,
+    step: 1,
+    shiftStep: 1, // original ignores Shift — step stays 1
+    // no altStep — original ignores Alt (falls back to base step)
+    min: 1,
+    revertOnEscape: true,
+    onCommit: (d) => {
+      setEditing(false);
+      const n = parseInt(d, 10);
+      if (!isNaN(n) && n >= 1 && n !== value) onChange(n);
+    },
+    onStep: (next) => onChange(next),
+    onEscape: () => setEditing(false),
+  });
 
   return (
     <div style={{
@@ -58,9 +58,9 @@ function TrackCountInput({ value, onChange }: {
       {editing ? (
         <input
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={handleKeyDown}
+          onChange={inputProps.onChange}
+          onBlur={inputProps.onBlur}
+          onKeyDown={inputProps.onKeyDown}
           autoFocus
           style={{
             width: "100%",

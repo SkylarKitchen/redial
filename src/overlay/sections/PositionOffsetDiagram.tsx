@@ -3,8 +3,9 @@
  * Single-layer version of SpacingBoxModel for position offsets.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import { UnitSelector, type ConversionHint } from "../controls/UnitSelector";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { ms } from "../timing";
 import { color, text, border, surface, primaryAlpha, blackAlpha, gridAlpha, font } from "../theme";
 
@@ -165,46 +166,33 @@ function EditableValue({
   step?: number;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
-
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
-
-  const commit = useCallback(() => {
-    setEditing(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed !== value) {
-      onChange(parsed);
-    }
-  }, [draft, value, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-      } else if (e.key === "Escape") {
-        setDraft(String(value));
-        setEditing(false);
-      } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.altKey ? stepProp * 0.1 : e.shiftKey ? stepProp * 10 : stepProp;
-        const direction = e.key === "ArrowUp" ? 1 : -1;
-        const next = Math.round((value + step * direction) * 10) / 10;
-        setDraft(String(next));
-        onChange(next);
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !editing,
+    step: stepProp,
+    shiftStep: stepProp * 10,
+    altStep: stepProp * 0.1,
+    round: 1,
+    revertOnEscape: true,
+    stepUpdatesDraft: true,
+    onCommit: (d) => {
+      setEditing(false);
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed) && parsed !== value) {
+        onChange(parsed);
       }
     },
-    [commit, value, onChange]
-  );
+    onStep: (next) => onChange(next),
+    onEscape: () => setEditing(false),
+  });
 
   if (editing) {
     return (
       <input
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
+        onChange={inputProps.onChange}
+        onBlur={inputProps.onBlur}
+        onKeyDown={inputProps.onKeyDown}
         autoFocus
         style={{
           width: "32px",

@@ -153,6 +153,25 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 
 ## Issues Found & Fixed
 
+### 2026-06-03 — useDraftNumber migration completed + stale-draft bug fixed
+
+Finished the `useDraftNumber` adoption begun on 2026-06-02. The genuine numeric-draft site count was re-grepped (not trusted from the prior audit): **13** real sites (the "14"/"~11" were approximate), of which 3 were already migrated. Migrated the remaining **10**. All **behavior-preserving** (byte-equivalent unless noted); verified: typecheck clean, full suite **3296 pass / 1 skip / 0 fail across 188 files** (+11 new fired-event test files), `npm run build` green. Every site followed TDD: a fired-event characterization test written to **pass against the un-migrated code first**, then the migration kept it green, then an **independent adversarial reviewer** re-ran it and audited 8 behavioral axes (all `pass`, 0 medium/high drift).
+
+**Bug fixed (TDD, `staleDraftOnArrowStep.test.tsx` — stateful parent, asserts the displayed value):**
+- **Stale draft on Arrow-step** — FilterSliders `NumberInput` and TransitionEditor `MsInput` display `focused ? draft : String(value)` with `resync: !focused`, but did not write stepped values back into `draft`, so a focused field showed the old number until blur. Fixed with `stepUpdatesDraft: true` on both hook calls (ShadowEditor already had it).
+
+**Migrated to `useDraftNumber` (each with a new behavioral `*Draft.test.tsx`):**
+- `controls/ValueInput.tsx` (piloted first — shared control + trickiest: preserves `stopPropagation` on Escape/arrows, blur-on-Enter/Escape, math-expr eval, empty→keyword commit, wheel-adjust around the hook)
+- `sections/{CornerRadiusEditor (CornerCell), PositionOffsetDiagram (EditableValue), GapControls (GapInput), GridControls (TrackCountInput), layoutMisc (TypoValueCell), SizeInputCell, SpacingValuePopover, TransformOriginPicker (OriginInput), TransformEditor (AxisSliderRow)}`
+- TransformOriginPicker + TransformEditor done by one agent in sequence (TransformEditor imports TransformOriginPicker). The two source-string tests that asserted on the moved internals (`axisSliderRow.test.ts`, `transformOriginPicker.test.ts`) were converted to fired-event tests (behavioral > source-text).
+
+**Byte-equivalence notes (deliberate / accepted):**
+- `GapControls` + `layoutMisc` resync the edit-draft seed with `String(Math.round(value*100)/100)` (2-decimal rounding), which the hook's built-in `String(value)` resync can't express — both keep `resync:false` + the original rounded `useEffect` (gap pinned by a new regression test).
+- Modifier precedence: the hook checks Shift before Alt; the bespoke sites were Alt-first. This only diverges for the degenerate **alt+shift held together** combo — negligible, uniform, untested.
+- Single-bound arrow clamps (gap/grid clamped only one direction) became two-bound via `min`/`max`; unreachable in practice (values stay non-negative / ≥1).
+
+Out of scope (own sessions, per handoff): engine-facade #14, Overlay reducer, MiniSelect wider adoption (a design decision, not a refactor).
+
 ### 2026-06-02 — Reusability & architecture refactor pass
 
 Executed the deferred reusability/architecture items from the prior session's handoff. All **byte-identical pure refactors** unless noted; verified by typecheck clean, `npm run build` green (public `index.d.ts` 3.96 KB → 2.88 KB), full suite **3103 pass / 1 skip / 0 fail across 175 files** (+8 new behavioral test files), and a 6-area adversarial behavior-preservation review (**0 findings**). Out of scope (own sessions): engine-facade #14, Overlay reducer.

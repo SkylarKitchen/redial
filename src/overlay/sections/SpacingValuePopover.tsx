@@ -8,11 +8,12 @@
  * Rendered via portal to escape panel overflow/z-index constraints.
  */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { selectAllOnDoubleClick } from "../controls";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { VariableField } from "../controls/VariableField";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { ms } from "../timing";
 import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "../theme";
 
@@ -86,7 +87,6 @@ export function SpacingValuePopover({
   const isLinked = !!activeVariable;
   const popoverRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState(String(value));
   const [unitOpen, setUnitOpen] = useState(false);
   const [unitMenuUp, setUnitMenuUp] = useState(false);
   const unitBtnRef = useRef<HTMLButtonElement>(null);
@@ -102,11 +102,6 @@ export function SpacingValuePopover({
   // Extract the side (top/right/bottom/left) from property
   const side = property.split("-").pop() || "top";
   const icon = SIDE_ICONS[side] || "↓";
-
-  // Sync draft when external value changes
-  useEffect(() => {
-    setDraft(String(value));
-  }, [value]);
 
   // Focus input on open
   useEffect(() => {
@@ -144,35 +139,37 @@ export function SpacingValuePopover({
     };
   }, []);
 
-  const commitInput = useCallback(() => {
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) {
-      const clamped = isMargin ? parsed : Math.max(0, parsed);
-      onChange(clamped);
-    }
-  }, [draft, onChange, isMargin]);
+  // ArrowDown clamps padding (non-margin) to min 0; ArrowUp never clamps.
+  // The hook's onStep doesn't pass direction, so remember the last arrow key.
+  const lastArrowDir = useRef<1 | -1>(1);
 
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commitInput();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const base = isTailwind ? 4 : 1;
-        const step = e.shiftKey ? base * 10 : e.altKey ? base * 0.1 : base;
-        const next = Math.round((value + step) * 10) / 10;
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const base = isTailwind ? 4 : 1;
-        const step = e.shiftKey ? base * 10 : e.altKey ? base * 0.1 : base;
-        const next = Math.round((value - step) * 10) / 10;
-        const clamped = isMargin ? next : Math.max(0, next);
+  const base = isTailwind ? 4 : 1;
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: true,
+    step: base,
+    shiftStep: base * 10,
+    altStep: base * 0.1,
+    round: 1,
+    onCommit: (d) => {
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed)) {
+        const clamped = isMargin ? parsed : Math.max(0, parsed);
         onChange(clamped);
       }
     },
-    [commitInput, value, onChange, isMargin],
-  );
+    onStep: (next) => {
+      const clamped =
+        lastArrowDir.current === -1 && !isMargin ? Math.max(0, next) : next;
+      onChange(clamped);
+    },
+  });
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowUp") lastArrowDir.current = 1;
+    else if (e.key === "ArrowDown") lastArrowDir.current = -1;
+    inputProps.onKeyDown(e);
+  };
 
   // --- Positioning: below anchor, centered, clamped to viewport ---
   const popoverWidth = 240;
@@ -270,9 +267,9 @@ export function SpacingValuePopover({
           <input
             ref={inputRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={inputProps.onChange}
             onBlur={(e) => {
-              commitInput();
+              inputProps.onBlur();
               (e.currentTarget as HTMLElement).style.borderColor = border.default;
             }}
             onKeyDown={handleInputKeyDown}

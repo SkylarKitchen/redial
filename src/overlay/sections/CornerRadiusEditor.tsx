@@ -5,10 +5,11 @@
  * All cells share the same unit — changing any one changes all.
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { UnitSelector } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash } from "../controls";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { color, text, border, surface, font, primaryAlpha, type IndicatorType, indicatorStyle } from "../theme";
 
 export interface CornerRadiusEditorProps {
@@ -75,46 +76,29 @@ function CornerCell({
   onReset?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
   const cellRef = useRef<HTMLDivElement>(null);
   const flashStyle = useValueFlash(value);
   useWheelAdjust(cellRef, value, onChange, { step: 1, min: 0 });
 
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
-
-  const commit = useCallback(() => {
-    setEditing(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed) && parsed !== value) {
-      onChange(Math.max(0, Math.min(999, parsed)));
-    }
-  }, [draft, value, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-      } else if (e.key === "Escape") {
-        setDraft(String(value));
-        setEditing(false);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = Math.min(999, value + step);
-        setDraft(String(next));
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const step = e.shiftKey ? 10 : 1;
-        const next = Math.max(0, value - step);
-        setDraft(String(next));
-        onChange(next);
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !editing,
+    step: 1,
+    shiftStep: 10,
+    min: 0,
+    max: 999,
+    revertOnEscape: true,
+    stepUpdatesDraft: true,
+    onCommit: (d) => {
+      setEditing(false);
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed) && parsed !== value) {
+        onChange(Math.max(0, Math.min(999, parsed)));
       }
     },
-    [commit, value, onChange]
-  );
+    onStep: (next) => onChange(next),
+    onEscape: () => setEditing(false),
+  });
 
   return (
     <div
@@ -142,9 +126,9 @@ function CornerCell({
         {editing ? (
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={handleKeyDown}
+            onChange={inputProps.onChange}
+            onBlur={inputProps.onBlur}
+            onKeyDown={inputProps.onKeyDown}
             onDoubleClick={selectAllOnDoubleClick}
             autoFocus
             title={label}

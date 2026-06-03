@@ -13,7 +13,7 @@
  * All styles use inline React styles referencing theme.ts tokens.
  */
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { LabelScrub } from "../controls/LabelScrub";
 import { UnitSelector, type SpecialOption, type ConversionHint, type VariableOption } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash, useResetPopover } from "../controls";
@@ -24,6 +24,7 @@ import type { IndicatorType } from "../theme";
 import { parseValueWithUnit } from "../parseValueWithUnit";
 import { evaluateMathExpr } from "../inputMath";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 
 export interface SizeInputCellProps {
   label: string;
@@ -77,7 +78,6 @@ export function SizeInputCell({
   onReset,
 }: SizeInputCellProps) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
   const [rowHovered, setRowHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
@@ -87,60 +87,47 @@ export function SizeInputCell({
   const indicator: IndicatorType = isModified ? "modified" : "none";
   const resetPopover = useResetPopover(indicator, onReset);
 
-  useEffect(() => {
-    if (!editing) setDraft(String(value));
-  }, [value, editing]);
-
-  const commit = useCallback(() => {
-    setEditing(false);
-    // Empty field → contextual keyword (e.g. "auto" for width, "none" for max-width)
-    if (draft.trim() === '') {
-      if (supportsAuto) { onKeywordChange?.("auto"); return; }
-      if (supportsNone) { onKeywordChange?.("none"); return; }
-      return;
-    }
-    // Try math expression first (e.g. "*2", "+10")
-    const mathResult = evaluateMathExpr(draft, value);
-    if (mathResult !== null) { onValueChange(mathResult); return; }
-    const { value: parsed, unit: parsedUnit } = parseValueWithUnit(draft, units);
-    if (isNaN(parsed)) return;
-    if (parsedUnit && parsedUnit !== unit) {
-      // User typed a unit suffix (e.g. "68em") — switch unit and value
-      if (keyword !== null) onKeywordChange?.(null);
-      onUnitChange(parsedUnit);
-      onValueChange(parsed);
-    } else if (parsed !== value) {
-      onValueChange(parsed);
-    }
-  }, [draft, units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange, supportsAuto, supportsNone]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-      } else if (e.key === "Escape") {
-        setDraft(String(value));
-        setEditing(false);
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-        let next = Math.round((value + s) * 10) / 10;
-        if (max !== undefined) next = Math.min(next, max);
-        if (min !== undefined) next = Math.max(next, min);
-        setDraft(String(next));
-        onValueChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-        let next = Math.round((value - s) * 10) / 10;
-        if (max !== undefined) next = Math.min(next, max);
-        if (min !== undefined) next = Math.max(next, min);
-        setDraft(String(next));
-        onValueChange(next);
+  const commit = useCallback(
+    (draft: string) => {
+      setEditing(false);
+      // Empty field → contextual keyword (e.g. "auto" for width, "none" for max-width)
+      if (draft.trim() === '') {
+        if (supportsAuto) { onKeywordChange?.("auto"); return; }
+        if (supportsNone) { onKeywordChange?.("none"); return; }
+        return;
+      }
+      // Try math expression first (e.g. "*2", "+10")
+      const mathResult = evaluateMathExpr(draft, value);
+      if (mathResult !== null) { onValueChange(mathResult); return; }
+      const { value: parsed, unit: parsedUnit } = parseValueWithUnit(draft, units);
+      if (isNaN(parsed)) return;
+      if (parsedUnit && parsedUnit !== unit) {
+        // User typed a unit suffix (e.g. "68em") — switch unit and value
+        if (keyword !== null) onKeywordChange?.(null);
+        onUnitChange(parsedUnit);
+        onValueChange(parsed);
+      } else if (parsed !== value) {
+        onValueChange(parsed);
       }
     },
-    [commit, value, onValueChange, step, min, max]
+    [units, unit, value, keyword, onValueChange, onUnitChange, onKeywordChange, supportsAuto, supportsNone]
   );
+
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !editing,
+    step,
+    shiftStep: 10,
+    altStep: 0.1,
+    min,
+    max,
+    round: 1,
+    revertOnEscape: true,
+    stepUpdatesDraft: true,
+    onCommit: commit,
+    onStep: onValueChange,
+    onEscape: () => setEditing(false),
+  });
 
   // Build special options for the unit dropdown
   const specialOptions: SpecialOption[] = [];
@@ -252,10 +239,10 @@ export function SizeInputCell({
             <input
               ref={inputRef}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={inputProps.onChange}
               onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { e.preventDefault(); onReset(); setEditing(false); } }}
-              onBlur={commit}
-              onKeyDown={handleKeyDown}
+              onBlur={inputProps.onBlur}
+              onKeyDown={inputProps.onKeyDown}
               onDoubleClick={selectAllOnDoubleClick}
               autoFocus
               style={{

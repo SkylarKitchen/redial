@@ -12,6 +12,7 @@ import { EditorRemoveButton, SliderRow, AnimatedListItem } from "../controls";
 import { SegmentedControl, type SegmentOption } from "../controls/SegmentedControl";
 import { DragHandle } from "../shell/DragHandle";
 import { useDragReorder } from "../hooks/useDragReorder";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { Slider } from "@/components/ui/slider";
 import { beginBatch, endBatch } from "../core/apply";
 import { color, text, border, surface, font, blackAlpha, focusBorder } from "../theme";
@@ -179,40 +180,26 @@ function AxisSliderRow({
   unit: string;
   onChange: (v: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(value));
   const [focused, setFocused] = useState(false);
 
-  useEffect(() => {
-    if (!focused) setDraft(String(value));
-  }, [value, focused]);
-
-  const commit = useCallback(() => {
-    setFocused(false);
-    const parsed = parseFloat(draft);
-    if (!isNaN(parsed)) {
-      onChange(Math.min(range.max, Math.max(range.min, parsed)));
-    }
-  }, [draft, range.min, range.max, onChange]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        commit();
-        (e.target as HTMLInputElement).blur();
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        const inc = e.shiftKey ? range.step * 10 : range.step;
-        const next = Math.min(range.max, Math.round((value + inc) * 1000) / 1000);
-        onChange(next);
-      } else if (e.key === "ArrowDown") {
-        e.preventDefault();
-        const inc = e.shiftKey ? range.step * 10 : range.step;
-        const next = Math.max(range.min, Math.round((value - inc) * 1000) / 1000);
-        onChange(next);
+  const { draft, inputProps } = useDraftNumber({
+    value,
+    resync: !focused,
+    step: range.step,
+    shiftStep: range.step * 10,
+    round: 3,
+    min: range.min,
+    max: range.max,
+    blurOnEnter: true,
+    onCommit: (d) => {
+      setFocused(false);
+      const parsed = parseFloat(d);
+      if (!isNaN(parsed)) {
+        onChange(Math.min(range.max, Math.max(range.min, parsed)));
       }
     },
-    [commit, value, range.min, range.max, range.step, onChange],
-  );
+    onStep: (next) => onChange(next),
+  });
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "2px 0" }}>
@@ -259,10 +246,10 @@ function AxisSliderRow({
       >
         <input
           value={focused ? draft : String(value)}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={inputProps.onChange}
           onFocus={() => setFocused(true)}
-          onBlur={commit}
-          onKeyDown={handleKeyDown}
+          onBlur={inputProps.onBlur}
+          onKeyDown={inputProps.onKeyDown}
           style={{
             width: 40,
             background: "transparent",

@@ -13,8 +13,9 @@
  * Parses incoming CSS values (keywords, percentages, px) to find the active cell.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { ms } from "../timing";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { color, focusRing, font, text, border, surface, blackAlpha, primaryAlpha } from "../theme";
 
 export interface TransformOriginPickerProps {
@@ -261,22 +262,29 @@ function OriginInput({
   value: number;
   onChange: (v: number) => void;
 }) {
-  const [draft, setDraft] = useState(String(Math.round(value)));
-
-  useEffect(() => {
-    setDraft(String(Math.round(value)));
-  }, [value]);
-
-  const commit = useCallback(() => {
-    const parsed = parseFloat(draft);
-    if (isNaN(parsed)) {
-      setDraft(String(Math.round(value)));
-      return;
-    }
-    const clamped = Math.max(0, Math.min(100, Math.round(parsed)));
-    setDraft(String(clamped));
-    onChange(clamped);
-  }, [draft, value, onChange]);
+  // The displayed/stepped value is always rounded to an integer; passing the
+  // rounded value into the hook keeps resync (String(value)) and arrow-stepping
+  // (value ± 1) byte-equivalent to the original Math.round(value)-based math.
+  const rounded = Math.round(value);
+  const { draft, setDraft, inputProps } = useDraftNumber({
+    value: rounded,
+    resync: true,
+    step: 1,
+    shiftStep: 1,
+    min: 0,
+    max: 100,
+    onCommit: (d) => {
+      const parsed = parseFloat(d);
+      if (isNaN(parsed)) {
+        setDraft(String(rounded));
+        return;
+      }
+      const clamped = Math.max(0, Math.min(100, Math.round(parsed)));
+      setDraft(String(clamped));
+      onChange(clamped);
+    },
+    onStep: (next) => onChange(next),
+  });
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
@@ -294,21 +302,13 @@ function OriginInput({
       <input
         type="text"
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
+        onChange={inputProps.onChange}
+        onBlur={inputProps.onBlur}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            commit();
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            const next = Math.min(100, Math.round(value) + 1);
-            onChange(next);
-          } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            const next = Math.max(0, Math.round(value) - 1);
-            onChange(next);
           }
+          inputProps.onKeyDown(e);
         }}
         style={{
           width: "36px",

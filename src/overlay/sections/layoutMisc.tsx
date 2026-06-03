@@ -13,6 +13,7 @@ import { evaluateMathExpr } from "../inputMath";
 import { color, text, border, surface, font, blackAlpha, layout, type IndicatorType } from "../theme";
 import { SegmentedControl } from "../controls/SegmentedControl";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
+import { useDraftNumber } from "../hooks/useDraftNumber";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { VariableField } from "../controls/VariableField";
 import { RowLabel, ReverseButton } from "./layoutPrimitives";
@@ -85,42 +86,36 @@ export function TypoValueCell({
   variableOptions?: VariableOption[];
 }) {
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(String(value));
   const [rowHovered, setRowHovered] = useState(false);
   const cellRef = useRef<HTMLDivElement>(null);
   const flashStyle = useValueFlash(value);
   const isVariable = keyword == null && (cssVar ?? null) !== null;
   useWheelAdjust(cellRef, value, onChange, { step, disabled: keyword != null || isVariable });
 
+  const { draft, setDraft, inputProps } = useDraftNumber({
+    value,
+    // Resync is handled by the effect below to preserve the rounded resync value.
+    resync: false,
+    step,
+    shiftStep: 10,
+    altStep: 0.1,
+    round: 2,
+    stepUpdatesDraft: true,
+    onCommit: (d) => {
+      setEditing(false);
+      const mathResult = evaluateMathExpr(d, value);
+      if (mathResult !== null) { onChange(mathResult); return; }
+      const n = parseFloat(d);
+      if (!isNaN(n) && n !== value) onChange(n);
+    },
+    onStep: (next) => onChange(next),
+    revertOnEscape: true,
+    onEscape: () => setEditing(false),
+  });
+
   useEffect(() => {
     if (!editing) setDraft(String(Math.round(value * 100) / 100));
-  }, [value, editing]);
-
-  const commit = () => {
-    setEditing(false);
-    const mathResult = evaluateMathExpr(draft, value);
-    if (mathResult !== null) { onChange(mathResult); return; }
-    const n = parseFloat(draft);
-    if (!isNaN(n) && n !== value) onChange(n);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") commit();
-    else if (e.key === "Escape") { setDraft(String(value)); setEditing(false); }
-    else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-      const next = Math.round((value + s) * 100) / 100;
-      setDraft(String(next));
-      onChange(next);
-    } else if (e.key === "ArrowDown") {
-      e.preventDefault();
-      const s = e.shiftKey ? 10 : e.altKey ? 0.1 : step;
-      const next = Math.round((value - s) * 100) / 100;
-      setDraft(String(next));
-      onChange(next);
-    }
-  };
+  }, [value, editing, setDraft]);
 
   const isKeyword = keyword != null;
 
@@ -185,9 +180,9 @@ export function TypoValueCell({
       ) : editing ? (
         <input
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={handleKeyDown}
+          onChange={inputProps.onChange}
+          onBlur={inputProps.onBlur}
+          onKeyDown={inputProps.onKeyDown}
           onDoubleClick={selectAllOnDoubleClick}
           autoFocus
           style={{
