@@ -72,7 +72,7 @@ describe("infer — SVG elements", () => {
   // For SVG elements className is an SVGAnimatedString (object), so the class is
   // dropped and the panel name loses the ".logo" suffix — even though
   // getAttribute("class") (used everywhere else, e.g. util.getDisplayClass) has it.
-  it.fails("should include the SVG class in the name (uses className not getAttribute)", () => {
+  it("should include the SVG class in the name (uses className not getAttribute)", () => {
     const svg = makeSvgWithAnimatedClassName("svg", "logo");
     // Sanity: the attribute IS present and the rest of the codebase reads it.
     expect(svg.getAttribute("class")).toBe("logo");

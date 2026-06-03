@@ -10,7 +10,10 @@ import type { FilterItem, FilterType } from "./sections/FilterSliders";
 import type { TransformValue } from "./sections/TransformEditor";
 import type { TransitionValue } from "./sections/TransitionEditor";
 
-const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,.*)?\)$/;
+// CSS keywords are case-insensitive, so the `var(` keyword may be authored as
+// VAR(/Var( — match it case-insensitively. (Non-ASCII custom-property names are
+// tracked separately and intentionally left to the ASCII [\w-] class here.)
+const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,.*)?\)$/i;
 
 /** Extract the custom property name from a `var(--foo)` expression. */
 export function parseVarRef(value: string): string | null {
@@ -18,15 +21,20 @@ export function parseVarRef(value: string): string | null {
   return m ? m[1] : null;
 }
 
-/** Parse a numeric CSS value, returning 0 for non-numeric inputs. */
+/** Parse a numeric CSS value, returning 0 for non-numeric or non-finite inputs. */
 export function parseNum(val: string): number {
   const n = parseFloat(val);
-  return isNaN(n) ? 0 : n;
+  // Guard both NaN and ±Infinity (parseFloat("Infinity") → Infinity), so a CSS
+  // value can never become a non-finite number a serializer would emit verbatim.
+  return Number.isFinite(n) ? n : 0;
 }
 
 /** Extract the CSS unit suffix from a value string (e.g., "16px" → "px", "50%" → "%"). */
 export function extractUnit(value: string, fallback: string = "px"): string {
-  const match = value.trim().match(/^-?[\d.]+([a-zA-Z]+|%)$/);
+  // Numeric portion allows an optional exponent (1e2rem) and trimmed inner
+  // whitespace between the number and unit (50 %); genuinely non-numeric tokens
+  // like calc() still fall through to the fallback.
+  const match = value.trim().match(/^-?[\d.]+(?:[eE][+-]?\d+)?\s*([a-zA-Z]+|%)$/);
   return match?.[1] ?? fallback;
 }
 
@@ -135,9 +143,15 @@ export function parseFilterItems(raw: string): FilterItem[] {
   let m: RegExpExecArray | null;
   while ((m = simpleRegex.exec(raw)) !== null) {
     const type = m[1] as FilterType;
-    let val = parseFloat(m[2]);
+    const arg = m[2];
+    let val = parseFloat(arg);
     if (type !== "blur" && type !== "hue-rotate") {
-      val = Math.round(val * 100);
+      // CSS filter amounts accept equivalent decimal (0.8) and percent (80%)
+      // forms. Only the decimal form needs scaling into our 0-100 model; a
+      // percent value is already in that range. (blur=px / hue-rotate=deg
+      // are excluded above and keep their raw units.)
+      const isPct = /%\s*$/.test(arg);
+      val = isPct ? val : Math.round(val * 100);
     }
     matches.push({
       index: m.index,

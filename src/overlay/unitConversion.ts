@@ -53,6 +53,12 @@ function toPx(
       return (value / 100) * ctx.viewportWidth;
     case "vh":
       return (value / 100) * ctx.viewportHeight;
+    case "vmin":
+      // vmin is relative to the smaller of the two viewport dimensions
+      return (value / 100) * Math.min(ctx.viewportWidth, ctx.viewportHeight);
+    case "vmax":
+      // vmax is relative to the larger of the two viewport dimensions
+      return (value / 100) * Math.max(ctx.viewportWidth, ctx.viewportHeight);
     case "ch":
       // Approximate ch as 0.5em
       return value * ctx.computedFontSize * 0.5;
@@ -83,6 +89,14 @@ function fromPx(
       return ctx.viewportWidth === 0 ? 0 : (px / ctx.viewportWidth) * 100;
     case "vh":
       return ctx.viewportHeight === 0 ? 0 : (px / ctx.viewportHeight) * 100;
+    case "vmin": {
+      const base = Math.min(ctx.viewportWidth, ctx.viewportHeight);
+      return base === 0 ? 0 : (px / base) * 100;
+    }
+    case "vmax": {
+      const base = Math.max(ctx.viewportWidth, ctx.viewportHeight);
+      return base === 0 ? 0 : (px / base) * 100;
+    }
     case "ch":
       return ctx.computedFontSize === 0 ? 0 : px / (ctx.computedFontSize * 0.5);
     default:
@@ -131,6 +145,10 @@ export function conversionBasis(
       return `viewport: ${ctx.viewportWidth}px`;
     case "vh":
       return `viewport: ${ctx.viewportHeight}px`;
+    case "vmin":
+      return `viewport: ${Math.min(ctx.viewportWidth, ctx.viewportHeight)}px`;
+    case "vmax":
+      return `viewport: ${Math.max(ctx.viewportWidth, ctx.viewportHeight)}px`;
     case "ch":
       return `base: ${Math.round(ctx.computedFontSize * 0.5)}px`;
     default:

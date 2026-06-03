@@ -99,6 +99,85 @@ function escapeRegex(str: string): string {
 }
 
 /**
+ * Return a SAME-LENGTH copy of `source` with the INTERIORS of CSS comments,
+ * string literals ('...' / "...") and url(...) contents replaced by spaces.
+ * Newlines and the overall char/line count are preserved, so line indices and
+ * column offsets computed on the mask map 1:1 back onto the original text.
+ *
+ * Used for ALL line-selection and brace-counting so that:
+ *   - a comment that mentions `color: blue` is never mistaken for a declaration,
+ *   - a `{` / `}` / `;` / prop name living inside a string or url() can't fool
+ *     the brace-depth counter or the declaration matcher.
+ * The actual text replacement is always applied to the ORIGINAL line.
+ */
+function maskCSS(source: string): string {
+  const out = source.split("");
+  const n = source.length;
+  let i = 0;
+  while (i < n) {
+    const ch = source[i];
+    const next = i + 1 < n ? source[i + 1] : "";
+
+    // Block comment — mask the interior, keep the delimiters.
+    if (ch === "/" && next === "*") {
+      i += 2;
+      while (i < n && !(source[i] === "*" && source[i + 1] === "/")) {
+        if (source[i] !== "\n") out[i] = " ";
+        i++;
+      }
+      if (i < n) i += 2; // skip the closing "*/"
+      continue;
+    }
+
+    // String literal — mask the interior, keep the quotes.
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      i++;
+      while (i < n && source[i] !== quote) {
+        if (source[i] === "\\" && i + 1 < n) {
+          // escaped char — mask both, preserving newline positions
+          if (source[i] !== "\n") out[i] = " ";
+          if (source[i + 1] !== "\n") out[i + 1] = " ";
+          i += 2;
+          continue;
+        }
+        if (source[i] !== "\n") out[i] = " ";
+        i++;
+      }
+      if (i < n) i++; // keep the closing quote
+      continue;
+    }
+
+    // url(...) — mask the (possibly brace-bearing) body. A quoted url body is
+    // handled by the string branch above, so bail to it when one is found.
+    if (
+      (ch === "u" || ch === "U") &&
+      /^url\s*\(/i.test(source.slice(i, i + 6))
+    ) {
+      let j = i + 3;
+      while (j < n && /\s/.test(source[j])) j++;
+      if (source[j] === "(") {
+        i = j + 1; // keep "url("
+        while (i < n && source[i] !== ")") {
+          if (source[i] === "'" || source[i] === '"') break;
+          if (source[i] !== "\n") out[i] = " ";
+          i++;
+        }
+        continue;
+      }
+    }
+
+    i++;
+  }
+  return out.join("");
+}
+
+/** Build the masked, line-split view used for all matching/brace-counting. */
+function maskedLinesOf(lines: string[]): string[] {
+  return maskCSS(lines.join("\n")).split("\n");
+}
+
+/**
  * Reject malformed client input before any search or write (issue #16), so a
  * crafted prop/value/className can't break out of a CSS block. Returns a
  * failure reason, or null when the change is safe to process.
@@ -111,6 +190,42 @@ function changeValidationError(change: CommitChange): string | null {
   if (change.className != null && !isValidCSSClassName(change.className))
     return `invalid CSS class name: "${change.className}"`;
   return null;
+}
+
+/**
+ * Build a regex that matches `prop` only at a real declaration boundary
+ * (start of line, or after a `;` or `{`), with optional whitespace before the
+ * colon. Prevents `color` from matching inside `background-color:` and stops a
+ * declaration matcher from firing on a bare substring.
+ */
+function declAnchoredPropRegex(prop: string): RegExp {
+  // Boundary = start-of-line (allowing indentation) OR after a `;`/`{`. This
+  // anchors the match to a real declaration start so `color` can't match inside
+  // `background-color:` and `--accent` can't match `--accent-dark:`.
+  return new RegExp(`(?:^\\s*|[;{]\\s*)${escapeRegex(prop)}\\s*:`);
+}
+
+/**
+ * Build the surgical/broad replacement regex with a LEFT boundary so `color`
+ * cannot match inside `background-color`. Capture group 1 is the boundary char
+ * (preserved), group 2 is the `prop:` prefix (preserved); the value that
+ * follows is what gets rewritten by the caller.
+ */
+function replacePropRegex(prop: string, valuePattern: string): RegExp {
+  return new RegExp(
+    `(^|[;{\\s])(${escapeRegex(prop)}\\s*:\\s*)${valuePattern}`
+  );
+}
+
+/**
+ * Whether a (masked) line contains `prop` as a real declaration AND either the
+ * literal `value` or an SCSS `$variable`. Used by the value-aware searches.
+ */
+function lineHasDecl(maskedLine: string, prop: string, value: string): boolean {
+  return (
+    declAnchoredPropRegex(prop).test(maskedLine) &&
+    (maskedLine.includes(value) || /\$[\w-]+/.test(maskedLine))
+  );
 }
 
 // --- File resolution ---
@@ -251,8 +366,17 @@ function searchWindow(
   const start = Math.max(0, targetLine - windowSize);
   const end = Math.min(lines.length - 1, targetLine + windowSize);
 
+  // First pass: prefer an EXACT (prop + value) declaration anywhere in the
+  // window so a false positive earlier in the window can't win over the real
+  // declaration at the supplied sourceLine.
   for (let i = start; i <= end; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
+    if (declAnchoredPropRegex(prop).test(lines[i]) && lines[i].includes(value)) {
+      return i;
+    }
+  }
+  // Second pass: SCSS-variable lines (value can't be matched literally).
+  for (let i = start; i <= end; i++) {
+    if (declAnchoredPropRegex(prop).test(lines[i]) && /\$[\w-]+/.test(lines[i])) {
       return i;
     }
   }
@@ -280,13 +404,17 @@ function searchClassBlock(
     let depth = 0;
     let blockStart = i;
 
-    // Find the opening brace (might be on same line or next)
-    for (let j = i; j < lines.length && j < i + 3; j++) {
+    // Find the opening brace (might be on the same line or several lines below,
+    // e.g. a multi-line selector list). Scan until the first '{', no fixed cap.
+    let foundBrace = false;
+    for (let j = i; j < lines.length; j++) {
       if (lines[j].includes("{")) {
         blockStart = j;
+        foundBrace = true;
         break;
       }
     }
+    if (!foundBrace) continue;
 
     // Count from blockStart
     for (let j = blockStart; j < lines.length; j++) {
@@ -297,7 +425,7 @@ function searchClassBlock(
 
       // Search within the block for our property
       if (j > blockStart && depth >= 0) {
-        if (lines[j].includes(prop) && (lines[j].includes(value) || /\$[\w-]+/.test(lines[j]))) {
+        if (lineHasDecl(lines[j], prop, value)) {
           return j;
         }
       }
@@ -335,7 +463,7 @@ function searchPseudoClassBlock(
       }
 
       if (j > i && depth >= 0) {
-        if (lines[j].includes(prop) && (lines[j].includes(value) || /\$[\w-]+/.test(lines[j]))) {
+        if (lineHasDecl(lines[j], prop, value)) {
           return j;
         }
       }
@@ -392,7 +520,7 @@ function searchNestedPseudoBlock(
           }
 
           if (k > j && subDepth >= 0) {
-            if (lines[k].includes(prop) && (lines[k].includes(value) || /\$[\w-]+/.test(lines[k]))) {
+            if (lineHasDecl(lines[k], prop, value)) {
               return k;
             }
           }
@@ -454,7 +582,7 @@ function searchFullFile(
   value: string
 ): number | null {
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes(prop) && (lines[i].includes(value) || /\$[\w-]+/.test(lines[i]))) {
+    if (lineHasDecl(lines[i], prop, value)) {
       return i;
     }
   }
@@ -462,14 +590,14 @@ function searchFullFile(
 }
 
 /**
- * Fuzzy search: find any line with just the property name.
- * Last resort — handles variables, calc(), etc.
+ * Fuzzy search: find any line with just the property name (as a real
+ * declaration). Last resort — handles variables, calc(), etc.
  */
 function searchFuzzy(
   lines: string[],
   prop: string
 ): number | null {
-  const pattern = new RegExp(`${escapeRegex(prop)}\\s*:`);
+  const pattern = declAnchoredPropRegex(prop);
   for (let i = 0; i < lines.length; i++) {
     if (pattern.test(lines[i])) return i;
   }
@@ -489,11 +617,19 @@ function searchRootBlock(
   const rootPattern = /^\s*(:root|\[data-theme[^\]]*\])\s*\{/;
   const layerPattern = /^\s*@layer\b[^{]*\{/;
 
+  // Collect every candidate declaration line across all root-like blocks so we
+  // can value-disambiguate (root cause C): two root-like blocks may both define
+  // `prop`, and editing the dark value must not rewrite the light block.
+  const candidates: number[] = [];
+  const collect = (start: number) => {
+    const idx = searchWithinRootBlock(lines, start, prop);
+    if (idx != null) candidates.push(idx);
+  };
+
   for (let i = 0; i < lines.length; i++) {
     // Direct :root / [data-theme] block
     if (rootPattern.test(lines[i])) {
-      const result = searchWithinRootBlock(lines, i, prop);
-      if (result != null) return result;
+      collect(i);
       continue;
     }
 
@@ -507,8 +643,7 @@ function searchRootBlock(
         }
 
         if (j > i && layerDepth >= 1 && rootPattern.test(lines[j])) {
-          const result = searchWithinRootBlock(lines, j, prop);
-          if (result != null) return result;
+          collect(j);
         }
 
         if (layerDepth <= 0 && j > i) break;
@@ -516,17 +651,25 @@ function searchRootBlock(
     }
   }
 
-  return null;
+  if (candidates.length === 0) return null;
+  // Prefer the block whose declared value matches the requested `value`; fall
+  // back to the first candidate when none match (e.g. hex vs computed rgb).
+  const valueMatch = candidates.find((idx) => lines[idx].includes(value));
+  return valueMatch ?? candidates[0];
 }
 
 /**
- * Search within a :root or [data-theme] block starting at line `start` for a custom property.
+ * Search within a :root or [data-theme] block starting at line `start` for a
+ * custom property. Matches at a real declaration boundary so `--accent` cannot
+ * match `--accent-dark` (prefix collision) and a comment mentioning the prop is
+ * skipped (the caller passes masked lines).
  */
 function searchWithinRootBlock(
   lines: string[],
   start: number,
   prop: string
 ): number | null {
+  const propPattern = declAnchoredPropRegex(prop);
   let depth = 0;
   for (let j = start; j < lines.length; j++) {
     for (const ch of lines[j]) {
@@ -535,7 +678,7 @@ function searchWithinRootBlock(
     }
 
     if (j > start && depth >= 0) {
-      if (lines[j].includes(prop)) {
+      if (propPattern.test(lines[j])) {
         return j;
       }
     }
@@ -605,7 +748,7 @@ function collapseShorthand(expanded: string[], count: 2 | 4): string {
 
 /**
  * Like searchClassBlock but matches property name only (no value check).
- * Uses exact-match regex to avoid matching longhand variants.
+ * Uses a declaration-anchored regex to avoid matching longhand variants.
  */
 function searchClassBlockFuzzy(
   lines: string[],
@@ -615,16 +758,18 @@ function searchClassBlockFuzzy(
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*[{,]`
   );
-  const propPattern = new RegExp(`${escapeRegex(prop)}\\s*:`);
+  const propPattern = declAnchoredPropRegex(prop);
 
   for (let i = 0; i < lines.length; i++) {
     if (!classPattern.test(lines[i])) continue;
 
     let depth = 0;
     let blockStart = i;
-    for (let j = i; j < lines.length && j < i + 3; j++) {
-      if (lines[j].includes("{")) { blockStart = j; break; }
+    let foundBrace = false;
+    for (let j = i; j < lines.length; j++) {
+      if (lines[j].includes("{")) { blockStart = j; foundBrace = true; break; }
     }
+    if (!foundBrace) continue;
 
     for (let j = blockStart; j < lines.length; j++) {
       for (const ch of lines[j]) {
@@ -646,9 +791,14 @@ function searchClassBlockFuzzy(
 /**
  * Try to find and rewrite a CSS shorthand property when the longhand isn't found directly.
  * e.g., `padding-top` → finds `padding: 16px 24px`, expands, replaces sub-value, collapses.
+ *
+ * `maskedLines` is used to LOCATE the shorthand line (so a comment mentioning the
+ * shorthand can't be selected); the extraction/replacement runs on the ORIGINAL
+ * line at the same index.
  */
 function tryShorthandFallback(
   lines: string[],
+  maskedLines: string[],
   prop: string,
   from: string,
   to: string,
@@ -658,13 +808,13 @@ function tryShorthandFallback(
   const mapping = LONGHAND_TO_SHORTHAND[prop];
   if (!mapping) return null;
 
-  // Find the shorthand line (class-scoped first, then file-wide)
+  // Find the shorthand line on the MASKED copy (class-scoped first, then file-wide)
   let lineIdx: number | null = null;
   if (className) {
-    lineIdx = searchClassBlockFuzzy(lines, className, mapping.shorthand);
+    lineIdx = searchClassBlockFuzzy(maskedLines, className, mapping.shorthand);
   }
   if (lineIdx == null) {
-    lineIdx = searchFuzzy(lines, mapping.shorthand);
+    lineIdx = searchFuzzy(maskedLines, mapping.shorthand);
   }
   if (lineIdx == null) return null;
 
@@ -673,9 +823,9 @@ function tryShorthandFallback(
   // Guard: bail if line contains SCSS variable
   if (/\$[\w-]/.test(line)) return null;
 
-  // Extract the value portion
+  // Extract the value portion (anchored so `gap` can't match `row-gap`, etc.)
   const valueMatch = line.match(
-    new RegExp(`${escapeRegex(mapping.shorthand)}\\s*:\\s*([^;!}]+)`)
+    new RegExp(`(?:^\\s*|[;{]\\s*)${escapeRegex(mapping.shorthand)}\\s*:\\s*([^;!}]+)`)
   );
   if (!valueMatch) return null;
 
@@ -692,7 +842,7 @@ function tryShorthandFallback(
   const collapsed = collapseShorthand(expanded, count);
 
   const replacementLine = line.replace(
-    new RegExp(`(${escapeRegex(mapping.shorthand)}\\s*:\\s*)[^;!}]+`),
+    new RegExp(`((?:^\\s*|[;{]\\s*)${escapeRegex(mapping.shorthand)}\\s*:\\s*)[^;!}]+`),
     `$1${collapsed}`
   );
 
@@ -710,33 +860,38 @@ export function findPropertyInFile(
   sourceLine?: number,
   className?: string
 ): FindResult | null {
+  // Match/count on a comment-, string- and url()-masked copy so neither a
+  // declaration matcher nor a brace counter is fooled by those constructs. The
+  // mask is same-length and line-for-line, so returned indices map onto `lines`.
+  const masked = maskedLinesOf(lines);
+
   // Tier 1: Window search (if we have a reliable line number)
   if (sourceLine != null && sourceLine > 0) {
-    const idx = searchWindow(lines, sourceLine, prop, value);
+    const idx = searchWindow(masked, sourceLine, prop, value);
     if (idx != null) return { lineIdx: idx, strategy: "window" };
   }
 
   // Tier 1.5: For custom properties (--*), search :root and theme blocks first
   if (prop.startsWith("--")) {
-    const idx = searchRootBlock(lines, prop, value);
+    const idx = searchRootBlock(masked, prop, value);
     if (idx != null) return { lineIdx: idx, strategy: "class-block" };
   }
 
   // Tier 2: Class-scoped search (if we know the CSS class)
   if (className) {
-    const idx = searchClassBlock(lines, className, prop, value);
+    const idx = searchClassBlock(masked, className, prop, value);
     if (idx != null) return { lineIdx: idx, strategy: "class-block" };
   }
 
   // Tier 3: Full-file search (prop + value anywhere)
   {
-    const idx = searchFullFile(lines, prop, value);
+    const idx = searchFullFile(masked, prop, value);
     if (idx != null) return { lineIdx: idx, strategy: "full-file" };
   }
 
   // Tier 4: Fuzzy search (prop name only — handles variables)
   {
-    const idx = searchFuzzy(lines, prop);
+    const idx = searchFuzzy(masked, prop);
     if (idx != null) return { lineIdx: idx, strategy: "fuzzy" };
   }
 
@@ -796,6 +951,11 @@ export async function handleCommit(
       let lines = source.split("\n");
       let modified = false;
 
+      // Recompute lazily: after any structural splice (state block creation) the
+      // masked view must be rebuilt before the next change is processed.
+      let masked = maskedLinesOf(lines);
+      const remask = () => { masked = maskedLinesOf(lines); };
+
       for (const change of fileChanges) {
         // Reject malformed client input up front (issue #16).
         const invalid = changeValidationError(change);
@@ -815,14 +975,16 @@ export async function handleCommit(
             });
             continue;
           }
+          // Locate on the masked view so brace literals / comments can't fool
+          // the scan; the replacement is applied to the original `lines`.
           const pseudoIdx = searchPseudoClassBlock(
-            lines,
+            masked,
             change.className,
             change.state,
             change.prop,
             change.from
           ) ?? searchNestedPseudoBlock(
-            lines,
+            masked,
             change.className,
             change.state,
             change.prop,
@@ -831,22 +993,20 @@ export async function handleCommit(
 
           if (pseudoIdx != null) {
             // Found the property in the pseudo-class block — do surgical replacement
-            const pattern = new RegExp(
-              `(${escapeRegex(change.prop)}\\s*:\\s*)${escapeRegex(change.from)}`
-            );
+            const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
             if (pattern.test(lines[pseudoIdx])) {
               const safeValue = change.to.replace(/\$/g, "$$$$");
-              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1${safeValue}`);
+              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1$2${safeValue}`);
               modified = true;
+              remask();
             } else {
               // Try broad replacement (handles hex vs rgb, etc.)
-              const broadPattern = new RegExp(
-                `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
-              );
+              const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
               if (broadPattern.test(lines[pseudoIdx])) {
                 const safeValue = change.to.replace(/\$/g, "$$$$");
-                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1${safeValue}`);
+                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1$2${safeValue}`);
                 modified = true;
+                remask();
               } else {
                 result.failed.push({
                   ...change,
@@ -858,9 +1018,9 @@ export async function handleCommit(
           }
 
           // No existing pseudo-class block — create one
-          const baseEnd = findClassBlockEnd(lines, change.className);
+          const baseEnd = findClassBlockEnd(masked, change.className);
           if (baseEnd != null) {
-            const isNestedSCSS = lines.some(line => /&\s*[:.[]/.test(line));
+            const isNestedSCSS = masked.some(line => /&\s*[:.[]/.test(line));
 
             if (isNestedSCSS) {
               // Insert nested &:state block inside parent (before closing })
@@ -886,6 +1046,7 @@ export async function handleCommit(
               lines.splice(baseEnd + 1, 0, ...newBlock);
             }
             modified = true;
+            remask();
             continue;
           }
 
@@ -910,11 +1071,12 @@ export async function handleCommit(
         if (!found) {
           // Try shorthand fallback: e.g. padding-top → padding: 16px 24px
           const shorthand = tryShorthandFallback(
-            lines, change.prop, change.from, change.to, change.sourceLine, change.className
+            lines, masked, change.prop, change.from, change.to, change.sourceLine, change.className
           );
           if (shorthand) {
             lines[shorthand.lineIdx] = shorthand.replacementLine;
             modified = true;
+            remask();
             continue;
           }
           result.failed.push({
@@ -924,19 +1086,20 @@ export async function handleCommit(
           continue;
         }
 
-        // Surgical replacement: only change the value, preserve everything else
-        const pattern = new RegExp(
-          `(${escapeRegex(change.prop)}\\s*:\\s*)${escapeRegex(change.from)}`
-        );
+        // Surgical replacement: only change the value, preserve everything else.
+        // The pattern carries a LEFT boundary so `color` can't match inside
+        // `background-color` even if both share a line.
+        const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
 
         if (pattern.test(lines[found.lineIdx])) {
           // Escape $ in replacement to prevent regex backreference interpretation
           const safeValue = change.to.replace(/\$/g, "$$$$");
           lines[found.lineIdx] = lines[found.lineIdx].replace(
             pattern,
-            `$1${safeValue}`
+            `$1$2${safeValue}`
           );
           modified = true;
+          remask();
         } else if (found.strategy === "fuzzy") {
           // Fuzzy match found the property by name but the exact from-value
           // isn't on this line. Source likely uses a different representation
@@ -950,16 +1113,15 @@ export async function handleCommit(
               reason: `uses SCSS variable ${scssVarMatch[0]} — manual edit required`,
             });
           } else {
-            const broadPattern = new RegExp(
-              `(${escapeRegex(change.prop)}\\s*:\\s*)([^;!}]+)`
-            );
+            const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
             if (broadPattern.test(lines[found.lineIdx])) {
               const safeValue = change.to.replace(/\$/g, "$$$$");
               lines[found.lineIdx] = lines[found.lineIdx].replace(
                 broadPattern,
-                `$1${safeValue}`
+                `$1$2${safeValue}`
               );
               modified = true;
+              remask();
             } else {
               result.failed.push({
                 ...change,

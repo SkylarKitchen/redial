@@ -4,24 +4,19 @@
  * Kept separate from the JSX so the "what should we show" judgment is a pure,
  * fully-tested function. The badge component is a thin renderer over this.
  */
-import { contrastRatio, hexToRgb, isValidHex, wcagAssessment } from "../colorUtils";
+import {
+  contrastRatio,
+  hexToRgb,
+  isValidHex,
+  parseColorAlpha,
+  wcagAssessment,
+} from "../colorUtils";
 import { resolveBackdropColor } from "./resolveBackdrop";
 
 export type ContrastEval =
   | { kind: "unknown"; reason: string }
   | { kind: "ok"; ratio: number; level: "AAA" | "AA"; largeText: boolean }
   | { kind: "fail"; ratio: number; largeText: boolean };
-
-/** Alpha of a computed color string (0–1); "" / transparent → 0, opaque → 1. */
-function colorAlpha(color: string): number {
-  if (!color || color === "transparent") return 0;
-  const m = color.match(/rgba?\(([^)]+)\)/i);
-  if (m) {
-    const parts = m[1].split(",").map((s) => s.trim());
-    return parts.length === 4 ? parseFloat(parts[3]) : 1;
-  }
-  return 1;
-}
 
 /** WCAG "large text": ≥24px, or ≥18.66px when bold (≥700). */
 function isLargeText(cs: CSSStyleDeclaration): boolean {
@@ -42,7 +37,7 @@ export function evaluateContrast(el: Element, foregroundHex: string): ContrastEv
   }
 
   const cs = getComputedStyle(el);
-  if (colorAlpha(cs.color) < 1) {
+  if (parseColorAlpha(cs.color) < 1) {
     return { kind: "unknown", reason: "translucent text" };
   }
 

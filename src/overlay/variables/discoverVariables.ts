@@ -71,7 +71,12 @@ export function detectVarType(value: string): { type: VarType; numericValue?: nu
 
 // ─── Alias Detection ────────────────────────────────────────────────
 
-const ALIAS_RE = /^\s*var\(\s*(--[\w-]+)\s*(?:,\s*(.*))?\)\s*$/s;
+// The `var` keyword is case-insensitive in CSS (VAR(--a) is valid), so use the
+// `i` flag. NOTE: the name class stays [\w-] (ASCII) — non-ASCII names are a
+// separate i18n concern.
+const ALIAS_RE = /^\s*var\(\s*(--[\w-]+)\s*(?:,\s*(.*))?\)\s*$/is;
+// Strips a trailing `!important` (with surrounding whitespace) from a value.
+const IMPORTANT_RE = /\s*!important\s*$/i;
 
 /**
  * Parse a raw CSS value for a `var()` alias reference.
@@ -80,7 +85,9 @@ const ALIAS_RE = /^\s*var\(\s*(--[\w-]+)\s*(?:,\s*(.*))?\)\s*$/s;
  */
 export function parseVarAlias(raw: string): { target: string; fallback: string | undefined } | null {
   if (!raw) return null;
-  const m = raw.match(ALIAS_RE);
+  // A var()-valued property may carry `!important`; strip it so the
+  // end-anchored regex still recognizes the alias (and the redirect fires).
+  const m = raw.replace(IMPORTANT_RE, "").match(ALIAS_RE);
   if (!m) return null;
   const target = m[1];
   const fallback = m[2] !== undefined ? m[2].trim() || undefined : undefined;

@@ -70,7 +70,7 @@ describe("getUtilityGroup — arbitrary & exotic", () => {
   // which is NOT a known prefix, so the whole thing becomes its own group
   // ("dark:md:hover:bg-x") instead of "dark:md:hover:bg". Two stacked-variant
   // bg utilities that should conflict will never be deduped.
-  it.fails("groups a stacked-variant utility by its real prefix", () => {
+  it("groups a stacked-variant utility by its real prefix", () => {
     expect(getUtilityGroup("dark:md:hover:bg-red-500")).toBe(
       "dark:md:hover:bg"
     );
@@ -80,7 +80,7 @@ describe("getUtilityGroup — arbitrary & exotic", () => {
   // "!mt-2" -> isNeg false -> dashIdx finds "!mt" as first segment, which is
   // not in SINGLE_SEGMENT_PREFIXES, so it falls through to "!mt-2" as its own
   // group. So "!mt-2" and "mt-4" do NOT conflict even though both set margin-top.
-  it.fails("groups an important-prefixed utility (!mt-2) under mt", () => {
+  it("groups an important-prefixed utility (!mt-2) under mt", () => {
     expect(getUtilityGroup("!mt-2")).toBe("mt");
   });
 
@@ -98,7 +98,7 @@ describe("getUtilityGroup — arbitrary & exotic", () => {
   // does not contain "[&>svg]:hidden", dashIdx is -1 (no dash before bracket
   // content actually there's none), so it returns the whole string as group.
   // Two arbitrary-variant display utils that should conflict won't.
-  it.fails(
+  it(
     "groups arbitrary-variant display utilities so they conflict",
     () => {
       // Both target display under the same arbitrary variant; should share group.

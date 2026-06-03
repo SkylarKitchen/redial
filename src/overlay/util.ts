@@ -30,11 +30,13 @@ function extractModuleName(cls: string): string | null {
  * Regular: "btn primary" → "btn"
  */
 export function getDisplayClass(el: Element): string | null {
-  // Use getAttribute to handle SVGElement.className (SVGAnimatedString, not string)
-  const classes = el.getAttribute("class");
-  if (!classes || !classes.trim()) return null;
-
-  const list = classes.split(/\s+/);
+  // Use getAttribute (with SVGAnimatedString.baseVal fallback) to handle
+  // SVGElement.className, which is an SVGAnimatedString object, not a string.
+  const classes = el.getAttribute("class") ?? (el.className as any)?.baseVal ?? "";
+  // Trim + filter empty tokens so leading/interior whitespace does not produce
+  // an empty leading token that the list[0] fallback would return.
+  const list = classes.trim().split(/\s+/).filter(Boolean);
+  if (list.length === 0) return null;
 
   for (const cls of list) {
     const name = extractModuleName(cls);
@@ -147,15 +149,19 @@ export function getStableSelector(el: Element): string {
  */
 export function getSelector(el: Element): string {
   const tag = el.tagName.toLowerCase();
-  const classes = el.className;
-  if (typeof classes !== "string" || !classes.trim()) return tag;
+  // Use getAttribute (with SVGAnimatedString.baseVal fallback) instead of
+  // el.className so SVG elements and leading-whitespace classes resolve correctly.
+  const classes = el.getAttribute("class") ?? (el.className as any)?.baseVal ?? "";
+  // Trim + filter empty tokens to avoid an empty leading token from whitespace.
+  const list = classes.trim().split(/\s+/).filter(Boolean);
+  if (list.length === 0) return tag;
 
-  for (const cls of classes.split(/\s+/)) {
+  for (const cls of list) {
     const name = extractModuleName(cls);
     if (name) return `.${name}`;
   }
 
-  return `.${classes.split(/\s+/)[0]}`;
+  return `.${list[0]}`;
 }
 
 /**

@@ -170,7 +170,7 @@ describe("sanitizeCSSValue — live-preview <style> escaping", () => {
   // whitespace before `>` in an end tag, so the injected markup breaks out of
   // the live-preview <style> element. (The commit path is safe — isSafeCSSValue
   // rejects any `<` — but the overlay's <style> writer uses sanitizeCSSValue.)
-  it.fails("neutralizes a whitespace-padded </style > close tag", () => {
+  it("neutralizes a whitespace-padded </style > close tag", () => {
     const malicious = '</style\t><img src=x onerror=alert(1)>';
     const sanitized = sanitizeCSSValue(malicious);
 

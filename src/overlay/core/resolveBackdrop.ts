@@ -7,22 +7,11 @@
  * modes, filters), we return `{ unknown }` rather than guess. A contrast badge
  * that lies erodes trust in every future proactive feature.
  */
-import { cssColorToHex } from "../colorUtils";
+import { cssColorToHex, parseColorAlpha } from "../colorUtils";
 
 export type BackdropResult =
   | { hex: string }
   | { unknown: true; reason: string };
-
-/** Parse the alpha channel from a computed color string (0–1). "" / transparent → 0. */
-function parseAlpha(color: string): number {
-  if (!color || color === "transparent") return 0;
-  const m = color.match(/rgba?\(([^)]+)\)/i);
-  if (m) {
-    const parts = m[1].split(",").map((s) => s.trim());
-    return parts.length === 4 ? parseFloat(parts[3]) : 1;
-  }
-  return 1; // named colors / hex are opaque
-}
 
 /**
  * If this layer makes the effective backdrop unknowable from color alone,
@@ -57,7 +46,7 @@ export function resolveBackdropColor(el: Element): BackdropResult {
     if (reason) return { unknown: true, reason };
 
     const bg = cs.backgroundColor;
-    const alpha = parseAlpha(bg);
+    const alpha = parseColorAlpha(bg);
 
     if (alpha >= 1) {
       const hex = cssColorToHex(bg);

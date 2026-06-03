@@ -96,25 +96,43 @@ const DISPLAY_CLASSES = new Set([
  * "flex" -> "flex", "hidden" -> "hidden"
  */
 export function getUtilityGroup(cls: string): string {
-  // Preserve responsive/state prefixes as part of the group
-  // so "sm:w-4" and "w-4" don't conflict with each other
-  const prefixMatch = cls.match(
-    /^((sm|md|lg|xl|2xl|hover|focus|active|dark|group-hover|focus-within|focus-visible|first|last|odd|even|disabled|placeholder|before|after):)/
-  );
-  const prefix = prefixMatch ? prefixMatch[1] : "";
-  const bare = prefix ? cls.slice(prefix.length) : cls;
+  // Strip ALL leading "variant:" segments (preserving them as part of the
+  // group) so stacked variants like "dark:md:hover:bg-x" dedup against each
+  // other and so a variant chain never gets mistaken for the utility prefix.
+  // Each segment is either a plain word-ish variant (e.g. "hover", "md",
+  // "group-hover") or a bracketed arbitrary variant (e.g. "[&>svg]:").
+  let rest = cls;
+  let prefix = "";
+  // Matches one leading variant segment ending in ':'. Bracketed arbitrary
+  // variants ("[...]:") are matched as a whole; plain variants allow word
+  // chars, '-' and '&' but not the chars that appear inside a utility value.
+  const variantSegment = /^(?:\[[^\]]*\]|[\w&-]+):/;
+  let m: RegExpMatchArray | null;
+  while ((m = rest.match(variantSegment))) {
+    prefix += m[0];
+    rest = rest.slice(m[0].length);
+  }
+
+  // Important modifier: strip a leading "!" (Tailwind v3 syntax). It is NOT
+  // re-applied to the group key — "!important" only raises specificity, so
+  // "!mt-2" sets the same property as plain "mt-4" and must share its group.
+  const bare = rest.startsWith("!") ? rest.slice(1) : rest;
 
   // Negative utilities: strip leading - and check the remaining prefix
   const isNeg = bare.startsWith("-");
   const unsigned = isNeg ? bare.slice(1) : bare;
 
+  // Re-prepend the variant chain and (unlike "!") the negative sign to the
+  // resolved group key, mirroring the pre-existing negative handling.
+  const sign = isNeg ? "-" : "";
+
   // Display classes all conflict with each other
-  if (DISPLAY_CLASSES.has(unsigned)) return prefix + "__display";
+  if (DISPLAY_CLASSES.has(unsigned)) return prefix + sign + "__display";
 
   // Check multi-segment prefixes first (longer match wins)
   for (const mp of MULTI_SEGMENT_PREFIXES) {
     if (unsigned.startsWith(mp + "-") || unsigned === mp) {
-      return prefix + (isNeg ? "-" : "") + mp;
+      return prefix + sign + mp;
     }
   }
 
@@ -123,12 +141,12 @@ export function getUtilityGroup(cls: string): string {
   if (dashIdx > 0) {
     const first = unsigned.slice(0, dashIdx);
     if (SINGLE_SEGMENT_PREFIXES.has(first)) {
-      return prefix + (isNeg ? "-" : "") + first;
+      return prefix + sign + first;
     }
   }
 
   // Fallback: use the full class as its own group (standalone classes)
-  return prefix + bare;
+  return prefix + sign + unsigned;
 }
 
 /**
@@ -204,6 +222,11 @@ function parseClassNameOnLine(line: string, lineIdx: number): ClassNameMatch | n
   // className={`...`}
   const btMatch = line.match(/className=\{`([^`]*)`\}/);
   if (btMatch) {
+    // Refuse to edit interpolated template literals — rewriting the captured
+    // string would clobber the "${...}" expression and feed the literal token
+    // to mergeClasses as if it were a utility. Decline so the commit reports a
+    // clear failure instead of corrupting the interpolation.
+    if (btMatch[1].includes("${")) return null;
     const start = line.indexOf("className={`") + "className={`".length;
     return {
       lineIdx,
@@ -214,15 +237,20 @@ function parseClassNameOnLine(line: string, lineIdx: number): ClassNameMatch | n
     };
   }
 
-  // className={cn("...", "...")} or className={clsx("...", "...")}
-  const cnMatch = line.match(/className=\{(?:cn|clsx)\(([^)]*)\)\}/);
-  if (cnMatch) {
-    const inner = cnMatch[1];
-    const firstStr = inner.match(/"([^"]*)"/);
+  // className={cn(...)} or className={clsx(...)}
+  // Don't rely on a balanced-paren regex ([^)]* stops at the FIRST ')', so a
+  // nested call like cn("flex p-2", active && toggle(x)) never matches). Instead
+  // locate the cn(/clsx( opener, then anchor on the FIRST quoted string literal
+  // after it (without requiring a trailing ")}").
+  const openerMatch = line.match(/className=\{(?:cn|clsx)\(/);
+  if (openerMatch) {
+    const openerEnd = openerMatch.index! + openerMatch[0].length;
+    const firstStr = line.slice(openerEnd).match(/"([^"]*)"/);
     if (firstStr) {
-      const cnStart = line.indexOf(cnMatch[0]);
-      const innerStart = cnStart + line.slice(cnStart).indexOf(inner);
-      const strStart = innerStart + inner.indexOf(firstStr[0]) + 1;
+      // Refuse interpolation in the captured literal, consistent with the
+      // template-literal guard above.
+      if (firstStr[1].includes("${")) return null;
+      const strStart = openerEnd + firstStr.index! + 1;
       return {
         lineIdx,
         start: strStart,

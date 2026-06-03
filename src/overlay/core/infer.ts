@@ -84,10 +84,15 @@ export function infer(el: Element): InferResult {
 // --- Inline helpers (avoid circular import with util.ts) ---
 
 function getDisplayClassInline(el: Element): string | null {
-  const classes = el.className;
-  if (typeof classes !== "string" || !classes.trim()) return null;
+  // Use getAttribute (with SVGAnimatedString.baseVal fallback) instead of
+  // el.className: SVG elements expose className as an SVGAnimatedString object,
+  // not a string, which would otherwise drop the class entirely.
+  const classes = el.getAttribute("class") ?? (el.className as any)?.baseVal ?? "";
+  // Trim + filter empty tokens so leading/interior whitespace ("   card") does
+  // not yield an empty leading token that the list[0] fallback would return.
+  const list = classes.trim().split(/\s+/).filter(Boolean);
+  if (list.length === 0) return null;
 
-  const list = classes.split(/\s+/);
   for (const cls of list) {
     // webpack: ComponentName_className__hash
     const webpack = cls.match(/^[A-Z]\w+_(\w+)__\w+$/);

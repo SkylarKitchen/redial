@@ -5,7 +5,13 @@
  * Only recognizes units from the provided allowedUnits list.
  */
 
-const KNOWN_UNITS = ["px", "%", "vw", "vh", "em", "rem", "ch", "vmin", "vmax", "ex", "cap", "lh", "rlh"];
+const KNOWN_UNITS = [
+  "px", "%", "vw", "vh", "em", "rem", "ch", "vmin", "vmax", "ex", "cap", "lh", "rlh",
+  // Modern dynamic-viewport units (small/large/dynamic) and logical viewport axes
+  "svh", "lvh", "dvh", "svw", "lvw", "dvw", "vi", "vb",
+  // Container-query units (width/height/inline/block + min/max)
+  "cqw", "cqh", "cqi", "cqb", "cqmin", "cqmax",
+];
 
 export interface ParsedValueUnit {
   value: number;

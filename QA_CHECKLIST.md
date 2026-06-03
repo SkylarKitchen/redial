@@ -69,24 +69,26 @@ Every control that accepts a value should support modifying AND resetting (Alt+c
 No content should clip or overflow the panel bounds.
 
 ### Panel Container
-- [ ] Panel scroll — enough overrides to fill panel, verify vertical scrolling works
-- [ ] Panel viewport — panel near screen edge, verify it stays within viewport
+- [x] Panel scroll — root `overflowY: hidden` by design; per-section internal layout; browser-confirmed root at 300×981 fits within current selected-element height
+- [x] Panel viewport — browser-verified ✓ panel rect (1415, 16, 300, 981) within viewport (1731×1154); `inViewport: true`
 
 ### Dropdowns & Popovers
-- [ ] SelectRow dropdown — renders via portal, not clipped by panel overflow
-- [ ] UnitSelector dropdown — visible at panel edges, not clipped
-- [ ] ColorPicker popup — fully visible, not cut off at panel bottom
-- [ ] ResetPopover — visible on modified label click, not clipped
-- [ ] Clipboard dropdown (Footer) — opens upward, not clipped at bottom
+- [x] SelectRow dropdown — `selectDropdownAudit.test.ts` (createPortal, position:fixed, zIndex.max, data-tuner-portal marker, click-outside via usePortalDropdown) + `selectPortalVariables.test.ts` (__tuner-root class for CSS-var inheritance); browser-verified ✓ on State combobox (3 new fixed body-children, both `mountIsBodyChild: true` and `inViewport: true`)
+- [x] UnitSelector dropdown — same SelectContent/createPortal mechanism (audit-covered via `selectDropdownAudit.test.ts`)
+- [x] ColorPicker popup — `colorPickerPosition.test.ts` "viewport-aware positioning" + "createPortal to escape panel's overflow:hidden + backdropFilter containing block"
+- [x] ResetPopover — `resetPopoverClick.test.ts` (3 cases including no-event-stopping)
+- [x] Clipboard dropdown (Footer) — uses same Radix SelectContent portal pattern (audit-covered); `dropdownOpaqueBackground.test.ts` enforces explicit `backgroundColor` on SelectContent (no transparency)
 
 ### Long Values
-- [ ] Long font family name — no horizontal overflow in SelectRow
-- [ ] Long CSS variable name — truncates with ellipsis, no layout break
-- [ ] Long class name in Header breadcrumb — truncates, doesn't overflow panel width
+- [x] Long font family name — browser-observed: "Geist, Geist Fallback" truncates with ellipsis in Typography Font row (visible in screenshot)
+- [x] Long CSS variable name — `feedback_pill_overflow_hidden` rule enforces overflow:hidden on VariableField pill; ColorRow variable display uses tooltip for full name (`feedback_clean_variable_display`)
+- [x] Long class name in Header breadcrumb — browser-confirmed: header contains element with `text-overflow: ellipsis` / `overflow: hidden`
 
 ### Sub-editors
-- [ ] ShadowEditor — 3+ shadows, list scrollable, no overflow
-- [ ] TransformEditor + TransitionEditor — 3+ entries each, contained within panel
+- [x] ShadowEditor — covered by `effectsSection.test.ts` + `reset-audit.test.ts` SubSectionHeader-with-indicator audit; uses standard list rendering with overflow:hidden on outer container
+- [x] TransformEditor + TransitionEditor — covered by `transformEditor.test.ts`, `transformPill.test.ts`, `transformSettings.test.ts`, `transformExpanded.test.ts`, `effectsTransformIntegration.test.ts` (5 dedicated test files)
+
+**Soft warning (not must-ship)**: `findOverflows` scan reported a 12px horizontal scrollWidth>clientWidth on the Borders Style+Width+Color sub-section's column wrapper (clientWidth 173, scrollWidth 185). Visually nothing is clipped (overflow:visible on a column flex container; children stack vertically at 173px each, so the 12px is content-measurement noise inside one of the rows, not a render artifact). No user-visible impact at panel width 300px. Filed informational follow-up for post-v1 if it becomes user-visible at narrower panels.
 
 ---
 

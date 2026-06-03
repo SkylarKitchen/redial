@@ -34,5 +34,16 @@ export function isSafeCSSValue(value: string): boolean {
  * live-preview `<style>` writer, which mutates rather than rejects.
  */
 export function sanitizeCSSValue(value: string): string {
-  return value.replace(/[{}]/g, "").replace(/<\/style>/gi, "");
+  return (
+    value
+      .replace(/[{}]/g, "")
+      // HTML end tags tolerate whitespace before `>` (`</style\t>`, `</style >`),
+      // so a `>`-anchored strip is bypassable. Match whitespace-tolerantly,
+      // case-insensitively, and globally so a padded close tag can't break out
+      // of the live-preview <style> element.
+      .replace(/<\/style\s*>/gi, "")
+      // A CSS declaration value never legitimately contains `<`; drop any that
+      // remain so no markup can escape the <style> context, however malformed.
+      .replace(/</g, "")
+  );
 }
