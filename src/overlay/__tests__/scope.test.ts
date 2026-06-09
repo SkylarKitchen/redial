@@ -9,6 +9,7 @@ import {
   destroyClassStyles,
   getCustomProperties,
 } from "../core/scope";
+import { beginBatch, endBatch } from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
 
@@ -158,6 +159,39 @@ describe("applyClassStyle — class-scope save path", () => {
     expect(tagAfter!.textContent).not.toContain("color: red");
     expect(tagAfter!.textContent).not.toContain("font-size: 20px");
     expect(tagAfter!.textContent).not.toContain("padding: 12px");
+  });
+});
+
+// ─── Batched rebuilds during a drag (issue #29) ──────────────────────────
+
+describe("applyClassStyle — batched rebuilds", () => {
+  it("defers the <style> rewrite while a batch is open, flushing once on endBatch", () => {
+    beginBatch();
+    applyClassStyle("Card_wrapper__f3k2m", "color", "red");
+    applyClassStyle("Card_wrapper__f3k2m", "color", "green");
+    applyClassStyle("Card_wrapper__f3k2m", "color", "blue");
+
+    // Mid-batch the tag is NOT yet rewritten — the drag's intermediate values
+    // never hit the DOM, only the final one does.
+    const mid = getStyleTag();
+    expect(mid?.textContent ?? "").not.toContain("color");
+
+    endBatch();
+
+    // One flush on close, carrying only the last value.
+    const after = getStyleTag();
+    expect(after!.textContent).toContain("color: blue !important");
+    expect(after!.textContent).not.toContain("color: red");
+  });
+
+  it("nested batches only flush at the outermost endBatch", () => {
+    beginBatch();
+    beginBatch();
+    applyClassStyle("X_y__a1", "opacity", "0.5");
+    endBatch(); // inner close — still deferred
+    expect(getStyleTag()?.textContent ?? "").not.toContain("opacity");
+    endBatch(); // outer close — flush
+    expect(getStyleTag()!.textContent).toContain("opacity: 0.5 !important");
   });
 });
 

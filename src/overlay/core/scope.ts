@@ -306,10 +306,44 @@ export function resetClassStyles(className: string): void {
   rebuildClassStyles();
 }
 
+// ─── Batched rebuilds (issue #29) ──────────────────────────────────────
+// A slider drag fires applyClassStyle on every pointermove, and a full <style>
+// rewrite per call is wasteful. While a batch is open (drags wrap their apply
+// calls in beginBatch/endBatch), rebuilds are deferred and coalesced into a
+// SINGLE rewrite when the outermost batch closes. Outside a batch the rebuild
+// stays synchronous, so callers (and tests) see the <style> update immediately.
+// This rides the existing batch lifecycle rather than a time-based debounce.
+let classStyleBatchDepth = 0;
+let rebuildDeferred = false;
+
+/** Open a class-style batch — called from apply.ts's beginBatch. */
+export function beginClassStyleBatch(): void {
+  classStyleBatchDepth++;
+}
+
+/** Close a class-style batch — flushes one rebuild when the outermost closes. */
+export function endClassStyleBatch(): void {
+  classStyleBatchDepth = Math.max(0, classStyleBatchDepth - 1);
+  if (classStyleBatchDepth === 0 && rebuildDeferred) {
+    rebuildDeferred = false;
+    doRebuildClassStyles();
+  }
+}
+
 /**
- * Rebuild the class-scope <style> tag from current overrides.
+ * Rebuild the class-scope <style> tag from current overrides. Deferred while a
+ * batch is open so a drag produces one rewrite, not one per pointermove.
  */
 function rebuildClassStyles(): void {
+  if (classStyleBatchDepth > 0) {
+    rebuildDeferred = true;
+    return;
+  }
+  doRebuildClassStyles();
+}
+
+/** The actual <style> rewrite. */
+function doRebuildClassStyles(): void {
   const style = getClassScopeStyle();
   const rules: string[] = [];
 

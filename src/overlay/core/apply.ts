@@ -14,6 +14,7 @@
 
 import { getStableSelector } from "../util";
 import { isInvalidDeclaration } from "../../lib/css";
+import { beginClassStyleBatch, endClassStyleBatch } from "./scope";
 
 export type Override = {
   initial: string;
@@ -282,6 +283,9 @@ let batchEntries: SingleUndoEntry[] = [];
  */
 export function beginBatch(): void {
   batchDepth++;
+  // Defer class-scope <style> rebuilds for the duration of the batch (issue #29)
+  // so a slider drag rewrites the tag once on endBatch, not per pointermove.
+  beginClassStyleBatch();
 }
 
 /**
@@ -300,6 +304,9 @@ export function endBatch(): void {
       batchEntries = [];
     }
   }
+  // Mirror the batch close to the class-scope rebuilder; the outermost close
+  // flushes the single deferred rebuild (issue #29).
+  endClassStyleBatch();
 }
 
 // --- Public API ---

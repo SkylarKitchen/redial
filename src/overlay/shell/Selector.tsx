@@ -29,6 +29,10 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
   const labelRef = useRef<HTMLDivElement>(null);
   const candidatesRef = useRef<Element[]>([]);
   const focusIdxRef = useRef(-1);
+  // Whether the Tab candidate list has been built for the current activation.
+  // Building is deferred to the first Tab press (issue #28) so merely entering
+  // selection mode never pays the full-document querySelectorAll cost.
+  const candidatesBuiltRef = useRef(false);
 
   // The Selector activates either through explicit (modal) selecting mode or
   // additively while Alt is held — the latter works even when the panel is
@@ -100,19 +104,13 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
     };
   }, [effectiveActive, hovered]);
 
-  // Build candidate list for keyboard selection when active.
-  // Gated on `active` only — the Tab candidate list belongs to explicit
-  // (modal) selecting mode, not the lightweight Alt path.
+  // Reset the (lazily-built) candidate list whenever selection mode toggles.
+  // The list itself is built on the first Tab press — see buildCandidates below
+  // — so activation alone never walks the whole document (issue #28).
   useEffect(() => {
-    if (!active) {
-      candidatesRef.current = [];
-      focusIdxRef.current = -1;
-      return;
-    }
-    const all = document.querySelectorAll("*");
-    candidatesRef.current = Array.from(all).filter(
-      (el) => isNavigableElement(el) && el instanceof HTMLElement,
-    );
+    candidatesRef.current = [];
+    focusIdxRef.current = -1;
+    candidatesBuiltRef.current = false;
   }, [active]);
 
   // Mouse tracking + click selection (shared by modal `active` and Alt path)
@@ -163,6 +161,15 @@ export function Selector({ active, onSelect, onCancel }: SelectorProps) {
       // Tab / Shift+Tab cycles through page elements (keyboard-only selection)
       if (e.key === "Tab") {
         e.preventDefault();
+        // Lazily build the candidate list on first Tab (issue #28): the
+        // full-document walk happens only when the user actually keyboard-
+        // navigates, not on every activation.
+        if (!candidatesBuiltRef.current) {
+          candidatesRef.current = Array.from(
+            document.querySelectorAll("*"),
+          ).filter((el) => isNavigableElement(el) && el instanceof HTMLElement);
+          candidatesBuiltRef.current = true;
+        }
         const list = candidatesRef.current;
         if (list.length === 0) return;
         const idx = focusIdxRef.current;

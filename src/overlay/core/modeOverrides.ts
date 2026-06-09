@@ -133,6 +133,15 @@ export function removeModeOverride(
   selector: string,
   varName: string,
 ): void {
+  // Unset is reversible: record the prior value so Cmd+Z restores the override,
+  // mirroring applyModeOverride. A no-op (nothing to remove) registers no step.
+  const prev = store.get(selector)?.get(varName) ?? null;
+  if (prev === null) return;
+  pushForeignUndo({
+    revert: () => applyModeOverrideInternal(selector, varName, prev),
+    reapply: () => removeModeOverrideInternal(selector, varName),
+    coalesceKey: `${selector} ${varName}`,
+  });
   removeModeOverrideInternal(selector, varName);
 }
 
