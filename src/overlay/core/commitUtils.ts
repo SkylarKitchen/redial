@@ -113,7 +113,9 @@ export function enrichChangesForCommit(
         sourceLine: varSource?.line,
         className: undefined,
         componentName: moduleInfo?.componentName,
-        state: isStateActive ? opts.activeState : undefined,
+        // Keep the entry's OWN state (diff() returns state-keyed entries even
+        // when the panel is on "None") — issue #57.
+        state: c.state ?? (isStateActive ? opts.activeState : undefined),
         cssHref,
       };
     }
@@ -127,7 +129,7 @@ export function enrichChangesForCommit(
         ? (getReadableName(opts.activeClassName) ?? moduleInfo?.className)
         : undefined,
       componentName: moduleInfo?.componentName,
-      state: isStateActive ? opts.activeState : undefined,
+      state: c.state ?? (isStateActive ? opts.activeState : undefined),
       cssHref,
     };
   });
