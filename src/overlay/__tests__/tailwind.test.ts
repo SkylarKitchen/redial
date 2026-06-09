@@ -547,6 +547,60 @@ describe("formatTailwindDiff", () => {
     ];
     expect(formatTailwindDiff(changes)).toBe("");
   });
+
+  it("prefixes a state-tagged change with the Tailwind variant", () => {
+    const changes: DiffEntry[] = [
+      { prop: "color", from: "", to: "red", state: "hover" },
+    ];
+    expect(formatTailwindDiff(changes)).toBe("hover:text-[red]");
+  });
+
+  it("keeps base and state changes distinct in a mixed diff", () => {
+    const changes: DiffEntry[] = [
+      { prop: "display", from: "", to: "flex" },
+      { prop: "color", from: "", to: "red", state: "hover" },
+    ];
+    expect(formatTailwindDiff(changes)).toBe("flex hover:text-[red]");
+  });
+
+  it.each([
+    ["hover", "hover"],
+    ["focus", "focus"],
+    ["active", "active"],
+    ["visited", "visited"],
+    ["focus-within", "focus-within"],
+    ["focus-visible", "focus-visible"],
+    ["first-child", "first"],
+    ["last-child", "last"],
+  ])("maps state %s to the %s: variant", (state, variant) => {
+    const changes: DiffEntry[] = [
+      { prop: "color", from: "", to: "red", state },
+    ];
+    expect(formatTailwindDiff(changes)).toBe(`${variant}:text-[red]`);
+  });
+
+  it("excludes a change whose state has no Tailwind variant (never emits it bare)", () => {
+    const changes: DiffEntry[] = [
+      { prop: "color", from: "", to: "red", state: "checked-marker" },
+    ];
+    expect(formatTailwindDiff(changes)).toBe("");
+  });
+
+  it("does not resolve Object.prototype members as variants", () => {
+    // A corrupted persisted-session key could yield arbitrary state strings;
+    // "toString" must be refused, not looked up on the prototype chain.
+    const changes: DiffEntry[] = [
+      { prop: "color", from: "", to: "red", state: "toString" },
+    ];
+    expect(formatTailwindDiff(changes)).toBe("");
+  });
+
+  it("state on a null-converting property still yields nothing", () => {
+    const changes: DiffEntry[] = [
+      { prop: "position", from: "", to: "static", state: "hover" },
+    ];
+    expect(formatTailwindDiff(changes)).toBe("");
+  });
 });
 
 // ─── Non-standard spacing values ─────────────────────────────────────

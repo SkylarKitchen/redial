@@ -111,6 +111,24 @@ describe("mergeClasses", () => {
     expect(mergeClasses("w-4 sm:w-8", "w-6")).toBe("sm:w-8 w-6");
   });
 
+  it("same-variant conflict: hover:p-4 replaces hover:p-2", () => {
+    expect(mergeClasses("flex hover:p-2", "hover:p-4")).toBe("flex hover:p-4");
+  });
+
+  it("state prefixed classes never clobber unprefixed base classes", () => {
+    expect(mergeClasses("p-2", "hover:p-4")).toBe("p-2 hover:p-4");
+  });
+
+  it("unprefixed classes never clobber state prefixed classes", () => {
+    expect(mergeClasses("hover:p-2", "p-4")).toBe("hover:p-2 p-4");
+  });
+
+  it("mixed base + state new classes replace only their own groups", () => {
+    expect(mergeClasses("flex p-2 hover:p-2", "p-4 hover:p-4")).toBe(
+      "flex p-4 hover:p-4"
+    );
+  });
+
   it("display classes conflict with each other", () => {
     // flex, hidden, block are all display classes — block replaces both
     expect(mergeClasses("flex hidden", "block")).toBe("block");
@@ -256,6 +274,38 @@ describe("handleTailwindCommit", () => {
     const content = await readFile(join(tempDir, filePath), "utf-8");
     expect(content).toContain("flex items-center w-6 p-4");
     expect(content).not.toContain("w-4");
+  });
+
+  it("merges a hover-variant class against an existing hover class", async () => {
+    const filePath = "src/Hover.tsx";
+    await writeFixture(
+      filePath,
+      [
+        "export default function Hover() {",
+        '  return <div className="flex p-2 hover:p-2">Hello</div>;',
+        "}",
+      ].join("\n")
+    );
+
+    const result = await handleTailwindCommit(
+      [
+        {
+          sourceFile: filePath,
+          sourceLine: 2,
+          existingClasses: "flex p-2 hover:p-2",
+          newClasses: "hover:p-4",
+        },
+      ],
+      tempDir
+    );
+
+    expect(result.written).toContain(filePath);
+    expect(result.failed).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    // hover:p-4 replaces hover:p-2; the base p-2 is untouched
+    expect(content).toContain("flex p-2 hover:p-4");
+    expect(content).not.toContain("hover:p-2");
   });
 
   it("finds className without target line (full file search)", async () => {

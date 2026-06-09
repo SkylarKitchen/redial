@@ -7,10 +7,36 @@
 
 import type { DiffEntry } from "./core/apply";
 
+// Redial pseudo-state → Tailwind variant prefix. Covers exactly the
+// VALID_STATES allowlist (statePreview.ts / server commit.ts); the
+// StateSelector UI exposes the first six. States without an entry have
+// no Tailwind equivalent and must be REFUSED — writing a state edit as
+// a bare base utility would silently restyle the element's resting state.
+const STATE_VARIANTS = new Map<string, string>([
+  ["hover", "hover"],
+  ["focus", "focus"],
+  ["active", "active"],
+  ["visited", "visited"],
+  ["focus-within", "focus-within"],
+  ["focus-visible", "focus-visible"],
+  ["first-child", "first"],
+  ["last-child", "last"],
+]);
+
+/** Tailwind variant for a redial pseudo-state, or null if none exists. */
+export function twStateVariant(state: string): string | null {
+  return STATE_VARIANTS.get(state) ?? null;
+}
+
 /** Convert a CSS diff to a space-separated Tailwind v4 class string. */
 export function formatTailwindDiff(changes: DiffEntry[]): string {
   return changes
-    .map((c) => cssToTailwind(c.prop, c.to))
+    .map((c) => {
+      const cls = cssToTailwind(c.prop, c.to);
+      if (cls === null || !c.state) return cls;
+      const variant = twStateVariant(c.state);
+      return variant === null ? null : `${variant}:${cls}`;
+    })
     .filter((c): c is string => c !== null)
     .join(" ");
 }
