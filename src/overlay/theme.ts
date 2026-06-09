@@ -363,7 +363,7 @@ export const shadow = {
 
 // ─── Indicator Colors ───────────────────────────────────────────────
 
-export const indicatorColor: Record<string, string> = {
+export const indicatorColor: Record<IndicatorType, string> = {
   "authored-here": color.indicatorBlue,   // blue   — authored on this element's own rule
   inherited: color.indicatorOrange,        // orange — cascaded from an ancestor
   "element-inline": color.indicatorPink,   // pink   — element-scope (inline) override
