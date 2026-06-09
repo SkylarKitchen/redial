@@ -88,6 +88,10 @@ export const color = {
   // ── Indicators ──
   /** Indicator green — state-specific style modifications (hover, focus, etc.) */
   indicatorGreen: "#16a34a",
+  /** Indicator orange — value inherited/cascaded from an ancestor (cascade provenance, ADR-0007) */
+  indicatorOrange: "#D97757",
+  /** Indicator pink — element-scope (inline) override (cascade provenance, ADR-0007) */
+  indicatorPink: "#EC4899",
 
   // ── Dark surfaces ──
   /** Dark menu/dropdown surface */
@@ -360,18 +364,37 @@ export const shadow = {
 // ─── Indicator Colors ───────────────────────────────────────────────
 
 export const indicatorColor: Record<string, string> = {
-  modified: color.primary,
-  state: color.indicatorGreen,
+  "authored-here": color.indicatorBlue,   // blue   — authored on this element's own rule
+  inherited: color.indicatorOrange,        // orange — cascaded from an ancestor
+  "element-inline": color.indicatorPink,   // pink   — element-scope (inline) override
+  state: color.indicatorGreen,             // green  — pseudo-state-specific style
+  modified: color.warning,                 // amber  — changed THIS SESSION (orthogonal cue)
   none: color.mutedForeground,
 };
 
 // ─── Label Indicator Colors ─────────────────────────────────────────
 
-export type IndicatorType = "modified" | "state" | "none";
+/**
+ * Cascade-provenance indicator variants (ADR-0007 / spec §11). Beyond raw
+ * "did I change this?", these classify WHERE a value comes from — matching
+ * Webflow's Designer. `modified` is kept as an orthogonal "changed this
+ * session" cue (distinct amber, never dropped) and takes priority over the
+ * provenance variants in the resolver so reset affordances keep working.
+ */
+export type IndicatorType =
+  | "authored-here"
+  | "inherited"
+  | "element-inline"
+  | "state"
+  | "modified"
+  | "none";
 
 export const labelIndicator: Record<IndicatorType, { bg: string; text: string }> = {
-  modified: { bg: hexToRgba(color.indicatorBlue, 0.2), text: color.primaryDark },
+  "authored-here": { bg: hexToRgba(color.indicatorBlue, 0.2), text: color.primaryDark },
+  inherited: { bg: hexToRgba(color.indicatorOrange, 0.2), text: color.indicatorOrange },
+  "element-inline": { bg: hexToRgba(color.indicatorPink, 0.2), text: color.indicatorPink },
   state: { bg: hexToRgba(color.indicatorGreen, 0.2), text: color.indicatorGreen },
+  modified: { bg: hexToRgba(color.warning, 0.2), text: color.foreground },
   none: { bg: "transparent", text: color.foregroundSecondary },
 };
 

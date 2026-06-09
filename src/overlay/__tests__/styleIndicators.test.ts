@@ -2,32 +2,52 @@
 /**
  * styleIndicators.test.ts
  *
- * Verifies the style indicator dot system described in the spec:
- * - No dot: property has no override (browser default)
- * - Pink dot: property overridden at element scope
- * - Blue dot: property overridden at class scope
- * - Orange dot: property inherited from a parent class
+ * Locks the cascade-provenance indicator model adopted in ADR-0007
+ * (webflow-style-panel-spec.md §11). `getIndicatorType` now classifies
+ * WHERE a value comes from, not just whether it changed this session:
  *
- * The current codebase has "modified" (blue) and "state" (green) indicators.
- * This test defines the scope-aware indicator behavior specified in
- * webflow-style-panel-spec.md (Section 11: Style Indicators).
+ *   - "element-inline" (pink)   — value set via the element's inline style attr
+ *   - "authored-here"  (blue)   — value set on a CSS rule matching this element
+ *   - "inherited"      (orange) — CSS-inherited prop cascaded from an ancestor
+ *   - "state"          (green)  — pseudo-state-specific session edit
+ *   - "modified"       (amber)  — changed THIS SESSION (orthogonal cue, preserved)
+ *   - "none"                    — browser default / unset
+ *
+ * Priority (ADR-0007 open sub-question resolution): a session edit wins over
+ * provenance, so the "I edited this" cue is never lost and the reset
+ * affordances (gated on "modified") keep working. Provenance therefore
+ * surfaces only on properties that have NOT been edited this session.
  */
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { getIndicatorType } from "../panelUtils";
 import { applyInlineStyle, isDirty, resetAll, stateKey } from "../core/apply";
-import { indicatorColor, color } from "../theme";
+import { indicatorColor, labelIndicator, color, type IndicatorType } from "../theme";
 
 // ─── Setup ───────────────────────────────────────────────────────────
+
+const injectedSheets: HTMLStyleElement[] = [];
 
 beforeEach(() => {
   resetAll();
   document.body.innerHTML = "";
 });
 
+afterEach(() => {
+  injectedSheets.splice(0).forEach((s) => s.remove());
+});
+
 function makeEl(tag = "div"): HTMLElement {
   const el = document.createElement(tag);
   document.body.appendChild(el);
   return el;
+}
+
+/** Inject a real stylesheet rule so getAuthoredValue can resolve it via document.styleSheets. */
+function injectRule(css: string): void {
+  const style = document.createElement("style");
+  style.textContent = css;
+  document.head.appendChild(style);
+  injectedSheets.push(style);
 }
 
 // ─── No override → no indicator ──────────────────────────────────────
@@ -39,128 +59,112 @@ describe("no override shows no indicator", () => {
     expect(getIndicatorType(el, "color", cs)).toBe("none");
   });
 
-  it('returns "none" for multiple untouched properties', () => {
+  it('returns "none" for multiple untouched properties (default values are not "inherited")', () => {
     const el = makeEl();
     const cs = getComputedStyle(el);
-    for (const prop of ["font-size", "margin", "padding", "display", "opacity"]) {
-      expect(getIndicatorType(el, prop, cs)).toBe("none");
+    const parentCs = el.parentElement ? getComputedStyle(el.parentElement) : null;
+    for (const prop of ["font-size", "color", "display", "opacity"]) {
+      expect(getIndicatorType(el, prop, cs, parentCs)).toBe("none");
     }
   });
+});
 
-  it("isDirty returns false for untouched properties", () => {
+// ─── Element-scope inline attr → pink ("element-inline") ─────────────
+
+describe("element-scope inline override → element-inline (pink)", () => {
+  it('returns "element-inline" for a value set via the inline style attribute', () => {
     const el = makeEl();
+    el.style.setProperty("color", "red"); // real inline attr, NOT a session edit
+    const cs = getComputedStyle(el);
     expect(isDirty(el, "color")).toBe(false);
-    expect(isDirty(el, "width")).toBe(false);
+    expect(getIndicatorType(el, "color", cs)).toBe("element-inline");
   });
 });
 
-// ─── Element scope → pink dot (currently "modified" blue) ────────────
-//
-// The spec says element-scope overrides show as pink. The current
-// implementation uses "modified" (blue) for all overrides. These tests
-// verify the existing behavior and document the spec intent.
+// ─── Class-rule authoring → blue ("authored-here") ───────────────────
 
-describe("element-scope override shows indicator", () => {
-  it('returns "modified" when a property is overridden at element scope', () => {
+describe("value authored on a matching rule → authored-here (blue)", () => {
+  it('returns "authored-here" for a value set on a CSS rule matching the element', () => {
+    injectRule(".prov-card { background-color: rgb(240, 240, 240); }");
     const el = makeEl();
-    applyInlineStyle(el, "color", "red");
+    el.className = "prov-card";
     const cs = getComputedStyle(el);
-    expect(getIndicatorType(el, "color", cs)).toBe("modified");
+    expect(getIndicatorType(el, "background-color", cs)).toBe("authored-here");
+  });
+});
+
+// ─── Inherited from an ancestor → orange ("inherited") ───────────────
+
+describe("inherited property detection → inherited (orange)", () => {
+  it('returns "inherited" for a CSS-inherited prop cascaded from an authored ancestor', () => {
+    const parent = makeEl();
+    parent.style.setProperty("color", "blue"); // ancestor authors color
+    const child = document.createElement("span");
+    parent.appendChild(child);
+
+    const cs = getComputedStyle(child);
+    const parentCs = getComputedStyle(parent);
+    // child has no authored value; its computed color equals the parent's
+    expect(getIndicatorType(child, "color", cs, parentCs)).toBe("inherited");
   });
 
-  it("isDirty returns true for element-scoped override", () => {
+  it('returns "none" for a non-inherited prop even when it matches the parent', () => {
+    const parent = makeEl();
+    const child = document.createElement("div");
+    parent.appendChild(child);
+    const cs = getComputedStyle(child);
+    const parentCs = getComputedStyle(parent);
+    // display is not a CSS-inherited property → never "inherited"
+    expect(getIndicatorType(child, "display", cs, parentCs)).toBe("none");
+  });
+});
+
+// ─── Session edit wins over provenance (preserved "modified" cue) ────
+
+describe("session edit takes priority over provenance", () => {
+  it('returns "modified" when a property is edited this session', () => {
     const el = makeEl();
     applyInlineStyle(el, "font-size", "20px");
+    const cs = getComputedStyle(el);
     expect(isDirty(el, "font-size")).toBe(true);
+    expect(getIndicatorType(el, "font-size", cs)).toBe("modified");
   });
-});
 
-// ─── Class scope → blue dot ──────────────────────────────────────────
-//
-// When applying with a className, the override is class-scoped.
-// The indicator still reads as "modified" via isDirty because the
-// tracking key includes className in the undo entry.
-
-describe("class-scope override shows indicator", () => {
-  it('returns "modified" when a property is overridden at class scope', () => {
+  it('"modified" beats "authored-here" when an authored prop is also edited this session', () => {
+    injectRule(".prov-edited { background-color: rgb(1, 2, 3); }");
     const el = makeEl();
-    const className = "Card_wrapper__f3k2m";
-    // Class-scope apply passes className to applyInlineStyle
-    applyInlineStyle(el, "background-color", "#f0f0f0", className);
+    el.className = "prov-edited";
+    applyInlineStyle(el, "background-color", "rgb(9, 9, 9)");
     const cs = getComputedStyle(el);
     expect(getIndicatorType(el, "background-color", cs)).toBe("modified");
   });
 
-  it("isDirty returns true for class-scoped override", () => {
+  it('class-scoped session edit still reads as "modified" (dirty cue preserved)', () => {
     const el = makeEl();
     applyInlineStyle(el, "padding", "16px", "Button_btn__a8f2k");
-    expect(isDirty(el, "padding")).toBe(true);
+    expect(getIndicatorType(el, "padding", getComputedStyle(el))).toBe("modified");
   });
 });
 
-// ─── Inherited from parent class → orange dot ────────────────────────
-//
-// Per the spec, properties inherited from a parent class should show
-// an orange dot. The current implementation doesn't distinguish
-// inherited values from unmodified ones — getIndicatorType returns
-// "none" for both. These tests document the expected detection pattern:
-// a property is "inherited" when the element's computed value matches
-// the parent's computed value AND neither is the browser default.
+// ─── State-specific overrides → green ("state") ──────────────────────
 
-describe("inherited property detection", () => {
-  it('returns "none" for a property inherited from parent (no override on child)', () => {
-    const parent = makeEl();
-    parent.style.setProperty("color", "blue");
-    const child = document.createElement("span");
-    parent.appendChild(child);
-
-    const cs = getComputedStyle(child);
-    const parentCs = getComputedStyle(parent);
-    // No override on child — indicator should be "none" (inherited but not locally modified)
-    expect(getIndicatorType(child, "color", cs, parentCs)).toBe("none");
-  });
-
-  it('returns "modified" when child overrides an inherited value', () => {
-    const parent = makeEl();
-    parent.style.setProperty("color", "blue");
-    const child = document.createElement("span");
-    parent.appendChild(child);
-    document.body.appendChild(child);
-
-    // Child explicitly overrides
-    applyInlineStyle(child, "color", "red");
-    const cs = getComputedStyle(child);
-    const parentCs = getComputedStyle(parent);
-    expect(getIndicatorType(child, "color", cs, parentCs)).toBe("modified");
-  });
-
-  it("parent class override tracked via className shows as modified on parent", () => {
-    const parent = makeEl();
-    applyInlineStyle(parent, "font-size", "20px", "Card_wrapper__f3k2m");
-    expect(isDirty(parent, "font-size")).toBe(true);
-    expect(getIndicatorType(parent, "font-size", getComputedStyle(parent))).toBe("modified");
-  });
-});
-
-// ─── State-specific overrides → green dot ────────────────────────────
-
-describe("state-specific override shows green indicator", () => {
-  it('returns "state" when property is overridden for a pseudo-class', () => {
+describe("state-specific override → state (green)", () => {
+  it('returns "state" when a property is overridden for an active pseudo-class', () => {
     const el = makeEl();
     applyInlineStyle(el, stateKey("hover", "color"), "red");
     const cs = getComputedStyle(el);
     expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("state");
   });
 
-  it('"state" takes priority over "modified" when both exist', () => {
+  it('"state" takes priority over a base session edit', () => {
     const el = makeEl();
-    applyInlineStyle(el, "color", "blue"); // base override
-    applyInlineStyle(el, stateKey("hover", "color"), "red"); // state override
+    applyInlineStyle(el, "color", "blue");
+    applyInlineStyle(el, stateKey("hover", "color"), "red");
     const cs = getComputedStyle(el);
     expect(getIndicatorType(el, "color", cs, null, "hover")).toBe("state");
   });
 
-  it('falls back to "modified" when viewing base state with activeState="none"', () => {
+  it('falls back to "modified" when viewing the base state (activeState="none")', () => {
     const el = makeEl();
     applyInlineStyle(el, "color", "blue");
     const cs = getComputedStyle(el);
@@ -168,12 +172,31 @@ describe("state-specific override shows green indicator", () => {
   });
 });
 
-// ─── Indicator color mapping completeness ────────────────────────────
+// ─── Indicator color + label maps cover every variant ────────────────
 
-describe("indicator color mapping", () => {
-  it("indicatorColor map has expected entries", () => {
-    expect(indicatorColor.modified).toBe(color.primary);
+describe("indicator maps are exhaustive over the widened union", () => {
+  const ALL: IndicatorType[] = [
+    "authored-here", "inherited", "element-inline", "state", "modified", "none",
+  ];
+
+  it("indicatorColor maps every variant to a token", () => {
+    expect(indicatorColor["authored-here"]).toBe(color.indicatorBlue);
+    expect(indicatorColor.inherited).toBe(color.indicatorOrange);
+    expect(indicatorColor["element-inline"]).toBe(color.indicatorPink);
     expect(indicatorColor.state).toBe(color.indicatorGreen);
+    expect(indicatorColor.modified).toBe(color.warning); // amber — distinct from authored-here
     expect(indicatorColor.none).toBe(color.mutedForeground);
+  });
+
+  it("labelIndicator has an entry for every variant", () => {
+    for (const t of ALL) {
+      expect(labelIndicator[t]).toBeTruthy();
+      expect(typeof labelIndicator[t].bg).toBe("string");
+      expect(typeof labelIndicator[t].text).toBe("string");
+    }
+  });
+
+  it("the session cue (modified) is visibly distinct from authored-here", () => {
+    expect(indicatorColor.modified).not.toBe(indicatorColor["authored-here"]);
   });
 });

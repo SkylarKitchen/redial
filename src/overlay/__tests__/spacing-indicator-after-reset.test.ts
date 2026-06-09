@@ -2,15 +2,21 @@
 /**
  * spacing-indicator-after-reset.test.ts
  *
- * Reproduces bug: after alt+click resetting a spacing property, the value
- * cell stays blue ("modified") and the section dot persists — even though
- * the value is back at its original computed value.
+ * Guards the anti-regression invariant: after resetting a spacing property,
+ * the cell must NOT stay amber ("modified" — the "I edited this" cue). The
+ * original bug reported a non-dirty property still reading as a session edit.
  *
- * Root cause: getIndicatorType checks inline style PRESENCE
- * (el.style.getPropertyValue(prop) !== ""), but after a reset the onChange
- * callback re-applies the original value via applyInlineStyle — which sets
- * the inline style again. isDirty correctly returns false (initial === current),
- * but getIndicatorType ignores isDirty and reports "modified".
+ * Under ADR-0007 (cascade provenance), a non-dirty value with a real inline
+ * style attribute reads as "element-inline" (pink provenance) — distinct from
+ * a session edit ("modified", amber). That distinction is the whole point: the
+ * page's own inline styles are now shown as provenance, not mistaken for edits.
+ * The hard invariant these tests lock is therefore `!== "modified"` whenever
+ * isDirty is false; the precise provenance ("element-inline" for an inline
+ * attribute, "none" once the inline style is actually removed) is asserted too.
+ *
+ * The real reset path (resetProp) removes the inline style → "none" (see the
+ * resetProp test below). Tests that pre-seed an inline style via setProperty
+ * keep that inline attribute, so they read as "element-inline".
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
@@ -50,9 +56,10 @@ describe("Spacing indicator after alt+click reset", () => {
     // isDirty should be false: initial (captured from getComputedStyle) === current
     expect(isDirty(el, "padding-left")).toBe(false);
 
-    // BUG: getIndicatorType returns "modified" because the inline style is
-    // physically present — even though isDirty is false.
-    expect(getIndicatorType(el, "padding-left")).toBe("none");
+    // Invariant: a non-dirty property must never read as a session edit.
+    expect(getIndicatorType(el, "padding-left")).not.toBe("modified");
+    // Provenance: a real inline style attribute reads as "element-inline" (pink).
+    expect(getIndicatorType(el, "padding-left")).toBe("element-inline");
   });
 
   it("section indicator returns 'none' when no spacing props are dirty after reset", () => {
@@ -69,9 +76,10 @@ describe("Spacing indicator after alt+click reset", () => {
     expect(isDirty(el, "padding-left")).toBe(false);
     expect(isDirty(el, "padding-right")).toBe(false);
 
-    // Both indicators should be "none"
-    expect(getIndicatorType(el, "padding-left")).toBe("none");
-    expect(getIndicatorType(el, "padding-right")).toBe("none");
+    // Non-dirty inline styles read as provenance ("element-inline"), never as
+    // a session edit ("modified").
+    expect(getIndicatorType(el, "padding-left")).toBe("element-inline");
+    expect(getIndicatorType(el, "padding-right")).toBe("element-inline");
 
     // Section-level: no spacing prop should show "modified"
     const spacingProps = [
@@ -94,17 +102,19 @@ describe("Spacing indicator after alt+click reset", () => {
     expect(getIndicatorType(el, "padding-left")).toBe("modified");
   });
 
-  it("indicator shows 'none' for property not tracked by apply.ts", () => {
+  it("page's own inline style reads as provenance, not a session edit", () => {
     const el = makeEl();
 
-    // Property set by external code (e.g. the page's own styles), NOT via panel
+    // Property set by external code (e.g. the page's own inline styles), NOT via panel
     el.style.setProperty("padding-left", "20px");
 
     // Not tracked in overrides → isDirty is false
     expect(isDirty(el, "padding-left")).toBe(false);
 
-    // Should NOT show as modified — it's the page's own style, not a user edit
-    expect(getIndicatorType(el, "padding-left")).toBe("none");
+    // Must NOT show as a session edit — it's the page's own style.
+    expect(getIndicatorType(el, "padding-left")).not.toBe("modified");
+    // ADR-0007: the page's own inline style is shown as element-scope provenance.
+    expect(getIndicatorType(el, "padding-left")).toBe("element-inline");
   });
 
   it("FIXED: reset without re-apply leaves isDirty false (component-level fix)", () => {
@@ -133,6 +143,8 @@ describe("Spacing indicator after alt+click reset", () => {
 
     // Both are numerically zero — isDirty should return false
     expect(isDirty(el, "padding-left")).toBe(false);
-    expect(getIndicatorType(el, "padding-left")).toBe("none");
+    // Non-dirty → never "modified"; the inline "0em" is element-scope provenance.
+    expect(getIndicatorType(el, "padding-left")).not.toBe("modified");
+    expect(getIndicatorType(el, "padding-left")).toBe("element-inline");
   });
 });

@@ -45,27 +45,88 @@ export interface SectionCtx {
 
 // ─── Indicator Helpers ───────────────────────────────────────────────────
 
-/** Indicator: "state" (green) when a pseudo-class state is active and the property is dirty
- *  for that state, "modified" (blue) for base-state changes, "none" otherwise. */
+/**
+ * CSS properties that inherit by default. Used to decide whether a value that
+ * matches the parent's computed value is genuinely cascaded (orange "inherited")
+ * vs. coincidentally equal. Scoped to the properties the panel actually shows.
+ */
+const INHERITED_PROPS = new Set([
+  "color", "font", "font-family", "font-size", "font-weight", "font-style",
+  "font-variant", "font-stretch", "line-height", "letter-spacing", "word-spacing",
+  "text-align", "text-indent", "text-transform", "text-shadow", "white-space",
+  "word-break", "overflow-wrap", "tab-size", "direction", "visibility", "cursor",
+  "list-style", "list-style-type", "list-style-position",
+]);
+
+/** Walk ancestors to see if any of them authors `prop` — distinguishes a real
+ *  inherited cascade from a shared browser default (which has no author). */
+function hasAuthoredAncestor(el: Element, prop: string): boolean {
+  let p = el.parentElement;
+  while (p) {
+    if (getAuthoredValue(p, prop)) return true;
+    p = p.parentElement;
+  }
+  return false;
+}
+
+/**
+ * Cascade-provenance indicator (ADR-0007 / spec §11). Classifies WHERE a
+ * property's value comes from, with two orthogonal session cues taking priority
+ * so the "I edited this" signal — and the reset affordances gated on it — are
+ * never lost:
+ *
+ *   1. "state"          — green:  active pseudo-state has a session edit
+ *   2. "modified"       — amber:  edited THIS SESSION (dirty) — preserved cue
+ *   3. "element-inline" — pink:   value set via the element's inline style attr
+ *   4. "authored-here"  — blue:   value set on a CSS rule matching this element
+ *   5. "inherited"      — orange: CSS-inherited prop cascaded from an ancestor
+ *   6. "none"                   — browser default / unset
+ *
+ * Provenance (3–5) therefore surfaces only on properties not edited this session.
+ */
 export function getIndicatorType(
   el: Element,
   prop: string,
-  _cs?: CSSStyleDeclaration,
-  _parentCs?: CSSStyleDeclaration | null,
+  cs?: CSSStyleDeclaration,
+  parentCs?: CSSStyleDeclaration | null,
   activeState?: string,
 ): IndicatorType {
-  // When a pseudo-class state is active, check the state-keyed override
+  // 1–2. Session cues take priority (orthogonal to provenance, ADR-0007).
   if (activeState && activeState !== "none") {
     if (isDirty(el, stateKey(activeState, prop))) return "state";
   }
   if (isDirty(el, prop)) return "modified";
+
+  // 3. Element-scope inline override (read the attribute directly, not via
+  //    getAuthoredValue, so it's unambiguously inline rather than a rule match).
+  if ((el as HTMLElement).style?.getPropertyValue(prop)) return "element-inline";
+
+  // 4. Authored on a CSS rule that matches this element.
+  if (getAuthoredValue(el, prop)) return "authored-here";
+
+  // 5. Inherited: a CSS-inherited prop whose computed value equals the parent's
+  //    and is sourced from an authored ancestor (not a shared browser default).
+  if (
+    INHERITED_PROPS.has(prop) && cs && parentCs &&
+    cs.getPropertyValue(prop) &&
+    cs.getPropertyValue(prop) === parentCs.getPropertyValue(prop) &&
+    hasAuthoredAncestor(el, prop)
+  ) {
+    return "inherited";
+  }
+
   return "none";
 }
 
 export function getIndicatorTitle(type: IndicatorType): string | undefined {
-  if (type === "state") return "State-specific style — Option+Click to reset";
-  if (type === "modified") return "Modified — Option+Click to reset";
-  return undefined;
+  switch (type) {
+    case "state": return "State-specific style — Option+Click to reset";
+    case "modified": return "Modified — Option+Click to reset";
+    case "authored-here": return "Authored on this element";
+    case "inherited": return "Inherited from a parent";
+    case "element-inline": return "Element-scope (inline) override";
+    case "none": return undefined;
+  }
 }
 
 // ─── Authored Value / Unit Detection ─────────────────────────────────────
