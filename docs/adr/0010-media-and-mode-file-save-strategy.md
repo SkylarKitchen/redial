@@ -35,11 +35,15 @@ A full pipeline inventory (2026-06-09) found five hard constraints:
    duplicates.
 5. **Tailwind breakpoints are variant prefixes, not `@media`.** The merge
    side already understands stacked variants (`getUtilityGroup`,
-   `commitTailwind.ts:96`), but `formatTailwindDiff` (`tailwind.ts:11`) maps
-   only `prop`/`to` — it ignores `breakpoint` **and `state`**. By code
-   reading, a `:hover` edit on a Tailwind element saves today as an
-   *unprefixed base utility* — a latent correctness bug this ADR's fix
-   subsumes (repro test required as part of implementation).
+   `commitTailwind.ts:96`). The inventory originally found
+   `formatTailwindDiff` ignored `breakpoint` **and `state`**, so a
+   `:hover` edit on a Tailwind element saved as an *unprefixed base
+   utility*; the **state half is fixed** as of this draft —
+   `formatTailwindDiff` (`tailwind.ts:32`) composes state variants via
+   `STATE_VARIANTS` and `enrichChangesForCommit` refuses unmappable
+   states (regression tests: `commitUtilsTailwindState.test.ts`,
+   `tailwind.test.ts`, `commitTailwind.test.ts`). `breakpoint` is still
+   unmapped — the `md:` prefix half remains this ADR's scope.
 
 ## Decision (recommended)
 
@@ -101,10 +105,11 @@ For a change with `breakpoint`, derive the condition from the registry
   1280→`xl:`; any other px → arbitrary variant `min-[Npx]:`. Project-custom
   `screens` config is #40's domain (Tailwind v4 CSS-first awareness) — note
   the dependency, don't block on it.
-- `formatTailwindDiff` composes prefixes per change —
-  `{breakpoint: "768", state: "hover"}` → `md:hover:p-4` — fixing the
-  latent unprefixed-state bug in the same stroke (with a regression test
-  locking `hover:` emission). The variant-aware merge side needs no change.
+- `formatTailwindDiff` already composes the state variant per change
+  (the unprefixed-state bug from constraint 5 is fixed; `hover:`
+  emission is locked by regression tests). This ADR adds the breakpoint
+  prefix in front of it — `{breakpoint: "768", state: "hover"}` →
+  `md:hover:p-4`. The variant-aware merge side needs no change.
 
 ### 5. Round-trip read side
 
@@ -123,7 +128,8 @@ second save must edit the same block, not duplicate it).
   `.dark` block only; light `:root` untouched (regression test for the
   wrong-block fuzzy hazard).
 - Tailwind: breakpoint edit emits `md:*`; state edit emits `hover:*`
-  (regression for the latent bug); unknown px emits `min-[Npx]:*`.
+  (already shipped and locked by `commitUtilsTailwindState.test.ts`);
+  unknown px emits `min-[Npx]:*`.
 - Every refusal path lands in `failed[]` with the clipboard fallback toast —
   no silent base-style writes anywhere (extends the
   `outliers-commit-nesting` duplicate-disambiguation suite to
