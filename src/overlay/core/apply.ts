@@ -141,20 +141,30 @@ export function subscribeOverrides(callback: () => void): () => void {
 }
 
 /**
- * Return the current count of dirty overrides (where initial !== current).
- * Used as the snapshot value for `useSyncExternalStore`.
+ * Return the current count of dirty overrides (where initial !== current) for
+ * elements still connected to a document. Used as the snapshot value for
+ * `useSyncExternalStore`.
  *
- * Returns the O(1) maintained `dirtyCount` rather than iterating the
- * overrides map: this runs on every subscriber for every notifyListeners()
- * call — hundreds of times per second during a scrub — and the old walk also
- * forced a DOM lookup (`document.contains`) per touched element. Entries for
- * removed elements are pruned by the mutation paths (reset, stripAllOverrides,
- * clearRedundantOverrides); a transient over-count between element teardown
- * and the next mutation is harmless because every mutation re-notifies.
+ * Starts from the maintained `dirtyCount` (kept in sync by every mutation
+ * path) and subtracts dirty entries on disconnected elements. Nothing prunes
+ * map entries when an element leaves the DOM (React re-render, route change,
+ * HMR node replacement), so without this subtraction the count would stay
+ * inflated indefinitely. The hot-path cost is one O(1) `isConnected` flag
+ * check per touched element — unlike the previous full walk, which compared
+ * every entry and did an ancestor-chain `document.contains` lookup per
+ * element on every notifyListeners() call (hundreds of times per second
+ * during a scrub).
  * @returns The number of active dirty overrides.
  */
 export function getOverrideSnapshot(): number {
-  return dirtyCount;
+  let count = dirtyCount;
+  for (const [el, props] of overrides) {
+    if (el.isConnected) continue;
+    for (const { initial, current } of props.values()) {
+      if (initial !== current) count--;
+    }
+  }
+  return count;
 }
 
 function notifyListeners() {
@@ -915,6 +925,10 @@ export function clearRedundantOverrides(): number {
   // (state overrides are managed via the <style> tag, not inline)
   const entries: Array<{ el: Element; prop: string; current: string }> = [];
   for (const [el, props] of overrides) {
+    // Skip detached elements: getComputedStyle on a disconnected node returns
+    // "" for every property, which would make the comparison below always
+    // fail and pointlessly re-apply inline styles to dead nodes.
+    if (!el.isConnected) continue;
     for (const [prop, { current }] of props) {
       if (!isInlineWritable(prop)) continue; // skip state- and breakpoint-keyed (not inline)
       entries.push({ el, prop, current });
@@ -1463,8 +1477,16 @@ export function restoreSession(): number {
       const elOverrides = overrides.get(el)!;
 
       for (const [prop, override] of Object.entries(props)) {
+        // Idempotent dirtyCount update: restoreSession can run more than once
+        // for the same (el, prop) — e.g. React StrictMode double-mounting the
+        // overlay's restore effect — so account for an existing entry that was
+        // already counted instead of unconditionally incrementing.
+        const existing = elOverrides.get(prop);
+        const wasDirty = existing ? existing.initial !== existing.current : false;
         elOverrides.set(prop, { initial: override.initial, current: override.current, inlineOriginal: null });
-        if (override.initial !== override.current) dirtyCount++;
+        const isDirtyNow = override.initial !== override.current;
+        if (!wasDirty && isDirtyNow) dirtyCount++;
+        else if (wasDirty && !isDirtyNow) dirtyCount--;
 
         const parsed = parseKey(prop);
         if (parsed.breakpoint !== BASE_BREAKPOINT) {
