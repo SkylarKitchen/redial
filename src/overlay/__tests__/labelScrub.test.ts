@@ -241,7 +241,7 @@ describe("Shift during scrub applies 10x multiplier", () => {
       join(__dirname, "..", "controls", "LabelScrub.tsx"),
       "utf-8",
     );
-    expect(src).toContain("if (ev.shiftKey) multiplier = 10");
+    expect(src).toContain("multiplier = 10");
   });
 });
 
@@ -265,7 +265,7 @@ describe("Alt during scrub applies 0.1x multiplier", () => {
       join(__dirname, "..", "controls", "LabelScrub.tsx"),
       "utf-8",
     );
-    expect(src).toContain("if (ev.altKey) multiplier = 0.1");
+    expect(src).toContain("multiplier = 0.1");
   });
 });
 
@@ -285,23 +285,59 @@ describe("mouseup commits the final value", () => {
     expect(onScrubEnd).toHaveBeenCalledTimes(1);
   });
 
-  it("the last onChange value before pointerup is the committed value", () => {
+  it("the final committed onChange value matches the last move", () => {
     const onChange = vi.fn();
     renderLabelScrub({ value: 0, onChange, step: 1 });
     const label = getLabel();
 
     pointerDown(label, 100);
-    pointerMove(label, 110); // +10
-    pointerMove(label, 115); // +15
-    pointerMove(label, 120); // +20
+    pointerMove(label, 110); // +10 — leading-edge emit
+    pointerMove(label, 115); // +15 — coalesced into trailing
+    pointerMove(label, 120); // +20 — coalesced into trailing
+
+    // The leading-edge emit fires on the first move; subsequent moves are
+    // coalesced and flushed when pointerup arrives.
+    expect(onChange).toHaveBeenCalledWith(10);
+    pointerUp(label);
 
     const lastValue = onChange.mock.calls[onChange.mock.calls.length - 1][0];
     expect(lastValue).toBe(20);
+  });
 
-    pointerUp(label);
-    // No additional onChange call from pointerup itself
-    const callCount = onChange.mock.calls.length;
-    expect(callCount).toBeGreaterThanOrEqual(3);
+  it("coalesces high-Hz pointermoves into one trailing emit per frame", () => {
+    // Stub rAF so we control when "the next frame" runs. Three pointermoves
+    // back-to-back should produce exactly one leading emit and one trailing
+    // emit (not three emits) — the throttling contract.
+    let queued: FrameRequestCallback | null = null;
+    const origRAF = globalThis.requestAnimationFrame;
+    const origCAF = globalThis.cancelAnimationFrame;
+    globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      queued = cb;
+      return 1 as unknown as number;
+    }) as typeof requestAnimationFrame;
+    globalThis.cancelAnimationFrame = (() => { queued = null; }) as typeof cancelAnimationFrame;
+
+    try {
+      const onChange = vi.fn();
+      renderLabelScrub({ value: 0, onChange, step: 1 });
+      const label = getLabel();
+
+      pointerDown(label, 100);
+      pointerMove(label, 110); // leading emit: 10
+      pointerMove(label, 120); // coalesced (no second leading emit)
+      pointerMove(label, 130); // coalesced (still no extra emit)
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenLastCalledWith(10);
+
+      // Flush the frame — trailing emit fires with the latest dx.
+      const flush = queued as FrameRequestCallback | null;
+      if (flush) flush(performance.now());
+      expect(onChange).toHaveBeenCalledTimes(2);
+      expect(onChange).toHaveBeenLastCalledWith(30);
+    } finally {
+      globalThis.requestAnimationFrame = origRAF;
+      globalThis.cancelAnimationFrame = origCAF;
+    }
   });
 
   it("does not call onScrubEnd if drag never exceeded dead zone (click)", () => {

@@ -101,6 +101,32 @@ export function LabelScrub({
       const prevSelect = document.body.style.userSelect;
       const prevCursor = document.body.style.cursor;
 
+      // Leading-edge + trailing-edge throttling for pointermove. High-Hz
+      // pointers (120/240 Hz) fire many events per frame; without throttling
+      // each one triggers applyInlineStyle → notifyListeners → React
+      // re-render of the entire control stack. We emit immediately on the
+      // first event after a frame boundary (zero lag), then drop intermediate
+      // events until rAF fires, at which point a trailing emit catches the
+      // latest state.
+      let pendingDx = 0;
+      let pendingShift = false;
+      let pendingAlt = false;
+      let trailingPending = false;
+      let rafId = 0;
+
+      function emit() {
+        let multiplier = 1;
+        if (pendingShift) multiplier = 10;
+        else if (pendingAlt) multiplier = 0.1;
+
+        const delta = pendingDx * step * multiplier;
+        const raw = startValueRef.current + delta;
+        // Round to avoid floating-point noise
+        const precision = multiplier < 1 ? 2 : 0;
+        const rounded = parseFloat(raw.toFixed(precision));
+        onChangeRef.current(clamp(rounded));
+      }
+
       function handleMove(ev: PointerEvent) {
         const dx = ev.clientX - startXRef.current;
 
@@ -117,16 +143,25 @@ export function LabelScrub({
           onScrubStartRef.current?.();
         }
 
-        let multiplier = 1;
-        if (ev.shiftKey) multiplier = 10;
-        else if (ev.altKey) multiplier = 0.1;
+        pendingDx = dx;
+        pendingShift = ev.shiftKey;
+        pendingAlt = ev.altKey;
 
-        const delta = dx * step * multiplier;
-        const raw = startValueRef.current + delta;
-        // Round to avoid floating-point noise
-        const precision = multiplier < 1 ? 2 : 0;
-        const rounded = parseFloat(raw.toFixed(precision));
-        onChangeRef.current(clamp(rounded));
+        if (rafId === 0) {
+          // No frame pending — emit immediately for zero-lag response, then
+          // schedule a trailing frame in case more events arrive.
+          emit();
+          rafId = requestAnimationFrame(() => {
+            rafId = 0;
+            if (trailingPending) {
+              trailingPending = false;
+              emit();
+            }
+          });
+        } else {
+          // Frame already pending — coalesce this event into the trailing emit.
+          trailingPending = true;
+        }
       }
 
       let cleaned = false;
@@ -139,12 +174,24 @@ export function LabelScrub({
         window.removeEventListener("blur", handleUp);
 
         if (isDraggingRef.current) {
+          // Flush any pending trailing emit so the final value isn't dropped.
+          if (rafId !== 0) {
+            cancelAnimationFrame(rafId);
+            rafId = 0;
+            if (trailingPending) {
+              trailingPending = false;
+              emit();
+            }
+          }
           document.body.style.userSelect = prevSelect;
           document.body.style.cursor = prevCursor;
           endBatch();
           setScrubbing(false);
           setScrubActive(false);
           onScrubEndRef.current?.();
+        } else if (rafId !== 0) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
         }
       }
 

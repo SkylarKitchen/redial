@@ -9,7 +9,7 @@
  * Falls back gracefully for SCSS variables, calc(), etc.
  */
 
-import { readFile, writeFile, readdir, stat, realpath } from "fs/promises";
+import { readFile, writeFile, readdir, realpath } from "fs/promises";
 import { resolve, join, basename, normalize, sep } from "path";
 import { trySourceMapResolution } from "./sourceMapCache";
 import {
@@ -30,31 +30,37 @@ async function findVariableDefinitionFile(
 ): Promise<string | null> {
   const cssFiles = await findCSSFiles(projectRoot);
   const pattern = new RegExp(`${varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`);
-  for (const file of cssFiles) {
-    try {
-      const source = await readFile(file, "utf-8");
-      if (pattern.test(source)) return file;
-    } catch { /* skip unreadable files */ }
-  }
-  return null;
+  // Read all candidates in parallel; first match in walk order wins.
+  const hits = await Promise.all(
+    cssFiles.map((file) =>
+      readFile(file, "utf-8").then(
+        (src) => (pattern.test(src) ? file : null),
+        () => null, // skip unreadable files
+      ),
+    ),
+  );
+  return hits.find((f): f is string => f !== null) ?? null;
 }
 
 /** Collect all CSS/SCSS files in the project (excluding node_modules etc.) */
 async function findCSSFiles(dir: string): Promise<string[]> {
-  const results: string[] = [];
+  let entries;
   try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDE_DIRS.has(entry.name)) continue;
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        results.push(...await findCSSFiles(full));
-      } else if (/\.(css|scss)$/.test(entry.name)) {
-        results.push(full);
-      }
-    }
-  } catch { /* skip */ }
-  return results;
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const direct: string[] = [];
+  const subdirs: string[] = [];
+  for (const entry of entries) {
+    if (EXCLUDE_DIRS.has(entry.name)) continue;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) subdirs.push(full);
+    else if (/\.(css|scss)$/.test(entry.name)) direct.push(full);
+  }
+  // Recurse into subdirectories concurrently; concat preserves walk order.
+  const nested = await Promise.all(subdirs.map((d) => findCSSFiles(d)));
+  return direct.concat(...nested);
 }
 
 /** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
@@ -270,34 +276,39 @@ async function findFileRecursive(
   target: string,
   root: string
 ): Promise<string[]> {
-  const results: string[] = [];
+  let entries;
   try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDE_DIRS.has(entry.name)) continue;
-      const full = join(dir, entry.name);
-      // Ensure symlinks or unusual names don't escape the starting directory
-      const normalizedFull = normalize(full);
-      const normalizedDir = normalize(dir);
-      if (!normalizedFull.startsWith(normalizedDir + "/")) continue;
-      if (entry.isDirectory()) {
-        // Only descend into real in-root directories — never follow a symlinked
-        // directory whose target lies outside the project root.
-        if (await isRealPathWithinRoot(full, root)) {
-          results.push(...await findFileRecursive(full, target, root));
-        }
-      } else if (entry.name === target) {
-        // A name match is only accepted if its real location is in-root, so a
-        // symlinked-out file masquerading as a stylesheet is rejected.
-        if (await isRealPathWithinRoot(full, root)) {
-          results.push(full);
-        }
-      }
-    }
+    entries = await readdir(dir, { withFileTypes: true });
   } catch {
     // Permission error or similar — skip
+    return [];
   }
-  return results;
+  const normalizedDir = normalize(dir);
+  // Each entry needs a realpath check (and directories a recursive walk) —
+  // run them concurrently. Awaiting in entry order keeps the result list
+  // byte-identical to the old sequential DFS, so `matches[0]` tie-breaking
+  // downstream is unaffected.
+  const perEntry = await Promise.all(entries.map(async (entry): Promise<string[]> => {
+    if (EXCLUDE_DIRS.has(entry.name)) return [];
+    const full = join(dir, entry.name);
+    // Ensure symlinks or unusual names don't escape the starting directory
+    if (!normalize(full).startsWith(normalizedDir + "/")) return [];
+    if (entry.isDirectory()) {
+      // Only descend into real in-root directories — never follow a symlinked
+      // directory whose target lies outside the project root.
+      if (await isRealPathWithinRoot(full, root)) {
+        return findFileRecursive(full, target, root);
+      }
+    } else if (entry.name === target) {
+      // A name match is only accepted if its real location is in-root, so a
+      // symlinked-out file masquerading as a stylesheet is rejected.
+      if (await isRealPathWithinRoot(full, root)) {
+        return [full];
+      }
+    }
+    return [];
+  }));
+  return perEntry.flat();
 }
 
 /**
@@ -318,12 +329,10 @@ export async function resolveSourceFile(
     const mapped = trySourceMapResolution(cssHref, 1, 0, projectRoot);
     if (mapped) {
       const mappedPath = resolve(projectRoot, mapped.file);
-      try {
-        await stat(mappedPath);
-        return mappedPath;
-      } catch {
-        // Mapped file doesn't exist on disk — fall through to existing logic
-      }
+      // realpath doubles as the existence check (false for missing files), so
+      // no separate stat() — and it rejects a symlinked-out mapped path too.
+      if (await isRealPathWithinRoot(mappedPath, projectRoot)) return mappedPath;
+      // Mapped file doesn't exist on disk — fall through to existing logic
     }
   }
 
@@ -333,17 +342,12 @@ export async function resolveSourceFile(
     throw new Error("Path traversal detected: sourceFile contains '..' segment");
   }
 
-  // Try direct resolution first
+  // Try direct resolution first. isRealPathWithinRoot returns false both for
+  // a missing file and for a symlink escaping the root (issue #22) — either
+  // way we fall through to the recursive search.
   const direct = resolve(projectRoot, sourceFile);
   assertWithinRoot(direct, projectRoot);
-  try {
-    await stat(direct);
-    // Reject a direct path that is a symlink escaping the root (issue #22);
-    // fall through to the recursive search rather than returning it.
-    if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
-  } catch {
-    // Not found at direct path — search recursively
-  }
+  if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
 
   // Search by exact filename
   const target = basename(sourceFile);
@@ -1000,7 +1004,13 @@ export async function handleCommit(
     changesByFile.set(change.sourceFile, existing);
   }
 
-  for (const [sourceFile, fileChanges] of changesByFile) {
+  // Process each source file concurrently — groups don't share state and
+  // writes are batched per file, so they can't conflict. Each task collects
+  // into local arrays which are merged into `result` after all settle, keeping
+  // the output order deterministic (input order, not completion order).
+  const perFile = await Promise.all(Array.from(changesByFile).map(async ([sourceFile, fileChanges]) => {
+    const written: string[] = [];
+    const failed: CommitResult["failed"] = [];
     try {
       // Resolve the actual file path (handles bare filenames + source maps)
       let filePath = await resolveSourceFile(
@@ -1021,12 +1031,12 @@ export async function handleCommit(
         }
         if (!filePath) {
           for (const change of fileChanges) {
-            result.failed.push({
+            failed.push({
               ...change,
               reason: `file not found: "${sourceFile}"`,
             });
           }
-          continue;
+          return { written, failed };
         }
       }
 
@@ -1035,12 +1045,12 @@ export async function handleCommit(
       // every resolution branch, including the var-definition-file fallback.
       if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
         for (const change of fileChanges) {
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `resolved path escapes project root: "${sourceFile}"`,
           });
         }
-        continue;
+        return { written, failed };
       }
 
       const source = await readFile(filePath, "utf-8");
@@ -1056,7 +1066,7 @@ export async function handleCommit(
         // Reject malformed client input up front (issue #16).
         const invalid = changeValidationError(change);
         if (invalid) {
-          result.failed.push({ ...change, reason: invalid });
+          failed.push({ ...change, reason: invalid });
           continue;
         }
 
@@ -1065,7 +1075,7 @@ export async function handleCommit(
         if (change.state && change.className) {
           // Validate state against allowlist to prevent CSS injection
           if (!VALID_STATES.has(change.state)) {
-            result.failed.push({
+            failed.push({
               ...change,
               reason: `invalid state "${change.state}" — not in allowlist`,
             });
@@ -1104,7 +1114,7 @@ export async function handleCommit(
                 modified = true;
                 remask();
               } else {
-                result.failed.push({
+                failed.push({
                   ...change,
                   reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
                 });
@@ -1147,7 +1157,7 @@ export async function handleCommit(
           }
 
           // Can't find the base class block at all
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `base class ".${change.className}" not found — cannot create :${change.state} block`,
           });
@@ -1175,7 +1185,7 @@ export async function handleCommit(
             remask();
             continue;
           }
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
           });
@@ -1215,7 +1225,7 @@ export async function handleCommit(
           // Guard: don't overwrite SCSS variables — they require manual editing
           const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
           if (scssVarMatch) {
-            result.failed.push({
+            failed.push({
               ...change,
               reason: `uses SCSS variable ${scssVarMatch[0]} — manual edit required`,
             });
@@ -1230,7 +1240,7 @@ export async function handleCommit(
               modified = true;
               remask();
             } else {
-              result.failed.push({
+              failed.push({
                 ...change,
                 reason: `value "${change.from}" not found literally (may be a variable)`,
               });
@@ -1238,7 +1248,7 @@ export async function handleCommit(
           }
         } else {
           const lineVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
-          result.failed.push({
+          failed.push({
             ...change,
             reason: lineVarMatch
               ? `uses SCSS variable ${lineVarMatch[0]} — manual edit required`
@@ -1249,19 +1259,25 @@ export async function handleCommit(
 
       if (modified) {
         await writeFile(filePath, lines.join("\n"), "utf-8");
-        if (!result.written.includes(sourceFile)) {
-          result.written.push(sourceFile);
-        }
+        written.push(sourceFile);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       for (const change of fileChanges) {
-        result.failed.push({
+        failed.push({
           ...change,
           reason: `file error: ${message}`,
         });
       }
     }
+    return { written, failed };
+  }));
+
+  for (const { written, failed } of perFile) {
+    for (const f of written) {
+      if (!result.written.includes(f)) result.written.push(f);
+    }
+    result.failed.push(...failed);
   }
 
   return result;
