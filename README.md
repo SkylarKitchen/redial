@@ -265,9 +265,9 @@ existing `run-tasks-parallel.sh` flow with Docker isolation.
 
 v1.0 is shipped and stable. Planned post-v1 work — features, architectural
 improvements, and design decisions — is tracked in
-[`ROADMAP.md`](ROADMAP.md) and the open
-[GitHub issues](https://github.com/SkylarKitchen/redial/issues) (all labeled
-`post-v1`).
+[`ROADMAP.md`](ROADMAP.md), the source of truth. The corresponding
+[GitHub issues](https://github.com/SkylarKitchen/redial/issues?q=is%3Aissue)
+are closed for a clean v1.0 tracker and reopened when work begins.
 
 ---
 
