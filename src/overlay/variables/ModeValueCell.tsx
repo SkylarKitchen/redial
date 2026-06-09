@@ -4,10 +4,12 @@
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { RotateCcw } from "lucide-react";
 import { VariableValue } from "./ReferencePill";
 import type { InferredMode } from "./modeDiscovery";
 import {
   applyModeOverride,
+  removeModeOverride,
   isModeOverrideDirty,
   beginModeCoalesce,
   endModeCoalesce,
@@ -85,6 +87,41 @@ export function ModeValueCell({
     }
   }, [linkedVarName, mode.selector, varName]);
 
+  // Revert this mode override back to its inherited value (issue #52). Shown
+  // only when the cell is actually overridden; reversible via Cmd+Z because
+  // removeModeOverride records an undo step.
+  const handleUnset = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (mode.selector) removeModeOverride(mode.selector, varName);
+  }, [mode.selector, varName]);
+
+  const UnsetButton = (
+    <button
+      type="button"
+      aria-label="Reset mode override"
+      title="Reset to inherited value"
+      onClick={handleUnset}
+      data-tuner-portal
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        width: 16,
+        height: 16,
+        marginLeft: 4,
+        padding: 0,
+        border: "none",
+        borderRadius: 3,
+        background: "transparent",
+        color: text.secondary,
+        cursor: "pointer",
+      }}
+    >
+      <RotateCcw size={11} />
+    </button>
+  );
+
   // ── Editing state ──
   if (editing) {
     return (
@@ -139,6 +176,7 @@ export function ModeValueCell({
           onSelectVariable={handleVarSelect}
           onUnlink={handleUnlink}
         />
+        {isOverridden && UnsetButton}
       </div>
     );
   }
@@ -227,6 +265,9 @@ export function ModeValueCell({
           {editable ? "+" : "\u2014"}
         </span>
       )}
+
+      {/* Revert-to-inherited affordance (issue #52) \u2014 only when overridden */}
+      {editable && isOverridden && UnsetButton}
 
       {/* Color picker portal */}
       {pickerOpen && dotRef.current && (() => {
