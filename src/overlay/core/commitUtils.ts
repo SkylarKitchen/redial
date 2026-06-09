@@ -88,11 +88,19 @@ export function enrichChangesForCommit(
 
   // CSS path: standard enrichment
   const isStateActive = opts.activeState !== undefined && opts.activeState !== "none";
-  const needsClassInfo = opts.scope === "class" || isStateActive;
+  // Class info is needed whenever ANY entry will carry a pseudo-state — the
+  // panel's active state OR the entry's own state (diff() returns state-keyed
+  // entries even when the panel is back on "None") — issue #57.
+  const needsClassInfo =
+    opts.scope === "class" || isStateActive || changes.some((c) => c.state !== undefined);
   const moduleInfo = needsClassInfo ? getModuleClassInfo(element) : null;
   const cssHref = getStylesheetHref(element);
 
   return changes.map((c) => {
+    // Keep the entry's OWN state; only fall back to the panel's active state
+    // for stateless entries — issue #57.
+    const state = c.state ?? (isStateActive ? opts.activeState : undefined);
+
     // Check if the authored value is a var() reference
     const authored = getAuthoredValue(element, c.prop);
     const varName = authored ? parseVarRef(authored.trim()) : null;
@@ -113,24 +121,122 @@ export function enrichChangesForCommit(
         sourceLine: varSource?.line,
         className: undefined,
         componentName: moduleInfo?.componentName,
-        // Keep the entry's OWN state (diff() returns state-keyed entries even
-        // when the panel is on "None") — issue #57.
-        state: c.state ?? (isStateActive ? opts.activeState : undefined),
+        state,
         cssHref,
       };
     }
 
     const source = resolveSource(element, c.prop);
+    // The server only routes a change into a `.class:state { }` block when
+    // BOTH `state` AND `className` are present — a state-tagged entry without
+    // class info gets flattened into the base rule (issue #57). So resolve a
+    // class for EVERY stateful entry, not just when the panel scope/state says
+    // so: panel class first, then the element's CSS-module class, then a
+    // global class backed by stylesheet evidence.
+    const needsClassName = opts.scope === "class" || state !== undefined;
     return {
       ...c,
       sourceFile: source?.file,
       sourceLine: source?.line,
-      className: needsClassInfo && opts.activeClassName
-        ? (getReadableName(opts.activeClassName) ?? moduleInfo?.className)
+      className: needsClassName
+        ? ((opts.activeClassName ? getReadableName(opts.activeClassName) : null)
+            ?? moduleInfo?.className
+            ?? (state !== undefined ? findGlobalClassName(element, c.prop, state) : undefined))
         : undefined,
       componentName: moduleInfo?.componentName,
-      state: c.state ?? (isStateActive ? opts.activeState : undefined),
+      state,
       cssHref,
     };
   });
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Last-resort class resolution for state-tagged changes on elements without a
+ * CSS-module class (plain global CSS, e.g. `.btn` in globals.css). The server
+ * can only write a `:hover`/`:focus` edit into the right place when it knows
+ * which class block to target (`.cls:state { }`), so pick the element's class
+ * with the strongest stylesheet evidence:
+ *   1. a `.cls:state` rule that already declares the changed property
+ *   2. any `.cls:state` rule
+ *   3. a rule matching the element that declares the property and names `.cls`
+ *   4. any rule matching the element that names `.cls`
+ * Returns undefined when there is no evidence at all — the server then rejects
+ * the change instead of flattening it into the base rule.
+ */
+function findGlobalClassName(
+  el: Element,
+  prop: string,
+  state: string,
+): string | undefined {
+  const classes = Array.from(el.classList).filter((cls) => !cls.startsWith("__tuner"));
+  if (classes.length === 0) return undefined;
+
+  // `(?![\w-])` keeps `.btn` from matching `.btn-primary` and `:focus` from
+  // matching `:focus-within`.
+  const stateRes = classes.map(
+    (cls) => new RegExp(`\\.${escapeRegex(cls)}:${escapeRegex(state)}(?![\\w-])`),
+  );
+  const baseRes = classes.map(
+    (cls) => new RegExp(`\\.${escapeRegex(cls)}(?![\\w-])`),
+  );
+
+  let stateOnly: string | undefined;
+  let matchWithProp: string | undefined;
+  let matchOnly: string | undefined;
+
+  try {
+    for (const sheet of document.styleSheets) {
+      // Skip redial's own managed tags (state/class previews, breakpoint and
+      // mode overrides) — they must never count as authored-source evidence.
+      const owner = sheet.ownerNode;
+      if (
+        owner instanceof Element &&
+        (owner.hasAttribute("data-tuner-scope") || /^(redial-|__tuner|tuner-)/.test(owner.id))
+      ) {
+        continue;
+      }
+      try {
+        for (const rule of sheet.cssRules) {
+          if (!(rule instanceof CSSStyleRule)) continue;
+          const selector = rule.selectorText;
+          // Belt-and-braces for environments where ownerNode is unavailable:
+          // redial-injected rules carry these markers in their selectors.
+          if (selector.includes("data-tuner") || selector.includes("__tuner")) continue;
+          const declaresProp = !!rule.style.getPropertyValue(prop);
+          for (let i = 0; i < classes.length; i++) {
+            if (stateRes[i].test(selector)) {
+              if (declaresProp) return classes[i]; // strongest evidence
+              stateOnly ??= classes[i];
+            }
+          }
+          // Base-rule evidence requires the rule to actually match the element.
+          // (`:state` selectors never match at save time, hence the tier above.)
+          let matchesEl = false;
+          try {
+            matchesEl = el.matches(selector);
+          } catch {
+            // Invalid/unsupported selector
+          }
+          if (!matchesEl) continue;
+          for (let i = 0; i < classes.length; i++) {
+            if (baseRes[i].test(selector)) {
+              if (declaresProp) matchWithProp ??= classes[i];
+              matchOnly ??= classes[i];
+              break;
+            }
+          }
+        }
+      } catch {
+        // CORS or security error — skip sheet
+      }
+    }
+  } catch {
+    // Stylesheet access failed
+  }
+
+  return stateOnly ?? matchWithProp ?? matchOnly;
 }

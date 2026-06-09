@@ -1154,6 +1154,22 @@ export async function handleCommit(
           continue;
         }
 
+        // Fail-safe (issue #57): a state-tagged change WITHOUT class info
+        // cannot be routed to a `.class:state { }` block. Falling through to
+        // the standard search would write the state-only value into the BASE
+        // rule — silently corrupting the resting style while reporting
+        // success. Reject it instead. Custom properties are exempt: the client
+        // intentionally redirects var()-backed edits to the variable's
+        // definition site (e.g. `:root`) with no class info, regardless of the
+        // state the edit was made under.
+        if (change.state && !change.className && !change.prop.startsWith("--")) {
+          result.failed.push({
+            ...change,
+            reason: `state ":${change.state}" edit has no class info — refusing to write it into the base rule`,
+          });
+          continue;
+        }
+
         // --- Standard (non-state) property search ---
         // Tiered search for the property
         const found = findPropertyInFile(
