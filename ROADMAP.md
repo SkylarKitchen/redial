@@ -39,7 +39,7 @@ or interactive exploration first.
 | [#39](https://github.com/SkylarKitchen/redial/issues/39) | Visual grid-track editor (beyond text input) | M | low | Define the editor UX (drag handles vs numeric cells) before building. |
 | [#34](https://github.com/SkylarKitchen/redial/issues/34) | Authored-value round-tripping (preserve `var()` on save) | M | low | Largely works today; needs an edge-case spec + regression tests locked. |
 | [#26](https://github.com/SkylarKitchen/redial/issues/26) | Code-splitting / lazy-load boundary | M | low | Marginal benefit for a dev-only tool; consumers can already `dynamic(..., { ssr:false })`. Decide if worth a separate entry point. |
-| [#53](https://github.com/SkylarKitchen/redial/issues/53) | Breakpoint `@media` + mode overrides: file-save path | M | med | #35 shipped clipboard-only; file-save needs the commit-pipeline `@media`/mode write strategy. |
+| [#53](https://github.com/SkylarKitchen/redial/issues/53) | Breakpoint `@media` + mode overrides: file-save path | M | med | Decision-ready draft: [ADR-0010](docs/adr/0010-media-and-mode-file-save-strategy.md) (Proposed) specs the write strategy — media-aware commit tier (merge/insert/create-at-EOF), selector-scoped mode targeting (fuzzy tier forbidden), Tailwind variant prefixes (`md:`), round-trip read fixes. Also flags a latent bug: state edits on Tailwind elements save unprefixed. Awaiting maintainer sign-off. |
 
 ## Design / product decisions (the maintainer's call)
 
