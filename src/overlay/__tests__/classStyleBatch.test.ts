@@ -20,11 +20,12 @@ import {
   applyClassStyle,
   resetClassStyles,
   destroyClassStyles,
+  getClassScopeCss,
 } from "../core/scope";
 import { beginBatch, endBatch } from "../core/apply";
 
-function classStyleEl(): HTMLStyleElement | null {
-  return document.querySelector('style[data-tuner-scope="class"]');
+function classStyleText(): string {
+  return getClassScopeCss() ?? "";
 }
 
 beforeEach(() => {
@@ -38,42 +39,41 @@ afterEach(() => {
 describe("class-style batching (#29)", () => {
   it("rewrites synchronously when NOT in a batch", () => {
     applyClassStyle(".btn", "color", "red");
-    expect(classStyleEl()?.textContent).toContain("color: red");
+    expect(classStyleText()).toContain("color: red");
   });
 
   it("defers the rewrite while a batch is open, then flushes once at close", () => {
     beginBatch();
     applyClassStyle(".btn", "color", "red");
-    // Deferred: the <style> has not picked up the change yet.
-    expect(classStyleEl()?.textContent ?? "").not.toContain("color: red");
+    // Deferred: the managed sheet has not picked up the change yet.
+    expect(classStyleText()).not.toContain("color: red");
 
     applyClassStyle(".btn", "background", "blue");
-    expect(classStyleEl()?.textContent ?? "").not.toContain("background: blue");
+    expect(classStyleText()).not.toContain("background: blue");
 
     endBatch();
     // One flush at close carries BOTH declarations.
-    const css = classStyleEl()?.textContent ?? "";
+    const css = classStyleText();
     expect(css).toContain("color: red");
     expect(css).toContain("background: blue");
   });
 
-  it("coalesces N applies in a batch into a SINGLE <style> rewrite", () => {
-    // Prime the node, then clear so the batch starts from a known value.
+  it("coalesces N applies in a batch into a SINGLE managed-sheet rewrite", () => {
+    // Prime the sheet, then clear so the batch starts from a known value.
     applyClassStyle(".btn", "color", "red");
-    const el = classStyleEl()!;
-    resetClassStyles(".btn"); // back to empty, still the same node
-    const before = el.textContent ?? "";
+    resetClassStyles(".btn"); // back to empty, still the same sheet
+    const before = classStyleText();
 
     beginBatch();
-    // Simulate a drag: 10 applies. The <style> must not change on any of them
+    // Simulate a drag: 10 applies. The sheet must not change on any of them
     // (0 rewrites during the batch — that is what "coalesced" means).
     for (let i = 0; i < 10; i++) {
       applyClassStyle(".btn", "width", `${i}px`);
-      expect(el.textContent ?? "").toBe(before);
+      expect(classStyleText()).toBe(before);
     }
     endBatch();
 
     // Exactly one rewrite happened — at close — carrying the final drag frame.
-    expect(el.textContent).toContain("width: 9px");
+    expect(classStyleText()).toContain("width: 9px");
   });
 });

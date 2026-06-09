@@ -18,6 +18,9 @@
 import type { DiffEntry } from "./apply";
 import { onStateChange } from "./apply";
 import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
+import { managedSheet, _readManagedSheetCss } from "./managedSheet";
+
+const SHEET_KEY = "state-preview";
 
 // --- Valid pseudo-class states (allowlist) ---
 
@@ -58,22 +61,11 @@ function elAttrSelector(el: Element): string {
   return `[data-tuner-state-id="${id}"]`;
 }
 
-// --- Managed <style> tag ---
+// --- Managed sheet ---
 
-let stateStyleTag: HTMLStyleElement | null = null;
-
-function getOrCreateStyleTag(): HTMLStyleElement {
-  if (!stateStyleTag) {
-    stateStyleTag = document.createElement("style");
-    stateStyleTag.setAttribute("data-tuner-scope", "state");
-    document.head.appendChild(stateStyleTag);
-  }
-  return stateStyleTag;
-}
-
-/** Exposed for tests */
-export function getStateStyleTag(): HTMLStyleElement | null {
-  return stateStyleTag;
+/** Test-only read of the state-preview sheet's serialized CSS, or null if never registered. */
+export function getStateStyleCss(): string | null {
+  return _readManagedSheetCss(SHEET_KEY);
 }
 
 // --- Rebuild (with rAF debounce for hot-path calls) ---
@@ -98,7 +90,6 @@ export function flushScheduledRebuild(): void {
 }
 
 function rebuildStyleTag(): void {
-  const tag = getOrCreateStyleTag();
   const rules: string[] = [];
 
   // Group by (element, state)
@@ -122,7 +113,7 @@ function rebuildStyleTag(): void {
     rules.push(`${selector} {\n${declarations}\n}`);
   }
 
-  tag.textContent = rules.join("\n\n");
+  managedSheet(SHEET_KEY).replace(rules.join("\n\n"));
 }
 
 // Track element + state metadata for each override key
@@ -257,11 +248,8 @@ export function destroyStateStyles(): void {
   }
   taggedElements.clear();
 
-  // Remove style tag
-  if (stateStyleTag) {
-    stateStyleTag.remove();
-    stateStyleTag = null;
-  }
+  // Dispose managed sheet
+  managedSheet(SHEET_KEY).dispose();
 
   // Clear tracking
   overrides.clear();

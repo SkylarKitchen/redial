@@ -6,7 +6,7 @@ import {
   resetStateStyles,
   diffState,
   destroyStateStyles,
-  getStateStyleTag,
+  getStateStyleCss,
   VALID_STATES,
   flushScheduledRebuild,
 } from "../core/statePreview";
@@ -27,23 +27,21 @@ beforeEach(() => {
 
 // ─── Style tag injection ──────────────────────────────────────────────
 
-describe("applyStateStyle — style tag injection", () => {
-  it("creates a <style> tag with data-tuner-scope='state' attribute", () => {
+describe("applyStateStyle — managed sheet injection", () => {
+  it("registers a state-preview managed sheet on first apply", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag).not.toBeNull();
-    expect(tag!.getAttribute("data-tuner-scope")).toBe("state");
+    expect(getStateStyleCss()).not.toBeNull();
   });
 
   it("injects CSS rule targeting the temporary class + pseudo-class", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain(":hover");
-    expect(tag!.textContent).toContain("font-size: 20px !important");
+    const css = getStateStyleCss();
+    expect(css).toContain(":hover");
+    expect(css).toContain("font-size: 20px");
   });
 
   it("adds the __tuner-state-preview class to the element", () => {
@@ -55,7 +53,7 @@ describe("applyStateStyle — style tag injection", () => {
   it("does NOT set inline styles on the element", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
-    // Inline styles should remain untouched — pseudo-class styles go in the <style> tag
+    // Inline styles should remain untouched — pseudo-class styles go in the managed sheet
     expect(el.style.getPropertyValue("font-size")).toBe("");
   });
 
@@ -64,9 +62,9 @@ describe("applyStateStyle — style tag injection", () => {
     applyStateStyle(el, "hover", "font-size", "20px");
     applyStateStyle(el, "hover", "color", "red");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain("font-size: 20px !important");
-    expect(tag!.textContent).toContain("color: red !important");
+    const css = getStateStyleCss()!;
+    expect(css).toContain("font-size: 20px");
+    expect(css).toContain("color: red");
   });
 
   it("updates an existing property value", () => {
@@ -74,9 +72,9 @@ describe("applyStateStyle — style tag injection", () => {
     applyStateStyle(el, "hover", "font-size", "20px");
     applyStateStyle(el, "hover", "font-size", "24px");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain("font-size: 24px !important");
-    expect(tag!.textContent).not.toContain("font-size: 20px");
+    const css = getStateStyleCss()!;
+    expect(css).toContain("font-size: 24px");
+    expect(css).not.toContain("font-size: 20px");
   });
 
   it("keeps different states separate", () => {
@@ -84,32 +82,33 @@ describe("applyStateStyle — style tag injection", () => {
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "focus", "color", "blue");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain(":hover");
-    expect(tag!.textContent).toContain("color: red !important");
-    expect(tag!.textContent).toContain(":focus");
-    expect(tag!.textContent).toContain("color: blue !important");
+    const css = getStateStyleCss()!;
+    expect(css).toContain(":hover");
+    expect(css).toContain("color: red");
+    expect(css).toContain(":focus");
+    expect(css).toContain("color: blue");
   });
 
-  it("reuses the same <style> tag across calls", () => {
+  it("reuses the same managed sheet across calls", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "focus", "font-size", "20px");
     flushScheduledRebuild();
-    const tags = document.querySelectorAll('style[data-tuner-scope="state"]');
-    expect(tags.length).toBe(1);
+    const css = getStateStyleCss()!;
+    expect(css).toContain(":hover");
+    expect(css).toContain(":focus");
   });
 });
 
 // ─── Debounced rebuild ───────────────────────────────────────────────
 
 describe("applyStateStyle — debounced rebuild", () => {
-  it("does not update style tag synchronously (deferred to rAF)", () => {
+  it("does not register sheet content synchronously (deferred to rAF)", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "font-size", "20px");
-    const tag = getStateStyleTag();
-    // Style tag is created but content not yet written (pending rAF)
-    expect(tag == null || tag.textContent === "").toBe(true);
+    const css = getStateStyleCss();
+    // Sheet not yet written (pending rAF) — either unregistered or empty.
+    expect(css === null || css === "").toBe(true);
   });
 
   it("coalesces multiple calls into a single rebuild on flush", () => {
@@ -118,9 +117,9 @@ describe("applyStateStyle — debounced rebuild", () => {
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "hover", "font-size", "24px");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain("font-size: 24px !important");
-    expect(tag!.textContent).toContain("color: red !important");
+    const css = getStateStyleCss()!;
+    expect(css).toContain("font-size: 24px");
+    expect(css).toContain("color: red");
   });
 
   it("flush is a no-op when nothing is scheduled", () => {
@@ -137,9 +136,9 @@ describe("removeStateStyle", () => {
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "hover", "font-size", "20px");
     removeStateStyle(el, "hover", "color");
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).not.toContain("color");
-    expect(tag!.textContent).toContain("font-size: 20px !important");
+    const css = getStateStyleCss()!;
+    expect(css).not.toContain("color: red");
+    expect(css).toContain("font-size: 20px");
   });
 
   it("removes the __tuner-state-preview class when no properties remain for any state", () => {
@@ -166,8 +165,8 @@ describe("resetStateStyles", () => {
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "hover", "font-size", "20px");
     resetStateStyles(el, "hover");
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).not.toContain(":hover");
+    const css = getStateStyleCss()!;
+    expect(css).not.toContain(":hover");
   });
 
   it("does not affect other states on the same element", () => {
@@ -175,10 +174,10 @@ describe("resetStateStyles", () => {
     applyStateStyle(el, "hover", "color", "red");
     applyStateStyle(el, "focus", "color", "blue");
     resetStateStyles(el, "hover");
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).not.toContain(":hover");
-    expect(tag!.textContent).toContain(":focus");
-    expect(tag!.textContent).toContain("color: blue !important");
+    const css = getStateStyleCss()!;
+    expect(css).not.toContain(":hover");
+    expect(css).toContain(":focus");
+    expect(css).toContain("color: blue");
   });
 });
 
@@ -214,13 +213,13 @@ describe("diffState", () => {
 // ─── destroyStateStyles ───────────────────────────────────────────────
 
 describe("destroyStateStyles", () => {
-  it("removes the <style> tag from the DOM", () => {
+  it("disposes the managed sheet", () => {
     const el = makeEl();
     applyStateStyle(el, "hover", "color", "red");
     flushScheduledRebuild();
-    expect(getStateStyleTag()).not.toBeNull();
+    expect(getStateStyleCss()).not.toBeNull();
     destroyStateStyles();
-    expect(getStateStyleTag()).toBeNull();
+    expect(getStateStyleCss()).toBeNull();
   });
 
   it("removes __tuner-state-preview class from all elements", () => {
@@ -236,7 +235,7 @@ describe("destroyStateStyles", () => {
     applyStateStyle(el, "hover", "color", "red");
     destroyStateStyles();
     destroyStateStyles(); // should not throw
-    expect(getStateStyleTag()).toBeNull();
+    expect(getStateStyleCss()).toBeNull();
   });
 });
 
@@ -299,8 +298,8 @@ describe("state validation — VALID_STATES allowlist", () => {
   it("applyStateStyle silently rejects an invalid state", () => {
     const el = makeEl();
     applyStateStyle(el, "} .evil { color: red", "font-size", "20px");
-    // No style tag should be created, no class added
-    expect(getStateStyleTag()).toBeNull();
+    // No managed sheet should be created, no class added
+    expect(getStateStyleCss()).toBeNull();
     expect(el.classList.contains("__tuner-state-preview")).toBe(false);
   });
 
@@ -310,16 +309,16 @@ describe("state validation — VALID_STATES allowlist", () => {
     flushScheduledRebuild();
     // Attempt to remove with invalid state — should be a no-op
     removeStateStyle(el, "} .evil { color: red", "color");
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
+    const css = getStateStyleCss()!;
+    expect(css).toContain("color: red");
   });
 
   it("valid states like focus-within and last-child are accepted", () => {
     const el = makeEl();
     applyStateStyle(el, "focus-within", "outline", "2px solid blue");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
-    expect(tag!.textContent).toContain(":focus-within");
-    expect(tag!.textContent).toContain("outline: 2px solid blue !important");
+    const css = getStateStyleCss()!;
+    expect(css).toContain(":focus-within");
+    expect(css).toContain("outline: 2px solid blue");
   });
 });

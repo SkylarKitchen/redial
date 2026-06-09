@@ -18,6 +18,9 @@ import {
   beginForeignCoalesce,
   endForeignCoalesce,
 } from "./apply";
+import { managedSheet, _readManagedSheetCss } from "./managedSheet";
+
+const SHEET_KEY = "mode-overrides";
 
 // ─── Store ──────────────────────────────────────────────────────────
 
@@ -27,8 +30,10 @@ const store = new Map<string, Map<string, string>>();
 /** Monotonic counter for useSyncExternalStore snapshot */
 let version = 0;
 
-/** Style element reference */
-let styleEl: HTMLStyleElement | null = null;
+/** Test-only read of the mode-overrides sheet's serialized CSS. */
+export function getModeOverridesCss(): string | null {
+  return _readManagedSheetCss(SHEET_KEY);
+}
 
 // ─── Subscription ───────────────────────────────────────────────────
 
@@ -52,22 +57,8 @@ function notify() {
 
 // ─── DOM ────────────────────────────────────────────────────────────
 
-const STYLE_ID = "redial-mode-overrides";
-
-function ensureStyleEl(): HTMLStyleElement {
-  if (styleEl && document.contains(styleEl)) return styleEl;
-  styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (!styleEl) {
-    styleEl = document.createElement("style");
-    styleEl.id = STYLE_ID;
-    document.head.appendChild(styleEl);
-  }
-  return styleEl;
-}
-
 function renderStyleTag() {
-  const el = ensureStyleEl();
-  el.textContent = serializeModeOverrides();
+  managedSheet(SHEET_KEY).replace(serializeModeOverrides());
 }
 
 // ─── Internal mutation helpers (no undo/redo side-effects) ──────────
@@ -158,9 +149,7 @@ export function resetAllModeOverrides(): void {
   clearForeignUndo();
   if (store.size === 0) return;
   store.clear();
-  if (styleEl && document.contains(styleEl)) {
-    styleEl.textContent = "";
-  }
+  managedSheet(SHEET_KEY).replace("");
   notify();
 }
 

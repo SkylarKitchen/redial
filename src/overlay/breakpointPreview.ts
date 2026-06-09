@@ -15,23 +15,17 @@
 
 import { diffAll, subscribeOverrides } from "./core/apply";
 import { serializeBreakpointCSS } from "./breakpoints";
+import { managedSheet, _readManagedSheetCss } from "./core/managedSheet";
 
-const STYLE_ID = "redial-breakpoint-preview";
+const SHEET_KEY = "breakpoint-preview";
 const ID_ATTR = "data-redial-bp";
 
-let styleEl: HTMLStyleElement | null = null;
 let counter = 0;
 let unsubscribe: (() => void) | null = null;
 
-function ensureStyleEl(): HTMLStyleElement {
-  if (styleEl && document.contains(styleEl)) return styleEl;
-  styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (!styleEl) {
-    styleEl = document.createElement("style");
-    styleEl.id = STYLE_ID;
-    document.head.appendChild(styleEl);
-  }
-  return styleEl;
+/** Test-only read of the breakpoint-preview sheet's serialized CSS. */
+export function getBreakpointPreviewCss(): string | null {
+  return _readManagedSheetCss(SHEET_KEY);
 }
 
 /** Stable per-element preview id — reused across renders so the media selector
@@ -56,7 +50,7 @@ export function renderBreakpointPreview(): void {
     const id = previewIdFor(el);
     items.push({ selector: `[${ID_ATTR}="${id}"]`, changes });
   }
-  ensureStyleEl().textContent = serializeBreakpointCSS(items);
+  managedSheet(SHEET_KEY).replace(serializeBreakpointCSS(items));
 }
 
 /**
@@ -70,12 +64,11 @@ export function startBreakpointPreview(): void {
   renderBreakpointPreview();
 }
 
-/** Tear down the preview: unsubscribe and remove the <style> tag. */
+/** Tear down the preview: unsubscribe and dispose the managed sheet. */
 export function destroyBreakpointPreview(): void {
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
   }
-  if (styleEl && document.contains(styleEl)) styleEl.remove();
-  styleEl = null;
+  managedSheet(SHEET_KEY).dispose();
 }
