@@ -162,7 +162,7 @@ export function mergeClasses(existing: string, newClasses: string): string {
   const existingList = existing.trim().split(/\s+/).filter(Boolean);
   const newList = newClasses.trim().split(/\s+/).filter(Boolean);
 
-  if (newList.length === 0) return existing;
+  if (newList.length === 0) return dedupeUtilityGroups(existingList).join(" ");
   if (existingList.length === 0) return newClasses;
 
   // Collapse pre-existing intra-string conflicts: when the existing string
@@ -455,10 +455,10 @@ async function findFileByClassName(
     } catch { return null; }
 
     // Visit prioritized source directories first, then files, then the rest.
-    const dirs = entries.filter((e) => e.isDirectory() && !SKIP_DIRS.has(e.name));
+    const dirs = entries.filter((e) => e.isDirectory() && !e.isSymbolicLink() && !SKIP_DIRS.has(e.name));
     dirs.sort((a, b) =>
       Number(SOURCE_DIR_PRIORITY.has(b.name)) - Number(SOURCE_DIR_PRIORITY.has(a.name)));
-    const files = entries.filter((e) => !e.isDirectory());
+    const files = entries.filter((e) => e.isFile());
 
     for (const entry of files) {
       if (!JSX_EXTENSIONS.has(extname(entry.name))) continue;

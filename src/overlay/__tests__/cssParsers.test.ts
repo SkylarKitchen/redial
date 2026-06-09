@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   parseNum,
+  parseVarRef,
   extractUnit,
   parseBoxShadow,
   shadowToCSS,
@@ -11,6 +12,28 @@ import {
   parseSelfPerspective,
   transformToCSSWithPerspective,
 } from "../cssParsers";
+
+// ─── parseVarRef ─────────────────────────────────────────────────────
+
+describe("parseVarRef — whitespace tolerance (issue #50)", () => {
+  it("extracts the name from a clean var() expression", () => {
+    expect(parseVarRef("var(--foo)")).toBe("--foo");
+  });
+
+  it("tolerates leading/trailing whitespace (getComputedStyle returns it)", () => {
+    // getComputedStyle().getPropertyValue() commonly returns a leading space and
+    // can carry a trailing one; VAR_RE must match ALIAS_RE's tolerance so
+    // variable linking doesn't silently break on i18n names.
+    expect(parseVarRef("var(--primário) ")).toBe("--primário");
+    expect(parseVarRef(" var(--primário)")).toBe("--primário");
+    expect(parseVarRef("  var( --foo )  ")).toBe("--foo");
+  });
+
+  it("still rejects non-var values", () => {
+    expect(parseVarRef("notavar")).toBeNull();
+    expect(parseVarRef("16px")).toBeNull();
+  });
+});
 
 // ─── parseNum ────────────────────────────────────────────────────────
 

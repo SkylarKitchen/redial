@@ -24,7 +24,7 @@ import { styleEngine, resolveTarget } from "../core/engine";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
-import { getCSSModuleClasses, type Scope } from "../core/scope";
+import { getCSSModuleClasses, syncWithApplyUndoRedo as syncClassScopeUndoRedo, type Scope } from "../core/scope";
 import { diffState, syncWithApplyUndoRedo } from "../core/statePreview";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { Toolbar } from "./Toolbar";
@@ -259,6 +259,9 @@ export function Overlay() {
 
   // Sync statePreview.ts <style> tag with apply.ts undo/redo
   useEffect(() => syncWithApplyUndoRedo(), []);
+
+  // Sync scope.ts class-scope <style> tag with apply.ts undo/redo (issue #29)
+  useEffect(() => syncClassScopeUndoRedo(), []);
 
   // Auto-dismiss hint bar after 5 seconds
   useEffect(() => {

@@ -97,6 +97,12 @@ describe("mergeClasses", () => {
     expect(mergeClasses("flex p-4", "")).toBe("flex p-4");
   });
 
+  it("collapses a pre-existing same-group conflict even when new is empty (issue #49)", () => {
+    // #49's goal is to collapse duplicates "regardless of whether the new set
+    // touched that group" — so the empty-new path must dedupe too, not early-out.
+    expect(mergeClasses("p-2 p-4 flex", "")).toBe("p-4 flex");
+  });
+
   it("multiple new classes with conflicts", () => {
     expect(mergeClasses("w-4 h-8 p-2", "w-6 p-4")).toBe("h-8 w-6 p-4");
   });

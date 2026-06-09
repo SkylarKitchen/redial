@@ -14,8 +14,11 @@ import { CSS_NAME_CHARS } from "../lib/css";
 // CSS keywords are case-insensitive, so the `var(` keyword may be authored as
 // VAR(/Var( — match it case-insensitively. The custom-property name uses the
 // shared Unicode-aware name-char class so i18n names like --primário parse
-// (issue #50).
-const VAR_RE = new RegExp(`^var\\(\\s*(--[${CSS_NAME_CHARS}]+)\\s*(?:,.*)?\\)$`, "iu");
+// (issue #50). Leading/trailing whitespace is tolerated to mirror ALIAS_RE in
+// discoverVariables.ts, because getComputedStyle().getPropertyValue() commonly
+// returns a surrounding space — without this, variable linking silently breaks
+// on those values (issue #50 follow-up).
+const VAR_RE = new RegExp(`^\\s*var\\(\\s*(--[${CSS_NAME_CHARS}]+)\\s*(?:,.*)?\\)\\s*$`, "isu");
 
 /** Extract the custom property name from a `var(--foo)` expression. */
 export function parseVarRef(value: string): string | null {
@@ -60,19 +63,21 @@ export function extractUnit(value: string, fallback: string = "px"): string {
  * blur, and spread in px (getComputedStyle already returns px), so authored
  * em/rem values must be normalized rather than silently truncated to a bare
  * number that the serializer re-emits as px (issue #48). em/rem are converted
- * at the CSS root font size (16px); other units and bare numbers pass through
- * via parseFloat, matching the prior behavior (e.g. "1e1px" → 10).
+ * at `rootFontSizePx` (default = the CSS-spec 16px). cssParsers stays pure, so
+ * the root size is a parameter rather than a getComputedStyle read — a host with
+ * a non-16px root passes its own (issue #48 follow-up). Other units and bare
+ * numbers pass through via parseFloat, matching the prior behavior ("1e1px" → 10).
  */
-function shadowLengthToPx(token: string): number {
+function shadowLengthToPx(token: string, rootFontSizePx = 16): number {
   const n = parseFloat(token);
   if (isNaN(n)) return NaN;
-  // Trailing em/rem (e.g. "0.5em", "1.5rem") → ×16. The "px"/numeric forms and
-  // any other unit fall through unchanged.
-  if (/r?em\s*$/i.test(token)) return n * 16;
+  // Trailing em/rem (e.g. "0.5em", "1.5rem") → ×rootFontSizePx. The "px"/numeric
+  // forms and any other unit fall through unchanged.
+  if (/r?em\s*$/i.test(token)) return n * rootFontSizePx;
   return n;
 }
 
-export function parseBoxShadow(raw: string): ShadowValue[] {
+export function parseBoxShadow(raw: string, rootFontSizePx = 16): ShadowValue[] {
   if (!raw || raw === "none") return [];
   const shadows: ShadowValue[] = [];
   // Split on commas that are NOT inside parentheses (for rgba colors)
@@ -106,7 +111,7 @@ export function parseBoxShadow(raw: string): ShadowValue[] {
       numStr = numStr.slice(0, colorEndMatch.index).trim();
     }
     numStr = numStr.replace(/(rgba?\([^)]+\)|hsla?\([^)]+\)|#[0-9a-fA-F]{3,8})/g, "").trim();
-    const nums = numStr.split(/\s+/).map(shadowLengthToPx).filter((n) => !isNaN(n));
+    const nums = numStr.split(/\s+/).map((t) => shadowLengthToPx(t, rootFontSizePx)).filter((n) => !isNaN(n));
     shadows.push({
       x: nums[0] ?? 0,
       y: nums[1] ?? 0,

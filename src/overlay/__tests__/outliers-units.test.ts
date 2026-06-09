@@ -296,6 +296,16 @@ describe("parseBoxShadow — non-px offsets & exotic numbers", () => {
     expect(result[0].x).toBe(8);
   });
 
+  // Regression (issue #48 follow-up): the em/rem→px conversion must not hardcode
+  // a 16px root. cssParsers stays pure (no DOM reads), so the root font size is
+  // an overridable parameter that defaults to the CSS-spec 16px. A host with
+  // `html { font-size: 20px }` can pass 20 and get a correct 0.5rem = 10px.
+  it("converts em/rem at an overridable root font size, defaulting to 16px", () => {
+    expect(parseBoxShadow("0 0.5rem 0 #000")[0].y).toBe(8); // default 16px
+    expect(parseBoxShadow("0 0.5rem 0 #000", 20)[0].y).toBe(10); // 20px root
+    expect(parseBoxShadow("0 1em 0 #000", 20)[0].y).toBe(20);
+  });
+
   it("reads scientific-notation offsets the way parseFloat does", () => {
     // "1e1px" → 10. Not pretty, but deterministic and matches parseNum.
     const result = parseBoxShadow("1e1px 2px 3px #000");

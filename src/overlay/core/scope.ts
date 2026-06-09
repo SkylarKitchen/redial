@@ -8,6 +8,7 @@
  */
 
 import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
+import { onClassChange } from "./apply";
 
 export type Scope = "element" | "class";
 
@@ -369,4 +370,17 @@ export function destroyClassStyles(): void {
     classScopeStyle = null;
   }
   classOverrides.clear();
+}
+
+/** Mirror apply.ts class-scoped undo/redo into the class-scope <style> tag
+ *  (issue #29). Mirrors statePreview.ts's syncWithApplyUndoRedo. Wire once on
+ *  overlay mount; returns an unsubscribe. */
+export function syncWithApplyUndoRedo(): () => void {
+  return onClassChange(({ className, prop, value }) => {
+    if (value !== null) {
+      applyClassStyle(className, prop, value);
+    } else {
+      removeClassStyle(className, prop);
+    }
+  });
 }
