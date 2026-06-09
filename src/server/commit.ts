@@ -207,7 +207,7 @@ function changeValidationError(change: CommitChange): string | null {
   if (!isValidCSSProp(change.prop))
     return `invalid CSS property name: "${change.prop}"`;
   if (!isSafeCSSValue(change.to))
-    return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
+    return `unsafe CSS value (contains "{", "}", ";", "<", "/*", "*/", or newline): "${change.to}"`;
   // Semantic validity: reject `none` for props whose grammar has no `none`
   // (toggle-deselect sentinel). Shares the predicate with the live preview so
   // client and server can't drift apart.

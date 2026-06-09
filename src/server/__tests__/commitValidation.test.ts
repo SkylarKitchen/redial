@@ -27,6 +27,7 @@ import { mkdtemp, writeFile, readFile, mkdir, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { handleCommit } from "../commit";
+import { isSafeCSSValue, sanitizeCSSValue } from "../../lib/css";
 
 let tempDir: string;
 
@@ -165,5 +166,47 @@ describe("handleCommit — server-side input validation (issue #16)", () => {
 
     expect(result.failed).toHaveLength(0);
     expect(result.written).toContain(FIXTURE);
+  });
+});
+
+describe("comment-sequence injection (issue #55)", () => {
+  // A value like `red/*` is written as `color: red/*;` — an unterminated
+  // comment that swallows the rest of the stylesheet. Both delimiters must be
+  // rejected by the commit-path predicate.
+  it("isSafeCSSValue rejects values containing /* or */", () => {
+    expect(isSafeCSSValue("red/*")).toBe(false);
+    expect(isSafeCSSValue("red*/")).toBe(false);
+    expect(isSafeCSSValue("url(/*x)")).toBe(false);
+  });
+
+  it("isSafeCSSValue still accepts slash and asterisk on their own", () => {
+    expect(isSafeCSSValue("1 / 2")).toBe(true); // grid-row shorthand
+    expect(isSafeCSSValue("calc(2 * 1rem)")).toBe(true);
+  });
+
+  it("handleCommit refuses a comment-opening value and leaves the file untouched", async () => {
+    const original = await writeFixture(FIXTURE, BASE_CSS);
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "blue", to: "red/*", sourceFile: FIXTURE, sourceLine: 1 }],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toBe(original);
+    expect(content).not.toContain("/*");
+  });
+
+  it("sanitizeCSSValue strips comment delimiters, including re-formed ones", () => {
+    expect(sanitizeCSSValue("a/*b*/c")).toBe("abc");
+    // A single global pass over `//**` removes the inner `/*` and leaves the
+    // outer chars re-joined as a fresh `/*` — the strip must run to a fixpoint.
+    expect(sanitizeCSSValue("//**")).not.toContain("/*");
+    // Earlier sanitize steps can splice delimiters together (`/{*}` → `/*`).
+    expect(sanitizeCSSValue("/{*}")).not.toContain("/*");
+    expect(sanitizeCSSValue("/<*")).not.toContain("/*");
   });
 });
