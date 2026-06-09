@@ -9,7 +9,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import type { SpacingValues } from "../core/infer";
 import { isTailwindElement, type Scope } from "../core/scope";
-import { styleEngine, type OverrideTarget } from "../core/engine";
+import { styleEngine, resolveTarget } from "../core/engine";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { buildConversionContext } from "../unitConversion";
 import { type IndicatorType, focusRing, text } from "../theme";
@@ -47,6 +47,8 @@ export interface WebflowPanelProps {
   activeClassName?: string | null;
   /** Active pseudo-class state ("none" = base styles, "hover", "focus", etc.) */
   activeState?: string;
+  /** Active responsive breakpoint ("base" = un-mediated; "768" = ≥768px, …) */
+  activeBreakpoint?: string;
   /** Controlled expanded section (from Overlay keyboard navigation) */
   expandedSection?: string | null;
   /** Callback when section is toggled (for controlled mode) */
@@ -59,7 +61,7 @@ export interface WebflowPanelProps {
 
 // ─── Main Component ──────────────────────────────────────────────────
 
-export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", expandedSection: controlledSection, onExpandSection, sectionMemory, onSectionMemoryChange }: WebflowPanelProps) {
+export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset, showGridOverlay, onToggleGridOverlay, searchQuery = "", focusMode = false, scope = "element", activeClassName, activeState = "none", activeBreakpoint = "base", expandedSection: controlledSection, onExpandSection, sectionMemory, onSectionMemoryChange }: WebflowPanelProps) {
   // Read computed styles once on mount
   const [cs] = useState(() => getComputedStyle(element));
   const [parentCs] = useState(() => element.parentElement ? getComputedStyle(element.parentElement) : null);
@@ -115,15 +117,19 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   // (which also covers scope === "class" with no active class name — a bare inline write).
   const apply = useCallback(
     (prop: string, value: string) => {
-      const target: OverrideTarget =
-        activeState && activeState !== "none"
-          ? { scope: "state", el: element, state: activeState }
-          : scope === "class" && activeClassName
-            ? { scope: "class", el: element, className: activeClassName }
-            : { scope: "element", el: element };
+      // resolveTarget is the engine's single source of truth for the
+      // (scope, class, state, breakpoint) → OverrideTarget mapping. Carrying
+      // activeBreakpoint here is what keys an edit to the chosen breakpoint
+      // (ADR-0005) so it renders media-gated instead of as a base inline style.
+      const target = resolveTarget(element, {
+        scope,
+        activeClassName: activeClassName ?? null,
+        activeState,
+        activeBreakpoint,
+      });
       styleEngine.apply(target, prop, value);
     },
-    [element, scope, activeClassName, activeState]
+    [element, scope, activeClassName, activeState, activeBreakpoint]
   );
 
   // ── Reset helpers (mirror `apply` so sections don't reach into core/apply) ──

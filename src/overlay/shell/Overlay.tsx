@@ -48,6 +48,7 @@ import { useOverlayDrag } from "../hooks/useOverlayDrag";
 import { useStyleHandlers } from "../hooks/useStyleHandlers";
 import { useElementSelection } from "../hooks/useElementSelection";
 import { useInjectedStyles } from "../hooks/useInjectedStyles";
+import { startBreakpointPreview, destroyBreakpointPreview } from "../breakpointPreview";
 import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 import { useSelectionOutline } from "../hooks/useSelectionOutline";
@@ -149,6 +150,15 @@ export function Overlay() {
   const handleStateChange = useCallback((newState: string) => {
     if (isScrubActive()) return;
     setActiveState(newState);
+  }, []);
+
+  // Breakpoint selector (#35). "base" = un-mediated; "768" = ≥768px, etc.
+  // Edits made while a non-base breakpoint is active are keyed to it (ADR-0005)
+  // and rendered media-gated by breakpointPreview.ts.
+  const [activeBreakpoint, setActiveBreakpoint] = useState("base");
+  const handleBreakpointChange = useCallback((bp: string) => {
+    if (isScrubActive()) return;
+    setActiveBreakpoint(bp);
   }, []);
 
   // Grid overlay toggle
@@ -549,6 +559,13 @@ export function Overlay() {
   // --- One-time global <style> injection (Next.js z-index fix + focus ring) ---
   useInjectedStyles();
 
+  // --- Breakpoint live preview (#35): keep the media-gated <style> in sync with
+  //     breakpoint edits/undo/reset for the whole session. ---
+  useEffect(() => {
+    startBreakpointPreview();
+    return () => destroyBreakpointPreview();
+  }, []);
+
   // --- HMR auto-reset (Turbopack + Vite + webpack) ---
   useEffect(() => {
     const cleanup = onHmrUpdate(() => {
@@ -625,7 +642,7 @@ export function Overlay() {
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
-        styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState }), prop, value);
+        styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState, activeBreakpoint }), prop, value);
       }
 
       // Re-infer to update panel
@@ -634,7 +651,7 @@ export function Overlay() {
     } catch {
       setClipboardMessage("Clipboard access denied");
     }
-  }, [diffMode, activeState, scope, activeClassName]);
+  }, [diffMode, activeState, scope, activeClassName, activeBreakpoint]);
 
   // --- Command Palette action handler (typed dispatch map, no inline branching) ---
   const handleCommandAction = useCallback((action: string) => {
@@ -791,6 +808,8 @@ export function Overlay() {
                 activeClassName={activeClassName}
                 state={activeState}
                 onStateChange={handleStateChange}
+                breakpoint={activeBreakpoint}
+                onBreakpointChange={handleBreakpointChange}
                 pinned={pinned}
                 onTogglePin={handleTogglePin}
               />
@@ -835,6 +854,7 @@ export function Overlay() {
                         scope={scope}
                         activeClassName={activeClassName}
                         activeState={activeState}
+                        activeBreakpoint={activeBreakpoint}
                         expandedSection={expandedSection}
                         onExpandSection={setExpandedSection}
                         sectionMemory={sectionMemory}
@@ -865,6 +885,7 @@ export function Overlay() {
                 scope={scope}
                 activeClassName={activeClassName}
                 activeState={activeState}
+                activeBreakpoint={activeBreakpoint}
                 clipboardMessage={clipboardMessage}
                 hasClipboard={hasClipboardStyles()}
                 onPasteStyles={handlePasteStyles}

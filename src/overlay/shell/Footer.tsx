@@ -15,6 +15,7 @@ import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
 import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
+import { serializeBreakpointCSS } from "../breakpoints";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -64,13 +65,15 @@ interface FooterProps {
   activeClassName?: string | null;
   /** Active pseudo-class state ("none" = base, "hover", "focus", etc.) */
   activeState?: string;
+  /** Active responsive breakpoint ("base" = un-mediated; "768" = ≥768px, …) */
+  activeBreakpoint?: string;
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
   onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, activeState = "none", clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, activeState = "none", activeBreakpoint = "base", clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [saved, setSaved] = useState(false);
@@ -154,17 +157,31 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setCopyOpen(false);
   }, [showMessage]);
 
+  // Append breakpoint @media blocks (#35) to a base CSS string, so responsive
+  // edits export as real @media rules (against the element's real selector)
+  // instead of being flattened into the base rule.
+  const withBreakpointCSS = useCallback(
+    (changes: DiffEntry[], base: string): string => {
+      const bp = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
+      if (!bp) return base;
+      return base ? `${base}\n\n${bp}` : bp;
+    },
+    [element],
+  );
+
   const handleCopy = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(formatCSSDiff(element, changes), "SCSS");
-  }, [element, copyAndClose]);
+    const base = changes.filter((c) => !c.breakpoint);
+    copyAndClose(withBreakpointCSS(changes, formatCSSDiff(element, base)), "SCSS");
+  }, [element, copyAndClose, withBreakpointCSS]);
 
   const handleCopyCleanCSS = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(formatCleanCSS(element, changes), "CSS");
-  }, [element, copyAndClose]);
+    const base = changes.filter((c) => !c.breakpoint);
+    copyAndClose(withBreakpointCSS(changes, formatCleanCSS(element, base)), "CSS");
+  }, [element, copyAndClose, withBreakpointCSS]);
 
   const handleCopyTailwind = useCallback(() => {
     const changes = styleEngine.diffElement(element);
@@ -195,7 +212,9 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
     if (!endpoint) {
-      const css = formatCleanCSS(element, changes);
+      // Breakpoint edits export as @media blocks (#35); keep them out of the
+      // base rule so they aren't flattened to un-mediated styles.
+      const css = withBreakpointCSS(changes, formatCleanCSS(element, changes.filter((c) => !c.breakpoint)));
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       const modeCount = getModeOverrideCount();
@@ -240,18 +259,26 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
         }
         onSaved?.();
-        // After successful server save, copy mode overrides to clipboard if any
+        // Media-gated edits aren't written to source files yet (tracked as a
+        // #35 follow-up): breakpoint @media blocks + CSS-variable mode overrides
+        // go to the clipboard so they aren't silently lost.
+        const bpCSS = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
         const modeCSS = serializeModeOverrides();
-        if (modeCSS) {
-          navigator.clipboard.writeText(modeCSS).then(() => {
+        const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
+        if (extra) {
+          navigator.clipboard.writeText(extra).then(() => {
+            const bpCount = changes.filter((c) => c.breakpoint).length;
             const mc = getModeOverrideCount();
-            showMessage(`${mc} mode override${mc === 1 ? "" : "s"} copied to clipboard (not saved to file)`, 4000);
+            const parts: string[] = [];
+            if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
+            if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
+            showMessage(`${parts.join(" + ")} copied to clipboard (not saved to file)`, 4000);
           }).catch(() => {});
         }
       }
     } catch {
       // Network error — fall back to clipboard
-      const css = formatCleanCSS(element, changes);
+      const css = withBreakpointCSS(changes, formatCleanCSS(element, changes.filter((c) => !c.breakpoint)));
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       navigator.clipboard.writeText(fullCSS).then(() => {
@@ -263,16 +290,18 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       setSaving(false);
       savingRef.current = false;
     }
-  }, [element, onSaved, showMessage, scope, activeClassName, activeState]);
+  }, [element, onSaved, showMessage, scope, activeClassName, activeState, withBreakpointCSS]);
 
   const handleReset = useCallback(() => {
-    // Reset only the selected element's overrides for the active scope/state.
+    // Reset only the selected element's overrides for the active scope/state, and
+    // SURGICALLY for the active breakpoint (ADR-0005): resetting at ≥768px clears
+    // only that breakpoint's cell, leaving base and other breakpoints intact.
     // Global mode overrides are a separate dimension and are intentionally NOT
     // cleared here (they were over-cleared before — see resetScope / issue #14);
     // they stay clearable via undo and the Variables panel.
-    styleEngine.resetScope(element, { scope, activeClassName: activeClassName ?? null, activeState });
+    styleEngine.resetScope(element, { scope, activeClassName: activeClassName ?? null, activeState, activeBreakpoint });
     onReset();
-  }, [element, onReset, scope, activeClassName, activeState]);
+  }, [element, onReset, scope, activeClassName, activeState, activeBreakpoint]);
 
   const handleResetClick = useCallback(() => {
     // Reset reflects the element's own overrides only (it no longer clears modes).

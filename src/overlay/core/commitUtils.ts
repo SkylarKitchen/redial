@@ -61,10 +61,13 @@ export function enrichChangesForCommit(
     activeState?: string;
   },
 ): EnrichedChange[] {
-  // #35: breakpoint (@media) overrides need a dedicated save path that emits
-  // `@media` blocks. Until that lands, never write one as an un-mediated base
-  // style — drop any breakpoint-tagged change here. No-op today: Increment C
-  // (RFC #14, ADR-0005) ships no breakpoint UI, so none can reach commit yet.
+  // #35 ships the breakpoint UI + live media-gated preview, but file-WRITING
+  // `@media` blocks to source is still a tracked follow-up (like CSS-variable
+  // mode overrides, which are clipboard-only — see engine.ts UnifiedDiff). So we
+  // still must never write a breakpoint change as an un-mediated base style:
+  // drop breakpoint-tagged changes from the file-commit payload here. They are
+  // NOT lost — the Footer copies them to the clipboard as @media on save, and
+  // the "Copy CSS" actions emit them as @media blocks.
   changes = changes.filter((c) => !c.breakpoint);
 
   // Tailwind path: convert CSS diffs to Tailwind classes and target JSX source

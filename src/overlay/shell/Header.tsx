@@ -11,6 +11,7 @@ import { getReactSource } from "../core/sourcemap";
 import type { Scope } from "../core/scope";
 import { getReadableName } from "../core/scope";
 import { StateSelector } from "./StateSelector";
+import { BreakpointSelector } from "./BreakpointSelector";
 import { X, ChevronRight, Pin } from "lucide-react";
 import { color, text, border, surface, font, layout, blackAlpha, primaryAlpha, focusRing } from "../theme";
 import { ms, cssTransition } from "../timing";
@@ -33,6 +34,8 @@ interface HeaderProps {
   activeClassName?: string | null;
   state?: string;
   onStateChange?: (state: string) => void;
+  breakpoint?: string;
+  onBreakpointChange?: (breakpoint: string) => void;
   pinned?: boolean;
   onTogglePin?: () => void;
 }
@@ -53,6 +56,8 @@ export function Header({
   activeClassName,
   state,
   onStateChange,
+  breakpoint,
+  onBreakpointChange,
   pinned = false,
   onTogglePin,
 }: HeaderProps) {
@@ -73,7 +78,7 @@ export function Header({
   const reactSource = getReactSource(element);
   const sourceFile = reactSource?.displayPath ?? null;
 
-  const hasToolbar = (cssClasses.length > 0 && onScopeChange) || (state !== undefined && onStateChange);
+  const hasToolbar = (cssClasses.length > 0 && onScopeChange) || (state !== undefined && onStateChange) || (breakpoint !== undefined && onBreakpointChange);
 
   // How many elements on the page use each class — surfaced as a Webflow-style
   // "used by N elements" reuse signal on the class scope pills. Keyed on the
@@ -363,6 +368,14 @@ export function Header({
                 <div style={{ width: 1, height: 14, marginLeft: 3, marginRight: 3, flexShrink: 0, background: surface.hover }} />
               )}
               <StateSelector value={state} onChange={onStateChange} />
+            </>
+          )}
+          {breakpoint !== undefined && onBreakpointChange && (
+            <>
+              {((cssClasses.length > 0 && onScopeChange) || (state !== undefined && onStateChange)) && (
+                <div style={{ width: 1, height: 14, marginLeft: 3, marginRight: 3, flexShrink: 0, background: surface.hover }} />
+              )}
+              <BreakpointSelector value={breakpoint} onChange={onBreakpointChange} />
             </>
           )}
         </div>

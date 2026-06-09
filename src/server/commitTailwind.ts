@@ -393,16 +393,57 @@ export function findClassNameForChange(
   return { ok: true, match: best };
 }
 
+// Per-process className → relative-file memo for the Turbopack fallback walk
+// (issue #43). The walk is O(files-in-project); a dev session re-saves the same
+// few elements many times, so caching the resolved file turns repeat saves into
+// an O(1) lookup. The entry is VALIDATED on hit (the file is re-checked for the
+// className), so a stale entry simply falls through to a fresh walk — the cache
+// is a pure optimization with no effect on which file is chosen.
+const classNameFileCache = new Map<string, string>();
+
+/** Drop the className→file memo (exported for tests / explicit invalidation). */
+export function clearClassNameFileCache(): void {
+  classNameFileCache.clear();
+}
+
+/** Does `relPath` (relative to projectRoot) still define `className` in a className attribute? */
+async function fileStillHasClassName(
+  projectRoot: string,
+  relPath: string,
+  className: string,
+): Promise<boolean> {
+  try {
+    const content = await readFile(resolve(projectRoot, relPath), "utf-8");
+    if (!content.includes(className)) return false;
+    const lines = content.split("\n");
+    const found = findClassNameAttribute(lines);
+    return !!found && lines[found.lineIdx].slice(found.start, found.end) === className;
+  } catch {
+    return false;
+  }
+}
+
+// Common source roots are visited first so a typical repo resolves before the
+// walk wanders into unrelated trees; ordering is a hint, not a restriction.
+const SOURCE_DIR_PRIORITY = new Set(["src", "app", "pages", "components", "lib", "ui"]);
+
 /**
  * Search project JSX/TSX files for one containing the given className string.
  * Used as a fallback when React _debugSource is unavailable (e.g., Turbopack).
- * Returns the relative file path or null.
+ * Returns the relative file path or null. Memoized per (projectRoot, className).
  */
 async function findFileByClassName(
   projectRoot: string,
   className: string,
 ): Promise<string | null> {
   if (!className) return null;
+
+  const cacheKey = `${projectRoot} ${className}`;
+  const cached = classNameFileCache.get(cacheKey);
+  if (cached !== undefined) {
+    if (await fileStillHasClassName(projectRoot, cached, className)) return cached;
+    classNameFileCache.delete(cacheKey); // stale — fall through to a fresh walk
+  }
 
   const JSX_EXTENSIONS = new Set([".tsx", ".jsx", ".js", ".ts"]);
   const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", ".turbo"]);
@@ -413,34 +454,42 @@ async function findFileByClassName(
       entries = await readdir(dir, { withFileTypes: true });
     } catch { return null; }
 
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        if (SKIP_DIRS.has(entry.name)) continue;
-        const found = await walk(join(dir, entry.name));
-        if (found) return found;
-      } else if (JSX_EXTENSIONS.has(extname(entry.name))) {
-        const filePath = join(dir, entry.name);
-        try {
-          const content = await readFile(filePath, "utf-8");
-          if (content.includes(className)) {
-            // Verify it's actually inside a className attribute
-            const lines = content.split("\n");
-            const found = findClassNameAttribute(lines);
-            if (found) {
-              const foundClasses = lines[found.lineIdx].slice(found.start, found.end);
-              if (foundClasses === className) {
-                // Return path relative to project root
-                return filePath.slice(projectRoot.length + 1);
-              }
+    // Visit prioritized source directories first, then files, then the rest.
+    const dirs = entries.filter((e) => e.isDirectory() && !SKIP_DIRS.has(e.name));
+    dirs.sort((a, b) =>
+      Number(SOURCE_DIR_PRIORITY.has(b.name)) - Number(SOURCE_DIR_PRIORITY.has(a.name)));
+    const files = entries.filter((e) => !e.isDirectory());
+
+    for (const entry of files) {
+      if (!JSX_EXTENSIONS.has(extname(entry.name))) continue;
+      const filePath = join(dir, entry.name);
+      try {
+        const content = await readFile(filePath, "utf-8");
+        if (content.includes(className)) {
+          // Verify it's actually inside a className attribute
+          const lines = content.split("\n");
+          const found = findClassNameAttribute(lines);
+          if (found) {
+            const foundClasses = lines[found.lineIdx].slice(found.start, found.end);
+            if (foundClasses === className) {
+              // Return path relative to project root
+              return filePath.slice(projectRoot.length + 1);
             }
           }
-        } catch { /* unreadable file */ }
-      }
+        }
+      } catch { /* unreadable file */ }
+    }
+
+    for (const entry of dirs) {
+      const found = await walk(join(dir, entry.name));
+      if (found) return found;
     }
     return null;
   }
 
-  return walk(projectRoot);
+  const result = await walk(projectRoot);
+  if (result) classNameFileCache.set(cacheKey, result);
+  return result;
 }
 
 /**
