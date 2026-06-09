@@ -10,6 +10,12 @@ decision** that must be made by a human before implementation can start. Nothing
 should be picked up "cold" by an autonomous agent — they all need a product/design call
 or interactive exploration first.
 
+## Decided — ready to build
+
+| # | Title | Effort | Risk | Status |
+|---|-------|--------|------|--------|
+| [#46](https://github.com/SkylarKitchen/redial/issues/46) | Cascade-provenance style indicators | L | med | **Decided 2026-06-09** ([ADR-0007](docs/adr/0007-cascade-provenance-style-indicators.md)): adopt Webflow-style provenance (blue=authored-here / orange=inherited / pink=element-inline / green=state), superseding the blue/green-only model. Full build spec on the issue; `ready-for-agent`. Needs browser visual QA before close. |
+
 ## Architectural (need a design decision + ADR before work)
 
 | # | Title | Effort | Risk | Blocking decision |
@@ -35,7 +41,6 @@ or interactive exploration first.
 
 | # | Title | Effort | Risk | Decision needed |
 |---|-------|--------|------|-----------------|
-| [#46](https://github.com/SkylarKitchen/redial/issues/46) | Cascade-provenance style indicators | L | med | **Conflicts with a prior explicit decision** (blue/green "dirty"-only dots). Reaffirm that model, or adopt Webflow-style provenance (authored/inherited/inline)? ~65 call-sites if adopted. |
 | [#32](https://github.com/SkylarKitchen/redial/issues/32) | Configurable keyboard shortcuts (stop hijacking Cmd+S/C/Z/F/K) | M | med | API shape (`disabledShortcuts` vs `keyboardConfig`). Hotkey handler is a sensitive seam. |
 | [#33](https://github.com/SkylarKitchen/redial/issues/33) | Dark-mode token set in `theme.ts` | L | med | Amend ADR-0003 (light-only is currently deliberate); pick detection strategy; source dark tokens from the design system. |
 
