@@ -157,14 +157,16 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setCopyOpen(false);
   }, [showMessage]);
 
-  // Append breakpoint @media blocks (#35) to a base CSS string, so responsive
-  // edits export as real @media rules (against the element's real selector)
-  // instead of being flattened into the base rule.
-  const withBreakpointCSS = useCallback(
-    (changes: DiffEntry[], base: string): string => {
-      const bp = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
-      if (!bp) return base;
-      return base ? `${base}\n\n${bp}` : bp;
+  // Compose export CSS: base changes via the chosen formatter, PLUS breakpoint
+  // edits as real @media blocks (#35) against the element's real selector — so
+  // responsive edits aren't flattened into the base rule. The base rule is
+  // omitted entirely when there are no base changes (no empty `sel {}` noise).
+  const composeExportCSS = useCallback(
+    (changes: DiffEntry[], formatBase: (el: Element, c: DiffEntry[]) => string): string => {
+      const base = changes.filter((c) => !c.breakpoint);
+      const baseCSS = base.length ? formatBase(element, base) : "";
+      const bpCSS = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
+      return [baseCSS, bpCSS].filter(Boolean).join("\n\n");
     },
     [element],
   );
@@ -172,16 +174,14 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   const handleCopy = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    const base = changes.filter((c) => !c.breakpoint);
-    copyAndClose(withBreakpointCSS(changes, formatCSSDiff(element, base)), "SCSS");
-  }, [element, copyAndClose, withBreakpointCSS]);
+    copyAndClose(composeExportCSS(changes, formatCSSDiff), "SCSS");
+  }, [element, copyAndClose, composeExportCSS]);
 
   const handleCopyCleanCSS = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    const base = changes.filter((c) => !c.breakpoint);
-    copyAndClose(withBreakpointCSS(changes, formatCleanCSS(element, base)), "CSS");
-  }, [element, copyAndClose, withBreakpointCSS]);
+    copyAndClose(composeExportCSS(changes, formatCleanCSS), "CSS");
+  }, [element, copyAndClose, composeExportCSS]);
 
   const handleCopyTailwind = useCallback(() => {
     const changes = styleEngine.diffElement(element);
@@ -214,7 +214,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     if (!endpoint) {
       // Breakpoint edits export as @media blocks (#35); keep them out of the
       // base rule so they aren't flattened to un-mediated styles.
-      const css = withBreakpointCSS(changes, formatCleanCSS(element, changes.filter((c) => !c.breakpoint)));
+      const css = composeExportCSS(changes, formatCleanCSS);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       const modeCount = getModeOverrideCount();
@@ -278,7 +278,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       }
     } catch {
       // Network error — fall back to clipboard
-      const css = withBreakpointCSS(changes, formatCleanCSS(element, changes.filter((c) => !c.breakpoint)));
+      const css = composeExportCSS(changes, formatCleanCSS);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       navigator.clipboard.writeText(fullCSS).then(() => {
@@ -290,7 +290,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
       setSaving(false);
       savingRef.current = false;
     }
-  }, [element, onSaved, showMessage, scope, activeClassName, activeState, withBreakpointCSS]);
+  }, [element, onSaved, showMessage, scope, activeClassName, activeState, composeExportCSS]);
 
   const handleReset = useCallback(() => {
     // Reset only the selected element's overrides for the active scope/state, and
