@@ -32,11 +32,18 @@ parent's computed value and to authored rules (`getAuthoredValue` already locate
 matching rules). Element scope → all overrides render pink; class scope → rules
 on the active class render blue, ancestor-sourced render orange.
 
-**Open sub-question (resolve during implementation):** provenance and
-"changed-this-session" are orthogonal signals. Preserve a distinct affordance for
-session edits (e.g. retain the existing `isDirty` outline alongside the
-provenance dot) rather than silently dropping it. The implementer must not lose
-the "I edited this" cue when widening the model.
+**Resolved sub-question (2026-06-09 implementation):** provenance and
+"changed-this-session" are orthogonal, so the session cue is kept as a **sixth
+`IndicatorType` member, `"modified"`**, with its own distinct colour
+(`color.warning` amber, visibly different from the blue `authored-here`) rather
+than an outline. The resolver applies a **priority order** —
+`state → modified (isDirty) → element-inline → authored-here → inherited → none`
+— so a property reads as `"modified"` exactly when it is dirty, which is the
+precondition the existing reset affordances already gate on (`indicator ===
+"modified"`). Provenance therefore surfaces only on properties not edited this
+session, the "I edited this" cue is never lost, and no consumer churn was needed
+(the ~12 components that synthesise `"modified"` from a local dirty/set boolean
+keep working unchanged). Final union is 6 members, not 5.
 
 ## Consequences
 

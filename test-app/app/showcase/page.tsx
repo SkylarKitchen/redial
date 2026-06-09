@@ -177,6 +177,10 @@ const tokenRows: { code: string; value: string; figma: string }[] = [
   { code: "surface.hover", value: surface.hover, figma: "colors/surface/hover" },
   { code: "surface.active", value: surface.active, figma: "colors/surface/active" },
   { code: "surface.track", value: surface.track, figma: "colors/surface/track" },
+  { code: "indicatorColor['authored-here']", value: indicatorColor["authored-here"], figma: "colors/indicator/authored-here" },
+  { code: "indicatorColor.inherited", value: indicatorColor.inherited, figma: "colors/indicator/inherited" },
+  { code: "indicatorColor['element-inline']", value: indicatorColor["element-inline"], figma: "colors/indicator/element-inline" },
+  { code: "indicatorColor.state", value: indicatorColor.state, figma: "colors/indicator/state" },
   { code: "indicatorColor.modified", value: indicatorColor.modified, figma: "colors/indicator/modified" },
   { code: "indicatorColor.none", value: indicatorColor.none, figma: "colors/indicator/none" },
   { code: "spacingZone.marginBase", value: spacingZone.marginBase, figma: "colors/spacing/margin" },
@@ -1347,9 +1351,9 @@ export default function ShowcasePage() {
             <div className="swatch"><div className="swatch-box" style={{ background: color.destructive }} /><div className="swatch-name">destructive</div><div className="swatch-value">{color.destructive}</div></div>
           </div>
 
-          <div className="card-label" style={{ marginTop: 12 }}>Indicator Colors</div>
+          <div className="card-label" style={{ marginTop: 12 }}>Indicator Colors — cascade provenance (ADR-0007)</div>
           <div className="swatch-grid">
-            {(["modified", "none"] as const).map((type) => (
+            {(["authored-here", "inherited", "element-inline", "state", "modified", "none"] as const).map((type) => (
               <div key={type} className="swatch"><div className="swatch-box" style={{ width: 32, height: 32, background: indicatorColor[type] }} /><div className="swatch-name">{type}</div><div className="swatch-value">{indicatorColor[type]}</div></div>
             ))}
           </div>
