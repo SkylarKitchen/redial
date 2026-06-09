@@ -1,16 +1,18 @@
 /**
- * breakpointPreview.ts — Live media-gated <style> for breakpoint edits (#35).
+ * breakpointPreview.ts — Live media-gated stylesheet for breakpoint edits (#35).
  *
  * The engine tracks non-base breakpoint edits under a composite key but does NOT
  * write them to the element's inline style (ADR-0005: their media-gated render
  * was deferred to #35). This module is that render: it projects every element's
- * breakpoint-tagged diffs into a single <style id="redial-breakpoint-preview">
- * as `@media` rules, each targeting the element through a stable
- * `[data-redial-bp="N"]` attribute selector.
+ * breakpoint-tagged diffs into the `managedSheet("breakpoint-preview")` sheet
+ * (constructable stylesheet on `document.adoptedStyleSheets`, with a `<style>`
+ * fallback — see ADR-0009) as `@media` rules, each targeting the element
+ * through a stable `[data-redial-bp="N"]` attribute selector.
  *
  * The result is a true media-gated live preview — the responsive edit takes
  * effect exactly when the viewport matches, and the base inline style is never
- * touched. It mirrors the modeOverrides.ts / statePreview.ts <style> pattern.
+ * touched. It mirrors the modeOverrides.ts / statePreview.ts managed-sheet
+ * pattern.
  */
 
 import { diffAll, subscribeOverrides } from "./core/apply";

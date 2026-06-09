@@ -1,9 +1,10 @@
 /**
  * modeOverrides.ts — Runtime CSS variable mode overrides.
  *
- * Manages a <style id="redial-mode-overrides"> element that holds
- * per-selector overrides for CSS custom properties in specific modes.
- * Integrates with the panel's undo/save system via subscription API.
+ * Owns the `managedSheet("mode-overrides")` sheet (constructable stylesheet
+ * on `document.adoptedStyleSheets`, with a `<style>` fallback — see ADR-0009)
+ * that holds per-selector overrides for CSS custom properties in specific
+ * modes. Integrates with the panel's undo/save system via subscription API.
  *
  * Undo is NOT owned here: every mode edit registers a revert/reapply closure on
  * apply.ts's ONE temporal stack via `pushForeignUndo`, so Cmd+Z reverses mode

@@ -1,8 +1,10 @@
 /**
- * statePreview.ts — Pseudo-class style preview via <style> tag injection
+ * statePreview.ts — Pseudo-class style preview via a managed stylesheet
  *
  * Inline styles can't target pseudo-classes (:hover, :focus, etc.).
- * This module manages a <style> tag that injects rules like:
+ * This module owns a `managedSheet("state-preview")` (constructable
+ * stylesheet on `document.adoptedStyleSheets`, with a `<style>` fallback —
+ * see ADR-0009 / managedSheet.ts) that injects rules like:
  *
  *   .__tuner-state-preview:hover {
  *     font-size: 20px !important;

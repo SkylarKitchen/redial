@@ -3,7 +3,9 @@
  *
  * Determines how a style change should be applied:
  * - "element": inline style on the clicked DOM node (default)
- * - "class": write to a <style> tag targeting the CSS modules classname
+ * - "class": write to the `managedSheet("class-scope-overrides")` sheet
+ *   (constructable stylesheet with a `<style>` fallback — see ADR-0009)
+ *   targeting the CSS modules classname
  * - CSS custom properties: detected and editable on their definition scope
  */
 
