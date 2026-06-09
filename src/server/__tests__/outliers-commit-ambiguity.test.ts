@@ -200,11 +200,11 @@ describe("commit ambiguity — minified single-line", () => {
     expect(content).toBe(".a{color:red}.b{color:green}");
   });
 
-  // BUG: with IDENTICAL values, searchClassBlock can't isolate the block on a
-  // single minified line (its `j > blockStart` guard never inspects line 0), so
-  // full-file search returns line 0 and the surgical regex rewrites the FIRST
-  // `color:red` — i.e. .a — even though the user targeted .b.
-  it.fails("minified: editing .b with a value shared by .a must not rewrite .a", async () => {
+  // Fixed (issue #47): searchClassBlock now inspects the brace line itself, and
+  // the surgical replace is confined to the target class's block char-range on
+  // that physical line, so editing .b with a value shared by .a rewrites only
+  // .b — the earlier identical `color:red` in .a is left untouched.
+  it("minified: editing .b with a value shared by .a must not rewrite .a", async () => {
     const filePath = "src/MinDup.module.css";
     await writeFixture(filePath, ".a{color:red}.b{color:red}");
 

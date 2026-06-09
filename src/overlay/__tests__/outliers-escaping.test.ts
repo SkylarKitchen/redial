@@ -45,16 +45,17 @@ describe("isValidCSSClassName — special class names", () => {
   });
 
   // CSS identifiers MAY contain non-ASCII letters per the spec (e.g. `.café`,
-  // `.你好`, RTL `.عنوان`). The predicate is ASCII-only, so all are rejected.
-  // This is a known limitation, not a corruption bug — the rewrite expects the
-  // ACTUAL (false) output so the suite stays green and documents the gap.
-  it("rejects non-Latin / RTL / accented class names (ASCII-only regex)", () => {
-    expect(isValidCSSClassName("café")).toBe(false);
-    expect(isValidCSSClassName("你好")).toBe(false);
-    expect(isValidCSSClassName("عنوان")).toBe(false);
-    expect(isValidCSSClassName("Über")).toBe(false);
+  // `.你好`, RTL `.عنوان`). The predicate is now Unicode-aware (\p{L}, issue
+  // #50), so non-Latin / RTL / accented LETTER names are accepted.
+  it("accepts non-Latin / RTL / accented class names (Unicode-aware)", () => {
+    expect(isValidCSSClassName("café")).toBe(true);
+    expect(isValidCSSClassName("你好")).toBe(true);
+    expect(isValidCSSClassName("عنوان")).toBe(true);
+    expect(isValidCSSClassName("Über")).toBe(true);
   });
 
+  // Emoji / symbols (\p{So}) are NOT letters and remain rejected — the
+  // Unicode-aware grammar admits scripts, not pictographs (issue #50).
   it("rejects emoji class names", () => {
     expect(isValidCSSClassName("emoji-🎨")).toBe(false);
     expect(isValidCSSClassName("🎨")).toBe(false);
@@ -117,11 +118,11 @@ describe("isValidCSSProp — prefixes and custom properties", () => {
     expect(isValidCSSProp("ZINDEX")).toBe(false);
   });
 
-  // An emoji or non-ASCII custom-property tail is rejected. Documents the
-  // ASCII-only `\w` semantics (no Unicode flag).
-  it("rejects a non-ASCII custom property tail", () => {
+  // The custom-property name is now Unicode-aware (issue #50): a non-ASCII
+  // LETTER tail is accepted, while an emoji/symbol tail is still rejected.
+  it("accepts a non-ASCII letter custom property tail but rejects an emoji tail", () => {
     expect(isValidCSSProp("--🎨")).toBe(false);
-    expect(isValidCSSProp("--brändchen")).toBe(false);
+    expect(isValidCSSProp("--brändchen")).toBe(true);
   });
 });
 
@@ -262,11 +263,11 @@ describe("handleCommit — class/prop name escaping & substring collisions", () 
     expect(after).toContain("color: red;");
   });
 
-  // Unicode class name → rejected by the validation gate, file left untouched
-  // and the change reported in `failed`. Honest degradation, asserted as such.
-  it("rejects a unicode class name and leaves the file untouched", async () => {
+  // Unicode (letter) class name → now accepted by the Unicode-aware validation
+  // gate (issue #50): the .café rule is located and the value rewritten.
+  it("writes through a unicode (letter) class name", async () => {
     const F = "src/Cafe.module.scss";
-    const original = await writeFixture(
+    await writeFixture(
       F,
       [".café {", "  color: blue;", "}"].join("\n"),
     );
@@ -276,10 +277,9 @@ describe("handleCommit — class/prop name escaping & substring collisions", () 
       tempDir,
     );
 
-    expect(r.written).toHaveLength(0);
-    expect(r.failed).toHaveLength(1);
-    expect(r.failed[0].reason).toMatch(/invalid CSS class name/);
-    expect(await readFile(join(tempDir, F), "utf-8")).toBe(original);
+    expect(r.failed).toHaveLength(0);
+    expect(r.written).toHaveLength(1);
+    expect(await readFile(join(tempDir, F), "utf-8")).toContain("color: red;");
   });
 
   // A content value with an emoji / `>` arrow is valid CSS and must be written

@@ -9,16 +9,36 @@
  */
 
 /**
- * CSS property name: a custom property (`--foo`) or a kebab ident, allowing a
- * leading vendor hyphen (`-webkit-transform`).
+ * Character-class body (no surrounding brackets) for the "name" code points of a
+ * CSS identifier: Unicode letters, numbers, and combining marks, plus `_` and
+ * `-`. Uses Unicode property escapes, so any regex built from it MUST carry the
+ * `u` flag. Sharing one fragment keeps the client validators, the inference-side
+ * var() parsers, and the server commit path from drifting on what counts as a
+ * valid i18n identifier (café, 你好, عنوان, --primário). Letters/marks accept
+ * non-ASCII scripts; emoji and other symbols (\p{So}) are intentionally excluded
+ * — a tuning tool need not author emoji class names, and \p{L} avoids the
+ * lone-surrogate pitfalls of a raw BMP range. See issue #50.
+ */
+export const CSS_NAME_CHARS = "\\p{L}\\p{N}\\p{M}_-";
+/** Start code points for a CSS ident (no digits, no marks): a letter or `_`. */
+const CSS_NAME_START = "_\\p{L}";
+
+const CUSTOM_PROP_RE = new RegExp(`^--[${CSS_NAME_CHARS}]+$`, "u");
+const CLASS_NAME_RE = new RegExp(`^-?[${CSS_NAME_START}][${CSS_NAME_CHARS}]*$`, "u");
+
+/**
+ * CSS property name: a custom property (`--foo`, including non-ASCII names) or a
+ * kebab ident, allowing a leading vendor hyphen (`-webkit-transform`). Standard
+ * property names are always ASCII, so only the custom-property branch is
+ * Unicode-aware.
  */
 export function isValidCSSProp(prop: string): boolean {
-  return /^--[\w-]+$/.test(prop) || /^-?[a-z][a-z-]*$/.test(prop);
+  return CUSTOM_PROP_RE.test(prop) || /^-?[a-z][a-z-]*$/.test(prop);
 }
 
 /** A single CSS class identifier (no braces, semicolons, or whitespace). */
 export function isValidCSSClassName(name: string): boolean {
-  return /^-?[_a-zA-Z][\w-]*$/.test(name);
+  return CLASS_NAME_RE.test(name);
 }
 
 /**

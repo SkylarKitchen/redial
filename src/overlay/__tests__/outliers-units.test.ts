@@ -285,10 +285,10 @@ describe("parseBoxShadow — non-px offsets & exotic numbers", () => {
     expect(result[0]).toMatchObject({ x: -2, y: -4, blur: 6, spread: 0 });
   });
 
-  // BUG: shadow offsets can be specified in em/rem (e.g. "0.5em 0.25em 1em"),
-  // but parseBoxShadow strips the unit with parseFloat and the serializer
-  // re-emits everything as px. 0.5em (8px at 16px font) silently becomes 0.5px.
-  it.fails("preserves the em unit on a shadow offset", () => {
+  // Fixed (issue #48): shadow offsets specified in em/rem (e.g. "0.5em 0.25em
+  // 1em") are normalized to px at the 16px root font size rather than having
+  // the unit stripped by parseFloat (which silently turned 0.5em into 0.5px).
+  it("preserves the em unit on a shadow offset", () => {
     // We assert that the numeric magnitude reflects the em→px conversion the
     // user intended (0.5em = 8px), proving the unit was honored rather than
     // dropped. The current code keeps the bare number 0.5 and forgets it was em.

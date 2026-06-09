@@ -9,8 +9,8 @@
  * Falls back gracefully for SCSS variables, calc(), etc.
  */
 
-import { readFile, writeFile, readdir, stat } from "fs/promises";
-import { resolve, join, basename, normalize } from "path";
+import { readFile, writeFile, readdir, stat, realpath } from "fs/promises";
+import { resolve, join, basename, normalize, sep } from "path";
 import { trySourceMapResolution } from "./sourceMapCache";
 import {
   isValidCSSProp,
@@ -72,6 +72,26 @@ function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
   const normalizedPath = normalize(resolvedPath);
   if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
     throw new Error("Path traversal detected: resolved path escapes project root");
+  }
+}
+
+/**
+ * Resolve `candidate` through symlinks and verify its REAL location stays within
+ * the (also symlink-resolved) project root. Unlike the string-only
+ * assertWithinRoot, this defeats a symlink whose target escapes the root — e.g.
+ * a repo shipping `styles.module.css -> ~/.ssh/authorized_keys` (issue #22).
+ * Returns false when the path can't be resolved (missing/broken link).
+ */
+export async function isRealPathWithinRoot(
+  candidate: string,
+  projectRoot: string,
+): Promise<boolean> {
+  try {
+    const realRoot = await realpath(projectRoot);
+    const realCandidate = await realpath(candidate);
+    return realCandidate === realRoot || realCandidate.startsWith(realRoot + sep);
+  } catch {
+    return false;
   }
 }
 
@@ -242,12 +262,13 @@ const EXCLUDE_DIRS = new Set([
 
 /**
  * Recursively search for a file by basename, excluding common build dirs.
- * Returns the first match, preferring paths that contain the componentName.
+ * `root` is the project root used to reject any match whose real (symlink-
+ * resolved) location escapes it (issue #22); it stays constant across recursion.
  */
 async function findFileRecursive(
   dir: string,
   target: string,
-  componentHint?: string
+  root: string
 ): Promise<string[]> {
   const results: string[] = [];
   try {
@@ -260,9 +281,17 @@ async function findFileRecursive(
       const normalizedDir = normalize(dir);
       if (!normalizedFull.startsWith(normalizedDir + "/")) continue;
       if (entry.isDirectory()) {
-        results.push(...await findFileRecursive(full, target, componentHint));
+        // Only descend into real in-root directories — never follow a symlinked
+        // directory whose target lies outside the project root.
+        if (await isRealPathWithinRoot(full, root)) {
+          results.push(...await findFileRecursive(full, target, root));
+        }
       } else if (entry.name === target) {
-        results.push(full);
+        // A name match is only accepted if its real location is in-root, so a
+        // symlinked-out file masquerading as a stylesheet is rejected.
+        if (await isRealPathWithinRoot(full, root)) {
+          results.push(full);
+        }
       }
     }
   } catch {
@@ -309,14 +338,16 @@ export async function resolveSourceFile(
   assertWithinRoot(direct, projectRoot);
   try {
     await stat(direct);
-    return direct;
+    // Reject a direct path that is a symlink escaping the root (issue #22);
+    // fall through to the recursive search rather than returning it.
+    if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
   } catch {
     // Not found at direct path — search recursively
   }
 
   // Search by exact filename
   const target = basename(sourceFile);
-  const matches = await findFileRecursive(projectRoot, target);
+  const matches = await findFileRecursive(projectRoot, target, projectRoot);
 
   if (matches.length === 1) return matches[0];
 
@@ -333,7 +364,7 @@ export async function resolveSourceFile(
   // Try variant extensions if we have a component hint
   if (componentName) {
     for (const ext of [".module.scss", ".module.css"]) {
-      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`);
+      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`, projectRoot);
       if (variants.length > 0) return variants[0];
     }
   }
@@ -344,7 +375,7 @@ export async function resolveSourceFile(
     for (const ext of [".css", ".scss"]) {
       const globalTarget = `${baseName}${ext}`;
       if (globalTarget === target) continue; // already tried
-      const globalMatches = await findFileRecursive(projectRoot, globalTarget);
+      const globalMatches = await findFileRecursive(projectRoot, globalTarget, projectRoot);
       if (globalMatches.length > 0) return globalMatches[0];
     }
   }
@@ -357,6 +388,13 @@ export async function resolveSourceFile(
 type FindResult = {
   lineIdx: number;
   strategy: "window" | "class-block" | "full-file" | "fuzzy";
+  /**
+   * Optional character span [start, end) on `lineIdx` to which a surgical
+   * replacement must be confined. Set for minified/same-line CSS where several
+   * class blocks share one physical line and an identical declaration in an
+   * earlier sibling block would otherwise be rewritten (issue #47).
+   */
+  range?: [number, number];
 };
 
 /**
@@ -429,8 +467,12 @@ function searchClassBlock(
         if (ch === "}") depth--;
       }
 
-      // Search within the block for our property
-      if (j > blockStart && depth >= 0) {
+      // Search within the block for our property. The brace line itself
+      // (j === blockStart) is inspected too, so an all-on-one-line minified
+      // block whose declaration shares the line with the `{` is found rather
+      // than skipped (issue #47); a multi-line selector line carries no
+      // `prop: value`, so this is a no-op there.
+      if (depth >= 0) {
         if (lineHasDecl(lines[j], prop, value)) {
           return j;
         }
@@ -441,6 +483,34 @@ function searchClassBlock(
   }
 
   return null;
+}
+
+/**
+ * For minified/same-line CSS, return the character span [start, end) of the
+ * BODY of `.className { ... }` on a single physical line — the region between
+ * the block's opening `{` and its matching `}`. Used to confine a surgical
+ * replacement to the targeted block so an identical declaration in an earlier
+ * sibling block on the same line isn't rewritten (issue #47). Returns null when
+ * the class/brace aren't present or the block doesn't close on this one line.
+ */
+function classBlockBodyRangeOnLine(
+  maskedLine: string,
+  className: string
+): [number, number] | null {
+  const classRe = new RegExp(`\\.${escapeRegex(className)}\\s*\\{`);
+  const m = classRe.exec(maskedLine);
+  if (!m) return null;
+  const braceIdx = maskedLine.indexOf("{", m.index);
+  if (braceIdx === -1) return null;
+  let depth = 0;
+  for (let k = braceIdx; k < maskedLine.length; k++) {
+    if (maskedLine[k] === "{") depth++;
+    else if (maskedLine[k] === "}") {
+      depth--;
+      if (depth === 0) return [braceIdx + 1, k]; // body between the braces
+    }
+  }
+  return null; // block doesn't close on this line
 }
 
 /**
@@ -886,7 +956,14 @@ export function findPropertyInFile(
   // Tier 2: Class-scoped search (if we know the CSS class)
   if (className) {
     const idx = searchClassBlock(masked, className, prop, value);
-    if (idx != null) return { lineIdx: idx, strategy: "class-block" };
+    if (idx != null) {
+      // If the target class's block opens AND closes on this same physical
+      // line (minified CSS), confine the later surgical replacement to that
+      // block's body so a sibling block's identical declaration earlier on the
+      // line isn't the one rewritten (issue #47).
+      const range = classBlockBodyRangeOnLine(masked[idx], className) ?? undefined;
+      return { lineIdx: idx, strategy: "class-block", range };
+    }
   }
 
   // Tier 3: Full-file search (prop + value anywhere)
@@ -951,6 +1028,19 @@ export async function handleCommit(
           }
           continue;
         }
+      }
+
+      // Final chokepoint guard (issue #22): never read/write a resolved path
+      // whose real (symlink-resolved) location escapes the project root. Covers
+      // every resolution branch, including the var-definition-file fallback.
+      if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
+        for (const change of fileChanges) {
+          result.failed.push({
+            ...change,
+            reason: `resolved path escapes project root: "${sourceFile}"`,
+          });
+        }
+        continue;
       }
 
       const source = await readFile(filePath, "utf-8");
@@ -1097,13 +1187,24 @@ export async function handleCommit(
         // `background-color` even if both share a line.
         const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
 
-        if (pattern.test(lines[found.lineIdx])) {
+        // When a char range is set (minified same-line block, issue #47),
+        // confine the match+replace to that block's body so an identical sibling
+        // declaration earlier on the line is left untouched. The range is
+        // computed on the masked view, which is same-length as `lines`.
+        const range = found.range;
+        const segment = range
+          ? lines[found.lineIdx].slice(range[0], range[1])
+          : lines[found.lineIdx];
+
+        if (pattern.test(segment)) {
           // Escape $ in replacement to prevent regex backreference interpretation
           const safeValue = change.to.replace(/\$/g, "$$$$");
-          lines[found.lineIdx] = lines[found.lineIdx].replace(
-            pattern,
-            `$1$2${safeValue}`
-          );
+          const replaced = segment.replace(pattern, `$1$2${safeValue}`);
+          lines[found.lineIdx] = range
+            ? lines[found.lineIdx].slice(0, range[0]) +
+              replaced +
+              lines[found.lineIdx].slice(range[1])
+            : replaced;
           modified = true;
           remask();
         } else if (found.strategy === "fuzzy") {

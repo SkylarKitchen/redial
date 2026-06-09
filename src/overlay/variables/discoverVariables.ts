@@ -6,6 +6,8 @@
  * and the GlobalVariablesPanel.
  */
 
+import { CSS_NAME_CHARS } from "../../lib/css";
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 export type VarSource = "element" | "inherited" | "root";
@@ -74,7 +76,9 @@ export function detectVarType(value: string): { type: VarType; numericValue?: nu
 // The `var` keyword is case-insensitive in CSS (VAR(--a) is valid), so use the
 // `i` flag. NOTE: the name class stays [\w-] (ASCII) — non-ASCII names are a
 // separate i18n concern.
-const ALIAS_RE = /^\s*var\(\s*(--[\w-]+)\s*(?:,\s*(.*))?\)\s*$/is;
+// Custom-property name uses the shared Unicode-aware name-char class so an i18n
+// alias target like --primário is recognized (issue #50).
+const ALIAS_RE = new RegExp(`^\\s*var\\(\\s*(--[${CSS_NAME_CHARS}]+)\\s*(?:,\\s*(.*))?\\)\\s*$`, "isu");
 // Strips a trailing `!important` (with surrounding whitespace) from a value.
 const IMPORTANT_RE = /\s*!important\s*$/i;
 

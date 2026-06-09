@@ -7,6 +7,7 @@
 
 import { readFile, writeFile, stat, readdir } from "fs/promises";
 import { resolve, normalize, join, extname } from "path";
+import { isRealPathWithinRoot } from "./commit";
 
 export type TailwindChange = {
   sourceFile: string;
@@ -164,6 +165,13 @@ export function mergeClasses(existing: string, newClasses: string): string {
   if (newList.length === 0) return existing;
   if (existingList.length === 0) return newClasses;
 
+  // Collapse pre-existing intra-string conflicts: when the existing string
+  // already carries two members of the same utility group (a hand-written
+  // "p-2 p-4"), keep only the LAST in its original position so the contradiction
+  // isn't carried forward on every edit (issue #49). Without this, a duplicate
+  // only gets resolved when the NEW set happens to touch that group.
+  const dedupedExisting = dedupeUtilityGroups(existingList);
+
   // Build a set of groups from the new classes
   const newGroups = new Map<string, string>();
   for (const cls of newList) {
@@ -171,12 +179,22 @@ export function mergeClasses(existing: string, newClasses: string): string {
   }
 
   // Filter out existing classes that conflict with new ones
-  const kept = existingList.filter(
+  const kept = dedupedExisting.filter(
     (cls) => !newGroups.has(getUtilityGroup(cls))
   );
 
   // Append the new classes
   return [...kept, ...newList].join(" ");
+}
+
+/**
+ * Keep only the last occurrence of each utility group, preserving order at that
+ * last position. e.g. ["p-2","p-4","flex"] → ["p-4","flex"].
+ */
+function dedupeUtilityGroups(list: string[]): string[] {
+  const lastIndexByGroup = new Map<string, number>();
+  list.forEach((cls, i) => lastIndexByGroup.set(getUtilityGroup(cls), i));
+  return list.filter((cls, i) => lastIndexByGroup.get(getUtilityGroup(cls)) === i);
 }
 
 export type ClassNameMatch = {
@@ -468,6 +486,12 @@ export async function handleTailwindCommit(
 
       // Verify file exists
       await stat(filePath);
+
+      // Reject a resolved path that is a symlink escaping the root (issue #22),
+      // so a malicious repo can't redirect a className write outside the project.
+      if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
+        throw new Error("Path traversal detected: resolved path escapes project root");
+      }
 
       const source = await readFile(filePath, "utf-8");
       const lines = source.split("\n");

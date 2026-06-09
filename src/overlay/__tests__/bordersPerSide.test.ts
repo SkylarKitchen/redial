@@ -86,17 +86,20 @@ function sideButton(container: HTMLElement, side: string): HTMLElement {
 
 /**
  * Get the border width input value.
- * The Width row has a LabelScrub with "Width" text, and the ValueInput is nearby.
- * We identify it by finding the input inside the section that is NOT the radius input.
+ *
+ * Both the Radius row and the Width row render a `ValueInput`, which carries
+ * `aria-label="Value"`. (The radius row also renders a range `<input>` Slider,
+ * so a positional `querySelectorAll("input")[n]` is brittle — selecting by the
+ * semantic aria-label is stable against that layout.) In document order the
+ * radius ValueInput is first and the width ValueInput is second.
  */
 function getBorderWidthInput(container: HTMLElement): HTMLInputElement {
-  // The border controls are in a flex column after the side selector.
-  // Look for all inputs — the first is the radius input, the second is the width input.
-  const inputs = container.querySelectorAll("input");
-  // With forceOpen, we should see the radius input and the width input.
-  // The width input is the second one.
-  if (inputs.length < 2) throw new Error(`Expected at least 2 inputs, found ${inputs.length}`);
-  return inputs[1] as HTMLInputElement;
+  const valueInputs = container.querySelectorAll<HTMLInputElement>('input[aria-label="Value"]');
+  // [0] = radius ValueInput, [1] = width ValueInput.
+  if (valueInputs.length < 2) {
+    throw new Error(`Expected at least 2 ValueInputs, found ${valueInputs.length}`);
+  }
+  return valueInputs[1];
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────

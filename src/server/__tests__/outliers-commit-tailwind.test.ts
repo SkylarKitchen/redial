@@ -133,7 +133,7 @@ describe("mergeClasses — exotic value conflict resolution", () => {
   // BOTH p-2 and p-4 in place — the function never dedups pre-existing
   // intra-string conflicts. This test asserts the (arguably) desired
   // dedup-on-touch behavior and currently fails.
-  it.fails(
+  it(
     "collapses a pre-existing p-2/p-4 conflict to the last one when other classes are merged",
     () => {
       // Existing has BOTH p-2 and p-4; we add an unrelated class.

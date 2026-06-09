@@ -73,10 +73,10 @@ describe("parseVarAlias — outlier inputs", () => {
     });
   });
 
-  // BUG: CSS custom-property names may contain non-ASCII characters, but the
-  // [\w-] character class only matches ASCII word chars, so a valid unicode
-  // variable like --primário is never parsed as an alias.
-  it.fails("parses a var() referencing a non-ASCII custom property name", () => {
+  // Fixed (issue #50): CSS custom-property names may contain non-ASCII
+  // characters. The var() parsers now use a shared Unicode-aware name-char
+  // class, so a valid unicode variable like --primário parses as an alias.
+  it("parses a var() referencing a non-ASCII custom property name", () => {
     expect(parseVarAlias("var(--primário)")).toEqual({
       target: "--primário",
       fallback: undefined,
