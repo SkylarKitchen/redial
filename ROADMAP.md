@@ -25,7 +25,7 @@ or interactive exploration first.
 | # | Title | Effort | Risk | Blocking decision |
 |---|-------|--------|------|-------------------|
 | [#14](https://github.com/SkylarKitchen/redial/issues/14) | Unified Style Engine (RFC, Phase 4 + Item C) | XL | high | Phase 1 facade is live. Phase 4 rewrites the temporal undo/redo core (issue forbids unattended work). Item C (breakpoint dimension shape) must be recorded as an ADR first. |
-| [#30](https://github.com/SkylarKitchen/redial/issues/30) | Shadow DOM / iframe isolation | XL | high | Choose Shadow DOM vs iframe (opposite trade-offs). ~23 portal sites affected. Payoff only verifiable by manual integration testing. |
+| [#30](https://github.com/SkylarKitchen/redial/issues/30) | Shadow DOM / iframe isolation | XL | high | Decision-ready draft: [ADR-0008](docs/adr/0008-shadow-dom-overlay-isolation.md) (Proposed) recommends **Shadow DOM** from a full inventory (24 portal sites, ~50 document listeners, 25 cross-realm `instanceof` checks). Awaiting maintainer sign-off; payoff still only verifiable by manual integration testing. |
 | [#31](https://github.com/SkylarKitchen/redial/issues/31) | CSP compatibility (no runtime `<style>` injection under strict CSP) | L | med | Pick path: documentation (S) / nonce threading (M) / static CSS extraction (XL). |
 | [#36](https://github.com/SkylarKitchen/redial/issues/36) | Commit-pipeline robustness (SCSS vars, `calc()`, mixed colors) | XL | med | Current pipeline already refuses/escapes these safely. SCSS-AST strategy + dry-run response shape need specs. |
 | [#37](https://github.com/SkylarKitchen/redial/issues/37) | Pseudo-element support (`::before`/`::after`/`::placeholder`) | XL | high | 5 open design questions (no live preview path for generated content). |
