@@ -141,19 +141,20 @@ export function subscribeOverrides(callback: () => void): () => void {
 }
 
 /**
- * Return the current count of dirty overrides (where initial !== current) for
- * elements still in the document. Used as the snapshot value for `useSyncExternalStore`.
+ * Return the current count of dirty overrides (where initial !== current).
+ * Used as the snapshot value for `useSyncExternalStore`.
+ *
+ * Returns the O(1) maintained `dirtyCount` rather than iterating the
+ * overrides map: this runs on every subscriber for every notifyListeners()
+ * call — hundreds of times per second during a scrub — and the old walk also
+ * forced a DOM lookup (`document.contains`) per touched element. Entries for
+ * removed elements are pruned by the mutation paths (reset, stripAllOverrides,
+ * clearRedundantOverrides); a transient over-count between element teardown
+ * and the next mutation is harmless because every mutation re-notifies.
  * @returns The number of active dirty overrides.
  */
 export function getOverrideSnapshot(): number {
-  let count = 0;
-  for (const [el, props] of overrides) {
-    if (!document.contains(el)) continue;
-    for (const [, { initial, current }] of props) {
-      if (initial !== current) count++;
-    }
-  }
-  return count;
+  return dirtyCount;
 }
 
 function notifyListeners() {

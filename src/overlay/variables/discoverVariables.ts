@@ -124,6 +124,19 @@ export function discoverVariables(element: Element): CSSVariable[] {
     try {
       walkRules(sheet.cssRules, (rule) => {
         const isRoot = rule.selectorText === ":root" || rule.selectorText === "html";
+
+        // Cheap pre-filter: skip element.matches() (full selector engine) for
+        // rules that don't declare any --* property. Most stylesheets are
+        // 90%+ non-variable rules, so this avoids the selector engine for
+        // nearly every rule on a real project.
+        if (!isRoot) {
+          let hasCustomProp = false;
+          for (let i = 0; i < rule.style.length; i++) {
+            if (rule.style[i].startsWith("--")) { hasCustomProp = true; break; }
+          }
+          if (!hasCustomProp) return;
+        }
+
         let matchesEl = false;
         if (!isRoot) {
           try { matchesEl = element.matches(rule.selectorText); } catch { /* invalid selector */ }
@@ -488,7 +501,8 @@ export function replaceVarReferences(oldName: string, newName: string): number {
   const re = new RegExp(`var\\(\\s*${escaped}\\s*(,|\\))`, "g");
   let count = 0;
 
-  // Replace in stylesheets
+  // Replace in stylesheets. A single .replace() with a string compare instead
+  // of test() + replace() — the latter runs the regex twice over every value.
   for (const sheet of Array.from(document.styleSheets)) {
     try {
       walkRules(sheet.cssRules, (rule) => {
@@ -496,9 +510,8 @@ export function replaceVarReferences(oldName: string, newName: string): number {
           const prop = rule.style[i];
           const value = rule.style.getPropertyValue(prop);
           re.lastIndex = 0;
-          if (re.test(value)) {
-            re.lastIndex = 0;
-            const newValue = value.replace(re, `var(${newName}$1`);
+          const newValue = value.replace(re, `var(${newName}$1`);
+          if (newValue !== value) {
             rule.style.setProperty(prop, newValue);
             count++;
           }
@@ -517,9 +530,8 @@ export function replaceVarReferences(oldName: string, newName: string): number {
       const prop = htmlEl.style[i];
       const value = htmlEl.style.getPropertyValue(prop);
       re.lastIndex = 0;
-      if (re.test(value)) {
-        re.lastIndex = 0;
-        const newValue = value.replace(re, `var(${newName}$1`);
+      const newValue = value.replace(re, `var(${newName}$1`);
+      if (newValue !== value) {
         htmlEl.style.setProperty(prop, newValue);
         count++;
       }

@@ -63,4 +63,19 @@ describe("subscribeScrubState", () => {
     expect(a).toHaveBeenCalledTimes(1);
     expect(b).toHaveBeenCalledTimes(1);
   });
+
+  it("does NOT notify when a setter receives the value it already holds", () => {
+    // Hover handlers can fire setHoverGroup("margin") on every mousemove
+    // within the same group; without this guard each call would schedule a
+    // re-measure in every subscribed overlay.
+    const cb = vi.fn();
+    subscribeScrubState(cb);
+    setScrubGroup("margin");
+    setScrubGroup("margin");
+    setScrubGroup("margin");
+    expect(cb).toHaveBeenCalledTimes(1);
+    setHoverGroup(null); // already null
+    setScrubActive(false); // already false
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
 });

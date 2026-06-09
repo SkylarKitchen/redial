@@ -7,7 +7,7 @@
  * LRU cache (max 50 entries) prevents re-parsing on repeated saves.
  */
 
-import { readFileSync, existsSync } from "fs";
+import { readFileSync } from "fs";
 import { resolve, join, dirname, relative } from "path";
 import { TraceMap, originalPositionFor } from "@jridgewell/trace-mapping";
 
@@ -63,16 +63,18 @@ export function getSourceMap(
   if (cached) return cached;
 
   const mapPath = compiledCssPath + ".map";
-  if (!existsSync(mapPath)) return null;
 
   try {
+    // No existsSync pre-check: readFileSync throws ENOENT for a missing map,
+    // which the catch already handles — one syscall instead of two, and no
+    // TOCTOU window between the check and the read.
     const raw = readFileSync(mapPath, "utf-8");
     const parsed = JSON.parse(raw);
     const map = new TraceMap(parsed);
     lruSet(compiledCssPath, map);
     return map;
   } catch {
-    // Malformed map file — skip
+    // Missing or malformed map file — skip
     return null;
   }
 }
