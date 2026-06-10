@@ -46,7 +46,7 @@ async function findCSSFiles(dir: string): Promise<string[]> {
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
-      if (EXCLUDE_DIRS.has(entry.name)) continue;
+      if (EXCLUDED_DIRS.has(entry.name)) continue;
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
         results.push(...await findCSSFiles(full));
@@ -63,38 +63,6 @@ const VALID_STATES = new Set([
   "hover", "focus", "active", "visited",
   "focus-within", "focus-visible", "first-child", "last-child",
 ]);
-
-/**
- * Ensure a resolved path is contained within the project root.
- * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
- */
-function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
-  const normalizedRoot = normalize(projectRoot);
-  const normalizedPath = normalize(resolvedPath);
-  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
-    throw new Error("Path traversal detected: resolved path escapes project root");
-  }
-}
-
-/**
- * Resolve `candidate` through symlinks and verify its REAL location stays within
- * the (also symlink-resolved) project root. Unlike the string-only
- * assertWithinRoot, this defeats a symlink whose target escapes the root — e.g.
- * a repo shipping `styles.module.css -> ~/.ssh/authorized_keys` (issue #22).
- * Returns false when the path can't be resolved (missing/broken link).
- */
-export async function isRealPathWithinRoot(
-  candidate: string,
-  projectRoot: string,
-): Promise<boolean> {
-  try {
-    const realRoot = await realpath(projectRoot);
-    const realCandidate = await realpath(candidate);
-    return realCandidate === realRoot || realCandidate.startsWith(realRoot + sep);
-  } catch {
-    return false;
-  }
-}
 
 export type CommitChange = {
   prop: string;
@@ -257,42 +225,28 @@ function lineHasDecl(maskedLine: string, prop: string, value: string): boolean {
 
 // --- File resolution ---
 
-const EXCLUDE_DIRS = new Set([
-  "node_modules", ".next", "dist", ".git", "build", "out", ".turbo",
-]);
-
 /**
  * Recursively search for a file by basename, excluding common build dirs.
- * `root` is the project root used to reject any match whose real (symlink-
- * resolved) location escapes it (issue #22); it stays constant across recursion.
+ * Symlinks are never followed (issue #22) — a symlinked dir or file could
+ * point outside the project root, so the walk only sees real entries. The
+ * symlink-resolved chokepoint guard in handleCommit remains the load-bearing
+ * containment layer before any read/write.
  */
 async function findFileRecursive(
   dir: string,
-  target: string,
-  root: string
+  target: string
 ): Promise<string[]> {
   const results: string[] = [];
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
-      if (EXCLUDE_DIRS.has(entry.name)) continue;
+      if (EXCLUDED_DIRS.has(entry.name)) continue;
+      if (entry.isSymbolicLink()) continue;
       const full = join(dir, entry.name);
-      // Ensure symlinks or unusual names don't escape the starting directory
-      const normalizedFull = normalize(full);
-      const normalizedDir = normalize(dir);
-      if (!normalizedFull.startsWith(normalizedDir + "/")) continue;
       if (entry.isDirectory()) {
-        // Only descend into real in-root directories — never follow a symlinked
-        // directory whose target lies outside the project root.
-        if (await isRealPathWithinRoot(full, root)) {
-          results.push(...await findFileRecursive(full, target, root));
-        }
+        results.push(...await findFileRecursive(full, target));
       } else if (entry.name === target) {
-        // A name match is only accepted if its real location is in-root, so a
-        // symlinked-out file masquerading as a stylesheet is rejected.
-        if (await isRealPathWithinRoot(full, root)) {
-          results.push(full);
-        }
+        results.push(full);
       }
     }
   } catch {
@@ -328,15 +282,9 @@ export async function resolveSourceFile(
     }
   }
 
-  // Reject path traversal attempts early
-  const segments = sourceFile.split(/[/\\]/);
-  if (segments.includes("..")) {
-    throw new Error("Path traversal detected: sourceFile contains '..' segment");
-  }
-
-  // Try direct resolution first
-  const direct = resolve(projectRoot, sourceFile);
-  assertWithinRoot(direct, projectRoot);
+  // Reject path traversal attempts early ("..": throw; string containment:
+  // throw) and resolve the direct candidate confined to the root.
+  const direct = resolveSafe(projectRoot, sourceFile);
   try {
     await stat(direct);
     // Reject a direct path that is a symlink escaping the root (issue #22);
@@ -348,7 +296,7 @@ export async function resolveSourceFile(
 
   // Search by exact filename
   const target = basename(sourceFile);
-  const matches = await findFileRecursive(projectRoot, target, projectRoot);
+  const matches = await findFileRecursive(projectRoot, target);
 
   if (matches.length === 1) return matches[0];
 
@@ -365,7 +313,7 @@ export async function resolveSourceFile(
   // Try variant extensions if we have a component hint
   if (componentName) {
     for (const ext of [".module.scss", ".module.css"]) {
-      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`, projectRoot);
+      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`);
       if (variants.length > 0) return variants[0];
     }
   }
@@ -376,7 +324,7 @@ export async function resolveSourceFile(
     for (const ext of [".css", ".scss"]) {
       const globalTarget = `${baseName}${ext}`;
       if (globalTarget === target) continue; // already tried
-      const globalMatches = await findFileRecursive(projectRoot, globalTarget, projectRoot);
+      const globalMatches = await findFileRecursive(projectRoot, globalTarget);
       if (globalMatches.length > 0) return globalMatches[0];
     }
   }

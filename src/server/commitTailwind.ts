@@ -6,8 +6,8 @@
  */
 
 import { readFile, writeFile, stat, readdir } from "fs/promises";
-import { resolve, normalize, join, extname } from "path";
-import { isRealPathWithinRoot } from "./commit";
+import { resolve, join, extname } from "path";
+import { EXCLUDED_DIRS, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
 
 export type TailwindChange = {
   sourceFile: string;
@@ -20,23 +20,6 @@ export type TailwindCommitResult = {
   written: string[];
   failed: Array<TailwindChange & { reason: string }>;
 };
-
-/**
- * Ensure a resolved path is contained within the project root.
- * Prevents path traversal attacks.
- */
-function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
-  const normalizedRoot = normalize(projectRoot);
-  const normalizedPath = normalize(resolvedPath);
-  if (
-    !normalizedPath.startsWith(normalizedRoot + "/") &&
-    normalizedPath !== normalizedRoot
-  ) {
-    throw new Error(
-      "Path traversal detected: resolved path escapes project root"
-    );
-  }
-}
 
 /**
  * Known single-segment Tailwind utility prefixes.
@@ -422,7 +405,7 @@ async function findFileByClassName(
 ): Promise<string | null> {
   if (!className) return null;
 
-  const cacheKey = `${projectRoot} ${className}`;
+  const cacheKey = `${projectRoot}\0${className}`;
   const cached = classNameFileCache.get(cacheKey);
   if (cached !== undefined) {
     if (await fileStillHasClassName(projectRoot, cached, className)) return cached;
@@ -430,7 +413,6 @@ async function findFileByClassName(
   }
 
   const JSX_EXTENSIONS = new Set([".tsx", ".jsx", ".js", ".ts"]);
-  const SKIP_DIRS = new Set(["node_modules", ".next", ".git", "dist", "build", ".turbo"]);
 
   async function walk(dir: string): Promise<string | null> {
     let entries;
@@ -439,7 +421,7 @@ async function findFileByClassName(
     } catch { return null; }
 
     // Visit prioritized source directories first, then files, then the rest.
-    const dirs = entries.filter((e) => e.isDirectory() && !e.isSymbolicLink() && !SKIP_DIRS.has(e.name));
+    const dirs = entries.filter((e) => e.isDirectory() && !e.isSymbolicLink() && !EXCLUDED_DIRS.has(e.name));
     dirs.sort((a, b) =>
       Number(SOURCE_DIR_PRIORITY.has(b.name)) - Number(SOURCE_DIR_PRIORITY.has(a.name)));
     const files = entries.filter((e) => e.isFile());
@@ -506,16 +488,9 @@ export async function handleTailwindCommit(
 
   for (const [sourceFile, fileChanges] of changesByFile) {
     try {
-      // Reject path traversal attempts
-      const segments = sourceFile.split(/[/\\]/);
-      if (segments.includes("..")) {
-        throw new Error(
-          "Path traversal detected: sourceFile contains '..' segment"
-        );
-      }
-
-      const filePath = resolve(projectRoot, sourceFile);
-      assertWithinRoot(filePath, projectRoot);
+      // Reject path traversal attempts ("..": throw; string containment:
+      // throw) and resolve the candidate confined to the root.
+      const filePath = resolveSafe(projectRoot, sourceFile);
 
       // Verify file exists
       await stat(filePath);

@@ -1,15 +1,16 @@
 /**
  * commitUtils.ts — Shared enrichment logic for save/commit flows.
  *
- * Both Overlay.tsx (Cmd+S shortcut) and Footer.tsx (Save button) need to
- * enrich raw DiffEntry[] with source file info, class names, and pseudo-state
- * before sending to the commit endpoint. This module deduplicates that logic.
+ * Footer.tsx (the ONE save pipeline — the Save button and Cmd+S both trigger
+ * it) and ChangesDrawer.tsx ("Save All") enrich raw DiffEntry[] with source
+ * file info, class names, and pseudo-state before sending to the commit
+ * endpoint. This module deduplicates that logic.
  */
 
 import type { DiffEntry } from "./apply";
+import type { ScopeContext } from "./engine";
 import { resolveSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, getVariableDefinitionSource } from "./sourcemap";
 import { getReadableName, isTailwindElement } from "./scope";
-import type { Scope } from "./scope";
 import { getAuthoredValue } from "../getAuthoredValue";
 import { parseVarRef } from "../cssParsers";
 import { formatTailwindDiff } from "../tailwind";
@@ -55,11 +56,7 @@ function getStylesheetHref(el: Element): string | undefined {
 export function enrichChangesForCommit(
   element: Element,
   changes: DiffEntry[],
-  opts: {
-    scope: Scope;
-    activeClassName?: string | null;
-    activeState?: string;
-  },
+  opts: ScopeContext,
 ): EnrichedChange[] {
   // #35 ships the breakpoint UI + live media-gated preview, but file-WRITING
   // `@media` blocks to source is still a tracked follow-up (like CSS-variable

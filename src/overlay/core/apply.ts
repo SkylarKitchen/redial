@@ -250,13 +250,17 @@ export function copyStyles(el: Element): number {
 /**
  * Paste clipboard styles onto an element.
  * Wraps in beginBatch/endBatch so the entire paste is one undo entry.
+ * `breakpoint` keys the pasted props to the active responsive breakpoint
+ * (ADR-0005) — at the default base breakpoint this is byte-identical to the
+ * legacy bare-prop paste; at a non-base breakpoint the paste is tracked
+ * media-gated instead of clobbering the base inline style.
  * Returns the number of styles pasted.
  */
-export function pasteStyles(el: Element): number {
+export function pasteStyles(el: Element, breakpoint: string = BASE_BREAKPOINT): number {
   if (styleClipboard.length === 0) return 0;
   beginBatch();
   for (const { prop, value } of styleClipboard) {
-    applyInlineStyle(el, prop, value);
+    applyInlineStyle(el, compositeKey(breakpoint, "none", prop), value);
   }
   endBatch();
   return styleClipboard.length;
