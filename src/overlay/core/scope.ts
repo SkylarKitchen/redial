@@ -3,12 +3,17 @@
  *
  * Determines how a style change should be applied:
  * - "element": inline style on the clicked DOM node (default)
- * - "class": write to a <style> tag targeting the CSS modules classname
+ * - "class": write to the `managedSheet("class-scope-overrides")` sheet
+ *   (constructable stylesheet with a `<style>` fallback — see ADR-0009)
+ *   targeting the CSS modules classname
  * - CSS custom properties: detected and editable on their definition scope
  */
 
 import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
 import { onClassChange } from "./apply";
+import { managedSheet, _readManagedSheetCss } from "./managedSheet";
+
+const CLASS_SCOPE_KEY = "class-scope-overrides";
 
 export type Scope = "element" | "class";
 
@@ -263,16 +268,9 @@ export function getReadableName(cls: string): string | null {
   return null;
 }
 
-// Managed <style> tag for class-scope overrides
-let classScopeStyle: HTMLStyleElement | null = null;
-
-function getClassScopeStyle(): HTMLStyleElement {
-  if (!classScopeStyle) {
-    classScopeStyle = document.createElement("style");
-    classScopeStyle.setAttribute("data-tuner-scope", "class");
-    document.head.appendChild(classScopeStyle);
-  }
-  return classScopeStyle;
+/** Test-only read of the class-scope sheet's serialized CSS. */
+export function getClassScopeCss(): string | null {
+  return _readManagedSheetCss(CLASS_SCOPE_KEY);
 }
 
 // Track class-scope overrides: className → Map<prop, value>
@@ -350,7 +348,6 @@ function rebuildClassStyles(): void {
 
 /** The actual <style> rewrite. */
 function doRebuildClassStyles(): void {
-  const style = getClassScopeStyle();
   const rules: string[] = [];
 
   for (const [className, props] of classOverrides) {
@@ -363,17 +360,14 @@ function doRebuildClassStyles(): void {
     rules.push(`.${escapedClass} {\n${declarations}\n}`);
   }
 
-  style.textContent = rules.join("\n\n");
+  managedSheet(CLASS_SCOPE_KEY).replace(rules.join("\n\n"));
 }
 
 /**
- * Clean up the class-scope <style> tag.
+ * Clean up the class-scope managed sheet.
  */
 export function destroyClassStyles(): void {
-  if (classScopeStyle) {
-    classScopeStyle.remove();
-    classScopeStyle = null;
-  }
+  managedSheet(CLASS_SCOPE_KEY).dispose();
   classOverrides.clear();
 }
 

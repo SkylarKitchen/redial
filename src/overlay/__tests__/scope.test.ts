@@ -8,6 +8,7 @@ import {
   resetClassStyles,
   destroyClassStyles,
   getCustomProperties,
+  getClassScopeCss,
 } from "../core/scope";
 import { beginBatch, endBatch } from "../core/apply";
 
@@ -19,19 +20,13 @@ function makeEl(tag = "div"): HTMLElement {
   return el;
 }
 
-function getStyleTag(): HTMLStyleElement | null {
-  return document.querySelector(
-    'style[data-tuner-scope="class"]'
-  ) as HTMLStyleElement | null;
+function getStyleText(): string | null {
+  return getClassScopeCss();
 }
 
 beforeEach(() => {
   destroyClassStyles();
   document.body.innerHTML = "";
-  // Remove any leftover style tags
-  document
-    .querySelectorAll('style[data-tuner-scope="class"]')
-    .forEach((s) => s.remove());
 });
 
 // ─── getCSSModuleClasses ──────────────────────────────────────────────
@@ -127,14 +122,14 @@ describe("getReadableName", () => {
 // ─── applyClassStyle (class-scope save path) ─────────────────────────
 
 describe("applyClassStyle — class-scope save path", () => {
-  it("creates style tag with correct CSS rule for a class and property", () => {
+  it("registers the class-scope sheet with a correct CSS rule for a class and property", () => {
     applyClassStyle("Card_wrapper__f3k2m", "background-color", "#f0f0f0");
-    const tag = getStyleTag();
-    expect(tag).not.toBeNull();
+    const css = getStyleText();
+    expect(css).not.toBeNull();
     // The rule should target the exact class
-    expect(tag!.textContent).toContain("Card_wrapper__f3k2m");
+    expect(css!).toContain("Card_wrapper__f3k2m");
     // The rule should contain the property with !important
-    expect(tag!.textContent).toContain(
+    expect(css!).toContain(
       "background-color: #f0f0f0 !important"
     );
   });
@@ -145,43 +140,42 @@ describe("applyClassStyle — class-scope save path", () => {
     applyClassStyle("Card_wrapper__f3k2m", "padding", "12px");
 
     // Confirm they exist first
-    const tagBefore = getStyleTag();
-    expect(tagBefore!.textContent).toContain("color: red !important");
-    expect(tagBefore!.textContent).toContain("font-size: 20px !important");
-    expect(tagBefore!.textContent).toContain("padding: 12px !important");
+    const before = getStyleText()!;
+    expect(before).toContain("color: red !important");
+    expect(before).toContain("font-size: 20px !important");
+    expect(before).toContain("padding: 12px !important");
 
     // Reset all overrides for this class
     resetClassStyles("Card_wrapper__f3k2m");
 
-    const tagAfter = getStyleTag();
-    // The style tag should no longer contain this class's rules
-    expect(tagAfter!.textContent).not.toContain("Card_wrapper__f3k2m");
-    expect(tagAfter!.textContent).not.toContain("color: red");
-    expect(tagAfter!.textContent).not.toContain("font-size: 20px");
-    expect(tagAfter!.textContent).not.toContain("padding: 12px");
+    const after = getStyleText()!;
+    // The sheet should no longer contain this class's rules
+    expect(after).not.toContain("Card_wrapper__f3k2m");
+    expect(after).not.toContain("color: red");
+    expect(after).not.toContain("font-size: 20px");
+    expect(after).not.toContain("padding: 12px");
   });
 });
 
 // ─── Batched rebuilds during a drag (issue #29) ──────────────────────────
 
 describe("applyClassStyle — batched rebuilds", () => {
-  it("defers the <style> rewrite while a batch is open, flushing once on endBatch", () => {
+  it("defers the rewrite while a batch is open, flushing once on endBatch", () => {
     beginBatch();
     applyClassStyle("Card_wrapper__f3k2m", "color", "red");
     applyClassStyle("Card_wrapper__f3k2m", "color", "green");
     applyClassStyle("Card_wrapper__f3k2m", "color", "blue");
 
-    // Mid-batch the tag is NOT yet rewritten — the drag's intermediate values
+    // Mid-batch the sheet is NOT yet rewritten — the drag's intermediate values
     // never hit the DOM, only the final one does.
-    const mid = getStyleTag();
-    expect(mid?.textContent ?? "").not.toContain("color");
+    expect(getStyleText() ?? "").not.toContain("color");
 
     endBatch();
 
     // One flush on close, carrying only the last value.
-    const after = getStyleTag();
-    expect(after!.textContent).toContain("color: blue !important");
-    expect(after!.textContent).not.toContain("color: red");
+    const after = getStyleText()!;
+    expect(after).toContain("color: blue !important");
+    expect(after).not.toContain("color: red");
   });
 
   it("nested batches only flush at the outermost endBatch", () => {
@@ -189,63 +183,60 @@ describe("applyClassStyle — batched rebuilds", () => {
     beginBatch();
     applyClassStyle("X_y__a1", "opacity", "0.5");
     endBatch(); // inner close — still deferred
-    expect(getStyleTag()?.textContent ?? "").not.toContain("opacity");
+    expect(getStyleText() ?? "").not.toContain("opacity");
     endBatch(); // outer close — flush
-    expect(getStyleTag()!.textContent).toContain("opacity: 0.5 !important");
+    expect(getStyleText()!).toContain("opacity: 0.5 !important");
   });
 });
 
 // ─── applyClassStyle ──────────────────────────────────────────────────
 
 describe("applyClassStyle", () => {
-  it("creates a <style> tag with data-tuner-scope attribute", () => {
+  it("registers the class-scope managed sheet on first apply", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
-    const tag = getStyleTag();
-    expect(tag).not.toBeNull();
-    expect(tag!.getAttribute("data-tuner-scope")).toBe("class");
+    expect(getStyleText()).not.toBeNull();
   });
 
   it("applies a CSS rule with !important", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
+    expect(getStyleText()!).toContain("color: red !important");
   });
 
-  it("scopes the rule to the class selector", () => {
+  it("scopes the rule to the class selector via the managed sheet", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("Button_btn__a8f2k");
+    expect(getStyleText()!).toContain("Button_btn__a8f2k");
   });
 
   it("handles multiple properties on the same class", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     applyClassStyle("Button_btn__a8f2k", "font-size", "16px");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
-    expect(tag!.textContent).toContain("font-size: 16px !important");
+    const css = getStyleText()!;
+    expect(css).toContain("color: red !important");
+    expect(css).toContain("font-size: 16px !important");
   });
 
   it("handles multiple different classes", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     applyClassStyle("Card_title__z3j8n", "margin", "10px");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("Button_btn__a8f2k");
-    expect(tag!.textContent).toContain("Card_title__z3j8n");
+    const css = getStyleText()!;
+    expect(css).toContain("Button_btn__a8f2k");
+    expect(css).toContain("Card_title__z3j8n");
   });
 
   it("updates an existing property value", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     applyClassStyle("Button_btn__a8f2k", "color", "blue");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: blue !important");
-    expect(tag!.textContent).not.toContain("color: red");
+    const css = getStyleText()!;
+    expect(css).toContain("color: blue !important");
+    expect(css).not.toContain("color: red");
   });
 
-  it("reuses the same <style> tag across calls", () => {
+  it("reuses the same managed sheet across calls", () => {
     applyClassStyle("Foo_a__x", "color", "red");
     applyClassStyle("Bar_b__y", "width", "100px");
-    const tags = document.querySelectorAll('style[data-tuner-scope="class"]');
-    expect(tags.length).toBe(1);
+    const css = getStyleText()!;
+    expect(css).toContain("Foo_a__x");
+    expect(css).toContain("Bar_b__y");
   });
 });
 
@@ -256,30 +247,27 @@ describe("removeClassStyle", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     applyClassStyle("Button_btn__a8f2k", "font-size", "16px");
     removeClassStyle("Button_btn__a8f2k", "color");
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("color");
-    expect(tag!.textContent).toContain("font-size: 16px !important");
+    const css = getStyleText()!;
+    expect(css).not.toContain("color: red");
+    expect(css).toContain("font-size: 16px !important");
   });
 
   it("removes the class rule entirely when last property is removed", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     removeClassStyle("Button_btn__a8f2k", "color");
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("Button_btn__a8f2k");
+    expect(getStyleText()!).not.toContain("Button_btn__a8f2k");
   });
 
   it("does nothing for unknown class", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     removeClassStyle("NonExistent_foo__bar", "color");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
+    expect(getStyleText()!).toContain("color: red !important");
   });
 
   it("does nothing for unknown property on a known class", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     removeClassStyle("Button_btn__a8f2k", "font-size");
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
+    expect(getStyleText()!).toContain("color: red !important");
   });
 });
 
@@ -291,17 +279,16 @@ describe("resetClassStyles", () => {
     applyClassStyle("Button_btn__a8f2k", "font-size", "16px");
     applyClassStyle("Button_btn__a8f2k", "width", "100px");
     resetClassStyles("Button_btn__a8f2k");
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("Button_btn__a8f2k");
+    expect(getStyleText()!).not.toContain("Button_btn__a8f2k");
   });
 
   it("does not affect other classes", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     applyClassStyle("Card_title__z3j8n", "margin", "10px");
     resetClassStyles("Button_btn__a8f2k");
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("Button_btn__a8f2k");
-    expect(tag!.textContent).toContain("Card_title__z3j8n");
+    const css = getStyleText()!;
+    expect(css).not.toContain("Button_btn__a8f2k");
+    expect(css).toContain("Card_title__z3j8n");
   });
 
   it("handles resetting a class with no overrides", () => {
@@ -313,11 +300,11 @@ describe("resetClassStyles", () => {
 // ─── destroyClassStyles ───────────────────────────────────────────────
 
 describe("destroyClassStyles", () => {
-  it("removes the <style> tag from the DOM", () => {
+  it("disposes the managed sheet", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
-    expect(getStyleTag()).not.toBeNull();
+    expect(getStyleText()).not.toBeNull();
     destroyClassStyles();
-    expect(getStyleTag()).toBeNull();
+    expect(getStyleText()).toBeNull();
   });
 
   it("clears all tracked overrides", () => {
@@ -326,33 +313,33 @@ describe("destroyClassStyles", () => {
     destroyClassStyles();
     // Re-applying should start fresh
     applyClassStyle("Button_btn__a8f2k", "width", "50px");
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("color");
-    expect(tag!.textContent).not.toContain("margin");
-    expect(tag!.textContent).toContain("width: 50px !important");
+    const css = getStyleText()!;
+    expect(css).not.toContain("color");
+    expect(css).not.toContain("margin");
+    expect(css).toContain("width: 50px !important");
   });
 
   it("is idempotent when called multiple times", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     destroyClassStyles();
     destroyClassStyles(); // should not throw
-    expect(getStyleTag()).toBeNull();
+    expect(getStyleText()).toBeNull();
   });
 
   it("allows recreation after destruction", () => {
     applyClassStyle("Button_btn__a8f2k", "color", "red");
     destroyClassStyles();
     applyClassStyle("Button_btn__a8f2k", "color", "blue");
-    const tag = getStyleTag();
-    expect(tag).not.toBeNull();
-    expect(tag!.textContent).toContain("color: blue !important");
+    const css = getStyleText();
+    expect(css).not.toBeNull();
+    expect(css!).toContain("color: blue !important");
   });
 });
 
 // ─── Class-scope undo sync (A1 bug) ──────────────────────────────────
 
-describe("class-scope undo reverts <style> tag", () => {
-  it("undo of class-scoped edit removes the property from <style> tag", async () => {
+describe("class-scope undo reverts managed sheet", () => {
+  it("undo of class-scoped edit removes the property from the managed sheet", async () => {
     const { applyInlineStyle, undo, resetAll, onClassChange } = await import("../core/apply");
 
     // Subscribe scope.ts to class change notifications
@@ -371,19 +358,18 @@ describe("class-scope undo reverts <style> tag", () => {
     applyClassStyle(className, "color", "red");
     applyInlineStyle(el, "color", "red", className);
 
-    // Verify style tag has the rule
-    const tag = getStyleTag();
-    expect(tag!.textContent).toContain("color: red !important");
+    // Verify the sheet has the rule
+    expect(getStyleText()!).toContain("color: red !important");
 
-    // Undo should revert BOTH inline and <style> tag
+    // Undo should revert BOTH inline and the managed sheet
     undo();
-    expect(tag!.textContent).not.toContain("color: red");
+    expect(getStyleText() ?? "").not.toContain("color: red");
 
     unsubscribe();
     resetAll();
   });
 
-  it("redo of class-scoped edit re-applies to <style> tag", async () => {
+  it("redo of class-scoped edit re-applies to the managed sheet", async () => {
     const { applyInlineStyle, undo, redo, resetAll, onClassChange } = await import("../core/apply");
 
     const unsubscribe = onClassChange(({ className, prop, value }) => {
@@ -401,11 +387,10 @@ describe("class-scope undo reverts <style> tag", () => {
     applyInlineStyle(el, "font-size", "20px", className);
 
     undo();
-    const tag = getStyleTag();
-    expect(tag!.textContent).not.toContain("font-size: 20px");
+    expect(getStyleText() ?? "").not.toContain("font-size: 20px");
 
     redo();
-    expect(tag!.textContent).toContain("font-size: 20px !important");
+    expect(getStyleText()!).toContain("font-size: 20px !important");
 
     unsubscribe();
     resetAll();

@@ -22,6 +22,7 @@ import {
   resetAllModeOverrides,
   isModeOverrideDirty,
 } from "../core/modeOverrides";
+import { getClassScopeCss } from "../core/scope";
 
 function makeEl(tag = "div"): HTMLElement {
   const el = document.createElement(tag);
@@ -30,9 +31,7 @@ function makeEl(tag = "div"): HTMLElement {
 }
 
 function classStyleText(): string {
-  return (
-    document.querySelector('style[data-tuner-scope="class"]')?.textContent ?? ""
-  );
+  return getClassScopeCss() ?? "";
 }
 
 beforeEach(() => {

@@ -16,15 +16,13 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { styleEngine } from "../core/engine";
-import { syncWithApplyUndoRedo, destroyClassStyles } from "../core/scope";
+import { syncWithApplyUndoRedo, destroyClassStyles, getClassScopeCss } from "../core/scope";
 import { resetAll } from "../core/apply";
 
 const CLASS = "Card_box__h2k";
 
 function classStyleText(): string {
-  return (
-    document.querySelector('style[data-tuner-scope="class"]')?.textContent ?? ""
-  );
+  return getClassScopeCss() ?? "";
 }
 
 let el: HTMLElement;

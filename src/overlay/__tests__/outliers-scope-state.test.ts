@@ -16,6 +16,7 @@ import {
   resetClassStyles,
   destroyClassStyles,
   isTailwindElement,
+  getClassScopeCss,
 } from "../core/scope";
 import {
   applyStateStyle,
@@ -23,7 +24,7 @@ import {
   resetStateStyles,
   diffState,
   destroyStateStyles,
-  getStateStyleTag,
+  getStateStyleCss,
   flushScheduledRebuild,
 } from "../core/statePreview";
 
@@ -35,19 +36,14 @@ function makeEl(tag = "div"): HTMLElement {
   return el;
 }
 
-function classStyleTag(): HTMLStyleElement | null {
-  return document.querySelector(
-    'style[data-tuner-scope="class"]'
-  ) as HTMLStyleElement | null;
+function classStyleText(): string | null {
+  return getClassScopeCss();
 }
 
 beforeEach(() => {
   destroyClassStyles();
   destroyStateStyles();
   document.body.innerHTML = "";
-  document
-    .querySelectorAll('style[data-tuner-scope]')
-    .forEach((s) => s.remove());
 });
 
 // ════════════════════════════════════════════════════════════════════════
@@ -129,11 +125,11 @@ describe("applyClassStyle — class name with CSS-special characters", () => {
   it("CSS.escapes a class name containing a colon so the rule is well-formed", () => {
     // ":" is the pseudo-class delimiter — must be escaped to target the literal class.
     applyClassStyle("weird:class", "color", "red");
-    const tag = classStyleTag();
-    expect(tag).not.toBeNull();
+    const css = classStyleText();
+    expect(css).not.toBeNull();
     // Escaped colon -> "\:" ; the raw ".weird:class" (unescaped) would be a bug.
-    expect(tag!.textContent).toContain("color: red !important");
-    expect(tag!.textContent).toContain(CSS.escape("weird:class"));
+    expect(css!).toContain("color: red !important");
+    expect(css!).toContain(CSS.escape("weird:class"));
   });
 
   it("drops a SYNTACTICALLY invalid CSS property (brace/digit) instead of emitting it", () => {
@@ -142,7 +138,7 @@ describe("applyClassStyle — class name with CSS-special characters", () => {
     // rejects names with braces, digits, or uppercase. A brace-bearing name
     // must be filtered so it cannot break out of the rule block.
     applyClassStyle("Button_btn__a8f2k", "col{or", "red");
-    const text = classStyleTag()?.textContent ?? "";
+    const text = classStyleText() ?? "";
     // No valid declarations -> no rule emitted for the class at all.
     expect(text).not.toContain("col{or");
     expect(text).not.toContain("Button_btn__a8f2k");
@@ -152,7 +148,7 @@ describe("applyClassStyle — class name with CSS-special characters", () => {
     // This documents the intentional design: isValidCSSProp is syntactic, not
     // a known-property allowlist, so future/custom kebab props pass through.
     applyClassStyle("Button_btn__a8f2k", "not-a-real-prop-xyz", "10px");
-    const text = classStyleTag()?.textContent ?? "";
+    const text = classStyleText() ?? "";
     expect(text).toContain("not-a-real-prop-xyz: 10px !important");
   });
 });
@@ -164,9 +160,9 @@ describe("resetClassStyles — independence across similar class names", () => {
     applyClassStyle("Card_x__h", "color", "red");
     applyClassStyle("Card_x__h2", "color", "blue");
     resetClassStyles("Card_x__h");
-    const tag = classStyleTag();
-    expect(tag!.textContent).not.toContain("color: red");
-    expect(tag!.textContent).toContain("color: blue !important");
+    const css = classStyleText()!;
+    expect(css).not.toContain("color: red");
+    expect(css).toContain("color: blue !important");
   });
 });
 
@@ -182,11 +178,11 @@ describe("applyStateStyle — element with NO class (pure element scope)", () =>
     const el = makeEl(); // no className at all
     applyStateStyle(el, "hover", "color", "red");
     flushScheduledRebuild();
-    const tag = getStateStyleTag();
+    const css = getStateStyleCss()!;
     expect(el.classList.contains("__tuner-state-preview")).toBe(true);
     expect(el.getAttribute("data-tuner-state-id")).not.toBeNull();
-    expect(tag!.textContent).toContain(":hover");
-    expect(tag!.textContent).toContain("color: red !important");
+    expect(css).toContain(":hover");
+    expect(css).toContain("color: red !important");
   });
 });
 
@@ -239,11 +235,11 @@ describe("applyStateStyle — invalid pseudo-state is a hard no-op", () => {
   // :nth-child(), :has(), :not() etc. are NOT in VALID_STATES. The function
   // must reject them entirely — no class, no data attr, no style tag — to
   // prevent selector injection and unsupported-state confusion.
-  it("rejects :nth-child(2n) entirely (no class, no attr, no tag)", () => {
+  it("rejects :nth-child(2n) entirely (no class, no attr, no sheet)", () => {
     const el = makeEl();
     applyStateStyle(el, "nth-child(2n)", "color", "red");
     flushScheduledRebuild();
-    expect(getStateStyleTag()).toBeNull();
+    expect(getStateStyleCss()).toBeNull();
     expect(el.classList.contains("__tuner-state-preview")).toBe(false);
     expect(el.getAttribute("data-tuner-state-id")).toBeNull();
     expect(diffState(el, "nth-child(2n)")).toEqual([]);
@@ -253,22 +249,22 @@ describe("applyStateStyle — invalid pseudo-state is a hard no-op", () => {
     const el = makeEl();
     applyStateStyle(el, "has(.child)", "color", "red");
     flushScheduledRebuild();
-    expect(getStateStyleTag()).toBeNull();
+    expect(getStateStyleCss()).toBeNull();
     expect(el.classList.contains("__tuner-state-preview")).toBe(false);
   });
 });
 
 describe("resetStateStyles — re-adds nothing and stays clean for unknown state", () => {
   // resetStateStyles unconditionally calls rebuildStyleTag(), which lazily
-  // creates the managed <style> tag even when there is nothing to reset. The
-  // tag is created but EMPTY, and no preview class is added — harmless but
-  // slightly eager. Lock the actual (correct-enough) behavior.
-  it("resetting a never-applied state leaves an empty tag and no preview class", () => {
+  // registers the managed sheet even when there is nothing to reset. The
+  // sheet is registered but EMPTY, and no preview class is added — harmless
+  // but slightly eager. Lock the actual (correct-enough) behavior.
+  it("resetting a never-applied state leaves an empty sheet and no preview class", () => {
     const el = makeEl();
     resetStateStyles(el, "hover");
-    const tag = getStateStyleTag();
-    // Tag may be created but must be empty (no spurious rules).
-    expect(tag === null || tag.textContent === "").toBe(true);
+    const css = getStateStyleCss();
+    // Sheet may be registered but must be empty (no spurious rules).
+    expect(css === null || css === "").toBe(true);
     expect(el.classList.contains("__tuner-state-preview")).toBe(false);
   });
 });
@@ -380,11 +376,11 @@ describe("apply.ts — class-scoped undo removes from class <style> tag (mismatc
     applyClassStyle(className, "padding", "4px");
     applyInlineStyle(el, "padding", "4px", className);
 
-    const tag = classStyleTag();
-    expect(tag!.textContent).toContain("padding: 4px !important");
+    const css = classStyleText();
+    expect(css).toContain("padding: 4px !important");
 
     undo();
-    expect(classStyleTag()!.textContent).not.toContain("padding: 4px");
+    expect(classStyleText() ?? "").not.toContain("padding: 4px");
 
     unsubscribe();
     resetAll();
