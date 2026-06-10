@@ -11,7 +11,7 @@
 
 import { readFile, writeFile, readdir, realpath } from "fs/promises";
 import { resolve, join, basename, normalize, sep } from "path";
-import { trySourceMapResolution } from "./sourceMapCache";
+import { tryFirstMappedSourceFile } from "./sourceMapCache";
 import {
   isValidCSSProp,
   isValidCSSClassName,
@@ -324,11 +324,13 @@ export async function resolveSourceFile(
   componentName?: string,
   cssHref?: string
 ): Promise<string | null> {
-  // Try source map resolution first (best accuracy)
+  // Try source map resolution first (best accuracy). This is a which-file
+  // question, so read the map's sources list rather than probing a position —
+  // Turbopack's sectioned maps leave line (1,0) unmapped (issue #59).
   if (cssHref) {
-    const mapped = trySourceMapResolution(cssHref, 1, 0, projectRoot);
+    const mapped = tryFirstMappedSourceFile(cssHref, projectRoot);
     if (mapped) {
-      const mappedPath = resolve(projectRoot, mapped.file);
+      const mappedPath = resolve(projectRoot, mapped);
       // realpath doubles as the existence check (false for missing files), so
       // no separate stat() — and it rejects a symlinked-out mapped path too.
       if (await isRealPathWithinRoot(mappedPath, projectRoot)) return mappedPath;

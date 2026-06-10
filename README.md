@@ -62,9 +62,9 @@ npm install github:SkylarKitchen/redial
 
 Three steps to add Redial to any Next.js project:
 
-### 1. Next.js plugin
+### 1. Next.js plugin (webpack only)
 
-Enables CSS source maps in dev mode so Redial can trace styles back to their source files.
+With Turbopack — the `next dev` default since Next 15 — **skip this step**: Turbopack already emits the CSS source maps Redial uses to trace styles back to their source files. Only add the plugin if you develop with `next dev --webpack`, where it enables full source maps:
 
 ```js
 // next.config.js
@@ -74,6 +74,8 @@ module.exports = withTuner({
   // your existing config
 });
 ```
+
+Either way, saving still works without source maps — Redial falls back to searching your source files — they just make the trace more accurate.
 
 ### 2. API route
 

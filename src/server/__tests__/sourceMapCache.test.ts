@@ -5,6 +5,7 @@ import { tmpdir } from "os";
 import {
   getSourceMap,
   trySourceMapResolution,
+  tryFirstMappedSourceFile,
   clearCache,
   cacheSize,
 } from "../sourceMapCache";
@@ -192,5 +193,150 @@ describe("trySourceMapResolution", () => {
 
     expect(result).not.toBeNull();
     expect(result!.file).toContain("styles.css");
+  });
+});
+
+// --- Turbopack dev layout (issue #59) ---
+//
+// Turbopack (the `next dev` default since Next 15) differs from webpack dev in
+// three ways the resolver must handle: assets live under .next/dev/… while
+// served from /_next/…, maps are SECTIONED ({ sections: [...] }), and sources
+// are anchored as turbopack:///[project]/… at the workspace root.
+
+/** A sectioned map in Turbopack's shape: banner line unmapped, one section. */
+function turbopackSectionedMap(sources: string[]): string {
+  return JSON.stringify({
+    version: 3,
+    sources: [],
+    sections: [
+      {
+        offset: { line: 1, column: 0 },
+        map: { version: 3, sources, names: [], mappings: "AAAA" },
+      },
+    ],
+  });
+}
+
+describe("Turbopack dev resolution (issue #59)", () => {
+  it("finds maps under .next/dev/ when .next/static does not exist", async () => {
+    await writeFixture("app/page.module.scss", ".hero { color: red; }");
+    await writeFixture(".next/dev/static/chunks/page.css", "/* banner */\n.x{color:red}");
+    await writeFixture(
+      ".next/dev/static/chunks/page.css.map",
+      turbopackSectionedMap(["turbopack:///[project]/app/page.module.scss"]),
+    );
+
+    const result = trySourceMapResolution("/_next/static/chunks/page.css", 2, 0, tempDir);
+    expect(result).toEqual({ file: "app/page.module.scss", line: 1 });
+  });
+
+  it("parses sectioned maps (TraceMap alone rejects them)", async () => {
+    const cssPath = join(tempDir, ".next/dev/static/chunks/sectioned.css");
+    await writeFixture(".next/dev/static/chunks/sectioned.css", "/* b */\n.y{}");
+    await writeFixture(
+      ".next/dev/static/chunks/sectioned.css.map",
+      turbopackSectionedMap(["turbopack:///[project]/styles.css"]),
+    );
+    expect(getSourceMap(cssPath, tempDir)).not.toBeNull();
+  });
+
+  it("strips stacked turbopack prefixes, including the collapsed single-slash form", async () => {
+    await writeFixture("app/page.module.scss", ".hero {}");
+    await writeFixture(".next/dev/static/chunks/stacked.css", "/* b */\n.x{}");
+    await writeFixture(
+      ".next/dev/static/chunks/stacked.css.map",
+      turbopackSectionedMap(["turbopack:///turbopack:/[project]/app/page.module.scss"]),
+    );
+
+    const result = trySourceMapResolution("/_next/static/chunks/stacked.css", 2, 0, tempDir);
+    expect(result).toEqual({ file: "app/page.module.scss", line: 1 });
+  });
+
+  it("anchors [project] sources at an ancestor for nested apps", async () => {
+    // Workspace root = tempDir; the Next project = tempDir/test-app. Turbopack
+    // anchors [project] at the WORKSPACE root, so the source carries the
+    // nested app's directory prefix.
+    const appRoot = join(tempDir, "test-app");
+    await writeFixture("test-app/app/page.module.scss", ".hero {}");
+    await writeFixture("test-app/.next/dev/static/chunks/nested.css", "/* b */\n.x{}");
+    await writeFixture(
+      "test-app/.next/dev/static/chunks/nested.css.map",
+      turbopackSectionedMap(["turbopack:///[project]/test-app/app/page.module.scss"]),
+    );
+
+    const result = trySourceMapResolution("/_next/static/chunks/nested.css", 2, 0, appRoot);
+    expect(result).toEqual({ file: "app/page.module.scss", line: 1 });
+  });
+
+  it("resolves file: URL sources relative to the project root", async () => {
+    await writeFixture("app/globals.css", "body {}");
+    await writeFixture(".next/dev/static/chunks/glob.css", "/* b */\n.x{}");
+    await writeFixture(
+      ".next/dev/static/chunks/glob.css.map",
+      turbopackSectionedMap([`file://${join(tempDir, "app/globals.css")}`]),
+    );
+
+    const result = trySourceMapResolution("/_next/static/chunks/glob.css", 2, 0, tempDir);
+    expect(result).toEqual({ file: "app/globals.css", line: 1 });
+  });
+});
+
+// --- tryFirstMappedSourceFile ---
+
+describe("tryFirstMappedSourceFile", () => {
+  it("answers the which-file question even though the banner line is unmapped", async () => {
+    await writeFixture("app/page.module.scss", ".hero {}");
+    await writeFixture(".next/dev/static/chunks/which.css", "/* b */\n.x{}");
+    await writeFixture(
+      ".next/dev/static/chunks/which.css.map",
+      turbopackSectionedMap(["turbopack:///[project]/app/page.module.scss"]),
+    );
+
+    // Sectioned maps leave line 1 outside every section, so a position probe
+    // at (1,0) cannot work — the sources list can.
+    expect(trySourceMapResolution("/_next/static/chunks/which.css", 1, 0, tempDir)).toBeNull();
+    expect(tryFirstMappedSourceFile("/_next/static/chunks/which.css", tempDir)).toBe(
+      "app/page.module.scss",
+    );
+  });
+
+  it("skips bundler-internal sources like [next]", async () => {
+    await writeFixture("app/page.module.scss", ".hero {}");
+    await writeFixture(".next/dev/static/chunks/internal.css", "/* b */\n.x{}");
+    await writeFixture(
+      ".next/dev/static/chunks/internal.css.map",
+      turbopackSectionedMap([
+        "turbopack:///[next]/internal/font/google/geist.css",
+        "turbopack:///[project]/app/page.module.scss",
+      ]),
+    );
+
+    expect(tryFirstMappedSourceFile("/_next/static/chunks/internal.css", tempDir)).toBe(
+      "app/page.module.scss",
+    );
+  });
+
+  it("returns null when no map exists", () => {
+    expect(tryFirstMappedSourceFile("/_next/static/css/none.css", tempDir)).toBeNull();
+    expect(tryFirstMappedSourceFile(undefined, tempDir)).toBeNull();
+  });
+
+  it("works for classic webpack maps too", async () => {
+    await writeFixture(".next/static/css/app.css", "body{}");
+    await writeFixture(
+      ".next/static/css/app.css.map",
+      JSON.stringify({
+        version: 3,
+        // Map-dir-relative source, the same shape the existing
+        // trySourceMapResolution tests use.
+        sources: ["../../../src/app/globals.css"],
+        names: [],
+        mappings: "AAAA",
+      }),
+    );
+
+    expect(tryFirstMappedSourceFile("/_next/static/css/app.css", tempDir)).toBe(
+      "src/app/globals.css",
+    );
   });
 });
