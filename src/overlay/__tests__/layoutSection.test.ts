@@ -411,3 +411,38 @@ describe("Grid Columns/Rows content alignment rows", () => {
     expect(layoutSrcFresh).not.toMatch(/label="Quick"/);
   });
 });
+
+// ─── 7. Gap lock initialization (issue #80) ───────────────────────────
+
+describe("Gap lock initialization", () => {
+  it("starts unlocked (Row Gap / Column Gap sliders) when the axes differ", async () => {
+    const ctx = makeMockCtx({ display: "flex" });
+    (ctx.element as HTMLElement).style.rowGap = "10px";
+    (ctx.element as HTMLElement).style.columnGap = "30px";
+    const cs = getComputedStyle(ctx.element);
+
+    const html = await renderLayout({
+      ctx: { ...ctx, cs },
+      display: "flex",
+      isFlex: true,
+      columnGap: 30,
+    });
+
+    // A locked init here would show a single "Gap 10" slider, hide the
+    // 30px column gap, and flatten both axes on the first drag.
+    expect(html).toContain("Row Gap");
+    expect(html).toContain("Col Gap");
+  });
+
+  it("starts locked (single Gap slider) when both axes agree", async () => {
+    const html = await renderLayout({
+      ctx: makeMockCtx({ display: "flex" }),
+      display: "flex",
+      isFlex: true,
+    });
+
+    expect(html).toContain("Gap");
+    expect(html).not.toContain("Row Gap");
+    expect(html).not.toContain("Col Gap");
+  });
+});

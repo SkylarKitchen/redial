@@ -193,12 +193,6 @@ describe("Changing position from static to absolute reveals offset diagram", () 
     expect(absoluteHtml).toContain("element");
   });
 
-  it("absolute renders Columns/Rows labels (below offset diagram)", async () => {
-    const absoluteHtml = await renderPosition({ position: "absolute" });
-    expect(absoluteHtml).toContain("Columns");
-    expect(absoluteHtml).toContain("Rows");
-  });
-
   it("static does not render Columns/Rows labels", async () => {
     const staticHtml = await renderPosition({ position: "static" });
     expect(staticHtml).not.toContain("Columns");
@@ -299,5 +293,22 @@ describe("Float and Clear section", () => {
     expect(positionSrc).toMatch(/useState\(false\)/);
     // The float/clear content is gated by showFloatClear
     expect(positionSrc).toContain("showFloatClear");
+  });
+});
+
+// ─── 7. No leftover grid-track labels (issue #79) ─────────────────────
+
+describe("No stray Columns/Rows labels", () => {
+  it("does not render Columns/Rows labels for non-static positions", async () => {
+    // A copy-paste leftover from GridControls rendered a "Columns / Rows"
+    // label row under the z-index controls whenever position !== static.
+    const html = await renderPosition({ position: "absolute" });
+    expect(html).not.toContain("Columns");
+    expect(html).not.toContain("Rows");
+  });
+
+  it("source contains no Columns/Rows label strings", () => {
+    expect(positionSrc).not.toMatch(/\bColumns\b/);
+    expect(positionSrc).not.toMatch(/\bRows\b/);
   });
 });
