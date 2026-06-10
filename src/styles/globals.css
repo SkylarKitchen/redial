@@ -112,32 +112,6 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
-/* DialKit overrides (keep existing) */
-.__tuner-root .dialkit-folder > summary,
-.__tuner-root .dialkit-folder-header {
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  color: #171717 !important;
-  padding: 10px 12px 6px !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  letter-spacing: 0;
-}
-
-.__tuner-root .dialkit-folder:first-child > summary,
-.__tuner-root .dialkit-folder-header:first-child {
-  border-top: none;
-}
-
-.__tuner-root .dialkit-control {
-  padding: 2px 12px !important;
-}
-
-.__tuner-root .dialkit-label {
-  font-size: 11px !important;
-  color: #525252 !important;
-  text-transform: capitalize;
-}
-
 /* Selection mode highlight pulse */
 .__tuner-selector-outline {
   animation: __tuner-pulse 1.5s ease-in-out infinite;

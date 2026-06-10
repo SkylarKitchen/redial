@@ -102,7 +102,6 @@ describe("published stylesheet containment (issue #58)", () => {
       if (insideAtRule(rule, "supports") && onlyTwVariables(rule)) return;
       const scoped =
         rule.selector.includes("__tuner-") || // panel containers + selection outline
-        rule.selector.includes("dialkit-") || // legacy scoped overrides (always nested under __tuner-root)
         insidePanelScope(rule);
       if (!scoped) offenders.push(rule.selector);
     });
