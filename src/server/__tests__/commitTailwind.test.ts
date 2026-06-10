@@ -119,6 +119,12 @@ describe("mergeClasses", () => {
   it("non-conflicting standalone classes are preserved", () => {
     expect(mergeClasses("absolute italic", "underline")).toBe("absolute italic underline");
   });
+
+  it("dedupes intra-group conflicts in the new side (new-side p-2 p-4 → last wins)", () => {
+    // If the incoming string itself has two classes from the same group,
+    // both should NOT survive — last occurrence wins.
+    expect(mergeClasses("flex", "p-2 p-4")).toBe("flex p-4");
+  });
 });
 
 // --- findClassNameAttribute ---
