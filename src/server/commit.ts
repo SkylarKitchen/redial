@@ -9,9 +9,10 @@
  * Falls back gracefully for SCSS variables, calc(), etc.
  */
 
-import { readFile, writeFile, readdir, stat, realpath } from "fs/promises";
-import { resolve, join, basename, normalize, sep } from "path";
+import { readFile, writeFile, readdir, stat } from "fs/promises";
+import { resolve, join, basename } from "path";
 import { trySourceMapResolution } from "./sourceMapCache";
+import { EXCLUDED_DIRS, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
 import {
   isValidCSSProp,
   isValidCSSClassName,
