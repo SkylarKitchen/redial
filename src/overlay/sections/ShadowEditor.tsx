@@ -29,6 +29,12 @@ export interface ShadowValue {
 export interface ShadowEditorProps {
   shadows: ShadowValue[];
   onChange: (shadows: ShadowValue[]) => void;
+  /**
+   * "box" (default) edits box-shadow. "text" edits text-shadow, whose grammar
+   * has no spread length and no inset keyword — the variant hides those
+   * controls and serializes the preview without them (issue #61).
+   */
+  variant?: "box" | "text";
 }
 
 /** Canonical default box-shadow value. */
@@ -148,6 +154,7 @@ function NumericInput({
 function ShadowRow({
   shadow,
   index,
+  variant,
   onUpdate,
   onDelete,
   onToggleVisible,
@@ -156,6 +163,7 @@ function ShadowRow({
 }: {
   shadow: ShadowValue;
   index: number;
+  variant: "box" | "text";
   onUpdate: (index: number, shadow: ShadowValue) => void;
   onDelete: (index: number) => void;
   onToggleVisible: (index: number) => void;
@@ -169,7 +177,7 @@ function ShadowRow({
     [index, shadow, onUpdate]
   );
 
-  const shadowCSS = shadowToCSS([shadow]);
+  const shadowCSS = shadowToCSS([shadow], variant);
 
   return (
     <div
@@ -189,7 +197,7 @@ function ShadowRow({
             style={{ alignSelf: "center" }}
           />
         )}
-        {/* Shadow preview swatch */}
+        {/* Shadow preview swatch — a glyph for text shadows, a box otherwise */}
         <div
           title={shadowCSS}
           style={{
@@ -198,16 +206,28 @@ function ShadowRow({
             borderRadius: 3,
             background: color.background,
             border: `1px solid ${border.default}`,
-            boxShadow: shadowCSS,
+            ...(variant === "text"
+              ? { textShadow: shadowCSS }
+              : { boxShadow: shadowCSS }),
             flexShrink: 0,
             alignSelf: "center",
             overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 12,
+            fontFamily: font.sans,
+            color: text.primary,
           }}
-        />
+        >
+          {variant === "text" ? "A" : null}
+        </div>
         <NumericInput value={shadow.x} label="X" onChange={updateField("x") as (v: number) => void} />
         <NumericInput value={shadow.y} label="Y" onChange={updateField("y") as (v: number) => void} />
         <NumericInput value={shadow.blur} label="Blur" onChange={updateField("blur") as (v: number) => void} />
-        <NumericInput value={shadow.spread} label="Spread" onChange={updateField("spread") as (v: number) => void} />
+        {variant !== "text" && (
+          <NumericInput value={shadow.spread} label="Spread" onChange={updateField("spread") as (v: number) => void} />
+        )}
       </div>
 
       {/* Row 2: color, inset, delete */}
@@ -233,7 +253,8 @@ function ShadowRow({
           }}
         />
 
-        {/* Inset toggle */}
+        {/* Inset toggle — text-shadow has no inset keyword */}
+        {variant !== "text" && (
         <button
           onClick={() => updateField("inset")(!shadow.inset)}
           title={shadow.inset ? "Inset (click to toggle)" : "Outset (click to toggle)"}
@@ -253,6 +274,7 @@ function ShadowRow({
         >
           Inset
         </button>
+        )}
 
         <div style={{ flex: 1 }} />
 
@@ -269,7 +291,7 @@ function ShadowRow({
   );
 }
 
-export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
+export function ShadowEditor({ shadows, onChange, variant = "box" }: ShadowEditorProps) {
   const { registerRef, handleProps, itemStyle, dropLine, isDragging } = useDragReorder(shadows, onChange);
 
   const handleAdd = useCallback(() => {
@@ -338,6 +360,7 @@ export function ShadowEditor({ shadows, onChange }: ShadowEditorProps) {
               <ShadowRow
                 shadow={shadow}
                 index={i}
+                variant={variant}
                 onUpdate={handleUpdate}
                 onDelete={handleDelete}
                 onToggleVisible={handleToggleVisible}
