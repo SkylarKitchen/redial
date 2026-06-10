@@ -20,8 +20,10 @@ const selectRowSrc = readFileSync(
   join(overlayDir, "controls", "SelectRow.tsx"),
   "utf-8",
 );
+// StateSelector is a thin declaration; ARIA/keyboard implementation is in
+// PortalListboxSelect (extracted by code-review step 8).
 const stateSelectorSrc = readFileSync(
-  join(overlayDir, "shell", "StateSelector.tsx"),
+  join(overlayDir, "controls", "PortalListboxSelect.tsx"),
   "utf-8",
 );
 const dropdownHookSrc = readFileSync(
@@ -225,15 +227,20 @@ describe("StateSelector — keyboard accessibility (via portal dropdown)", () =>
   });
 
   it("is a controlled component (value prop + onChange callback for selection)", () => {
-    expect(stateSelectorSrc).toMatch(/onChange:\s*\(state: string\) => void/);
-    // selection routes the chosen state value back through onChange
+    expect(stateSelectorSrc).toMatch(/onChange:\s*\(id: string\) => void/);
+    // selection routes the chosen option id back through onChange
     expect(stateSelectorSrc).toContain("onChange(");
   });
 
-  it("renders all state options from the STATES list", () => {
-    expect(stateSelectorSrc).toMatch(/STATES\.map\(\(state/);
-    // STATES drives the option list — spot-check canonical pseudo-states
-    expect(stateSelectorSrc).toContain('value: "hover"');
-    expect(stateSelectorSrc).toContain('value: "focus"');
+  it("renders all state options from the options list", () => {
+    // PortalListboxSelect maps over the options prop
+    expect(stateSelectorSrc).toMatch(/options\.map\(\(option/);
+    // StateSelector passes STATE_OPTIONS which spot-checks these ids
+    const stateSelectorDecl = readFileSync(
+      join(overlayDir, "shell", "StateSelector.tsx"),
+      "utf-8",
+    );
+    expect(stateSelectorDecl).toContain('id: "hover"');
+    expect(stateSelectorDecl).toContain('id: "focus"');
   });
 });

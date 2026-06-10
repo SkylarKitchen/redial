@@ -163,28 +163,12 @@ export function mergeClasses(existing: string, newClasses: string): string {
   const newList = newClasses.trim().split(/\s+/).filter(Boolean);
 
   if (newList.length === 0) return dedupeUtilityGroups(existingList).join(" ");
-  if (existingList.length === 0) return newClasses;
+  if (existingList.length === 0) return dedupeUtilityGroups(newList).join(" ");
 
-  // Collapse pre-existing intra-string conflicts: when the existing string
-  // already carries two members of the same utility group (a hand-written
-  // "p-2 p-4"), keep only the LAST in its original position so the contradiction
-  // isn't carried forward on every edit (issue #49). Without this, a duplicate
-  // only gets resolved when the NEW set happens to touch that group.
-  const dedupedExisting = dedupeUtilityGroups(existingList);
-
-  // Build a set of groups from the new classes
-  const newGroups = new Map<string, string>();
-  for (const cls of newList) {
-    newGroups.set(getUtilityGroup(cls), cls);
-  }
-
-  // Filter out existing classes that conflict with new ones
-  const kept = dedupedExisting.filter(
-    (cls) => !newGroups.has(getUtilityGroup(cls))
-  );
-
-  // Append the new classes
-  return [...kept, ...newList].join(" ");
+  // Merge existing + new, then dedupe by utility group (last occurrence wins).
+  // This collapses intra-existing conflicts (#49), intra-new conflicts, and
+  // cross-side conflicts in one pass: newer classes (appended last) beat older ones.
+  return dedupeUtilityGroups([...existingList, ...newList]).join(" ");
 }
 
 /**

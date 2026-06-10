@@ -8,7 +8,7 @@ import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "../panelUtils";
 import { ms, cssTransition, easeRelease } from "../timing";
-import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, labelHighlight, zIndex } from "../theme";
+import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, zIndex } from "../theme";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -49,9 +49,7 @@ export const selectAllOnDoubleClick = (e: React.MouseEvent<HTMLInputElement>) =>
 // ─── Shared styles ──────────────────────────────────────────────────
 
 export const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
-  const isModified = indicator === "modified";
-  const li = isModified ? labelIndicator.modified : labelIndicator.none;
-  return {
+  const base: React.CSSProperties = {
     fontSize: 11,
     width: layout.labelWidth,
     flexShrink: 0,
@@ -60,15 +58,12 @@ export const labelStyle = (indicator?: IndicatorType): React.CSSProperties => {
     alignItems: "center",
     gap: 4,
     cursor: "default",
-    color: li.text,
+    color: labelIndicator.none.text,
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
-    ...(isModified ? {
-      background: li.bg,
-      ...labelHighlight,
-    } : {}),
   };
+  return { ...base, ...indicatorStyle(indicator) };
 };
 
 export const rowStyle: React.CSSProperties = {

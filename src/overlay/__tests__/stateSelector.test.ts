@@ -12,23 +12,29 @@ import { isScrubActive, setScrubActive } from "../core/scrubState";
 
 // ── Source reading helpers ──────────────────────────────────────────
 
+// StateSelector is now a thin declaration; implementation details live in
+// PortalListboxSelect (extracted by code-review step 8 refactor).
 const stateSelectorSrc = readFileSync(
   join(__dirname, "../shell/StateSelector.tsx"),
+  "utf-8",
+);
+const portalListboxSrc = readFileSync(
+  join(__dirname, "../controls/PortalListboxSelect.tsx"),
   "utf-8",
 );
 
 // ── Static structure tests ─────────────────────────────────────────
 
 describe("StateSelector — static structure", () => {
-  it("default value is 'none' (first entry in STATES array)", () => {
-    // STATES[0] must be { value: "none", ... }
-    expect(stateSelectorSrc).toMatch(/STATES:\s*StateOption\[\]\s*=\s*\[/);
+  it("default value is 'none' (first entry in STATE_OPTIONS array)", () => {
+    // STATE_OPTIONS[0] must be { id: "none", ... }
+    expect(stateSelectorSrc).toMatch(/STATE_OPTIONS\s*=\s*\[/);
     expect(stateSelectorSrc).toMatch(
-      /\{\s*value:\s*"none"\s*,\s*label:\s*"None/,
+      /\{\s*id:\s*"none"\s*,\s*label:\s*"None/,
     );
     // Verify "none" comes first
     const firstValueMatch = stateSelectorSrc.match(
-      /STATES[^=]*=\s*\[\s*\{\s*value:\s*"([^"]+)"/,
+      /STATE_OPTIONS[^=]*=\s*\[\s*\{\s*id:\s*"([^"]+)"/,
     );
     expect(firstValueMatch).not.toBeNull();
     expect(firstValueMatch![1]).toBe("none");
@@ -48,32 +54,32 @@ describe("StateSelector — static structure", () => {
       expect(
         stateSelectorSrc,
         `Missing pseudo-class option: ${state}`,
-      ).toContain(`value: "${state}"`);
+      ).toContain(`id: "${state}"`);
     }
   });
 
   it("does not contain first-child / last-child structural selectors", () => {
-    // Webflow does not treat these as states — they were removed from STATES.
+    // Webflow does not treat these as states — they were removed from STATE_OPTIONS.
     expect(stateSelectorSrc).not.toContain("first-child");
     expect(stateSelectorSrc).not.toContain("last-child");
   });
 
   it("wires value/onChange through the portal-dropdown pattern (no shadcn Select)", () => {
-    // Reimplemented on usePortalDropdown — must not import the shadcn Select.
+    // Reimplemented on PortalListboxSelect (uses usePortalDropdown internally).
     expect(stateSelectorSrc).not.toContain("@/components/ui/select");
-    expect(stateSelectorSrc).toContain("usePortalDropdown");
+    expect(portalListboxSrc).toContain("usePortalDropdown");
     // value drives the active option; onChange fires on select.
-    expect(stateSelectorSrc).toContain("onChange(");
+    expect(stateSelectorSrc).toContain("onChange={onChange}");
   });
 
   it("portal carries data-tuner-portal and max z-index", () => {
-    expect(stateSelectorSrc).toContain("data-tuner-portal");
-    expect(stateSelectorSrc).toContain("zIndex: zIndex.max");
+    expect(portalListboxSrc).toContain("data-tuner-portal");
+    expect(portalListboxSrc).toContain("zIndex: zIndex.max");
   });
 
   it("shows 'State' label when value is base (none)", () => {
-    // {isBase ? "State" : current.label}
-    expect(stateSelectorSrc).toMatch(/isBase\s*\?\s*"State"/);
+    // baseTriggerLabel="State" passed to PortalListboxSelect
+    expect(stateSelectorSrc).toContain('baseTriggerLabel="State"');
   });
 });
 

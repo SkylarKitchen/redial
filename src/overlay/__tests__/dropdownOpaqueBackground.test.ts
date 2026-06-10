@@ -42,19 +42,21 @@ describe("Dropdown opaque background", () => {
     ).toBe(true);
   });
 
-  it("StateSelector.tsx dropdown content must have an explicit opaque backgroundColor", () => {
-    const src = readSrc(join(OVERLAY_DIR, "shell", "StateSelector.tsx"));
+  it("PortalListboxSelect.tsx dropdown content must have an explicit opaque backgroundColor", () => {
+    // StateSelector and BreakpointSelector are now thin declarations over
+    // PortalListboxSelect (code-review step 8 refactor). The listbox container
+    // and its opaque background live in PortalListboxSelect.tsx.
+    const src = readSrc(join(OVERLAY_DIR, "controls", "PortalListboxSelect.tsx"));
 
-    // StateSelector was refactored off Radix <SelectContent> to the project's
-    // portal-dropdown pattern (createPortal + role="listbox"), mirroring UnitSelector.
-    // The dropdown content container is now the role="listbox" element; it must still
-    // carry an explicit opaque inline background so it isn't see-through when portaled
-    // to document.body, outside .__tuner-root scope where Tailwind CSS variables
+    // PortalListboxSelect was extracted from StateSelector's portal-dropdown pattern
+    // (createPortal + role="listbox"). The dropdown content container must carry an
+    // explicit opaque inline background so it isn't see-through when portaled to
+    // document.body, outside .__tuner-root scope where Tailwind CSS variables
     // (e.g. bg-popover) may not resolve.
     const listboxIdx = src.indexOf('role="listbox"');
     expect(
       listboxIdx,
-      'StateSelector.tsx must render a role="listbox" dropdown content container.'
+      'PortalListboxSelect.tsx must render a role="listbox" dropdown content container.'
     ).toBeGreaterThan(-1);
 
     // Scope the check to the listbox container's OWN opening tag/style block —
@@ -65,7 +67,7 @@ describe("Dropdown opaque background", () => {
 
     expect(
       hasStyleBg,
-      'StateSelector.tsx: the role="listbox" dropdown container has no inline ' +
+      'PortalListboxSelect.tsx: the role="listbox" dropdown container has no inline ' +
       "background/backgroundColor. The dropdown appears transparent because a " +
       "bg-popover Tailwind class doesn't resolve in portal context."
     ).toBe(true);

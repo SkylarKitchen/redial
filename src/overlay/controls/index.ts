@@ -29,3 +29,5 @@ export { VisibilityToggle } from "./VisibilityToggle";
 export { VariableLinkDot } from "./VariableLinkDot";
 export { VariableField } from "./VariableField";
 export type { VariableFieldProps } from "./VariableField";
+export { PortalListboxSelect } from "./PortalListboxSelect";
+export type { PortalListboxSelectProps, PortalListboxOption } from "./PortalListboxSelect";
