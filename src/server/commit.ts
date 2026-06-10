@@ -346,6 +346,131 @@ type FindResult = {
   range?: [number, number];
 };
 
+// --- Block-extent walking (the single brace-depth implementation) ---
+
+/**
+ * A selector occurrence and its block's extent metadata, as yielded by
+ * `eachBlock`. Line-granular: the depth walk that delimits the block runs via
+ * `scanBlockLines` from `openLine`.
+ */
+type BlockExtent = {
+  /** Line index where the selector regex matched. */
+  selLine: number;
+  /**
+   * First line at/after `selLine` containing a `{` — where the brace-depth
+   * walk starts. Differs from `selLine` for multi-line selector lists.
+   */
+  openLine: number;
+  /**
+   * Char span [start, end) of the block BODY on `selLine` — the region between
+   * the block's opening `{` and its matching `}` — present only when both sit
+   * on that one physical line (minified/same-line CSS). Used to confine a
+   * surgical replacement to the targeted block so an identical declaration in
+   * an earlier sibling block on the same line isn't rewritten (issue #47).
+   */
+  bodyRange?: [number, number];
+};
+
+/**
+ * A scanner hit: the matched declaration's line plus the optional issue-#47
+ * confinement span (set when the hit line is a minified same-line block).
+ */
+type BlockHit = {
+  lineIdx: number;
+  range?: [number, number];
+};
+
+/**
+ * Yield a BlockExtent for every line on which `selectorRe` matches (first
+ * match per line). Candidates whose opening `{` never appears are skipped.
+ * `maskedLines` must be the masked view so braces in strings/comments/url()
+ * can't fool the extent computation.
+ */
+function* eachBlock(
+  maskedLines: string[],
+  selectorRe: RegExp
+): Generator<BlockExtent> {
+  for (let i = 0; i < maskedLines.length; i++) {
+    const m = selectorRe.exec(maskedLines[i]);
+    if (!m) continue;
+
+    // Find the opening brace (might be on the same line or several lines
+    // below, e.g. a multi-line selector list). Scan until the first '{',
+    // no fixed cap.
+    let openLine = -1;
+    for (let j = i; j < maskedLines.length; j++) {
+      if (maskedLines[j].includes("{")) {
+        openLine = j;
+        break;
+      }
+    }
+    if (openLine === -1) continue;
+
+    yield {
+      selLine: i,
+      openLine,
+      bodyRange: bodyRangeOnLine(maskedLines[i], m.index),
+    };
+  }
+}
+
+/**
+ * Char-accurate body span for a block that opens AND closes on one physical
+ * line: from the first `{` at/after `fromCol`, walk char-level brace depth to
+ * the matching `}`. Returns [openCol + 1, closeCol) — the body between the
+ * braces — or undefined when no `{` follows `fromCol` or the block doesn't
+ * close on this line.
+ */
+function bodyRangeOnLine(
+  maskedLine: string,
+  fromCol: number
+): [number, number] | undefined {
+  const braceIdx = maskedLine.indexOf("{", fromCol);
+  if (braceIdx === -1) return undefined;
+  let depth = 0;
+  for (let k = braceIdx; k < maskedLine.length; k++) {
+    if (maskedLine[k] === "{") depth++;
+    else if (maskedLine[k] === "}") {
+      depth--;
+      if (depth === 0) return [braceIdx + 1, k];
+    }
+  }
+  return undefined; // block doesn't close on this line
+}
+
+/**
+ * THE line-granular brace-depth walk — every block scanner is a consumer.
+ * Starting at `openLine`, count net brace depth line-by-line on the masked
+ * view and call `visit(lineIdx, depthAfter)` for each line, where
+ * `depthAfter` is the depth after all braces on that line are counted. The
+ * walk stops when `visit` returns a non-null line index (returned to the
+ * caller) or after visiting the first line PAST `openLine` on which depth has
+ * returned to <= 0 (the block's closing line). Returns null when the walk
+ * ends without a hit (including an unbalanced block running to EOF).
+ *
+ * Note the visit-then-stop order: the closing line itself IS visited, and for
+ * a block that opens and closes on `openLine` (net depth 0) the following
+ * line is visited too — quirks of the original hand-rolled scanners,
+ * preserved exactly.
+ */
+function scanBlockLines(
+  maskedLines: string[],
+  openLine: number,
+  visit: (lineIdx: number, depthAfter: number) => number | null
+): number | null {
+  let depth = 0;
+  for (let j = openLine; j < maskedLines.length; j++) {
+    for (const ch of maskedLines[j]) {
+      if (ch === "{") depth++;
+      if (ch === "}") depth--;
+    }
+    const hit = visit(j, depth);
+    if (hit != null) return hit;
+    if (depth <= 0 && j > openLine) break;
+  }
+  return null;
+}
+
 /**
  * Search for a CSS property near the expected line (±windowSize).
  */
@@ -378,56 +503,34 @@ function searchWindow(
 
 /**
  * Find a CSS class block (`.className { ... }`) and search within it.
+ * Returns the hit line plus, when the block opens AND closes on that same
+ * physical line (minified CSS), the char span of the block's body to which a
+ * surgical replacement must be confined (issue #47).
  */
 function searchClassBlock(
   lines: string[],
   className: string,
   prop: string,
   value: string
-): number | null {
-  // Find the opening line of the class block
+): BlockHit | null {
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*[{,]`
   );
 
-  for (let i = 0; i < lines.length; i++) {
-    if (!classPattern.test(lines[i])) continue;
-
-    // Found the class — track braces to find the block extent
-    let depth = 0;
-    let blockStart = i;
-
-    // Find the opening brace (might be on the same line or several lines below,
-    // e.g. a multi-line selector list). Scan until the first '{', no fixed cap.
-    let foundBrace = false;
-    for (let j = i; j < lines.length; j++) {
-      if (lines[j].includes("{")) {
-        blockStart = j;
-        foundBrace = true;
-        break;
-      }
-    }
-    if (!foundBrace) continue;
-
-    // Count from blockStart
-    for (let j = blockStart; j < lines.length; j++) {
-      for (const ch of lines[j]) {
-        if (ch === "{") depth++;
-        if (ch === "}") depth--;
-      }
-
-      // Search within the block for our property. The brace line itself
-      // (j === blockStart) is inspected too, so an all-on-one-line minified
-      // block whose declaration shares the line with the `{` is found rather
-      // than skipped (issue #47); a multi-line selector line carries no
-      // `prop: value`, so this is a no-op there.
-      if (depth >= 0) {
-        if (lineHasDecl(lines[j], prop, value)) {
-          return j;
-        }
-      }
-
-      if (depth <= 0 && j > blockStart) break;
+  for (const block of eachBlock(lines, classPattern)) {
+    // Search within the block for our property. The opening-brace line itself
+    // is inspected too (depthAfter >= 0 includes it), so an all-on-one-line
+    // minified block whose declaration shares the line with the `{` is found
+    // rather than skipped (issue #47); a multi-line selector line carries no
+    // `prop: value`, so this is a no-op there.
+    const idx = scanBlockLines(lines, block.openLine, (j, depth) =>
+      depth >= 0 && lineHasDecl(lines[j], prop, value) ? j : null
+    );
+    if (idx != null) {
+      return {
+        lineIdx: idx,
+        range: idx === block.selLine ? block.bodyRange : undefined,
+      };
     }
   }
 
@@ -510,7 +613,9 @@ function replaceDeclInLine(
 }
 
 /**
- * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within it.
+ * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within
+ * it. Returns the hit line plus, for a minified same-line block, the char span
+ * of the block's body to confine the replacement to (issue #47, pseudo branch).
  */
 function searchPseudoClassBlock(
   lines: string[],
@@ -518,33 +623,25 @@ function searchPseudoClassBlock(
   state: string,
   prop: string,
   value: string
-): number | null {
+): BlockHit | null {
   const pseudoPattern = new RegExp(
     `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`
   );
 
-  for (let i = 0; i < lines.length; i++) {
-    if (!pseudoPattern.test(lines[i])) continue;
-
-    // Found the pseudo-class block — track braces to find extent
-    let depth = 0;
-    for (let j = i; j < lines.length; j++) {
-      for (const ch of lines[j]) {
-        if (ch === "{") depth++;
-        if (ch === "}") depth--;
-      }
-
-      // The brace line itself (j === i) is inspected too, so an all-on-one-line
-      // minified pseudo block whose declaration shares the line with the `{` is
-      // found rather than skipped — and the scan can't fall through to a later
-      // sibling block's identical declaration (issue #47, pseudo branch).
-      if (depth >= 0) {
-        if (lineHasDecl(lines[j], prop, value)) {
-          return j;
-        }
-      }
-
-      if (depth <= 0 && j > i) break;
+  for (const block of eachBlock(lines, pseudoPattern)) {
+    // The opening-brace line itself is inspected too (depthAfter >= 0 includes
+    // it), so an all-on-one-line minified pseudo block whose declaration shares
+    // the line with the `{` is found rather than skipped — and the scan can't
+    // fall through to a later sibling block's identical declaration (issue #47,
+    // pseudo branch).
+    const idx = scanBlockLines(lines, block.openLine, (j, depth) =>
+      depth >= 0 && lineHasDecl(lines[j], prop, value) ? j : null
+    );
+    if (idx != null) {
+      return {
+        lineIdx: idx,
+        range: idx === block.selLine ? block.bodyRange : undefined,
+      };
     }
   }
 
@@ -553,7 +650,8 @@ function searchPseudoClassBlock(
 
 /**
  * Search for a CSS property inside a nested SCSS pseudo-class block.
- * Matches `&:hover {` inside `.className { }`.
+ * Matches `&:hover {` inside `.className { }`. Never produces a confinement
+ * range — nested SCSS hit lines are plain declaration lines.
  */
 function searchNestedPseudoBlock(
   lines: string[],
@@ -561,52 +659,33 @@ function searchNestedPseudoBlock(
   state: string,
   prop: string,
   value: string
-): number | null {
+): BlockHit | null {
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*\\{`
   );
   const nestedPattern = new RegExp(
     `&:${escapeRegex(state)}\\s*\\{`
   );
+  const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
 
-  for (let i = 0; i < lines.length; i++) {
+  for (const block of eachBlock(lines, classPattern)) {
     // Skip flat pseudo-class lines (e.g. .btn:hover)
-    if (lines[i].includes(":")) {
-      const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
-      if (pseudoCheck.test(lines[i])) continue;
-    }
-
-    if (!classPattern.test(lines[i])) continue;
+    if (pseudoCheck.test(lines[block.selLine])) continue;
 
     // Found parent class — scan within the block for &:state
-    let depth = 0;
-    for (let j = i; j < lines.length; j++) {
-      for (const ch of lines[j]) {
-        if (ch === "{") depth++;
-        if (ch === "}") depth--;
+    const idx = scanBlockLines(lines, block.openLine, (j, depth) => {
+      if (j > block.openLine && depth >= 1 && nestedPattern.test(lines[j])) {
+        // Found &:state sub-block — search within it with its own depth walk.
+        // The `&:state {` line itself is NOT inspected (k > j), as before.
+        return scanBlockLines(lines, j, (k, subDepth) =>
+          k > j && subDepth >= 0 && lineHasDecl(lines[k], prop, value)
+            ? k
+            : null
+        );
       }
-
-      if (j > i && depth >= 1 && nestedPattern.test(lines[j])) {
-        // Found &:state sub-block — search within it
-        let subDepth = 0;
-        for (let k = j; k < lines.length; k++) {
-          for (const ch of lines[k]) {
-            if (ch === "{") subDepth++;
-            if (ch === "}") subDepth--;
-          }
-
-          if (k > j && subDepth >= 0) {
-            if (lineHasDecl(lines[k], prop, value)) {
-              return k;
-            }
-          }
-
-          if (subDepth <= 0 && k > j) break;
-        }
-      }
-
-      if (depth <= 0 && j > i) break;
-    }
+      return null;
+    });
+    if (idx != null) return { lineIdx: idx };
   }
 
   return null;
@@ -623,27 +702,20 @@ function findClassBlockEnd(
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*\\{`
   );
+  const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
 
-  for (let i = 0; i < lines.length; i++) {
+  for (const block of eachBlock(lines, classPattern)) {
     // Skip pseudo-class blocks — we want the base class
-    if (lines[i].includes(":")) {
-      const pseudoCheck = new RegExp(
-        `\\.${escapeRegex(className)}:\\w`
-      );
-      if (pseudoCheck.test(lines[i])) continue;
-    }
+    if (pseudoCheck.test(lines[block.selLine])) continue;
 
-    if (!classPattern.test(lines[i])) continue;
-
-    // Found the base class — track braces to find the closing `}`
-    let depth = 0;
-    for (let j = i; j < lines.length; j++) {
-      for (const ch of lines[j]) {
-        if (ch === "{") depth++;
-        if (ch === "}") depth--;
-      }
-      if (depth <= 0 && j >= i) return j;
-    }
+    // Found the base class — the closing `}` is the first line on which the
+    // depth returns to <= 0 (the open line itself for a one-line block). An
+    // unbalanced block (depth never closes) falls through to the next
+    // candidate, as before.
+    const end = scanBlockLines(lines, block.openLine, (j, depth) =>
+      depth <= 0 ? j : null
+    );
+    if (end != null) return end;
   }
 
   return null;
@@ -955,14 +1027,12 @@ export function findPropertyInFile(
 
   // Tier 2: Class-scoped search (if we know the CSS class)
   if (className) {
-    const idx = searchClassBlock(masked, className, prop, value);
-    if (idx != null) {
-      // If the target class's block opens AND closes on this same physical
-      // line (minified CSS), confine the later surgical replacement to that
-      // block's body so a sibling block's identical declaration earlier on the
-      // line isn't the one rewritten (issue #47).
-      const range = classBlockBodyRangeOnLine(masked[idx], className);
-      return { lineIdx: idx, strategy: "class-block", range };
+    const hit = searchClassBlock(masked, className, prop, value);
+    if (hit != null) {
+      // hit.range (set for a minified same-line block) confines the later
+      // surgical replacement to the target block's body so a sibling block's
+      // identical declaration earlier on the line isn't rewritten (issue #47).
+      return { lineIdx: hit.lineIdx, strategy: "class-block", range: hit.range };
     }
   }
 
@@ -1073,7 +1143,7 @@ export async function handleCommit(
           }
           // Locate on the masked view so brace literals / comments can't fool
           // the scan; the replacement is applied to the original `lines`.
-          const pseudoIdx = searchPseudoClassBlock(
+          const pseudoHit = searchPseudoClassBlock(
             masked,
             change.className,
             change.state,
@@ -1087,24 +1157,21 @@ export async function handleCommit(
             change.from
           );
 
-          if (pseudoIdx != null) {
+          if (pseudoHit != null) {
             // Found the property in the pseudo-class block. When the block
-            // opens AND closes on this same physical line (minified CSS),
-            // confine the replacement to the block's body so a sibling block's
-            // identical declaration on the line isn't rewritten (issue #47).
-            const range = classBlockBodyRangeOnLine(
-              masked[pseudoIdx],
-              `${change.className}:${change.state}`
-            );
+            // opens AND closes on one physical line (minified CSS), hit.range
+            // confines the replacement to the block's body so a sibling
+            // block's identical declaration on the line isn't rewritten
+            // (issue #47).
             const updated = replaceDeclInLine(
-              lines[pseudoIdx],
+              lines[pseudoHit.lineIdx],
               change.prop,
               change.from,
               change.to,
-              range
+              pseudoHit.range
             );
             if (updated != null) {
-              lines[pseudoIdx] = updated;
+              lines[pseudoHit.lineIdx] = updated;
               modified = true;
               remask();
             } else {
