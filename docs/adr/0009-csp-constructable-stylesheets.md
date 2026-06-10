@@ -50,6 +50,14 @@ managedSheet(key: string): { replace(css: string): void; dispose(): void }
 `document.adoptedStyleSheets` (or, for panel-owned styles after ADR-0008
 lands, the shadow root's `adoptedStyleSheets`). Migrate the 8 sites onto it.
 
+**Contract requirement — append, don't assign.** `adoptedStyleSheets` is
+read/write but assigning a fresh array (`doc.adoptedStyleSheets = [mine]`)
+clobbers any sheets the host app, another devtool, or even ADR-0008's
+shadow root have already adopted. The helper must append its sheet via
+`[...adoptedStyleSheets, sheet]` (or the upcoming mutable-array API where
+supported) and `dispose()` must remove *only its own* sheet. Same rule for
+the shadow root's `adoptedStyleSheets` once 0008 lands.
+
 Why this beats the three listed options:
 
 - **vs documentation-only (S):** strict-CSP hosts would lose class-scope
@@ -82,6 +90,13 @@ head-appended tags.
 
 - New `managedSheet` helper (likely `src/overlay/core/managedSheet.ts`);
   8 call sites migrated; ~M effort total (down from the S/M/XL fork).
+- Limitation: `replaceSync` rejects `@import` rules. The 8 sites here all
+  build CSS strings in JS so this is moot for them, but it constrains
+  ADR-0008's shadow-root style delivery — that path must feed in the
+  postcss-flattened build output, not a source file like `globals.css`
+  whose line 1 is `@import "tailwindcss"`. The helper itself should
+  surface a clear error when given an `@import`-bearing string rather
+  than silently swallowing the throw.
 - Tests asserting on managed tags (`getStateStyleTag()` is exported for
   tests; scope/state/mode/breakpoint suites read tag `textContent`) move to
   sheet-based assertions — mechanical.

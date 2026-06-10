@@ -23,6 +23,7 @@ and recommends Shadow DOM.
 | `document.addEventListener` sites (mostly capture-phase mousedown/keydown/click) | ~50 | Events still reach the host document; `event.target` is retargeted to the shadow host — fix centrally with `composedPath()` | Split across two documents; click-outside, hotkey suppression, and `isInsideTunerUI` break wholesale |
 | `instanceof` DOM/CSSOM checks (13× `CSSStyleRule`, 8× `HTMLElement`, …) | 25 | Same realm — unaffected | Cross-realm constructors — every check is wrong |
 | `getComputedStyle` call sites (mostly against host elements: infer, apply, scope, variables) | ~60 | Same document — unaffected | Must hold the host `window` reference everywhere |
+| `document.activeElement` (5) + `document.elementFromPoint` (5) reads | 10 | Switch to `shadowRoot.activeElement` / shadow-aware point checks — mechanical, but silent: each one returns the *shadow host* instead of the actual panel node, so the focus trap (`useFocusTrap.ts:42`), modal focus-restore (`Modal.tsx:54,82`), wheel adjust (`useWheelAdjust.ts:38`), CSS-editor focus check (`CSSEditorView.tsx:179`), and `Selector`/`usePageInteractions` hit-testing all degrade without a type error | Same fixes plus correct-document juggling on every site |
 | Styling of panel components | 915 inline `style={{}}` vs 121 `className` | Inline styles are boundary-immune; only `globals.css` + 8 runtime `<style>` injections need relocation | Same relocation, plus a second document to bootstrap |
 | Tests locking the portal/event contract | ~20 files | Updated in place (target node + retargeting) | Largely rewritten |
 
@@ -62,19 +63,39 @@ Implementation outline:
    `navigatorFilter.ts:53`, `GridSettingsPopup.tsx:501`) switch to
    `event.composedPath()` / shadow-host awareness. Document-level listeners
    keep working because composed UI events cross open shadow boundaries.
+   Replace the 5 `document.activeElement` reads with
+   `(document.activeElement === host ? host.shadowRoot?.activeElement :
+   document.activeElement)`, and gate the 5 `elementFromPoint` reads on
+   "is this point over the shadow host" to keep selection-mode hit-testing
+   targeting host elements rather than the panel container.
 4. **Styles.** Panel styles move into the shadow root via
    `adoptedStyleSheets` (fallback: a `<style>` element). The published
    `globals.css` drops the *global* Tailwind import for panel chrome — this is
    what fixes the leak-out direction. Add a `:host` defensive reset
    (inherited properties: font, color, line-height, direction) for the
    bleed-in direction; inline styles already cover non-inherited properties.
-5. **What stays in the host document** (must not move): the four host-page
-   style injections (`breakpointPreview.ts`, `statePreview.ts`,
-   `modeOverrides.ts`, `scope.ts`), the Next.js dev-overlay z-index fix
-   (`useInjectedStyles.ts:26`), selection/guide overlays, and every
+   Three caveats worth locking with tests:
+   - `replaceSync` rejects `@import` rules, so the shadow sheet must be the
+     postcss-flattened build output — feeding the raw `globals.css` (whose
+     line 1 is `@import "tailwindcss"`) throws at runtime.
+   - Tailwind v4 emits theme variables on `:root, :host`, so utilities should
+     resolve inside the shadow root — verify in a browser before relying on it.
+   - Host CSS custom properties inherit through shadow boundaries; a non-issue
+     for the 915 inline styles fed from `theme.ts` JS constants, but any panel
+     CSS that consumes `var(--foo)` will pick up the host's value.
+5. **What stays host-document-bound** (must not be moved into the shadow
+   root): the four host-page style injections (`breakpointPreview.ts`,
+   `statePreview.ts`, `modeOverrides.ts`, `scope.ts`), the
+   `document.body.style.cursor` write in `Selector.tsx:196`, the Next.js
+   dev-overlay z-index fix (`useInjectedStyles.ts:26`), and every
    `getComputedStyle`/CSSOM read — inference and persistence keep operating on
-   the host page by design. `WebflowPanel.tsx:89` and `BezierEditor.tsx:42`
-   keyframe/focus injections move *into* the shadow root.
+   the host page by design. The selection/guide overlays
+   (`Selector.tsx`, `FlexGapOverlay.tsx`, `GridOverlay.tsx`) render normally
+   in the React tree and will naturally end up *inside* the shadow root;
+   that's fine — fixed-position drawing over host content works identically
+   from either side of the boundary. `WebflowPanel.tsx:89` and
+   `BezierEditor.tsx:42` keyframe/focus injections move *into* the shadow
+   root.
 
 ## Why not iframe
 
