@@ -27,6 +27,7 @@ import { onHmrUpdate } from "../core/hmr";
 import { getCSSModuleClasses, syncWithApplyUndoRedo as syncClassScopeUndoRedo, type Scope } from "../core/scope";
 import { diffState, syncWithApplyUndoRedo } from "../core/statePreview";
 import { enrichChangesForCommit } from "../core/commitUtils";
+import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
 import { getVariablesPanelWidth } from "../variables/panelWidth";
@@ -349,7 +350,7 @@ export function Overlay() {
     try {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
         body: JSON.stringify({
           ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
           changes: enriched,

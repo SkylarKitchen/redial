@@ -213,7 +213,7 @@ function changeValidationError(change: CommitChange): string | null {
   if (!isValidCSSProp(change.prop))
     return `invalid CSS property name: "${change.prop}"`;
   if (!isSafeCSSValue(change.to))
-    return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
+    return `unsafe CSS value (contains "{", "}", ";", "<", "/*", "*/", or newline): "${change.to}"`;
   // Semantic validity: reject `none` for props whose grammar has no `none`
   // (toggle-deselect sentinel). Shares the predicate with the live preview so
   // client and server can't drift apart.
@@ -1160,6 +1160,22 @@ export async function handleCommit(
           failed.push({
             ...change,
             reason: `base class ".${change.className}" not found — cannot create :${change.state} block`,
+          });
+          continue;
+        }
+
+        // Fail-safe (issue #57): a state-tagged change WITHOUT class info
+        // cannot be routed to a `.class:state { }` block. Falling through to
+        // the standard search would write the state-only value into the BASE
+        // rule — silently corrupting the resting style while reporting
+        // success. Reject it instead. Custom properties are exempt: the client
+        // intentionally redirects var()-backed edits to the variable's
+        // definition site (e.g. `:root`) with no class info, regardless of the
+        // state the edit was made under.
+        if (change.state && !change.className && !change.prop.startsWith("--")) {
+          result.failed.push({
+            ...change,
+            reason: `state ":${change.state}" edit has no class info — refusing to write it into the base rule`,
           });
           continue;
         }

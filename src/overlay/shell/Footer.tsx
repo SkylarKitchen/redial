@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { styleEngine } from "../core/engine";
 import { enrichChangesForCommit } from "../core/commitUtils";
+import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import type { Scope } from "../core/scope";
 import { formatCSSDiff, getSelector } from "../util";
 import { formatTailwindDiff } from "../tailwind";
@@ -232,7 +233,7 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     try {
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
         body: JSON.stringify({
           ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
           changes: enriched,
