@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { diffAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, formatCSSDiff } from "../util";
+import { composeExportCSS } from "../breakpoints";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
@@ -192,8 +193,9 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
 
   const handleCopyAll = useCallback(() => {
     if (allDiffs.length === 0) return;
-    const blocks = allDiffs.map(({ el, changes }) => formatCSSDiff(el, changes));
-    navigator.clipboard.writeText(blocks.join("\n\n"));
+    // Shared base-vs-@media partition (breakpoints.composeExportCSS) so
+    // responsive edits export as real @media blocks, not flattened into base.
+    navigator.clipboard.writeText(composeExportCSS(allDiffs, formatCSSDiff));
     setMessage("Copied!");
     setTimeout(() => setMessage(null), timing.dismissal);
   }, [allDiffs]);
@@ -203,10 +205,14 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     setSaving(true);
     setMessage(null);
 
-    // Mirror Footer.tsx / Overlay.tsx: route through enrichChangesForCommit so
-    // Tailwind elements get the correct shape + `mode: "tailwind"` marker.
+    // Mirror Footer.tsx: route through enrichChangesForCommit so Tailwind
+    // elements get the correct shape + `mode: "tailwind"` marker.
     const enriched = allDiffs.flatMap(({ el, changes }) =>
-      enrichChangesForCommit(el, changes, { scope: "element" }),
+      enrichChangesForCommit(el, changes, {
+        scope: "element",
+        activeClassName: null,
+        activeState: "none",
+      }),
     );
     const mode = enriched.find((c) => c.mode)?.mode;
 

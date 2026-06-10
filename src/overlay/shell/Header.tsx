@@ -9,6 +9,7 @@ import { useState, useEffect, useMemo } from "react";
 import { getDisplayClass } from "../util";
 import { getReactSource } from "../core/sourcemap";
 import type { Scope } from "../core/scope";
+import type { ScopeContext } from "../core/engine";
 import { getReadableName } from "../core/scope";
 import { StateSelector } from "./StateSelector";
 import { BreakpointSelector } from "./BreakpointSelector";
@@ -28,13 +29,12 @@ interface HeaderProps {
   breadcrumb?: BreadcrumbSegment[];
   onBreadcrumbClick?: (el: Element) => void;
   onBreadcrumbHover?: (el: Element | null) => void;
-  scope?: Scope;
+  /** The panel's active scoping bundle (scope ▸ class ▸ state ▸ breakpoint) —
+   *  Overlay's ONE memoized `scopeCtx`, never drilled per-dimension. */
+  scopeCtx?: ScopeContext;
   onScopeChange?: (scope: Scope, className?: string) => void;
   cssClasses?: string[];
-  activeClassName?: string | null;
-  state?: string;
   onStateChange?: (state: string) => void;
-  breakpoint?: string;
   onBreakpointChange?: (breakpoint: string) => void;
   pinned?: boolean;
   onTogglePin?: () => void;
@@ -50,17 +50,20 @@ export function Header({
   breadcrumb,
   onBreadcrumbClick,
   onBreadcrumbHover,
-  scope = "element",
+  scopeCtx,
   onScopeChange,
   cssClasses = [],
-  activeClassName,
-  state,
   onStateChange,
-  breakpoint,
   onBreakpointChange,
   pinned = false,
   onTogglePin,
 }: HeaderProps) {
+  // Destructure the bundle once; the selector children keep their plain
+  // value + onChange contracts (StateSelector / BreakpointSelector unchanged).
+  const scope = scopeCtx?.scope ?? "element";
+  const activeClassName = scopeCtx?.activeClassName;
+  const state = scopeCtx?.activeState;
+  const breakpoint = scopeCtx?.activeBreakpoint;
   const [breadcrumbExpanded, setBreadcrumbExpanded] = useState(false);
   const [closeHovered, setCloseHovered] = useState(false);
   const [pinHovered, setPinHovered] = useState(false);

@@ -193,6 +193,27 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     copyAndClose(formatCSSVars(changes), "vars");
   }, [element, copyAndClose]);
 
+  // Media-gated edits aren't written to source files yet (#53 / #35 follow-up):
+  // breakpoint @media blocks + CSS-variable mode overrides go to the clipboard
+  // on save so they aren't silently lost.
+  const copyMediaGatedExtras = useCallback((changes: DiffEntry[]) => {
+    const bpCSS = serializeElementBreakpointCSS(element, changes);
+    const modeCSS = serializeModeOverrides();
+    const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
+    if (!extra) return;
+    navigator.clipboard.writeText(extra).then(() => {
+      const bpCount = changes.filter((c) => c.breakpoint).length;
+      const mc = getModeOverrideCount();
+      const parts: string[] = [];
+      if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
+      if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
+      showMessage(`${parts.join(" + ")} copied to clipboard (not saved to file)`, 4000);
+    }).catch(() => {});
+  }, [element, showMessage]);
+
+  // THE save pipeline. The Save button, Cmd+S, and the command palette all end
+  // up here (via `saveRef`) — there is deliberately no second copy of the
+  // file-vs-clipboard partition anywhere else.
   const handleSave = useCallback(async () => {
     if (savingRef.current) return;
     savingRef.current = true;
@@ -205,14 +226,16 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     setSaving(true);
     setMessage(null);
 
-    const enriched = enrichChangesForCommit(element, changes, { scope, activeClassName, activeState });
+    // File-bound changes only — enrichment drops breakpoint-tagged changes
+    // (clipboard-only until #53; copyMediaGatedExtras carries them instead).
+    const enriched = enrichChangesForCommit(element, changes, scopeCtx);
 
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
     if (!endpoint) {
       // Breakpoint edits export as @media blocks (#35); keep them out of the
       // base rule so they aren't flattened to un-mediated styles.
-      const css = composeExportCSS(changes, formatCleanCSS);
+      const css = composeExportCSS([{ el: element, changes }], formatCleanCSS);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       const modeCount = getModeOverrideCount();
@@ -222,6 +245,15 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
       }).catch(() => {
         showMessage("Clipboard access denied", 2000);
       });
+      setSaving(false);
+      savingRef.current = false;
+      return;
+    }
+
+    // Nothing file-bound (e.g. only breakpoint edits / mode overrides): skip
+    // the pointless empty POST and go straight to the clipboard side-channel.
+    if (enriched.length === 0) {
+      copyMediaGatedExtras(changes);
       setSaving(false);
       savingRef.current = false;
       return;
@@ -248,35 +280,22 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
           const detail = failedList[0]?.reason ? `: ${failedList[0].reason}` : "";
           showMessage(`Saved ${writtenFiles.length}, ${failed} failed${detail}`, 3000);
         } else {
-          // Show file path in toast for context
+          // Count only what reached the file (breakpoint edits go to the
+          // clipboard, not the source write); show file path for context.
+          const savedCount = enriched.length;
           const filePath = writtenFiles[0]?.split("/").pop() ?? "";
           const fileHint = filePath ? ` \u2192 ${filePath}` : "";
-          showMessage(`Saved ${changes.length} propert${changes.length === 1 ? "y" : "ies"}${fileHint}`, 3000);
+          showMessage(`Saved ${savedCount} propert${savedCount === 1 ? "y" : "ies"}${fileHint}`, 3000);
           setSaved(true);
           if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
         }
         onSaved?.();
-        // Media-gated edits aren't written to source files yet (tracked as a
-        // #35 follow-up): breakpoint @media blocks + CSS-variable mode overrides
-        // go to the clipboard so they aren't silently lost.
-        const bpCSS = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
-        const modeCSS = serializeModeOverrides();
-        const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
-        if (extra) {
-          navigator.clipboard.writeText(extra).then(() => {
-            const bpCount = changes.filter((c) => c.breakpoint).length;
-            const mc = getModeOverrideCount();
-            const parts: string[] = [];
-            if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
-            if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
-            showMessage(`${parts.join(" + ")} copied to clipboard (not saved to file)`, 4000);
-          }).catch(() => {});
-        }
+        copyMediaGatedExtras(changes);
       }
     } catch {
       // Network error — fall back to clipboard
-      const css = composeExportCSS(changes, formatCleanCSS);
+      const css = composeExportCSS([{ el: element, changes }], formatCleanCSS);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
       navigator.clipboard.writeText(fullCSS).then(() => {
@@ -288,7 +307,14 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
       setSaving(false);
       savingRef.current = false;
     }
-  }, [element, onSaved, showMessage, scope, activeClassName, activeState, composeExportCSS]);
+  }, [element, onSaved, showMessage, scopeCtx, activeState, copyMediaGatedExtras]);
+
+  // One pipeline, two triggers: expose the save to Overlay (Cmd+S / palette).
+  useEffect(() => {
+    if (!saveRef) return;
+    saveRef.current = handleSave;
+    return () => { saveRef.current = null; };
+  }, [saveRef, handleSave]);
 
   const handleReset = useCallback(() => {
     // Reset only the selected element's overrides for the active scope/state, and
@@ -297,9 +323,9 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     // Global mode overrides are a separate dimension and are intentionally NOT
     // cleared here (they were over-cleared before — see resetScope / issue #14);
     // they stay clearable via undo and the Variables panel.
-    styleEngine.resetScope(element, { scope, activeClassName: activeClassName ?? null, activeState, activeBreakpoint });
+    styleEngine.resetScope(element, scopeCtx);
     onReset();
-  }, [element, onReset, scope, activeClassName, activeState, activeBreakpoint]);
+  }, [element, onReset, scopeCtx]);
 
   const handleResetClick = useCallback(() => {
     // Reset reflects the element's own overrides only (it no longer clears modes).

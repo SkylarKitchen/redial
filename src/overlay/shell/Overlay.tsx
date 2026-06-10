@@ -20,13 +20,12 @@ import { PromptPanel } from "./PromptPanel";
 import { ChangesDrawer, type HistoryEntry, type ChangesTab } from "./ChangesDrawer";
 import { infer, type InferResult } from "../core/infer";
 import { clearRedundantOverrides, stripAllOverrides, restoreAllOverrides, overrideCount, restoreSession, diff, reset, copyStyles, hasClipboardStyles, subscribeOverrides, getOverrideSnapshot, subscribeChanges } from "../core/apply";
-import { styleEngine, resolveTarget } from "../core/engine";
+import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
 import { getCSSModuleClasses, syncWithApplyUndoRedo as syncClassScopeUndoRedo, type Scope } from "../core/scope";
-import { diffState, syncWithApplyUndoRedo } from "../core/statePreview";
-import { enrichChangesForCommit } from "../core/commitUtils";
+import { syncWithApplyUndoRedo } from "../core/statePreview";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
 import { getVariablesPanelWidth } from "../variables/panelWidth";
@@ -35,7 +34,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "../core/scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { parseCSSText } from "../cssImport";
-import { formatTailwindDiff } from "../tailwind";
+import { composeExportCSS, composeTailwindExport } from "../breakpoints";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { OverlayScrollbarStyles, ReducedMotionStyles } from "./OverlayStyles";
 import { SelectionChrome } from "./SelectionChrome";
@@ -52,7 +51,6 @@ import { startBreakpointPreview, destroyBreakpointPreview } from "../breakpointP
 import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 import { useSelectionOutline } from "../hooks/useSelectionOutline";
-import { getConfig } from "../core/config";
 import { color, text, border, surface, font, shadow, blackAlpha, warningAlpha, layout, zIndex } from "../theme";
 
 // --- Panel State Types (canonical defs in ./overlayTypes) ---
@@ -160,6 +158,15 @@ export function Overlay() {
     if (isScrubActive()) return;
     setActiveBreakpoint(bp);
   }, []);
+
+  // THE scoping bundle (scope ▸ class ▸ state ▸ breakpoint). Overlay owns ONE
+  // memoized ScopeContext and threads it whole — call sites never enumerate
+  // the dimensions again (forgetting one is how breakpoint edits leaked to
+  // base in the spacing/paste/import paths).
+  const scopeCtx = useMemo<ScopeContext>(
+    () => ({ scope, activeClassName, activeState, activeBreakpoint }),
+    [scope, activeClassName, activeState, activeBreakpoint],
+  );
 
   // Grid overlay toggle
   const [showGridOverlay, setShowGridOverlay] = useState(false);
@@ -318,9 +325,6 @@ export function Overlay() {
   // Stable selector for re-resolving after HMR
   const selectedSelectorRef = useRef<string | null>(null);
 
-  // Save-in-flight guard to prevent double-save
-  const savingRef = useRef(false);
-
   // Queued tab to open after selector picks an element (e.g. AI button clicked with no selection)
   const pendingTabRef = useRef<"prompt" | null>(null);
 
@@ -334,47 +338,31 @@ export function Overlay() {
   }, []);
 
   // --- Keyboard shortcut helpers ---
-  const handleSaveShortcut = useCallback(async () => {
+  // ONE save pipeline, two triggers: the Footer owns the save (file write +
+  // breakpoint/mode clipboard side-channel) and registers it on this ref;
+  // Cmd+S and the command palette just invoke it. The old second pipeline here
+  // silently dropped breakpoint edits.
+  const saveRef = useRef<(() => void) | null>(null);
+  const handleSaveShortcut = useCallback(() => {
+    saveRef.current?.();
+  }, []);
+
+  // Footer save succeeded: refresh the panel from the (possibly HMR-updated)
+  // element and announce for screen readers.
+  const handleSaved = useCallback(() => {
     const el = selectedElRef.current;
-    if (!el || savingRef.current) return;
-
-    // Use state-specific diff when a pseudo-class state is active
-    const isStateActive = activeState !== "none";
-    const changes = isStateActive ? diffState(el, activeState) : diff(el);
-    if (changes.length === 0) return;
-
-    const enriched = enrichChangesForCommit(el, changes, { scope, activeClassName, activeState });
-
-    savingRef.current = true;
-    try {
-      const res = await fetch(getConfig().commitEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
-          changes: enriched,
-        }),
-      });
-      // Re-read ref after await — selectedEl may have changed during the fetch
-      const currentEl = selectedElRef.current;
-      if (res.ok && currentEl) {
-        refreshPanel(currentEl);
-        announce("Saved");
-      } else if (!res.ok) {
-        console.warn("[Tuner] Save failed:", res.status, res.statusText);
-      }
-    } catch (err) {
-      console.warn("[Tuner] Save error:", err);
-    } finally {
-      savingRef.current = false;
-    }
-  }, [announce, activeState, scope, activeClassName]);
+    if (el) refreshPanel(el);
+    announce("Saved");
+  }, [refreshPanel, announce]);
 
   const handleCopyShortcut = useCallback(() => {
     if (!selectedEl) return;
     const changes = diff(selectedEl);
     if (changes.length === 0) return;
-    navigator.clipboard.writeText(formatCSSDiff(selectedEl, changes)).then(() => {
+    // Shared base-vs-@media partition: breakpoint edits export as @media
+    // blocks instead of flattening into the base rule.
+    const css = composeExportCSS([{ el: selectedEl, changes }], formatCSSDiff);
+    navigator.clipboard.writeText(css).then(() => {
       announce("Copied CSS");
     }).catch(() => {
       // Clipboard API unavailable (non-HTTPS or permission denied) — silent fallback
@@ -392,9 +380,7 @@ export function Overlay() {
     handleSpacingReset,
   } = useStyleHandlers({
     selectedEl,
-    scope,
-    activeClassName,
-    activeState,
+    scopeCtx,
     diffMode,
     historyEntries,
     setInferResult,
@@ -645,7 +631,8 @@ export function Overlay() {
       if (declarations.length === 0) return;
 
       for (const { prop, value } of declarations) {
-        styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState, activeBreakpoint }), prop, value);
+        // The whole scopeCtx — never a hand-built subset (ADR-0005).
+        styleEngine.apply(resolveTarget(el, scopeCtx), prop, value);
       }
 
       // Re-infer to update panel
@@ -654,7 +641,7 @@ export function Overlay() {
     } catch {
       setClipboardMessage("Clipboard access denied");
     }
-  }, [diffMode, activeState, scope, activeClassName, activeBreakpoint]);
+  }, [diffMode, scopeCtx]);
 
   // --- Command Palette action handler (typed dispatch map, no inline branching) ---
   const handleCommandAction = useCallback((action: string) => {
@@ -672,7 +659,8 @@ export function Overlay() {
       "Copy Tailwind": () => {
         const changes = diff(el);
         if (changes.length > 0) {
-          navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
+          // Responsive edits keep their sm:/md:/lg:/xl: variant prefix.
+          navigator.clipboard.writeText(composeTailwindExport(changes)).catch(() => {});
         }
       },
       "Paste Styles": () => handlePasteStyles(),
@@ -695,7 +683,7 @@ export function Overlay() {
       "copy-tailwind": () => {
         const changes = diff(el);
         if (changes.length > 0) {
-          navigator.clipboard.writeText(formatTailwindDiff(changes)).catch(() => {});
+          navigator.clipboard.writeText(composeTailwindExport(changes)).catch(() => {});
         }
       },
       "select-parent": () => {
@@ -805,13 +793,10 @@ export function Overlay() {
                 breadcrumb={breadcrumb}
                 onBreadcrumbClick={handleBreadcrumbClick}
                 onBreadcrumbHover={setHoveredAncestor}
-                scope={scope}
+                scopeCtx={scopeCtx}
                 onScopeChange={handleScopeChange}
                 cssClasses={cssClasses}
-                activeClassName={activeClassName}
-                state={activeState}
                 onStateChange={handleStateChange}
-                breakpoint={activeBreakpoint}
                 onBreakpointChange={handleBreakpointChange}
                 pinned={pinned}
                 onTogglePin={handleTogglePin}
@@ -854,10 +839,7 @@ export function Overlay() {
                         onToggleGridOverlay={() => setShowGridOverlay((v) => !v)}
                         searchQuery={searchQuery}
                         focusMode={focusMode}
-                        scope={scope}
-                        activeClassName={activeClassName}
-                        activeState={activeState}
-                        activeBreakpoint={activeBreakpoint}
+                        scopeCtx={scopeCtx}
                         expandedSection={expandedSection}
                         onExpandSection={setExpandedSection}
                         sectionMemory={sectionMemory}
@@ -884,11 +866,10 @@ export function Overlay() {
               <Footer
                 element={selectedEl}
                 onReset={handleReset}
+                onSaved={handleSaved}
                 onCSSImport={handleCSSImport}
-                scope={scope}
-                activeClassName={activeClassName}
-                activeState={activeState}
-                activeBreakpoint={activeBreakpoint}
+                scopeCtx={scopeCtx}
+                saveRef={saveRef}
                 clipboardMessage={clipboardMessage}
                 hasClipboard={hasClipboardStyles()}
                 onPasteStyles={handlePasteStyles}
