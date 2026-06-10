@@ -10,8 +10,8 @@ import { useState, useCallback, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getDisplayClass, formatCSSDiff } from "../util";
-import { composeExportCSS } from "../breakpoints";
+import { getDisplayClass, getSelector, formatCSSDiff } from "../util";
+import { composeExportCSS, serializeBreakpointCSS } from "../breakpoints";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
@@ -216,6 +216,31 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     );
     const mode = enriched.find((c) => c.mode)?.mode;
 
+    // Breakpoint-tagged changes aren't file-written yet (#53) — same
+    // side-channel as the Footer save: export them as @media CSS to the
+    // clipboard so Save All doesn't silently drop them.
+    const bpCSS = serializeBreakpointCSS(
+      allDiffs.map(({ el, changes }) => ({ selector: getSelector(el), changes })),
+    );
+    const copyBreakpointExtras = () => {
+      if (!bpCSS) return;
+      navigator.clipboard.writeText(bpCSS).then(() => {
+        const bpCount = allDiffs.reduce(
+          (n, { changes }) => n + changes.filter((c) => c.breakpoint).length,
+          0,
+        );
+        setMessage(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"} copied (not saved to file)`);
+      }).catch(() => {});
+    };
+
+    // Nothing file-bound (only breakpoint edits): skip the empty POST.
+    if (enriched.length === 0) {
+      copyBreakpointExtras();
+      setSaving(false);
+      setTimeout(() => setMessage(null), timing.dismissal);
+      return;
+    }
+
     try {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
@@ -238,6 +263,7 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
             : `Saved ${written} change${written === 1 ? "" : "s"}`,
         );
         onSaved?.();
+        copyBreakpointExtras();
       }
     } catch {
       setMessage("Save failed — no route?");

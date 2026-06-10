@@ -165,8 +165,11 @@ export function getSelector(el: Element): string {
 }
 
 /**
- * Format a diff as a CSS rule block with selector and "// was" comments.
- * Shared by all copy operations (Cmd+C, Footer Copy, Session Copy All).
+ * Format BASE (un-mediated) changes as a CSS rule block with selector and
+ * "was" comments. This is a base-rule formatter only: copy surfaces (Cmd+C,
+ * Footer Copy, ChangesDrawer Copy All) pass it to
+ * `breakpoints.composeExportCSS`, which owns the base-vs-@media partition —
+ * never call it directly on a diff that may contain breakpoint-tagged changes.
  */
 export function formatCSSDiff(
   el: Element,

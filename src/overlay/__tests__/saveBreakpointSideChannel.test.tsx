@@ -88,7 +88,8 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
         <Footer
           element={el}
           onReset={() => {}}
-          {...({ saveRef, scopeCtx: { scope: "element", activeClassName: null, activeState: "none", activeBreakpoint: "768" } } as any)}
+          saveRef={saveRef}
+          scopeCtx={{ scope: "element", activeClassName: null, activeState: "none", activeBreakpoint: "768" }}
         />,
       );
     });
@@ -138,7 +139,8 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
         <Footer
           element={el}
           onReset={() => {}}
-          {...({ saveRef, scopeCtx: { scope: "element", activeClassName: null, activeState: "none" } } as any)}
+          saveRef={saveRef}
+          scopeCtx={{ scope: "element", activeClassName: null, activeState: "none" }}
         />,
       );
     });
@@ -171,7 +173,8 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
         <Footer
           element={el}
           onReset={() => {}}
-          {...({ saveRef, scopeCtx: { scope: "element", activeClassName: null, activeState: "none", activeBreakpoint: "1024" } } as any)}
+          saveRef={saveRef}
+          scopeCtx={{ scope: "element", activeClassName: null, activeState: "none", activeBreakpoint: "1024" }}
         />,
       );
     });
@@ -187,6 +190,47 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
     expect(mediaWrite).toContain("gap: 16px");
     // Nothing was file-bound — no pointless POST with an empty changes array.
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ChangesDrawer Save All exports breakpoint edits as @media CSS instead of dropping them", async () => {
+    const { ChangesDrawer } = await import("../shell/ChangesDrawer");
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el }, "color", "red"); // file-bound
+    styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "width", "100px"); // clipboard-bound
+
+    await act(async () => {
+      root.render(
+        <ChangesDrawer
+          open={true}
+          tab="pending"
+          onResetAll={() => {}}
+          entries={[]}
+          onUndoToIndex={() => {}}
+          onClose={() => {}}
+        />,
+      );
+    });
+
+    const saveBtn = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim() === "Save All",
+    );
+    expect(saveBtn).toBeTruthy();
+
+    await act(async () => {
+      saveBtn!.click();
+      await flushMicrotasks();
+    });
+
+    // Same contract as the Footer pipeline: the POST carries only the
+    // file-bound change, and the responsive edit reaches the clipboard.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.changes).toHaveLength(1);
+    expect(body.changes[0]).toMatchObject({ prop: "color", to: "red" });
+
+    const mediaWrite = clipboardWrites.find((t) => t.includes("@media (min-width: 768px)"));
+    expect(mediaWrite, "Save All must not silently drop breakpoint edits").toBeTruthy();
+    expect(mediaWrite).toContain("width: 100px");
   });
 
   it("Overlay.tsx no longer owns a second save pipeline (Cmd+S delegates to the Footer's)", async () => {

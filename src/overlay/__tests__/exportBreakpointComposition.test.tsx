@@ -156,7 +156,9 @@ describe("shared composer (breakpoints.ts) — unit coverage", () => {
     const { formatCSSDiff } = await import("../util");
 
     const a = makeEl("el-a");
+    a.className = "card-a";
     const b = makeEl("el-b");
+    b.className = "card-b";
     const items = [
       {
         el: a,
@@ -175,8 +177,8 @@ describe("shared composer (breakpoints.ts) — unit coverage", () => {
 
     // Base rule for `a` only (b has no base changes → no empty rule noise).
     expect(css).toContain("color: red");
-    expect(css).toContain("#el-a");
-    expect(css).not.toMatch(/#el-b\s*\{\s*\}/);
+    expect(css).toContain(".card-a");
+    expect(css).not.toMatch(/\.card-b\s*\{\s*\}/);
 
     // @media blocks ascend and carry the right declarations.
     expect(css.indexOf("min-width: 768px")).toBeLessThan(css.indexOf("min-width: 1024px"));

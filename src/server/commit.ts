@@ -439,18 +439,19 @@ function searchClassBlock(
  * BODY of `.className { ... }` on a single physical line — the region between
  * the block's opening `{` and its matching `}`. Used to confine a surgical
  * replacement to the targeted block so an identical declaration in an earlier
- * sibling block on the same line isn't rewritten (issue #47). Returns null when
- * the class/brace aren't present or the block doesn't close on this one line.
+ * sibling block on the same line isn't rewritten (issue #47). The selector may
+ * include a pseudo-state suffix (e.g. "btn:hover"). Returns undefined when the
+ * selector/brace aren't present or the block doesn't close on this one line.
  */
 function classBlockBodyRangeOnLine(
   maskedLine: string,
   className: string
-): [number, number] | null {
+): [number, number] | undefined {
   const classRe = new RegExp(`\\.${escapeRegex(className)}\\s*\\{`);
   const m = classRe.exec(maskedLine);
-  if (!m) return null;
+  if (!m) return undefined;
   const braceIdx = maskedLine.indexOf("{", m.index);
-  if (braceIdx === -1) return null;
+  if (braceIdx === -1) return undefined;
   let depth = 0;
   for (let k = braceIdx; k < maskedLine.length; k++) {
     if (maskedLine[k] === "{") depth++;
@@ -459,7 +460,53 @@ function classBlockBodyRangeOnLine(
       if (depth === 0) return [braceIdx + 1, k]; // body between the braces
     }
   }
-  return null; // block doesn't close on this line
+  return undefined; // block doesn't close on this line
+}
+
+/**
+ * Rewrite `prop: from` → `prop: to` within `line`, confined to the character
+ * span `range` [start, end). The single declaration-rewrite implementation
+ * shared by the pseudo-state and standard branches of handleCommit. Tries a
+ * surgical replacement (exact `from` value) first; when `broad` is allowed,
+ * falls back to replacing whatever value the property currently has (handles
+ * hex vs rgb, var(), etc.). Returns the updated line, or null when no
+ * declaration matched inside the range (issue #47: the range keeps an
+ * identical declaration in a sibling block on the same minified line intact).
+ */
+function replaceDeclInLine(
+  line: string,
+  prop: string,
+  from: string,
+  to: string,
+  range: [number, number] = [0, line.length],
+  broad = true
+): string | null {
+  const [start, end] = range;
+  const segment = line.slice(start, end);
+  // Escape $ in replacement to prevent regex backreference interpretation
+  const safeValue = to.replace(/\$/g, "$$$$");
+
+  const surgical = replacePropRegex(prop, escapeRegex(from));
+  if (surgical.test(segment)) {
+    return (
+      line.slice(0, start) +
+      segment.replace(surgical, `$1$2${safeValue}`) +
+      line.slice(end)
+    );
+  }
+
+  if (broad) {
+    const broadPattern = replacePropRegex(prop, "([^;!}]+)");
+    if (broadPattern.test(segment)) {
+      return (
+        line.slice(0, start) +
+        segment.replace(broadPattern, `$1$2${safeValue}`) +
+        line.slice(end)
+      );
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -487,7 +534,11 @@ function searchPseudoClassBlock(
         if (ch === "}") depth--;
       }
 
-      if (j > i && depth >= 0) {
+      // The brace line itself (j === i) is inspected too, so an all-on-one-line
+      // minified pseudo block whose declaration shares the line with the `{` is
+      // found rather than skipped — and the scan can't fall through to a later
+      // sibling block's identical declaration (issue #47, pseudo branch).
+      if (depth >= 0) {
         if (lineHasDecl(lines[j], prop, value)) {
           return j;
         }
@@ -910,7 +961,7 @@ export function findPropertyInFile(
       // line (minified CSS), confine the later surgical replacement to that
       // block's body so a sibling block's identical declaration earlier on the
       // line isn't the one rewritten (issue #47).
-      const range = classBlockBodyRangeOnLine(masked[idx], className) ?? undefined;
+      const range = classBlockBodyRangeOnLine(masked[idx], className);
       return { lineIdx: idx, strategy: "class-block", range };
     }
   }
@@ -1037,27 +1088,30 @@ export async function handleCommit(
           );
 
           if (pseudoIdx != null) {
-            // Found the property in the pseudo-class block — do surgical replacement
-            const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
-            if (pattern.test(lines[pseudoIdx])) {
-              const safeValue = change.to.replace(/\$/g, "$$$$");
-              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1$2${safeValue}`);
+            // Found the property in the pseudo-class block. When the block
+            // opens AND closes on this same physical line (minified CSS),
+            // confine the replacement to the block's body so a sibling block's
+            // identical declaration on the line isn't rewritten (issue #47).
+            const range = classBlockBodyRangeOnLine(
+              masked[pseudoIdx],
+              `${change.className}:${change.state}`
+            );
+            const updated = replaceDeclInLine(
+              lines[pseudoIdx],
+              change.prop,
+              change.from,
+              change.to,
+              range
+            );
+            if (updated != null) {
+              lines[pseudoIdx] = updated;
               modified = true;
               remask();
             } else {
-              // Try broad replacement (handles hex vs rgb, etc.)
-              const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
-              if (broadPattern.test(lines[pseudoIdx])) {
-                const safeValue = change.to.replace(/\$/g, "$$$$");
-                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1$2${safeValue}`);
-                modified = true;
-                remask();
-              } else {
-                result.failed.push({
-                  ...change,
-                  reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
-                });
-              }
+              result.failed.push({
+                ...change,
+                reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
+              });
             }
             continue;
           }
@@ -1131,66 +1185,40 @@ export async function handleCommit(
           continue;
         }
 
-        // Surgical replacement: only change the value, preserve everything else.
-        // The pattern carries a LEFT boundary so `color` can't match inside
-        // `background-color` even if both share a line.
-        const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
+        // Surgical replacement: only change the value, preserve everything else
+        // (the pattern carries a LEFT boundary so `color` can't match inside
+        // `background-color` even if both share a line), confined to
+        // `found.range` when set (minified same-line block, issue #47). The
+        // broad fallback (full CSS value replace — hex vs rgb, var(), etc.) is
+        // only allowed for fuzzy matches, and never over an SCSS variable —
+        // those require manual editing.
+        const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
+        const allowBroad = found.strategy === "fuzzy" && !scssVarMatch;
+        const updated = replaceDeclInLine(
+          lines[found.lineIdx],
+          change.prop,
+          change.from,
+          change.to,
+          found.range,
+          allowBroad
+        );
 
-        // When a char range is set (minified same-line block, issue #47),
-        // confine the match+replace to that block's body so an identical sibling
-        // declaration earlier on the line is left untouched. The range is
-        // computed on the masked view, which is same-length as `lines`.
-        const range = found.range;
-        const segment = range
-          ? lines[found.lineIdx].slice(range[0], range[1])
-          : lines[found.lineIdx];
-
-        if (pattern.test(segment)) {
-          // Escape $ in replacement to prevent regex backreference interpretation
-          const safeValue = change.to.replace(/\$/g, "$$$$");
-          const replaced = segment.replace(pattern, `$1$2${safeValue}`);
-          lines[found.lineIdx] = range
-            ? lines[found.lineIdx].slice(0, range[0]) +
-              replaced +
-              lines[found.lineIdx].slice(range[1])
-            : replaced;
+        if (updated != null) {
+          lines[found.lineIdx] = updated;
           modified = true;
           remask();
         } else if (found.strategy === "fuzzy") {
-          // Fuzzy match found the property by name but the exact from-value
-          // isn't on this line. Source likely uses a different representation
-          // (hex vs rgb, var() vs computed, etc.). Replace the full CSS value.
-
-          // Guard: don't overwrite SCSS variables — they require manual editing
-          const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
-          if (scssVarMatch) {
-            result.failed.push({
-              ...change,
-              reason: `uses SCSS variable ${scssVarMatch[0]} — manual edit required`,
-            });
-          } else {
-            const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
-            if (broadPattern.test(lines[found.lineIdx])) {
-              const safeValue = change.to.replace(/\$/g, "$$$$");
-              lines[found.lineIdx] = lines[found.lineIdx].replace(
-                broadPattern,
-                `$1$2${safeValue}`
-              );
-              modified = true;
-              remask();
-            } else {
-              result.failed.push({
-                ...change,
-                reason: `value "${change.from}" not found literally (may be a variable)`,
-              });
-            }
-          }
-        } else {
-          const lineVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
           result.failed.push({
             ...change,
-            reason: lineVarMatch
-              ? `uses SCSS variable ${lineVarMatch[0]} — manual edit required`
+            reason: scssVarMatch
+              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
+              : `value "${change.from}" not found literally (may be a variable)`,
+          });
+        } else {
+          result.failed.push({
+            ...change,
+            reason: scssVarMatch
+              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
               : `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
           });
         }

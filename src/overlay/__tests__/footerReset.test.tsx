@@ -53,7 +53,13 @@ describe("Footer Reset — over-clear fix", () => {
     expect(el.style.getPropertyValue("color")).toBe("red");
     expect(getModeOverrideCount()).toBe(1);
 
-    render(<Footer element={el} scope="element" activeState="none" onReset={() => {}} />);
+    render(
+      <Footer
+        element={el}
+        scopeCtx={{ scope: "element", activeClassName: null, activeState: "none" }}
+        onReset={() => {}}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /^Reset$/ }));
 
     // Element override is gone...
@@ -73,7 +79,13 @@ describe("Footer Reset — over-clear fix", () => {
       "#000",
     );
 
-    render(<Footer element={el} scope="element" activeState="hover" onReset={() => {}} />);
+    render(
+      <Footer
+        element={el}
+        scopeCtx={{ scope: "element", activeClassName: null, activeState: "hover" }}
+        onReset={() => {}}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /^Reset$/ }));
 
     // hover gone, base survives, mode survives

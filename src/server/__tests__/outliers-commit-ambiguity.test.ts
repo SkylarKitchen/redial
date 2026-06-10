@@ -219,6 +219,73 @@ describe("commit ambiguity — minified single-line", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Minified single-line CSS — pseudo-state blocks (issue #47, pseudo branch)
+// ---------------------------------------------------------------------------
+
+describe("commit ambiguity — minified pseudo-state blocks", () => {
+  // Issue #47's range confinement landed only in the standard (non-state)
+  // branch. The pseudo-state branch in handleCommit has its own duplicated
+  // rewrite code that still does a whole-line replace, and
+  // searchPseudoClassBlock never inspects the brace line itself — so minified
+  // pseudo blocks either rewrite the WRONG block or fall through to the
+  // create-a-duplicate-block path.
+
+  it("minified: editing .b:hover with a value shared by .a:hover must not rewrite .a:hover", async () => {
+    const filePath = "src/MinPseudo.module.css";
+    await writeFixture(filePath, ".a:hover{color:red}.b:hover{color:red}");
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "red", to: "green", sourceFile: filePath, className: "b", state: "hover" }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toBe(".a:hover{color:red}.b:hover{color:green}");
+  });
+
+  it("minified per-line: editing .a:hover must not rewrite the .b:hover line below it", async () => {
+    const filePath = "src/MinPseudoLines.module.css";
+    await writeFixture(filePath, [
+      ".a:hover{color:red}",
+      ".b:hover{color:red}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "red", to: "green", sourceFile: filePath, className: "a", state: "hover" }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toBe([
+      ".a:hover{color:green}",
+      ".b:hover{color:red}",
+    ].join("\n"));
+  });
+
+  it("minified with base classes: edits the existing .b:hover in place, no duplicate block", async () => {
+    const filePath = "src/MinPseudoBase.module.css";
+    await writeFixture(filePath, [
+      ".a{color:blue}.b{color:blue}",
+      ".a:hover{color:red}.b:hover{color:red}",
+    ].join("\n"));
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "red", to: "green", sourceFile: filePath, className: "b", state: "hover" }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    const content = await readFile(join(tempDir, filePath), "utf-8");
+    expect(content).toBe([
+      ".a{color:blue}.b{color:blue}",
+      ".a:hover{color:red}.b:hover{color:green}",
+    ].join("\n"));
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Shorthand fallback fooled by a comment
 // ---------------------------------------------------------------------------
 

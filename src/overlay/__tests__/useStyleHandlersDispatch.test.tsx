@@ -33,20 +33,33 @@ function classStyleText(): string {
   );
 }
 
-/** Build a StyleHandlersDeps with test-friendly defaults; override per case. */
-function makeDeps(overrides: Partial<StyleHandlersDeps> = {}): StyleHandlersDeps {
+/** Build a StyleHandlersDeps with test-friendly defaults; override per case.
+ *  Scoping rides on the consolidated `scopeCtx` bundle (review #2): the flat
+ *  scope/activeClassName/activeState conveniences are folded into it here. */
+function makeDeps(
+  overrides: Partial<StyleHandlersDeps> & {
+    scope?: string;
+    activeClassName?: string | null;
+    activeState?: string;
+  } = {},
+): StyleHandlersDeps {
+  const {
+    scope = "element",
+    activeClassName = null,
+    activeState = "none",
+    scopeCtx,
+    ...rest
+  } = overrides;
   return {
     selectedEl: null,
-    scope: "element",
-    activeClassName: null,
-    activeState: "none",
+    scopeCtx: scopeCtx ?? { scope, activeClassName, activeState },
     diffMode: false,
     historyEntries: [],
     setInferResult: vi.fn(),
     refreshPanel: vi.fn(),
     setClipboardMessage: vi.fn(),
     setHistoryEntries: vi.fn(),
-    ...overrides,
+    ...rest,
   };
 }
 
