@@ -153,7 +153,14 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
 
   // Gap
   const [gap, setGap] = useState(() => parseNum(cs.gap));
-  const [gapLocked, setGapLocked] = useState(true);
+  // Start linked only when both axes agree (cf. the overflow lock in
+  // SizeSection) — a locked init over `row-gap: 10px; column-gap: 30px`
+  // hides the 30px and the first drag flattens both axes. Compare computed
+  // strings, not parsed numbers: "10%" vs "10px" must count as different,
+  // and unset axes are both "normal".
+  const [gapLocked, setGapLocked] = useState(
+    () => (cs.rowGap || "normal") === (cs.columnGap || "normal"),
+  );
   const [rowGap, setRowGap] = useState(() => parseNum(cs.rowGap));
 
   // Gap variable linking
