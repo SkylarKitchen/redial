@@ -16,6 +16,7 @@
 import { useEffect } from "react";
 import type { ActiveModal } from "../shell/overlayTypes";
 import { isInsideTunerUI } from "../util";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface PageInteractionsDeps {
   selectedEl: Element | null;
@@ -72,7 +73,7 @@ export function usePageInteractions({
       if (document.querySelector("[data-radix-popper-content-wrapper]")) {
         return;
       }
-      const target = e.target as Element;
+      const target = composedTarget(e);
       if (isInsideTunerUI(target)) return;
 
       const el = document.elementFromPoint(e.clientX, e.clientY);
@@ -134,7 +135,7 @@ export function usePageInteractions({
     if (!selectedEl || selecting) return;
 
     const handleContextMenu = (e: MouseEvent) => {
-      const target = e.target as Element;
+      const target = composedTarget(e);
       if (isInsideTunerUI(target)) return;
 
       e.preventDefault();

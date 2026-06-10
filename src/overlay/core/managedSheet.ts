@@ -2,12 +2,15 @@
  * managedSheet.ts — CSP-compatible runtime style injection (ADR-0009).
  *
  * Backs each named sheet with a `new CSSStyleSheet()` + `replaceSync()` and
- * registers it on `document.adoptedStyleSheets`. Falls back to a `<style>`
- * element in browsers without `adoptedStyleSheets`.
+ * registers it on the target's `adoptedStyleSheets`. The target defaults to
+ * `document` so existing host-document-bound sites keep their behavior; pass a
+ * `ShadowRoot` to adopt the sheet into the overlay's shadow boundary
+ * (ADR-0008). Falls back to a `<style>` element in browsers without
+ * `adoptedStyleSheets`.
  *
  * Contract — append, don't assign. The helper appends its sheet via
  * `[...adoptedStyleSheets, sheet]` and removes via filter; clearing the
- * array would clobber host-app, devtool, or shadow-root adopted sheets.
+ * array would clobber host-app, devtool, or sibling adopted sheets.
  */
 
 interface ModernEntry {
@@ -25,31 +28,53 @@ interface FallbackEntry {
 
 type Entry = ModernEntry | FallbackEntry;
 
-const entries = new Map<string, Entry>();
+export type SheetTarget = Document | ShadowRoot;
 
-function supportsConstructable(): boolean {
-  return (
-    typeof CSSStyleSheet !== "undefined" &&
-    typeof Document !== "undefined" &&
-    "adoptedStyleSheets" in Document.prototype
-  );
+const entriesByTarget = new WeakMap<SheetTarget, Map<string, Entry>>();
+
+function entriesFor(target: SheetTarget): Map<string, Entry> {
+  let map = entriesByTarget.get(target);
+  if (!map) {
+    map = new Map();
+    entriesByTarget.set(target, map);
+  }
+  return map;
+}
+
+function supportsConstructable(target: SheetTarget): boolean {
+  if (typeof CSSStyleSheet === "undefined") return false;
+  // Both Document and ShadowRoot expose `adoptedStyleSheets` in modern browsers.
+  return "adoptedStyleSheets" in target;
+}
+
+function fallbackHost(target: SheetTarget): Node {
+  // Document: append to <head>. ShadowRoot: append to the shadow root itself.
+  // happy-dom's Document occasionally fails an `instanceof Document` check
+  // against the realm-level constructor, so duck-type on `.head` instead.
+  const head = (target as Document).head as HTMLHeadElement | undefined;
+  return head ?? target;
 }
 
 const IMPORT_RE = /^\s*@import\b/m;
 
-function ensureEntry(key: string): Entry {
-  let entry = entries.get(key);
+function ensureEntry(key: string, target: SheetTarget): Entry {
+  const map = entriesFor(target);
+  let entry = map.get(key);
   if (entry) return entry;
-  if (supportsConstructable()) {
+  if (supportsConstructable(target)) {
     const sheet = new CSSStyleSheet();
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    target.adoptedStyleSheets = [...target.adoptedStyleSheets, sheet];
     entry = { kind: "modern", sheet, lastCss: "" };
   } else {
-    const styleEl = document.createElement("style");
-    document.head.appendChild(styleEl);
+    const ownerDocument =
+      "createElement" in target
+        ? (target as Document)
+        : (target as ShadowRoot).ownerDocument ?? document;
+    const styleEl = ownerDocument.createElement("style");
+    fallbackHost(target).appendChild(styleEl);
     entry = { kind: "fallback", styleEl };
   }
-  entries.set(key, entry);
+  map.set(key, entry);
   return entry;
 }
 
@@ -58,7 +83,10 @@ export interface ManagedSheetHandle {
   dispose(): void;
 }
 
-export function managedSheet(key: string): ManagedSheetHandle {
+export function managedSheet(
+  key: string,
+  target: SheetTarget = document,
+): ManagedSheetHandle {
   return {
     replace(css: string): void {
       if (IMPORT_RE.test(css)) {
@@ -66,7 +94,7 @@ export function managedSheet(key: string): ManagedSheetHandle {
           "managedSheet: @import rules are not supported. constructable stylesheets reject @import; flatten via postcss before passing in.",
         );
       }
-      const entry = ensureEntry(key);
+      const entry = ensureEntry(key, target);
       if (entry.kind === "modern") {
         entry.sheet.replaceSync(css);
         entry.lastCss = css;
@@ -75,23 +103,27 @@ export function managedSheet(key: string): ManagedSheetHandle {
       }
     },
     dispose(): void {
-      const entry = entries.get(key);
-      if (!entry) return;
+      const map = entriesByTarget.get(target);
+      const entry = map?.get(key);
+      if (!entry || !map) return;
       if (entry.kind === "modern") {
-        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
+        target.adoptedStyleSheets = target.adoptedStyleSheets.filter(
           (s) => s !== entry.sheet,
         );
       } else {
         entry.styleEl.remove();
       }
-      entries.delete(key);
+      map.delete(key);
     },
   };
 }
 
 /** Read the CSS source written via replace(), or null if not registered. Test-only. */
-export function _readManagedSheetCss(key: string): string | null {
-  const entry = entries.get(key);
+export function _readManagedSheetCss(
+  key: string,
+  target: SheetTarget = document,
+): string | null {
+  const entry = entriesByTarget.get(target)?.get(key);
   if (!entry) return null;
   if (entry.kind === "modern") return entry.lastCss;
   return entry.styleEl.textContent ?? "";

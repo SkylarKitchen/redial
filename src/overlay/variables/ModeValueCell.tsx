@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { RotateCcw } from "lucide-react";
 import { VariableValue } from "./ReferencePill";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import type { InferredMode } from "./modeDiscovery";
 import {
   applyModeOverride,
@@ -47,6 +48,7 @@ export function ModeValueCell({
   const [cellHovered, setCellHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
 
   useEffect(() => {
     if (!editing) setDraft(value ?? "");
@@ -293,7 +295,7 @@ export function ModeValueCell({
               onClose={() => { endModeCoalesce(); setPickerOpen(false); }}
             />
           </div>,
-          document.body,
+          portalTarget,
         );
       })()}
     </div>

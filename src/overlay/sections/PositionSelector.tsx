@@ -18,6 +18,7 @@ import { color, text, border, surface, primaryAlpha, focusRing, font, labelIndic
 import { useResetPopover } from "../controls";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 
 // ─── Icons ──────────────────────────────────────────────────────────
 
@@ -87,6 +88,7 @@ export function PositionSelector({
   const [focused, setFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const portalTarget = usePortalTarget();
   const id = useId();
   const resetPopover = useResetPopover(indicator, onReset);
   const current = POSITION_ITEMS.find((o) => o.value === value) ?? POSITION_ITEMS[0];
@@ -329,7 +331,7 @@ export function PositionSelector({
               </div>
             </div>
           </div>,
-          document.body
+          portalTarget
         )}
       </div>
     </div>

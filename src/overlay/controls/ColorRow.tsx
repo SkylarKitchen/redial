@@ -20,6 +20,7 @@ import { ms, cssTransition } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
 import { computeColorPickerPosition } from "./colorPickerPosition";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 
 /** Walk the alias chain for a CSS variable, returning all names in the chain. */
 function resolveAliasChain(varName: string, maxDepth = 5): string[] {
@@ -93,6 +94,7 @@ export function ColorRow({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [rowHovered, setRowHovered] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
   const resetPopover = useResetPopover(indicator, onReset);
   const { pressHandlers: swatchPress, pressStyle: swatchPressStyle } = usePressScale(0.92);
 
@@ -271,7 +273,7 @@ export function ColorRow({
               activeVariable={varName}
             />
           </div>,
-          document.body
+          portalTarget
         );
       })()}
       {resetPopover.node}

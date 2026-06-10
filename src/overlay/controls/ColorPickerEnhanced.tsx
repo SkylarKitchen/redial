@@ -17,6 +17,7 @@ import { discoverColorVariables, type ColorVariable } from "../variables/colorVa
 import { naturalCompare } from "../variables/discoverVariables";
 import { color as themeColor, text, border, surface, font, shadow, primaryAlpha, focusRing } from "../theme";
 import { beginBatch, endBatch } from "../core/apply";
+import { composedTarget } from "../core/shadowRoot";
 
 // ─── Color Math (picker-specific — HSB conversions) ──────────────
 
@@ -301,9 +302,11 @@ export function ColorPickerEnhanced({
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (isDraggingRef.current || isEyedroppingRef.current) return;
+      const target = composedTarget(e);
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
+        target &&
+        !containerRef.current.contains(target)
       ) {
         onClose();
       }

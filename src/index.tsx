@@ -19,12 +19,29 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import "./styles/globals.css";
 import { Overlay } from "./overlay/shell/Overlay";
 import { configure, type TunerConfig } from "./overlay/core/config";
+import { ensureTunerHost } from "./overlay/core/shadowRoot";
+import { PortalTargetContext } from "./overlay/hooks/usePortalTarget";
 
 export interface TunerProps extends Partial<TunerConfig> {}
+
+function ShadowMount({ children }: { children: ReactNode }) {
+  const [container, setContainer] = useState<Element | null>(null);
+  useEffect(() => {
+    setContainer(ensureTunerHost());
+  }, []);
+  if (!container) return null;
+  return createPortal(
+    <PortalTargetContext.Provider value={container}>
+      {children}
+    </PortalTargetContext.Provider>,
+    container,
+  );
+}
 
 export function Tuner({ commitEndpoint }: TunerProps = {}) {
   // Apply config overrides on mount
@@ -38,7 +55,11 @@ export function Tuner({ commitEndpoint }: TunerProps = {}) {
   if (typeof window === "undefined") return null;
   if (process.env.NODE_ENV !== "development") return null;
 
-  return <Overlay />;
+  return (
+    <ShadowMount>
+      <Overlay />
+    </ShadowMount>
+  );
 }
 
 // Re-export types and utilities for consumers

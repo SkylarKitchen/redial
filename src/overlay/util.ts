@@ -193,6 +193,10 @@ export function isNavigableElement(el: Element): boolean {
   const tag = el.tagName.toLowerCase();
   if (NON_VISUAL_TAGS.has(tag)) return false;
   if ((el as HTMLElement).closest?.(".__tuner-root")) return false;
+  // Under ADR-0008 the panel lives inside a shadow root attached to
+  // `[data-tuner-host]`. Composed events retarget to the host element, which
+  // would otherwise enter the Tab cycle.
+  if ((el as HTMLElement).closest?.("[data-tuner-host]")) return false;
   // Skip display:none elements (cheap check via offsetParent, falls back for fixed/body)
   if (el instanceof HTMLElement && el.offsetParent === null && getComputedStyle(el).display === "none") return false;
   return true;
@@ -200,12 +204,13 @@ export function isNavigableElement(el: Element): boolean {
 
 /**
  * Selectors for every node that belongs to redial's own UI: the panel root,
- * the selection outline, and its portals (tuner / Radix / text-style). The
+ * the selection outline, the shadow host that wraps everything (ADR-0008),
+ * and its portals (tuner / Radix / text-style). The
  * `[data-feedback-toolbar]` / `[data-annotation-*]` selectors that used to
  * appear here guarded the removed Agentation toolbar and are intentionally gone.
  */
 const TUNER_OWNED_SELECTOR =
-  ".__tuner-root,.__tuner-selected-outline,[data-tuner-portal],[data-radix-portal],[data-textstyle-portal]";
+  ".__tuner-root,.__tuner-selected-outline,[data-tuner-host],[data-tuner-portal],[data-radix-portal],[data-textstyle-portal]";
 
 /**
  * True when `el` (or an ancestor) is part of redial's own chrome rather than

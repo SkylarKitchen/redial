@@ -19,6 +19,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { computeColorPickerPosition } from "./colorPickerPosition";
 import { cssColorToHex } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
@@ -54,6 +55,7 @@ export function SwatchColorPicker({
 }: SwatchColorPickerProps) {
   const [open, setOpen] = useState(false);
   const swatchRef = useRef<HTMLButtonElement>(null);
+  const portalTarget = usePortalTarget();
 
   // Close on Escape (outside-click is handled inside ColorPickerEnhanced).
   useEffect(() => {
@@ -114,7 +116,7 @@ export function SwatchColorPicker({
               activeVariable={activeVariable}
             />
           </div>,
-          document.body
+          portalTarget
         );
       })()}
     </>

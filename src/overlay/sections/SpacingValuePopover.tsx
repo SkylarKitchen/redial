@@ -16,6 +16,8 @@ import { VariableField } from "../controls/VariableField";
 import { useDraftNumber } from "../hooks/useDraftNumber";
 import { ms } from "../timing";
 import { text, color, font, border, surface, shadow, blackAlpha, primaryAlpha, zIndex } from "../theme";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 // 8px grid spacing presets
 const PRESETS = [0, 8, 16, 32, 48, 64, 96, 128];
@@ -90,6 +92,7 @@ export function SpacingValuePopover({
   const [unitOpen, setUnitOpen] = useState(false);
   const [unitMenuUp, setUnitMenuUp] = useState(false);
   const unitBtnRef = useRef<HTMLButtonElement>(null);
+  const portalTarget = usePortalTarget();
 
   // Stable ref for onClose to avoid re-registering global listeners on every render
   const onCloseRef = useRef(onClose);
@@ -125,7 +128,8 @@ export function SpacingValuePopover({
   // Close on click outside (uses ref, so no dependency churn)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (popoverRef.current && target && !popoverRef.current.contains(target)) {
         onCloseRef.current();
       }
     };
@@ -470,6 +474,6 @@ export function SpacingValuePopover({
         ))}
       </div>}
     </div>,
-    document.body,
+    portalTarget,
   );
 }

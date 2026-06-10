@@ -16,6 +16,7 @@ import { useState, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Monitor } from "lucide-react";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { BREAKPOINTS, BASE_BREAKPOINT_ID } from "../breakpoints";
 import { text, color, badge, border, surface, font, shadow, zIndex } from "../theme";
@@ -31,6 +32,7 @@ export function BreakpointSelector({ value, onChange }: BreakpointSelectorProps)
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const id = useId();
+  const portalTarget = usePortalTarget();
 
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
     open,
@@ -155,7 +157,7 @@ export function BreakpointSelector({ value, onChange }: BreakpointSelectorProps)
             })}
           </div>
         </div>,
-        document.body
+        portalTarget
       )}
     </div>
   );

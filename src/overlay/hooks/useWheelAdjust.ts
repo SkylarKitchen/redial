@@ -14,6 +14,7 @@
 
 import { useEffect, useRef } from "react";
 import { beginBatch, endBatch } from "../core/apply";
+import { shadowAwareActiveElement } from "../core/shadowRoot";
 
 export function useWheelAdjust(
   elRef: React.RefObject<HTMLElement | null>,
@@ -35,7 +36,8 @@ export function useWheelAdjust(
 
     const handler = (e: WheelEvent) => {
       // Only activate when this element or a descendant has focus
-      if (!el.contains(document.activeElement)) return;
+      const active = shadowAwareActiveElement();
+      if (!active || !el.contains(active)) return;
 
       e.preventDefault();
 

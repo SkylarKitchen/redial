@@ -15,6 +15,7 @@ import { DragHandle } from "../shell/DragHandle";
 import { VisibilityToggle } from "../controls";
 import { color, blackAlpha, border, surface, shadow, font, zIndex, checkerboard } from "../theme";
 import { ms } from "../timing";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface BackgroundLayer {
   id: string;
@@ -147,7 +148,8 @@ export function BackgroundLayerList({
   useEffect(() => {
     if (!addOpen) return;
     function handleDown(e: MouseEvent) {
-      if (addRef.current && !addRef.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (addRef.current && target && !addRef.current.contains(target)) {
         setAddOpen(false);
       }
     }

@@ -9,6 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import { color, text, border, surface, font, primaryAlpha, blackAlpha } from "../theme";
 import { managedSheet } from "../core/managedSheet";
+import { getTunerShadowRoot } from "../core/shadowRoot";
 
 export interface BezierEditorProps {
   value: [number, number, number, number]; // [x1, y1, x2, y2]
@@ -39,10 +40,11 @@ export function BezierEditor({ value, onChange, onClose }: BezierEditorProps) {
   // Inject keyframe animation style
   useEffect(() => {
     const key = "bezier-editor-keyframes";
-    managedSheet(key).replace(
+    const target = getTunerShadowRoot() ?? document;
+    managedSheet(key, target).replace(
       "@keyframes tuner-bezier-preview { from { left: 4px; } to { left: calc(100% - 20px); } }",
     );
-    return () => { managedSheet(key).dispose(); };
+    return () => { managedSheet(key, target).dispose(); };
   }, []);
 
   // Draw the bezier curve on canvas

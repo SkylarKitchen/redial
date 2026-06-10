@@ -14,6 +14,7 @@ import { useState, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown } from "lucide-react";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { text, color, badge, border, surface, font, shadow, zIndex } from "../theme";
 
@@ -43,6 +44,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const id = useId();
+  const portalTarget = usePortalTarget();
 
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
     open,
@@ -167,7 +169,7 @@ export function StateSelector({ value, onChange }: StateSelectorProps) {
             })}
           </div>
         </div>,
-        document.body
+        portalTarget
       )}
     </div>
   );

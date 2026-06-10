@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface PortalDropdownPos {
   top: number;
@@ -64,7 +65,8 @@ export function usePortalDropdown({
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      const target = e.target as Node;
+      const target = composedTarget(e);
+      if (!target) return;
       if (containerRef.current?.contains(target)) return;
       if (portalRef.current?.contains(target)) return;
       setOpen(false);

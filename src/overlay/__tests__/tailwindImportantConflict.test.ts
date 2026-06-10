@@ -100,11 +100,12 @@ function findConflictingInlineStyles(
 describe("No inline style conflicts with Tailwind !important on Shadcn components", () => {
   // Verify the precondition: Tailwind utilities still compile with
   // !important. Since the issue #58 rescope this comes from the `important`
-  // modifier on the utilities import (plus a selector-scoped config), not
-  // from `important: true`.
+  // modifier on the utilities import (plus a selector-scoped config); under
+  // ADR-0008 the input file moved from `globals.css` to `panel.tailwind.css`
+  // so the panel sheet can be adopted into the shadow root.
   it("utilities are compiled with !important (precondition)", () => {
-    const globals = readFileSync(join(__dirname, "../../styles/globals.css"), "utf-8");
-    expect(globals).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
+    const panelInput = readFileSync(join(__dirname, "../../styles/panel.tailwind.css"), "utf-8");
+    expect(panelInput).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
     const configPath = join(__dirname, "../../../tailwind.config.ts");
     const config = readFileSync(configPath, "utf-8");
     expect(config).toContain('important: ".__tuner-root"');

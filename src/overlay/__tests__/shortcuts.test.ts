@@ -158,7 +158,7 @@ describe("portal keyboard guard", () => {
     document.body.removeChild(div);
   });
 
-  it("Overlay.tsx keyboard guard checks data-tuner-portal", () => {
+  it("Overlay.tsx keyboard guard delegates to isInsideTunerUI (covers data-tuner-portal)", () => {
     const { readFileSync } = require("fs");
     const { join } = require("path");
     // Keyboard handler lives in hooks/useOverlayHotkeys.ts (extracted from Overlay.tsx)
@@ -170,8 +170,13 @@ describe("portal keyboard guard", () => {
 
     const guardBlock = src.slice(guardStart, guardStart + 400);
 
-    // The guard must check for data-tuner-portal to cover portal-rendered elements
-    expect(guardBlock).toContain("data-tuner-portal");
+    // ADR-0008 unified the guard on `isInsideTunerUI`, which itself matches
+    // `data-tuner-portal` (along with the shadow-host attribute). The util's
+    // selector list is the single source of truth.
+    expect(guardBlock).toContain("isInsideTunerUI");
+
+    const utilSrc = readFileSync(join(__dirname, "..", "util.ts"), "utf-8");
+    expect(utilSrc).toContain("data-tuner-portal");
   });
 });
 

@@ -12,6 +12,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, useId } from "react"
 import { createPortal } from "react-dom";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "../theme";
 import { ms, timing } from "../timing";
 
@@ -70,6 +71,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
   const id = useId();
+  const portalTarget = usePortalTarget();
 
   const { dropdownPos, updateDropdownPos: _updatePos, portalRef } = usePortalDropdown({
     open,
@@ -373,7 +375,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
             )}
           </div>
         </div>,
-        document.body
+        portalTarget
       )}
 
       {/* Conversion tooltip — portaled to document.body to escape scroll overflow */}
@@ -423,7 +425,7 @@ export function UnitSelector({ value, options = DEFAULT_UNITS, onChange, special
               }}
             />
           </div>,
-          document.body
+          portalTarget
         );
       })()}
     </div>

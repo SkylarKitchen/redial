@@ -1,19 +1,17 @@
 /**
  * stylesContainment.test.ts — the published stylesheet must not restyle the
- * host app (issue #58).
+ * host app (issue #58, ADR-0008).
  *
- * `redial/styles.css` is imported unconditionally by HOST applications, so
- * everything it emits has to stay inside the panel. These tests compile
- * src/styles/globals.css through the real @tailwindcss/postcss pipeline (the
- * same plugin the tsup build runs) and walk the output with postcss, asserting
- * the containment invariant: every style rule is scoped to the panel.
+ * `redial/styles.css` is imported by HOST applications. Pre-ADR-0008 it
+ * carried Tailwind utilities (scoped to `.__tuner-root`). ADR-0008 moved the
+ * Tailwind delivery into the overlay's shadow root via `panel.tailwind.css`,
+ * leaving `globals.css` essentially empty for backwards compatibility — host
+ * pages no longer need to import it. These tests assert both halves:
  *
- * Allowed exceptions, both inert for hosts:
- *  - Tailwind's `@layer properties` fallback (`*, ::before, ::after,
- *    ::backdrop` inside `@supports`), which only initializes `--tw-*` custom
- *    properties for browsers without `@property` support;
- *  - `@property --tw-*` registrations, identical to what any Tailwind v4 host
- *    would register itself.
+ *   1. `globals.css` (the published surface) emits no rules that can match
+ *      host elements.
+ *   2. `panel.tailwind.css` (the shadow-root-bound surface) still carries
+ *      Tailwind utilities under `.__tuner-root` with `!important`.
  */
 import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
@@ -21,17 +19,23 @@ import { join } from "path";
 import postcss, { type Root, type Rule, type AtRule, type Container, type Document } from "postcss";
 
 const GLOBALS = join(__dirname, "../globals.css");
+const PANEL_INPUT = join(__dirname, "../panel.tailwind.css");
 
-let root: Root;
+let publishedRoot: Root;
+let panelRoot: Root;
 
 beforeAll(async () => {
   const { default: tailwindcss } = await import("@tailwindcss/postcss");
-  const css = readFileSync(GLOBALS, "utf-8");
-  const result = await postcss([tailwindcss()]).process(css, {
-    from: GLOBALS,
-    map: false,
-  });
-  root = result.root;
+  const publishedResult = await postcss([tailwindcss()]).process(
+    readFileSync(GLOBALS, "utf-8"),
+    { from: GLOBALS, map: false },
+  );
+  publishedRoot = publishedResult.root;
+  const panelResult = await postcss([tailwindcss()]).process(
+    readFileSync(PANEL_INPUT, "utf-8"),
+    { from: PANEL_INPUT, map: false },
+  );
+  panelRoot = panelResult.root;
 }, 60_000);
 
 /** Walk a rule's ancestors looking for an at-rule of the given name. */
@@ -56,64 +60,30 @@ function insidePanelScope(rule: Rule): boolean {
   return false;
 }
 
-/** True when every declaration in the rule is a `--tw-*` custom property. */
-function onlyTwVariables(rule: Rule): boolean {
-  let ok = true;
-  let count = 0;
-  rule.walkDecls((decl) => {
-    count++;
-    if (!decl.prop.startsWith("--tw-")) ok = false;
-  });
-  return count > 0 && ok;
-}
-
-describe("published stylesheet containment (issue #58)", () => {
-  it("emits no :root, html, or body selectors", () => {
+describe("published stylesheet containment (issue #58, ADR-0008)", () => {
+  it("globals.css emits no style rules whatsoever", () => {
+    // ADR-0008: `globals.css` is intentionally empty. The published file
+    // exists only so `import \"redial/styles.css\"` keeps resolving for
+    // existing consumers; new consumers do not need it.
     const offenders: string[] = [];
-    root.walkRules((rule) => {
-      if (/(^|[^\w-]):root|\bhtml\b|\bbody\b/.test(rule.selector)) {
-        offenders.push(rule.selector);
-      }
-    });
-    expect(offenders, "host-global selectors leaked into the build").toEqual([]);
-  });
-
-  it("emits no preflight reset", () => {
-    // Preflight's signature: a bare universal reset with margin/border
-    // declarations. The only `*` selectors allowed are Tailwind's --tw-*
-    // fallback block inside @supports.
-    const offenders: string[] = [];
-    root.walkRules((rule) => {
-      const hasUniversal = rule.selectors.some((s) => s.trim().startsWith("*") || s.trim().startsWith("::"));
-      if (!hasUniversal) return;
-      if (rule.selector.includes("__tuner-root")) return; // panel's own scoped reset
-      if (insideAtRule(rule, "supports") && onlyTwVariables(rule)) return;
+    publishedRoot.walkRules((rule) => {
+      if (insideAtRule(rule, "keyframes")) return;
       offenders.push(rule.selector);
     });
-    expect(offenders, "unscoped universal selectors beyond the --tw-* fallback").toEqual([]);
+    expect(offenders, "globals.css should emit no rules under ADR-0008").toEqual([]);
   });
 
-  it("scopes every style rule to the panel", () => {
+  it("globals.css emits no @property registrations or theme vars", () => {
     const offenders: string[] = [];
-    root.walkRules((rule) => {
-      // Keyframe steps style nothing by themselves.
-      if (insideAtRule(rule, "keyframes")) return;
-      // The --tw-* @supports fallback is inert for hosts.
-      if (insideAtRule(rule, "supports") && onlyTwVariables(rule)) return;
-      const scoped =
-        rule.selector.includes("__tuner-") || // panel containers + selection outline
-        insidePanelScope(rule);
-      if (!scoped) offenders.push(rule.selector);
-    });
-    expect(offenders, "rules that can match host-app elements").toEqual([]);
+    publishedRoot.walkAtRules("property", (rule) => offenders.push(rule.name));
+    expect(offenders, "globals.css should not register --tw-* properties").toEqual([]);
   });
+});
 
+describe("panel.tailwind.css (shadow-root sheet, ADR-0008)", () => {
   it("emits utilities under .__tuner-root with !important", () => {
-    // Sanity that the scoping didn't silently produce an empty build:
-    // utilities must exist, nested under the panel scope, and keep
-    // !important so panel layout still beats unlayered host CSS.
     let flexRule: Rule | undefined;
-    root.walkRules((rule) => {
+    panelRoot.walkRules((rule) => {
       if (rule.selector === ".flex" && insidePanelScope(rule)) flexRule = rule;
     });
     expect(flexRule, "expected a .flex utility nested under .__tuner-root").toBeDefined();
@@ -125,17 +95,5 @@ describe("published stylesheet containment (issue #58)", () => {
     });
     expect(display).toBe("flex");
     expect(important, ".flex must keep !important").toBe(true);
-  });
-
-  it("emits no Tailwind theme variables outside the panel scope", () => {
-    const offenders: string[] = [];
-    root.walkRules((rule) => {
-      if (insideAtRule(rule, "supports") || insideAtRule(rule, "keyframes")) return;
-      if (rule.selector.includes("__tuner-root") || insidePanelScope(rule)) return;
-      rule.walkDecls((decl) => {
-        if (decl.prop.startsWith("--")) offenders.push(`${rule.selector} { ${decl.prop} }`);
-      });
-    });
-    expect(offenders, "custom properties leaked outside the panel").toEqual([]);
   });
 });

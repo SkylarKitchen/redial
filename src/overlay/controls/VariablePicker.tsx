@@ -14,6 +14,8 @@ import { useTokenCollections } from "../variables/tokenCollections";
 import { Unlink2 } from "lucide-react";
 import { color, text, border, surface, font, shadow, primaryAlpha, zIndex } from "../theme";
 import { ms } from "../timing";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface VariablePickerProps {
   anchor: HTMLElement;
@@ -179,6 +181,7 @@ export function VariablePicker({
   const searchRef = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [search, setSearch] = useState("");
+  const portalTarget = usePortalTarget();
   const { collections, getCollectionForVariable, getManuallyAssignedNames } = useTokenCollections();
 
   // Discover variables
@@ -257,7 +260,8 @@ export function VariablePicker({
   // Click-outside → close
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = composedTarget(e);
+      if (ref.current && target && !ref.current.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -419,6 +423,6 @@ export function VariablePicker({
         )}
       </div>
     </div>,
-    document.body,
+    portalTarget,
   );
 }

@@ -11,6 +11,7 @@ import { ChevronDown } from "lucide-react";
 import { color, font, shadow, surface, blackAlpha, zIndex } from "../theme";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
 import { useDropdownKeyboard } from "../hooks/useDropdownKeyboard";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { SearchableMenu } from "./SearchableMenu";
 import { labelStyle, rowStyle, useResetPopover } from "./helpers";
 
@@ -53,6 +54,7 @@ export function SelectRow({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const id = useId();
+  const portalTarget = usePortalTarget();
 
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
     open,
@@ -215,7 +217,7 @@ export function SelectRow({
               })}
             </div>
           </div>,
-          document.body
+          portalTarget
         )}
       </div>
       {resetPopover.node}
@@ -251,6 +253,7 @@ function SelectRowCustom({
   const [btnHovered, setBtnHovered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const portalTarget = usePortalTarget();
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
     open,
     setOpen,
@@ -360,7 +363,7 @@ function SelectRowCustom({
               )}
             />
           </div>,
-          document.body
+          portalTarget
         )}
       </div>
       {resetPopover.node}

@@ -1,0 +1,21 @@
+/*
+ * panel.tailwind.css — Tailwind utility input for the shadow-root panel sheet.
+ *
+ * Compiled by scripts/build-panel-css.mjs into a TS string module and adopted
+ * into the overlay's shadow root at runtime (ADR-0008). Host pages do NOT
+ * import this stylesheet; it lives inside the shadow boundary.
+ *
+ * Mirrors the structure of globals.css (theme + utilities, no preflight) so
+ * the panel chrome looks identical inside or outside the shadow root during
+ * the migration. The `important: ".__tuner-root"` scoping in tailwind.config.ts
+ * still applies; inside the shadow root every panel node lives under a
+ * `.__tuner-root` class, so utilities continue to win against any host
+ * declaration that managed to inherit through `:host`.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) theme(inline reference);
+@import "tailwindcss/utilities.css" layer(utilities) important;
+@config "../../tailwind.config.ts";
+@source "../**/*.tsx";
+@source "../../src/components/**/*.tsx";
+@source "../../src/lib/**/*.ts";

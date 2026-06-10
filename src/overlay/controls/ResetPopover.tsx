@@ -11,6 +11,8 @@ import { createPortal } from "react-dom";
 import { Undo2 } from "lucide-react";
 import { color, text, surface, border, shadow, font, zIndex } from "../theme";
 import { ms } from "../timing";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface ResetPopoverProps {
   /** Element to position below */
@@ -25,6 +27,7 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [hovered, setHovered] = useState(false);
+  const portalTarget = usePortalTarget();
 
   // Position below anchor, clamped to viewport
   useEffect(() => {
@@ -44,7 +47,8 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
   // Click-outside → close
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = composedTarget(e);
+      if (ref.current && target && !ref.current.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -109,6 +113,6 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
         </span>
       </div>
     </div>,
-    document.body,
+    portalTarget,
   );
 }

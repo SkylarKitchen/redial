@@ -6,6 +6,7 @@
  */
 
 import { useEffect, type RefObject } from "react";
+import { shadowAwareActiveElement } from "../core/shadowRoot";
 
 /** Exported for testing */
 export const FOCUSABLE_SELECTOR =
@@ -39,7 +40,7 @@ export function useFocusTrap(
       const focusable = Array.from(
         container.querySelectorAll(FOCUSABLE_SELECTOR),
       ) as HTMLElement[];
-      const target = getNextFocusTarget(focusable, document.activeElement, e.shiftKey);
+      const target = getNextFocusTarget(focusable, shadowAwareActiveElement(), e.shiftKey);
       if (target) {
         e.preventDefault();
         target.focus();

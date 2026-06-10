@@ -11,6 +11,8 @@ import { Plus, ChevronLeft, MoreHorizontal, Pencil, Trash2 } from "lucide-react"
 import type { TokenCollection } from "./tokenCollections";
 import type { AutoCollection } from "./autoCollections";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 import { text, border, surface, font, color, shadow, zIndex } from "../theme";
 import { ms } from "../timing";
 
@@ -237,11 +239,13 @@ interface ContextMenuProps {
 function ContextMenu({ x, y, onRename, onDelete, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const portalTarget = usePortalTarget();
   useFocusTrap(ref, true);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (ref.current && target && !ref.current.contains(target)) {
         onClose();
       }
     };
@@ -295,7 +299,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose }: ContextMenuProps) {
         Delete
       </button>
     </div>,
-    document.body,
+    portalTarget,
   );
 }
 

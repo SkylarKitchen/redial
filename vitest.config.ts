@@ -13,5 +13,6 @@ export default defineConfig({
       "scripts/**/__tests__/**/*.test.ts",
     ],
     setupFiles: ["./vitest.setup.ts"],
+    globalSetup: ["./vitest.globalSetup.ts"],
   },
 });

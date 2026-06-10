@@ -17,6 +17,7 @@ import { SECTION_PROPERTIES } from "../shell/PropertySearch";
 import { text, border, font, color, surface, shadow } from "../theme";
 import { ms } from "../timing";
 import { CSS_PROPERTIES } from "./cssPropertyList";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 
 // ─── Property filtering (exported for tests) ────────────────────────────
 
@@ -208,6 +209,7 @@ function PropertyAutocomplete({
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
 
   // Reset active index when results change
   useEffect(() => {
@@ -288,7 +290,7 @@ function PropertyAutocomplete({
         </div>
       ))}
     </div>,
-    document.body,
+    portalTarget,
   );
 }
 

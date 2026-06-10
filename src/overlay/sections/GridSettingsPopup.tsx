@@ -14,6 +14,8 @@ import { SegmentedControl } from "../controls/SegmentedControl";
 import { UnitSelector } from "../controls/UnitSelector";
 import { text, color, font, border, surface, shadow, zIndex, primaryAlpha } from "../theme";
 import { ms } from "../timing";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 // ─── Data Model ──────────────────────────────────────────────────
 
@@ -479,6 +481,7 @@ export function GridSettingsPopup({
   const popoverRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const portalTarget = usePortalTarget();
 
   // Derive tracks from props (no local copy — always in sync)
   const colTracks = useMemo(() => parseGridTemplate(gridCols), [gridCols]);
@@ -496,8 +499,8 @@ export function GridSettingsPopup({
   // Close on click outside (delayed to avoid closing from the opening click)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        const target = e.target as HTMLElement;
+      const target = composedTarget(e);
+      if (popoverRef.current && target && !popoverRef.current.contains(target)) {
         if (target.closest("[data-tuner-portal]")) return;
         onCloseRef.current();
       }
@@ -580,6 +583,6 @@ export function GridSettingsPopup({
         <TrackSection label="Rows" tracks={rowTracks} onTracksChange={handleRowsChange} />
       </div>
     </div>,
-    document.body,
+    portalTarget,
   );
 }

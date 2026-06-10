@@ -96,6 +96,11 @@ export default [
       "src/overlay/sections/BackgroundsSection.tsx",
       "src/overlay/sections/FilterSliders.tsx",
       "src/overlay/variables/ModeValueCell.tsx",
+      // ADR-0008 panel chrome lives in a CSS string so it can be `replaceSync`'d
+      // into the overlay's shadow root; the design tokens here are mirrored
+      // from globals.css and theme.ts intentionally (they would otherwise be
+      // duplicated as `${color.foreground}` interpolations).
+      "src/overlay/core/shadowRoot.ts",
     ],
     rules: { "no-restricted-syntax": "off" },
   },

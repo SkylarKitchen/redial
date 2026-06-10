@@ -25,6 +25,7 @@ import {
   getOverrideSnapshot,
 } from "../core/apply";
 import { font, text, color, border, surface } from "../theme";
+import { shadowAwareActiveElement } from "../core/shadowRoot";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -176,7 +177,7 @@ function InlineStyleEditor({
     if (block.declarations !== prevDeclsRef.current) {
       prevDeclsRef.current = block.declarations;
       // Only re-sync if the textarea is NOT focused (don't clobber mid-edit)
-      if (document.activeElement !== textareaRef.current) {
+      if (shadowAwareActiveElement() !== textareaRef.current) {
         setContent(declarationsToText(block.declarations));
       }
     }

@@ -25,12 +25,13 @@ import {
   pasteStyles,
 } from "../core/apply";
 import { styleEngine, resolveTarget } from "../core/engine";
-import { getStableSelector, isNavigableElement } from "../util";
+import { getStableSelector, isInsideTunerUI, isNavigableElement } from "../util";
 import { type Scope } from "../core/scope";
 import { isScrubActive } from "../core/scrubState";
 import { parseCSSText } from "../cssImport";
 import { SECTION_ORDER } from "../panelUtils";
 import type { ActivePanel, ActiveModal } from "../shell/overlayTypes";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface OverlayHotkeysDeps {
   // --- Values referenced in the effect (those in the dependency array) ---
@@ -127,7 +128,8 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
   // Uses capture phase so Cmd+Z reaches us before DialKit's internal input handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target instanceof Element ? e.target as HTMLElement : null;
+      const composed = composedTarget(e);
+      const target = composed instanceof HTMLElement ? composed : null;
       const insidePanel = target?.closest(".__tuner-root");
 
       // Block all shortcuts while a LabelScrub drag is active
@@ -260,8 +262,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
       // For all other shortcuts, skip when typing in inputs or inside our panel/portals
       const tag = target?.tagName?.toLowerCase();
       const isTyping = tag === "input" || tag === "textarea" || tag === "select" || target?.isContentEditable;
-      const isInsideTunerUI = insidePanel || !!target?.closest("[data-tuner-portal]");
-      if (isTyping || isInsideTunerUI) return;
+      if (isTyping || isInsideTunerUI(target)) return;
 
       // N to toggle navigator (no modifier, no selectedEl required)
       if (e.key === "n" && !e.metaKey && !e.ctrlKey && !selecting) {

@@ -13,6 +13,8 @@ import { color, font, layout, variableAlpha, text, border, surface, shadow, zInd
 import { ms } from "../timing";
 import { VariablePicker } from "./VariablePicker";
 import { Pencil } from "lucide-react";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -42,6 +44,7 @@ function EditVariablePopover({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const portalTarget = usePortalTarget();
 
   // Strip -- prefix for the name field
   const bareNameInit = variableName.startsWith("--")
@@ -75,7 +78,8 @@ function EditVariablePopover({
   // Click-outside → close (capture phase)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const target = composedTarget(e);
+      if (ref.current && target && !ref.current.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -189,7 +193,7 @@ function EditVariablePopover({
         />
       </div>
     </div>,
-    document.body,
+    portalTarget,
   );
 }
 

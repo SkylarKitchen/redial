@@ -26,6 +26,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { UnitSelector } from "../controls/UnitSelector";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { SpacingValuePopover } from "./SpacingValuePopover";
 import { beginBatch, endBatch, resetAndReadNum } from "../core/apply";
 import { ms } from "../timing";
@@ -119,6 +120,7 @@ export function SpacingBoxModel({
   // --- Optimistic scrub state (local values during drag for real-time display) ---
   const [scrubValues, setScrubValues] = useState<Record<string, number>>({});
   const scrubActiveRef = useRef(false);
+  const portalTarget = usePortalTarget();
 
   // --- Tooltip state ---
   const [tooltip, setTooltip] = useState<{ prop: string; rect: DOMRect; isEdited?: boolean } | null>(null);
@@ -665,7 +667,7 @@ export function SpacingBoxModel({
           >
             {propLabel(tooltip.prop, tooltip.isEdited)}
           </div>,
-          document.body,
+          portalTarget,
         )}
 
       {/* --- Popover (portal via SpacingValuePopover) --- */}

@@ -15,6 +15,7 @@ import { ChevronDown } from "lucide-react";
 import { text, color, border as borderTokens, surface, focusRing, font, layout, zIndex } from "../theme";
 import { ms } from "../timing";
 import { usePortalDropdown } from "../hooks/usePortalDropdown";
+import { usePortalTarget } from "../hooks/usePortalTarget";
 import { SearchableMenu } from "../controls/SearchableMenu";
 import type { TextStyle } from "../textStyleScanner";
 
@@ -30,6 +31,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
   const [focused, setFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const portalTarget = usePortalTarget();
 
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
     open,
@@ -111,7 +113,7 @@ export function TextStyleRow({ styles, matchedStyle, onApply }: TextStyleRowProp
         )}
       />
     </div>,
-    document.body,
+    portalTarget,
   );
 
   return (

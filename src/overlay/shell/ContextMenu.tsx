@@ -10,6 +10,8 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { color, border, surface, shadow, text, font, zIndex } from "../theme";
 import { ms } from "../timing";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface ContextMenuProps {
   x: number;
@@ -43,6 +45,7 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
   const menuRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ x, y });
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const portalTarget = usePortalTarget();
 
   // Build dynamic label for "Select Parent"
   const parentLabel = (() => {
@@ -76,7 +79,8 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
   // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (menuRef.current && target && !menuRef.current.contains(target)) {
         onClose();
       }
     };
@@ -184,6 +188,6 @@ export function ContextMenu({ x, y, element, onAction, onClose }: ContextMenuPro
         );
       })}
     </div>,
-    document.body,
+    portalTarget,
   );
 }

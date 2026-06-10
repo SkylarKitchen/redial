@@ -19,6 +19,7 @@ import { sectionMatchesQuery } from "./PropertySearch";
 import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
 import { SectionMemoryProvider } from "../controls";
 import { managedSheet } from "../core/managedSheet";
+import { getTunerShadowRoot } from "../core/shadowRoot";
 
 import { LayoutSection } from "../sections/LayoutSection";
 import { SpacingSection } from "../sections/SpacingSection";
@@ -86,10 +87,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   // Inject :focus-visible styles for keyboard navigation
   useEffect(() => {
     const key = 'tuner-focus-styles';
-    managedSheet(key).replace(
+    const target = getTunerShadowRoot() ?? document;
+    managedSheet(key, target).replace(
       `.tuner-focusable:focus-visible { outline: none; box-shadow: ${focusRing}; }`,
     );
-    return () => { managedSheet(key).dispose(); };
+    return () => { managedSheet(key, target).dispose(); };
   }, []);
 
   // ── Indicator helpers ──

@@ -55,10 +55,12 @@ describe("Precondition", () => {
   it("utilities still compile with !important (scoped strategy, issue #58)", () => {
     // The z-index discipline below exists because utilities beat inline
     // styles. That stays true after the issue #58 rescope: the utilities
-    // import carries the `important` modifier, and the config scopes the
-    // selector instead of using `important: true`.
-    const globals = readSrc(join(__dirname, "../../styles/globals.css"));
-    expect(globals).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
+    // import carries the `important` modifier. ADR-0008 moved the Tailwind
+    // input from `globals.css` to `panel.tailwind.css` for shadow-root
+    // adoption, but the `important` modifier and config-scoped strategy
+    // are unchanged.
+    const panelInput = readSrc(join(__dirname, "../../styles/panel.tailwind.css"));
+    expect(panelInput).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
     expect(readSrc(TAILWIND_CONFIG_PATH)).toContain('important: ".__tuner-root"');
   });
 });

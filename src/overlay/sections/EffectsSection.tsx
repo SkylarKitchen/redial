@@ -30,6 +30,8 @@ import {
   transitionsToCSS,
 } from "../cssParsers";
 import type { SectionCtx } from "../panelUtils";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 import {
   BLEND_MODE_OPTIONS,
   CURSOR_OPTIONS,
@@ -80,7 +82,8 @@ function TransitionOptionsMenu({ anchor, items, onClose }: {
   // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+      const target = composedTarget(e);
+      if (menuRef.current && target && !menuRef.current.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -163,6 +166,7 @@ interface EffectsSectionProps {
 
 export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, focusOpen, onToggle }: EffectsSectionProps) {
   const { element, apply, ind, sectionInd, cs, ctxMenu, reset, resetRead, resetReadStr } = ctx;
+  const portalTarget = usePortalTarget();
 
   // ── State ──────────────────────────────────────────────────────────
   const [transMenuAnchor, setTransMenuAnchor] = useState<HTMLElement | null>(null);
@@ -437,7 +441,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
           items={transMenuItems}
           onClose={() => setTransMenuAnchor(null)}
         />,
-        document.body
+        portalTarget
       )}
     </Section>
   );

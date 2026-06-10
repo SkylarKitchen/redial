@@ -7,6 +7,8 @@ import { createPortal } from "react-dom";
 import type { CSSVariable } from "./discoverVariables";
 import type { TokenCollection } from "./tokenCollections";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 import {
   text,
   border,
@@ -80,6 +82,7 @@ export function DetailContextMenu({
   onUnassign: () => void;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
   useFocusTrap(menuRef, true);
 
   // Viewport-clamp
@@ -101,7 +104,8 @@ export function DetailContextMenu({
   // Click-outside close
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
+      const target = composedTarget(e);
+      if (menuRef.current && target && !menuRef.current.contains(target)) onClose();
     };
     document.addEventListener("mousedown", handler, true);
     return () => document.removeEventListener("mousedown", handler, true);
@@ -171,6 +175,6 @@ export function DetailContextMenu({
         ),
       )}
     </div>,
-    document.body,
+    portalTarget,
   );
 }

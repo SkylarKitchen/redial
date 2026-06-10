@@ -18,6 +18,8 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { color, border, blackAlpha, zIndex } from "../theme";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { shadowAwareActiveElement } from "../core/shadowRoot";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -48,10 +50,11 @@ export function Modal({
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  const portalTarget = usePortalTarget();
 
   // Move focus into the modal on open; restore it on close.
   useEffect(() => {
-    previouslyFocused.current = document.activeElement as HTMLElement | null;
+    previouslyFocused.current = shadowAwareActiveElement() as HTMLElement | null;
     const content = contentRef.current;
     if (content) {
       const first = content.querySelector<HTMLElement>(FOCUSABLE);
@@ -79,7 +82,7 @@ export function Modal({
     }
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
+    const active = shadowAwareActiveElement();
     if (e.shiftKey && (active === first || active === content)) {
       e.preventDefault();
       last.focus();
@@ -132,6 +135,6 @@ export function Modal({
         {children}
       </div>
     </div>,
-    document.body,
+    portalTarget,
   );
 }

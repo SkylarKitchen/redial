@@ -12,6 +12,7 @@ import type { Scope } from "../core/scope";
 import { formatCSSDiff, getSelector } from "../util";
 import { formatTailwindDiff } from "../tailwind";
 import { timing, ms } from "../timing";
+import { composedTarget } from "../core/shadowRoot";
 import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
@@ -117,7 +118,8 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
   useEffect(() => {
     if (!copyOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (copyRef.current && !copyRef.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (copyRef.current && target && !copyRef.current.contains(target)) {
         setCopyOpen(false);
       }
     };

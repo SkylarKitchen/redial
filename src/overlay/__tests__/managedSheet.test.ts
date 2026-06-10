@@ -102,6 +102,43 @@ describe("managedSheet — @import rejection", () => {
   });
 });
 
+describe("managedSheet — shadow-root targets (ADR-0008)", () => {
+  function makeShadow(): ShadowRoot {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    return host.attachShadow({ mode: "open" });
+  }
+
+  it("same key on document and a ShadowRoot are independent entries", () => {
+    const shadow = makeShadow();
+    managedSheet("split").replace(".doc {}");
+    managedSheet("split", shadow).replace(".shadow {}");
+
+    expect(_readManagedSheetCss("split")).toContain(".doc");
+    expect(_readManagedSheetCss("split", shadow)).toContain(".shadow");
+    expect(_readManagedSheetCss("split")).not.toContain(".shadow");
+  });
+
+  it("appends to shadowRoot.adoptedStyleSheets without clobbering document", () => {
+    const shadow = makeShadow();
+    const docBefore = document.adoptedStyleSheets.length;
+    managedSheet("shadow-only", shadow).replace(".x {}");
+    expect(shadow.adoptedStyleSheets.length).toBe(1);
+    expect(document.adoptedStyleSheets.length).toBe(docBefore);
+  });
+
+  it("dispose on a shadow target leaves document sheets untouched", () => {
+    const shadow = makeShadow();
+    managedSheet("doc-side").replace(".a {}");
+    managedSheet("shadow-side", shadow).replace(".b {}");
+    const docCountBefore = document.adoptedStyleSheets.length;
+    managedSheet("shadow-side", shadow).dispose();
+    expect(_readManagedSheetCss("shadow-side", shadow)).toBeNull();
+    expect(_readManagedSheetCss("doc-side")).toContain(".a");
+    expect(document.adoptedStyleSheets.length).toBe(docCountBefore);
+  });
+});
+
 describe("managedSheet — fallback path (no adoptedStyleSheets)", () => {
   it("falls back to <style> element injection and supports replace + dispose", () => {
     // Walk the prototype chain to find where the descriptor actually lives,

@@ -13,6 +13,8 @@ import { resetProp } from "../core/apply";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { color, border, surface, shadow, text, font, zIndex } from "../theme";
 import { ms } from "../timing";
+import { usePortalTarget } from "../hooks/usePortalTarget";
+import { composedTarget } from "../core/shadowRoot";
 
 export interface ContextMenuState {
   x: number;
@@ -43,6 +45,7 @@ export function PropertyContextMenu({
   onReset,
 }: PropertyContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const portalTarget = usePortalTarget();
   useFocusTrap(menuRef, true);
 
   // Clamp position to viewport after mount
@@ -69,7 +72,8 @@ export function PropertyContextMenu({
   // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = composedTarget(e);
+      if (menuRef.current && target && !menuRef.current.contains(target)) {
         onClose();
       }
     };
@@ -134,7 +138,7 @@ export function PropertyContextMenu({
         <PropertyMenuItem key={item.label} label={item.label} onClick={item.action} />
       ))}
     </div>,
-    document.body
+    portalTarget
   );
 }
 

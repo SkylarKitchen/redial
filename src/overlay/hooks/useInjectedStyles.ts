@@ -13,6 +13,7 @@
 import { useEffect } from "react";
 import { color, gridAlpha } from "../theme";
 import { managedSheet } from "../core/managedSheet";
+import { getTunerShadowRoot } from "../core/shadowRoot";
 
 export function useInjectedStyles() {
   // --- Tame Next.js dev overlay z-index so it doesn't cover the panel ---
@@ -24,12 +25,16 @@ export function useInjectedStyles() {
     return () => { managedSheet(key).dispose(); };
   }, []);
 
-  // --- Focus ring styles (global, scoped to tuner root) ---
+  // --- Focus ring styles (panel-internal — lives inside the shadow root) ---
+  // The `.__tuner-selected-outline` element stays in the host document
+  // (SelectionChrome renders directly under the host body for hit-testing
+  // immunity), so we keep ONE host-bound selector here too.
   useEffect(() => {
     const key = "focus-rings-and-pulse";
-    managedSheet(key).replace(
+    const shadowSheet = managedSheet(key, getTunerShadowRoot() ?? document);
+    shadowSheet.replace(
       `.__tuner-root *:focus-visible { outline: none; box-shadow: 0 0 0 2px ${color.ring}; } .__tuner-root *:focus:not(:focus-visible) { outline: none; } .__tuner-root *:hover > .__tuner-drag-handle { opacity: 0.4; } @keyframes tuner-outline-pulse { 0% { box-shadow: 0 0 0 0 ${gridAlpha(0.4)}; } 50% { box-shadow: 0 0 0 4px ${gridAlpha(0.15)}; } 100% { box-shadow: 0 0 0 0 ${gridAlpha(0)}; } } .__tuner-selected-outline.--pulse { animation: tuner-outline-pulse 400ms ease-out; }`,
     );
-    return () => { managedSheet(key).dispose(); };
+    return () => { shadowSheet.dispose(); };
   }, []);
 }
