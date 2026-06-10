@@ -5,17 +5,15 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { styleEngine } from "../core/engine";
+import { styleEngine, type ScopeContext } from "../core/engine";
 import { enrichChangesForCommit } from "../core/commitUtils";
-import type { Scope } from "../core/scope";
 import { formatCSSDiff, getSelector } from "../util";
-import { formatTailwindDiff } from "../tailwind";
 import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
 import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
-import { serializeBreakpointCSS } from "../breakpoints";
+import { composeExportCSS, composeTailwindExport, serializeElementBreakpointCSS } from "../breakpoints";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -57,23 +55,32 @@ interface SaveResult {
   failed?: Array<{ reason: string }>;
 }
 
+const DEFAULT_SCOPE_CTX: ScopeContext = {
+  scope: "element",
+  activeClassName: null,
+  activeState: "none",
+};
+
 interface FooterProps {
   element: Element;
   onReset: () => void;
   onSaved?: () => void;
-  scope?: Scope;
-  activeClassName?: string | null;
-  /** Active pseudo-class state ("none" = base, "hover", "focus", etc.) */
-  activeState?: string;
-  /** Active responsive breakpoint ("base" = un-mediated; "768" = ≥768px, …) */
-  activeBreakpoint?: string;
+  /** The panel's active scoping bundle (scope ▸ class ▸ state ▸ breakpoint) —
+   *  Overlay's ONE memoized `scopeCtx`, never enumerated per-dimension. */
+  scopeCtx?: ScopeContext;
+  /** The Footer registers its save pipeline here so Cmd+S and the command
+   *  palette trigger the SAME save as the Save button — one pipeline, two
+   *  triggers (this is what keeps the breakpoint clipboard side-channel from
+   *  diverging again). */
+  saveRef?: React.MutableRefObject<(() => void) | null>;
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
   onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scope = "element", activeClassName, activeState = "none", activeBreakpoint = "base", clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX, saveRef, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
+  const { activeState } = scopeCtx;
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [saved, setSaved] = useState(false);
@@ -157,36 +164,27 @@ export function Footer({ element, onReset, onSaved, scope = "element", activeCla
     setCopyOpen(false);
   }, [showMessage]);
 
-  // Compose export CSS: base changes via the chosen formatter, PLUS breakpoint
-  // edits as real @media blocks (#35) against the element's real selector — so
-  // responsive edits aren't flattened into the base rule. The base rule is
-  // omitted entirely when there are no base changes (no empty `sel {}` noise).
-  const composeExportCSS = useCallback(
-    (changes: DiffEntry[], formatBase: (el: Element, c: DiffEntry[]) => string): string => {
-      const base = changes.filter((c) => !c.breakpoint);
-      const baseCSS = base.length ? formatBase(element, base) : "";
-      const bpCSS = serializeBreakpointCSS([{ selector: getSelector(element), changes }]);
-      return [baseCSS, bpCSS].filter(Boolean).join("\n\n");
-    },
-    [element],
-  );
-
+  // All copy/export surfaces route through the SHARED base-vs-@media partition
+  // (breakpoints.composeExportCSS) so responsive edits are never flattened into
+  // the un-mediated base rule.
   const handleCopy = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(composeExportCSS(changes, formatCSSDiff), "SCSS");
-  }, [element, copyAndClose, composeExportCSS]);
+    copyAndClose(composeExportCSS([{ el: element, changes }], formatCSSDiff), "SCSS");
+  }, [element, copyAndClose]);
 
   const handleCopyCleanCSS = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(composeExportCSS(changes, formatCleanCSS), "CSS");
-  }, [element, copyAndClose, composeExportCSS]);
+    copyAndClose(composeExportCSS([{ el: element, changes }], formatCleanCSS), "CSS");
+  }, [element, copyAndClose]);
 
   const handleCopyTailwind = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(formatTailwindDiff(changes), "Tailwind");
+    // Responsive edits get their sm:/md:/lg:/xl: variant prefix (1:1 with
+    // Redial's 640/768/1024/1280 set) instead of flattening to base.
+    copyAndClose(composeTailwindExport(changes), "Tailwind");
   }, [element, copyAndClose]);
 
   const handleCopyVars = useCallback(() => {

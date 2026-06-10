@@ -14,15 +14,18 @@
  * exactly as dom-move already did. Migrating this to `styleEngine.undo` with
  * history-row-aware scrub semantics is Increment 4b of #14.)
  *
- * Extracted from Overlay.tsx — dependency arrays are preserved exactly. The hook
- * receives the values/setters each callback closes over so nothing reaches back
- * into Overlay's scope via globals.
+ * Extracted from Overlay.tsx. The hook receives the values/setters each
+ * callback closes over so nothing reaches back into Overlay's scope via
+ * globals. Scoping arrives as Overlay's ONE memoized `scopeCtx` (scope, class,
+ * state, breakpoint) so this hook never enumerates the dimensions by hand —
+ * the hand-rolled triple here is how spacing drags at a breakpoint silently
+ * wrote to base.
  */
 
 import { useCallback } from "react";
 import { infer, type InferResult } from "../core/infer";
 import { pasteStyles, undo } from "../core/apply";
-import { styleEngine, resolveTarget } from "../core/engine";
+import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import type { HistoryEntry } from "../shell/ChangesDrawer";
 
 /**
@@ -51,9 +54,8 @@ function applySpacingValue(
 
 export interface StyleHandlersDeps {
   selectedEl: Element | null;
-  scope: string;
-  activeClassName: string | null;
-  activeState: string;
+  /** Overlay's ONE memoized scoping bundle (scope ▸ class ▸ state ▸ breakpoint). */
+  scopeCtx: ScopeContext;
   diffMode: boolean;
   historyEntries: HistoryEntry[];
   setInferResult: React.Dispatch<React.SetStateAction<InferResult | null>>;
@@ -74,9 +76,7 @@ export interface StyleHandlers {
 
 export function useStyleHandlers({
   selectedEl,
-  scope,
-  activeClassName,
-  activeState,
+  scopeCtx,
   diffMode,
   historyEntries,
   setInferResult,
@@ -95,12 +95,13 @@ export function useStyleHandlers({
   // --- Paste handler for Footer ---
   const handlePasteStyles = useCallback(() => {
     if (!selectedEl || diffMode) return;
-    const count = pasteStyles(selectedEl);
+    // Paste lands at the ACTIVE breakpoint (ADR-0005) — base by default.
+    const count = pasteStyles(selectedEl, scopeCtx.activeBreakpoint);
     if (count > 0) {
       refreshPanel(selectedEl);
       setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
     }
-  }, [selectedEl, diffMode]);
+  }, [selectedEl, diffMode, scopeCtx]);
 
   // --- Reset handler: re-infer to get fresh values ---
   const handleReset = useCallback(() => {
@@ -135,11 +136,13 @@ export function useStyleHandlers({
   const handleSpacingChange = useCallback((prop: string, value: number, unit: string) => {
     if (!selectedEl) return;
     const cssValue = `${value}${unit}`;
-    const target = resolveTarget(selectedEl, { scope, activeClassName, activeState });
+    // The full scopeCtx (NOT a hand-built subset) so the active breakpoint
+    // rides along — omitting it sent breakpoint spacing drags to base.
+    const target = resolveTarget(selectedEl, scopeCtx);
     styleEngine.apply(target, prop, cssValue);
     // Update inferResult.spacing so the panel receives fresh prop values
     setInferResult((prev) => applySpacingValue(prev, prop, value));
-  }, [selectedEl, scope, activeClassName, activeState]);
+  }, [selectedEl, scopeCtx]);
 
   // --- Spacing reset handler (alt+click) ---
   // Only updates inferResult state without re-applying inline styles.
