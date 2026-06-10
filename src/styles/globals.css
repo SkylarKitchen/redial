@@ -1,4 +1,17 @@
-@import "tailwindcss";
+/*
+ * Granular Tailwind imports instead of the all-in-one `@import "tailwindcss"`
+ * (issue #58). The published stylesheet is imported by HOST apps, so it must
+ * not leak anything outside the panel:
+ *  - no preflight import — the unscoped reset (`*{margin:0}` etc.) visibly
+ *    restyled any host without its own preflight;
+ *  - `theme(inline reference)` — utilities inline their theme values rather
+ *    than emitting Tailwind's `--color-*`/`--font-*` variables on the host's
+ *    `:root`, where they could collide with a Tailwind host's own tokens.
+ * The panel ships its own scoped reset under `.__tuner-root` below.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme) theme(inline reference);
+@import "tailwindcss/utilities.css" layer(utilities) important;
 @config "../../tailwind.config.ts";
 @source "../**/*.tsx";
 @source "../../src/components/**/*.tsx";

@@ -5,9 +5,10 @@ import { join } from "path";
 /**
  * tailwindImportantConflict.test.ts
  *
- * Tailwind is configured with `important: true`, making all utility classes
- * use `!important`. This means inline React styles CANNOT override Shadcn
- * base variant classes (e.g. h-9, min-w-9, px-2, gap-1).
+ * Tailwind utilities compile with `!important` (via the `important` modifier
+ * on the utilities import since the issue #58 rescope). This means inline
+ * React styles CANNOT override Shadcn base variant classes (e.g. h-9,
+ * min-w-9, px-2, gap-1).
  *
  * When using Shadcn primitives (ToggleGroupItem, SelectTrigger, etc.),
  * size/spacing overrides MUST be passed via className (so twMerge can
@@ -97,11 +98,16 @@ function findConflictingInlineStyles(
 }
 
 describe("No inline style conflicts with Tailwind !important on Shadcn components", () => {
-  // Verify the precondition: Tailwind important is enabled
-  it("tailwind.config.ts has important: true (precondition)", () => {
+  // Verify the precondition: Tailwind utilities still compile with
+  // !important. Since the issue #58 rescope this comes from the `important`
+  // modifier on the utilities import (plus a selector-scoped config), not
+  // from `important: true`.
+  it("utilities are compiled with !important (precondition)", () => {
+    const globals = readFileSync(join(__dirname, "../../styles/globals.css"), "utf-8");
+    expect(globals).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
     const configPath = join(__dirname, "../../../tailwind.config.ts");
     const config = readFileSync(configPath, "utf-8");
-    expect(config).toContain("important: true");
+    expect(config).toContain('important: ".__tuner-root"');
   });
 
   const files = readdirSync(overlayDir).filter(

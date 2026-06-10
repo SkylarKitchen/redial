@@ -107,6 +107,30 @@ export default function RootLayout({ children }) {
 }
 ```
 
+The stylesheet is fully scoped under the panel's `.__tuner-root` container — it ships no preflight reset, no `:root` variables, and no global utility classes, so importing it cannot restyle your app. To keep its bytes out of production bundles entirely, load the panel and its stylesheet from a dev-gated client component instead of the layout:
+
+```tsx
+// app/tuner-provider.tsx
+"use client";
+
+import dynamic from "next/dynamic";
+
+// Both chunks load only when the provider actually renders — never in
+// production, where it returns null first.
+const Tuner = dynamic(
+  () =>
+    Promise.all([import("redial"), import("redial/styles.css")]).then(
+      ([m]) => ({ default: m.Tuner })
+    ),
+  { ssr: false }
+);
+
+export function TunerProvider() {
+  if (process.env.NODE_ENV !== "development") return null;
+  return <Tuner commitEndpoint="/api/tuner/commit" />;
+}
+```
+
 ---
 
 ## Panel Sections

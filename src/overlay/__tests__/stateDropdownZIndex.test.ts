@@ -2,13 +2,13 @@
 /**
  * Test: All portal/overlay z-indices must be >= the panel z-index.
  *
- * The panel uses z-[2147483647] with Tailwind's `important: true`.
+ * The panel uses z-[2147483647] with !important utilities (the `important`
+ * modifier on the utilities import since the issue #58 rescope).
  * Any dropdown/popover/portal that appears on top of the panel must
  * also use z-index 2147483647. Two classes of bugs:
  *
- * 1. Shadcn/Radix components using `z-50` (Tailwind class) — with
- *    important: true, this compiles to `z-index: 50 !important`,
- *    overriding any inline zIndex.
+ * 1. Shadcn/Radix components using `z-50` (Tailwind class) — it compiles
+ *    to `z-index: 50 !important`, overriding any inline zIndex.
  *
  * 2. Manual createPortal components whose portal container has
  *    zIndex < 2147483647 — these render at body level but behind
@@ -57,8 +57,14 @@ function hasPanelLevelZ(src: string): boolean {
 // ── Precondition ────────────────────────────────────────────────
 
 describe("Precondition", () => {
-  it("tailwind config has important: true", () => {
-    expect(readSrc(TAILWIND_CONFIG_PATH)).toContain("important: true");
+  it("utilities still compile with !important (scoped strategy, issue #58)", () => {
+    // The z-index discipline below exists because utilities beat inline
+    // styles. That stays true after the issue #58 rescope: the utilities
+    // import carries the `important` modifier, and the config scopes the
+    // selector instead of using `important: true`.
+    const globals = readSrc(join(__dirname, "../../styles/globals.css"));
+    expect(globals).toMatch(/@import "tailwindcss\/utilities\.css"[^;\n]*\bimportant\b/);
+    expect(readSrc(TAILWIND_CONFIG_PATH)).toContain('important: ".__tuner-root"');
   });
 });
 
