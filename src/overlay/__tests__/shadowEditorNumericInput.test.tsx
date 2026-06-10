@@ -101,3 +101,31 @@ describe("ShadowEditor NumericInput (behavioral)", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 });
+
+// ─── Text-shadow variant (issue #61) ──────────────────────────────────
+
+describe("ShadowEditor text variant", () => {
+  it("hides the Spread cell and Inset toggle for text shadows", () => {
+    // text-shadow's grammar has no spread length and no inset keyword, so
+    // the controls would edit fields the serializer must never emit.
+    render(<ShadowEditor variant="text" shadows={[SHADOW]} onChange={vi.fn()} />);
+    expect(screen.queryByText("Spread")).toBeNull();
+    expect(screen.queryByText("Inset")).toBeNull();
+    // X/Y/Blur remain editable.
+    expect(screen.getByText("X")).toBeTruthy();
+    expect(screen.getByText("Y")).toBeTruthy();
+    expect(screen.getByText("Blur")).toBeTruthy();
+  });
+
+  it("shows Spread and Inset by default (box variant)", () => {
+    render(<ShadowEditor shadows={[SHADOW]} onChange={vi.fn()} />);
+    expect(screen.getByText("Spread")).toBeTruthy();
+    expect(screen.getByText("Inset")).toBeTruthy();
+  });
+
+  it("previews the text variant without a spread length", () => {
+    render(<ShadowEditor variant="text" shadows={[SHADOW]} onChange={vi.fn()} />);
+    const swatch = screen.getByTitle("1px 2px 3px #000000");
+    expect(swatch).toBeTruthy();
+  });
+});

@@ -77,10 +77,12 @@ function shadowLengthToPx(token: string, rootFontSizePx = 16): number {
   return n;
 }
 
-export function parseBoxShadow(raw: string, rootFontSizePx = 16): ShadowValue[] {
-  if (!raw || raw === "none") return [];
-  const shadows: ShadowValue[] = [];
-  // Split on commas that are NOT inside parentheses (for rgba colors)
+/**
+ * Split a comma-separated CSS list on top-level commas only — commas inside
+ * parentheses (`rgba(…)`, `cubic-bezier(…)`, `steps(…)`) belong to the item,
+ * not the list. Empty items are dropped, so "" returns [].
+ */
+export function splitCSSList(raw: string): string[] {
   const parts: string[] = [];
   let depth = 0;
   let current = "";
@@ -95,6 +97,14 @@ export function parseBoxShadow(raw: string, rootFontSizePx = 16): ShadowValue[] 
     }
   }
   if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+export function parseBoxShadow(raw: string, rootFontSizePx = 16): ShadowValue[] {
+  if (!raw || raw === "none") return [];
+  const shadows: ShadowValue[] = [];
+  // Split on commas that are NOT inside parentheses (for rgba colors)
+  const parts = splitCSSList(raw);
 
   for (const part of parts) {
     const inset = part.includes("inset");
@@ -125,11 +135,18 @@ export function parseBoxShadow(raw: string, rootFontSizePx = 16): ShadowValue[] 
   return shadows;
 }
 
-export function shadowToCSS(shadows: ShadowValue[]): string {
+export function shadowToCSS(
+  shadows: ShadowValue[],
+  variant: "box" | "text" = "box",
+): string {
   const visible = shadows.filter((s) => s.visible !== false);
   if (visible.length === 0) return "none";
   return visible
     .map((s) => {
+      // text-shadow accepts at most three lengths and no `inset` keyword — a
+      // fourth length makes the whole declaration invalid and the browser
+      // silently drops it (issue #61), so the text variant omits spread/inset.
+      if (variant === "text") return `${s.x}px ${s.y}px ${s.blur}px ${s.color}`;
       const inset = s.inset ? "inset " : "";
       return `${inset}${s.x}px ${s.y}px ${s.blur}px ${s.spread}px ${s.color}`;
     })
@@ -328,7 +345,11 @@ export function parseTransitions(cs: CSSStyleDeclaration): TransitionValue[] {
   if (!props || props === "none") return [];
   const properties = props.split(",").map((s) => s.trim());
   const durations = cs.transitionDuration.split(",").map((s) => parseFloat(s.trim()) * 1000);
-  const easings = cs.transitionTimingFunction.split(",").map((s) => s.trim());
+  // Only the timing function can contain top-level-comma functions
+  // (`cubic-bezier(0.4, 0, 0.2, 1)`, `steps(4, end)`); a naive split shreds
+  // them into garbage tokens that misalign with `properties` (issue #62).
+  // The other three longhands are plain `<time>#`/`<ident>#` lists.
+  const easings = splitCSSList(cs.transitionTimingFunction);
   const delays = cs.transitionDelay.split(",").map((s) => parseFloat(s.trim()) * 1000);
   const entries = properties.map((p, i) => ({
     property: p,

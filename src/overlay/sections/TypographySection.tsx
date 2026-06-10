@@ -226,7 +226,9 @@ export const TypographySection = memo(function TypographySection({
   const handleColumnCountChange = useCallback((v: number) => { setColumnCount(v); apply("column-count", String(v)); }, [apply]);
   const handleTextShadowsChange = useCallback((newShadows: ShadowValue[]) => {
     setTextShadows(newShadows);
-    apply("text-shadow", shadowToCSS(newShadows));
+    // text-shadow grammar: at most three lengths, no inset — the "text"
+    // variant omits the spread a box-shadow serialization would add (#61).
+    apply("text-shadow", shadowToCSS(newShadows, "text"));
   }, [apply]);
   const handleTextOverflowChange = useCallback((v: string) => { setTextOverflow(v); apply("text-overflow", v); }, [apply]);
   const handleTextStrokeWidthChange = useCallback((v: number) => { setTextStrokeWidth(v); apply("-webkit-text-stroke-width", `${v}px`); }, [apply]);
@@ -518,7 +520,7 @@ export const TypographySection = memo(function TypographySection({
 
           {/* Text shadows */}
           <SubSectionHeader label="Text shadows" onAdd={() => handleTextShadowsChange([...textShadows, makeShadow(blackAlpha(0.25))])} />
-          {textShadows.length > 0 && <ShadowEditor shadows={textShadows} onChange={handleTextShadowsChange} />}
+          {textShadows.length > 0 && <ShadowEditor variant="text" shadows={textShadows} onChange={handleTextShadowsChange} />}
         </>
       )}
     </Section>
