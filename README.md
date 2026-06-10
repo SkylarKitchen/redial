@@ -205,12 +205,12 @@ Supports both CSS Modules (`.module.scss`, `.module.css`) and Tailwind CSS proje
 ## Configuration
 
 ```tsx
-<Tuner commitEndpoint="/api/tuner" />
+<Tuner commitEndpoint="/api/tuner/commit" />
 ```
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `commitEndpoint` | `string` | `"/api/tuner"` | API route path for the commit server |
+| `commitEndpoint` | `string` | `"/api/tuner/commit"` | API route path for the commit server. The client POSTs to this exact path — with the catch-all route above, it must include at least one segment after `/api/tuner` |
 
 ---
 

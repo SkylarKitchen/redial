@@ -13,5 +13,5 @@
 ## Tasks
 
 - [ ] In src/overlay/theme.ts, audit all color tokens and ensure contrast ratios meet WCAG AA (4.5:1 for text). Fix any that don't pass.
-- [ ] Add unit tests for src/overlay/infer.ts covering edge cases: elements with no computed styles, inline elements, and SVG elements.
-- [ ] Review src/overlay/apply.ts and add JSDoc comments to all exported functions describing their parameters and return values.
+- [ ] Add unit tests for src/overlay/core/infer.ts covering edge cases: elements with no computed styles, inline elements, and SVG elements.
+- [ ] Review src/overlay/core/apply.ts and add JSDoc comments to all exported functions describing their parameters and return values.

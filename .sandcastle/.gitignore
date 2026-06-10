@@ -5,4 +5,5 @@
 state/
 .cache/
 sessions/
+logs/
 *.log

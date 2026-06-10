@@ -131,7 +131,7 @@ Same checklist format as the existing flow:
 ```md
 ## Tasks
 
-- [ ] Add JSDoc comments to every exported function in src/overlay/infer.ts.
+- [ ] Add JSDoc comments to every exported function in src/overlay/core/infer.ts.
 - [ ] Audit color tokens in src/overlay/theme.ts for WCAG AA contrast.
 ```
 
