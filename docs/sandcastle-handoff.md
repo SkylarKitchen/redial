@@ -86,7 +86,7 @@ Drop a real task into `.sandcastle/prompt.md` and `npm run sandcastle`.
 Suggested first real task — something low-risk and well-scoped:
 
 ```
-Add JSDoc comments to every exported function in src/overlay/infer.ts
+Add JSDoc comments to every exported function in src/overlay/core/infer.ts
 describing parameters and return values. Run `npm run typecheck` before
 finishing. Do not change any logic.
 ```
@@ -97,8 +97,8 @@ Create a `tasks.md` (same format `run-tasks-parallel.sh` uses):
 ```md
 ## Tasks
 
-- [ ] Add JSDoc to exports in src/overlay/infer.ts.
-- [ ] Add JSDoc to exports in src/overlay/apply.ts.
+- [ ] Add JSDoc to exports in src/overlay/core/infer.ts.
+- [ ] Add JSDoc to exports in src/overlay/core/apply.ts.
 ```
 
 Run:
