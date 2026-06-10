@@ -9,15 +9,14 @@
  * Fix: All dropdowns must use an explicit inline `background` or `backgroundColor`
  * with an opaque value (from theme.ts), never relying solely on Tailwind classes.
  *
- * Two categories:
- * 1. Shadcn SelectContent — the base component must hardcode an opaque background
- * 2. Custom dropdown containers — must include `background: color.popover` or similar
+ * Custom dropdown containers must include `background: color.popover` or
+ * similar. (The shadcn SelectContent category went away with
+ * src/components/ui in the issue #92 dead-code sweep.)
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-const COMPONENTS_DIR = join(__dirname, "../../components/ui");
 const OVERLAY_DIR = join(__dirname, "..");
 
 function readSrc(path: string) {
@@ -25,23 +24,6 @@ function readSrc(path: string) {
 }
 
 describe("Dropdown opaque background", () => {
-  it("select.tsx SelectContent must have an explicit inline backgroundColor", () => {
-    const src = readSrc(join(COMPONENTS_DIR, "select.tsx"));
-
-    // The SelectPrimitive.Content element must have an inline style with an opaque background.
-    // bg-popover Tailwind class alone is NOT sufficient because CSS variables
-    // may not resolve when the portal renders outside .__tuner-root.
-    const hasInlineBg =
-      /SelectPrimitive\.Content[\s\S]*?style=\{[\s\S]*?background(?:Color)?\s*:/m.test(src);
-
-    expect(
-      hasInlineBg,
-      "select.tsx: SelectContent relies only on Tailwind bg-popover class for background. " +
-      "Add an explicit inline backgroundColor (e.g., '#F5F5F5') so the dropdown is opaque " +
-      "even when portaled outside .__tuner-root scope."
-    ).toBe(true);
-  });
-
   it("StateSelector.tsx dropdown content must have an explicit opaque backgroundColor", () => {
     const src = readSrc(join(OVERLAY_DIR, "shell", "StateSelector.tsx"));
 
