@@ -712,6 +712,19 @@ export function Overlay() {
       {/* Scoped scrollbar + slider styles for the tuner panel */}
       <OverlayScrollbarStyles />
 
+      {/* Screen reader live region for announcements — mounted whenever the
+          overlay root is mounted (NOT gated on the inspector branch), so
+          announce() is never a silent no-op (e.g. Cmd+S with the Footer
+          unmounted while the Variables panel covers a live selection). */}
+      <div
+        role="status"
+        aria-live="assertive"
+        aria-atomic="true"
+        style={{ position: "fixed", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", borderWidth: 0 }}
+      >
+        {announcement}
+      </div>
+
       {/* Selector overlay (full viewport, invisible until hover) */}
       <Selector
         active={selecting}
@@ -778,16 +791,6 @@ export function Overlay() {
 
           {activePanel.type === "inspector" && selectedEl && inferResult && (
             <>
-              {/* Screen reader live region for announcements */}
-              <div
-                role="status"
-                aria-live="assertive"
-                aria-atomic="true"
-                style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", borderWidth: 0 }}
-              >
-                {announcement}
-              </div>
-
               <Header
                 element={selectedEl}
                 onClose={handleCloseAttempt}

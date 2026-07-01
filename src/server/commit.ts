@@ -506,7 +506,21 @@ function classBlockBodyRangeOnLine(
   const classRe = new RegExp(`\\.${escapeRegex(className)}\\s*\\{`);
   const m = classRe.exec(maskedLine);
   if (!m) return null;
-  const braceIdx = maskedLine.indexOf("{", m.index);
+  return bodyRangeOnLine(maskedLine, m.index);
+}
+
+/**
+ * Char-accurate body span for a block that opens AND closes on one physical
+ * line: from the first `{` at/after `fromCol`, walk char-level brace depth to
+ * the matching `}`. Returns [openCol + 1, closeCol) — the body between the
+ * braces — or null when no `{` follows `fromCol` or the block doesn't close
+ * on this line.
+ */
+function bodyRangeOnLine(
+  maskedLine: string,
+  fromCol: number
+): [number, number] | null {
+  const braceIdx = maskedLine.indexOf("{", fromCol);
   if (braceIdx === -1) return null;
   let depth = 0;
   for (let k = braceIdx; k < maskedLine.length; k++) {
@@ -520,7 +534,10 @@ function classBlockBodyRangeOnLine(
 }
 
 /**
- * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within it.
+ * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within
+ * it. Returns the hit line plus, when the block opens AND closes on that same
+ * physical line (minified CSS), the char span of the block's body to which a
+ * surgical replacement must be confined (issue #47, pseudo branch).
  */
 function searchPseudoClassBlock(
   lines: string[],
@@ -528,13 +545,14 @@ function searchPseudoClassBlock(
   state: string,
   prop: string,
   value: string
-): number | null {
+): { lineIdx: number; range?: [number, number] } | null {
   const pseudoPattern = new RegExp(
     `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`
   );
 
   for (let i = 0; i < lines.length; i++) {
-    if (!pseudoPattern.test(lines[i])) continue;
+    const m = pseudoPattern.exec(lines[i]);
+    if (!m) continue;
 
     // Found the pseudo-class block — track braces to find extent
     let depth = 0;
@@ -544,9 +562,17 @@ function searchPseudoClassBlock(
         if (ch === "}") depth--;
       }
 
-      if (j > i && depth >= 0) {
+      // The opening-brace line itself (j === i) is inspected too, so an
+      // all-on-one-line minified pseudo block whose declaration shares the
+      // line with the `{` is found rather than skipped — and the scan can't
+      // fall through to a later sibling block's identical declaration
+      // (issue #47, pseudo branch).
+      if (depth >= 0) {
         if (lineHasDecl(lines[j], prop, value)) {
-          return j;
+          return {
+            lineIdx: j,
+            range: j === i ? bodyRangeOnLine(lines[i], m.index) ?? undefined : undefined,
+          };
         }
       }
 
@@ -1085,34 +1111,58 @@ export async function handleCommit(
           }
           // Locate on the masked view so brace literals / comments can't fool
           // the scan; the replacement is applied to the original `lines`.
-          const pseudoIdx = searchPseudoClassBlock(
-            masked,
-            change.className,
-            change.state,
-            change.prop,
-            change.from
-          ) ?? searchNestedPseudoBlock(
+          const pseudoHit = searchPseudoClassBlock(
             masked,
             change.className,
             change.state,
             change.prop,
             change.from
           );
+          const nestedIdx = pseudoHit == null
+            ? searchNestedPseudoBlock(
+                masked,
+                change.className,
+                change.state,
+                change.prop,
+                change.from
+              )
+            : null;
+          const pseudoIdx = pseudoHit?.lineIdx ?? nestedIdx;
 
           if (pseudoIdx != null) {
-            // Found the property in the pseudo-class block — do surgical replacement
+            // Found the property in the pseudo-class block — do surgical
+            // replacement. When a char range is set (minified same-line block,
+            // issue #47), confine the match+replace to the targeted block's
+            // body so an identical sibling declaration earlier on the line is
+            // left untouched. The range is computed on the masked view, which
+            // is same-length as `lines`.
+            const range = pseudoHit?.range;
+            const segment = range
+              ? lines[pseudoIdx].slice(range[0], range[1])
+              : lines[pseudoIdx];
+
             const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
-            if (pattern.test(lines[pseudoIdx])) {
+            if (pattern.test(segment)) {
               const safeValue = change.to.replace(/\$/g, "$$$$");
-              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1$2${safeValue}`);
+              const replaced = segment.replace(pattern, `$1$2${safeValue}`);
+              lines[pseudoIdx] = range
+                ? lines[pseudoIdx].slice(0, range[0]) +
+                  replaced +
+                  lines[pseudoIdx].slice(range[1])
+                : replaced;
               modified = true;
               remask();
             } else {
               // Try broad replacement (handles hex vs rgb, etc.)
               const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
-              if (broadPattern.test(lines[pseudoIdx])) {
+              if (broadPattern.test(segment)) {
                 const safeValue = change.to.replace(/\$/g, "$$$$");
-                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1$2${safeValue}`);
+                const replaced = segment.replace(broadPattern, `$1$2${safeValue}`);
+                lines[pseudoIdx] = range
+                  ? lines[pseudoIdx].slice(0, range[0]) +
+                    replaced +
+                    lines[pseudoIdx].slice(range[1])
+                  : replaced;
                 modified = true;
                 remask();
               } else {

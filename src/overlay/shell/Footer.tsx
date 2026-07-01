@@ -14,7 +14,7 @@ import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
 import { getConfig } from "../core/config";
 import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
-import { composeExportCSS, composeTailwindExport, serializeElementBreakpointCSS } from "../breakpoints";
+import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS } from "../breakpoints";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -191,7 +191,20 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
   const handleCopyVars = useCallback(() => {
     const changes = styleEngine.diffElement(element);
     if (changes.length === 0) return;
-    copyAndClose(formatCSSVars(changes), "vars");
+    // Same base-vs-@media partition as the other copy surfaces, but the vars
+    // export targets :root (with var-name props) instead of the element's own
+    // selector, so the shared serializer is fed `:root` directly.
+    const blocks: string[] = [];
+    const base = changes.filter((c) => !c.breakpoint);
+    if (base.length > 0) blocks.push(formatCSSVars(base));
+    const bpCSS = serializeBreakpointCSS([{
+      selector: ":root",
+      changes: changes
+        .filter((c) => c.breakpoint)
+        .map((c) => ({ ...c, prop: toVarName(c.prop) })),
+    }]);
+    if (bpCSS) blocks.push(bpCSS);
+    copyAndClose(blocks.join("\n\n"), "vars");
   }, [element, copyAndClose]);
 
   // Media-gated edits aren't written to source files yet (#53 / #35 follow-up):
@@ -460,7 +473,9 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
             onMouseDown={savePress.onMouseDown}
             onMouseUp={savePress.onMouseUp}
             onMouseLeave={() => { savePress.onMouseLeave(); setSaveHovered(false); }}
-            disabled={count === 0 || saving}
+            // Gate on totalCount, matching the label: mode-override-only edits
+            // are saveable (handleSave routes them to the clipboard side-channel).
+            disabled={totalCount === 0 || saving}
             title="Save to source (⌘S)"
             style={{
               display: "inline-flex",
@@ -473,11 +488,11 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
               paddingRight: 12,
               borderRadius: 6,
               border: "none",
-              cursor: (count === 0 || saving) ? "default" : "pointer",
+              cursor: (totalCount === 0 || saving) ? "default" : "pointer",
               background: saved ? color.success : color.primary,
               color: color.primaryForeground,
-              boxShadow: (count === 0 || saving) ? "none" : saved ? `0 1px 3px ${successAlpha(0.4)}` : `0 1px 3px ${primaryAlpha(0.4)}`,
-              opacity: (count === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
+              boxShadow: (totalCount === 0 || saving) ? "none" : saved ? `0 1px 3px ${successAlpha(0.4)}` : `0 1px 3px ${primaryAlpha(0.4)}`,
+              opacity: (totalCount === 0 || saving) ? 0.5 : (saveHovered && !saved ? 0.9 : 1),
               transition: `opacity ${ms("normal")}, background ${ms("normal")}, box-shadow ${ms("normal")}`,
               ...savePressStyle,
             }}
