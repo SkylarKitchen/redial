@@ -344,8 +344,15 @@ export function Overlay() {
   // silently dropped breakpoint edits.
   const saveRef = useRef<(() => void) | null>(null);
   const handleSaveShortcut = useCallback(() => {
-    saveRef.current?.();
-  }, []);
+    if (saveRef.current) {
+      saveRef.current();
+    } else {
+      // The Footer (the save pipeline) isn't mounted — e.g. the Variables
+      // panel is open over a live selection. The hotkey already swallowed the
+      // browser's save dialog, so never let this be a SILENT no-op.
+      announce("Open the style panel to save");
+    }
+  }, [announce]);
 
   // Footer save succeeded: refresh the panel from the (possibly HMR-updated)
   // element and announce for screen readers.
@@ -433,13 +440,11 @@ export function Overlay() {
     diffMode,
     showSearch,
     activeModal,
-    scope,
+    scopeCtx,
     cssClasses,
     focusMode,
     activePanel,
     expandedSection,
-    activeState,
-    activeClassName,
     handleSaveShortcut,
     handleCopyShortcut,
     handleScopeChange,

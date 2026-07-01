@@ -6,13 +6,14 @@
  * search, scope/pin/focus toggles, section jumps, diff peek, arrow-key element
  * navigation, backtick toggle, Escape dismiss, …).
  *
- * Extracted verbatim from Overlay.tsx. Behavior is identical: the handler body
- * is unchanged and the effect's dependency array is preserved exactly (same 16
- * entries, same order). In particular `activeState` / `activeClassName` are
- * read by the CSS-import branch but intentionally remain OUT of the dependency
- * array — exactly as in the original — so the stale-closure characteristics are
- * unchanged. Component-scope state, setters, refs and callbacks are passed in
- * via `deps` so the hook never reaches back into Overlay's scope.
+ * Extracted from Overlay.tsx. Component-scope state, setters, refs and
+ * callbacks are passed in via `deps` so the hook never reaches back into
+ * Overlay's scope. Scoping arrives as Overlay's ONE memoized `scopeCtx`
+ * (scope ▸ class ▸ state ▸ breakpoint) — this module never enumerates the
+ * dimensions by hand (the hand-built triple in the paste/import branches is
+ * how breakpoint edits silently landed on base). `scopeCtx` sits in the
+ * dependency array, so the old deliberate stale-closure quirk (activeState /
+ * activeClassName outside the array) is gone with the flat fields.
  */
 
 import { useEffect } from "react";
@@ -24,7 +25,7 @@ import {
   copyStyles,
   pasteStyles,
 } from "../core/apply";
-import { styleEngine, resolveTarget } from "../core/engine";
+import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import { getStableSelector, isNavigableElement } from "../util";
 import { type Scope } from "../core/scope";
 import { isScrubActive } from "../core/scrubState";
@@ -39,14 +40,12 @@ export interface OverlayHotkeysDeps {
   diffMode: boolean;
   showSearch: boolean;
   activeModal: ActiveModal;
-  scope: Scope;
+  /** Overlay's ONE memoized scoping bundle (scope ▸ class ▸ state ▸ breakpoint). */
+  scopeCtx: ScopeContext;
   cssClasses: string[];
   focusMode: boolean;
   activePanel: ActivePanel;
   expandedSection: string | null;
-  // --- Values read but intentionally not in the dependency array ---
-  activeState: string;
-  activeClassName: string | null;
   // --- Callbacks (in the dependency array) ---
   handleSaveShortcut: () => void;
   handleCopyShortcut: () => void;
@@ -87,13 +86,11 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
     diffMode,
     showSearch,
     activeModal,
-    scope,
+    scopeCtx,
     cssClasses,
     focusMode,
     activePanel,
     expandedSection,
-    activeState,
-    activeClassName,
     handleSaveShortcut,
     handleCopyShortcut,
     handleScopeChange,
@@ -185,7 +182,9 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
           if (declarations.length === 0) return;
           styleEngine.beginBatch();
           for (const { prop, value } of declarations) {
-            styleEngine.apply(resolveTarget(el, { scope, activeClassName, activeState }), prop, value);
+            // The whole scopeCtx — never a hand-built subset (ADR-0005): the
+            // active breakpoint must ride along or imports flatten to base.
+            styleEngine.apply(resolveTarget(el, scopeCtx), prop, value);
           }
           styleEngine.endBatch();
           refreshPanel(el);
@@ -201,7 +200,8 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         if (diffMode) return;
         e.preventDefault();
         e.stopPropagation();
-        const count = pasteStyles(selectedEl);
+        // Paste lands at the ACTIVE breakpoint (ADR-0005) — base by default.
+        const count = pasteStyles(selectedEl, scopeCtx.activeBreakpoint);
         if (count > 0) {
           refreshPanel(selectedEl);
           setClipboardMessage(`${count} style${count === 1 ? "" : "s"} pasted`);
@@ -297,7 +297,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         // cycle between "element" and "class" scope
         // Only cycle if there are CSS classes available
         if (cssClasses.length > 0) {
-          if (scope === "element") {
+          if (scopeCtx.scope === "element") {
             handleScopeChange("class", cssClasses[0]);
           } else {
             handleScopeChange("element");
@@ -487,5 +487,5 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scope, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll, handleCloseAttempt]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scopeCtx, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll, handleCloseAttempt]);
 }

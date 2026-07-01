@@ -150,6 +150,48 @@ describe("Footer Copy Tailwind — responsive prefixes", () => {
   });
 });
 
+describe("Footer Copy CSS Variables — base vs @media partition (review round 2, Issue 4)", () => {
+  it("wraps breakpoint-tagged vars in @media blocks instead of flattening into one :root", async () => {
+    const el = makeEl("vars-el");
+    styleEngine.apply({ scope: "element", el }, "width", "100px"); // base
+    styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "width", "50px"); // responsive
+
+    await act(async () => {
+      root.render(<Footer element={el} onReset={() => {}} />);
+    });
+
+    const trigger = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.includes("Clipboard"),
+    );
+    expect(trigger).toBeTruthy();
+    await act(async () => { trigger!.click(); });
+
+    const varsItem = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim() === "CSS Variables",
+    );
+    expect(varsItem, "CSS Variables copy item should be rendered").toBeTruthy();
+
+    await act(async () => {
+      varsItem!.click();
+      await flushMicrotasks();
+    });
+
+    expect(clipboardWrites).toHaveLength(1);
+    const out = clipboardWrites[0];
+
+    // THE BUG: pre-fix both widths land flat in one :root{} (last one wins).
+    expect(out, "responsive var must live in an @media block").toContain("@media (min-width: 768px)");
+
+    const baseBlock = out.slice(0, out.indexOf("@media"));
+    expect(baseBlock).toContain("--width: 100px");
+    expect(baseBlock, "breakpoint var leaked into the base :root").not.toContain("--width: 50px");
+
+    const mediaBlock = out.slice(out.indexOf("@media"));
+    expect(mediaBlock).toContain(":root");
+    expect(mediaBlock).toContain("--width: 50px");
+  });
+});
+
 describe("shared composer (breakpoints.ts) — unit coverage", () => {
   it("composeExportCSS partitions base vs breakpoint changes across multiple elements", async () => {
     const { composeExportCSS } = await import("../breakpoints");

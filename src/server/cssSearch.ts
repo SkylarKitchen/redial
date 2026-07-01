@@ -1,190 +1,16 @@
 /**
- * commit.ts — Direct file write for CSS changes
+ * cssSearch.ts — Block-extent walking, tiered property search, and surgical
+ * declaration rewriting for the commit pipeline.
  *
- * Receives a list of { prop, from, to, sourceFile?, sourceLine? } changes,
- * finds the property in the source file using tiered search,
- * and does a surgical string replacement.
- *
- * Works for the 90% case: literal CSS values in .module.scss files.
- * Falls back gracefully for SCSS variables, calc(), etc.
+ * All matching/brace-counting runs on the masked view (see cssMask.ts); the
+ * actual text replacement is always applied to the ORIGINAL line. Extracted
+ * from commit.ts (structural split only).
  */
 
-import { readFile, writeFile, readdir, stat } from "fs/promises";
-import { resolve, join, basename } from "path";
-import { trySourceMapResolution } from "./sourceMapCache";
-import { EXCLUDED_DIRS, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
-import {
-  isValidCSSProp,
-  isValidCSSClassName,
-  isSafeCSSValue,
-  isInvalidDeclaration,
-} from "../lib/css";
-
-/**
- * Search the project for a CSS file that defines a custom property.
- * Used as a fallback when the client can't determine the definition site
- * (e.g., variable is in a bundled global stylesheet).
- */
-async function findVariableDefinitionFile(
-  projectRoot: string,
-  varName: string,
-): Promise<string | null> {
-  const cssFiles = await findCSSFiles(projectRoot);
-  const pattern = new RegExp(`${varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`);
-  for (const file of cssFiles) {
-    try {
-      const source = await readFile(file, "utf-8");
-      if (pattern.test(source)) return file;
-    } catch { /* skip unreadable files */ }
-  }
-  return null;
-}
-
-/** Collect all CSS/SCSS files in the project (excluding node_modules etc.) */
-async function findCSSFiles(dir: string): Promise<string[]> {
-  const results: string[] = [];
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        results.push(...await findCSSFiles(full));
-      } else if (/\.(css|scss)$/.test(entry.name)) {
-        results.push(full);
-      }
-    }
-  } catch { /* skip */ }
-  return results;
-}
-
-/** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
-const VALID_STATES = new Set([
-  "hover", "focus", "active", "visited",
-  "focus-within", "focus-visible", "first-child", "last-child",
-]);
-
-export type CommitChange = {
-  prop: string;
-  from: string;
-  to: string;
-  sourceFile?: string;
-  sourceLine?: number;
-  className?: string;
-  componentName?: string;
-  /** CSS pseudo-class state (e.g. "hover", "focus"). When set, targets
-   *  the `.className:state { }` block instead of the base class block. */
-  state?: string;
-  /** Compiled CSS href for source map resolution (e.g. "/_next/static/css/abc.css") */
-  cssHref?: string;
-};
-
-export type CommitResult = {
-  written: string[];
-  failed: Array<CommitChange & { reason: string }>;
-};
+import { maskedLinesOf } from "./cssMask";
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/**
- * Return a SAME-LENGTH copy of `source` with the INTERIORS of CSS comments,
- * string literals ('...' / "...") and url(...) contents replaced by spaces.
- * Newlines and the overall char/line count are preserved, so line indices and
- * column offsets computed on the mask map 1:1 back onto the original text.
- *
- * Used for ALL line-selection and brace-counting so that:
- *   - a comment that mentions `color: blue` is never mistaken for a declaration,
- *   - a `{` / `}` / `;` / prop name living inside a string or url() can't fool
- *     the brace-depth counter or the declaration matcher.
- * The actual text replacement is always applied to the ORIGINAL line.
- */
-function maskCSS(source: string): string {
-  const out = source.split("");
-  const n = source.length;
-  let i = 0;
-  while (i < n) {
-    const ch = source[i];
-    const next = i + 1 < n ? source[i + 1] : "";
-
-    // Block comment — mask the interior, keep the delimiters.
-    if (ch === "/" && next === "*") {
-      i += 2;
-      while (i < n && !(source[i] === "*" && source[i + 1] === "/")) {
-        if (source[i] !== "\n") out[i] = " ";
-        i++;
-      }
-      if (i < n) i += 2; // skip the closing "*/"
-      continue;
-    }
-
-    // String literal — mask the interior, keep the quotes.
-    if (ch === "'" || ch === '"') {
-      const quote = ch;
-      i++;
-      while (i < n && source[i] !== quote) {
-        if (source[i] === "\\" && i + 1 < n) {
-          // escaped char — mask both, preserving newline positions
-          if (source[i] !== "\n") out[i] = " ";
-          if (source[i + 1] !== "\n") out[i + 1] = " ";
-          i += 2;
-          continue;
-        }
-        if (source[i] !== "\n") out[i] = " ";
-        i++;
-      }
-      if (i < n) i++; // keep the closing quote
-      continue;
-    }
-
-    // url(...) — mask the (possibly brace-bearing) body. A quoted url body is
-    // handled by the string branch above, so bail to it when one is found.
-    if (
-      (ch === "u" || ch === "U") &&
-      /^url\s*\(/i.test(source.slice(i, i + 6))
-    ) {
-      let j = i + 3;
-      while (j < n && /\s/.test(source[j])) j++;
-      if (source[j] === "(") {
-        i = j + 1; // keep "url("
-        while (i < n && source[i] !== ")") {
-          if (source[i] === "'" || source[i] === '"') break;
-          if (source[i] !== "\n") out[i] = " ";
-          i++;
-        }
-        continue;
-      }
-    }
-
-    i++;
-  }
-  return out.join("");
-}
-
-/** Build the masked, line-split view used for all matching/brace-counting. */
-function maskedLinesOf(lines: string[]): string[] {
-  return maskCSS(lines.join("\n")).split("\n");
-}
-
-/**
- * Reject malformed client input before any search or write (issue #16), so a
- * crafted prop/value/className can't break out of a CSS block. Returns a
- * failure reason, or null when the change is safe to process.
- */
-function changeValidationError(change: CommitChange): string | null {
-  if (!isValidCSSProp(change.prop))
-    return `invalid CSS property name: "${change.prop}"`;
-  if (!isSafeCSSValue(change.to))
-    return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
-  // Semantic validity: reject `none` for props whose grammar has no `none`
-  // (toggle-deselect sentinel). Shares the predicate with the live preview so
-  // client and server can't drift apart.
-  if (isInvalidDeclaration(change.prop, change.to))
-    return `semantically invalid value "${change.to}" for property "${change.prop}"`;
-  if (change.className != null && !isValidCSSClassName(change.className))
-    return `invalid CSS class name: "${change.className}"`;
-  return null;
 }
 
 /**
@@ -223,118 +49,9 @@ function lineHasDecl(maskedLine: string, prop: string, value: string): boolean {
   );
 }
 
-// --- File resolution ---
-
-/**
- * Recursively search for a file by basename, excluding common build dirs.
- * Symlinks are never followed (issue #22) — a symlinked dir or file could
- * point outside the project root, so the walk only sees real entries. The
- * symlink-resolved chokepoint guard in handleCommit remains the load-bearing
- * containment layer before any read/write.
- */
-async function findFileRecursive(
-  dir: string,
-  target: string
-): Promise<string[]> {
-  const results: string[] = [];
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      if (entry.isSymbolicLink()) continue;
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        results.push(...await findFileRecursive(full, target));
-      } else if (entry.name === target) {
-        results.push(full);
-      }
-    }
-  } catch {
-    // Permission error or similar — skip
-  }
-  return results;
-}
-
-/**
- * Resolve a source file path. Handles:
- * - Source map resolution (if cssHref is provided) → accurate file + line
- * - Full/relative paths that exist → return directly
- * - Bare filenames → recursive search from projectRoot
- * - Component name hint → try ComponentName.module.scss / .module.css
- */
-export async function resolveSourceFile(
-  projectRoot: string,
-  sourceFile: string,
-  componentName?: string,
-  cssHref?: string
-): Promise<string | null> {
-  // Try source map resolution first (best accuracy)
-  if (cssHref) {
-    const mapped = trySourceMapResolution(cssHref, 1, 0, projectRoot);
-    if (mapped) {
-      const mappedPath = resolve(projectRoot, mapped.file);
-      try {
-        await stat(mappedPath);
-        return mappedPath;
-      } catch {
-        // Mapped file doesn't exist on disk — fall through to existing logic
-      }
-    }
-  }
-
-  // Reject path traversal attempts early ("..": throw; string containment:
-  // throw) and resolve the direct candidate confined to the root.
-  const direct = resolveSafe(projectRoot, sourceFile);
-  try {
-    await stat(direct);
-    // Reject a direct path that is a symlink escaping the root (issue #22);
-    // fall through to the recursive search rather than returning it.
-    if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
-  } catch {
-    // Not found at direct path — search recursively
-  }
-
-  // Search by exact filename
-  const target = basename(sourceFile);
-  const matches = await findFileRecursive(projectRoot, target);
-
-  if (matches.length === 1) return matches[0];
-
-  if (matches.length > 1 && componentName) {
-    // Prefer the match closest to the component name
-    const preferred = matches.find((m) =>
-      m.includes(componentName) || m.toLowerCase().includes(componentName.toLowerCase())
-    );
-    if (preferred) return preferred;
-  }
-
-  if (matches.length > 0) return matches[0];
-
-  // Try variant extensions if we have a component hint
-  if (componentName) {
-    for (const ext of [".module.scss", ".module.css"]) {
-      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`);
-      if (variants.length > 0) return variants[0];
-    }
-  }
-
-  // Try bare .css and .scss extensions (for global stylesheets)
-  const baseName = target.replace(/\.\w+$/, "");
-  if (baseName !== target) {
-    for (const ext of [".css", ".scss"]) {
-      const globalTarget = `${baseName}${ext}`;
-      if (globalTarget === target) continue; // already tried
-      const globalMatches = await findFileRecursive(projectRoot, globalTarget);
-      if (globalMatches.length > 0) return globalMatches[0];
-    }
-  }
-
-  return null;
-}
-
 // --- Property search (tiered) ---
 
-type FindResult = {
+export type FindResult = {
   lineIdx: number;
   strategy: "window" | "class-block" | "full-file" | "fuzzy";
   /**
@@ -375,7 +92,7 @@ type BlockExtent = {
  * A scanner hit: the matched declaration's line plus the optional issue-#47
  * confinement span (set when the hit line is a minified same-line block).
  */
-type BlockHit = {
+export type BlockHit = {
   lineIdx: number;
   range?: [number, number];
 };
@@ -547,7 +264,7 @@ function searchClassBlock(
  * declaration matched inside the range (issue #47: the range keeps an
  * identical declaration in a sibling block on the same minified line intact).
  */
-function replaceDeclInLine(
+export function replaceDeclInLine(
   line: string,
   prop: string,
   from: string,
@@ -588,7 +305,7 @@ function replaceDeclInLine(
  * it. Returns the hit line plus, for a minified same-line block, the char span
  * of the block's body to confine the replacement to (issue #47, pseudo branch).
  */
-function searchPseudoClassBlock(
+export function searchPseudoClassBlock(
   lines: string[],
   className: string,
   state: string,
@@ -624,7 +341,7 @@ function searchPseudoClassBlock(
  * Matches `&:hover {` inside `.className { }`. Never produces a confinement
  * range — nested SCSS hit lines are plain declaration lines.
  */
-function searchNestedPseudoBlock(
+export function searchNestedPseudoBlock(
   lines: string[],
   className: string,
   state: string,
@@ -666,7 +383,7 @@ function searchNestedPseudoBlock(
  * Find the end of a CSS class block (closing `}`) for `.className { ... }`.
  * Used to know where to insert a new pseudo-class block after the base class.
  */
-function findClassBlockEnd(
+export function findClassBlockEnd(
   lines: string[],
   className: string
 ): number | null {
@@ -881,7 +598,7 @@ function searchClassBlockFuzzy(
  * shorthand can't be selected); the extraction/replacement runs on the ORIGINAL
  * line at the same index.
  */
-function tryShorthandFallback(
+export function tryShorthandFallback(
   lines: string[],
   maskedLines: string[],
   prop: string,
@@ -986,264 +703,4 @@ export function findPropertyInFile(
   }
 
   return null;
-}
-
-export async function handleCommit(
-  changes: CommitChange[],
-  cwd?: string
-): Promise<CommitResult> {
-  const projectRoot = cwd ?? process.cwd();
-  const result: CommitResult = { written: [], failed: [] };
-
-  // Group changes by file to batch writes
-  const changesByFile = new Map<string, CommitChange[]>();
-  for (const change of changes) {
-    if (!change.sourceFile) {
-      result.failed.push({ ...change, reason: "no source file specified" });
-      continue;
-    }
-    const existing = changesByFile.get(change.sourceFile) ?? [];
-    existing.push(change);
-    changesByFile.set(change.sourceFile, existing);
-  }
-
-  for (const [sourceFile, fileChanges] of changesByFile) {
-    try {
-      // Resolve the actual file path (handles bare filenames + source maps)
-      let filePath = await resolveSourceFile(
-        projectRoot,
-        sourceFile,
-        fileChanges[0]?.componentName,
-        fileChanges[0]?.cssHref
-      );
-
-      if (!filePath) {
-        // Fallback: if the property is a CSS custom property, search project for its definition
-        const firstProp = fileChanges[0]?.prop;
-        if (firstProp?.startsWith("--")) {
-          const varFile = await findVariableDefinitionFile(projectRoot, firstProp);
-          if (varFile) {
-            filePath = varFile;
-          }
-        }
-        if (!filePath) {
-          for (const change of fileChanges) {
-            result.failed.push({
-              ...change,
-              reason: `file not found: "${sourceFile}"`,
-            });
-          }
-          continue;
-        }
-      }
-
-      // Final chokepoint guard (issue #22): never read/write a resolved path
-      // whose real (symlink-resolved) location escapes the project root. Covers
-      // every resolution branch, including the var-definition-file fallback.
-      if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
-        for (const change of fileChanges) {
-          result.failed.push({
-            ...change,
-            reason: `resolved path escapes project root: "${sourceFile}"`,
-          });
-        }
-        continue;
-      }
-
-      const source = await readFile(filePath, "utf-8");
-      let lines = source.split("\n");
-      let modified = false;
-
-      // Recompute lazily: after any structural splice (state block creation) the
-      // masked view must be rebuilt before the next change is processed.
-      let masked = maskedLinesOf(lines);
-      const remask = () => { masked = maskedLinesOf(lines); };
-
-      for (const change of fileChanges) {
-        // Reject malformed client input up front (issue #16).
-        const invalid = changeValidationError(change);
-        if (invalid) {
-          result.failed.push({ ...change, reason: invalid });
-          continue;
-        }
-
-        // --- Pseudo-class state handling ---
-        // When a state like "hover" is provided, target the `.className:hover { }` block
-        if (change.state && change.className) {
-          // Validate state against allowlist to prevent CSS injection
-          if (!VALID_STATES.has(change.state)) {
-            result.failed.push({
-              ...change,
-              reason: `invalid state "${change.state}" — not in allowlist`,
-            });
-            continue;
-          }
-          // Locate on the masked view so brace literals / comments can't fool
-          // the scan; the replacement is applied to the original `lines`.
-          const pseudoHit = searchPseudoClassBlock(
-            masked,
-            change.className,
-            change.state,
-            change.prop,
-            change.from
-          ) ?? searchNestedPseudoBlock(
-            masked,
-            change.className,
-            change.state,
-            change.prop,
-            change.from
-          );
-
-          if (pseudoHit != null) {
-            // Found the property in the pseudo-class block. When the block
-            // opens AND closes on one physical line (minified CSS), hit.range
-            // confines the replacement to the block's body so a sibling
-            // block's identical declaration on the line isn't rewritten
-            // (issue #47).
-            const updated = replaceDeclInLine(
-              lines[pseudoHit.lineIdx],
-              change.prop,
-              change.from,
-              change.to,
-              pseudoHit.range
-            );
-            if (updated != null) {
-              lines[pseudoHit.lineIdx] = updated;
-              modified = true;
-              remask();
-            } else {
-              result.failed.push({
-                ...change,
-                reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
-              });
-            }
-            continue;
-          }
-
-          // No existing pseudo-class block — create one
-          const baseEnd = findClassBlockEnd(masked, change.className);
-          if (baseEnd != null) {
-            const isNestedSCSS = masked.some(line => /&\s*[:.[]/.test(line));
-
-            if (isNestedSCSS) {
-              // Insert nested &:state block inside parent (before closing })
-              const innerLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
-              const indent = innerLine.match(/^(\s*)/)?.[1] ?? "  ";
-              const newLines = [
-                "",
-                `${indent}&:${change.state} {`,
-                `${indent}  ${change.prop}: ${change.to};`,
-                `${indent}}`,
-              ];
-              lines.splice(baseEnd, 0, ...newLines);
-            } else {
-              // Insert flat block after base class
-              const baseLine = lines[baseEnd > 0 ? baseEnd - 1 : baseEnd];
-              const indent = baseLine.match(/^(\s*)/)?.[1] ?? "  ";
-              const newBlock = [
-                "",
-                `.${change.className}:${change.state} {`,
-                `${indent}${change.prop}: ${change.to};`,
-                "}",
-              ];
-              lines.splice(baseEnd + 1, 0, ...newBlock);
-            }
-            modified = true;
-            remask();
-            continue;
-          }
-
-          // Can't find the base class block at all
-          result.failed.push({
-            ...change,
-            reason: `base class ".${change.className}" not found — cannot create :${change.state} block`,
-          });
-          continue;
-        }
-
-        // --- Standard (non-state) property search ---
-        // Tiered search for the property
-        const found = findPropertyInFile(
-          lines,
-          change.prop,
-          change.from,
-          change.sourceLine,
-          change.className
-        );
-
-        if (!found) {
-          // Try shorthand fallback: e.g. padding-top → padding: 16px 24px
-          const shorthand = tryShorthandFallback(
-            lines, masked, change.prop, change.from, change.to, change.sourceLine, change.className
-          );
-          if (shorthand) {
-            lines[shorthand.lineIdx] = shorthand.replacementLine;
-            modified = true;
-            remask();
-            continue;
-          }
-          result.failed.push({
-            ...change,
-            reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
-          });
-          continue;
-        }
-
-        // Surgical replacement: only change the value, preserve everything else
-        // (the pattern carries a LEFT boundary so `color` can't match inside
-        // `background-color` even if both share a line), confined to
-        // `found.range` when set (minified same-line block, issue #47). The
-        // broad fallback (full CSS value replace — hex vs rgb, var(), etc.) is
-        // only allowed for fuzzy matches, and never over an SCSS variable —
-        // those require manual editing.
-        const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
-        const allowBroad = found.strategy === "fuzzy" && !scssVarMatch;
-        const updated = replaceDeclInLine(
-          lines[found.lineIdx],
-          change.prop,
-          change.from,
-          change.to,
-          found.range,
-          allowBroad
-        );
-
-        if (updated != null) {
-          lines[found.lineIdx] = updated;
-          modified = true;
-          remask();
-        } else if (found.strategy === "fuzzy") {
-          result.failed.push({
-            ...change,
-            reason: scssVarMatch
-              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
-              : `value "${change.from}" not found literally (may be a variable)`,
-          });
-        } else {
-          result.failed.push({
-            ...change,
-            reason: scssVarMatch
-              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
-              : `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
-          });
-        }
-      }
-
-      if (modified) {
-        await writeFile(filePath, lines.join("\n"), "utf-8");
-        if (!result.written.includes(sourceFile)) {
-          result.written.push(sourceFile);
-        }
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      for (const change of fileChanges) {
-        result.failed.push({
-          ...change,
-          reason: `file error: ${message}`,
-        });
-      }
-    }
-  }
-
-  return result;
 }
