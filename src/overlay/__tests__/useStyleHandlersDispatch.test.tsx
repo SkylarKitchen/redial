@@ -20,6 +20,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useStyleHandlers, type StyleHandlersDeps } from "../hooks/useStyleHandlers";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { getClassScopeCss } from "../core/scope";
 
 function makeEl(tag = "div"): HTMLElement {
   const el = document.createElement(tag);
@@ -28,9 +29,7 @@ function makeEl(tag = "div"): HTMLElement {
 }
 
 function classStyleText(): string {
-  return (
-    document.querySelector('style[data-tuner-scope="class"]')?.textContent ?? ""
-  );
+  return getClassScopeCss() ?? "";
 }
 
 /** Build a StyleHandlersDeps with test-friendly defaults; override per case.

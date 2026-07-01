@@ -9,10 +9,9 @@
  * Falls back gracefully for SCSS variables, calc(), etc.
  */
 
-import { readFile, writeFile, readdir, stat } from "fs/promises";
-import { resolve, join, basename } from "path";
-import { trySourceMapResolution } from "./sourceMapCache";
-import { EXCLUDED_DIRS, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
+import { readFile, writeFile, readdir, realpath } from "fs/promises";
+import { resolve, join, basename, normalize, sep } from "path";
+import { tryFirstMappedSourceFile } from "./sourceMapCache";
 import {
   isValidCSSProp,
   isValidCSSClassName,
@@ -31,31 +30,37 @@ async function findVariableDefinitionFile(
 ): Promise<string | null> {
   const cssFiles = await findCSSFiles(projectRoot);
   const pattern = new RegExp(`${varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`);
-  for (const file of cssFiles) {
-    try {
-      const source = await readFile(file, "utf-8");
-      if (pattern.test(source)) return file;
-    } catch { /* skip unreadable files */ }
-  }
-  return null;
+  // Read all candidates in parallel; first match in walk order wins.
+  const hits = await Promise.all(
+    cssFiles.map((file) =>
+      readFile(file, "utf-8").then(
+        (src) => (pattern.test(src) ? file : null),
+        () => null, // skip unreadable files
+      ),
+    ),
+  );
+  return hits.find((f): f is string => f !== null) ?? null;
 }
 
 /** Collect all CSS/SCSS files in the project (excluding node_modules etc.) */
 async function findCSSFiles(dir: string): Promise<string[]> {
-  const results: string[] = [];
+  let entries;
   try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        results.push(...await findCSSFiles(full));
-      } else if (/\.(css|scss)$/.test(entry.name)) {
-        results.push(full);
-      }
-    }
-  } catch { /* skip */ }
-  return results;
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const direct: string[] = [];
+  const subdirs: string[] = [];
+  for (const entry of entries) {
+    if (EXCLUDE_DIRS.has(entry.name)) continue;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) subdirs.push(full);
+    else if (/\.(css|scss)$/.test(entry.name)) direct.push(full);
+  }
+  // Recurse into subdirectories concurrently; concat preserves walk order.
+  const nested = await Promise.all(subdirs.map((d) => findCSSFiles(d)));
+  return direct.concat(...nested);
 }
 
 /** Valid pseudo-class states — rejects anything not on this list to prevent CSS injection. */
@@ -63,6 +68,38 @@ const VALID_STATES = new Set([
   "hover", "focus", "active", "visited",
   "focus-within", "focus-visible", "first-child", "last-child",
 ]);
+
+/**
+ * Ensure a resolved path is contained within the project root.
+ * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
+ */
+function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
+  const normalizedRoot = normalize(projectRoot);
+  const normalizedPath = normalize(resolvedPath);
+  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
+    throw new Error("Path traversal detected: resolved path escapes project root");
+  }
+}
+
+/**
+ * Resolve `candidate` through symlinks and verify its REAL location stays within
+ * the (also symlink-resolved) project root. Unlike the string-only
+ * assertWithinRoot, this defeats a symlink whose target escapes the root — e.g.
+ * a repo shipping `styles.module.css -> ~/.ssh/authorized_keys` (issue #22).
+ * Returns false when the path can't be resolved (missing/broken link).
+ */
+export async function isRealPathWithinRoot(
+  candidate: string,
+  projectRoot: string,
+): Promise<boolean> {
+  try {
+    const realRoot = await realpath(projectRoot);
+    const realCandidate = await realpath(candidate);
+    return realCandidate === realRoot || realCandidate.startsWith(realRoot + sep);
+  } catch {
+    return false;
+  }
+}
 
 export type CommitChange = {
   prop: string;
@@ -176,7 +213,7 @@ function changeValidationError(change: CommitChange): string | null {
   if (!isValidCSSProp(change.prop))
     return `invalid CSS property name: "${change.prop}"`;
   if (!isSafeCSSValue(change.to))
-    return `unsafe CSS value (contains "{", "}", ";", "<", or newline): "${change.to}"`;
+    return `unsafe CSS value (contains "{", "}", ";", "<", "/*", "*/", or newline): "${change.to}"`;
   // Semantic validity: reject `none` for props whose grammar has no `none`
   // (toggle-deselect sentinel). Shares the predicate with the live preview so
   // client and server can't drift apart.
@@ -225,34 +262,53 @@ function lineHasDecl(maskedLine: string, prop: string, value: string): boolean {
 
 // --- File resolution ---
 
+const EXCLUDE_DIRS = new Set([
+  "node_modules", ".next", "dist", ".git", "build", "out", ".turbo",
+]);
+
 /**
  * Recursively search for a file by basename, excluding common build dirs.
- * Symlinks are never followed (issue #22) — a symlinked dir or file could
- * point outside the project root, so the walk only sees real entries. The
- * symlink-resolved chokepoint guard in handleCommit remains the load-bearing
- * containment layer before any read/write.
+ * `root` is the project root used to reject any match whose real (symlink-
+ * resolved) location escapes it (issue #22); it stays constant across recursion.
  */
 async function findFileRecursive(
   dir: string,
-  target: string
+  target: string,
+  root: string
 ): Promise<string[]> {
-  const results: string[] = [];
+  let entries;
   try {
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
-      if (entry.isSymbolicLink()) continue;
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        results.push(...await findFileRecursive(full, target));
-      } else if (entry.name === target) {
-        results.push(full);
-      }
-    }
+    entries = await readdir(dir, { withFileTypes: true });
   } catch {
     // Permission error or similar — skip
+    return [];
   }
-  return results;
+  const normalizedDir = normalize(dir);
+  // Each entry needs a realpath check (and directories a recursive walk) —
+  // run them concurrently. Awaiting in entry order keeps the result list
+  // byte-identical to the old sequential DFS, so `matches[0]` tie-breaking
+  // downstream is unaffected.
+  const perEntry = await Promise.all(entries.map(async (entry): Promise<string[]> => {
+    if (EXCLUDE_DIRS.has(entry.name)) return [];
+    const full = join(dir, entry.name);
+    // Ensure symlinks or unusual names don't escape the starting directory
+    if (!normalize(full).startsWith(normalizedDir + "/")) return [];
+    if (entry.isDirectory()) {
+      // Only descend into real in-root directories — never follow a symlinked
+      // directory whose target lies outside the project root.
+      if (await isRealPathWithinRoot(full, root)) {
+        return findFileRecursive(full, target, root);
+      }
+    } else if (entry.name === target) {
+      // A name match is only accepted if its real location is in-root, so a
+      // symlinked-out file masquerading as a stylesheet is rejected.
+      if (await isRealPathWithinRoot(full, root)) {
+        return [full];
+      }
+    }
+    return [];
+  }));
+  return perEntry.flat();
 }
 
 /**
@@ -268,35 +324,36 @@ export async function resolveSourceFile(
   componentName?: string,
   cssHref?: string
 ): Promise<string | null> {
-  // Try source map resolution first (best accuracy)
+  // Try source map resolution first (best accuracy). This is a which-file
+  // question, so read the map's sources list rather than probing a position —
+  // Turbopack's sectioned maps leave line (1,0) unmapped (issue #59).
   if (cssHref) {
-    const mapped = trySourceMapResolution(cssHref, 1, 0, projectRoot);
+    const mapped = tryFirstMappedSourceFile(cssHref, projectRoot);
     if (mapped) {
-      const mappedPath = resolve(projectRoot, mapped.file);
-      try {
-        await stat(mappedPath);
-        return mappedPath;
-      } catch {
-        // Mapped file doesn't exist on disk — fall through to existing logic
-      }
+      const mappedPath = resolve(projectRoot, mapped);
+      // realpath doubles as the existence check (false for missing files), so
+      // no separate stat() — and it rejects a symlinked-out mapped path too.
+      if (await isRealPathWithinRoot(mappedPath, projectRoot)) return mappedPath;
+      // Mapped file doesn't exist on disk — fall through to existing logic
     }
   }
 
-  // Reject path traversal attempts early ("..": throw; string containment:
-  // throw) and resolve the direct candidate confined to the root.
-  const direct = resolveSafe(projectRoot, sourceFile);
-  try {
-    await stat(direct);
-    // Reject a direct path that is a symlink escaping the root (issue #22);
-    // fall through to the recursive search rather than returning it.
-    if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
-  } catch {
-    // Not found at direct path — search recursively
+  // Reject path traversal attempts early
+  const segments = sourceFile.split(/[/\\]/);
+  if (segments.includes("..")) {
+    throw new Error("Path traversal detected: sourceFile contains '..' segment");
   }
+
+  // Try direct resolution first. isRealPathWithinRoot returns false both for
+  // a missing file and for a symlink escaping the root (issue #22) — either
+  // way we fall through to the recursive search.
+  const direct = resolve(projectRoot, sourceFile);
+  assertWithinRoot(direct, projectRoot);
+  if (await isRealPathWithinRoot(direct, projectRoot)) return direct;
 
   // Search by exact filename
   const target = basename(sourceFile);
-  const matches = await findFileRecursive(projectRoot, target);
+  const matches = await findFileRecursive(projectRoot, target, projectRoot);
 
   if (matches.length === 1) return matches[0];
 
@@ -313,7 +370,7 @@ export async function resolveSourceFile(
   // Try variant extensions if we have a component hint
   if (componentName) {
     for (const ext of [".module.scss", ".module.css"]) {
-      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`);
+      const variants = await findFileRecursive(projectRoot, `${componentName}${ext}`, projectRoot);
       if (variants.length > 0) return variants[0];
     }
   }
@@ -324,7 +381,7 @@ export async function resolveSourceFile(
     for (const ext of [".css", ".scss"]) {
       const globalTarget = `${baseName}${ext}`;
       if (globalTarget === target) continue; // already tried
-      const globalMatches = await findFileRecursive(projectRoot, globalTarget);
+      const globalMatches = await findFileRecursive(projectRoot, globalTarget, projectRoot);
       if (globalMatches.length > 0) return globalMatches[0];
     }
   }
@@ -345,131 +402,6 @@ type FindResult = {
    */
   range?: [number, number];
 };
-
-// --- Block-extent walking (the single brace-depth implementation) ---
-
-/**
- * A selector occurrence and its block's extent metadata, as yielded by
- * `eachBlock`. Line-granular: the depth walk that delimits the block runs via
- * `scanBlockLines` from `openLine`.
- */
-type BlockExtent = {
-  /** Line index where the selector regex matched. */
-  selLine: number;
-  /**
-   * First line at/after `selLine` containing a `{` — where the brace-depth
-   * walk starts. Differs from `selLine` for multi-line selector lists.
-   */
-  openLine: number;
-  /**
-   * Char span [start, end) of the block BODY on `selLine` — the region between
-   * the block's opening `{` and its matching `}` — present only when both sit
-   * on that one physical line (minified/same-line CSS). Used to confine a
-   * surgical replacement to the targeted block so an identical declaration in
-   * an earlier sibling block on the same line isn't rewritten (issue #47).
-   */
-  bodyRange?: [number, number];
-};
-
-/**
- * A scanner hit: the matched declaration's line plus the optional issue-#47
- * confinement span (set when the hit line is a minified same-line block).
- */
-type BlockHit = {
-  lineIdx: number;
-  range?: [number, number];
-};
-
-/**
- * Yield a BlockExtent for every line on which `selectorRe` matches (first
- * match per line). Candidates whose opening `{` never appears are skipped.
- * `maskedLines` must be the masked view so braces in strings/comments/url()
- * can't fool the extent computation.
- */
-function* eachBlock(
-  maskedLines: string[],
-  selectorRe: RegExp
-): Generator<BlockExtent> {
-  for (let i = 0; i < maskedLines.length; i++) {
-    const m = selectorRe.exec(maskedLines[i]);
-    if (!m) continue;
-
-    // Find the opening brace (might be on the same line or several lines
-    // below, e.g. a multi-line selector list). Scan until the first '{',
-    // no fixed cap.
-    let openLine = -1;
-    for (let j = i; j < maskedLines.length; j++) {
-      if (maskedLines[j].includes("{")) {
-        openLine = j;
-        break;
-      }
-    }
-    if (openLine === -1) continue;
-
-    yield {
-      selLine: i,
-      openLine,
-      bodyRange: bodyRangeOnLine(maskedLines[i], m.index),
-    };
-  }
-}
-
-/**
- * Char-accurate body span for a block that opens AND closes on one physical
- * line: from the first `{` at/after `fromCol`, walk char-level brace depth to
- * the matching `}`. Returns [openCol + 1, closeCol) — the body between the
- * braces — or undefined when no `{` follows `fromCol` or the block doesn't
- * close on this line.
- */
-function bodyRangeOnLine(
-  maskedLine: string,
-  fromCol: number
-): [number, number] | undefined {
-  const braceIdx = maskedLine.indexOf("{", fromCol);
-  if (braceIdx === -1) return undefined;
-  let depth = 0;
-  for (let k = braceIdx; k < maskedLine.length; k++) {
-    if (maskedLine[k] === "{") depth++;
-    else if (maskedLine[k] === "}") {
-      depth--;
-      if (depth === 0) return [braceIdx + 1, k];
-    }
-  }
-  return undefined; // block doesn't close on this line
-}
-
-/**
- * THE line-granular brace-depth walk — every block scanner is a consumer.
- * Starting at `openLine`, count net brace depth line-by-line on the masked
- * view and call `visit(lineIdx, depthAfter)` for each line, where
- * `depthAfter` is the depth after all braces on that line are counted. The
- * walk stops when `visit` returns a non-null line index (returned to the
- * caller) or after visiting the first line PAST `openLine` on which depth has
- * returned to <= 0 (the block's closing line). Returns null when the walk
- * ends without a hit (including an unbalanced block running to EOF).
- *
- * Note the visit-then-stop order: the closing line itself IS visited, and for
- * a block that opens and closes on `openLine` (net depth 0) the following
- * line is visited too — quirks of the original hand-rolled scanners,
- * preserved exactly.
- */
-function scanBlockLines(
-  maskedLines: string[],
-  openLine: number,
-  visit: (lineIdx: number, depthAfter: number) => number | null
-): number | null {
-  let depth = 0;
-  for (let j = openLine; j < maskedLines.length; j++) {
-    for (const ch of maskedLines[j]) {
-      if (ch === "{") depth++;
-      if (ch === "}") depth--;
-    }
-    const hit = visit(j, depth);
-    if (hit != null) return hit;
-    if (depth <= 0 && j > openLine) break;
-  }
-  return null;
-}
 
 /**
  * Search for a CSS property near the expected line (±windowSize).
@@ -503,34 +435,56 @@ function searchWindow(
 
 /**
  * Find a CSS class block (`.className { ... }`) and search within it.
- * Returns the hit line plus, when the block opens AND closes on that same
- * physical line (minified CSS), the char span of the block's body to which a
- * surgical replacement must be confined (issue #47).
  */
 function searchClassBlock(
   lines: string[],
   className: string,
   prop: string,
   value: string
-): BlockHit | null {
+): number | null {
+  // Find the opening line of the class block
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*[{,]`
   );
 
-  for (const block of eachBlock(lines, classPattern)) {
-    // Search within the block for our property. The opening-brace line itself
-    // is inspected too (depthAfter >= 0 includes it), so an all-on-one-line
-    // minified block whose declaration shares the line with the `{` is found
-    // rather than skipped (issue #47); a multi-line selector line carries no
-    // `prop: value`, so this is a no-op there.
-    const idx = scanBlockLines(lines, block.openLine, (j, depth) =>
-      depth >= 0 && lineHasDecl(lines[j], prop, value) ? j : null
-    );
-    if (idx != null) {
-      return {
-        lineIdx: idx,
-        range: idx === block.selLine ? block.bodyRange : undefined,
-      };
+  for (let i = 0; i < lines.length; i++) {
+    if (!classPattern.test(lines[i])) continue;
+
+    // Found the class — track braces to find the block extent
+    let depth = 0;
+    let blockStart = i;
+
+    // Find the opening brace (might be on the same line or several lines below,
+    // e.g. a multi-line selector list). Scan until the first '{', no fixed cap.
+    let foundBrace = false;
+    for (let j = i; j < lines.length; j++) {
+      if (lines[j].includes("{")) {
+        blockStart = j;
+        foundBrace = true;
+        break;
+      }
+    }
+    if (!foundBrace) continue;
+
+    // Count from blockStart
+    for (let j = blockStart; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      // Search within the block for our property. The brace line itself
+      // (j === blockStart) is inspected too, so an all-on-one-line minified
+      // block whose declaration shares the line with the `{` is found rather
+      // than skipped (issue #47); a multi-line selector line carries no
+      // `prop: value`, so this is a no-op there.
+      if (depth >= 0) {
+        if (lineHasDecl(lines[j], prop, value)) {
+          return j;
+        }
+      }
+
+      if (depth <= 0 && j > blockStart) break;
     }
   }
 
@@ -538,55 +492,35 @@ function searchClassBlock(
 }
 
 /**
- * Rewrite `prop: from` → `prop: to` within `line`, confined to the character
- * span `range` [start, end). The single declaration-rewrite implementation
- * shared by the pseudo-state and standard branches of handleCommit. Tries a
- * surgical replacement (exact `from` value) first; when `broad` is allowed,
- * falls back to replacing whatever value the property currently has (handles
- * hex vs rgb, var(), etc.). Returns the updated line, or null when no
- * declaration matched inside the range (issue #47: the range keeps an
- * identical declaration in a sibling block on the same minified line intact).
+ * For minified/same-line CSS, return the character span [start, end) of the
+ * BODY of `.className { ... }` on a single physical line — the region between
+ * the block's opening `{` and its matching `}`. Used to confine a surgical
+ * replacement to the targeted block so an identical declaration in an earlier
+ * sibling block on the same line isn't rewritten (issue #47). Returns null when
+ * the class/brace aren't present or the block doesn't close on this one line.
  */
-function replaceDeclInLine(
-  line: string,
-  prop: string,
-  from: string,
-  to: string,
-  range: [number, number] = [0, line.length],
-  broad = true
-): string | null {
-  const [start, end] = range;
-  const segment = line.slice(start, end);
-  // Escape $ in replacement to prevent regex backreference interpretation
-  const safeValue = to.replace(/\$/g, "$$$$");
-
-  const surgical = replacePropRegex(prop, escapeRegex(from));
-  if (surgical.test(segment)) {
-    return (
-      line.slice(0, start) +
-      segment.replace(surgical, `$1$2${safeValue}`) +
-      line.slice(end)
-    );
-  }
-
-  if (broad) {
-    const broadPattern = replacePropRegex(prop, "([^;!}]+)");
-    if (broadPattern.test(segment)) {
-      return (
-        line.slice(0, start) +
-        segment.replace(broadPattern, `$1$2${safeValue}`) +
-        line.slice(end)
-      );
+function classBlockBodyRangeOnLine(
+  maskedLine: string,
+  className: string
+): [number, number] | null {
+  const classRe = new RegExp(`\\.${escapeRegex(className)}\\s*\\{`);
+  const m = classRe.exec(maskedLine);
+  if (!m) return null;
+  const braceIdx = maskedLine.indexOf("{", m.index);
+  if (braceIdx === -1) return null;
+  let depth = 0;
+  for (let k = braceIdx; k < maskedLine.length; k++) {
+    if (maskedLine[k] === "{") depth++;
+    else if (maskedLine[k] === "}") {
+      depth--;
+      if (depth === 0) return [braceIdx + 1, k]; // body between the braces
     }
   }
-
-  return null;
+  return null; // block doesn't close on this line
 }
 
 /**
- * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within
- * it. Returns the hit line plus, for a minified same-line block, the char span
- * of the block's body to confine the replacement to (issue #47, pseudo branch).
+ * Find a CSS pseudo-class block (`.className:hover { ... }`) and search within it.
  */
 function searchPseudoClassBlock(
   lines: string[],
@@ -594,25 +528,29 @@ function searchPseudoClassBlock(
   state: string,
   prop: string,
   value: string
-): BlockHit | null {
+): number | null {
   const pseudoPattern = new RegExp(
     `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`
   );
 
-  for (const block of eachBlock(lines, pseudoPattern)) {
-    // The opening-brace line itself is inspected too (depthAfter >= 0 includes
-    // it), so an all-on-one-line minified pseudo block whose declaration shares
-    // the line with the `{` is found rather than skipped — and the scan can't
-    // fall through to a later sibling block's identical declaration (issue #47,
-    // pseudo branch).
-    const idx = scanBlockLines(lines, block.openLine, (j, depth) =>
-      depth >= 0 && lineHasDecl(lines[j], prop, value) ? j : null
-    );
-    if (idx != null) {
-      return {
-        lineIdx: idx,
-        range: idx === block.selLine ? block.bodyRange : undefined,
-      };
+  for (let i = 0; i < lines.length; i++) {
+    if (!pseudoPattern.test(lines[i])) continue;
+
+    // Found the pseudo-class block — track braces to find extent
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      if (j > i && depth >= 0) {
+        if (lineHasDecl(lines[j], prop, value)) {
+          return j;
+        }
+      }
+
+      if (depth <= 0 && j > i) break;
     }
   }
 
@@ -621,8 +559,7 @@ function searchPseudoClassBlock(
 
 /**
  * Search for a CSS property inside a nested SCSS pseudo-class block.
- * Matches `&:hover {` inside `.className { }`. Never produces a confinement
- * range — nested SCSS hit lines are plain declaration lines.
+ * Matches `&:hover {` inside `.className { }`.
  */
 function searchNestedPseudoBlock(
   lines: string[],
@@ -630,33 +567,52 @@ function searchNestedPseudoBlock(
   state: string,
   prop: string,
   value: string
-): BlockHit | null {
+): number | null {
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*\\{`
   );
   const nestedPattern = new RegExp(
     `&:${escapeRegex(state)}\\s*\\{`
   );
-  const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
 
-  for (const block of eachBlock(lines, classPattern)) {
+  for (let i = 0; i < lines.length; i++) {
     // Skip flat pseudo-class lines (e.g. .btn:hover)
-    if (pseudoCheck.test(lines[block.selLine])) continue;
+    if (lines[i].includes(":")) {
+      const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
+      if (pseudoCheck.test(lines[i])) continue;
+    }
+
+    if (!classPattern.test(lines[i])) continue;
 
     // Found parent class — scan within the block for &:state
-    const idx = scanBlockLines(lines, block.openLine, (j, depth) => {
-      if (j > block.openLine && depth >= 1 && nestedPattern.test(lines[j])) {
-        // Found &:state sub-block — search within it with its own depth walk.
-        // The `&:state {` line itself is NOT inspected (k > j), as before.
-        return scanBlockLines(lines, j, (k, subDepth) =>
-          k > j && subDepth >= 0 && lineHasDecl(lines[k], prop, value)
-            ? k
-            : null
-        );
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
       }
-      return null;
-    });
-    if (idx != null) return { lineIdx: idx };
+
+      if (j > i && depth >= 1 && nestedPattern.test(lines[j])) {
+        // Found &:state sub-block — search within it
+        let subDepth = 0;
+        for (let k = j; k < lines.length; k++) {
+          for (const ch of lines[k]) {
+            if (ch === "{") subDepth++;
+            if (ch === "}") subDepth--;
+          }
+
+          if (k > j && subDepth >= 0) {
+            if (lineHasDecl(lines[k], prop, value)) {
+              return k;
+            }
+          }
+
+          if (subDepth <= 0 && k > j) break;
+        }
+      }
+
+      if (depth <= 0 && j > i) break;
+    }
   }
 
   return null;
@@ -673,20 +629,27 @@ function findClassBlockEnd(
   const classPattern = new RegExp(
     `\\.${escapeRegex(className)}\\s*\\{`
   );
-  const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
 
-  for (const block of eachBlock(lines, classPattern)) {
+  for (let i = 0; i < lines.length; i++) {
     // Skip pseudo-class blocks — we want the base class
-    if (pseudoCheck.test(lines[block.selLine])) continue;
+    if (lines[i].includes(":")) {
+      const pseudoCheck = new RegExp(
+        `\\.${escapeRegex(className)}:\\w`
+      );
+      if (pseudoCheck.test(lines[i])) continue;
+    }
 
-    // Found the base class — the closing `}` is the first line on which the
-    // depth returns to <= 0 (the open line itself for a one-line block). An
-    // unbalanced block (depth never closes) falls through to the next
-    // candidate, as before.
-    const end = scanBlockLines(lines, block.openLine, (j, depth) =>
-      depth <= 0 ? j : null
-    );
-    if (end != null) return end;
+    if (!classPattern.test(lines[i])) continue;
+
+    // Found the base class — track braces to find the closing `}`
+    let depth = 0;
+    for (let j = i; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+      if (depth <= 0 && j >= i) return j;
+    }
   }
 
   return null;
@@ -752,14 +715,21 @@ function searchRootBlock(
       continue;
     }
 
-    // @layer block — scan inside its extent for :root blocks
+    // @layer block — scan inside for :root blocks
     if (layerPattern.test(lines[i])) {
-      scanBlockLines(lines, i, (j, layerDepth) => {
+      let layerDepth = 0;
+      for (let j = i; j < lines.length; j++) {
+        for (const ch of lines[j]) {
+          if (ch === "{") layerDepth++;
+          if (ch === "}") layerDepth--;
+        }
+
         if (j > i && layerDepth >= 1 && rootPattern.test(lines[j])) {
           collect(j);
         }
-        return null;
-      });
+
+        if (layerDepth <= 0 && j > i) break;
+      }
     }
   }
 
@@ -782,10 +752,22 @@ function searchWithinRootBlock(
   prop: string
 ): number | null {
   const propPattern = declAnchoredPropRegex(prop);
-  // The opening line itself is NOT inspected (j > start), as before.
-  return scanBlockLines(lines, start, (j, depth) =>
-    j > start && depth >= 0 && propPattern.test(lines[j]) ? j : null
-  );
+  let depth = 0;
+  for (let j = start; j < lines.length; j++) {
+    for (const ch of lines[j]) {
+      if (ch === "{") depth++;
+      if (ch === "}") depth--;
+    }
+
+    if (j > start && depth >= 0) {
+      if (propPattern.test(lines[j])) {
+        return j;
+      }
+    }
+
+    if (depth <= 0 && j > start) break;
+  }
+  return null;
 }
 
 // --- Shorthand property fallback ---
@@ -860,14 +842,29 @@ function searchClassBlockFuzzy(
   );
   const propPattern = declAnchoredPropRegex(prop);
 
-  for (const block of eachBlock(lines, classPattern)) {
-    // Quirk preserved: unlike searchClassBlock, the opening-brace line itself
-    // is NOT inspected (j > openLine) — the shorthand fallback has never
-    // targeted minified one-line blocks.
-    const idx = scanBlockLines(lines, block.openLine, (j, depth) =>
-      j > block.openLine && depth >= 0 && propPattern.test(lines[j]) ? j : null
-    );
-    if (idx != null) return idx;
+  for (let i = 0; i < lines.length; i++) {
+    if (!classPattern.test(lines[i])) continue;
+
+    let depth = 0;
+    let blockStart = i;
+    let foundBrace = false;
+    for (let j = i; j < lines.length; j++) {
+      if (lines[j].includes("{")) { blockStart = j; foundBrace = true; break; }
+    }
+    if (!foundBrace) continue;
+
+    for (let j = blockStart; j < lines.length; j++) {
+      for (const ch of lines[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+
+      if (j > blockStart && depth >= 0) {
+        if (propPattern.test(lines[j])) return j;
+      }
+
+      if (depth <= 0 && j > blockStart) break;
+    }
   }
 
   return null;
@@ -964,12 +961,14 @@ export function findPropertyInFile(
 
   // Tier 2: Class-scoped search (if we know the CSS class)
   if (className) {
-    const hit = searchClassBlock(masked, className, prop, value);
-    if (hit != null) {
-      // hit.range (set for a minified same-line block) confines the later
-      // surgical replacement to the target block's body so a sibling block's
-      // identical declaration earlier on the line isn't rewritten (issue #47).
-      return { lineIdx: hit.lineIdx, strategy: "class-block", range: hit.range };
+    const idx = searchClassBlock(masked, className, prop, value);
+    if (idx != null) {
+      // If the target class's block opens AND closes on this same physical
+      // line (minified CSS), confine the later surgical replacement to that
+      // block's body so a sibling block's identical declaration earlier on the
+      // line isn't the one rewritten (issue #47).
+      const range = classBlockBodyRangeOnLine(masked[idx], className) ?? undefined;
+      return { lineIdx: idx, strategy: "class-block", range };
     }
   }
 
@@ -1007,7 +1006,13 @@ export async function handleCommit(
     changesByFile.set(change.sourceFile, existing);
   }
 
-  for (const [sourceFile, fileChanges] of changesByFile) {
+  // Process each source file concurrently — groups don't share state and
+  // writes are batched per file, so they can't conflict. Each task collects
+  // into local arrays which are merged into `result` after all settle, keeping
+  // the output order deterministic (input order, not completion order).
+  const perFile = await Promise.all(Array.from(changesByFile).map(async ([sourceFile, fileChanges]) => {
+    const written: string[] = [];
+    const failed: CommitResult["failed"] = [];
     try {
       // Resolve the actual file path (handles bare filenames + source maps)
       let filePath = await resolveSourceFile(
@@ -1028,12 +1033,12 @@ export async function handleCommit(
         }
         if (!filePath) {
           for (const change of fileChanges) {
-            result.failed.push({
+            failed.push({
               ...change,
               reason: `file not found: "${sourceFile}"`,
             });
           }
-          continue;
+          return { written, failed };
         }
       }
 
@@ -1042,12 +1047,12 @@ export async function handleCommit(
       // every resolution branch, including the var-definition-file fallback.
       if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
         for (const change of fileChanges) {
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `resolved path escapes project root: "${sourceFile}"`,
           });
         }
-        continue;
+        return { written, failed };
       }
 
       const source = await readFile(filePath, "utf-8");
@@ -1063,7 +1068,7 @@ export async function handleCommit(
         // Reject malformed client input up front (issue #16).
         const invalid = changeValidationError(change);
         if (invalid) {
-          result.failed.push({ ...change, reason: invalid });
+          failed.push({ ...change, reason: invalid });
           continue;
         }
 
@@ -1072,7 +1077,7 @@ export async function handleCommit(
         if (change.state && change.className) {
           // Validate state against allowlist to prevent CSS injection
           if (!VALID_STATES.has(change.state)) {
-            result.failed.push({
+            failed.push({
               ...change,
               reason: `invalid state "${change.state}" — not in allowlist`,
             });
@@ -1080,7 +1085,7 @@ export async function handleCommit(
           }
           // Locate on the masked view so brace literals / comments can't fool
           // the scan; the replacement is applied to the original `lines`.
-          const pseudoHit = searchPseudoClassBlock(
+          const pseudoIdx = searchPseudoClassBlock(
             masked,
             change.className,
             change.state,
@@ -1094,28 +1099,28 @@ export async function handleCommit(
             change.from
           );
 
-          if (pseudoHit != null) {
-            // Found the property in the pseudo-class block. When the block
-            // opens AND closes on one physical line (minified CSS), hit.range
-            // confines the replacement to the block's body so a sibling
-            // block's identical declaration on the line isn't rewritten
-            // (issue #47).
-            const updated = replaceDeclInLine(
-              lines[pseudoHit.lineIdx],
-              change.prop,
-              change.from,
-              change.to,
-              pseudoHit.range
-            );
-            if (updated != null) {
-              lines[pseudoHit.lineIdx] = updated;
+          if (pseudoIdx != null) {
+            // Found the property in the pseudo-class block — do surgical replacement
+            const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
+            if (pattern.test(lines[pseudoIdx])) {
+              const safeValue = change.to.replace(/\$/g, "$$$$");
+              lines[pseudoIdx] = lines[pseudoIdx].replace(pattern, `$1$2${safeValue}`);
               modified = true;
               remask();
             } else {
-              result.failed.push({
-                ...change,
-                reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
-              });
+              // Try broad replacement (handles hex vs rgb, etc.)
+              const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
+              if (broadPattern.test(lines[pseudoIdx])) {
+                const safeValue = change.to.replace(/\$/g, "$$$$");
+                lines[pseudoIdx] = lines[pseudoIdx].replace(broadPattern, `$1$2${safeValue}`);
+                modified = true;
+                remask();
+              } else {
+                failed.push({
+                  ...change,
+                  reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
+                });
+              }
             }
             continue;
           }
@@ -1154,9 +1159,25 @@ export async function handleCommit(
           }
 
           // Can't find the base class block at all
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `base class ".${change.className}" not found — cannot create :${change.state} block`,
+          });
+          continue;
+        }
+
+        // Fail-safe (issue #57): a state-tagged change WITHOUT class info
+        // cannot be routed to a `.class:state { }` block. Falling through to
+        // the standard search would write the state-only value into the BASE
+        // rule — silently corrupting the resting style while reporting
+        // success. Reject it instead. Custom properties are exempt: the client
+        // intentionally redirects var()-backed edits to the variable's
+        // definition site (e.g. `:root`) with no class info, regardless of the
+        // state the edit was made under.
+        if (change.state && !change.className && !change.prop.startsWith("--")) {
+          result.failed.push({
+            ...change,
+            reason: `state ":${change.state}" edit has no class info — refusing to write it into the base rule`,
           });
           continue;
         }
@@ -1182,47 +1203,73 @@ export async function handleCommit(
             remask();
             continue;
           }
-          result.failed.push({
+          failed.push({
             ...change,
             reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
           });
           continue;
         }
 
-        // Surgical replacement: only change the value, preserve everything else
-        // (the pattern carries a LEFT boundary so `color` can't match inside
-        // `background-color` even if both share a line), confined to
-        // `found.range` when set (minified same-line block, issue #47). The
-        // broad fallback (full CSS value replace — hex vs rgb, var(), etc.) is
-        // only allowed for fuzzy matches, and never over an SCSS variable —
-        // those require manual editing.
-        const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
-        const allowBroad = found.strategy === "fuzzy" && !scssVarMatch;
-        const updated = replaceDeclInLine(
-          lines[found.lineIdx],
-          change.prop,
-          change.from,
-          change.to,
-          found.range,
-          allowBroad
-        );
+        // Surgical replacement: only change the value, preserve everything else.
+        // The pattern carries a LEFT boundary so `color` can't match inside
+        // `background-color` even if both share a line.
+        const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
 
-        if (updated != null) {
-          lines[found.lineIdx] = updated;
+        // When a char range is set (minified same-line block, issue #47),
+        // confine the match+replace to that block's body so an identical sibling
+        // declaration earlier on the line is left untouched. The range is
+        // computed on the masked view, which is same-length as `lines`.
+        const range = found.range;
+        const segment = range
+          ? lines[found.lineIdx].slice(range[0], range[1])
+          : lines[found.lineIdx];
+
+        if (pattern.test(segment)) {
+          // Escape $ in replacement to prevent regex backreference interpretation
+          const safeValue = change.to.replace(/\$/g, "$$$$");
+          const replaced = segment.replace(pattern, `$1$2${safeValue}`);
+          lines[found.lineIdx] = range
+            ? lines[found.lineIdx].slice(0, range[0]) +
+              replaced +
+              lines[found.lineIdx].slice(range[1])
+            : replaced;
           modified = true;
           remask();
         } else if (found.strategy === "fuzzy") {
-          result.failed.push({
-            ...change,
-            reason: scssVarMatch
-              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
-              : `value "${change.from}" not found literally (may be a variable)`,
-          });
+          // Fuzzy match found the property by name but the exact from-value
+          // isn't on this line. Source likely uses a different representation
+          // (hex vs rgb, var() vs computed, etc.). Replace the full CSS value.
+
+          // Guard: don't overwrite SCSS variables — they require manual editing
+          const scssVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
+          if (scssVarMatch) {
+            failed.push({
+              ...change,
+              reason: `uses SCSS variable ${scssVarMatch[0]} — manual edit required`,
+            });
+          } else {
+            const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
+            if (broadPattern.test(lines[found.lineIdx])) {
+              const safeValue = change.to.replace(/\$/g, "$$$$");
+              lines[found.lineIdx] = lines[found.lineIdx].replace(
+                broadPattern,
+                `$1$2${safeValue}`
+              );
+              modified = true;
+              remask();
+            } else {
+              failed.push({
+                ...change,
+                reason: `value "${change.from}" not found literally (may be a variable)`,
+              });
+            }
+          }
         } else {
-          result.failed.push({
+          const lineVarMatch = lines[found.lineIdx].match(/\$[\w-]+/);
+          failed.push({
             ...change,
-            reason: scssVarMatch
-              ? `uses SCSS variable ${scssVarMatch[0]} — manual edit required`
+            reason: lineVarMatch
+              ? `uses SCSS variable ${lineVarMatch[0]} — manual edit required`
               : `value "${change.from}" not found literally on line ${found.lineIdx + 1}`,
           });
         }
@@ -1230,19 +1277,25 @@ export async function handleCommit(
 
       if (modified) {
         await writeFile(filePath, lines.join("\n"), "utf-8");
-        if (!result.written.includes(sourceFile)) {
-          result.written.push(sourceFile);
-        }
+        written.push(sourceFile);
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       for (const change of fileChanges) {
-        result.failed.push({
+        failed.push({
           ...change,
           reason: `file error: ${message}`,
         });
       }
     }
+    return { written, failed };
+  }));
+
+  for (const { written, failed } of perFile) {
+    for (const f of written) {
+      if (!result.written.includes(f)) result.written.push(f);
+    }
+    result.failed.push(...failed);
   }
 
   return result;

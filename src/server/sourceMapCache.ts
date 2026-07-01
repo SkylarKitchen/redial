@@ -2,14 +2,24 @@
  * sourceMapCache.ts — Parse CSS source maps for accurate file + line resolution
  *
  * Uses @jridgewell/trace-mapping (transitive dep of Next.js) to read .map files
- * adjacent to compiled CSS in .next/static/css/.
+ * adjacent to compiled CSS. Webpack dev writes them under .next/static/…;
+ * Turbopack dev (the `next dev` default since Next 15) writes them under
+ * .next/dev/static/… while still serving from /_next/, emits SECTIONED maps,
+ * and anchors sources at `turbopack:///[project]/…` (issue #59) — all three
+ * are handled here.
  *
  * LRU cache (max 50 entries) prevents re-parsing on repeated saves.
  */
 
-import { readFileSync, existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve, join, dirname, relative } from "path";
-import { TraceMap, originalPositionFor } from "@jridgewell/trace-mapping";
+import { fileURLToPath } from "url";
+import {
+  AnyMap,
+  LEAST_UPPER_BOUND,
+  originalPositionFor,
+  type TraceMap,
+} from "@jridgewell/trace-mapping";
 
 // --- LRU Cache ---
 
@@ -63,16 +73,20 @@ export function getSourceMap(
   if (cached) return cached;
 
   const mapPath = compiledCssPath + ".map";
-  if (!existsSync(mapPath)) return null;
 
   try {
+    // No existsSync pre-check: readFileSync throws ENOENT for a missing map,
+    // which the catch already handles — one syscall instead of two, and no
+    // TOCTOU window between the check and the read.
     const raw = readFileSync(mapPath, "utf-8");
     const parsed = JSON.parse(raw);
-    const map = new TraceMap(parsed);
+    // AnyMap, not TraceMap: Turbopack emits sectioned maps ({ sections: … }),
+    // which the TraceMap constructor rejects outright.
+    const map = new AnyMap(parsed);
     lruSet(compiledCssPath, map);
     return map;
   } catch {
-    // Malformed map file — skip
+    // Missing or malformed map file — skip
     return null;
   }
 }
@@ -92,6 +106,58 @@ export function trySourceMapResolution(
   column: number,
   projectRoot: string,
 ): { file: string; line: number } | null {
+  const located = loadMapForHref(cssHref, projectRoot);
+  if (!located) return null;
+
+  try {
+    let pos = originalPositionFor(located.map, { line, column });
+    if (pos.source == null) {
+      // The default (greatest-lower-bound) lookup only comes up empty when
+      // the position sits BEFORE the first mapped segment (e.g. a banner
+      // line). Retrying least-upper-bound lands on that first segment.
+      pos = originalPositionFor(located.map, { line, column, bias: LEAST_UPPER_BOUND });
+    }
+    if (pos.source == null || pos.line == null) return null;
+
+    const file = sourceToProjectFile(pos.source, located.compiledCssPath, projectRoot);
+    if (file == null) return null;
+    return { file, line: pos.line };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve which source FILE a compiled stylesheet comes from, without a
+ * position. Position probes can't answer this reliably: Turbopack's sectioned
+ * maps leave their banner line uncovered by any section, so probing (1,0)
+ * returns nothing. The map's own `sources` list is authoritative — return the
+ * first entry that normalizes to a user file.
+ */
+export function tryFirstMappedSourceFile(
+  cssHref: string | undefined,
+  projectRoot: string,
+): string | null {
+  const located = loadMapForHref(cssHref, projectRoot);
+  if (!located) return null;
+  for (const source of located.map.sources) {
+    if (source == null) continue;
+    const file = sourceToProjectFile(source, located.compiledCssPath, projectRoot);
+    if (file != null) return file;
+  }
+  return null;
+}
+
+/**
+ * Convert an /_next/ href to the on-disk compiled CSS path and load its map.
+ * Probes both bundler layouts: webpack dev writes static assets to .next/…,
+ * Turbopack dev (the `next dev` default since Next 15) to .next/dev/… — the
+ * classic path does not exist there at all.
+ */
+function loadMapForHref(
+  cssHref: string | undefined,
+  projectRoot: string,
+): { map: TraceMap; compiledCssPath: string } | null {
   if (!cssHref) return null;
 
   // Convert href to filesystem path
@@ -104,31 +170,65 @@ export function trySourceMapResolution(
     pathname = cssHref;
   }
 
-  // Strip /_next/ prefix and resolve relative to .next/ in projectRoot
   const nextRelative = pathname.replace(/^\/_next\//, "");
-  const compiledCssPath = resolve(join(projectRoot, ".next", nextRelative));
+  for (const candidate of [
+    resolve(join(projectRoot, ".next", nextRelative)),
+    resolve(join(projectRoot, ".next", "dev", nextRelative)),
+  ]) {
+    const map = getSourceMap(candidate, projectRoot);
+    if (map) return { map, compiledCssPath: candidate };
+  }
+  return null;
+}
 
-  const map = getSourceMap(compiledCssPath, projectRoot);
-  if (!map) return null;
+/**
+ * Normalize a raw source-map `sources` entry to a projectRoot-relative file
+ * path, or null when the entry is a bundler internal rather than user source.
+ * The commit caller re-checks root containment before writing, so this only
+ * has to locate the file, not police it.
+ */
+function sourceToProjectFile(
+  rawSource: string,
+  compiledCssPath: string,
+  projectRoot: string,
+): string | null {
+  // Strip bundler protocol prefixes. Turbopack stacks its scheme, and the
+  // trace-mapping section join collapses the inner one to a single slash
+  // ("turbopack:///turbopack:/[project]/…"), so accept 1–3 slashes and
+  // strip repeatedly.
+  let source = rawSource.replace(/^(?:webpack:\/\/\/|turbopack:\/{1,3})+/, "");
 
-  try {
-    const pos = originalPositionFor(map, { line, column });
-    if (pos.source == null || pos.line == null) return null;
+  // Turbopack also emits absolute file: URLs (e.g. the app's own globals.css).
+  if (source.startsWith("file:")) {
+    try {
+      return relative(projectRoot, fileURLToPath(new URL(source)));
+    } catch {
+      return null;
+    }
+  }
 
-    let source = pos.source;
-
-    // Strip webpack:/// or similar protocol prefixes
-    source = source.replace(/^webpack:\/\/\//, "");
-    source = source.replace(/^\.\/(\.\/)*/, "");
-
-    // Resolve source relative to the .map file's directory, then make
-    // it relative to projectRoot so the caller can resolve(projectRoot, file).
-    const mapDir = dirname(compiledCssPath);
-    const absoluteSource = resolve(mapDir, source);
-    const file = relative(projectRoot, absoluteSource);
-
-    return { file, line: pos.line };
-  } catch {
+  if (source.startsWith("[project]/")) {
+    // Turbopack anchors sources at its root — the nearest workspace root,
+    // which can be an ANCESTOR of the Next.js project (monorepo / nested
+    // app). Probe upward from projectRoot for the first anchor where the
+    // file exists.
+    const rest = source.slice("[project]/".length);
+    let anchor = projectRoot;
+    for (let up = 0; up <= 3; up++) {
+      const candidate = resolve(anchor, rest);
+      if (existsSync(candidate)) return relative(projectRoot, candidate);
+      anchor = dirname(anchor);
+    }
     return null;
   }
+  // Other bracket-tagged origins ([next]/internal fonts etc.) are bundler
+  // internals, not user source files.
+  if (source.startsWith("[")) return null;
+
+  source = source.replace(/^\.\/(\.\/)*/, "");
+
+  // Resolve source relative to the .map file's directory, then make it
+  // relative to projectRoot so the caller can resolve(projectRoot, file).
+  const mapDir = dirname(compiledCssPath);
+  return relative(projectRoot, resolve(mapDir, source));
 }

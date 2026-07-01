@@ -27,6 +27,7 @@ import {
   parseStateKey,
   onStateChange,
   restoreSession,
+  getOverrideSnapshot,
 } from "../core/apply";
 
 // ─── Setup ────────────────────────────────────────────────────────────
@@ -942,5 +943,85 @@ describe("undo coalescing", () => {
 
     redo();
     expect(el.style.getPropertyValue("width")).toBe("100px");
+  });
+});
+
+// ─── getOverrideSnapshot ──────────────────────────────────────────────
+
+describe("getOverrideSnapshot", () => {
+  it("excludes dirty overrides on elements removed from the DOM", () => {
+    const kept = makeEl();
+    const removed = makeEl();
+    applyInlineStyle(kept, "color", "red");
+    applyInlineStyle(removed, "color", "blue");
+    expect(getOverrideSnapshot()).toBe(2);
+
+    // Simulate a React re-render / route change detaching the element.
+    removed.remove();
+    expect(getOverrideSnapshot()).toBe(1);
+
+    // totalOverrideCount (raw counter) still tracks the map entry.
+    expect(totalOverrideCount()).toBe(2);
+  });
+
+  it("counts an override again if its element is re-attached", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "red");
+    el.remove();
+    expect(getOverrideSnapshot()).toBe(0);
+
+    document.body.appendChild(el);
+    expect(getOverrideSnapshot()).toBe(1);
+  });
+});
+
+// ─── restoreSession dirtyCount idempotency ────────────────────────────
+
+describe("restoreSession dirtyCount idempotency", () => {
+  const KEY = "__tuner_session:" + location.pathname;
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("does not double-count when run twice (StrictMode double-effect)", () => {
+    const el = makeEl();
+    el.id = "strict-mode-target";
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        "#strict-mode-target": {
+          color: { initial: "rgb(0, 0, 0)", current: "red" },
+          "padding-top": { initial: "0px", current: "8px" },
+        },
+      })
+    );
+
+    expect(restoreSession()).toBe(2);
+    expect(totalOverrideCount()).toBe(2);
+    expect(getOverrideSnapshot()).toBe(2);
+
+    // Second run (e.g. React StrictMode re-mounting the restore effect)
+    // overwrites identical entries and must not inflate the counter.
+    expect(restoreSession()).toBe(2);
+    expect(totalOverrideCount()).toBe(2);
+    expect(getOverrideSnapshot()).toBe(2);
+  });
+});
+
+// ─── clearRedundantOverrides with detached elements ───────────────────
+
+describe("clearRedundantOverrides — detached elements", () => {
+  it("does not re-apply inline overrides to detached elements", () => {
+    const el = makeEl();
+    applyInlineStyle(el, "color", "red");
+    el.remove();
+    el.style.removeProperty("color");
+
+    // getComputedStyle on a detached node returns "" for every property;
+    // before the isConnected guard this restored the override onto the
+    // dead node. Detached entries must be skipped entirely.
+    clearRedundantOverrides();
+    expect(el.style.getPropertyValue("color")).toBe("");
   });
 });

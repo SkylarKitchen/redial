@@ -1,37 +1,33 @@
 /**
- * breakpointPreview.ts — Live media-gated <style> for breakpoint edits (#35).
+ * breakpointPreview.ts — Live media-gated stylesheet for breakpoint edits (#35).
  *
  * The engine tracks non-base breakpoint edits under a composite key but does NOT
  * write them to the element's inline style (ADR-0005: their media-gated render
  * was deferred to #35). This module is that render: it projects every element's
- * breakpoint-tagged diffs into a single <style id="redial-breakpoint-preview">
- * as `@media` rules, each targeting the element through a stable
- * `[data-redial-bp="N"]` attribute selector.
+ * breakpoint-tagged diffs into the `managedSheet("breakpoint-preview")` sheet
+ * (constructable stylesheet on `document.adoptedStyleSheets`, with a `<style>`
+ * fallback — see ADR-0009) as `@media` rules, each targeting the element
+ * through a stable `[data-redial-bp="N"]` attribute selector.
  *
  * The result is a true media-gated live preview — the responsive edit takes
  * effect exactly when the viewport matches, and the base inline style is never
- * touched. It mirrors the modeOverrides.ts / statePreview.ts <style> pattern.
+ * touched. It mirrors the modeOverrides.ts / statePreview.ts managed-sheet
+ * pattern.
  */
 
 import { diffAll, subscribeOverrides } from "./core/apply";
 import { serializeBreakpointCSS } from "./breakpoints";
+import { managedSheet, _readManagedSheetCss } from "./core/managedSheet";
 
-const STYLE_ID = "redial-breakpoint-preview";
+const SHEET_KEY = "breakpoint-preview";
 const ID_ATTR = "data-redial-bp";
 
-let styleEl: HTMLStyleElement | null = null;
 let counter = 0;
 let unsubscribe: (() => void) | null = null;
 
-function ensureStyleEl(): HTMLStyleElement {
-  if (styleEl && document.contains(styleEl)) return styleEl;
-  styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (!styleEl) {
-    styleEl = document.createElement("style");
-    styleEl.id = STYLE_ID;
-    document.head.appendChild(styleEl);
-  }
-  return styleEl;
+/** Test-only read of the breakpoint-preview sheet's serialized CSS. */
+export function getBreakpointPreviewCss(): string | null {
+  return _readManagedSheetCss(SHEET_KEY);
 }
 
 /** Stable per-element preview id — reused across renders so the media selector
@@ -56,7 +52,7 @@ export function renderBreakpointPreview(): void {
     const id = previewIdFor(el);
     items.push({ selector: `[${ID_ATTR}="${id}"]`, changes });
   }
-  ensureStyleEl().textContent = serializeBreakpointCSS(items);
+  managedSheet(SHEET_KEY).replace(serializeBreakpointCSS(items));
 }
 
 /**
@@ -70,12 +66,11 @@ export function startBreakpointPreview(): void {
   renderBreakpointPreview();
 }
 
-/** Tear down the preview: unsubscribe and remove the <style> tag. */
+/** Tear down the preview: unsubscribe and dispose the managed sheet. */
 export function destroyBreakpointPreview(): void {
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
   }
-  if (styleEl && document.contains(styleEl)) styleEl.remove();
-  styleEl = null;
+  managedSheet(SHEET_KEY).dispose();
 }

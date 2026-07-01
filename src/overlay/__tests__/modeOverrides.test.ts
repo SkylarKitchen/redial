@@ -9,6 +9,7 @@ import {
   subscribeModeOverrides,
   getModeOverrideSnapshot,
   isModeOverrideDirty,
+  getModeOverridesCss,
 } from "../core/modeOverrides";
 // Undo/redo were unified onto apply.ts's ONE temporal stack in RFC #14 4a;
 // modeOverrides no longer owns its own undo functions (ADR-0006).
@@ -24,19 +25,18 @@ describe("applyModeOverride", () => {
     expect(getModeOverrides(".dark")).toEqual({ "--bg-primary": "#111" });
   });
 
-  it("injects a <style> tag with the override", () => {
+  it("registers a managed sheet with the override", () => {
     applyModeOverride(".dark", "--bg-primary", "#111");
-    const styleEl = document.getElementById("redial-mode-overrides");
-    expect(styleEl).toBeTruthy();
-    expect(styleEl!.textContent).toContain(".dark");
-    expect(styleEl!.textContent).toContain("--bg-primary: #111");
+    const css = getModeOverridesCss();
+    expect(css).not.toBeNull();
+    expect(css!).toContain(".dark");
+    expect(css!).toContain("--bg-primary: #111");
   });
 
   it("multiple overrides in the same selector share one rule block", () => {
     applyModeOverride(".dark", "--bg-primary", "#111");
     applyModeOverride(".dark", "--text", "#fff");
-    const styleEl = document.getElementById("redial-mode-overrides");
-    const text = styleEl!.textContent!;
+    const text = getModeOverridesCss()!;
     expect(text.match(/\.dark\s*\{/g)?.length).toBe(1);
     expect(text).toContain("--bg-primary: #111");
     expect(text).toContain("--text: #fff");
@@ -45,7 +45,7 @@ describe("applyModeOverride", () => {
   it("overrides in different selectors get separate rule blocks", () => {
     applyModeOverride(".dark", "--bg", "#111");
     applyModeOverride(".light", "--bg", "#fff");
-    const text = document.getElementById("redial-mode-overrides")!.textContent!;
+    const text = getModeOverridesCss()!;
     expect(text).toContain(".dark");
     expect(text).toContain(".light");
   });
@@ -67,13 +67,13 @@ describe("removeModeOverride", () => {
 });
 
 describe("resetAllModeOverrides", () => {
-  it("clears all overrides and empties the style tag", () => {
+  it("clears all overrides and empties the managed sheet", () => {
     applyModeOverride(".dark", "--bg", "#111");
     applyModeOverride(".light", "--bg", "#fff");
     resetAllModeOverrides();
     expect(getModeOverrides(".dark")).toBeUndefined();
-    const styleEl = document.getElementById("redial-mode-overrides");
-    expect(!styleEl || styleEl.textContent === "").toBe(true);
+    const css = getModeOverridesCss();
+    expect(css === null || css === "").toBe(true);
   });
 });
 

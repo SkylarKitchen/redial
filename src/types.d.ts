@@ -4,11 +4,6 @@ declare module "*.css" {
   export default content;
 }
 
-declare module "dialkit/styles.css" {
-  const content: string;
-  export default content;
-}
-
 // HMR types for Turbopack / Vite / webpack
 interface ImportMetaHot {
   on(event: string, cb: (...args: any[]) => void): void;

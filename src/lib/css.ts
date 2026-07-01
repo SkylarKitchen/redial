@@ -42,11 +42,15 @@ export function isValidCSSClassName(name: string): boolean {
 }
 
 /**
- * Reject a declaration value that could break out of its block or statement.
+ * Reject a declaration value that could break out of its block or statement,
+ * or open/close a CSS comment (`red/*` would be written as `color: red/*;` —
+ * an unterminated comment that swallows the rest of the stylesheet).
  * Used by the commit path, which rejects bad input rather than mutating it.
  */
 export function isSafeCSSValue(value: string): boolean {
-  return !/[{};<]/.test(value) && !/[\r\n]/.test(value);
+  return (
+    !/[{};<]/.test(value) && !/[\r\n]/.test(value) && !/\/\*|\*\//.test(value)
+  );
 }
 
 /**
@@ -89,20 +93,25 @@ export function isInvalidDeclaration(prop: string, value: string): boolean {
 }
 
 /**
- * Strip characters that could break out of a CSS value context. Used by the
- * live-preview `<style>` writer, which mutates rather than rejects.
+ * Strip characters and comment delimiters that could break out of a CSS value
+ * context. Used by the live-preview `<style>` writer, which mutates rather
+ * than rejects.
  */
 export function sanitizeCSSValue(value: string): string {
-  return (
-    value
-      .replace(/[{}]/g, "")
-      // HTML end tags tolerate whitespace before `>` (`</style\t>`, `</style >`),
-      // so a `>`-anchored strip is bypassable. Match whitespace-tolerantly,
-      // case-insensitively, and globally so a padded close tag can't break out
-      // of the live-preview <style> element.
-      .replace(/<\/style\s*>/gi, "")
-      // A CSS declaration value never legitimately contains `<`; drop any that
-      // remain so no markup can escape the <style> context, however malformed.
-      .replace(/</g, "")
-  );
+  let out = value
+    .replace(/[{}]/g, "")
+    // HTML end tags tolerate whitespace before `>` (`</style\t>`, `</style >`),
+    // so a `>`-anchored strip is bypassable. Match whitespace-tolerantly,
+    // case-insensitively, and globally so a padded close tag can't break out
+    // of the live-preview <style> element.
+    .replace(/<\/style\s*>/gi, "")
+    // A CSS declaration value never legitimately contains `<`; drop any that
+    // remain so no markup can escape the <style> context, however malformed.
+    .replace(/</g, "");
+  // Comment delimiters disable the rest of the stylesheet (`red/*` leaves an
+  // unterminated comment). Strip LAST — the removals above can splice a fresh
+  // delimiter together (`/{*}` → `/*`) — and loop to a fixpoint, because one
+  // global pass re-forms on inputs like `//**`.
+  while (/\/\*|\*\//.test(out)) out = out.replace(/\/\*|\*\//g, "");
+  return out;
 }

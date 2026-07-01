@@ -18,6 +18,7 @@ import {
   applyModeOverride,
   getModeOverrideCount,
   resetAllModeOverrides,
+  getModeOverridesCss,
 } from "../core/modeOverrides";
 
 function darkMode(): InferredMode {
@@ -51,7 +52,6 @@ afterEach(() => {
   act(() => root.unmount());
   container.remove();
   resetAllModeOverrides();
-  document.getElementById("redial-mode-overrides")?.remove();
 });
 
 describe("ModeValueCell — unset affordance (issue #52)", () => {
@@ -104,7 +104,6 @@ describe("ModeValueCell — unset affordance (issue #52)", () => {
     act(() => { btn!.click(); });
 
     expect(getModeOverrideCount()).toBe(0);
-    const styleEl = document.getElementById("redial-mode-overrides");
-    expect(!styleEl || !styleEl.textContent?.includes("--bg")).toBe(true);
+    expect(getModeOverridesCss() ?? "").not.toContain("--bg");
   });
 });

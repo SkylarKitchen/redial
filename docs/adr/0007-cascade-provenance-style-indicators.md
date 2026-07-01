@@ -1,6 +1,6 @@
 # ADR-0007: Adopt cascade-provenance style indicators
 
-**Status:** Accepted (2026-06-09) — supersedes the blue/green-only simplification (commit `c5e7adb`, 2026-03-13)
+**Status:** Accepted (2026-06-09), implemented (2026-06-09, commit `fd05edb`) — supersedes the blue/green-only simplification (commit `c5e7adb`, 2026-03-13)
 
 ## Context
 
@@ -25,6 +25,7 @@ Adopt cascade-provenance indicators per spec §11:
 | Orange | Inherited / cascaded from a parent or base class | `inherited` |
 | Pink | Element-scope (inline) override | `element-inline` |
 | Green | Pseudo-state-specific style (unchanged) | `state` |
+| Amber | Changed this session (orthogonal cue, kept — see resolution below) | `modified` |
 | — | Browser default / unset | `none` |
 
 **Detection** (`getIndicatorType`): compare the element's computed value to its
@@ -32,22 +33,21 @@ parent's computed value and to authored rules (`getAuthoredValue` already locate
 matching rules). Element scope → all overrides render pink; class scope → rules
 on the active class render blue, ancestor-sourced render orange.
 
-**Resolved sub-question (2026-06-09 implementation):** provenance and
-"changed-this-session" are orthogonal, so the session cue is kept as a **sixth
-`IndicatorType` member, `"modified"`**, with its own distinct colour
-(`color.warning` amber, visibly different from the blue `authored-here`) rather
-than an outline. The resolver applies a **priority order** —
-`state → modified (isDirty) → element-inline → authored-here → inherited → none`
-— so a property reads as `"modified"` exactly when it is dirty, which is the
-precondition the existing reset affordances already gate on (`indicator ===
-"modified"`). Provenance therefore surfaces only on properties not edited this
-session, the "I edited this" cue is never lost, and no consumer churn was needed
-(the ~12 components that synthesise `"modified"` from a local dirty/set boolean
-keep working unchanged). Final union is 6 members, not 5.
+**Sub-question — resolved during implementation (2026-06-09):** provenance and
+"changed-this-session" are orthogonal signals, and the session cue is **kept as a
+sixth union member** rather than an outline: `modified` renders a distinct amber
+dot (`color.warning`) and takes priority in the resolver, so a property reads
+`modified` exactly when it is dirty this session. Resolver priority is
+`state → modified → element-inline → authored-here → inherited → none` —
+provenance therefore surfaces only on properties *not* edited this session. This
+keeps the precondition the existing reset affordances gate on
+(`indicator === "modified"`), so the "I edited this" cue is never lost and the
+~12 components that synthesise `modified` from a local boolean need no churn.
 
 ## Consequences
 
-- `IndicatorType` widens from 3 to 5 members; `tsc` exhaustiveness flags every
+- `IndicatorType` widens from 3 to 6 members (the 5 provenance variants above
+  plus the retained `modified` session cue); `tsc` exhaustiveness flags every
   consumer that must handle the new variants (~65 call-sites across
   sections/controls/overlays).
 - Two new design tokens needed in `theme.ts` (`indicatorOrange` — may reuse
@@ -58,6 +58,8 @@ keep working unchanged). Final union is 6 members, not 5.
   (it already sketches the inherited/authored-here/element-inline cases).
 - Requires browser visual verification (no geometric oracle) before #46 closes.
 
-This work is **decided and ready to build** but remains tracked (not launch-
-blocking): v1.0 is shipped, and the indicator overhaul is a deliberate,
-visually-iterated effort rather than a launch-moment change.
+This work is **implemented** (resolver, tokens, consumer sweep, and rewritten
+`styleIndicators.test.ts` landed in commit `fd05edb`; ADR resolution and
+showcase sync followed). Browser visual verification of the rendered palette
+ran against `/showcase` and `/demo`; colour tuning remains a one-line token
+swap in `theme.ts` if the maintainer wants to adjust amber/pink/orange.

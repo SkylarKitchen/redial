@@ -15,6 +15,7 @@ import {
   renderBreakpointPreview,
   startBreakpointPreview,
   destroyBreakpointPreview,
+  getBreakpointPreviewCss,
 } from "../breakpointPreview";
 
 function makeEl(): HTMLElement {
@@ -24,7 +25,7 @@ function makeEl(): HTMLElement {
 }
 
 function previewText(): string {
-  return document.getElementById("redial-breakpoint-preview")?.textContent ?? "";
+  return getBreakpointPreviewCss() ?? "";
 }
 
 beforeEach(() => {

@@ -1604,9 +1604,9 @@ export default function ShowcasePage() {
 
           {/* StyleIndicator */}
           <div className="card" style={{ width: 320 }} data-component="StyleIndicator">
-            <div className="card-label">StyleIndicator — All 5 Types</div>
+            <div className="card-label">StyleIndicator — All 6 Types</div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              {(["direct", "inherited", "state", "element", "variable"] as const).map((type) => (
+              {(["authored-here", "inherited", "element-inline", "state", "modified", "none"] as const).map((type) => (
                 <div key={type} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={{ display: "inline-block", width: 4, height: 4, borderRadius: "50%", background: indicatorColor[type], boxShadow: `0 0 3px ${indicatorColor[type]}` }} />
                   <span style={{ fontSize: 10, color: blackAlpha(0.7) }} className="mono">{type}</span>

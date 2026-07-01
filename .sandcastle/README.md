@@ -23,7 +23,7 @@ npm run sandcastle:build-image
 npm run sandcastle
 
 # Or pass the prompt inline:
-PROMPT="Add JSDoc to every export in src/overlay/infer.ts" npm run sandcastle
+PROMPT="Add JSDoc to every export in src/overlay/core/infer.ts" npm run sandcastle
 ```
 
 ## Parallel / overnight runs

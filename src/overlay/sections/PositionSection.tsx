@@ -330,33 +330,6 @@ export const PositionSection = memo(function PositionSection({
             </div>
           </div>
 
-          {/* Columns / Rows labels */}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "0 12px",
-          }}>
-            <div style={{ width: layout.labelWidth, flexShrink: 0 }} />
-            <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-              <span style={{
-                fontSize: 11,
-                color: text.label,
-                flex: 1,
-                textAlign: "center",
-              }}>
-                Columns
-              </span>
-              <span style={{
-                fontSize: 11,
-                color: text.label,
-                width: 64,
-                textAlign: "center",
-                flexShrink: 0,
-              }}>
-                Rows
-              </span>
-            </div>
-          </div>
         </>
       )}
 

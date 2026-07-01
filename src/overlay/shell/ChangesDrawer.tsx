@@ -13,6 +13,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, getSelector, formatCSSDiff } from "../util";
 import { composeExportCSS, serializeBreakpointCSS } from "../breakpoints";
 import { enrichChangesForCommit } from "../core/commitUtils";
+import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
 import { getConfig } from "../core/config";
@@ -244,7 +245,7 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     try {
       const res = await fetch(getConfig().commitEndpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
         body: JSON.stringify({
           ...(mode ? { mode } : {}),
           changes: enriched,

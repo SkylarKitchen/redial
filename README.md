@@ -62,9 +62,9 @@ npm install github:SkylarKitchen/redial
 
 Three steps to add Redial to any Next.js project:
 
-### 1. Next.js plugin
+### 1. Next.js plugin (webpack only)
 
-Enables CSS source maps in dev mode so Redial can trace styles back to their source files.
+With Turbopack — the `next dev` default since Next 15 — **skip this step**: Turbopack already emits the CSS source maps Redial uses to trace styles back to their source files. Only add the plugin if you develop with `next dev --webpack`, where it enables full source maps:
 
 ```js
 // next.config.js
@@ -74,6 +74,8 @@ module.exports = withTuner({
   // your existing config
 });
 ```
+
+Either way, saving still works without source maps — Redial falls back to searching your source files — they just make the trace more accurate.
 
 ### 2. API route
 
@@ -102,6 +104,30 @@ export default function RootLayout({ children }) {
       </body>
     </html>
   );
+}
+```
+
+The stylesheet is fully scoped under the panel's `.__tuner-root` container — it ships no preflight reset, no `:root` variables, and no global utility classes, so importing it cannot restyle your app. To keep its bytes out of production bundles entirely, load the panel and its stylesheet from a dev-gated client component instead of the layout:
+
+```tsx
+// app/tuner-provider.tsx
+"use client";
+
+import dynamic from "next/dynamic";
+
+// Both chunks load only when the provider actually renders — never in
+// production, where it returns null first.
+const Tuner = dynamic(
+  () =>
+    Promise.all([import("redial"), import("redial/styles.css")]).then(
+      ([m]) => ({ default: m.Tuner })
+    ),
+  { ssr: false }
+);
+
+export function TunerProvider() {
+  if (process.env.NODE_ENV !== "development") return null;
+  return <Tuner commitEndpoint="/api/tuner/commit" />;
 }
 ```
 
@@ -205,12 +231,12 @@ Supports both CSS Modules (`.module.scss`, `.module.css`) and Tailwind CSS proje
 ## Configuration
 
 ```tsx
-<Tuner commitEndpoint="/api/tuner" />
+<Tuner commitEndpoint="/api/tuner/commit" />
 ```
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `commitEndpoint` | `string` | `"/api/tuner"` | API route path for the commit server |
+| `commitEndpoint` | `string` | `"/api/tuner/commit"` | API route path for the commit server. The client POSTs to this exact path — with the catch-all route above, it must include at least one segment after `/api/tuner` |
 
 ---
 

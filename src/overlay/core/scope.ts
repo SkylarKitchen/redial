@@ -3,12 +3,17 @@
  *
  * Determines how a style change should be applied:
  * - "element": inline style on the clicked DOM node (default)
- * - "class": write to a <style> tag targeting the CSS modules classname
+ * - "class": write to the `managedSheet("class-scope-overrides")` sheet
+ *   (constructable stylesheet with a `<style>` fallback — see ADR-0009)
+ *   targeting the CSS modules classname
  * - CSS custom properties: detected and editable on their definition scope
  */
 
 import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
 import { onClassChange } from "./apply";
+import { managedSheet, _readManagedSheetCss } from "./managedSheet";
+
+const CLASS_SCOPE_KEY = "class-scope-overrides";
 
 export type Scope = "element" | "class";
 
@@ -36,19 +41,51 @@ export type CustomProp = {
 export function getCustomProperties(el: Element): CustomProp[] {
   const found = new Map<string, CustomProp>(); // dedupe by name
 
-  // Strategy 1: Walk stylesheets to find var() references in rules matching this element
+  // Resolve computed style once and thread it through — getComputedStyle and
+  // each getPropertyValue force style recalc, and this used to run per
+  // variable inside a nested loop.
+  let cs: CSSStyleDeclaration;
+  try {
+    cs = getComputedStyle(el);
+  } catch {
+    return [];
+  }
+
+  // :root --* definitions discovered during the walk. Applied after the
+  // var()-reference strategies so those keep dedupe precedence (a referenced
+  // variable resolves its real definition scope, which may be an ancestor).
+  const rootDefs: string[] = [];
+  const seenRootDefs = new Set<string>();
+
+  // Single walk over all stylesheets handles both:
+  //  - rules matching el → var() references (Strategy 1)
+  //  - :root rules → inherited --* definitions (Strategy 3)
   try {
     for (const sheet of document.styleSheets) {
       try {
         for (const rule of sheet.cssRules) {
           if (!(rule instanceof CSSStyleRule)) continue;
-          if (!el.matches(rule.selectorText)) continue;
 
-          // Check each property's value for var(--name) references
+          let matchesEl = false;
+          try {
+            matchesEl = el.matches(rule.selectorText);
+          } catch {
+            // Invalid selector for matches() (e.g. ::-webkit-*) — not a match
+          }
+          const isRoot = rule.selectorText === ":root";
+          if (!matchesEl && !isRoot) continue;
+
           for (let i = 0; i < rule.style.length; i++) {
             const prop = rule.style[i];
-            const value = rule.style.getPropertyValue(prop);
-            extractVarReferences(value, el, found);
+
+            if (matchesEl) {
+              extractVarReferences(rule.style.getPropertyValue(prop), el, cs, found);
+            }
+
+            if (isRoot && prop.startsWith("--") && !seenRootDefs.has(prop)) {
+              seenRootDefs.add(prop);
+              rootDefs.push(prop);
+            }
           }
         }
       } catch {
@@ -63,14 +100,23 @@ export function getCustomProperties(el: Element): CustomProp[] {
   if (el instanceof HTMLElement) {
     for (let i = 0; i < el.style.length; i++) {
       const prop = el.style[i];
-      const value = el.style.getPropertyValue(prop);
-      extractVarReferences(value, el, found);
+      extractVarReferences(el.style.getPropertyValue(prop), el, cs, found);
     }
   }
 
-  // Strategy 3: Also collect any --* properties directly defined on ancestor scopes
-  // that might be relevant (e.g. :root variables used via inheritance)
-  collectAncestorCustomProperties(el, found);
+  // Strategy 3: :root --* used via inheritance, for any not already discovered
+  for (const prop of rootDefs) {
+    if (found.has(prop)) continue;
+    const computedValue = cs.getPropertyValue(prop).trim();
+    if (computedValue) {
+      found.set(prop, {
+        name: prop,
+        value: computedValue,
+        scope: document.documentElement,
+        scopeSelector: ":root",
+      });
+    }
+  }
 
   return Array.from(found.values());
 }
@@ -79,6 +125,7 @@ export function getCustomProperties(el: Element): CustomProp[] {
 function extractVarReferences(
   value: string,
   el: Element,
+  cs: CSSStyleDeclaration,
   found: Map<string, CustomProp>
 ): void {
   const varRegex = /var\(\s*(--[\w-]+)/g;
@@ -87,7 +134,7 @@ function extractVarReferences(
     const name = match[1];
     if (found.has(name)) continue;
 
-    const resolved = resolveCustomProperty(el, name);
+    const resolved = resolveCustomProperty(el, name, cs);
     if (resolved) {
       found.set(name, resolved);
     }
@@ -95,52 +142,15 @@ function extractVarReferences(
 }
 
 /**
- * Collect custom properties defined on ancestor elements (including :root).
- * Only includes properties that are actually used (have non-empty values).
- */
-function collectAncestorCustomProperties(
-  el: Element,
-  found: Map<string, CustomProp>
-): void {
-  // Check :root for --* properties
-  try {
-    for (const sheet of document.styleSheets) {
-      try {
-        for (const rule of sheet.cssRules) {
-          if (!(rule instanceof CSSStyleRule)) continue;
-          if (rule.selectorText !== ":root") continue;
-
-          for (let i = 0; i < rule.style.length; i++) {
-            const prop = rule.style[i];
-            if (!prop.startsWith("--")) continue;
-            if (found.has(prop)) continue;
-
-            const computedValue = getComputedStyle(el).getPropertyValue(prop).trim();
-            if (computedValue) {
-              found.set(prop, {
-                name: prop,
-                value: computedValue,
-                scope: document.documentElement,
-                scopeSelector: ":root",
-              });
-            }
-          }
-        }
-      } catch {
-        // CORS error — skip
-      }
-    }
-  } catch {
-    // ignore
-  }
-}
-
-/**
  * Resolve a custom property: find where it's defined and what its computed value is.
  * Walks up the DOM from el to find the nearest ancestor where --name is set.
  */
-function resolveCustomProperty(el: Element, name: string): CustomProp | null {
-  const computedValue = getComputedStyle(el).getPropertyValue(name).trim();
+function resolveCustomProperty(
+  el: Element,
+  name: string,
+  cs: CSSStyleDeclaration
+): CustomProp | null {
+  const computedValue = cs.getPropertyValue(name).trim();
   if (!computedValue) return null;
 
   // Walk up to find the definition scope
@@ -258,16 +268,9 @@ export function getReadableName(cls: string): string | null {
   return null;
 }
 
-// Managed <style> tag for class-scope overrides
-let classScopeStyle: HTMLStyleElement | null = null;
-
-function getClassScopeStyle(): HTMLStyleElement {
-  if (!classScopeStyle) {
-    classScopeStyle = document.createElement("style");
-    classScopeStyle.setAttribute("data-tuner-scope", "class");
-    document.head.appendChild(classScopeStyle);
-  }
-  return classScopeStyle;
+/** Test-only read of the class-scope sheet's serialized CSS. */
+export function getClassScopeCss(): string | null {
+  return _readManagedSheetCss(CLASS_SCOPE_KEY);
 }
 
 // Track class-scope overrides: className → Map<prop, value>
@@ -345,7 +348,6 @@ function rebuildClassStyles(): void {
 
 /** The actual <style> rewrite. */
 function doRebuildClassStyles(): void {
-  const style = getClassScopeStyle();
   const rules: string[] = [];
 
   for (const [className, props] of classOverrides) {
@@ -358,17 +360,14 @@ function doRebuildClassStyles(): void {
     rules.push(`.${escapedClass} {\n${declarations}\n}`);
   }
 
-  style.textContent = rules.join("\n\n");
+  managedSheet(CLASS_SCOPE_KEY).replace(rules.join("\n\n"));
 }
 
 /**
- * Clean up the class-scope <style> tag.
+ * Clean up the class-scope managed sheet.
  */
 export function destroyClassStyles(): void {
-  if (classScopeStyle) {
-    classScopeStyle.remove();
-    classScopeStyle = null;
-  }
+  managedSheet(CLASS_SCOPE_KEY).dispose();
   classOverrides.clear();
 }
 

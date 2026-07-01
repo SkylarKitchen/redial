@@ -55,6 +55,7 @@ export function isScrubActive(): boolean {
  * @param active - `true` to mark a scrub as in progress, `false` to clear it.
  */
 export function setScrubActive(active: boolean): void {
+  if (scrubActive === active) return; // no change — don't wake subscribers
   scrubActive = active;
   notify();
 }
@@ -76,6 +77,7 @@ export function getScrubGroup(): "margin" | "padding" | null {
  * @param group - `"margin"`, `"padding"`, or `null` to clear.
  */
 export function setScrubGroup(group: "margin" | "padding" | null): void {
+  if (scrubGroup === group) return; // no change — don't wake subscribers
   scrubGroup = group;
   notify();
 }
@@ -97,6 +99,7 @@ export function getHoverGroup(): "margin" | "padding" | null {
  * @param group - `"margin"`, `"padding"`, or `null` to clear.
  */
 export function setHoverGroup(group: "margin" | "padding" | null): void {
+  if (hoverGroup === group) return; // no change — don't wake subscribers
   hoverGroup = group;
   notify();
 }

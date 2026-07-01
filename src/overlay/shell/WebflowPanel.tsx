@@ -18,6 +18,7 @@ import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "..
 import { sectionMatchesQuery } from "./PropertySearch";
 import { PropertyContextMenu, type ContextMenuState } from "./PropertyContextMenu";
 import { SectionMemoryProvider } from "../controls";
+import { managedSheet } from "../core/managedSheet";
 
 import { LayoutSection } from "../sections/LayoutSection";
 import { SpacingSection } from "../sections/SpacingSection";
@@ -88,14 +89,11 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
 
   // Inject :focus-visible styles for keyboard navigation
   useEffect(() => {
-    const id = 'tuner-focus-styles';
-    if (!document.getElementById(id)) {
-      const style = document.createElement('style');
-      style.id = id;
-      style.textContent = `.tuner-focusable:focus-visible { outline: none; box-shadow: ${focusRing}; }`;
-      document.head.appendChild(style);
-    }
-    return () => { document.getElementById(id)?.remove(); };
+    const key = 'tuner-focus-styles';
+    managedSheet(key).replace(
+      `.tuner-focusable:focus-visible { outline: none; box-shadow: ${focusRing}; }`,
+    );
+    return () => { managedSheet(key).dispose(); };
   }, []);
 
   // ── Indicator helpers ──

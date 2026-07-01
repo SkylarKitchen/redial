@@ -3,6 +3,7 @@ import {
   parseNum,
   parseVarRef,
   extractUnit,
+  splitCSSList,
   parseBoxShadow,
   shadowToCSS,
   parseFilterItems,
@@ -11,6 +12,8 @@ import {
   transformToCSS,
   parseSelfPerspective,
   transformToCSSWithPerspective,
+  parseTransitions,
+  transitionsToCSS,
 } from "../cssParsers";
 
 // ─── parseVarRef ─────────────────────────────────────────────────────
@@ -182,6 +185,141 @@ describe("shadowToCSS", () => {
       { x: 0, y: 0, blur: 8, spread: 0, color: "red", inset: false },
     ]);
     expect(css).toBe("1px 1px 2px 0px #000, 0px 0px 8px 0px red");
+  });
+});
+
+// ─── shadowToCSS — text variant (issue #61) ───────────────────────────
+
+describe("shadowToCSS text variant", () => {
+  it("emits three lengths and no spread for text shadows", () => {
+    // A fourth length is invalid text-shadow — browsers drop the whole
+    // declaration, so the Typography section's edits visibly did nothing.
+    expect(
+      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0, 0, 0, 0.25)", inset: false }], "text")
+    ).toBe("0px 2px 4px rgba(0, 0, 0, 0.25)");
+  });
+
+  it("omits spread and inset even when set on the value", () => {
+    expect(
+      shadowToCSS([{ x: 1, y: 1, blur: 2, spread: 9, color: "#000", inset: true }], "text")
+    ).toBe("1px 1px 2px #000");
+  });
+
+  it("round-trips a computed text-shadow through parse and serialize", () => {
+    // getComputedStyle returns color-first, three lengths.
+    const parsed = parseBoxShadow("rgba(0, 0, 0, 0.25) 0px 2px 4px");
+    expect(shadowToCSS(parsed, "text")).toBe("0px 2px 4px rgba(0, 0, 0, 0.25)");
+  });
+
+  it("never contains four consecutive lengths or the inset keyword", () => {
+    const css = shadowToCSS(
+      [
+        { x: 1, y: 2, blur: 3, spread: 4, color: "#abc", inset: true },
+        { x: 5, y: 6, blur: 7, spread: 8, color: "red", inset: false },
+      ],
+      "text"
+    );
+    expect(css).not.toContain("inset");
+    for (const item of css.split(", ")) {
+      const lengths = item.match(/-?[\d.]+px/g) ?? [];
+      expect(lengths.length).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it("defaults to the box variant with spread and inset", () => {
+    expect(
+      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 6, color: "#000", inset: true }])
+    ).toBe("inset 0px 2px 4px 6px #000");
+  });
+});
+
+// ─── splitCSSList ─────────────────────────────────────────────────────
+
+describe("splitCSSList", () => {
+  it("splits a plain comma list", () => {
+    expect(splitCSSList("opacity, transform")).toEqual(["opacity", "transform"]);
+  });
+
+  it("keeps commas inside parentheses with the item", () => {
+    expect(splitCSSList("cubic-bezier(0.4, 0, 0.2, 1), ease-in")).toEqual([
+      "cubic-bezier(0.4, 0, 0.2, 1)",
+      "ease-in",
+    ]);
+  });
+
+  it("handles nested parentheses", () => {
+    expect(splitCSSList("drop-shadow(0 0 2px rgba(0, 0, 0, 0.5)), blur(2px)")).toEqual([
+      "drop-shadow(0 0 2px rgba(0, 0, 0, 0.5))",
+      "blur(2px)",
+    ]);
+  });
+
+  it("returns [] for an empty string", () => {
+    expect(splitCSSList("")).toEqual([]);
+  });
+});
+
+// ─── parseTransitions — paren-aware easing split (issue #62) ──────────
+
+describe("parseTransitions with function-valued easings", () => {
+  const makeCs = (overrides: Record<string, string>) =>
+    ({
+      transitionProperty: "opacity",
+      transitionDuration: "0.3s",
+      transitionTimingFunction: "ease",
+      transitionDelay: "0s",
+      ...overrides,
+    }) as unknown as CSSStyleDeclaration;
+
+  it("keeps a cubic-bezier easing intact", () => {
+    // Tailwind's default `transition` utility uses exactly this easing; a
+    // naive split shredded it into four garbage tokens that misaligned
+    // every per-property easing after it.
+    const result = parseTransitions(
+      makeCs({ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" })
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].easing).toBe("cubic-bezier(0.4, 0, 0.2, 1)");
+  });
+
+  it("aligns easings with properties across a mixed list", () => {
+    const result = parseTransitions(
+      makeCs({
+        transitionProperty: "opacity, transform",
+        transitionDuration: "0.3s, 0.5s",
+        transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1), ease-in",
+        transitionDelay: "0s, 0.1s",
+      })
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      property: "opacity",
+      duration: 300,
+      easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+      delay: 0,
+    });
+    expect(result[1]).toMatchObject({
+      property: "transform",
+      duration: 500,
+      easing: "ease-in",
+      delay: 100,
+    });
+  });
+
+  it("keeps a steps() easing intact", () => {
+    const result = parseTransitions(
+      makeCs({ transitionTimingFunction: "steps(4, end)" })
+    );
+    expect(result[0].easing).toBe("steps(4, end)");
+  });
+
+  it("re-serializes to a valid transition shorthand", () => {
+    const result = parseTransitions(
+      makeCs({ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" })
+    );
+    expect(transitionsToCSS(result)).toBe(
+      "opacity 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms"
+    );
   });
 });
 
