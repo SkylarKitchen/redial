@@ -39,7 +39,9 @@ function runTsc(args: string[]): string {
 }
 
 describe("next-plugin.d.cts (issue #88)", () => {
-  it("typechecks for consumers with skipLibCheck: false", () => {
+  // 60s budget: spawned tsc typechecks next's bundled types too — cold CI
+  // caches blow the 5s vitest default (observed 6s on Actions runners).
+  it("typechecks for consumers with skipLibCheck: false", { timeout: 60_000 }, () => {
     // The consumer fixture must live under the repo so `import type { … }
     // from "next"` resolves through the repo's node_modules chain.
     const cacheDir = join(repoRoot, "node_modules", ".cache");
