@@ -2,9 +2,9 @@
 # run-tasks-parallel.sh — Parallel task runner using git worktrees
 # Each worker gets an isolated repo copy. File locking prevents duplicate claims.
 #
-# Usage:
-#   ./run-tasks-parallel.sh tasks.md 10
-#   ./run-tasks-parallel.sh tasks.md 5 --max-turns 50
+# Usage (run from the repo root):
+#   ./scripts/run-tasks-parallel.sh tasks.md 10
+#   ./scripts/run-tasks-parallel.sh tasks.md 5 --max-turns 50
 #
 # Args:
 #   $1 = PRD file (markdown checklist)
@@ -13,7 +13,9 @@
 
 set -euo pipefail
 
-PRD_FILE="${1:?Usage: ./run-tasks-parallel.sh <tasks.md> [workers] [--max-turns N]}"
+[[ "$(uname)" == "Darwin" ]] || { echo "macOS only (uses BSD sed -i '')" >&2; exit 1; }
+
+PRD_FILE="${1:?Usage: ./scripts/run-tasks-parallel.sh <tasks.md> [workers] [--max-turns N]}"
 NUM_WORKERS="${2:-10}"
 shift 2 2>/dev/null || shift 1
 EXTRA_FLAGS="${*:---max-turns 30}"
@@ -180,7 +182,7 @@ done
 
 # Wait for all workers
 echo "All workers launched. Waiting for completion..."
-echo "(Use ./dashboard-parallel.sh to monitor progress)"
+echo "(Use ./scripts/dashboard.sh $PRD_FILE to monitor progress)"
 echo ""
 
 for pid in "${pids[@]}"; do
@@ -220,10 +222,10 @@ done
 
 echo ""
 echo "To merge all workers into $MAIN_BRANCH:"
-echo "  ./merge-workers.sh"
+echo "  ./scripts/merge-workers.sh"
 echo ""
 echo "To clean up worktrees:"
-echo "  ./cleanup-workers.sh"
+echo "  ./scripts/cleanup-workers.sh"
 
 # --- Cleanup temp files ---
 rm -f "$TASK_FILE" "$COUNTER_FILE"

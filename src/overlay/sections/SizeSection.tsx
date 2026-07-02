@@ -10,6 +10,7 @@ import { Section, SelectRow, TextRow } from "../controls";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
 import { WebflowSegmentedControl } from "../controls/WebflowSegmentedControl";
 import { SizeInputCell } from "./SizeInputCell";
+import { useAppliedPropSync } from "./layoutControls";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { isDirty } from "../core/apply";
@@ -48,6 +49,13 @@ const OVERFLOW_OPTS = [
   { value: "scroll", icon: <OverflowScrollIcon size={16} />, title: "Scroll" },
   { value: "auto", label: "Auto", title: "Auto" },
 ];
+
+/** Map an align-items value to the Children sizing mode (fill/fit/fixed). */
+function alignItemsToChildrenMode(alignItems: string): string {
+  if (alignItems === "stretch") return "fill";
+  if (alignItems === "flex-start" || alignItems === "start") return "fit";
+  return "fixed";
+}
 
 const LOCK_BTN: React.CSSProperties = {
   width: 20, height: 20, display: "flex", alignItems: "center",
@@ -121,12 +129,14 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   const [showMoreSize, setShowMoreSize] = useState(false);
 
   // Children sizing mode (only relevant for flex/grid containers)
-  const [childrenMode, setChildrenMode] = useState<string>(() => {
-    const ai = cs.alignItems;
-    if (ai === "stretch") return "fill";
-    if (ai === "flex-start" || ai === "start") return "fit";
-    return "fixed";
-  });
+  const [childrenMode, setChildrenMode] = useState<string>(() =>
+    alignItemsToChildrenMode(cs.alignItems));
+
+  // align-items is also written by the Layout section's AlignBox / Y dropdown
+  // (issue #77). Re-derive the Children mode from every applied value so the
+  // two sections' controls can't disagree.
+  useAppliedPropSync(element, "align-items", (v) =>
+    setChildrenMode(alignItemsToChildrenMode(v)));
 
   // Size units
   const [widthUnit, setWidthUnit] = useState(() => detectUnit(element, "width"));
@@ -510,6 +520,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           <button
             onClick={() => setShowMoreSize(!showMoreSize)}
             title="More size options"
+            aria-expanded={showMoreSize}
             style={{
               width: 24,
               height: 24,
@@ -529,10 +540,16 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           </button>
         </div>
       )}
-      <div onClick={() => setShowMoreSize(!showMoreSize)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderTop: `1px solid ${border.subtle}` }}>
+      {/* Native <button> so the expander is Tab-reachable and activates on
+          Enter/Space (issue #85 — this was a mouse-only div). */}
+      <button
+        onClick={() => setShowMoreSize(!showMoreSize)}
+        aria-expanded={showMoreSize}
+        style={{ width: "100%", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, background: "transparent", fontFamily: font.sans, textAlign: "left" as const, borderTop: `1px solid ${border.subtle}`, borderRight: "none", borderBottom: "none", borderLeft: "none" }}
+      >
         <ChevronRight size={9} strokeWidth={2} style={{ color: text.label, transition: `transform ${ms("expand")}`, transform: showMoreSize ? "rotate(90deg)" : "rotate(0deg)" }} />
         <span style={{ fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: text.label }}>More size options</span>
-      </div>
+      </button>
       {showMoreSize && (
         <>
           <TextRow label="Aspect" value={aspectRatio} placeholder="16 / 9" onChange={handleAspectRatioChange} onContextMenu={ctxMenu("aspect-ratio", aspectRatio || "auto")} computedProp="aspect-ratio" computedElement={element} indicator={ind("aspect-ratio")} onReset={() => resetCssStr("aspect-ratio", setAspectRatio)} />

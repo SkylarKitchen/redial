@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createElement } from "react";
+import { createElement, type ComponentProps } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { Section } from "../controls";
@@ -34,7 +34,8 @@ function renderSection() {
     root.render(
       createElement(
         Section,
-        { title: "Layout" },
+        // children arrive via createElement rest args (runtime-identical).
+        { title: "Layout" } as ComponentProps<typeof Section>,
         createElement("div", null, "child-content"),
       ),
     );

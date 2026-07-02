@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   applyStateStyle,
   removeStateStyle,
@@ -236,6 +236,61 @@ describe("destroyStateStyles", () => {
     destroyStateStyles();
     destroyStateStyles(); // should not throw
     expect(getStateStyleCss()).toBeNull();
+  });
+});
+
+// ─── destroyStateStyles — pending rAF must not resurrect the sheet (#83) ──
+
+describe("destroyStateStyles — pending rAF (#83)", () => {
+  // Manual rAF mock: capture callbacks so we can flush them AFTER teardown,
+  // simulating a frame that was queued before destroy fired.
+  let rafQueue: Map<number, FrameRequestCallback>;
+  let rafSeq: number;
+
+  beforeEach(() => {
+    rafQueue = new Map();
+    rafSeq = 0;
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      const id = ++rafSeq;
+      rafQueue.set(id, cb);
+      return id;
+    });
+    vi.stubGlobal("cancelAnimationFrame", (id: number) => {
+      rafQueue.delete(id);
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    destroyStateStyles();
+  });
+
+  function flushRafQueue() {
+    const pending = Array.from(rafQueue.values());
+    rafQueue.clear();
+    for (const cb of pending) cb(0);
+  }
+
+  it("a rAF queued before destroy does not re-create the state sheet", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red"); // schedules a rAF rebuild
+    destroyStateStyles(); // teardown while the frame is still pending
+    flushRafQueue(); // the browser fires the already-queued frame
+
+    // The state sheet must stay gone — no orphan style artifact in the page.
+    expect(getStateStyleCss()).toBeNull();
+    expect(document.querySelectorAll("style").length).toBe(0);
+  });
+
+  it("flushScheduledRebuild consumes the queued frame (no double rebuild after destroy)", () => {
+    const el = makeEl();
+    applyStateStyle(el, "hover", "color", "red");
+    flushScheduledRebuild(); // synchronous rebuild — should also cancel the queued frame
+    destroyStateStyles();
+    flushRafQueue();
+
+    expect(getStateStyleCss()).toBeNull();
+    expect(document.querySelectorAll("style").length).toBe(0);
   });
 });
 

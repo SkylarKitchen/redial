@@ -169,20 +169,20 @@ describe("shadowToCSS", () => {
 
   it("serializes single shadow", () => {
     expect(
-      shadowToCSS([{ x: 2, y: 4, blur: 6, spread: 0, color: "#000", inset: false }])
+      shadowToCSS([{ x: 2, y: 4, blur: 6, spread: 0, color: "#000", inset: false, visible: true }])
     ).toBe("2px 4px 6px 0px #000");
   });
 
   it("serializes inset shadow", () => {
     expect(
-      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 0, color: "#000", inset: true }])
+      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 0, color: "#000", inset: true, visible: true }])
     ).toBe("inset 0px 2px 4px 0px #000");
   });
 
   it("serializes multiple shadows joined by commas", () => {
     const css = shadowToCSS([
-      { x: 1, y: 1, blur: 2, spread: 0, color: "#000", inset: false },
-      { x: 0, y: 0, blur: 8, spread: 0, color: "red", inset: false },
+      { x: 1, y: 1, blur: 2, spread: 0, color: "#000", inset: false, visible: true },
+      { x: 0, y: 0, blur: 8, spread: 0, color: "red", inset: false, visible: true },
     ]);
     expect(css).toBe("1px 1px 2px 0px #000, 0px 0px 8px 0px red");
   });
@@ -195,13 +195,13 @@ describe("shadowToCSS text variant", () => {
     // A fourth length is invalid text-shadow — browsers drop the whole
     // declaration, so the Typography section's edits visibly did nothing.
     expect(
-      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0, 0, 0, 0.25)", inset: false }], "text")
+      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 0, color: "rgba(0, 0, 0, 0.25)", inset: false, visible: true }], "text")
     ).toBe("0px 2px 4px rgba(0, 0, 0, 0.25)");
   });
 
   it("omits spread and inset even when set on the value", () => {
     expect(
-      shadowToCSS([{ x: 1, y: 1, blur: 2, spread: 9, color: "#000", inset: true }], "text")
+      shadowToCSS([{ x: 1, y: 1, blur: 2, spread: 9, color: "#000", inset: true, visible: true }], "text")
     ).toBe("1px 1px 2px #000");
   });
 
@@ -214,8 +214,8 @@ describe("shadowToCSS text variant", () => {
   it("never contains four consecutive lengths or the inset keyword", () => {
     const css = shadowToCSS(
       [
-        { x: 1, y: 2, blur: 3, spread: 4, color: "#abc", inset: true },
-        { x: 5, y: 6, blur: 7, spread: 8, color: "red", inset: false },
+        { x: 1, y: 2, blur: 3, spread: 4, color: "#abc", inset: true, visible: true },
+        { x: 5, y: 6, blur: 7, spread: 8, color: "red", inset: false, visible: true },
       ],
       "text"
     );
@@ -228,7 +228,7 @@ describe("shadowToCSS text variant", () => {
 
   it("defaults to the box variant with spread and inset", () => {
     expect(
-      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 6, color: "#000", inset: true }])
+      shadowToCSS([{ x: 0, y: 2, blur: 4, spread: 6, color: "#000", inset: true, visible: true }])
     ).toBe("inset 0px 2px 4px 6px #000");
   });
 });

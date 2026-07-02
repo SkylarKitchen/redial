@@ -213,6 +213,25 @@ export const TypographySection = memo(function TypographySection({
     else if (lineHeightUnit === "%") apply("line-height", `${v}%`);
     else apply("line-height", `${v}${lineHeightUnit}`);
   }, [apply, lineHeightUnit]);
+  const handleLineHeightUnitChange = useCallback((u: string) => {
+    if (u === lineHeightUnit) return;
+    if (lineHeightVar) setLineHeightVar(null);
+    // Line-height units interconvert through the font-size multiplier:
+    // unitless ("\u2014") and em are both multipliers of the element's own
+    // font-size, % is that multiplier \u00d7 100, px is multiplier \u00d7 font-size.
+    // (convertUnit's % basis is parent width \u2014 wrong for line-height \u2014 so
+    // convert locally.) Then APPLY the converted value so the panel and the
+    // element never silently disagree (#81).
+    const conv = getConversionCtx();
+    const fs = conv.computedFontSize || 16;
+    const toMultiplier = (v: number, unit: string) => (unit === "px" ? v / fs : unit === "%" ? v / 100 : v);
+    const fromMultiplier = (m: number, unit: string) => (unit === "px" ? m * fs : unit === "%" ? m * 100 : m);
+    const c = Math.round(fromMultiplier(toMultiplier(lineHeight, lineHeightUnit), u) * 100) / 100;
+    fireLineHeightHint(lineHeight, lineHeightUnit, c, u, conv);
+    setLineHeight(c);
+    setLineHeightUnit(u);
+    apply("line-height", u === "\u2014" ? String(c) : `${c}${u}`);
+  }, [apply, getConversionCtx, fireLineHeightHint, lineHeight, lineHeightUnit, lineHeightVar]);
   const handleLetterSpacingChange = useCallback((v: number) => { setLetterSpacing(v); apply("letter-spacing", `${v}${letterSpacingUnit}`); }, [apply, letterSpacingUnit]);
   const handleColorChange = useCallback((v: string) => { setColor(v); apply("color", v); }, [apply]);
   const handleTextAlignChange = useCallback((v: string) => { setTextAlign(v); apply("text-align", v); }, [apply]);
@@ -256,7 +275,10 @@ export const TypographySection = memo(function TypographySection({
       title="Typography"
       indicator={sectionInd([
         "font-family", "font-weight", "font-size", "line-height",
-        "letter-spacing", "color", "text-align", "text-decoration", "text-transform",
+        // Decoration is applied as the longhand text-decoration-line (matching
+        // the Tailwind converter + save path) — track the same key so edits
+        // light the section dot (#78).
+        "letter-spacing", "color", "text-align", "text-decoration-line", "text-transform",
       ])}
       forceOpen={forceOpen}
       focusOpen={focusOpen}
@@ -313,7 +335,7 @@ export const TypographySection = memo(function TypographySection({
           onChange={(v) => { if (lineHeightVar) setLineHeightVar(null); handleLineHeightChange(v); }}
           unit={lineHeightUnit === "\u2014" ? "\u2013" : lineHeightUnit}
           units={LINE_HEIGHT_UNITS}
-          onUnitChange={(u) => { if (lineHeightVar) setLineHeightVar(null); if (lineHeightUnit !== "\u2014" && u !== "\u2014") { const ctx = getConversionCtx(); const c = convertUnit(lineHeight, lineHeightUnit, u, ctx); fireLineHeightHint(lineHeight, lineHeightUnit, c, u, ctx); setLineHeight(c); } setLineHeightUnit(u); }}
+          onUnitChange={handleLineHeightUnitChange}
           step={lineHeightUnit === "%" ? 5 : lineHeightUnit === "px" ? (ctx.isTailwind ? 4 : 1) : 0.05}
           conversionHint={lineHeightHint}
           cssVar={lineHeightVar}
@@ -349,6 +371,7 @@ export const TypographySection = memo(function TypographySection({
       <div style={{ padding: "4px 12px" }}>
         <button
           onClick={() => setShowTypoAdvanced(!showTypoAdvanced)}
+          aria-expanded={showTypoAdvanced}
           style={EXPAND_BUTTON}
           onMouseEnter={(e) => { e.currentTarget.style.background = surface.hover; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = surface.subtle; }}

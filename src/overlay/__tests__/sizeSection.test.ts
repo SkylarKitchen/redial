@@ -222,6 +222,9 @@ describe("object-fit and object-position only appear for media elements", () => 
     const ctx: SectionCtx = {
       element,
       apply: vi.fn(),
+      reset: vi.fn(),
+      resetRead: () => 0,
+      resetReadStr: () => "",
       ind: () => "none",
       sectionInd: () => "none",
       cs: getComputedStyle(element),
@@ -235,6 +238,7 @@ describe("object-fit and object-position only appear for media elements", () => 
         viewportHeight: 720,
       }),
       ctxMenu: () => vi.fn(),
+      isTailwind: false,
     };
 
     const html = renderToString(

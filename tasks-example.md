@@ -5,7 +5,7 @@
 > no memory of the others.
 >
 > Works with both runners:
-> - `./run-tasks-parallel.sh tasks-example.md 5` (bash, host worktrees)
+> - `./scripts/run-tasks-parallel.sh tasks-example.md 5` (bash, host worktrees)
 > - `npm run tasks -- tasks-example.md --workers 5` (sandcastle, Docker isolation)
 >
 > See [`docs/sandcastle.md`](docs/sandcastle.md) for the trade-offs.

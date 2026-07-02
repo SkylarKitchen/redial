@@ -24,7 +24,17 @@ export function HintBar({ show, onDismiss }: HintBarProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
+          // Keyboard-dismissible (issue #85 — this was a mouse-only div).
+          role="button"
+          tabIndex={0}
+          aria-label="Dismiss shortcuts hint"
           onClick={onDismiss}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onDismiss();
+            }
+          }}
           style={{
             fontSize: 10,
             fontFamily: font.sans,

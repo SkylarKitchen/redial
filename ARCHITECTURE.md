@@ -39,7 +39,7 @@ graph TB
 
     subgraph Rendering["Rendering Layer"]
         Overlay["Overlay.tsx<br/>Lifecycle Orchestrator"]
-        Panel["WebflowPanel.tsx<br/>9 CSS Sections"]
+        Panel["WebflowPanel.tsx<br/>8 CSS Sections + Custom properties"]
         Header["Header.tsx<br/>Breadcrumb + Drag"]
         Footer["Footer.tsx<br/>Save · Reset · Diff"]
         Controls["DialKit Controls<br/>Sliders · Pickers · Dropdowns"]
@@ -86,7 +86,7 @@ sequenceDiagram
     Overlay->>Infer: infer(element)
     Note over Infer: getComputedStyle()<br/>→ detect type (text? flex? grid?)<br/>→ build DialConfig sections
     Infer-->>Panel: InferResult { config, name, varUnits, spacing }
-    Panel->>Panel: Render 9 collapsible sections
+    Panel->>Panel: Render 8 collapsible sections + Custom properties
 
     User->>Panel: Drag slider / pick color
     Panel->>Apply: applyInlineStyle(el, prop, value)
@@ -125,7 +125,7 @@ graph LR
     end
 
     subgraph Output
-        DC["DialConfig<br/>(9 sections × N controls)"]
+        DC["DialConfig<br/>(8 sections × N controls)"]
         SI["Scope Info<br/>element · class · tailwind"]
         VU["Variable Units<br/>--spacing-sm → px"]
     end
@@ -152,7 +152,7 @@ graph LR
 | Backgrounds | background-color, gradient, image, blend-mode | Always |
 | Borders | border width/color/radius, outline | Always |
 | Effects | opacity, box-shadow, filter, backdrop-filter, transform | Always |
-| Variables | CSS custom properties detected on element | When vars found |
+| Custom properties | arbitrary user-added CSS declarations (escape hatch) | Always (9th section) |
 
 ### Rendering Layer
 
@@ -165,7 +165,7 @@ graph TD
     Header["Header.tsx<br/>Breadcrumb · Scope pills · Drag handle"]
     WP["WebflowPanel.tsx<br/>Section orchestrator"]
     Footer["Footer.tsx<br/>Save · Reset · Diff · Copy"]
-    Search["SearchBar<br/>Filter controls by name"]
+    Search["PropertySearch<br/>Filter controls by name"]
 
     Overlay --> Selector
     Overlay --> Header
@@ -177,10 +177,10 @@ graph TD
     WP --> SZ["SizeSection"]
     WP --> PS["PositionSection"]
     WP --> TS["TypographySection"]
-    WP --> BG["BackgroundSection"]
-    WP --> BR["BorderSection"]
+    WP --> BG["BackgroundsSection"]
+    WP --> BR["BordersSection"]
     WP --> EF["EffectsSection"]
-    WP --> VS["VariablesSection"]
+    WP --> CP["CustomPropertiesSection"]
 
     Header --> Search
 
@@ -312,7 +312,7 @@ graph LR
         Hover[":hover"]
         Focus[":focus"]
         Active[":active"]
-        Visited[":visited"]
+        FocusWithin[":focus-within"]
         FocusVis[":focus-visible"]
     end
 
@@ -369,13 +369,13 @@ graph TD
 
 | Group | Examples |
 |-------|---------|
-| `color` | `text`, `textMuted`, `accent`, `border`, `bg`, `surface` |
-| `darkToolbar` | `bg`, `border`, `text` — dark header/footer |
-| `layout` | `panelWidth: 300`, `headerHeight: 36`, `sectionGap: 1` |
-| `zIndex` | `panel: 99998`, `selector: 99997`, `tooltip: 99999` |
-| `shadow` | `panel`, `popover`, `tooltip`, `inset` |
-| `indicatorColor` | `modified` (amber), `linked` (purple) |
-| `spacing` | Zone colors for box-model visualization |
+| `color` | `background`, `foreground`, `mutedForeground`, `primary`, `border`, `input` |
+| `darkToolbar` | Dark toolbar / FAB surface tokens |
+| `layout` | `panelWidth: 340`, `panelRadius: 10`, `labelWidth: 64` |
+| `zIndex` | `max: 2147483647`, `overlay`, `guide`, `backdrop` |
+| `shadow` | `panel`, `panelDrag`, `dropdown`, `picker` |
+| `indicatorColor` | Cascade provenance (ADR-0007): `authored-here` (blue), `inherited` (orange), `element-inline` (pink), `state` (green), `modified` (amber), `none` |
+| `spacingZone` | Zone colors for box-model visualization |
 
 **`timing.ts` tokens:**
 
@@ -385,6 +385,7 @@ graph TD
 | `micro` | 60ms | Micro-interactions |
 | `fast` | 80ms | Hover states |
 | `normal` | 100ms | Default transitions |
+| `release` | 120ms | Press-release spring-back |
 | `expand` | 150ms | Section expand/collapse |
 | `layout` | 200ms | Panel reflows |
 | `slow` | 300ms | Cross-fades |
@@ -401,7 +402,7 @@ graph LR
         Client["dist/index.js<br/>Tuner component"]
         Server["dist/server/index.js<br/>GET + POST handlers"]
         Plugin["next-plugin.cjs<br/>Next.js config wrapper"]
-        Styles["dist/index.css<br/>Global styles"]
+        Styles["dist/index.css<br/>Scoped stylesheet (.__tuner-root)"]
     end
 
     subgraph App["Next.js App"]
@@ -421,6 +422,7 @@ graph LR
 ```tsx
 // 1. app/layout.tsx
 import { Tuner } from "redial";
+import "redial/styles.css";
 export default function Layout({ children }) {
   return <html><body>{children}<Tuner /></body></html>;
 }
@@ -437,48 +439,40 @@ module.exports = withTuner({ /* next config */ });
 
 ## Directory Map
 
+`src/overlay/` is organized into 8 subdirectories plus shared root utilities.
+The per-file map lives in [`src/overlay/DIRECTORY.md`](src/overlay/DIRECTORY.md)
+— read that first for any task.
+
 ```
 redial/
 ├── src/
-│   ├── index.tsx                    # Entry — exports Tuner component
+│   ├── index.tsx                    # Entry — exports Tuner component (SSR-safe mount gate)
 │   ├── overlay/
-│   │   ├── Overlay.tsx              # Lifecycle: hotkey → selector → panel
-│   │   ├── WebflowPanel.tsx         # 9 CSS sections orchestrator
-│   │   ├── Header.tsx               # Breadcrumb · scope pills · drag
-│   │   ├── Footer.tsx               # Save · reset · diff · copy
-│   │   ├── infer.ts                 # DOM → DialConfig (intelligence)
-│   │   ├── apply.ts                 # Inline styles + undo/redo stack
+│   │   ├── DIRECTORY.md             # Per-file module map — read this first
+│   │   ├── core/                    # Engine (no UI): apply.ts (styles + undo/redo),
+│   │   │                            #   engine.ts (unified facade), infer.ts, scope.ts,
+│   │   │                            #   statePreview.ts, sourcemap.ts, commitUtils.ts, …
+│   │   ├── controls/                # Shared UI primitives (Section, SliderRow, ColorRow, …)
+│   │   ├── sections/                # 8 style sections + Custom properties + sub-editors
+│   │   ├── shell/                   # Panel frame: Overlay.tsx (entry), Header, Footer,
+│   │   │                            #   WebflowPanel, Toolbar, modals, drawers
+│   │   ├── variables/               # Variable/token discovery, linking, collections
+│   │   ├── overlays/                # On-page overlays (box model, grid, flex gap, spacing)
+│   │   ├── navigator/               # DOM tree panel + CSS editor tab
+│   │   ├── hooks/                   # 20 shared hooks (hotkeys, drag, selection, tracking, …)
+│   │   ├── util/                    # boxGeometry.ts — pure box-model math
 │   │   ├── theme.ts                 # Design tokens (single source of truth)
 │   │   ├── timing.ts                # Animation timing tokens
-│   │   ├── scope.ts                 # Element · class · tailwind scoping
-│   │   ├── statePreview.ts          # Pseudo-class styling engine
-│   │   ├── config.ts                # Runtime configuration
-│   │   ├── util.ts                  # Selector building, CSS diff formatting
-│   │   ├── cssParsers.ts            # CSS value parsing
-│   │   ├── colorUtils.ts            # Color conversion (RGB ↔ hex)
-│   │   ├── unitConversion.ts        # px ↔ em ↔ rem ↔ %
-│   │   ├── sourcemap.ts             # React component source detection
-│   │   ├── commitUtils.ts           # Enrich changes with file metadata
-│   │   ├── hmr.ts                   # HMR event listener
-│   │   ├── navigationHistory.ts     # Breadcrumb + undo navigation
-│   │   ├── tailwind.ts              # Tailwind class parsing
-│   │   ├── tokenCollections.ts      # CSS variable linking
-│   │   ├── LayoutSection.tsx        # display, flex, grid
-│   │   ├── SpacingSection.tsx       # margin, padding
-│   │   ├── SizeSection.tsx          # width, height, aspect-ratio
-│   │   ├── PositionSection.tsx      # position, inset, z-index
-│   │   ├── TypographySection.tsx    # font, text, color
-│   │   ├── BackgroundSection.tsx    # background-color, gradient, image
-│   │   ├── BorderSection.tsx        # border, outline, radius
-│   │   ├── EffectsSection.tsx       # opacity, shadow, filter, transform
-│   │   ├── VariablesSection.tsx     # CSS custom properties
-│   │   └── GlobalVariablesPanel.tsx # Variable collections view
+│   │   └── …                        # Root utilities: cssParsers, colorUtils, unitConversion,
+│   │                                #   breakpoints, breakpointPreview, tailwind, panelUtils, …
 │   ├── server/
 │   │   ├── index.ts                 # API route handler (GET + POST)
 │   │   ├── commit.ts                # Source resolution + file write
-│   │   └── commitTailwind.ts        # Tailwind class rewriting
-│   ├── components/ui/               # Radix + shadcn component library
-│   └── styles/                      # Global CSS
+│   │   ├── commitTailwind.ts        # Tailwind class rewriting
+│   │   ├── pathSafety.ts            # Path containment guards
+│   │   └── sourceMapCache.ts        # Source map caching
+│   ├── lib/                         # Shared client/server helpers (css.ts, protocol.ts)
+│   └── styles/                      # Scoped stylesheet (globals.css)
 ├── test-app/
 │   ├── app/
 │   │   ├── layout.tsx               # Mounts Tuner via TunerProvider
@@ -497,13 +491,48 @@ redial/
 
 ## Hotkey Reference
 
+All shortcuts live in one capture-phase listener (`hooks/useOverlayHotkeys.ts`);
+the in-app `?` overlay (`shell/ShortcutsHelp.tsx`) is the canonical list.
+
 | Key | Action |
 |-----|--------|
-| `` ` `` (backtick) | Toggle selection mode |
-| `Escape` | Close panel |
+| `` ` `` (backtick) | Toggle selection mode / close panel |
+| `Escape` | Dismiss modal → close search → close panel |
 | `Cmd/Ctrl + Z` | Undo |
 | `Cmd/Ctrl + Shift + Z` | Redo |
-| `Cmd/Ctrl + C` | Copy (in copy dropdown) |
-| `Enter` (in search) | Jump to first match |
-| `Arrow Up/Down` (in search) | Navigate matches |
-| `Arrow Left/Right` (breadcrumb) | Navigate ancestors |
+| `Cmd/Ctrl + S` | Save to source |
+| `Cmd/Ctrl + C` | Copy CSS |
+| `Cmd/Ctrl + Alt + C` / `+ V` | Copy / paste styles between elements |
+| `Cmd/Ctrl + Shift + V` | Import CSS from clipboard |
+| `Cmd/Ctrl + K` | Command palette |
+| `Cmd/Ctrl + F`, `/` | Property search |
+| `D` (hold) | Diff peek (strips overrides while held) |
+| `S` | Cycle scope (element ↔ class) |
+| `Alt + Shift + S` | Toggle focus mode |
+| `R` / `Shift + R` | Reset element / reset all |
+| `P` | Pin / unpin element |
+| `N` | Toggle navigator |
+| `H` | Toggle changes drawer (history tab) |
+| `M` / `G` | Toggle box model / grid overlay |
+| `T` | Toggle Style / AI tab |
+| `1`–`8` | Jump to section |
+| `[` / `]` | Cycle sections |
+| `↑ ↓ ← →` | Navigate elements (parent / child / siblings) |
+| `?` | Shortcuts help |
+
+**Context-aware pass-through** (`hotkeyPageHijacking.test.tsx` pins this matrix —
+the overlay must never hijack the host page):
+
+- `Cmd+F` / `Cmd+K` — claimed **only** while focus is inside the tuner UI
+  (`.__tuner-root` or `[data-tuner-portal]`). On the page, browser find and
+  host command palettes keep working.
+- `Cmd+C` — passes through when the page has a text selection, when a text
+  control holds a range selection, or when focus is in a host editing surface;
+  otherwise claimed (copy CSS).
+- `Cmd+Z` / `Cmd+Shift+Z` — claimed inside the tuner UI (including panel
+  inputs); pass through in host text fields (native undo wins); on the page,
+  claimed only when the style engine actually has a step to revert/replay.
+- `Cmd+S` — claimed globally while the panel is open (blocks the browser save
+  dialog).
+- Plain-key shortcuts (`S`, `R`, `D`, arrows, digits, …) never fire while
+  typing in inputs or while focus is inside the panel/portals.

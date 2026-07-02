@@ -47,7 +47,10 @@ describe("StateSelector — portal markup", () => {
     // by the panel's `[data-tuner-portal]` check.
     const listbox = portal!.querySelector('[role="listbox"]');
     expect(listbox).not.toBeNull();
-    expect(listbox!.querySelectorAll('[role="option"]').length).toBe(7);
+    // 6 options — none/hover/focus/active/focus-within/focus-visible.
+    // ":visited" is not offered (browser privacy restrictions make it
+    // unpreviewable — no getComputedStyle diff, no forced rendering).
+    expect(listbox!.querySelectorAll('[role="option"]').length).toBe(6);
   });
 
   it("does not render any Radix popper-content-wrapper (no shadcn Select)", () => {
@@ -71,11 +74,12 @@ describe("StateSelector — selection is not hijacked", () => {
   });
 
   it("every option resolves to its pseudo-class value", () => {
+    // No "Visited": browsers block :visited previewing for privacy (history
+    // sniffing), so the option was removed from the selector.
     const cases: Array<[string, string]> = [
       ["Hover", "hover"],
       ["Focus", "focus"],
       ["Active", "active"],
-      ["Visited", "visited"],
       ["Focus Within", "focus-within"],
       ["Focus Visible", "focus-visible"],
     ];

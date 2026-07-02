@@ -11,6 +11,8 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { styleEngine } from "../core/engine";
+import { diff } from "../core/apply";
+import { serializeElementBreakpointCSS } from "../breakpoints";
 import {
   renderBreakpointPreview,
   startBreakpointPreview,
@@ -90,6 +92,18 @@ describe("breakpoint live preview (#35)", () => {
     expect(previewText()).toBe("");
   });
 
+  it("removes data-redial-bp attributes from elements on destroy (#83)", () => {
+    const el = makeEl();
+    styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "red");
+    renderBreakpointPreview();
+    expect(el.hasAttribute("data-redial-bp")).toBe(true);
+
+    destroyBreakpointPreview();
+
+    // Teardown must not leave stamped attributes in the user's DOM.
+    expect(el.hasAttribute("data-redial-bp")).toBe(false);
+  });
+
   it("reuses the same preview id for an element across renders", () => {
     const el = makeEl();
     styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "red");
@@ -98,5 +112,70 @@ describe("breakpoint live preview (#35)", () => {
     styleEngine.apply({ scope: "element", el, breakpoint: "1024" }, "margin", "8px");
     renderBreakpointPreview();
     expect(el.getAttribute("data-redial-bp")).toBe(first);
+  });
+
+  describe("cascade priority: injected declarations carry !important", () => {
+    it("appends !important to every injected declaration so the preview beats matching author CSS", () => {
+      // Author CSS with (0,2,0) specificity — beats the preview's single
+      // [data-redial-bp="N"] attribute selector (0,1,0) unless the preview
+      // declarations carry !important (mirrors statePreview.ts / scope.ts).
+      const authorSheet = document.createElement("style");
+      authorSheet.textContent = ".list .item { gap: 8px; color: blue; }";
+      document.head.appendChild(authorSheet);
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "list";
+      const el = document.createElement("div");
+      el.className = "item";
+      wrapper.appendChild(el);
+      document.body.appendChild(wrapper);
+
+      styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "gap", "24px");
+      styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "red");
+      renderBreakpointPreview();
+
+      const css = previewText();
+      expect(css).toContain("gap: 24px !important;");
+      expect(css).toContain("color: red !important;");
+
+      // Structural guarantee: EVERY declaration line ends with !important —
+      // base edits win via inline styles, so the media-gated preview must win
+      // the cascade the same way or breakpoint editing silently no-ops.
+      const decls = css.match(/^\s+[a-z-]+:.*;$/gim) ?? [];
+      expect(decls.length).toBe(2);
+      for (const decl of decls) {
+        expect(decl).toMatch(/ !important;$/);
+      }
+
+      authorSheet.remove();
+    });
+
+    it("does not double-append when a value already carries !important", () => {
+      const el = makeEl();
+      styleEngine.apply(
+        { scope: "element", el, breakpoint: "768" },
+        "color",
+        "red !important",
+      );
+      renderBreakpointPreview();
+
+      const css = previewText();
+      expect(css).toContain("color: red !important;");
+      expect(css).not.toContain("!important !important");
+    });
+
+    it("keeps the clipboard/export serialization clean — no !important in saved CSS", () => {
+      const el = makeEl();
+      styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "gap", "24px");
+      renderBreakpointPreview();
+
+      // Preview injection carries !important…
+      expect(previewText()).toContain("gap: 24px !important;");
+
+      // …but the export path (Footer Copy / Save side-channel) must stay clean.
+      const exported = serializeElementBreakpointCSS(el, diff(el));
+      expect(exported).toContain("gap: 24px;");
+      expect(exported).not.toContain("!important");
+    });
   });
 });

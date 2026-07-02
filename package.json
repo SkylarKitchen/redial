@@ -1,6 +1,6 @@
 {
   "name": "redial",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A floating CSS tuning panel for Next.js. Click any element, get context-aware controls, drag to tune, save directly to source.",
   "author": "Skylar Kitchen",
   "repository": {
@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.sandcastle.json",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.sandcastle.json && tsc -p tsconfig.tests.json",
     "test": "vitest run",
     "lint": "eslint src/overlay",
     "test:visual": "bash scripts/visual-test.sh",
@@ -58,7 +58,6 @@
   ],
   "files": [
     "dist",
-    "!dist/**/*.map",
     "next-plugin.cjs",
     "next-plugin.d.cts",
     "LICENSE",
@@ -67,14 +66,14 @@
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",
     "motion": "^12.35.2"
   },
   "peerDependencies": {
-    "next": ">=13",
+    "next": ">=13.2.0",
     "react": ">=18",
     "react-dom": ">=18"
   },

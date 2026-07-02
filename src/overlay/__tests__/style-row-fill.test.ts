@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 /**
  * style-row-fill.test.ts — Verify the Typography "Style" row's Italicize
  * and Decoration sub-groups both use flex:1 so buttons fill the row
@@ -6,67 +7,121 @@
  * Bug: The Italicize wrapper lacked flex:1, causing the buttons to shrink
  * to content width instead of filling the row — visually "indented" on
  * the left compared to other full-width button rows.
+ *
+ * CONVERTED (issue #105): was a source-text test (readFileSync + string
+ * slicing around ">Italicize<" looking for "flex: 1" / "items-center").
+ * Now renders the real TypographySection and asserts the rendered wrapper
+ * styles. Invariant mapping:
+ *  - "both wrappers have flex: 1"      → wrapper.style.flex === "1" on the
+ *    rendered Italicize AND Decoration wrapper divs (equal fill).
+ *  - "no items-center on the wrappers" → wrapper.style.alignItems is not
+ *    "center" (default stretch, so the IconButtonGroup fills the width).
  */
 
-import { describe, it, expect } from "vitest";
-import fs from "fs";
-import path from "path";
+import { describe, it, expect, afterEach } from "vitest";
+import { createElement } from "react";
+import { render, cleanup, screen } from "@testing-library/react";
+import { TypographySection } from "../sections/TypographySection";
+import { resetAll } from "../core/apply";
+import type { SectionCtx } from "../panelUtils";
+import type { UnitConversionContext } from "../unitConversion";
 
-function readSection(filename: string): string {
-  return fs.readFileSync(
-    path.resolve(__dirname, `../sections/${filename}`),
-    "utf-8"
+// happy-dom lacks document.fonts; TypographySection's mount effect reads
+// document.fonts.ready. Stub it so client-side render doesn't throw.
+if (!(document as unknown as { fonts?: unknown }).fonts) {
+  (document as unknown as { fonts: unknown }).fonts = {
+    ready: Promise.resolve(),
+    forEach: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  };
+}
+
+afterEach(() => {
+  cleanup();
+  resetAll();
+  document.body.innerHTML = "";
+});
+
+function makeCtx(): SectionCtx {
+  const element = document.createElement("div");
+  document.body.appendChild(element);
+  const cs = getComputedStyle(element);
+  return {
+    element,
+    apply: () => {},
+    reset: () => {},
+    resetRead: () => 0,
+    resetReadStr: () => "",
+    ind: () => "none" as const,
+    sectionInd: () => "none" as const,
+    cs,
+    parentCs: null,
+    getConversionCtx: (): UnitConversionContext => ({
+      computedFontSize: 16,
+      rootFontSize: 16,
+      parentWidth: 800,
+      parentHeight: 600,
+      viewportWidth: 1280,
+      viewportHeight: 720,
+    }),
+    ctxMenu: () => () => {},
+    isTailwind: false,
+  };
+}
+
+function renderTypography() {
+  return render(
+    createElement(TypographySection, {
+      ctx: makeCtx(),
+      columnGap: 0,
+      columnGapUnit: "px",
+      onColumnGapChange: () => {},
+      onColumnGapUnitChange: () => {},
+      forceOpen: true,
+    }),
   );
 }
 
+/** The sub-group wrapper div that owns a hint label ("Italicize"/"Decoration"). */
+function wrapperOf(hintText: string): HTMLElement {
+  const hint = screen.getByText(hintText);
+  const wrapper = hint.parentElement as HTMLElement;
+  expect(wrapper, `${hintText} wrapper should render`).toBeTruthy();
+  return wrapper;
+}
+
 describe("Typography Style row fill", () => {
-  const src = readSection("TypographySection.tsx");
+  it("both Italicize and Decoration wrappers render with flex: 1 (equal edge-to-edge fill)", () => {
+    renderTypography();
 
-  it("both Italicize and Decoration wrappers should have flex: 1", () => {
-    // Find the Style row region (between "Italicize" and "Decoration" labels)
-    const italicizeIdx = src.indexOf(">Italicize<");
-    const decorationIdx = src.indexOf(">Decoration<");
-    expect(italicizeIdx).toBeGreaterThan(-1);
-    expect(decorationIdx).toBeGreaterThan(-1);
+    const italicize = wrapperOf("Italicize");
+    const decoration = wrapperOf("Decoration");
 
-    // Extract the region around both sub-groups (from ~200 chars before Italicize
-    // to the Decoration hint)
-    const regionStart = Math.max(0, italicizeIdx - 300);
-    const regionEnd = decorationIdx + 50;
-    const region = src.slice(regionStart, regionEnd);
-
-    // Both wrapper divs should use flex: 1 (inline style, not className)
-    // Split on the hint labels to isolate each wrapper
-    const [italicizePart] = region.split(">Italicize<");
-    const decorationPart = region.slice(region.indexOf(">Italicize<"));
-
-    // Italicize wrapper must have flex: 1
+    // happy-dom expands `flex: 1` to "1 1 0%" — flex-grow: 1 is the invariant
     expect(
-      italicizePart.includes("flex: 1") || italicizePart.includes("flex-1"),
-      "Italicize wrapper should have flex: 1 for consistent fill"
-    ).toBe(true);
-
-    // Decoration wrapper must have flex: 1
+      italicize.style.flexGrow,
+      "Italicize wrapper should have flex: 1 for consistent fill",
+    ).toBe("1");
     expect(
-      decorationPart.includes("flex: 1") || decorationPart.includes("flex-1"),
-      "Decoration wrapper should have flex: 1 for consistent fill"
-    ).toBe(true);
+      decoration.style.flexGrow,
+      "Decoration wrapper should have flex: 1 for consistent fill",
+    ).toBe("1");
+    expect(italicize.style.flex).toBe(decoration.style.flex);
+
+    // Both wrappers share the same row (side by side under the Style label)
+    expect(italicize.parentElement).toBe(decoration.parentElement);
   });
 
-  it("Style row wrappers should not use items-center (prevents stretch)", () => {
-    // items-center on a column flex parent prevents children from stretching
-    // to fill width — use default stretch alignment instead
-    const italicizeIdx = src.indexOf(">Italicize<");
-    const regionStart = Math.max(0, italicizeIdx - 300);
-    const region = src.slice(regionStart, italicizeIdx);
+  it("Style row wrappers do not use align-items: center (would prevent stretch fill)", () => {
+    renderTypography();
 
-    // The wrapper divs should NOT have items-center className
-    // (they should use default align-items: stretch so IconButtonGroup fills width)
-    const wrapperDivs = region.match(/<div[^>]*>/g) || [];
-    const lastWrapper = wrapperDivs[wrapperDivs.length - 1] || "";
-    expect(
-      lastWrapper.includes("items-center"),
-      "Italicize wrapper should not use items-center — prevents buttons from filling width"
-    ).toBe(false);
+    for (const hint of ["Italicize", "Decoration"]) {
+      const wrapper = wrapperOf(hint);
+      expect(
+        wrapper.style.alignItems,
+        `${hint} wrapper must not center-align — default stretch lets the buttons fill the width`,
+      ).not.toBe("center");
+    }
   });
 });

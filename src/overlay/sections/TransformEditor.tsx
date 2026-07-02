@@ -184,6 +184,50 @@ function AxisSliderRow({
 }) {
   const [focused, setFocused] = useState(false);
 
+  // Ghost-drag protection (same family as issue #73): the axis slider opens
+  // an undo batch on pointerdown, but the input's own pointerup is the only
+  // normal close path. A lost release — window blur (Cmd+Tab), pointercancel,
+  // Escape, or a mid-drag unmount (Cmd+Z remounts the panel) — must still
+  // close the batch exactly once, mirroring the SliderRow pattern.
+  const endDragRef = useRef<(() => void) | null>(null);
+
+  const handleSliderPointerDown = useCallback(() => {
+    // Defensive: if a previous drag somehow never closed, close it before
+    // opening a new batch so begin/end stay balanced.
+    endDragRef.current?.();
+    beginBatch();
+    let ended = false;
+    const end = () => {
+      if (ended) return; // terminal events can race — close exactly once
+      ended = true;
+      endBatch();
+      document.removeEventListener("pointercancel", end);
+      window.removeEventListener("blur", end);
+      window.removeEventListener("keydown", onKey);
+      endDragRef.current = null;
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") end();
+    };
+    endDragRef.current = end;
+    // Ghost-drag safety: a lost release (canceled pointer, Cmd+Tab blur,
+    // Escape) must still close the batch.
+    document.addEventListener("pointercancel", end);
+    window.addEventListener("blur", end);
+    window.addEventListener("keydown", onKey);
+  }, []);
+
+  const handleSliderPointerUp = useCallback(() => {
+    endDragRef.current?.();
+  }, []);
+
+  // Close any in-flight batch on unmount (e.g. Cmd+Z remounts the panel).
+  useEffect(() => {
+    return () => {
+      endDragRef.current?.();
+    };
+  }, []);
+
   const { draft, inputProps } = useDraftNumber({
     value,
     resync: !focused,
@@ -230,8 +274,8 @@ function AxisSliderRow({
         step={range.step}
         value={[value]}
         onValueChange={([v]) => onChange(v)}
-        onPointerDown={() => beginBatch()}
-        onPointerUp={() => endBatch()}
+        onPointerDown={handleSliderPointerDown}
+        onPointerUp={handleSliderPointerUp}
       />
 
       {/* Value input + unit */}
@@ -387,9 +431,23 @@ function TransformPill({
 }) {
   const [hovered, setHovered] = useState(false);
 
+  // role="button" + keydown instead of a native <button>: the pill nests a
+  // real remove button and button-in-button is invalid HTML (issue #85).
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      aria-label={`Toggle ${transform.type} settings`}
       onClick={onClick}
+      onKeyDown={(e) => {
+        // Ignore keystrokes bubbling from nested controls.
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

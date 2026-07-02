@@ -106,17 +106,69 @@ export function SectionMemoryProvider({ memory, onUpdate, children }: {
 
 // ─── Reset Popover Hook ─────────────────────────────────────────────
 
-/** Shared hook for the click-on-modified-label reset popover. */
-export function useResetPopover(indicator?: IndicatorType, onReset?: () => void) {
+/** Trigger wiring returned by useResetPopover — spread onto the anchor span. */
+export interface ResetTriggerProps {
+  ref: React.RefObject<HTMLSpanElement | null>;
+  onClick: (e: React.MouseEvent) => void;
+  role?: "button";
+  tabIndex?: number;
+  "aria-haspopup"?: "dialog";
+  "aria-label"?: string;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+}
+
+/**
+ * Shared hook for the click-on-modified-label reset popover.
+ *
+ * `triggerProps` centralizes the whole trigger contract (issue #85):
+ * click opens the popover, Alt+click resets directly, and — while the
+ * indicator is "modified" with an onReset — the anchor becomes a focusable
+ * role="button" that opens the same popover on Enter/Space, labelled
+ * "Reset <label>". Spread it onto the anchor instead of hand-wiring
+ * ref + onClick at every site.
+ */
+export function useResetPopover(indicator?: IndicatorType, onReset?: () => void, label?: string) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLSpanElement>(null);
   const triggerOpen = useCallback(() => {
     if (indicator === "modified" && onReset) setOpen(true);
   }, [indicator, onReset]);
+  const close = useCallback(() => {
+    setOpen(false);
+    // Return focus to the trigger so keyboard users don't fall off the panel.
+    anchorRef.current?.focus?.();
+  }, []);
   const node = open && anchorRef.current && onReset ? (
-    <ResetPopover anchor={anchorRef.current} onReset={onReset} onClose={() => setOpen(false)} />
+    <ResetPopover anchor={anchorRef.current} onReset={onReset} onClose={close} />
   ) : null;
-  return { anchorRef, triggerOpen, node };
+
+  const interactive = indicator === "modified" && !!onReset;
+  const triggerProps: ResetTriggerProps = {
+    ref: anchorRef,
+    onClick: (e: React.MouseEvent) => {
+      if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; }
+      triggerOpen();
+    },
+    ...(interactive
+      ? {
+          role: "button" as const,
+          tabIndex: 0,
+          "aria-haspopup": "dialog" as const,
+          "aria-label": label ? `Reset ${label}` : "Reset",
+          onKeyDown: (e: React.KeyboardEvent) => {
+            // Ignore keystrokes bubbling from nested controls.
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              triggerOpen();
+            }
+          },
+        }
+      : {}),
+  };
+
+  return { anchorRef, triggerOpen, triggerProps, node };
 }
 
 // ─── Press Scale Hook ────────────────────────────────────────────────

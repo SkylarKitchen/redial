@@ -197,17 +197,36 @@ function PropertyAutocomplete({
   inputRef,
   onSelect,
   onClose,
+  listboxId,
 }: {
   query: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onSelect: (prop: string) => void;
   onClose: () => void;
+  listboxId: string;
 }) {
   const results = filterProperties(query);
   const [activeIdx, setActiveIdx] = useState(0);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const open = results.length > 0;
+
+  // Combobox ARIA wiring on the driving input. The input lives in the parent
+  // component, so wire the dynamic attributes imperatively while the listbox
+  // is open (pattern reference: shell/CommandPalette.tsx — issue #85).
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el || !open) return;
+    el.setAttribute("aria-expanded", "true");
+    el.setAttribute("aria-controls", listboxId);
+    el.setAttribute("aria-activedescendant", `${listboxId}-opt-${activeIdx}`);
+    return () => {
+      el.setAttribute("aria-expanded", "false");
+      el.removeAttribute("aria-controls");
+      el.removeAttribute("aria-activedescendant");
+    };
+  }, [inputRef, open, activeIdx, listboxId]);
 
   // Reset active index when results change
   useEffect(() => {
@@ -268,6 +287,9 @@ function PropertyAutocomplete({
   return createPortal(
     <div
       data-tuner-portal
+      id={listboxId}
+      role="listbox"
+      aria-label="CSS property suggestions"
       style={{ ...dropdownStyle, top: pos.top, left: pos.left, width: pos.width }}
       ref={listRef}
       onMouseDown={(e) => e.preventDefault()} // prevent blur before click registers
@@ -275,6 +297,9 @@ function PropertyAutocomplete({
       {results.map((prop, i) => (
         <div
           key={prop}
+          id={`${listboxId}-opt-${i}`}
+          role="option"
+          aria-selected={activeIdx === i}
           style={{
             ...dropdownItemStyle,
             background:
@@ -484,6 +509,8 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
               <div style={entryRowStyle}>
                 <input
                   ref={setInputRef(`${entry.id}-prop`)}
+                  role="combobox"
+                  aria-autocomplete="list"
                   style={{
                     ...inputStyle,
                     ...(focusedInput === `${entry.id}-prop` ? inputFocusStyle : {}),
@@ -502,6 +529,7 @@ export const CustomPropertiesSection = memo(function CustomPropertiesSection({
                     inputRef={propInputRef}
                     onSelect={(prop) => handleAutocompleteSelect(entry.id, prop)}
                     onClose={() => setAutocompleteId(null)}
+                    listboxId={`redial-prop-listbox-${entry.id}`}
                   />
                 )}
                 <span style={separatorStyle}>:</span>

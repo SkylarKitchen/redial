@@ -9,6 +9,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { SwatchColorPicker } from "../controls/SwatchColorPicker";
 import { hexToRgba } from "../colorUtils";
 import { parseVarRef } from "../variables/colorVariables";
+import { splitCSSList } from "../cssParsers";
 import { ms } from "../timing";
 import { color, text, surface, font, blackAlpha, border, primaryAlpha } from "../theme";
 
@@ -34,6 +35,84 @@ export function buildGradientCSS(
   if (type === "linear") return `linear-gradient(${angle}deg, ${stopStr})`;
   if (type === "radial") return `radial-gradient(circle, ${stopStr})`;
   return `conic-gradient(from ${angle}deg, ${stopStr})`;
+}
+
+/** `to <side-or-corner>` keywords mapped to their equivalent angles. */
+const DIR_TO_ANGLE: Record<string, number> = {
+  "top": 0, "right": 90, "bottom": 180, "left": 270,
+  "top right": 45, "right top": 45,
+  "bottom right": 135, "right bottom": 135,
+  "bottom left": 225, "left bottom": 225,
+  "top left": 315, "left top": 315,
+};
+
+/**
+ * Inverse of buildGradientCSS — parse a gradient string (authored or computed)
+ * back into the editor's { type, angle, stops } model. Conservative: returns
+ * null for anything the editor can't round-trip losslessly (repeating
+ * gradients, px-positioned or double-position stops, interpolation hints,
+ * explicit radial shapes/positions), so callers can pass those through raw
+ * instead of mangling them.
+ */
+export function parseGradientCSS(
+  css: string,
+): { type: "linear" | "radial" | "conic"; angle: number; stops: GradientStop[] } | null {
+  const m = css.trim().match(/^(linear|radial|conic)-gradient\((.*)\)$/s);
+  if (!m) return null;
+  const type = m[1] as "linear" | "radial" | "conic";
+  const args = splitCSSList(m[2]);
+  if (args.length === 0) return null;
+
+  let angle = type === "linear" ? 180 : 0;
+  let rest = args;
+  const head = args[0];
+  const numRe = /^-?\d+(?:\.\d+)?/;
+
+  if (type === "linear") {
+    const deg = head.match(/^(-?\d+(?:\.\d+)?)deg$/);
+    if (deg) {
+      angle = parseFloat(deg[1]);
+      rest = args.slice(1);
+    } else if (head.startsWith("to ")) {
+      const mapped = DIR_TO_ANGLE[head.slice(3).trim()];
+      if (mapped === undefined) return null;
+      angle = mapped;
+      rest = args.slice(1);
+    }
+  } else if (type === "radial") {
+    if (head === "circle") rest = args.slice(1);
+    else if (/^(circle|ellipse)\b|\bat\b|closest-|farthest-/.test(head)) return null;
+  } else {
+    const from = head.match(/^from\s+(-?\d+(?:\.\d+)?)deg$/);
+    if (from) {
+      angle = parseFloat(from[1]);
+      rest = args.slice(1);
+    } else if (/^(from|at)\b/.test(head)) return null;
+  }
+
+  const stops: GradientStop[] = [];
+  for (let i = 0; i < rest.length; i++) {
+    const s = rest[i].trim();
+    const pm = s.match(/^(.*?)\s+(-?\d+(?:\.\d+)?)%$/s);
+    let stopColor: string;
+    let position: number;
+    if (pm) {
+      stopColor = pm[1].trim();
+      // A trailing length/percent on the color part means a double-position
+      // or px-positioned stop — not representable in the editor.
+      if (/\s-?\d+(?:\.\d+)?(%|[a-z]+)$/i.test(stopColor)) return null;
+      position = parseFloat(pm[2]);
+    } else {
+      if (/\d(px|em|rem|ch|vw|vh)$/i.test(s)) return null;
+      stopColor = s;
+      position = rest.length === 1 ? 0 : Math.round((i / (rest.length - 1)) * 100);
+    }
+    // Bare numbers are interpolation hints, not colors.
+    if (!stopColor || numRe.test(stopColor)) return null;
+    stops.push({ color: stopColor, position });
+  }
+  if (stops.length < 2) return null;
+  return { type, angle, stops };
 }
 
 function clamp(v: number, lo: number, hi: number) {
@@ -124,6 +203,69 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
     emit({ stops: next });
   }, [selectedIndex, stops, emit]);
 
+  // --- Keyboard equivalent of marker dragging (issue #85) ---
+  // Arrows nudge ±1 (Shift = ±10), Home/End jump to the rail ends,
+  // Enter/Space select, Delete/Backspace remove (min 2 stops, like mouse).
+  const handleMarkerKeyDown = useCallback(
+    (e: React.KeyboardEvent, index: number) => {
+      const stop = stops[index];
+      if (!stop) return;
+      const moveTo = (position: number) => {
+        e.preventDefault();
+        setSelectedIndex(index);
+        const next = stops.map((s, i) =>
+          i === index ? { ...s, position: clamp(position, 0, 100) } : s
+        );
+        emit({ stops: next });
+      };
+      switch (e.key) {
+        case "ArrowLeft":
+        case "ArrowDown":
+          moveTo(stop.position - (e.shiftKey ? 10 : 1));
+          break;
+        case "ArrowRight":
+        case "ArrowUp":
+          moveTo(stop.position + (e.shiftKey ? 10 : 1));
+          break;
+        case "Home":
+          moveTo(0);
+          break;
+        case "End":
+          moveTo(100);
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          setSelectedIndex(index);
+          break;
+        case "Delete":
+        case "Backspace":
+          if (stops.length > 2) {
+            e.preventDefault();
+            setSelectedIndex(null);
+            emit({ stops: stops.filter((_, i) => i !== index) });
+          }
+          break;
+      }
+    },
+    [stops, emit]
+  );
+
+  // --- Keyboard equivalent of click-to-add: Enter/Space on the bar adds a
+  // stop at the 50% midpoint (mouse adds at the pointer position) ---
+  const handleBarKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.target !== e.currentTarget) return;
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      const newStop: GradientStop = { color: "#ffffff", position: 50 };
+      const next = [...stops, newStop];
+      setSelectedIndex(next.length - 1);
+      emit({ stops: next });
+    },
+    [stops, emit]
+  );
+
   const selected = selectedIndex !== null ? stops[selectedIndex] : null;
 
   const typeOptions: Array<"linear" | "radial" | "conic"> = ["linear", "radial", "conic"];
@@ -204,7 +346,11 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
       <div style={{ position: "relative", paddingBottom: "14px" }}>
         <div
           ref={barRef}
+          role="button"
+          tabIndex={0}
+          aria-label="Add gradient stop"
           onClick={handleBarClick}
+          onKeyDown={handleBarKeyDown}
           style={{
             width: "100%",
             height: "24px",
@@ -215,14 +361,24 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
           }}
         />
 
-        {/* Stop markers */}
+        {/* Stop markers — focusable sliders: focusing selects, arrows nudge,
+            Delete removes (issue #85). Mouse dragging is unchanged. */}
         {stops.map((stop, i) => {
           const isSelected = i === selectedIndex;
           return (
             <div
               key={i}
               data-marker="true"
+              role="slider"
+              tabIndex={0}
+              aria-label={`Gradient stop ${i + 1} of ${stops.length}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={stop.position}
+              aria-valuetext={`${stop.position}%`}
+              onFocus={() => setSelectedIndex(i)}
               onMouseDown={(e) => handleMarkerDown(e, i)}
+              onKeyDown={(e) => handleMarkerKeyDown(e, i)}
               style={{
                 position: "absolute",
                 left: `${stop.position}%`,

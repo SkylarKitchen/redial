@@ -11,10 +11,11 @@ import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { formatCSSDiff, getSelector } from "../util";
 import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/engine";
-import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha } from "../theme";
+import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha, warningAlpha } from "../theme";
 import { getConfig } from "../core/config";
 import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
 import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS } from "../breakpoints";
+import { importCSSText } from "../hooks/useOverlayHotkeys";
 import { usePressScale } from "../controls/helpers";
 
 // --- Clean CSS format (no "was" comments) ---
@@ -56,6 +57,37 @@ interface SaveResult {
   failed?: Array<{ reason: string }>;
 }
 
+// --- Save-endpoint health check (audit: opaque first-save failures) ---
+// One GET per session, cached at module scope so the Footer's per-selection
+// remounts never re-ping. Dev-only: the route deliberately 404s outside
+// development, so pinging it anywhere else would always cry wolf.
+let healthPromise: Promise<boolean> | null = null;
+let healthNoticeDismissed = false;
+
+function checkSaveEndpointHealth(endpoint: string): Promise<boolean> {
+  if (!healthPromise) {
+    healthPromise = fetch(endpoint, { method: "GET" })
+      .then(async (res) => {
+        if (!res.ok) return false;
+        const body: unknown = await res.json().catch(() => null);
+        const shape = body as { ok?: unknown; status?: unknown } | null;
+        // Shape matters, not just reachability — a 200 from some coincidental
+        // route must not count as healthy. Current payload is
+        // { ok: true, version }; the legacy { status: "tuner server active" }
+        // from older redial/server builds is also accepted.
+        return shape != null && (shape.ok === true || shape.status === "tuner server active");
+      })
+      .catch(() => false);
+  }
+  return healthPromise;
+}
+
+/** Test seam: clear the session-cached health result and notice dismissal. */
+export function __resetSaveHealthForTests(): void {
+  healthPromise = null;
+  healthNoticeDismissed = false;
+}
+
 const DEFAULT_SCOPE_CTX: ScopeContext = {
   scope: "element",
   activeClassName: null,
@@ -77,10 +109,14 @@ interface FooterProps {
   clipboardMessage?: string | null;
   hasClipboard?: boolean;
   onPasteStyles?: () => void;
+  /** @deprecated Ignored (issue #87). The Footer now runs the ONE shared
+   *  batched CSS import (`importCSSText`) itself — the legacy host-provided
+   *  import applied N properties as N separate undo entries. Retained only so
+   *  existing hosts (Overlay) compile unchanged. */
   onCSSImport?: () => void;
 }
 
-export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX, saveRef, clipboardMessage, hasClipboard, onPasteStyles, onCSSImport }: FooterProps) {
+export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX, saveRef, clipboardMessage, hasClipboard, onPasteStyles }: FooterProps) {
   const { activeState } = scopeCtx;
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
@@ -109,6 +145,27 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
 
   const { pressHandlers: clipPress, pressStyle: clipPressStyle } = usePressScale(0.97);
   const { pressHandlers: savePress, pressStyle: savePressStyle } = usePressScale(0.97);
+
+  // Save-endpoint health notice (persistent until dismissed). Checked once
+  // per session on first Footer mount, so a missing route mount surfaces
+  // BEFORE the user invests edits and hits Save.
+  const [healthNotice, setHealthNotice] = useState<string | null>(null);
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const endpoint = getConfig().commitEndpoint;
+    if (!endpoint || healthNoticeDismissed) return;
+    let cancelled = false;
+    void checkSaveEndpointHealth(endpoint).then((ok) => {
+      if (cancelled || ok || healthNoticeDismissed) return;
+      setHealthNotice(`Save endpoint not reachable at ${endpoint} — check the route handler mount`);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const dismissHealthNotice = useCallback(() => {
+    healthNoticeDismissed = true;
+    setHealthNotice(null);
+  }, []);
 
   // Clear timers on unmount to prevent stale setState calls
   useEffect(() => {
@@ -207,16 +264,18 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     copyAndClose(blocks.join("\n\n"), "vars");
   }, [element, copyAndClose]);
 
-  // Media-gated edits aren't written to source files yet (#53 / #35 follow-up):
-  // breakpoint @media blocks + CSS-variable mode overrides go to the clipboard
-  // on save so they aren't silently lost.
-  const copyMediaGatedExtras = useCallback((changes: DiffEntry[]) => {
-    const bpCSS = serializeElementBreakpointCSS(element, changes);
+  // Clipboard side-channel for edits that can't be file-written: CSS-variable
+  // mode overrides (still clipboard-only) plus any breakpoint edits the
+  // enrichment could NOT bind to a file (#53 writes class-backed breakpoint
+  // edits into `@media` blocks now; `clipboardBpChanges` is the leftover —
+  // e.g. a classless element or an unresolvable stylesheet).
+  const copyMediaGatedExtras = useCallback((clipboardBpChanges: DiffEntry[]) => {
+    const bpCSS = serializeElementBreakpointCSS(element, clipboardBpChanges);
     const modeCSS = serializeModeOverrides();
     const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
     if (!extra) return;
     navigator.clipboard.writeText(extra).then(() => {
-      const bpCount = changes.filter((c) => c.breakpoint).length;
+      const bpCount = clipboardBpChanges.filter((c) => c.breakpoint).length;
       const mc = getModeOverrideCount();
       const parts: string[] = [];
       if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
@@ -240,9 +299,27 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     setSaving(true);
     setMessage(null);
 
-    // File-bound changes only — enrichment drops breakpoint-tagged changes
-    // (clipboard-only until #53; copyMediaGatedExtras carries them instead).
-    const enriched = enrichChangesForCommit(element, changes, scopeCtx);
+    // File-bound changes. Breakpoint-tagged changes are INCLUDED with a
+    // resolved `breakpoint: { id, minWidth }` (#53) when a class + stylesheet
+    // resolved; the leftover (classless / unresolvable) stays clipboard-bound
+    // via copyMediaGatedExtras. `elementScopeSave` (audit 06): the Footer
+    // KNOWS the user's scope choice, so element scope saves with element
+    // semantics — the server merges stateless base changes into the element's
+    // JSX `style` attribute instead of rewriting the shared class rule.
+    const enriched = enrichChangesForCommit(element, changes, {
+      ...scopeCtx,
+      elementScopeSave: true,
+    });
+    const bpKeyOf = (id: string, state: string | undefined, prop: string) =>
+      `${id}@@${state ?? ""}::${prop}`;
+    const fileBoundBp = new Set(
+      enriched.flatMap((e) =>
+        e.breakpoint ? [bpKeyOf(e.breakpoint.id, e.state, e.prop)] : [],
+      ),
+    );
+    const clipboardBpChanges = changes.filter(
+      (c) => c.breakpoint && !fileBoundBp.has(bpKeyOf(c.breakpoint, c.state, c.prop)),
+    );
 
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
@@ -264,10 +341,10 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
       return;
     }
 
-    // Nothing file-bound (e.g. only breakpoint edits / mode overrides): skip
-    // the pointless empty POST and go straight to the clipboard side-channel.
+    // Nothing file-bound (e.g. only clipboard-bound breakpoint edits / mode
+    // overrides): skip the pointless empty POST, go straight to the clipboard.
     if (enriched.length === 0) {
-      copyMediaGatedExtras(changes);
+      copyMediaGatedExtras(clipboardBpChanges);
       setSaving(false);
       savingRef.current = false;
       return;
@@ -284,18 +361,31 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
       });
 
       if (!res.ok) {
-        showMessage("Save failed", 2000);
+        // Status-aware failure (audit: opaque first-save failures): a 404
+        // (route not mounted) and a 500 (server bug) are different problems —
+        // surface the HTTP status plus any server-provided error text.
+        let detail = "";
+        try {
+          const body: unknown = await res.json();
+          const err = (body as { error?: unknown } | null)?.error;
+          if (typeof err === "string" && err) detail = ` — ${err}`;
+        } catch {
+          // Non-JSON error body (e.g. an HTML 404 page) — status alone.
+        }
+        showMessage(`Save failed (${res.status})${detail}`, 4000);
       } else {
         const result: SaveResult = await res.json();
         const writtenFiles = result.written ?? [];
         const failedList = result.failed ?? [];
         const failed = failedList.length;
         if (failed > 0) {
-          const detail = failedList[0]?.reason ? `: ${failedList[0].reason}` : "";
-          showMessage(`Saved ${writtenFiles.length}, ${failed} failed${detail}`, 3000);
+          // Partial success — the response carries written[]/failed[];
+          // surface them truthfully instead of a success-ish toast.
+          const reason = failedList[0]?.reason || "unknown reason";
+          showMessage(`Saved ${writtenFiles.length}, failed ${failed} — first failure: ${reason}`, 4000);
         } else {
-          // Count only what reached the file (breakpoint edits go to the
-          // clipboard, not the source write); show file path for context.
+          // Count what reached the file \u2014 file-bound breakpoint edits (#53)
+          // included; show file path for context.
           const savedCount = enriched.length;
           const filePath = writtenFiles[0]?.split("/").pop() ?? "";
           const fileHint = filePath ? ` \u2192 ${filePath}` : "";
@@ -303,20 +393,44 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
           setSaved(true);
           if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
+
+          // Clear the file-written breakpoint overrides (#53). Base edits
+          // clear via HMR redundancy detection once the reloaded CSS catches
+          // up \u2014 breakpoint keys are tracked-only (never inline), so a fully
+          // successful save IS their catch-up moment. Surgical per-breakpoint
+          // (ADR-0005), and only for breakpoints whose EVERY change was
+          // file-bound (clipboard leftovers keep their tracking).
+          const clearableBp = new Map<string, boolean>();
+          for (const c of changes) {
+            if (!c.breakpoint) continue;
+            const bound = fileBoundBp.has(bpKeyOf(c.breakpoint, c.state, c.prop));
+            clearableBp.set(c.breakpoint, (clearableBp.get(c.breakpoint) ?? true) && bound);
+          }
+          for (const [id, allBound] of clearableBp) {
+            if (!allBound) continue;
+            styleEngine.resetScope(element, {
+              scope: "element",
+              activeClassName: null,
+              activeState: "none",
+              activeBreakpoint: id,
+            });
+          }
         }
         onSaved?.();
-        copyMediaGatedExtras(changes);
+        copyMediaGatedExtras(clipboardBpChanges);
       }
     } catch {
-      // Network error — fall back to clipboard
+      // Fetch REJECTION (not an HTTP error): the route itself is unreachable —
+      // dev server down or the catch-all handler isn't mounted. The old
+      // message blamed a missing endpoint *config* ("No commit endpoint"),
+      // a misdiagnosis: this branch only runs when an endpoint IS configured.
+      // Diagnose truthfully, and still copy the CSS as a best-effort fallback
+      // so the edit isn't lost.
       const css = composeExportCSS([{ el: element, changes }], formatCleanCSS);
       const modeCSS = serializeModeOverrides();
       const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
-      navigator.clipboard.writeText(fullCSS).then(() => {
-        showMessage("No commit endpoint \u2014 copied CSS to clipboard", 3000);
-      }).catch(() => {
-        showMessage("Save failed", 2000);
-      });
+      navigator.clipboard.writeText(fullCSS).catch(() => {});
+      showMessage("Can't reach the dev server route \u2014 is app/api/tuner/[...path]/route.ts mounted?", 5000);
     } finally {
       setSaving(false);
       savingRef.current = false;
@@ -329,6 +443,26 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     saveRef.current = handleSave;
     return () => { saveRef.current = null; };
   }, [saveRef, handleSave]);
+
+  // Clipboard ▸ Import CSS — routes through the ONE shared batched import
+  // (issue #87): `importCSSText` wraps the whole blob in beginBatch/endBatch,
+  // so a multi-property paste is a single undo step, exactly like the
+  // Cmd+Shift+V hotkey. The legacy `onCSSImport` prop (Overlay's unbatched
+  // copy) is deliberately NOT invoked.
+  const handleImportCSS = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const count = importCSSText(element, scopeCtx, text);
+      if (count === 0) return;
+      // `onReset` is the host's "engine state changed → re-infer + remount the
+      // panel" callback (Overlay wires it to refreshPanel); the import needs
+      // the same refresh so section controls show the imported values.
+      onReset();
+      showMessage(`Imported ${count} propert${count === 1 ? "y" : "ies"}`, 3000);
+    } catch {
+      showMessage("Clipboard access denied", 2000);
+    }
+  }, [element, scopeCtx, onReset, showMessage]);
 
   const handleReset = useCallback(() => {
     // Reset only the selected element's overrides for the active scope/state, and
@@ -366,6 +500,50 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
         gap: 6,
       }}
     >
+      {/* Save-endpoint health notice — persistent (no auto-timeout) and
+          dismissible; the dismissal is remembered for the session so the
+          Footer's per-selection remounts don't nag. */}
+      {healthNotice && (
+        <div
+          role="alert"
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: 6,
+            paddingTop: 4,
+            paddingBottom: 4,
+            paddingLeft: 8,
+            paddingRight: 8,
+            borderRadius: 6,
+            border: `1px solid ${warningAlpha(0.45)}`,
+            background: warningAlpha(0.12),
+            fontSize: 11,
+            lineHeight: 1.4,
+            fontFamily: font.sans,
+            color: color.foregroundSecondary,
+          }}
+        >
+          <span>{healthNotice}</span>
+          <button
+            onClick={dismissHealthNotice}
+            aria-label="Dismiss save endpoint notice"
+            title="Dismiss"
+            style={{
+              border: "none",
+              background: "transparent",
+              padding: 0,
+              cursor: "pointer",
+              color: text.disabled,
+              fontSize: 12,
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            {"×"}
+          </button>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
         {/* Left: Clipboard dropdown */}
         <div ref={copyRef} style={{ position: "relative" as const }}>
@@ -427,8 +605,7 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
                 Paste Styles
               </DropdownItem>
               <DropdownItem
-                onClick={() => { onCSSImport?.(); setCopyOpen(false); }}
-                disabled={!onCSSImport}
+                onClick={() => { void handleImportCSS(); setCopyOpen(false); }}
                 shortcut={"\u21E7\u2318V"}
               >
                 Import CSS

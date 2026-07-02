@@ -7,13 +7,13 @@
  *   npm run tasks -- tasks.md --workers 5
  *
  * Matches the `- [ ]` / `- [x]` / `- [!]` PRD semantics of the existing
- * `run-tasks-parallel.sh`, with three differences:
+ * `scripts/run-tasks-parallel.sh`, with three differences:
  *
  *   1. Each task runs in a Docker sandbox via sandcastle. The host
  *      working tree is never touched until merge.
  *   2. Concurrency is a Node-side semaphore, not flock(1) over a counter.
  *   3. Branches are named `sandcastle/<slug>-<unix-ts>`. Cleanup with
- *      `./merge-workers.sh` works against the same branch pattern, or
+ *      `./scripts/merge-workers.sh` works against the same branch pattern, or
  *      delete the branches directly once you've reviewed them.
  *
  * The fast-fail-on-auth heuristic from the bash runner is preserved:

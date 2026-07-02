@@ -56,6 +56,19 @@ describe("FOCUSABLE_SELECTOR", () => {
     el.remove();
   });
 
+  it("does NOT match disabled controls (focus() on them no-ops)", () => {
+    const btn = document.createElement("button");
+    btn.disabled = true;
+    const input = document.createElement("input");
+    input.disabled = true;
+    document.body.append(btn, input);
+    const found = Array.from(document.querySelectorAll(FOCUSABLE_SELECTOR));
+    expect(found).not.toContain(btn);
+    expect(found).not.toContain(input);
+    btn.remove();
+    input.remove();
+  });
+
   it("does NOT match [tabindex='-1']", () => {
     const el = document.createElement("div");
     el.setAttribute("tabindex", "-1");

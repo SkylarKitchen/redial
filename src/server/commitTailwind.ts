@@ -137,9 +137,10 @@ export function getUtilityGroup(cls: string): string {
  * Merge new Tailwind classes into an existing class string.
  * Conflict-aware: classes in the same utility group are replaced, not duplicated.
  *
+ * Replacements land at the END of the list (last occurrence wins):
  * "flex items-center" + "p-4" -> "flex items-center p-4"
- * "w-4 h-8" + "w-6" -> "w-6 h-8"
- * "bg-blue-500 text-white" + "bg-red-500" -> "bg-red-500 text-white"
+ * "w-4 h-8" + "w-6" -> "h-8 w-6"
+ * "bg-blue-500 text-white" + "bg-red-500" -> "text-white bg-red-500"
  */
 export function mergeClasses(existing: string, newClasses: string): string {
   const existingList = existing.trim().split(/\s+/).filter(Boolean);
@@ -373,6 +374,17 @@ export function clearClassNameFileCache(): void {
   classNameFileCache.clear();
 }
 
+/**
+ * Does any className attribute in `lines` have exactly `className` as its
+ * content? Scans ALL attributes (issue #66) — the first-match-only check
+ * missed elements whose className isn't the first one in the file.
+ */
+function linesHaveExactClassName(lines: string[], className: string): boolean {
+  return findAllClassNameAttributes(lines).some(
+    (m) => lines[m.lineIdx].slice(m.start, m.end) === className,
+  );
+}
+
 /** Does `relPath` (relative to projectRoot) still define `className` in a className attribute? */
 async function fileStillHasClassName(
   projectRoot: string,
@@ -382,9 +394,7 @@ async function fileStillHasClassName(
   try {
     const content = await readFile(resolve(projectRoot, relPath), "utf-8");
     if (!content.includes(className)) return false;
-    const lines = content.split("\n");
-    const found = findClassNameAttribute(lines);
-    return !!found && lines[found.lineIdx].slice(found.start, found.end) === className;
+    return linesHaveExactClassName(content.split("\n"), className);
   } catch {
     return false;
   }
@@ -396,7 +406,9 @@ const SOURCE_DIR_PRIORITY = new Set(["src", "app", "pages", "components", "lib",
 
 /**
  * Search project JSX/TSX files for one containing the given className string.
- * Used as a fallback when React _debugSource is unavailable (e.g., Turbopack).
+ * Used as a fallback when the client's JSX source hint is unavailable — no
+ * usable fiber dev metadata (React ≤18 _debugSource / React 19 _debugStack),
+ * e.g. Turbopack compiled-chunk stacks or production builds.
  * Returns the relative file path or null. Memoized per (projectRoot, className).
  */
 async function findFileByClassName(
@@ -432,15 +444,11 @@ async function findFileByClassName(
       try {
         const content = await readFile(filePath, "utf-8");
         if (content.includes(className)) {
-          // Verify it's actually inside a className attribute
-          const lines = content.split("\n");
-          const found = findClassNameAttribute(lines);
-          if (found) {
-            const foundClasses = lines[found.lineIdx].slice(found.start, found.end);
-            if (foundClasses === className) {
-              // Return path relative to project root
-              return filePath.slice(projectRoot.length + 1);
-            }
+          // Verify it's actually inside a className attribute — any attribute
+          // in the file, not just the first (issue #66).
+          if (linesHaveExactClassName(content.split("\n"), className)) {
+            // Return path relative to project root
+            return filePath.slice(projectRoot.length + 1);
           }
         }
       } catch { /* unreadable file */ }
@@ -458,6 +466,621 @@ async function findFileByClassName(
   return result;
 }
 
+// ─── Class attach (class creation — audit 05) ───────────────────────────────
+//
+// commit.ts calls this after creating a `.name { }` rule for a class the user
+// typed in the panel: the class token must also land on the JSX element's
+// className attribute. This REUSES the className-location machinery above
+// (findClassNameForChange / parseClassNameOnLine) but deliberately NOT
+// mergeClasses — the Tailwind conflict merge groups by utility prefix, so a
+// plain-class attach like "text-brand" onto "text-large" would EAT the
+// existing class. A plain attach is a whole-token append with dedupe.
+
+export type AttachClassResult =
+  | { ok: true; file: string; changed: boolean }
+  | { ok: false; reason: string };
+
+/** Append `className` to a class string as a whole token (idempotent). */
+function appendClassToken(current: string, className: string): string | null {
+  const tokens = current.trim().split(/\s+/).filter(Boolean);
+  if (tokens.includes(className)) return null; // already attached
+  tokens.push(className);
+  return tokens.join(" ");
+}
+
+/**
+ * Insert ` className="x"` right after the tag name of the first JSX opener on
+ * `line`. Returns null when the line has no opener (caller tries the next
+ * candidate line).
+ */
+function insertClassNameAttributeOnLine(line: string, className: string): string | null {
+  const m = line.match(/<([A-Za-z][\w.:-]*)/);
+  if (!m) return null;
+  const at = m.index! + m[0].length;
+  return line.slice(0, at) + ` className="${className}"` + line.slice(at);
+}
+
+/**
+ * Attach `className` to the JSX source element's className attribute.
+ *
+ *  - `existingClasses` non-empty → locate the attribute whose content matches
+ *    (findClassNameForChange — the issue-#42 disambiguation) and append the
+ *    token.
+ *  - `existingClasses` empty → the element has no classes in source: insert a
+ *    fresh `className="x"` attribute at the fiber's sourceLine (merging into
+ *    a parseable empty/literal attribute if one is already there; refusing a
+ *    non-literal expression with an accurate reason).
+ *
+ * Path safety mirrors handleTailwindCommit: resolveSafe (string-level) +
+ * isRealPathWithinRoot (symlink-resolved) before any read/write.
+ */
+export async function attachClassToJSX(
+  projectRoot: string,
+  opts: {
+    className: string;
+    sourceFile?: string;
+    sourceLine?: number;
+    existingClasses?: string;
+  }
+): Promise<AttachClassResult> {
+  let file = opts.sourceFile;
+  if (!file && opts.existingClasses) {
+    file = (await findFileByClassName(projectRoot, opts.existingClasses)) ?? undefined;
+  }
+  if (!file) {
+    return { ok: false, reason: "no JSX source file resolved for the element" };
+  }
+
+  let filePath: string;
+  try {
+    filePath = resolveSafe(projectRoot, file);
+    await stat(filePath);
+    if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
+      return { ok: false, reason: `resolved path escapes project root: "${file}"` };
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, reason: `cannot open "${file}": ${message}` };
+  }
+
+  const source = await readFile(filePath, "utf-8");
+  const lines = source.split("\n");
+  const existing = (opts.existingClasses ?? "").trim();
+
+  const write = async (): Promise<void> => {
+    await writeFile(filePath, lines.join("\n"), "utf-8");
+  };
+
+  if (existing) {
+    const lookup = findClassNameForChange(lines, existing, opts.sourceLine);
+    if (!lookup.ok) {
+      return {
+        ok: false,
+        reason:
+          lookup.reason === "ambiguous"
+            ? `ambiguous className "${existing}" in ${file}: ${lookup.count} matching elements and no sourceLine to disambiguate`
+            : `className attribute matching "${existing}" not found in ${file}`,
+      };
+    }
+    const { lineIdx, start, end } = lookup.match;
+    const next = appendClassToken(lines[lineIdx].slice(start, end), opts.className);
+    if (next === null) return { ok: true, file, changed: false }; // idempotent re-save
+    lines[lineIdx] = lines[lineIdx].slice(0, start) + next + lines[lineIdx].slice(end);
+    await write();
+    return { ok: true, file, changed: true };
+  }
+
+  // No classes in source — insert a fresh className attribute at the element.
+  if (opts.sourceLine == null || opts.sourceLine <= 0) {
+    return {
+      ok: false,
+      reason: `element has no className in ${file} and no source line was provided to insert one`,
+    };
+  }
+  const target = opts.sourceLine - 1; // 1-indexed fiber line → 0-indexed
+  const order = [target, target + 1, target - 1, target + 2, target - 2].filter(
+    (i) => i >= 0 && i < lines.length
+  );
+  for (const i of order) {
+    const line = lines[i];
+    if (!/<[A-Za-z]/.test(line)) continue;
+    if (/className\s*=/.test(line)) {
+      // The element ALREADY carries a className in source. A parseable literal
+      // (e.g. className="") gets the token appended; a non-literal expression
+      // (className={styles.card}) is refused — rewriting it would corrupt code.
+      const parsed = parseClassNameOnLine(line, i);
+      if (parsed) {
+        const next = appendClassToken(line.slice(parsed.start, parsed.end), opts.className);
+        if (next === null) return { ok: true, file, changed: false };
+        lines[i] = line.slice(0, parsed.start) + next + line.slice(parsed.end);
+        await write();
+        return { ok: true, file, changed: true };
+      }
+      return {
+        ok: false,
+        reason: `className at ${file}:${i + 1} is a non-literal expression — attach ".${opts.className}" manually`,
+      };
+    }
+    const inserted = insertClassNameAttributeOnLine(line, opts.className);
+    if (inserted === null) continue;
+    lines[i] = inserted;
+    await write();
+    return { ok: true, file, changed: true };
+  }
+  return {
+    ok: false,
+    reason: `no JSX element found near ${file}:${opts.sourceLine} — cannot attach ".${opts.className}"`,
+  };
+}
+
+// ─── Element-scope inline style write (audit 06) ─────────────────────────────
+//
+// Element scope previews on ONE element, so it must persist to that one
+// element: commit.ts routes `elementScope`-tagged changes here, and the change
+// lands in the element's JSX `style` attribute — NEVER in the shared CSS class
+// rule (the silent blast-radius widening this fixes). Reuses the
+// className-location machinery above (findClassNameForChange /
+// findFileByClassName — the issue-#42 disambiguation and the issue-#43
+// fallback walk) to anchor on the element's opening tag.
+
+export type InlineStyleResult =
+  | { ok: true; file: string; changed: boolean }
+  | { ok: false; reason: string };
+
+type TagSpan = {
+  /** Offset of the opening `<`. */
+  start: number;
+  /** Offset just past the tag name (the insertion point for a new attribute). */
+  nameEnd: number;
+  /** Offset of the closing `>` of the opening tag. */
+  end: number;
+};
+
+/** Skip a quoted string starting at `i` (source[i] is the quote). Returns the
+ *  offset just past the closing quote (or `limit`). */
+function skipString(source: string, i: number, limit: number): number {
+  const q = source[i];
+  i++;
+  while (i < limit && source[i] !== q) {
+    if (source[i] === "\\") i++;
+    i++;
+  }
+  return i + 1;
+}
+
+/**
+ * Scan a JSX opening tag from its `<`. Tracks strings and `{ }` expression
+ * depth so a `>` inside an attribute expression (arrow function, comparison)
+ * never terminates the scan early. Returns null when `start` isn't actually a
+ * tag opener (e.g. a `<` comparison) or the tag never closes.
+ */
+function scanTagSpan(source: string, start: number): TagSpan | null {
+  const m = /^<[A-Za-z][\w.:-]*/.exec(source.slice(start, start + 200));
+  if (!m) return null;
+  let i = start + m[0].length;
+  const nameEnd = i;
+  let depth = 0;
+  const limit = Math.min(source.length, start + 20000);
+  while (i < limit) {
+    const ch = source[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      i = skipString(source, i, limit);
+      continue;
+    }
+    if (ch === "{") { depth++; i++; continue; }
+    if (ch === "}") { depth--; i++; continue; }
+    if (depth === 0) {
+      if (ch === ">") return { start, nameEnd, end: i };
+      if (ch === "<") return null; // another opener before this one closed
+    }
+    i++;
+  }
+  return null;
+}
+
+/** The nearest opening tag whose span contains `anchorOffset` (a position
+ *  inside one of its attributes, e.g. the className content). */
+function findEnclosingTag(source: string, anchorOffset: number): TagSpan | null {
+  for (let i = anchorOffset; i >= 0 && anchorOffset - i <= 4000; i--) {
+    if (source[i] === "<" && /[A-Za-z]/.test(source[i + 1] ?? "")) {
+      const span = scanTagSpan(source, i);
+      if (span && span.end >= anchorOffset) return span;
+    }
+  }
+  return null;
+}
+
+/** Offset of the `}` matching the `{` at `openPos` (string-aware), or null. */
+function matchBrace(source: string, openPos: number): number | null {
+  let depth = 0;
+  let i = openPos;
+  const limit = Math.min(source.length, openPos + 20000);
+  while (i < limit) {
+    const ch = source[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      i = skipString(source, i, limit);
+      continue;
+    }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return i;
+    }
+    i++;
+  }
+  return null;
+}
+
+/**
+ * Find the top-level `style` attribute inside a tag span. Returns the offset
+ * of the attribute value's first char after `=` (whitespace skipped), or
+ * `{ valueStart: null }` when the tag has a bare `style` with no value, or
+ * null when the tag has no style attribute at all.
+ */
+function findStyleAttr(
+  source: string,
+  tag: TagSpan
+): { valueStart: number | null } | null {
+  let i = tag.nameEnd;
+  let depth = 0;
+  while (i < tag.end) {
+    const ch = source[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      i = skipString(source, i, tag.end);
+      continue;
+    }
+    if (ch === "{") { depth++; i++; continue; }
+    if (ch === "}") { depth--; i++; continue; }
+    if (depth === 0 && /[A-Za-z_]/.test(ch)) {
+      const idm = /^[\w-]+/.exec(source.slice(i, i + 200))!;
+      i += idm[0].length;
+      if (idm[0] === "style") {
+        let j = i;
+        while (j < tag.end && /\s/.test(source[j])) j++;
+        if (source[j] !== "=") return { valueStart: null };
+        j++;
+        while (j < tag.end && /\s/.test(source[j])) j++;
+        return { valueStart: j };
+      }
+      continue;
+    }
+    i++;
+  }
+  return null;
+}
+
+/** Split `[from, to)` on top-level commas (string/brace/paren/bracket aware),
+ *  dropping all-whitespace segments. */
+function splitTopLevel(
+  source: string,
+  from: number,
+  to: number
+): Array<{ start: number; end: number }> {
+  const segs: Array<{ start: number; end: number }> = [];
+  let depth = 0;
+  let segStart = from;
+  let i = from;
+  while (i < to) {
+    const ch = source[i];
+    if (ch === '"' || ch === "'" || ch === "`") {
+      i = skipString(source, i, to);
+      continue;
+    }
+    if (ch === "{" || ch === "(" || ch === "[") { depth++; i++; continue; }
+    if (ch === "}" || ch === ")" || ch === "]") { depth--; i++; continue; }
+    if (ch === "," && depth === 0) {
+      segs.push({ start: segStart, end: i });
+      segStart = i + 1;
+    }
+    i++;
+  }
+  segs.push({ start: segStart, end: to });
+  return segs.filter((s) => source.slice(s.start, s.end).trim() !== "");
+}
+
+/**
+ * CSS property → React style-object key. `background-color` → backgroundColor,
+ * `-webkit-line-clamp` → WebkitLineClamp, `-ms-overflow-style` →
+ * msOverflowStyle. Custom properties (`--x`) keep their verbatim (quoted) form.
+ */
+function cssPropToJsxKey(prop: string): string {
+  if (prop.startsWith("--")) return prop;
+  let p = prop;
+  let vendor = false;
+  if (p.startsWith("-")) {
+    vendor = true;
+    p = p.slice(1);
+  }
+  const segs = p.split("-").filter(Boolean);
+  if (segs.length === 0) return prop;
+  let out =
+    segs[0] +
+    segs
+      .slice(1)
+      .map((s) => s[0].toUpperCase() + s.slice(1))
+      .join("");
+  if (vendor && !p.startsWith("ms-")) out = out[0].toUpperCase() + out.slice(1);
+  return out;
+}
+
+/** Normalize an authored style-object key for comparison: quoted css-case
+ *  spellings ("background-color") fold onto the camelCase key. */
+function normalizeStyleKey(key: string): string {
+  if (key.startsWith("--")) return key;
+  return key.includes("-") ? cssPropToJsxKey(key) : key;
+}
+
+/** Identifier keys stay bare; anything else (custom properties) is quoted. */
+function formatStyleKey(key: string): string {
+  return /^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key);
+}
+
+type SourceEdit = { start: number; end: number; text: string };
+
+function applyEdits(source: string, edits: SourceEdit[]): string {
+  const sorted = [...edits].sort((a, b) => b.start - a.start || b.end - a.end);
+  let out = source;
+  for (const e of sorted) {
+    out = out.slice(0, e.start) + e.text + out.slice(e.end);
+  }
+  return out;
+}
+
+/** 1-indexed line number of `offset` in `source` (for error messages). */
+function lineOf(source: string, offset: number): number {
+  let line = 1;
+  for (let i = 0; i < offset && i < source.length; i++) {
+    if (source[i] === "\n") line++;
+  }
+  return line;
+}
+
+/**
+ * Pure merge: locate the element's opening tag in `source` and merge the
+ * declarations into its `style` attribute. Returns the next source text, or an
+ * accurate refusal — non-literal style expressions (`style={styles}`,
+ * spreads, computed entries) are never rewritten.
+ */
+function mergeInlineStyleIntoSource(
+  source: string,
+  opts: {
+    declarations: Array<{ prop: string; value: string }>;
+    sourceLine?: number;
+    existingClasses?: string;
+  },
+  file: string
+): { ok: true; next: string } | { ok: false; reason: string } {
+  const lines = source.split("\n");
+  const lineStarts: number[] = new Array(lines.length);
+  {
+    let off = 0;
+    for (let i = 0; i < lines.length; i++) {
+      lineStarts[i] = off;
+      off += lines[i].length + 1;
+    }
+  }
+
+  // ── Anchor: the element's opening tag ──
+  const existing = (opts.existingClasses ?? "").trim();
+  let tag: TagSpan | null = null;
+  if (existing) {
+    const lookup = findClassNameForChange(lines, existing, opts.sourceLine);
+    if (!lookup.ok) {
+      return {
+        ok: false,
+        reason:
+          lookup.reason === "ambiguous"
+            ? `ambiguous className "${existing}" in ${file}: ${lookup.count} matching elements and no sourceLine to disambiguate — refusing to guess which element to style`
+            : `can't locate the element's JSX in ${file} (no className attribute matches "${existing}") — use class scope or edit the source manually`,
+      };
+    }
+    const anchorOffset = lineStarts[lookup.match.lineIdx] + lookup.match.start;
+    tag = findEnclosingTag(source, anchorOffset);
+    if (!tag) {
+      return {
+        ok: false,
+        reason: `can't parse the JSX opening tag at ${file}:${lookup.match.lineIdx + 1} — edit the style attribute manually`,
+      };
+    }
+  } else {
+    if (opts.sourceLine == null || opts.sourceLine <= 0) {
+      return {
+        ok: false,
+        reason: `can't locate the element's JSX in ${file} (element has no classes and no source line) — use class scope or edit the source manually`,
+      };
+    }
+    const target = opts.sourceLine - 1; // 1-indexed fiber line → 0-indexed
+    const order = [target, target + 1, target - 1, target + 2, target - 2].filter(
+      (i) => i >= 0 && i < lines.length
+    );
+    for (const i of order) {
+      const m = lines[i].match(/<[A-Za-z]/);
+      if (!m) continue;
+      const span = scanTagSpan(source, lineStarts[i] + m.index!);
+      if (span) {
+        tag = span;
+        break;
+      }
+    }
+    if (!tag) {
+      return {
+        ok: false,
+        reason: `no JSX element found near ${file}:${opts.sourceLine} — can't write the inline style`,
+      };
+    }
+  }
+
+  const at = `${file}:${lineOf(source, tag.start)}`;
+
+  // ── Declarations, deduped by resolved key (last write wins) ──
+  const byKey = new Map<string, { key: string; value: string }>();
+  for (const d of opts.declarations) {
+    byKey.set(cssPropToJsxKey(d.prop), {
+      key: cssPropToJsxKey(d.prop),
+      value: d.value,
+    });
+  }
+  const decls = Array.from(byKey.values());
+
+  // ── No style attribute: insert a fresh one after the tag name ──
+  const attr = findStyleAttr(source, tag);
+  if (attr === null) {
+    const body = decls
+      .map((d) => `${formatStyleKey(d.key)}: ${JSON.stringify(d.value)}`)
+      .join(", ");
+    return {
+      ok: true,
+      next: applyEdits(source, [
+        { start: tag.nameEnd, end: tag.nameEnd, text: ` style={{ ${body} }}` },
+      ]),
+    };
+  }
+
+  // ── Existing style attribute: it must be a plain object literal ──
+  const nonLiteral = {
+    ok: false as const,
+    reason: `style at ${at} is not a plain object literal — edit the style object manually`,
+  };
+  if (attr.valueStart === null || source[attr.valueStart] !== "{") {
+    return nonLiteral;
+  }
+  const exprClose = matchBrace(source, attr.valueStart);
+  if (exprClose === null) return nonLiteral;
+  let objOpen = attr.valueStart + 1;
+  while (objOpen < exprClose && /\s/.test(source[objOpen])) objOpen++;
+  if (source[objOpen] !== "{") return nonLiteral; // style={styles} / expressions
+  const objClose = matchBrace(source, objOpen);
+  if (
+    objClose === null ||
+    objClose > exprClose ||
+    source.slice(objClose + 1, exprClose).trim() !== ""
+  ) {
+    return nonLiteral; // e.g. style={cond ? {…} : {…}}
+  }
+
+  // ── Parse the object body into simple `key: value` entries ──
+  type ObjEntry = { key: string; valStart: number; valEnd: number };
+  const entries: ObjEntry[] = [];
+  for (const seg of splitTopLevel(source, objOpen + 1, objClose)) {
+    const text = source.slice(seg.start, seg.end);
+    if (/^\s*\.\.\./.test(text)) {
+      return {
+        ok: false,
+        reason: `style object at ${at} contains a spread — edit the style object manually`,
+      };
+    }
+    const km = /^(\s*)("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[A-Za-z_$][\w$]*)(\s*):/.exec(
+      text
+    );
+    if (!km) {
+      return {
+        ok: false,
+        reason: `style object at ${at} has an entry that isn't a simple key: value pair — edit the style object manually`,
+      };
+    }
+    const rawKey = km[2];
+    const key =
+      rawKey.startsWith('"') || rawKey.startsWith("'")
+        ? rawKey.slice(1, -1)
+        : rawKey;
+    let valStart = seg.start + km[0].length;
+    while (valStart < seg.end && /\s/.test(source[valStart])) valStart++;
+    let valEnd = seg.end;
+    while (valEnd > valStart && /\s/.test(source[valEnd - 1])) valEnd--;
+    if (valEnd <= valStart) return nonLiteral; // `key:` with no value
+    entries.push({ key, valStart, valEnd });
+  }
+
+  // ── Merge: replace matching keys (last occurrence wins), append the rest ──
+  const edits: SourceEdit[] = [];
+  const additions: string[] = [];
+  for (const d of decls) {
+    const matching = entries.filter((e) => normalizeStyleKey(e.key) === d.key);
+    const target = matching[matching.length - 1];
+    const lit = JSON.stringify(d.value);
+    if (target) {
+      edits.push({ start: target.valStart, end: target.valEnd, text: lit });
+    } else {
+      additions.push(`${formatStyleKey(d.key)}: ${lit}`);
+    }
+  }
+  if (additions.length > 0) {
+    let p = objClose - 1;
+    while (p > objOpen && /\s/.test(source[p])) p--;
+    if (p === objOpen) {
+      // empty object literal `{}`
+      edits.push({ start: objOpen + 1, end: objOpen + 1, text: ` ${additions.join(", ")} ` });
+    } else if (source[p] === ",") {
+      edits.push({ start: p + 1, end: p + 1, text: ` ${additions.join(", ")}` });
+    } else {
+      edits.push({ start: p + 1, end: p + 1, text: `, ${additions.join(", ")}` });
+    }
+  }
+
+  return { ok: true, next: applyEdits(source, edits) };
+}
+
+/**
+ * Merge element-scoped declarations into the element's JSX `style` attribute.
+ *
+ * Anchoring mirrors attachClassToJSX: `existingClasses` locates the className
+ * attribute (issue-#42 disambiguation via `sourceLine`; issue-#43 project walk
+ * when no source-file hint exists); a class-less element falls back to the
+ * fiber `sourceLine`. Path safety mirrors every other write: resolveSafe
+ * (string-level) + isRealPathWithinRoot (symlink-resolved) before any
+ * read/write. `acquireLock` (injected by commit.ts) serializes the
+ * read-modify-write against overlapping requests on the same file (issue #64).
+ *
+ * Never falls back to a CSS rule — an unresolvable anchor is an accurate
+ * per-batch failure and the file is left untouched.
+ */
+export async function applyInlineStyleToJSX(
+  projectRoot: string,
+  opts: {
+    declarations: Array<{ prop: string; value: string }>;
+    sourceFile?: string;
+    sourceLine?: number;
+    existingClasses?: string;
+  },
+  acquireLock?: (absPath: string) => Promise<() => void>
+): Promise<InlineStyleResult> {
+  let file = opts.sourceFile;
+  if (!file && opts.existingClasses) {
+    file = (await findFileByClassName(projectRoot, opts.existingClasses)) ?? undefined;
+  }
+  if (!file) {
+    return {
+      ok: false,
+      reason:
+        "can't locate the element's JSX (no source hint and no className anchor) — use class scope or edit the source manually",
+    };
+  }
+
+  let filePath: string;
+  try {
+    filePath = resolveSafe(projectRoot, file);
+    await stat(filePath);
+    if (!(await isRealPathWithinRoot(filePath, projectRoot))) {
+      return { ok: false, reason: `resolved path escapes project root: "${file}"` };
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, reason: `cannot open "${file}": ${message}` };
+  }
+
+  const release = acquireLock ? await acquireLock(filePath) : null;
+  try {
+    const source = await readFile(filePath, "utf-8");
+    const merged = mergeInlineStyleIntoSource(source, opts, file);
+    if (!merged.ok) return merged;
+    if (merged.next === source) return { ok: true, file, changed: false };
+    await writeFile(filePath, merged.next, "utf-8");
+    return { ok: true, file, changed: true };
+  } finally {
+    release?.();
+  }
+}
+
 /**
  * Handle Tailwind class commit: read JSX files, merge classes, write back.
  */
@@ -472,7 +1095,9 @@ export async function handleTailwindCommit(
   const changesByFile = new Map<string, TailwindChange[]>();
   for (const change of changes) {
     let file: string | undefined = change.sourceFile;
-    // Fallback: when _debugSource is unavailable, search project for the className
+    // Fallback: when the client couldn't derive a JSX source hint from fiber
+    // dev metadata (React ≤18 _debugSource / React 19 _debugStack), search
+    // the project for the className
     if (!file && change.existingClasses) {
       file = (await findFileByClassName(projectRoot, change.existingClasses)) ?? undefined;
     }

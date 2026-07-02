@@ -44,9 +44,9 @@ afterEach(() => {
 
 function renderLabelScrub(props: {
   value: number;
-  onChange: ReturnType<typeof vi.fn>;
-  onScrubStart?: ReturnType<typeof vi.fn>;
-  onScrubEnd?: ReturnType<typeof vi.fn>;
+  onChange: (value: number) => void;
+  onScrubStart?: () => void;
+  onScrubEnd?: () => void;
   step?: number;
   deadZone?: number;
 }) {

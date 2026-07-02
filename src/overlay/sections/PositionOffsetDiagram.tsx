@@ -60,7 +60,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
         {/* Top */}
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, padding: "8px 0 4px" }}>
           {auto.top ? (
-            <AutoLabel onClick={() => onAutoDisable?.("top")} />
+            <AutoLabel side="top" onClick={() => onAutoDisable?.("top")} />
           ) : (
             <>
               <EditableValue value={top} onChange={(v) => onChange("top", v)} onReset={() => onReset?.("top")} step={stepFor("top")} />
@@ -73,7 +73,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
         <div style={{ display: "flex", alignItems: "center" }}>
           <div style={{ flex: "0 0 56px", display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
             {auto.left ? (
-              <AutoLabel onClick={() => onAutoDisable?.("left")} />
+              <AutoLabel side="left" onClick={() => onAutoDisable?.("left")} />
             ) : (
               <>
                 <EditableValue value={left} onChange={(v) => onChange("left", v)} onReset={() => onReset?.("left")} step={stepFor("left")} />
@@ -101,7 +101,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
           </div>
           <div style={{ flex: "0 0 56px", display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
             {auto.right ? (
-              <AutoLabel onClick={() => onAutoDisable?.("right")} />
+              <AutoLabel side="right" onClick={() => onAutoDisable?.("right")} />
             ) : (
               <>
                 <EditableValue value={right} onChange={(v) => onChange("right", v)} onReset={() => onReset?.("right")} step={stepFor("right")} />
@@ -114,7 +114,7 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
         {/* Bottom */}
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, padding: "4px 0 8px" }}>
           {auto.bottom ? (
-            <AutoLabel onClick={() => onAutoDisable?.("bottom")} />
+            <AutoLabel side="bottom" onClick={() => onAutoDisable?.("bottom")} />
           ) : (
             <>
               <EditableValue value={bottom} onChange={(v) => onChange("bottom", v)} onReset={() => onReset?.("bottom")} step={stepFor("bottom")} />
@@ -129,10 +129,21 @@ export function PositionOffsetDiagram({ top, right, bottom, left, onChange, unit
 
 // --- Auto keyword label ---
 
-function AutoLabel({ onClick }: { onClick: () => void }) {
+function AutoLabel({ onClick, side }: { onClick: () => void; side?: string }) {
   return (
     <span
+      role="button"
+      tabIndex={0}
+      aria-label={side ? `Edit ${side} offset (auto)` : "Edit offset (auto)"}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          onClick();
+        }
+      }}
       style={{
         fontSize: "10px",
         fontFamily: font.mono,
@@ -213,10 +224,21 @@ function EditableValue({
 
   return (
     <span
+      role="button"
+      tabIndex={0}
+      aria-label="Edit offset value"
       onClick={(e) => {
         e.stopPropagation();
         if (e.altKey && onReset) { onReset(); return; }
         setEditing(true);
+      }}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          setEditing(true);
+        }
       }}
       style={{
         fontSize: "10px",

@@ -11,6 +11,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import type { DiffEntry } from "../core/apply";
+import type { ScopeContext } from "../core/engine";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
     const el = makeEl();
     const [c] = enrichChangesForCommit(el, [entry()], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.state).toBeUndefined();
@@ -64,6 +66,7 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
     const el = makeEl();
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.state).toBe("hover");
@@ -74,7 +77,7 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
     const [plain, hovered] = enrichChangesForCommit(
       el,
       [entry(), entry({ prop: "background-color", state: "hover" })],
-      { scope: "element", activeState: "focus" },
+      { scope: "element", activeClassName: null, activeState: "focus" },
     );
     expect(plain.state).toBe("focus");
     expect(hovered.state).toBe("hover");
@@ -97,6 +100,7 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
     el.style.setProperty("color", "var(--brand)");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.prop).toBe("--brand");
@@ -115,6 +119,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("Button_btn__a1b2c");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.state).toBe("hover");
@@ -124,8 +129,10 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
   it("resolves the CSS-module class on the ChangesDrawer Save-All path (scope only, no activeState/activeClassName)", () => {
     const el = makeEl("Button_btn__a1b2c");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
+      // Deliberately partial: this path passes only { scope } — the function
+      // must tolerate missing activeState/activeClassName (checked upstream).
       scope: "element",
-    });
+    } as ScopeContext);
     expect(c.state).toBe("hover");
     expect(c.className).toBe("btn");
   });
@@ -136,6 +143,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     // must carry class info with it.
     const [c] = enrichChangesForCommit(el, [entry()], {
       scope: "element",
+      activeClassName: null,
       activeState: "hover",
     });
     expect(c.state).toBe("hover");
@@ -147,6 +155,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("btn");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.state).toBe("hover");
@@ -158,6 +167,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("btn");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.className).toBe("btn");
@@ -168,6 +178,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("btn");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.className).toBeUndefined();
@@ -185,6 +196,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     el.classList.add("__tuner-state-preview");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.className).toBeUndefined();
@@ -194,6 +206,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("btn");
     const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.className).toBeUndefined();
@@ -203,6 +216,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("Button_btn__a1b2c");
     const [c] = enrichChangesForCommit(el, [entry()], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(c.className).toBeUndefined();

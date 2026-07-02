@@ -358,6 +358,11 @@ export function ColorPickerEnhanced({
 
   // ─── Drag helpers ─────────────────────────────────────────────
 
+  // Ghost-drag protection (issue #73): holds the active drag's end handler
+  // so window blur, pointercancel, Escape, or unmount can close the undo
+  // batch when the mouseup is lost — mirrors the LabelScrub pattern.
+  const endDragRef = useRef<(() => void) | null>(null);
+
   const startDrag = useCallback(
     (
       onMove: (clientX: number, clientY: number) => void,
@@ -367,17 +372,40 @@ export function ColorPickerEnhanced({
       beginBatch();
       onMove(e.clientX, e.clientY);
       const move = (ev: MouseEvent) => onMove(ev.clientX, ev.clientY);
+      let ended = false;
       const up = () => {
+        if (ended) return; // terminal events can race — close exactly once
+        ended = true;
         isDraggingRef.current = false;
         endBatch();
         document.removeEventListener("mousemove", move);
         document.removeEventListener("mouseup", up);
+        document.removeEventListener("pointercancel", up);
+        window.removeEventListener("blur", up);
+        window.removeEventListener("keydown", onKey);
+        endDragRef.current = null;
       };
+      const onKey = (ev: KeyboardEvent) => {
+        if (ev.key === "Escape") up();
+      };
+      endDragRef.current = up;
       document.addEventListener("mousemove", move);
       document.addEventListener("mouseup", up);
+      // Ghost-drag safety: a lost release (canceled pointer, Cmd+Tab blur,
+      // Escape) must still close the batch and detach the move listener.
+      document.addEventListener("pointercancel", up);
+      window.addEventListener("blur", up);
+      window.addEventListener("keydown", onKey);
     },
     [],
   );
+
+  // Close any in-flight drag on unmount (e.g. Cmd+Z remounts the panel).
+  useEffect(() => {
+    return () => {
+      endDragRef.current?.();
+    };
+  }, []);
 
   // ─── Canvas (saturation/brightness) interaction ───────────────
 

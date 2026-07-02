@@ -13,7 +13,8 @@
  */
 
 import { realpath } from "fs/promises";
-import { normalize, resolve, sep } from "path";
+import * as nodePath from "path";
+import { resolve, sep } from "path";
 
 /**
  * Directories excluded from recursive project searches (build output,
@@ -28,13 +29,27 @@ export const EXCLUDED_DIRS = new Set([
  * Ensure a resolved path is contained within the project root.
  * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
  *
+ * Containment is separator-aware via path.relative — a hardcoded "/" broke
+ * every Windows save, where normalize() yields backslashes (issue #69) —
+ * and rejects prefix-sharing siblings (`/root-evil` vs `/root`) either way.
+ *
+ * `p` exists for tests only: process.platform can't be flipped in a test,
+ * so the win32/posix semantics are exercised by injecting path.win32 /
+ * path.posix. Production callers use the host default.
+ *
  * String-level only — does NOT resolve symlinks; pair with
  * isRealPathWithinRoot() before any actual read/write.
  */
-export function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
-  const normalizedRoot = normalize(projectRoot);
-  const normalizedPath = normalize(resolvedPath);
-  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
+export function assertWithinRoot(
+  resolvedPath: string,
+  projectRoot: string,
+  p: Pick<typeof nodePath, "normalize" | "relative" | "isAbsolute" | "sep"> = nodePath,
+): void {
+  const rel = p.relative(p.normalize(projectRoot), p.normalize(resolvedPath));
+  // rel === "" means the path IS the root; anything reaching the root's
+  // parent ("..", "../…") or landing on another root/drive (absolute rel)
+  // escapes containment.
+  if (rel === ".." || rel.startsWith(`..${p.sep}`) || p.isAbsolute(rel)) {
     throw new Error("Path traversal detected: resolved path escapes project root");
   }
 }

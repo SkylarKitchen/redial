@@ -10,6 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { Mock } from "vitest";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
@@ -48,6 +49,9 @@ function makeMixedBorderCtx(): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none" as const,
     sectionInd: () => "none" as const,
     cs,
@@ -226,8 +230,8 @@ describe("Per-side border controls show correct values", () => {
     });
 
     // The apply fn should have been called with "border-top-width" (not "border-width")
-    const applyCalls = (ctx.apply as ReturnType<typeof vi.fn>).mock.calls;
-    const widthCall = applyCalls.find(([prop]: [string]) => prop.includes("width"));
+    const applyCalls = (ctx.apply as Mock<(prop: string, value: string) => void>).mock.calls;
+    const widthCall = applyCalls.find(([prop]) => prop.includes("width"));
     if (widthCall) {
       expect(widthCall[0]).toBe("border-top-width");
     }
@@ -251,8 +255,8 @@ describe("Per-side border controls show correct values", () => {
       widthInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     });
 
-    const applyCalls = (ctx.apply as ReturnType<typeof vi.fn>).mock.calls;
-    const widthCall = applyCalls.find(([prop]: [string]) => prop.includes("width"));
+    const applyCalls = (ctx.apply as Mock<(prop: string, value: string) => void>).mock.calls;
+    const widthCall = applyCalls.find(([prop]) => prop.includes("width"));
     if (widthCall) {
       expect(widthCall[0]).toBe("border-bottom-width");
     }

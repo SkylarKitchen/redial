@@ -32,6 +32,12 @@ export interface BackgroundLayer {
     repeat: string;
     attachment: string;
   };
+  /**
+   * Raw CSS image value for layers seeded from source that the editor can't
+   * model (e.g. repeating gradients, radial shapes). Passed through verbatim
+   * when composing background-image so authored layers are never lost (#75).
+   */
+  css?: string;
   opacity: number;
   blendMode: string;
   visible: boolean;
@@ -94,7 +100,17 @@ function layerPreviewBg(layer: BackgroundLayer): string {
     const g = layer.gradient;
     return buildGradientCSS(g.type as "linear" | "radial" | "conic", g.angle, g.stops);
   }
+  if (layer.css) return layer.css;
   return checkerboard;
+}
+
+/**
+ * Layer opacity is implemented by baking alpha into the layer's colors, so
+ * it only applies to color and editable gradient layers — url() images and
+ * raw pass-through layers have no per-layer opacity in CSS (#75).
+ */
+function supportsOpacity(layer: BackgroundLayer): boolean {
+  return layer.type === "color" || (layer.type === "gradient" && !!layer.gradient);
 }
 
 // Small inline dropdown
@@ -242,11 +258,18 @@ export function BackgroundLayerList({
               boxShadow: shadow.dropdown,
             }}
           >
+            {/* Native <button>s so the menu options are keyboard-reachable (issue #85) */}
             {(["color", "gradient", "image"] as BackgroundLayerType[]).map((t) => (
-              <div
+              <button
                 key={t}
+                type="button"
                 onClick={() => addLayer(t)}
                 style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  background: "transparent",
+                  border: "none",
                   paddingTop: 6,
                   paddingBottom: 6,
                   paddingLeft: 10,
@@ -262,7 +285,7 @@ export function BackgroundLayerList({
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
                 {t}
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -289,9 +312,23 @@ export function BackgroundLayerList({
               opacity: layer.visible === false ? 0.4 : 1,
             }}
           >
-            {/* Collapsed row */}
+            {/* Collapsed row. role="button" + keydown instead of a native
+                <button>: the row nests real controls (slider, visibility,
+                delete) and button-in-button is invalid HTML (issue #85). */}
             <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={isExpanded}
+              aria-label={`Toggle ${typeLabel} layer settings`}
               onClick={() => setExpandedId(isExpanded ? null : layer.id)}
+              onKeyDown={(e) => {
+                // Ignore keystrokes bubbling from nested controls.
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setExpandedId(isExpanded ? null : layer.id);
+                }
+              }}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -327,17 +364,19 @@ export function BackgroundLayerList({
                 {typeLabel}
               </span>
 
-              {/* Opacity slider */}
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={layer.opacity}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
-                style={{ width: 48, accentColor: color.primary }}
-              />
+              {/* Opacity slider (only where opacity can be expressed in CSS) */}
+              {supportsOpacity(layer) && (
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={layer.opacity}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => updateLayer(layer.id, { opacity: Number(e.target.value) })}
+                  style={{ width: 48, accentColor: color.primary }}
+                />
+              )}
 
               {/* Eye visibility toggle */}
               <span onClick={(e) => e.stopPropagation()} style={{ pointerEvents: isDragging ? "none" : "auto" }}>
@@ -386,30 +425,47 @@ export function BackgroundLayerList({
                 paddingBottom: 8,
                 borderTop: `1px solid ${blackAlpha(0.04)}`,
               }}>
-                {/* Color layer */}
+                {/* Color layer — native <button> so the edit-color chip is
+                    keyboard-reachable (issue #85) */}
                 {layer.type === "color" && (
-                  <div
+                  <button
+                    type="button"
+                    aria-label={`Edit color ${layer.color ?? ""}`.trim()}
+                    disabled={!onEditColor}
                     onClick={() => onEditColor?.(layer.id)}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       gap: 8,
                       cursor: onEditColor ? "pointer" : "default",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      textAlign: "left",
                     }}
                   >
-                    <div
+                    <span
                       style={{
+                        display: "block",
                         width: 32,
                         height: 24,
                         borderRadius: 4,
                         background: layer.color ?? "#ffffff",
                         border: `1px solid ${blackAlpha(0.12)}`,
+                        flexShrink: 0,
                       }}
                     />
                     <span style={{ fontSize: 11, fontFamily: font.mono, color: blackAlpha(0.5) }}>
                       {layer.color}
                     </span>
-                  </div>
+                  </button>
+                )}
+
+                {/* Raw pass-through layer — read-only source value */}
+                {!layer.gradient && layer.css && (
+                  <span style={{ fontSize: 11, fontFamily: font.mono, wordBreak: "break-all", color: blackAlpha(0.5) }}>
+                    {layer.css}
+                  </span>
                 )}
 
                 {/* Gradient layer — full inline editor */}

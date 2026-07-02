@@ -3,7 +3,7 @@
 [sandcastle](https://github.com/mattpocock/sandcastle) orchestrates Claude
 Code in an isolated Docker container, with each run scoped to its own git
 worktree and branch. It replaces the host-side worktree dance in
-`run-tasks-parallel.sh` with a container-based sandbox — the host working
+`scripts/run-tasks-parallel.sh` with a container-based sandbox — the host working
 tree is never touched until you merge.
 
 ## When to use what
@@ -11,8 +11,8 @@ tree is never touched until you merge.
 | Tool | Use it when |
 |---|---|
 | `npm run sandcastle` | One-off task. Edit `.sandcastle/prompt.md`, run, review the diff. |
-| `npm run tasks -- tasks.md` | Overnight / parallel runs over a checklist. Replaces `run-tasks-parallel.sh`. |
-| `./run-tasks-parallel.sh` (existing) | Still works — kept around for runs you want to do without containers. |
+| `npm run tasks -- tasks.md` | Overnight / parallel runs over a checklist. Replaces `scripts/run-tasks-parallel.sh`. |
+| `./scripts/run-tasks-parallel.sh` (existing) | Still works — kept around for runs you want to do without containers. |
 
 ## Prerequisites
 
@@ -159,7 +159,7 @@ reports conflicts without leaving the working tree mid-merge.
 Fast-fail-on-auth (< 15 s) aborts the whole fleet and leaves
 the line as `- [ ]` so you can rerun.
 
-`./dashboard.sh tasks.md 3` still works for live monitoring — it only
+`./scripts/dashboard.sh tasks.md 3` still works for live monitoring — it only
 reads the PRD checkbox state, doesn't care how tasks are dispatched.
 
 ## Configuration
@@ -180,14 +180,14 @@ CLI flags for `scripts/run-tasks.ts`:
 --model NAME     # default: $SANDCASTLE_MODEL or claude-opus-4-5
 ```
 
-## Differences from `run-tasks-parallel.sh`
+## Differences from `scripts/run-tasks-parallel.sh`
 
 | | bash runner | sandcastle runner |
 |---|---|---|
 | Isolation | git worktree on host | Docker container + worktree |
 | `--dangerously-skip-permissions` blast radius | Your real disk | Container only |
 | Per-task setup hook | none — agent runs against unbuilt deps | `npm ci` on sandbox ready |
-| Auto-commit | `merge-workers.sh` after the fact | `branchStrategy` commits as it goes |
+| Auto-commit | `scripts/merge-workers.sh` after the fact | `branchStrategy` commits as it goes |
 | Status ledger | `[ ]`/`[x]`/`[!]` (sed `-i ''` mac-only) | Same, but portable (Node `fs`) |
 | Fast-fail-on-auth | per-worker break | aborts the whole fleet via `AbortController` |
 | Concurrency primitive | `mkdir` spinlock | `Promise.all` + semaphore |
@@ -205,7 +205,7 @@ git branch --list 'sandcastle/*' --merged | xargs -n1 git branch -d
 docker rmi redial-sandcastle:local
 ```
 
-## Why not just keep using `run-tasks-parallel.sh`?
+## Why not just keep using `scripts/run-tasks-parallel.sh`?
 
 You should, when:
 

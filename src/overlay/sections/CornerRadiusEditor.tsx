@@ -5,7 +5,7 @@
  * All cells share the same unit — changing any one changes all.
  */
 
-import { useState, useRef } from "react";
+import { useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { UnitSelector } from "../controls/UnitSelector";
 import { selectAllOnDoubleClick, useValueFlash } from "../controls";
 import { useWheelAdjust } from "../hooks/useWheelAdjust";
@@ -112,11 +112,29 @@ function CornerCell({
         background: surface.subtle,
       }}
     >
-      {/* Corner icon — tinted when modified, alt-click to reset */}
+      {/* Corner icon — tinted when modified, alt-click to reset.
+          When resettable it's keyboard-reachable too: Enter/Space reset
+          directly (this site has no popover — issue #85). Plain click
+          stays a no-op so mouse behavior is unchanged. */}
       <div
         style={{ padding: "0 4px 0 6px", color: indicator === "modified" ? color.primary : text.disabled, display: "flex", alignItems: "center", cursor: onReset ? "default" : undefined }}
         title={indicator === "modified" ? "Modified — Option+Click to reset" : label}
         onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); } }}
+        {...(indicator === "modified" && onReset
+          ? {
+              role: "button" as const,
+              tabIndex: 0,
+              "aria-label": `Reset ${label.charAt(0).toLowerCase()}${label.slice(1)}`,
+              onKeyDown: (e: ReactKeyboardEvent) => {
+                if (e.target !== e.currentTarget) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onReset();
+                }
+              },
+            }
+          : {})}
       >
         <CornerIcon corner={corner} />
       </div>

@@ -120,6 +120,13 @@ export function SpacingBoxModel({
   const [scrubValues, setScrubValues] = useState<Record<string, number>>({});
   const scrubActiveRef = useRef(false);
 
+  // Ghost-drag protection (same family as issue #73): the active drag's
+  // idempotent cleanup, reachable from outside the pointerdown closure so a
+  // mid-drag unmount (Cmd+Z remounts the panel) can still close the batch AND
+  // remove the drag's window listeners — otherwise a later blur would close
+  // the batch a second time.
+  const scrubCleanupRef = useRef<(() => void) | null>(null);
+
   // --- Tooltip state ---
   const [tooltip, setTooltip] = useState<{ prop: string; rect: DOMRect; isEdited?: boolean } | null>(null);
 
@@ -160,6 +167,11 @@ export function SpacingBoxModel({
   // --- Safety: close undo batch if unmounted mid-scrub ---
   useEffect(() => {
     return () => {
+      // Route through the active drag's cleanup so its window listeners are
+      // removed too (a later blur must not close the batch a second time).
+      scrubCleanupRef.current?.();
+      // Belt-and-suspenders fallback: if a batch is somehow still open
+      // without a registered cleanup, close it directly.
       if (scrubActiveRef.current) {
         scrubActiveRef.current = false;
         endBatch();
@@ -318,6 +330,10 @@ export function SpacingBoxModel({
           if (e.button !== 0) return;
           e.preventDefault();
 
+          // Defensive: if a previous drag somehow never closed, close it
+          // before starting a new one so beginBatch/endBatch stay balanced.
+          scrubCleanupRef.current?.();
+
           const el = e.currentTarget as HTMLElement;
           el.setPointerCapture(e.pointerId);
 
@@ -388,6 +404,8 @@ export function SpacingBoxModel({
             el.removeEventListener("pointerup", handleUp);
             el.removeEventListener("lostpointercapture", handleUp);
             window.removeEventListener("blur", handleUp);
+            window.removeEventListener("keydown", handleEscape);
+            scrubCleanupRef.current = null;
 
             if (isDragging) {
               document.body.style.userSelect = prevSelect;
@@ -426,10 +444,19 @@ export function SpacingBoxModel({
             }
           }
 
+          // Escape cancels the interaction: close the batch (if scrubbing)
+          // and drop the listeners without opening the popover.
+          function handleEscape(ev: KeyboardEvent) {
+            if (ev.key === "Escape") cleanup();
+          }
+
           el.addEventListener("pointermove", handleMove);
           el.addEventListener("pointerup", handleUp);
           el.addEventListener("lostpointercapture", handleUp);
           window.addEventListener("blur", handleUp);
+          // Ghost drag safety: Escape mid-drag must also close the batch
+          window.addEventListener("keydown", handleEscape);
+          scrubCleanupRef.current = cleanup;
         }}
         // --- Keyboard: Enter opens popover ---
         onKeyDown={(e) => {

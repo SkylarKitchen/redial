@@ -2,9 +2,9 @@
 # run-tasks.sh — Overnight autonomous task runner for Claude Code
 # Processes a markdown checklist, one task per fresh claude invocation.
 #
-# Usage:
-#   ./run-tasks.sh tasks.md
-#   ./run-tasks.sh tasks.md --max-turns 50
+# Usage (run from the repo root):
+#   ./scripts/run-tasks.sh tasks.md
+#   ./scripts/run-tasks.sh tasks.md --max-turns 50
 #
 # Each "- [ ]" item becomes a prompt to a fresh `claude` process.
 # Progress is tracked in-place: [x] = done, [!] = failed.
@@ -12,8 +12,10 @@
 
 set -euo pipefail
 
+[[ "$(uname)" == "Darwin" ]] || { echo "macOS only (uses BSD sed -i '')" >&2; exit 1; }
+
 # --- Args ---
-PRD_FILE="${1:?Usage: ./run-tasks.sh <tasks.md> [--max-turns N]}"
+PRD_FILE="${1:?Usage: ./scripts/run-tasks.sh <tasks.md> [--max-turns N]}"
 shift
 EXTRA_FLAGS="${*:---max-turns 30}"
 

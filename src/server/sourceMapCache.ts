@@ -11,7 +11,7 @@
  * LRU cache (max 50 entries) prevents re-parsing on repeated saves.
  */
 
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
 import { resolve, join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 import {
@@ -25,10 +25,14 @@ import {
 
 const MAX_CACHE = 50;
 
-/** Ordered map: most-recently-used entries are at the end. */
-const cache = new Map<string, TraceMap>();
+/** Parsed map plus the .map file identity it was parsed from, so an HMR
+ *  rebuild that rewrites the file invalidates the entry (issue #68). */
+type CacheEntry = { map: TraceMap; mtimeMs: number; size: number };
 
-function lruGet(key: string): TraceMap | undefined {
+/** Ordered map: most-recently-used entries are at the end. */
+const cache = new Map<string, CacheEntry>();
+
+function lruGet(key: string): CacheEntry | undefined {
   const val = cache.get(key);
   if (val !== undefined) {
     // Move to end (most-recently-used)
@@ -38,7 +42,7 @@ function lruGet(key: string): TraceMap | undefined {
   return val;
 }
 
-function lruSet(key: string, val: TraceMap): void {
+function lruSet(key: string, val: CacheEntry): void {
   if (cache.has(key)) {
     cache.delete(key);
   } else if (cache.size >= MAX_CACHE) {
@@ -69,24 +73,40 @@ export function getSourceMap(
   compiledCssPath: string,
   _projectRoot: string,
 ): TraceMap | null {
-  const cached = lruGet(compiledCssPath);
-  if (cached) return cached;
-
   const mapPath = compiledCssPath + ".map";
 
+  // Validate any cached entry against the .map file's current identity —
+  // dev-server rebuilds rewrite maps in place, and serving the stale parse
+  // resolves saves into pre-rebuild sources (issue #68). Size is compared
+  // alongside mtime so back-to-back rewrites within one mtime tick still
+  // invalidate. A missing/unstatable map drops the entry entirely.
+  let mtimeMs: number;
+  let size: number;
   try {
-    // No existsSync pre-check: readFileSync throws ENOENT for a missing map,
-    // which the catch already handles — one syscall instead of two, and no
-    // TOCTOU window between the check and the read.
+    const stat = statSync(mapPath);
+    mtimeMs = stat.mtimeMs;
+    size = stat.size;
+  } catch {
+    cache.delete(compiledCssPath);
+    return null;
+  }
+
+  const cached = lruGet(compiledCssPath);
+  if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
+    return cached.map;
+  }
+
+  try {
     const raw = readFileSync(mapPath, "utf-8");
     const parsed = JSON.parse(raw);
     // AnyMap, not TraceMap: Turbopack emits sectioned maps ({ sections: … }),
     // which the TraceMap constructor rejects outright.
     const map = new AnyMap(parsed);
-    lruSet(compiledCssPath, map);
+    lruSet(compiledCssPath, { map, mtimeMs, size });
     return map;
   } catch {
-    // Missing or malformed map file — skip
+    // Malformed map file — drop any stale entry and skip
+    cache.delete(compiledCssPath);
     return null;
   }
 }

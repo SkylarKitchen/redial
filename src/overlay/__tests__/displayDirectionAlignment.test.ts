@@ -1,89 +1,111 @@
+// @vitest-environment happy-dom
 /**
  * displayDirectionAlignment.test.ts — Ensure Display and Direction rows
  * use consistent padding so their labels and controls align horizontally.
  *
- * Bug: The DisplayTabs row and FlexDirectionRow use layout.rowPadding ("2px 8px")
- * but sibling rows (Align, Gap) use ROW from panelStyles (paddingLeft: 12).
- * The 8px vs 12px mismatch causes Display/Direction labels and controls to
+ * Bug: The DisplayTabs row and FlexDirectionRow used layout.rowPadding
+ * ("2px 8px") but sibling rows (Align, Gap) use ROW from panelStyles
+ * (paddingLeft: 12). The 8px vs 12px mismatch made Display/Direction labels
  * sit 4px further left than the rest of the panel.
+ *
+ * CONVERTED (issue #105): was a source-text test (extracting function bodies
+ * from DisplayTabs.tsx/DirectionControls.tsx and grepping for
+ * "layout.rowPadding" / paddingLeft literals). Now renders the real
+ * LayoutSection (flex) and measures the rendered row containers.
+ * Invariant mapping:
+ *  - "no layout.rowPadding (8px)" + "matching horizontal padding" → the
+ *    rendered Display row and Direction row have IDENTICAL inline padding,
+ *    equal to the shared ROW contract from panelStyles (12px left) — so any
+ *    regression to a different padding mechanism misaligns and fails.
  */
 
-import { readFileSync } from "fs";
-import { join } from "path";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
+import { createElement } from "react";
+import { render, cleanup, screen } from "@testing-library/react";
+import { LayoutSection } from "../sections/LayoutSection";
+import { ROW } from "../panelStyles";
+import { resetAll } from "../core/apply";
+import type { SectionCtx } from "../panelUtils";
+import type { UnitConversionContext } from "../unitConversion";
 
-const overlayDir = join(__dirname, "..");
+afterEach(() => {
+  cleanup();
+  resetAll();
+  document.body.innerHTML = "";
+});
 
-/**
- * Extract lines between a function declaration and the next top-level export.
- * More robust than regex for multi-line function bodies.
- */
-function extractFunctionBody(src: string, fnName: string): string {
-  const lines = src.split("\n");
-  const startIdx = lines.findIndex((l) => l.includes(`function ${fnName}`));
-  if (startIdx === -1) return "";
+function makeCtx(): SectionCtx {
+  const element = document.createElement("div");
+  element.style.display = "flex";
+  document.body.appendChild(element);
+  const cs = getComputedStyle(element);
+  return {
+    element,
+    apply: () => {},
+    reset: () => {},
+    resetRead: () => 0,
+    resetReadStr: () => "",
+    ind: () => "none" as const,
+    sectionInd: () => "none" as const,
+    cs,
+    parentCs: null,
+    getConversionCtx: (): UnitConversionContext => ({
+      computedFontSize: 16,
+      rootFontSize: 16,
+      parentWidth: 800,
+      parentHeight: 600,
+      viewportWidth: 1280,
+      viewportHeight: 720,
+    }),
+    ctxMenu: () => () => {},
+    isTailwind: false,
+  };
+}
 
-  // Find the next top-level export/function after this one
-  let endIdx = lines.length;
-  for (let i = startIdx + 1; i < lines.length; i++) {
-    if (/^(?:export )?(?:function |const |class )/.test(lines[i]) && i > startIdx + 5) {
-      endIdx = i;
-      break;
-    }
+function renderLayoutFlex() {
+  return render(
+    createElement(LayoutSection, {
+      ctx: makeCtx(),
+      display: "flex",
+      onDisplayChange: () => {},
+      columnGap: 0,
+      columnGapUnit: "px",
+      onColumnGapChange: () => {},
+      onColumnGapUnitChange: () => {},
+      isFlex: true,
+      isGrid: false,
+      parentIsFlex: false,
+      parentIsGrid: false,
+      forceOpen: true,
+    }),
+  );
+}
+
+/** Walk up from a label to the row container that carries horizontal padding. */
+function rowContainerOf(labelText: string): HTMLElement {
+  let node: HTMLElement | null = screen.getByText(labelText) as HTMLElement;
+  while (node && !node.style.paddingLeft) {
+    node = node.parentElement;
   }
-  return lines.slice(startIdx, endIdx).join("\n");
+  expect(node, `row container with padding for "${labelText}" should exist`).toBeTruthy();
+  return node as HTMLElement;
 }
 
 describe("Display and Direction row alignment", () => {
-  const displayTabsSrc = readFileSync(
-    join(overlayDir, "sections", "DisplayTabs.tsx"),
-    "utf-8",
-  );
-  const directionControlsSrc = readFileSync(
-    join(overlayDir, "sections", "DirectionControls.tsx"),
-    "utf-8",
-  );
+  it("Display and Direction rows render with identical horizontal padding (the shared ROW contract)", () => {
+    renderLayoutFlex();
 
-  const displayTabsBody = extractFunctionBody(displayTabsSrc, "DisplayTabs");
-  const flexDirBody = extractFunctionBody(directionControlsSrc, "FlexDirectionRow");
+    const displayRow = rowContainerOf("Display");
+    const directionRow = rowContainerOf("Direction");
 
-  it("DisplayTabs function body is found", () => {
-    expect(displayTabsBody.length).toBeGreaterThan(0);
-  });
+    // Identical left AND right padding — no 8px vs 12px drift
+    expect(displayRow.style.paddingLeft).toBe(directionRow.style.paddingLeft);
+    expect(displayRow.style.paddingRight).toBe(directionRow.style.paddingRight);
 
-  it("FlexDirectionRow function body is found", () => {
-    expect(flexDirBody.length).toBeGreaterThan(0);
-  });
-
-  it("DisplayTabs should not use layout.rowPadding (8px misaligns with ROW 12px)", () => {
-    expect(
-      displayTabsBody.includes("layout.rowPadding"),
-      "DisplayTabs uses layout.rowPadding ('2px 8px') but sibling rows use ROW (12px). Replace with padding: '2px 12px' or use ROW spread.",
-    ).toBe(false);
-  });
-
-  it("FlexDirectionRow should not use layout.rowPadding (8px misaligns with ROW 12px)", () => {
-    expect(
-      flexDirBody.includes("layout.rowPadding"),
-      "FlexDirectionRow uses layout.rowPadding ('2px 8px') but sibling rows use ROW (12px). Replace with padding: '2px 12px' or use ROW spread.",
-    ).toBe(false);
-  });
-
-  it("DisplayTabs and FlexDirectionRow use matching horizontal padding", () => {
-    // Both should reference the same padding mechanism
-    const displayPad = displayTabsBody.match(/paddingLeft:\s*(\d+)/)?.[1];
-    const flexPad = flexDirBody.match(/paddingLeft:\s*(\d+)/)?.[1];
-
-    const displayUsesROW = displayTabsBody.includes("...ROW") || displayTabsBody.includes("{ROW}") || displayTabsBody.includes("= ROW");
-    const flexUsesROW = flexDirBody.includes("...ROW") || flexDirBody.includes("{ROW}") || flexDirBody.includes("= ROW");
-
-    const aligned =
-      (displayUsesROW && flexUsesROW) ||
-      (displayPad != null && flexPad != null && displayPad === flexPad);
-
-    expect(
-      aligned,
-      `DisplayTabs (pad=${displayPad ?? "ROW?" }) and FlexDirectionRow (pad=${flexPad ?? "ROW?"}) must use the same horizontal padding`,
-    ).toBe(true);
+    // And both match the shared ROW panel style (12px), not the old
+    // layout.rowPadding 8px
+    expect(displayRow.style.paddingLeft).toBe(`${ROW.paddingLeft}px`);
+    expect(directionRow.style.paddingLeft).toBe(`${ROW.paddingLeft}px`);
+    expect(displayRow.style.paddingLeft).not.toBe("8px");
   });
 });

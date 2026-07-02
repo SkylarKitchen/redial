@@ -85,7 +85,7 @@ export function SizeInputCell({
   const flashStyle = useValueFlash(value);
   useWheelAdjust(cellRef, value, onValueChange, { step, min, max, disabled: keyword !== null || isVariable });
   const indicator: IndicatorType = isModified ? "modified" : "none";
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
 
   const commit = useCallback(
     (draft: string) => {
@@ -181,8 +181,8 @@ export function SizeInputCell({
           activeVariable={cssVar}
         />
       )}
-      {/* Modified dot + Label — click opens reset popover */}
-      {isModified && <span ref={resetPopover.anchorRef} onClick={(e) => { e.stopPropagation(); if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }} style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4, cursor: "pointer" }} title="Click to reset" />}
+      {/* Modified dot + Label — click (or Enter/Space) opens reset popover */}
+      {isModified && <span {...resetPopover.triggerProps} style={{ width: 5, height: 5, borderRadius: '50%', background: color.primary, flexShrink: 0, marginLeft: 4, cursor: "pointer" }} title="Click to reset" />}
       {/* Label */}
       <div
         onClick={(e) => { if (isModified && !e.altKey) { e.stopPropagation(); resetPopover.triggerOpen(); } }}

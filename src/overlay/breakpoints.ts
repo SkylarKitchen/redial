@@ -25,6 +25,7 @@
  */
 
 import type { DiffEntry } from "./core/apply";
+import { getConfig, type TunerBreakpoint } from "./core/config";
 import { getSelector } from "./util";
 import { formatTailwindDiff } from "./tailwind";
 
@@ -41,9 +42,10 @@ export interface Breakpoint {
 export const BASE_BREAKPOINT_ID = "base";
 
 /**
- * The selectable breakpoints. A fixed, conventional viewport list (like the
- * pseudo-state list in StateSelector) — these are standard CSS breakpoints, not
- * fabricated design-system tokens.
+ * The DEFAULT selectable breakpoints — a conventional viewport list (like the
+ * pseudo-state list in StateSelector) used only when the project supplies
+ * nothing better. The ACTIVE set is resolved by {@link getBreakpoints}:
+ * config override → stylesheet auto-detection → these defaults.
  */
 export const BREAKPOINTS: Breakpoint[] = [
   { id: BASE_BREAKPOINT_ID, label: "Base" },
@@ -53,9 +55,142 @@ export const BREAKPOINTS: Breakpoint[] = [
   { id: "1280", label: "≥ 1280", minWidth: 1280 },
 ];
 
-/** Look up a breakpoint by id (undefined if not a known breakpoint). */
+// ─── Active-set resolution: config → detection → defaults ────────────────────
+
+/** Build a Breakpoint list from validated min-widths (ascending, Base first). */
+function buildSet(entries: Array<{ minWidth: number; label?: string }>): Breakpoint[] {
+  return [
+    { id: BASE_BREAKPOINT_ID, label: "Base" },
+    ...entries.map(({ minWidth, label }) => ({
+      id: String(minWidth),
+      label: label ?? `≥ ${minWidth}`,
+      minWidth,
+    })),
+  ];
+}
+
+/** Config set cached by source-array identity (getBreakpoint runs in loops). */
+let configCache: { source: TunerBreakpoint[]; set: Breakpoint[] | null } | null = null;
+
+/** Sanitize the configured breakpoints: positive finite min-widths, deduped,
+ *  ascending. Returns null when nothing valid remains (→ fall through). */
+function fromConfig(source: TunerBreakpoint[]): Breakpoint[] | null {
+  if (configCache?.source === source) return configCache.set;
+  const byMin = new Map<number, TunerBreakpoint>();
+  for (const b of source) {
+    if (!Number.isFinite(b.minWidth) || b.minWidth <= 0) continue;
+    const min = Math.round(b.minWidth);
+    if (!byMin.has(min)) byMin.set(min, b);
+  }
+  const entries = Array.from(byMin.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([minWidth, src]) => ({ minWidth, label: src.label }));
+  const set = entries.length > 0 ? buildSet(entries) : null;
+  configCache = { source, set };
+  return set;
+}
+
+/** Matches `(min-width: 768px)` / `(min-width: 48em)` inside a media condition. */
+const MIN_WIDTH_RE = /\(\s*min-width\s*:\s*(\d+(?:\.\d+)?)(px|em|rem)\s*\)/gi;
+
+function collectMinWidths(rules: CSSRuleList, out: Set<number>): void {
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i] as CSSRule & {
+      cssRules?: CSSRuleList;
+      conditionText?: string;
+      media?: MediaList;
+    };
+    if (typeof CSSMediaRule !== "undefined" && rule instanceof CSSMediaRule) {
+      const cond = rule.conditionText ?? rule.media?.mediaText ?? "";
+      for (const m of cond.matchAll(MIN_WIDTH_RE)) {
+        const n = parseFloat(m[1]);
+        const px = m[2].toLowerCase() === "px" ? n : n * 16; // em/rem at 16px root
+        if (Number.isFinite(px) && px > 0) out.add(Math.round(px));
+      }
+    }
+    // Recurse into grouping rules (@supports, @layer, nested @media).
+    if (rule.cssRules) collectMinWidths(rule.cssRules, out);
+  }
+}
+
+/**
+ * Scan a document's stylesheets for `@media (min-width: …)` rules and return
+ * the distinct min-widths actually used by the project, ascending (px; em/rem
+ * converted at 16px). Resilient to cross-origin sheets: any sheet whose
+ * `cssRules` access throws is skipped, never aborting the scan.
+ */
+export function detectBreakpointsFromStyleSheets(
+  doc: { styleSheets: ArrayLike<CSSStyleSheet> } = document,
+): number[] {
+  const found = new Set<number>();
+  let sheets: ArrayLike<CSSStyleSheet>;
+  try {
+    sheets = doc.styleSheets;
+  } catch {
+    return [];
+  }
+  for (let i = 0; i < sheets.length; i++) {
+    let rules: CSSRuleList;
+    try {
+      rules = sheets[i].cssRules;
+    } catch {
+      continue; // cross-origin sheet — skip, keep scanning
+    }
+    try {
+      collectMinWidths(rules, found);
+    } catch {
+      continue; // defensive: a hostile rule object must not abort detection
+    }
+  }
+  return Array.from(found).sort((a, b) => a - b);
+}
+
+/** Detected set, memoized at first resolution (≈ first panel open).
+ *  `undefined` = not yet computed; `null` = computed, nothing coherent found. */
+let detected: Breakpoint[] | null | undefined;
+
+/** Forget the memoized detection result (tests / future re-detection hooks). */
+export function invalidateBreakpointDetection(): void {
+  detected = undefined;
+}
+
+/** A detected set is coherent when the project uses 2–6 distinct min-widths;
+ *  outside that, detection is noise and the defaults are safer. */
+function toDetectedSet(minWidths: number[]): Breakpoint[] | null {
+  if (minWidths.length < 2 || minWidths.length > 6) return null;
+  return buildSet(minWidths.map((minWidth) => ({ minWidth })));
+}
+
+/**
+ * Resolve the active breakpoint set. `runDetection` gates the (memoized)
+ * stylesheet scan so hot lookup paths ({@link getBreakpoint}, serialization)
+ * never trigger a scan themselves — numeric-id fallbacks already cover them.
+ */
+function activeBreakpoints(runDetection: boolean): Breakpoint[] {
+  const cfg = getConfig().breakpoints;
+  if (cfg && cfg.length > 0) {
+    const set = fromConfig(cfg);
+    if (set) return set;
+  }
+  if (detected === undefined && runDetection && typeof document !== "undefined") {
+    detected = toDetectedSet(detectBreakpointsFromStyleSheets(document));
+  }
+  return detected ?? BREAKPOINTS;
+}
+
+/**
+ * The ACTIVE selectable breakpoints: the configured set when
+ * `configure({ breakpoints })` was given, else the set auto-detected from the
+ * project's stylesheets (first call scans; ≈ panel open), else
+ * {@link BREAKPOINTS}. Selector UI reads this.
+ */
+export function getBreakpoints(): Breakpoint[] {
+  return activeBreakpoints(true);
+}
+
+/** Look up a breakpoint by id in the active set (undefined if not known). */
 export function getBreakpoint(id: string): Breakpoint | undefined {
-  return BREAKPOINTS.find((b) => b.id === id);
+  return activeBreakpoints(false).find((b) => b.id === id);
 }
 
 /**

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # cleanup-workers.sh — Remove all worker worktrees and branches
+# Usage (run from the repo root): ./scripts/cleanup-workers.sh
 
 set -euo pipefail
 

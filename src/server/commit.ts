@@ -9,9 +9,11 @@
  * Falls back gracefully for SCSS variables, calc(), etc.
  */
 
-import { readFile, writeFile, readdir, realpath } from "fs/promises";
+import { readFile, writeFile, readdir } from "fs/promises";
 import { resolve, join, basename, normalize, sep } from "path";
 import { tryFirstMappedSourceFile } from "./sourceMapCache";
+import { assertWithinRoot, isRealPathWithinRoot } from "./pathSafety";
+import { attachClassToJSX, applyInlineStyleToJSX } from "./commitTailwind";
 import {
   isValidCSSProp,
   isValidCSSClassName,
@@ -28,7 +30,7 @@ async function findVariableDefinitionFile(
   projectRoot: string,
   varName: string,
 ): Promise<string | null> {
-  const cssFiles = await findCSSFiles(projectRoot);
+  const cssFiles = await findCSSFiles(projectRoot, projectRoot);
   const pattern = new RegExp(`${varName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*:`);
   // Read all candidates in parallel; first match in walk order wins.
   const hits = await Promise.all(
@@ -42,8 +44,15 @@ async function findVariableDefinitionFile(
   return hits.find((f): f is string => f !== null) ?? null;
 }
 
-/** Collect all CSS/SCSS files in the project (excluding node_modules etc.) */
-async function findCSSFiles(dir: string): Promise<string[]> {
+/**
+ * Collect all CSS/SCSS files in the project (excluding node_modules etc.).
+ * `root` stays constant across recursion: every candidate — directory before
+ * descending, file before it's ever read — must have its REAL (symlink-
+ * resolved) location inside it, mirroring findFileRecursive. Without this a
+ * symlink inside the repo pointing outside the root let the variable-
+ * definition search read out-of-root files (issue #56, the #22 gap).
+ */
+async function findCSSFiles(dir: string, root: string): Promise<string[]> {
   let entries;
   try {
     entries = await readdir(dir, { withFileTypes: true });
@@ -55,11 +64,14 @@ async function findCSSFiles(dir: string): Promise<string[]> {
   for (const entry of entries) {
     if (EXCLUDE_DIRS.has(entry.name)) continue;
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) subdirs.push(full);
-    else if (/\.(css|scss)$/.test(entry.name)) direct.push(full);
+    if (entry.isDirectory()) {
+      if (await isRealPathWithinRoot(full, root)) subdirs.push(full);
+    } else if (/\.(css|scss)$/.test(entry.name)) {
+      if (await isRealPathWithinRoot(full, root)) direct.push(full);
+    }
   }
   // Recurse into subdirectories concurrently; concat preserves walk order.
-  const nested = await Promise.all(subdirs.map((d) => findCSSFiles(d)));
+  const nested = await Promise.all(subdirs.map((d) => findCSSFiles(d, root)));
   return direct.concat(...nested);
 }
 
@@ -69,37 +81,10 @@ const VALID_STATES = new Set([
   "focus-within", "focus-visible", "first-child", "last-child",
 ]);
 
-/**
- * Ensure a resolved path is contained within the project root.
- * Prevents path traversal attacks (e.g. "../../etc/cron.d/malicious").
- */
-function assertWithinRoot(resolvedPath: string, projectRoot: string): void {
-  const normalizedRoot = normalize(projectRoot);
-  const normalizedPath = normalize(resolvedPath);
-  if (!normalizedPath.startsWith(normalizedRoot + "/") && normalizedPath !== normalizedRoot) {
-    throw new Error("Path traversal detected: resolved path escapes project root");
-  }
-}
-
-/**
- * Resolve `candidate` through symlinks and verify its REAL location stays within
- * the (also symlink-resolved) project root. Unlike the string-only
- * assertWithinRoot, this defeats a symlink whose target escapes the root — e.g.
- * a repo shipping `styles.module.css -> ~/.ssh/authorized_keys` (issue #22).
- * Returns false when the path can't be resolved (missing/broken link).
- */
-export async function isRealPathWithinRoot(
-  candidate: string,
-  projectRoot: string,
-): Promise<boolean> {
-  try {
-    const realRoot = await realpath(projectRoot);
-    const realCandidate = await realpath(candidate);
-    return realCandidate === realRoot || realCandidate.startsWith(realRoot + sep);
-  } catch {
-    return false;
-  }
-}
+// Containment guards live in pathSafety.ts (single owner — issue #69, which
+// fixed assertWithinRoot's hardcoded "/" separator breaking Windows saves);
+// isRealPathWithinRoot is re-exported so existing importers keep working.
+export { isRealPathWithinRoot } from "./pathSafety";
 
 export type CommitChange = {
   prop: string;
@@ -114,6 +99,49 @@ export type CommitChange = {
   state?: string;
   /** Compiled CSS href for source map resolution (e.g. "/_next/static/css/abc.css") */
   cssHref?: string;
+  /**
+   * Class-creation descriptor (audit 05 — the Webflow "type a class name"
+   * flow). When present, the server (a) appends a `.name { }` rule block to
+   * the resolved stylesheet if the class has no rule there yet, and (b)
+   * attaches the class token to the JSX source's className attribute
+   * (commitTailwind.attachClassToJSX). `existingClasses` is the element's
+   * class string BEFORE the session attach — the JSX disambiguation anchor.
+   */
+  createClass?: {
+    name: string;
+    jsxSourceFile?: string;
+    jsxSourceLine?: number;
+    existingClasses?: string;
+  };
+  /**
+   * Element-scope persistence descriptor (audit 06 — element scope previews on
+   * ONE element, so it must save to that one element). When present, the
+   * change is merged into the element's JSX `style` attribute at the
+   * fiber-resolved location (`applyInlineStyleToJSX`, same anchors createClass
+   * uses) and is NEVER routed into a CSS rule — even when the payload also
+   * carries `sourceFile`/`className`. An unresolvable anchor is an accurate
+   * per-item failure, not a fallback to the shared class rule.
+   */
+  elementScope?: {
+    jsxSourceFile?: string;
+    jsxSourceLine?: number;
+    existingClasses?: string;
+  };
+  /**
+   * Responsive breakpoint (issue #53). When present, the change targets the
+   * `@media (min-width: <minWidth>px)` block instead of the base rule:
+   * locate a matching block containing a rule for `className` and
+   * replace/insert the declaration there; create the rule inside a matching
+   * block that lacks it; append a whole new block at EOF when no block
+   * matches. Condition matching tolerates spacing variants and em/rem
+   * equivalents (×16); NEW blocks are always written in the px form.
+   */
+  breakpoint?: {
+    /** Engine breakpoint id (informational — the write keys off minWidth). */
+    id?: string;
+    /** min-width in px. Positive finite number. */
+    minWidth: number;
+  };
 };
 
 export type CommitResult = {
@@ -221,6 +249,8 @@ function changeValidationError(change: CommitChange): string | null {
     return `semantically invalid value "${change.to}" for property "${change.prop}"`;
   if (change.className != null && !isValidCSSClassName(change.className))
     return `invalid CSS class name: "${change.className}"`;
+  if (change.createClass != null && !isValidCSSClassName(change.createClass.name))
+    return `invalid class name for createClass: "${change.createClass.name}"`;
   return null;
 }
 
@@ -291,8 +321,10 @@ async function findFileRecursive(
   const perEntry = await Promise.all(entries.map(async (entry): Promise<string[]> => {
     if (EXCLUDE_DIRS.has(entry.name)) return [];
     const full = join(dir, entry.name);
-    // Ensure symlinks or unusual names don't escape the starting directory
-    if (!normalize(full).startsWith(normalizedDir + "/")) return [];
+    // Ensure symlinks or unusual names don't escape the starting directory.
+    // Platform separator, not "/" — join() emits backslashes on Windows and a
+    // hardcoded slash would reject every entry there (issue #69's bug class).
+    if (!normalize(full).startsWith(normalizedDir + sep)) return [];
     if (entry.isDirectory()) {
       // Only descend into real in-root directories — never follow a symlinked
       // directory whose target lies outside the project root.
@@ -681,6 +713,660 @@ function findClassBlockEnd(
   return null;
 }
 
+// --- Declaration insertion (the replace-only save gap) ---
+// When the target rule block exists but never authored the property (fresh /
+// AI-generated markup — the common case), every replace tier misses and the
+// save used to dead-end. The helpers below INSERT the declaration into the
+// existing block instead: before the closing brace with the block's own
+// indentation for multi-line blocks, or as a body-range-confined splice for
+// single-line/minified blocks (reusing the issue #47 confinement machinery so
+// sibling blocks sharing the physical line are untouched). Creating a brand-
+// new rule when NO block matches stays out of scope (class creation).
+
+/** A block's opening (or closing) brace position: line index + column. */
+type BracePos = { line: number; col: number };
+
+/**
+ * Locate the opening brace of the FIRST `.className` rule block. Mirrors
+ * searchClassBlock's selector rigor (`.card:hover` / `.card.active` /
+ * `.cardigan` all fail the match) and its unbounded forward scan for the brace
+ * (selector lists); the extra `$` alternative also tolerates Allman braces.
+ */
+function findClassBlockOpen(
+  masked: string[],
+  className: string
+): BracePos | null {
+  const classPattern = new RegExp(`\\.${escapeRegex(className)}\\s*([{,]|$)`);
+  for (let i = 0; i < masked.length; i++) {
+    const m = classPattern.exec(masked[i]);
+    if (!m) continue;
+    if (m[1] === "{") return { line: i, col: m.index + m[0].length - 1 };
+    // Selector list / Allman brace: the first `{` at/after the match.
+    const sameLineCol = masked[i].indexOf("{", m.index + m[0].length);
+    if (sameLineCol !== -1) return { line: i, col: sameLineCol };
+    for (let j = i + 1; j < masked.length; j++) {
+      const col = masked[j].indexOf("{");
+      if (col !== -1) return { line: j, col };
+    }
+    return null;
+  }
+  return null;
+}
+
+/** Locate the opening brace of the FIRST flat `.className:state { }` block. */
+function findPseudoBlockOpen(
+  masked: string[],
+  className: string,
+  state: string
+): BracePos | null {
+  const pseudoPattern = new RegExp(
+    `\\.${escapeRegex(className)}:${escapeRegex(state)}\\s*\\{`
+  );
+  for (let i = 0; i < masked.length; i++) {
+    const m = pseudoPattern.exec(masked[i]);
+    if (m) return { line: i, col: m.index + m[0].length - 1 };
+  }
+  return null;
+}
+
+/**
+ * Locate the opening brace of an existing nested `&:state { }` sub-block
+ * inside `.className { }` (SCSS / native CSS nesting). Mirrors
+ * searchNestedPseudoBlock's outer scan.
+ */
+function findNestedPseudoBlockOpen(
+  masked: string[],
+  className: string,
+  state: string
+): BracePos | null {
+  const classPattern = new RegExp(`\\.${escapeRegex(className)}\\s*\\{`);
+  const nestedPattern = new RegExp(`&:${escapeRegex(state)}\\s*\\{`);
+  const pseudoCheck = new RegExp(`\\.${escapeRegex(className)}:\\w`);
+  for (let i = 0; i < masked.length; i++) {
+    // Skip flat pseudo-class lines (e.g. .btn:hover) — we want the base class.
+    if (masked[i].includes(":") && pseudoCheck.test(masked[i])) continue;
+    if (!classPattern.test(masked[i])) continue;
+
+    let depth = 0;
+    for (let j = i; j < masked.length; j++) {
+      for (const ch of masked[j]) {
+        if (ch === "{") depth++;
+        if (ch === "}") depth--;
+      }
+      if (j > i && depth >= 1) {
+        const m = nestedPattern.exec(masked[j]);
+        if (m) return { line: j, col: m.index + m[0].length - 1 };
+      }
+      if (depth <= 0 && j > i) break;
+    }
+  }
+  return null;
+}
+
+/**
+ * Char-accurate matching `}` for the block whose `{` sits at `open`, via a
+ * depth walk on the masked view (so brace literals in strings/comments can't
+ * fool it). Null when the block never closes.
+ */
+function findBlockClose(masked: string[], open: BracePos): BracePos | null {
+  let depth = 0;
+  for (let j = open.line; j < masked.length; j++) {
+    for (let k = j === open.line ? open.col : 0; k < masked[j].length; k++) {
+      if (masked[j][k] === "{") depth++;
+      else if (masked[j][k] === "}") {
+        depth--;
+        if (depth === 0) return { line: j, col: k };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Whether the block at `open` already authors `prop` (any value). Returns the
+ * declaration's line plus the block's body char-span when the block opens AND
+ * closes on one physical line (minified CSS), so a value rewrite can be
+ * confined to the targeted block (issue #47).
+ */
+function findPropInBlock(
+  masked: string[],
+  open: BracePos,
+  prop: string
+): { lineIdx: number; range?: [number, number] } | null {
+  const propRe = declAnchoredPropRegex(prop);
+  const sameLineRange = bodyRangeOnLine(masked[open.line], open.col);
+  if (sameLineRange) {
+    const body = masked[open.line].slice(sameLineRange[0], sameLineRange[1]);
+    return propRe.test(body)
+      ? { lineIdx: open.line, range: sameLineRange }
+      : null;
+  }
+  let depth = 0;
+  for (let j = open.line; j < masked.length; j++) {
+    for (let k = j === open.line ? open.col : 0; k < masked[j].length; k++) {
+      if (masked[j][k] === "{") depth++;
+      else if (masked[j][k] === "}") depth--;
+    }
+    if (depth >= 0) {
+      // On the opening line only the brace's tail can hold a declaration.
+      const hay = j === open.line ? masked[j].slice(open.col + 1) : masked[j];
+      if (propRe.test(hay)) return { lineIdx: j };
+    }
+    if (depth <= 0 && j > open.line) break;
+  }
+  return null;
+}
+
+type InsertOutcome = "inserted" | "commented-out" | "unclosed";
+
+/**
+ * Insert `prop: value;` as the LAST declaration of the block whose opening
+ * brace sits at `open`. Multi-line blocks get a new line above the closing
+ * brace, copying the indentation of the block's first inner line; blocks whose
+ * `}` shares a line with body content (minified / single-line CSS) get an
+ * in-place splice immediately before the brace, so sibling blocks on the same
+ * physical line are untouched.
+ *
+ * Refuses ("commented-out") when the block mentions `prop:` only inside a
+ * comment — a commented-out declaration is a deliberate disable, and silently
+ * re-enabling it next to its tombstone would be dishonest (outlier contract:
+ * "only a comment mentions the property" must FAIL).
+ */
+function insertDeclarationIntoBlock(
+  lines: string[],
+  masked: string[],
+  open: BracePos,
+  prop: string,
+  value: string,
+  /** Indent unit for an EMPTY block (no inner line to copy) — the file's own
+   *  detected unit, so a freshly created class block in a tab-indented file
+   *  gets tab-indented declarations. Defaults to two spaces (the pinned
+   *  pre-existing behavior for files with no detectable indentation). */
+  emptyBlockIndentUnit = "  "
+): InsertOutcome {
+  const close = findBlockClose(masked, open);
+  if (!close) return "unclosed";
+
+  // A `prop:` visible in the ORIGINAL block text but blanked on the masked
+  // view lives inside a comment/string — treat as deliberately disabled.
+  // Boundary `[^-\w]` keeps `background-color:` from flagging `color`.
+  const mentionRe = new RegExp(`(?:^|[^-\\w])${escapeRegex(prop)}\\s*:`);
+  for (let j = open.line; j <= close.line; j++) {
+    const s = j === open.line ? open.col : 0;
+    const e = j === close.line ? close.col : lines[j].length;
+    if (
+      mentionRe.test(lines[j].slice(s, e)) &&
+      !mentionRe.test(masked[j].slice(s, e))
+    ) {
+      return "commented-out";
+    }
+  }
+
+  const decl = `${prop}: ${value};`;
+
+  // Masked body content preceding the closing brace on its own line.
+  const prefixStart = close.line === open.line ? open.col + 1 : 0;
+  const closePrefix = masked[close.line].slice(prefixStart, close.col);
+
+  if (close.line === open.line || closePrefix.trim() !== "") {
+    // Single-line block, or a declaration sharing the closing-brace line:
+    // splice right before the `}`, adding a `;` separator unless the body is
+    // empty or already terminated.
+    const trimmed = closePrefix.trim();
+    const sep = trimmed === "" || trimmed.endsWith(";") ? "" : ";";
+    const line = lines[close.line];
+    lines[close.line] = line.slice(0, close.col) + sep + decl + line.slice(close.col);
+    return "inserted";
+  }
+
+  // Closing brace on its own line: new declaration line above it, indented
+  // like the block's first non-blank inner line (empty block: opening-line
+  // indent plus two spaces).
+  let indent: string | null = null;
+  for (let j = open.line + 1; j < close.line; j++) {
+    if (masked[j].trim() !== "") {
+      indent = lines[j].match(/^\s*/)![0];
+      break;
+    }
+  }
+  if (indent == null) indent = lines[open.line].match(/^\s*/)![0] + emptyBlockIndentUnit;
+  lines.splice(close.line, 0, `${indent}${decl}`);
+  return "inserted";
+}
+
+// --- Class creation (audit 05 — the Webflow "type a class name" flow) ---
+
+/**
+ * Detect the file's indentation unit: the leading whitespace of the first
+ * indented non-blank line on the masked view. Returns null when the file has
+ * no indented line to learn from (callers fall back to two spaces).
+ */
+function detectIndentUnit(masked: string[]): string | null {
+  for (const line of masked) {
+    const m = line.match(/^([ \t]+)\S/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+/**
+ * Append an empty `.className { }` rule block at the end of the file,
+ * separated from the last rule by one blank line and preserving the file's
+ * trailing-newline state. The block is left empty — the batch's declarations
+ * flow through the standard insert-missing-declaration path, which handles
+ * indentation (via the file's detected unit) and the pseudo-state block
+ * machinery uniformly.
+ */
+function appendClassBlock(lines: string[], className: string): void {
+  // split("\n") represents a trailing newline as a final "" element.
+  let end = lines.length;
+  while (end > 0 && lines[end - 1].trim() === "") end--;
+  const hadTrailingNewline = end < lines.length;
+  lines.length = end;
+  if (end > 0) lines.push(""); // one blank line between the last rule and the new block
+  lines.push(`.${className} {`, `}`);
+  if (hadTrailingNewline || end === 0) lines.push("");
+}
+
+// --- Breakpoint (@media) file-save (issue #53) ---
+// A change carrying `breakpoint: { minWidth }` is written INSIDE the matching
+// `@media (min-width: Npx)` block, mirroring the base path's
+// replace → broad-rewrite → insert → create ladder. The media block's BODY is
+// extracted as a sub-document (boundary lines sliced at the braces), so the
+// existing class/pseudo/insert machinery runs unchanged within it and sibling
+// rules OUTSIDE the block — including a base rule with an identical
+// declaration on the same physical line (minified CSS) — are invisible to it.
+
+/** Matches ONE `(min-width: …px|em|rem)` term inside a media condition. */
+const MEDIA_MIN_WIDTH_COND_RE = /\(\s*min-width\s*:\s*(\d+(?:\.\d+)?)\s*(px|em|rem)\s*\)/i;
+
+/**
+ * The px min-width of a PURE mobile-first media condition, or null when the
+ * condition has no min-width or is a range band (contains max-width — writing
+ * a cascade-tier override into a band would silently confine it). Tolerates
+ * spacing variants; em/rem convert at the 16px root convention.
+ */
+function pureMinWidthPx(cond: string): number | null {
+  if (/max-width/i.test(cond)) return null;
+  const m = MEDIA_MIN_WIDTH_COND_RE.exec(cond);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  const px = m[2].toLowerCase() === "px" ? n : n * 16;
+  return Number.isFinite(px) && px > 0 ? px : null;
+}
+
+type MediaBlockPos = { open: BracePos; close: BracePos };
+
+/**
+ * Every `@media` block (on the masked view) whose condition is a pure
+ * min-width equal to `minWidth`. Conditions may span lines before the `{`;
+ * a line may hold several blocks (minified CSS).
+ */
+function findMatchingMediaBlocks(
+  masked: string[],
+  minWidth: number
+): MediaBlockPos[] {
+  const out: MediaBlockPos[] = [];
+  for (let i = 0; i < masked.length; i++) {
+    let from = 0;
+    for (;;) {
+      const at = masked[i].indexOf("@media", from);
+      if (at === -1) break;
+      from = at + 6;
+      // Gather the condition text up to the opening brace (may span lines).
+      let cond = "";
+      let open: BracePos | null = null;
+      for (let j = i; j < masked.length && open == null; j++) {
+        const startCol = j === i ? at + 6 : 0;
+        const braceCol = masked[j].indexOf("{", startCol);
+        if (braceCol !== -1) {
+          cond += masked[j].slice(startCol, braceCol);
+          open = { line: j, col: braceCol };
+        } else {
+          cond += masked[j].slice(startCol) + " ";
+        }
+      }
+      if (!open) break; // no brace follows — nothing more to scan here
+      if (pureMinWidthPx(cond) !== minWidth) continue;
+      const close = findBlockClose(masked, open);
+      if (close) out.push({ open, close });
+    }
+  }
+  return out;
+}
+
+/**
+ * The block's BODY as a sub-document: boundary lines sliced at the braces so
+ * content outside the block never leaks into a search. Middle lines are the
+ * original lines (indentation preserved). Always ≥ 1 element.
+ */
+function extractBlockBody(
+  lines: string[],
+  open: BracePos,
+  close: BracePos
+): string[] {
+  if (open.line === close.line) {
+    return [lines[open.line].slice(open.col + 1, close.col)];
+  }
+  return [
+    lines[open.line].slice(open.col + 1),
+    ...lines.slice(open.line + 1, close.line),
+    lines[close.line].slice(0, close.col),
+  ];
+}
+
+/**
+ * Write a (possibly grown) body sub-document back into `lines`, re-attaching
+ * the boundary-line prefix (up to and including `{`) and suffix (from `}`).
+ */
+function spliceBlockBody(
+  lines: string[],
+  open: BracePos,
+  close: BracePos,
+  body: string[]
+): void {
+  const prefix = lines[open.line].slice(0, open.col + 1);
+  const suffix = lines[close.line].slice(close.col);
+  const assembled =
+    body.length === 1
+      ? [prefix + body[0] + suffix]
+      : [prefix + body[0], ...body.slice(1, -1), body[body.length - 1] + suffix];
+  lines.splice(open.line, close.line - open.line + 1, ...assembled);
+}
+
+/**
+ * Create a `selector { prop: value; }` rule inside a media block's body
+ * sub-document: appended before the closing brace, blank-line separated from
+ * existing rules, indented like the block's existing rules (falling back to
+ * one file-indent unit). Single-line (minified) bodies get a text splice.
+ */
+function createRuleInBody(
+  body: string[],
+  bodyMasked: string[],
+  selector: string,
+  prop: string,
+  value: string,
+  fileIndent: string
+): void {
+  if (body.length === 1) {
+    body[0] += `${selector}{${prop}: ${value};}`;
+    return;
+  }
+  // Rule-level indent: the first non-blank FULL inner line (skip index 0 — a
+  // boundary slice whose leading whitespace isn't line indentation).
+  let ruleIndent: string | null = null;
+  for (let j = 1; j < body.length - 1; j++) {
+    if (bodyMasked[j].trim() !== "") {
+      ruleIndent = body[j].match(/^\s*/)![0];
+      break;
+    }
+  }
+  ruleIndent ??= fileIndent;
+  const rule = [
+    `${ruleIndent}${selector} {`,
+    `${ruleIndent}${fileIndent}${prop}: ${value};`,
+    `${ruleIndent}}`,
+  ];
+  // Insert before the final element (the closing-brace line's prefix).
+  const insertAt = body.length - 1;
+  const hasContent = bodyMasked
+    .slice(0, insertAt)
+    .some((l) => l.trim() !== "");
+  body.splice(insertAt, 0, ...(hasContent ? ["", ...rule] : rule));
+}
+
+/**
+ * The base save ladder (replace exact → broad rewrite → insert declaration →
+ * create rule), scoped to ONE media block's body sub-document. Mutates `body`
+ * in place; the caller splices it back on success.
+ */
+function applyChangeWithinBody(
+  body: string[],
+  bodyMasked: string[],
+  change: CommitChange,
+  fileIndent: string,
+  sourceFile: string
+): { modified: boolean; reason?: string } {
+  const className = change.className!;
+  const mediaLabel = `@media (min-width: ${change.breakpoint!.minWidth}px)`;
+
+  // Locate the target rule: the pseudo block for a state edit, else the base
+  // class block — the same open/prop/insert helpers the base path uses.
+  const open = change.state
+    ? findPseudoBlockOpen(bodyMasked, className, change.state) ??
+      findNestedPseudoBlockOpen(bodyMasked, className, change.state)
+    : findClassBlockOpen(bodyMasked, className);
+
+  if (open) {
+    const propHit = findPropInBlock(bodyMasked, open, change.prop);
+    if (propHit) {
+      // Authored — rewrite the value (exact `from` first, then the broad
+      // representation-tolerant pattern), confined to the block's body span
+      // on minified same-line blocks (issue #47 machinery).
+      const segment = propHit.range
+        ? body[propHit.lineIdx].slice(propHit.range[0], propHit.range[1])
+        : body[propHit.lineIdx];
+      const exact = replacePropRegex(change.prop, escapeRegex(change.from));
+      const broad = replacePropRegex(change.prop, "([^;!}]+)");
+      const pattern = exact.test(segment) ? exact : broad.test(segment) ? broad : null;
+      if (!pattern) {
+        return {
+          modified: false,
+          reason: `value "${change.from}" not found in the ${mediaLabel} rule for .${className}`,
+        };
+      }
+      const safeValue = change.to.replace(/\$/g, "$$$$");
+      const replaced = segment.replace(pattern, `$1$2${safeValue}`);
+      body[propHit.lineIdx] = propHit.range
+        ? body[propHit.lineIdx].slice(0, propHit.range[0]) +
+          replaced +
+          body[propHit.lineIdx].slice(propHit.range[1])
+        : replaced;
+      return { modified: true };
+    }
+    // Rule exists but never authored the prop — insert the declaration.
+    const outcome = insertDeclarationIntoBlock(
+      body, bodyMasked, open, change.prop, change.to, fileIndent
+    );
+    if (outcome === "inserted") return { modified: true };
+    return {
+      modified: false,
+      reason: `property "${change.prop}: ${change.from}" not found in the ${mediaLabel} rule for .${className} in ${sourceFile}`,
+    };
+  }
+
+  // No target rule inside the block yet. For a state edit whose BASE class
+  // rule lives in the block, create the pseudo block right after it (mirrors
+  // the base path's flat pseudo-block creation); otherwise create a fresh
+  // rule at the end of the block.
+  if (change.state && body.length > 1) {
+    const baseOpen = findClassBlockOpen(bodyMasked, className);
+    const baseEnd = baseOpen ? findClassBlockEnd(bodyMasked, className) : null;
+    if (baseOpen && baseEnd != null) {
+      const ruleIndent =
+        baseOpen.line > 0 ? body[baseOpen.line].match(/^\s*/)![0] : fileIndent;
+      body.splice(baseEnd + 1, 0,
+        "",
+        `${ruleIndent}.${className}:${change.state} {`,
+        `${ruleIndent}${fileIndent}${change.prop}: ${change.to};`,
+        `${ruleIndent}}`,
+      );
+      return { modified: true };
+    }
+  }
+  const selector = change.state
+    ? `.${className}:${change.state}`
+    : `.${className}`;
+  createRuleInBody(body, bodyMasked, selector, change.prop, change.to, fileIndent);
+  return { modified: true };
+}
+
+/** A top-level own-line media block, for trailing-run ordering. */
+type OwnLineMediaBlock = {
+  startLine: number;
+  closeLine: number;
+  closeCol: number;
+  minWidth: number;
+};
+
+/**
+ * Media blocks that START their own line (only whitespace before `@media`)
+ * and carry a pure min-width condition, in document order. Own-line is the
+ * "redial-shaped" appended form — mid-line/minified blocks never participate
+ * in ordering (they're matched for writes, just not treated as a sortable run).
+ */
+function collectOwnLineMediaBlocks(masked: string[]): OwnLineMediaBlock[] {
+  const out: OwnLineMediaBlock[] = [];
+  for (let i = 0; i < masked.length; i++) {
+    const at = masked[i].indexOf("@media");
+    if (at === -1 || masked[i].slice(0, at).trim() !== "") continue;
+    let cond = "";
+    let open: BracePos | null = null;
+    for (let j = i; j < masked.length && open == null; j++) {
+      const startCol = j === i ? at + 6 : 0;
+      const braceCol = masked[j].indexOf("{", startCol);
+      if (braceCol !== -1) {
+        cond += masked[j].slice(startCol, braceCol);
+        open = { line: j, col: braceCol };
+      } else {
+        cond += masked[j].slice(startCol) + " ";
+      }
+    }
+    if (!open) continue;
+    const close = findBlockClose(masked, open);
+    if (!close) continue;
+    const mw = pureMinWidthPx(cond);
+    if (mw != null) {
+      out.push({ startLine: i, closeLine: close.line, closeCol: close.col, minWidth: mw });
+    }
+    i = close.line; // never scan inside the block (nested @media stay out of the run)
+  }
+  return out;
+}
+
+/**
+ * Insertion line for a NEW `@media (min-width: minWidth px)` block so the
+ * TRAILING run of media blocks (the shape redial's own appends produce) stays
+ * in ascending min-width order — or null for a plain EOF append. Author
+ * blocks are never moved: ordering only ever picks an insertion POINT within
+ * the run; anything followed by non-media content ends the run.
+ */
+function trailingMediaInsertionLine(
+  masked: string[],
+  minWidth: number
+): number | null {
+  const blocks = collectOwnLineMediaBlocks(masked);
+  // Walk backwards, extending the trailing run while only blank space
+  // separates each block from the next run block / EOF.
+  let runStart = blocks.length;
+  let boundary = masked.length;
+  for (let k = blocks.length - 1; k >= 0; k--) {
+    const b = blocks[k];
+    if (masked[b.closeLine].slice(b.closeCol + 1).trim() !== "") break;
+    let clean = true;
+    for (let j = b.closeLine + 1; j < boundary; j++) {
+      if (masked[j].trim() !== "") { clean = false; break; }
+    }
+    if (!clean) break;
+    runStart = k;
+    boundary = b.startLine;
+  }
+  for (let k = runStart; k < blocks.length; k++) {
+    if (blocks[k].minWidth > minWidth) return blocks[k].startLine;
+  }
+  return null;
+}
+
+/**
+ * Insert a brand-new `@media (min-width: Npx) { selector { prop: value; } }`
+ * block: within the trailing media run in ascending min-width order when
+ * practical, else appended at EOF (blank-line separated, preserving the
+ * file's trailing-newline state — appendClassBlock conventions).
+ */
+function insertNewMediaBlock(
+  lines: string[],
+  masked: string[],
+  minWidth: number,
+  selector: string,
+  prop: string,
+  value: string,
+  fileIndent: string
+): void {
+  const blockLines = [
+    `@media (min-width: ${minWidth}px) {`,
+    `${fileIndent}${selector} {`,
+    `${fileIndent}${fileIndent}${prop}: ${value};`,
+    `${fileIndent}}`,
+    `}`,
+  ];
+  const insertLine = trailingMediaInsertionLine(masked, minWidth);
+  if (insertLine == null) {
+    // split("\n") represents a trailing newline as a final "" element.
+    let end = lines.length;
+    while (end > 0 && lines[end - 1].trim() === "") end--;
+    const hadTrailingNewline = end < lines.length;
+    lines.length = end;
+    if (end > 0) lines.push("");
+    lines.push(...blockLines);
+    if (hadTrailingNewline || end === 0) lines.push("");
+    return;
+  }
+  const needsBlankBefore = insertLine > 0 && lines[insertLine - 1].trim() !== "";
+  lines.splice(insertLine, 0, ...(needsBlankBefore ? [""] : []), ...blockLines, "");
+}
+
+/**
+ * Apply one breakpoint-tagged change (issue #53): pick the matching media
+ * block — preferring one that already holds a rule for the class — extract
+ * its body sub-document, run the base save ladder within it, and splice the
+ * result back. No matching block → a new one is created.
+ */
+function applyBreakpointChange(
+  lines: string[],
+  masked: string[],
+  change: CommitChange,
+  fileIndent: string,
+  sourceFile: string
+): { modified: boolean; reason?: string } {
+  const minWidth = change.breakpoint!.minWidth;
+  if (!change.className) {
+    return {
+      modified: false,
+      reason: `breakpoint edit (@media (min-width: ${minWidth}px)) has no class info — refusing to write it without a rule target`,
+    };
+  }
+  const className = change.className;
+
+  const candidates = findMatchingMediaBlocks(masked, minWidth);
+  let target: MediaBlockPos | null = null;
+  for (const cand of candidates) {
+    const bodyMasked = extractBlockBody(masked, cand.open, cand.close);
+    const hasRule =
+      findClassBlockOpen(bodyMasked, className) != null ||
+      (change.state != null &&
+        (findPseudoBlockOpen(bodyMasked, className, change.state) != null ||
+          findNestedPseudoBlockOpen(bodyMasked, className, change.state) != null));
+    if (hasRule) { target = cand; break; }
+  }
+  target ??= candidates[0] ?? null;
+
+  if (!target) {
+    const selector = change.state
+      ? `.${className}:${change.state}`
+      : `.${className}`;
+    insertNewMediaBlock(
+      lines, masked, minWidth, selector, change.prop, change.to, fileIndent
+    );
+    return { modified: true };
+  }
+
+  const body = extractBlockBody(lines, target.open, target.close);
+  const bodyMasked = extractBlockBody(masked, target.open, target.close);
+  const res = applyChangeWithinBody(body, bodyMasked, change, fileIndent, sourceFile);
+  if (res.modified) spliceBlockBody(lines, target.open, target.close, body);
+  return res;
+}
+
 /**
  * Search the entire file for `prop` + `value`.
  */
@@ -1013,6 +1699,81 @@ export function findPropertyInFile(
   return null;
 }
 
+// --- Write serialization (issue #64) ---
+// The read → mutate → write phase must not interleave across overlapping
+// requests that resolve to the same file: both would read the original
+// content and the second write would silently discard the first request's
+// edits (last writer wins). A module-level promise chain keyed by resolved
+// absolute path serializes that phase; different files still run concurrently.
+const fileWriteLocks = new Map<string, Promise<void>>();
+
+/** Wait for the previous holder of `key`, then hold the lock until the
+ *  returned release function is called. */
+async function acquireFileLock(key: string): Promise<() => void> {
+  const prev = fileWriteLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const tail = prev.then(() => current);
+  fileWriteLocks.set(key, tail);
+  // Drop the map entry once the chain drains (we're still the tail), so the
+  // lock table doesn't grow unboundedly across a long dev session.
+  void tail.then(() => {
+    if (fileWriteLocks.get(key) === tail) fileWriteLocks.delete(key);
+  });
+  await prev;
+  return release;
+}
+
+/** Shape-check one batch element BEFORE any field access (issue #65), so a
+ *  null / non-object / wrong-typed entry fails per-item instead of throwing
+ *  a TypeError that 500s the whole request. */
+function isWellFormedChange(change: unknown): change is CommitChange {
+  if (typeof change !== "object" || change === null || Array.isArray(change)) {
+    return false;
+  }
+  const c = change as Record<string, unknown>;
+  const cc = c.createClass;
+  const bp = c.breakpoint;
+  const es = c.elementScope;
+  return (
+    typeof c.prop === "string" &&
+    typeof c.from === "string" &&
+    typeof c.to === "string" &&
+    // elementScope, when present, must be an object whose (all optional)
+    // anchor fields carry the right types — they flow into path resolution
+    // and line arithmetic, so anything else fails per-item, never as a 500.
+    (es === undefined ||
+      (typeof es === "object" &&
+        es !== null &&
+        !Array.isArray(es) &&
+        ((es as Record<string, unknown>).jsxSourceFile === undefined ||
+          typeof (es as Record<string, unknown>).jsxSourceFile === "string") &&
+        ((es as Record<string, unknown>).jsxSourceLine === undefined ||
+          typeof (es as Record<string, unknown>).jsxSourceLine === "number") &&
+        ((es as Record<string, unknown>).existingClasses === undefined ||
+          typeof (es as Record<string, unknown>).existingClasses === "string"))) &&
+    // createClass, when present, must be an object with a string name — an
+    // arbitrary shape here would defeat the isValidCSSClassName gate below.
+    (cc === undefined ||
+      (typeof cc === "object" &&
+        cc !== null &&
+        !Array.isArray(cc) &&
+        typeof (cc as Record<string, unknown>).name === "string")) &&
+    // breakpoint, when present, must carry a positive finite numeric minWidth
+    // (issue #53) — the number is interpolated into a written `@media`
+    // condition, so anything else fails per-item here, never as a 500.
+    (bp === undefined ||
+      (typeof bp === "object" &&
+        bp !== null &&
+        !Array.isArray(bp) &&
+        typeof (bp as Record<string, unknown>).minWidth === "number" &&
+        Number.isFinite((bp as Record<string, unknown>).minWidth as number) &&
+        ((bp as Record<string, unknown>).minWidth as number) > 0))
+  );
+}
+
 export async function handleCommit(
   changes: CommitChange[],
   cwd?: string
@@ -1020,11 +1781,50 @@ export async function handleCommit(
   const projectRoot = cwd ?? process.cwd();
   const result: CommitResult = { written: [], failed: [] };
 
+  // Element-scope changes (audit 06) are partitioned FIRST — before any
+  // sourceFile handling — so they can never reach the CSS rule writer below.
+  // Falling back to the shared class rule is the exact bug element scope
+  // fixes, so the routing is structural, not best-effort. Grouped per anchor:
+  // one element = one JSX style-object write.
+  const inlineGroups = new Map<
+    string,
+    { anchor: NonNullable<CommitChange["elementScope"]>; changes: CommitChange[] }
+  >();
+
   // Group changes by file to batch writes
   const changesByFile = new Map<string, CommitChange[]>();
   for (const change of changes) {
+    // Issue #65: reject malformed elements per-item before any dereference.
+    if (!isWellFormedChange(change)) {
+      result.failed.push({
+        prop: "",
+        from: "",
+        to: "",
+        ...(typeof change === "object" && change !== null && !Array.isArray(change)
+          ? change
+          : {}),
+        reason:
+          "malformed change entry — expected an object with string prop/from/to fields",
+      });
+      continue;
+    }
+    if (change.elementScope) {
+      const es = change.elementScope;
+      const key = `${es.jsxSourceFile ?? ""}\0${es.jsxSourceLine ?? ""}\0${es.existingClasses ?? ""}`;
+      const group = inlineGroups.get(key) ?? { anchor: es, changes: [] };
+      group.changes.push(change);
+      inlineGroups.set(key, group);
+      continue;
+    }
     if (!change.sourceFile) {
-      result.failed.push({ ...change, reason: "no source file specified" });
+      result.failed.push({
+        ...change,
+        // Class creation is conservative: when the client couldn't resolve a
+        // target stylesheet we say so — we never guess a file to create into.
+        reason: change.createClass
+          ? `cannot create class ".${change.createClass.name}" — no target stylesheet resolved`
+          : "no source file specified",
+      });
       continue;
     }
     const existing = changesByFile.get(change.sourceFile) ?? [];
@@ -1039,6 +1839,7 @@ export async function handleCommit(
   const perFile = await Promise.all(Array.from(changesByFile).map(async ([sourceFile, fileChanges]) => {
     const written: string[] = [];
     const failed: CommitResult["failed"] = [];
+    let releaseLock: (() => void) | null = null;
     try {
       // Resolve the actual file path (handles bare filenames + source maps)
       let filePath = await resolveSourceFile(
@@ -1061,7 +1862,9 @@ export async function handleCommit(
           for (const change of fileChanges) {
             failed.push({
               ...change,
-              reason: `file not found: "${sourceFile}"`,
+              reason: change.createClass
+                ? `cannot create class ".${change.createClass.name}" — target stylesheet not found: "${sourceFile}"`
+                : `file not found: "${sourceFile}"`,
             });
           }
           return { written, failed };
@@ -1081,6 +1884,10 @@ export async function handleCommit(
         return { written, failed };
       }
 
+      // Serialize the read-modify-write for this resolved path (issue #64) so
+      // an overlapping request can't read stale content and clobber our write.
+      releaseLock = await acquireFileLock(filePath);
+
       const source = await readFile(filePath, "utf-8");
       let lines = source.split("\n");
       let modified = false;
@@ -1090,11 +1897,59 @@ export async function handleCommit(
       let masked = maskedLinesOf(lines);
       const remask = () => { masked = maskedLinesOf(lines); };
 
+      // The file's indentation unit, learned once — new (empty) class blocks
+      // get their declarations indented to the file's own convention.
+      const fileIndent = detectIndentUnit(masked) ?? "  ";
+
+      // --- Class creation (audit 05) ---
+      // Ensure a `.name { }` block exists for every class this batch creates.
+      // Idempotent: an existing block short-circuits (so the flow doubles as
+      // "attach existing class" and a re-save never appends a duplicate).
+      // Invalid names are skipped here — the per-change validation below
+      // fails them with an accurate reason.
+      const classesToCreate = new Map<string, NonNullable<CommitChange["createClass"]>>();
+      for (const change of fileChanges) {
+        const cc = change.createClass;
+        if (!cc || typeof cc.name !== "string" || !isValidCSSClassName(cc.name)) continue;
+        if (!classesToCreate.has(cc.name)) classesToCreate.set(cc.name, cc);
+      }
+      for (const name of classesToCreate.keys()) {
+        if (findClassBlockOpen(masked, name) == null) {
+          appendClassBlock(lines, name);
+          modified = true;
+          remask();
+        }
+      }
+
       for (const change of fileChanges) {
         // Reject malformed client input up front (issue #16).
         const invalid = changeValidationError(change);
         if (invalid) {
           failed.push({ ...change, reason: invalid });
+          continue;
+        }
+
+        // --- Breakpoint (@media) handling (issue #53) ---
+        // A change carrying `breakpoint` targets the matching media block —
+        // it must NEVER fall through to the base search (that's exactly the
+        // "flatten a responsive edit into the base rule" corruption).
+        if (change.breakpoint) {
+          if (change.state && !VALID_STATES.has(change.state)) {
+            failed.push({
+              ...change,
+              reason: `invalid state "${change.state}" — not in allowlist`,
+            });
+            continue;
+          }
+          const res = applyBreakpointChange(
+            lines, masked, change, fileIndent, sourceFile
+          );
+          if (res.modified) {
+            modified = true;
+            remask();
+          } else {
+            failed.push({ ...change, reason: res.reason ?? "breakpoint write failed" });
+          }
           continue;
         }
 
@@ -1171,6 +2026,58 @@ export async function handleCommit(
                   reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
                 });
               }
+            }
+            continue;
+          }
+
+          // The pseudo block EXISTS but the value-aware search missed: either
+          // the block never authored `prop` (replace-only save gap — insert
+          // it) or it authors `prop` under a different value representation
+          // than `from` (hex vs rgb — rewrite it). Falling through to the
+          // create path would append a DUPLICATE `.class:state` sibling block.
+          const pseudoOpen =
+            findPseudoBlockOpen(masked, change.className, change.state) ??
+            findNestedPseudoBlockOpen(masked, change.className, change.state);
+          if (pseudoOpen) {
+            const propHit = findPropInBlock(masked, pseudoOpen, change.prop);
+            if (propHit) {
+              // Authored with an unrecognized value — broad value rewrite,
+              // confined to the block's body span on minified same-line
+              // blocks (issue #47).
+              const segment = propHit.range
+                ? lines[propHit.lineIdx].slice(propHit.range[0], propHit.range[1])
+                : lines[propHit.lineIdx];
+              const broadPattern = replacePropRegex(change.prop, "([^;!}]+)");
+              if (broadPattern.test(segment)) {
+                const safeValue = change.to.replace(/\$/g, "$$$$");
+                const replaced = segment.replace(broadPattern, `$1$2${safeValue}`);
+                lines[propHit.lineIdx] = propHit.range
+                  ? lines[propHit.lineIdx].slice(0, propHit.range[0]) +
+                    replaced +
+                    lines[propHit.lineIdx].slice(propHit.range[1])
+                  : replaced;
+                modified = true;
+                remask();
+              } else {
+                failed.push({
+                  ...change,
+                  reason: `value "${change.from}" not found in .${change.className}:${change.state} block`,
+                });
+              }
+              continue;
+            }
+            // Never authored here — insert the declaration into the block.
+            const outcome = insertDeclarationIntoBlock(
+              lines, masked, pseudoOpen, change.prop, change.to, fileIndent
+            );
+            if (outcome === "inserted") {
+              modified = true;
+              remask();
+            } else {
+              failed.push({
+                ...change,
+                reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
+              });
             }
             continue;
           }
@@ -1253,6 +2160,44 @@ export async function handleCommit(
             remask();
             continue;
           }
+
+          // The file never authored `prop` anywhere (every tier + the
+          // shorthand fallback missed). When the target class block exists,
+          // INSERT the declaration into it instead of dead-ending the save.
+          // Insert-vs-replace is derived server-side: any authored
+          // declaration found above always wins as a replace.
+          if (change.className) {
+            // A longhand whose shorthand parent IS authored in the block
+            // (e.g. padding-top under `padding: $x` / mismatched sub-values)
+            // keeps today's honest failure instead of inserting a longhand
+            // override — pinned by the shorthand-bail tests.
+            const mapping = LONGHAND_TO_SHORTHAND[change.prop];
+            const shorthandAuthored =
+              mapping != null &&
+              searchClassBlockFuzzy(masked, change.className, mapping.shorthand) != null;
+            if (!shorthandAuthored) {
+              const open = findClassBlockOpen(masked, change.className);
+              if (!open) {
+                failed.push({
+                  ...change,
+                  reason: `no rule for .${change.className} in ${sourceFile} — create the class first`,
+                });
+                continue;
+              }
+              const outcome = insertDeclarationIntoBlock(
+                lines, masked, open, change.prop, change.to, fileIndent
+              );
+              if (outcome === "inserted") {
+                modified = true;
+                remask();
+                continue;
+              }
+              // "commented-out" (deliberately disabled declaration) and
+              // "unclosed" (no safe insertion point) fall through to the
+              // honest not-found failure below.
+            }
+          }
+
           failed.push({
             ...change,
             reason: `property "${change.prop}: ${change.from}" not found in ${sourceFile}`,
@@ -1329,6 +2274,29 @@ export async function handleCommit(
         await writeFile(filePath, lines.join("\n"), "utf-8");
         written.push(sourceFile);
       }
+
+      // --- JSX className attach for created classes (audit 05) ---
+      // Once per created class: append the class token to the JSX source's
+      // className attribute (or insert a fresh attribute for a class-less
+      // element). A refusal is an honest per-batch failure — the rule exists
+      // in CSS but the class is NOT attached in source, and the user must know.
+      for (const [name, cc] of classesToCreate) {
+        const attach = await attachClassToJSX(projectRoot, {
+          className: name,
+          sourceFile: cc.jsxSourceFile,
+          sourceLine: cc.jsxSourceLine,
+          existingClasses: cc.existingClasses,
+        });
+        if (attach.ok) {
+          if (attach.changed && !written.includes(attach.file)) written.push(attach.file);
+        } else {
+          const carrier = fileChanges.find((c) => c.createClass?.name === name);
+          failed.push({
+            ...(carrier ?? { prop: "", from: "", to: "" }),
+            reason: `could not attach ".${name}" to the JSX className: ${attach.reason}`,
+          });
+        }
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       for (const change of fileChanges) {
@@ -1337,11 +2305,76 @@ export async function handleCommit(
           reason: `file error: ${message}`,
         });
       }
+    } finally {
+      releaseLock?.();
     }
     return { written, failed };
   }));
 
-  for (const { written, failed } of perFile) {
+  // --- Element-scope inline writes (audit 06) ---
+  // One JSX style-attribute merge per anchor group, concurrently — the
+  // per-file mutex (acquireFileLock, injected into the writer) serializes
+  // groups that resolve to the same file, so overlapping read-modify-writes
+  // can't clobber each other (issue #64).
+  const perInline = await Promise.all(
+    Array.from(inlineGroups.values()).map(async ({ anchor, changes: groupChanges }) => {
+      const written: string[] = [];
+      const failed: CommitResult["failed"] = [];
+      const declarations: Array<{ prop: string; value: string }> = [];
+      const carriers: CommitChange[] = [];
+      for (const change of groupChanges) {
+        // Same malformed-input gate as the CSS path (issue #16).
+        const invalid = changeValidationError(change);
+        if (invalid) {
+          failed.push({ ...change, reason: invalid });
+          continue;
+        }
+        // An inline style attribute can express neither a pseudo-state nor a
+        // media query — refuse truthfully instead of flattening a `:hover`
+        // value into the resting style or a responsive value into all widths.
+        if (change.state) {
+          failed.push({
+            ...change,
+            reason: `":${change.state}" can't be expressed in an inline style attribute — use class scope to save state edits`,
+          });
+          continue;
+        }
+        if (change.breakpoint) {
+          failed.push({
+            ...change,
+            reason:
+              "a breakpoint edit can't be expressed in an inline style attribute (@media has no inline form) — element-scoped responsive edits stay on the clipboard",
+          });
+          continue;
+        }
+        declarations.push({ prop: change.prop, value: change.to });
+        carriers.push(change);
+      }
+      if (declarations.length > 0) {
+        const res = await applyInlineStyleToJSX(
+          projectRoot,
+          {
+            declarations,
+            sourceFile: anchor.jsxSourceFile,
+            sourceLine: anchor.jsxSourceLine,
+            existingClasses: anchor.existingClasses,
+          },
+          acquireFileLock
+        );
+        if (res.ok) {
+          if (res.changed) written.push(res.file);
+        } else {
+          // Truthful per-item failure; the CSS class rule is NEVER a fallback.
+          for (const change of carriers) {
+            failed.push({ ...change, reason: res.reason });
+          }
+        }
+      }
+      return { written, failed };
+    })
+  );
+
+  for (const { written, failed } of [...perFile, ...perInline]) {
     for (const f of written) {
       if (!result.written.includes(f)) result.written.push(f);
     }

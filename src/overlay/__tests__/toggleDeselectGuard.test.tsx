@@ -25,6 +25,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { Mock } from "vitest";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
@@ -55,6 +56,9 @@ function makeCtx(element: HTMLElement): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none" as const,
     sectionInd: () => "none" as const,
     cs,
@@ -107,8 +111,8 @@ function button(accName: string, groupLabel?: string): HTMLElement {
 }
 
 function appliedNone(ctx: SectionCtx, prop: string): boolean {
-  return (ctx.apply as ReturnType<typeof vi.fn>).mock.calls.some(
-    ([p, v]: [string, string]) => p === prop && v === "none",
+  return (ctx.apply as Mock<(prop: string, value: string) => void>).mock.calls.some(
+    ([p, v]) => p === prop && v === "none",
   );
 }
 

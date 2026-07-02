@@ -63,6 +63,21 @@ describe("stripPseudoClasses", () => {
     expect(result.base).toBe(".card");
     expect(result.pseudo).toBeUndefined();
   });
+
+  // #76 — :focus must not match inside :focus-within / :focus-visible
+  it("preserves the base selector for :focus-within (#76)", () => {
+    expect(stripPseudoClasses(".a:focus-within .b")).toEqual({
+      base: ".a .b",
+      pseudo: "focus-within",
+    });
+  });
+
+  it("preserves the base selector for :focus-visible (#76)", () => {
+    expect(stripPseudoClasses(".btn:focus-visible")).toEqual({
+      base: ".btn",
+      pseudo: "focus-visible",
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -120,6 +135,31 @@ describe("getMatchingRules", () => {
     const hover = blocks.find((b) => b.isState);
     expect(hover).toBeTruthy();
     expect(hover!.pseudoState).toBe("hover");
+  });
+
+  it("does not drop :focus-within rules (#76)", () => {
+    addStyle(".test-cls:focus-within { color: blue; }");
+    const div = document.createElement("div");
+    div.className = "test-cls";
+    document.body.appendChild(div);
+
+    const blocks = getMatchingRules(div);
+    const block = blocks.find((b) => b.selector === ".test-cls:focus-within");
+    expect(block).toBeTruthy();
+    expect(block!.isState).toBe(true);
+    expect(block!.pseudoState).toBe("focus-within");
+  });
+
+  it("does not drop :focus-visible rules (#76)", () => {
+    addStyle(".test-cls:focus-visible { color: green; }");
+    const div = document.createElement("div");
+    div.className = "test-cls";
+    document.body.appendChild(div);
+
+    const blocks = getMatchingRules(div);
+    const block = blocks.find((b) => b.selector === ".test-cls:focus-visible");
+    expect(block).toBeTruthy();
+    expect(block!.pseudoState).toBe("focus-visible");
   });
 
   // happy-dom does not implement CSSMediaRule — the walkRulesWithMedia branch

@@ -22,12 +22,15 @@ export function InspectorTabBar({ activePanel, onSelectTab, focusMode, onExitFoc
     <>
       {focusMode && (
         <div style={{ display: "flex", justifyContent: "center", paddingTop: 2, paddingBottom: 2, borderBottom: `1px solid ${border.subtle}` }}>
-          <span
+          {/* Native <button> so exiting focus mode is keyboard-reachable
+              (issue #85 — this was a mouse-only span). */}
+          <button
             onClick={onExitFocus}
-            style={{ fontSize: 9, fontWeight: 600, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
+            title="Exit focus mode"
+            style={{ fontSize: 9, fontWeight: 600, fontFamily: font.sans, paddingLeft: 8, paddingRight: 8, paddingTop: 1, paddingBottom: 1, border: "none", borderRadius: 9999, cursor: "pointer", userSelect: "none", letterSpacing: "0.04em", textTransform: "uppercase" as const, color: color.primary, background: primaryAlpha(0.15) }}
           >
             Focus Mode
-          </span>
+          </button>
         </div>
       )}
       {/* -- Style / AI tab bar -- */}

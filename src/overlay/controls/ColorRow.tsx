@@ -93,7 +93,7 @@ export function ColorRow({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [rowHovered, setRowHovered] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   const { pressHandlers: swatchPress, pressStyle: swatchPressStyle } = usePressScale(0.92);
 
   // Resolve var() references for display
@@ -118,8 +118,7 @@ export function ColorRow({
     : {};
   const labelContent = (
     <span
-      ref={resetPopover.anchorRef}
-      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
+      {...resetPopover.triggerProps}
       title={colorLabelTitle ?? label}
       style={{ ...labelStyle(indicator), ...compactLabelOverrides, ...widthOverrides }}
     >

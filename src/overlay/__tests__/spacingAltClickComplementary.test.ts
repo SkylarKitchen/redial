@@ -41,12 +41,12 @@ describe("SpacingBoxModel Alt+click complementary-side shortcut", () => {
   const stubInd = () => "none" as const;
 
   function renderBoxModel(
-    onChange: ReturnType<typeof vi.fn>,
+    onChange: (prop: string, value: number, unit: string) => void,
     overrides?: {
       margin?: { top: number; right: number; bottom: number; left: number };
       padding?: { top: number; right: number; bottom: number; left: number };
       element?: Element;
-      onReset?: ReturnType<typeof vi.fn>;
+      onReset?: (prop: string, value: number) => void;
     },
   ) {
     act(() => {

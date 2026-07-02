@@ -12,7 +12,15 @@
  * the resulting TypeErrors, but tests that read/write storage directly blow up.
  *
  * See GH #45.
+ *
+ * A global `beforeEach` clears both storages so no test sees another test's
+ * writes (GH #107 — the polyfill previously accumulated across all tests in
+ * a file, creating order coupling). Tests that simulate reload-persistence
+ * (write → vi.resetModules() → re-import → read) are unaffected: they run
+ * inside a single test body, and clearing only happens between tests.
  */
+
+import { beforeEach } from "vitest";
 
 class MemoryStorage implements Storage {
   private store = new Map<string, string>();
@@ -61,3 +69,19 @@ function installStorage(name: "localStorage" | "sessionStorage"): void {
 
 installStorage("localStorage");
 installStorage("sessionStorage");
+
+// GH #107 — reset storage between tests so test order is irrelevant.
+// Clears whatever is currently installed (a test may have swapped in its own
+// stub, possibly without clear(), hence the guarded call).
+beforeEach(() => {
+  try {
+    globalThis.localStorage?.clear?.();
+  } catch {
+    /* stubbed storage without clear() — ignore */
+  }
+  try {
+    globalThis.sessionStorage?.clear?.();
+  } catch {
+    /* stubbed storage without clear() — ignore */
+  }
+});

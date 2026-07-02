@@ -28,7 +28,6 @@ function makeMockCtx(overrides?: Partial<{ position: string; zIndex: string }>):
   element.style.left = "0px";
   element.style.zIndex = overrides?.zIndex ?? "auto";
   element.style.cssFloat = "none";
-  // @ts-expect-error happy-dom may not support clear directly
   element.style.clear = "none";
   document.body.appendChild(element);
 
@@ -37,6 +36,9 @@ function makeMockCtx(overrides?: Partial<{ position: string; zIndex: string }>):
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none",
     sectionInd: () => "none",
     cs,

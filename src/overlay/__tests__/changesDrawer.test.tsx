@@ -8,7 +8,8 @@
  * cover the count label, Copy All (clipboard), Reset All, and tab switching.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { act } from "react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { ChangesDrawer, type HistoryEntry } from "../shell/ChangesDrawer";
 import { applyInlineStyle, diffAll } from "../core/apply";
 import { styleEngine } from "../core/engine";
@@ -154,6 +155,108 @@ describe("ChangesDrawer — pending tab", () => {
     const resetBtn = screen.getByText("Reset All").closest("button") as HTMLButtonElement;
     expect(copyBtn.disabled).toBe(true);
     expect(resetBtn.disabled).toBe(true);
+  });
+});
+
+// ─── Save All — breakpoint file-save partition (#53) ─────────────────
+
+describe("ChangesDrawer Save All — breakpoint file-save partition (#53)", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ written: ["Button.module.scss"], failed: [] }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** CSS-module-classed element: getModuleClassInfo → className "btn",
+   *  source derivation → "Button.module.scss" — the enrichment binds its
+   *  breakpoint edits to a file (#53), same fixture as breakpointFileSave. */
+  function makeModuleEl(): HTMLElement {
+    const el = document.createElement("div");
+    el.className = "Button_btn__a1b2c";
+    document.body.appendChild(el);
+    return el;
+  }
+
+  /** Let handleSaveAll's async chain (fetch → json → clipboard) settle. */
+  async function flushSave() {
+    await act(async () => {
+      for (let i = 0; i < 8; i++) await Promise.resolve();
+    });
+  }
+
+  it("a class-backed breakpoint edit saves to file — no '(not saved to file)' caveat, no redundant clipboard copy", async () => {
+    const el = makeModuleEl();
+    styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "blue");
+
+    render(<ChangesDrawer {...baseProps} tab="pending" />);
+    fireEvent.click(screen.getByText("Save All"));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.changes).toHaveLength(1);
+    expect(body.changes[0]).toMatchObject({
+      prop: "color",
+      to: "blue",
+      className: "btn",
+      breakpoint: { id: "768", minWidth: 768 },
+    });
+
+    await flushSave();
+    // File-bound → NOT double-copied to the clipboard as @media …
+    const mediaWrite = writeText.mock.calls.find(([t]) => String(t).includes("@media"));
+    expect(mediaWrite, "file-bound breakpoint edit must not double-copy as @media").toBeUndefined();
+    // … and no stale clipboard-only caveat — the save message stands.
+    expect(screen.queryByText(/not saved to file/)).toBeNull();
+    expect(screen.getByText("Saved 1 change")).toBeTruthy();
+  });
+
+  it("a classless breakpoint edit keeps the clipboard side-channel and its caveat", async () => {
+    const el = makeEl("plain"); // classless → enrichment can't bind it to a file
+    styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "blue");
+
+    render(<ChangesDrawer {...baseProps} tab="pending" />);
+    fireEvent.click(screen.getByText("Save All"));
+    await flushSave();
+
+    // Nothing file-bound → no POST at all; the edit rides the clipboard as @media.
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText("1 breakpoint edit copied (not saved to file)")).toBeTruthy();
+    const clipboard = writeText.mock.calls.map(([t]) => String(t)).join("\n");
+    expect(clipboard).toContain("@media (min-width: 768px)");
+    expect(clipboard).toContain("color: blue;");
+  });
+
+  it("mixed save partitions PER ELEMENT — same prop+breakpoint on a class-backed and a classless element", async () => {
+    const fileEl = makeModuleEl();
+    const clipEl = makeEl("plain");
+    styleEngine.apply({ scope: "element", el: fileEl, breakpoint: "768" }, "color", "blue");
+    styleEngine.apply({ scope: "element", el: clipEl, breakpoint: "768" }, "color", "blue");
+
+    render(<ChangesDrawer {...baseProps} tab="pending" />);
+    fireEvent.click(screen.getByText("Save All"));
+    await flushSave();
+
+    // Only the class-backed edit reaches the POST …
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.changes).toHaveLength(1);
+    expect(body.changes[0].className).toBe("btn");
+    // … and only the classless one reaches the clipboard. (A GLOBAL
+    // fileBound set keyed by bp+state+prop would wrongly swallow it —
+    // both edits share the "768@@::color" key — hence per-element.)
+    // getSelector: classless div → "div"; the module element → ".btn".
+    expect(screen.getByText("1 breakpoint edit copied (not saved to file)")).toBeTruthy();
+    const clipboard = writeText.mock.calls.map(([t]) => String(t)).join("\n");
+    expect(clipboard).toContain("div {");
+    expect(clipboard).not.toContain(".btn");
   });
 });
 

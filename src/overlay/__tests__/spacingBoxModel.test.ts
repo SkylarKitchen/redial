@@ -40,7 +40,7 @@ const stubInd = () => "none" as const;
 
 function renderBoxModel(
   root: Root,
-  onChange: ReturnType<typeof vi.fn>,
+  onChange: (prop: string, value: number, unit: string) => void,
   overrides?: {
     margin?: { top: number; right: number; bottom: number; left: number };
     padding?: { top: number; right: number; bottom: number; left: number };
@@ -161,7 +161,7 @@ describe("SpacingValuePopover arrow key stepping", () => {
   beforeEach(() => { ({ container, root } = setup()); });
   afterEach(() => { teardown(container, root); });
 
-  function renderPopover(onChange: ReturnType<typeof vi.fn>, value = 10, isMargin = true) {
+  function renderPopover(onChange: (value: number) => void, value = 10, isMargin = true) {
     const anchorRect = new DOMRect(100, 100, 50, 24);
     act(() => {
       root.render(
@@ -224,7 +224,7 @@ describe("SpacingValuePopover shift+arrow stepping", () => {
   beforeEach(() => { ({ container, root } = setup()); });
   afterEach(() => { teardown(container, root); });
 
-  function renderPopover(onChange: ReturnType<typeof vi.fn>, value = 20, isMargin = true) {
+  function renderPopover(onChange: (value: number) => void, value = 20, isMargin = true) {
     const anchorRect = new DOMRect(100, 100, 50, 24);
     act(() => {
       root.render(
@@ -409,7 +409,7 @@ describe("SpacingValuePopover negative value clamping", () => {
   beforeEach(() => { ({ container, root } = setup()); });
   afterEach(() => { teardown(container, root); });
 
-  function renderPopover(onChange: ReturnType<typeof vi.fn>, value: number, isMargin: boolean) {
+  function renderPopover(onChange: (value: number) => void, value: number, isMargin: boolean) {
     const anchorRect = new DOMRect(100, 100, 50, 24);
     act(() => {
       root.render(

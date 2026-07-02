@@ -120,9 +120,19 @@ function NumericInput({
         />
       ) : (
         <span
+          role="button"
+          tabIndex={0}
+          aria-label={`Edit ${label}`}
           onClick={(e) => {
             e.stopPropagation();
             setEditing(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setEditing(true);
+            }
           }}
           style={{
             display: "inline-block",

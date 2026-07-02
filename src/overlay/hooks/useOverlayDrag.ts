@@ -48,6 +48,11 @@ export function useOverlayDrag(
   const [panelDragging, setPanelDragging] = useState(false);
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The document mousemove/mouseup handlers of the drag in flight, if any.
+  // They normally self-remove on mouseup — this ref lets the unmount cleanup
+  // detach them when the component unmounts mid-drag (otherwise they'd stay
+  // on document until the next mouseup, calling setPos on an unmounted hook).
+  const dragListenersRef = useRef<{ move: (e: MouseEvent) => void; up: () => void } | null>(null);
 
   const PANEL_WIDTH = activePanelType === "variables" ? getVariablesPanelWidth(variablesModeCount) : 300;
 
@@ -83,6 +88,7 @@ export function useOverlayDrag(
         setPanelDragging(false);
         document.removeEventListener("mousemove", handleMouseMove);
         document.removeEventListener("mouseup", handleMouseUp);
+        dragListenersRef.current = null;
 
         // Snap to nearest edge if within threshold, and track which edge we're anchored to
         setPos((current) => {
@@ -127,11 +133,24 @@ export function useOverlayDrag(
         });
       };
 
+      dragListenersRef.current = { move: handleMouseMove, up: handleMouseUp };
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
     },
     [pos, PANEL_WIDTH]
   );
+
+  // --- Detach mid-drag document listeners on unmount ---
+  // Unmounting while a drag is in flight must not orphan the drag handlers.
+  useEffect(() => {
+    return () => {
+      if (dragListenersRef.current) {
+        document.removeEventListener("mousemove", dragListenersRef.current.move);
+        document.removeEventListener("mouseup", dragListenersRef.current.up);
+        dragListenersRef.current = null;
+      }
+    };
+  }, []);
 
   // --- Re-anchor panel position on window resize ---
   useEffect(() => {

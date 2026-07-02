@@ -12,7 +12,12 @@ import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { fireEvent } from "@testing-library/react";
-import { Modal } from "../shell/Modal";
+import { Modal, type ModalProps } from "../shell/Modal";
+
+/** Children are supplied via createElement rest args (runtime-identical to
+ *  props.children), but ModalProps types `children` as required in the props
+ *  object — widen at the type level only. */
+const modalProps = (p: Omit<ModalProps, "children">) => p as ModalProps;
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -40,7 +45,7 @@ describe("inline Modal", () => {
   it("portals to body with the panel portal contract", () => {
     act(() => {
       root.render(
-        createElement(Modal, { onClose: vi.fn(), ariaLabel: "Test" }, createElement("p", null, "hi")),
+        createElement(Modal, modalProps({ onClose: vi.fn(), ariaLabel: "Test" }), createElement("p", null, "hi")),
       );
     });
     const backdrop = document.body.querySelector("[data-tuner-modal]") as HTMLElement;
@@ -56,7 +61,7 @@ describe("inline Modal", () => {
   it("calls onClose on Escape", () => {
     const onClose = vi.fn();
     act(() => {
-      root.render(createElement(Modal, { onClose }, createElement("button", null, "ok")));
+      root.render(createElement(Modal, modalProps({ onClose }), createElement("button", null, "ok")));
     });
     act(() => {
       fireEvent.keyDown(dialog(), { key: "Escape" });
@@ -67,7 +72,7 @@ describe("inline Modal", () => {
   it("closes on backdrop click but not on content click", () => {
     const onClose = vi.fn();
     act(() => {
-      root.render(createElement(Modal, { onClose }, createElement("button", null, "ok")));
+      root.render(createElement(Modal, modalProps({ onClose }), createElement("button", null, "ok")));
     });
     // Click content -> no close
     act(() => {
@@ -87,7 +92,7 @@ describe("inline Modal", () => {
       root.render(
         createElement(
           Modal,
-          { onClose: vi.fn() },
+          modalProps({ onClose: vi.fn() }),
           createElement("input", { "data-testid": "first" }),
           createElement("button", null, "second"),
         ),
@@ -102,7 +107,7 @@ describe("inline Modal", () => {
       root.render(
         createElement(
           Modal,
-          { onClose: vi.fn() },
+          modalProps({ onClose: vi.fn() }),
           createElement("button", { "data-testid": "a" }, "a"),
           createElement("button", { "data-testid": "b" }, "b"),
         ),
@@ -130,7 +135,7 @@ describe("inline Modal", () => {
     opener.focus();
     expect(document.activeElement).toBe(opener);
     act(() => {
-      root.render(createElement(Modal, { onClose: vi.fn() }, createElement("button", null, "x")));
+      root.render(createElement(Modal, modalProps({ onClose: vi.fn() }), createElement("button", null, "x")));
     });
     expect(document.activeElement).not.toBe(opener); // focus moved into modal
     act(() => root.unmount());

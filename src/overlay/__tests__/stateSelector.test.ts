@@ -46,7 +46,6 @@ describe("StateSelector — static structure", () => {
       "hover",
       "focus",
       "active",
-      "visited",
       "focus-within",
       "focus-visible",
     ];
@@ -56,6 +55,14 @@ describe("StateSelector — static structure", () => {
         `Missing pseudo-class option: ${state}`,
       ).toContain(`id: "${state}"`);
     }
+  });
+
+  it("does NOT offer :visited (browser privacy restrictions make it unpreviewable)", () => {
+    // Browsers deliberately break :visited introspection to stop history
+    // sniffing: getComputedStyle reports unvisited values for visited-only
+    // styles and the state cannot be force-rendered, so previewing/forcing
+    // it in the panel is impossible. Offering it was a dead option.
+    expect(stateSelectorSrc).not.toContain('id: "visited"');
   });
 
   it("does not contain first-child / last-child structural selectors", () => {
@@ -117,7 +124,8 @@ describe("StateSelector — scrub guard", () => {
 
   it("fires callback with each pseudo-class value", () => {
     const { handler, spy } = makeGuardedHandler();
-    const states = ["none", "hover", "focus", "active", "visited", "focus-within", "focus-visible"];
+    // The selectable states — no "visited": unpreviewable (browser privacy).
+    const states = ["none", "hover", "focus", "active", "focus-within", "focus-visible"];
     for (const state of states) {
       handler(state);
     }
@@ -151,7 +159,7 @@ describe("StateSelector — scrub guard", () => {
     setScrubActive(true);
     handler("hover");
     handler("active");
-    handler("visited");
+    handler("focus-visible");
     setScrubActive(false);
     // None of the mid-scrub calls should have been queued
     expect(spy).not.toHaveBeenCalled();

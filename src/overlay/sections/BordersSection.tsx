@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo, useEffect } from "react";
+import React, { useState, useCallback, memo, useEffect, useRef } from "react";
 import { Section, ValueInput, ColorRow, useResetPopover } from "../controls";
 import { SideSelector } from "../controls/SideSelector";
 import { CornerRadiusEditor } from "./CornerRadiusEditor";
@@ -205,9 +205,9 @@ export const BordersSection = memo(function BordersSection({
   }, [element]);
 
   // ── Reset popovers ──
-  const radiusPopover = useResetPopover(radiusInd, handleRadiusReset);
-  const stylePopover = useResetPopover(styleInd, handleStyleReset);
-  const widthPopover = useResetPopover(widthInd, handleWidthReset);
+  const radiusPopover = useResetPopover(radiusInd, handleRadiusReset, "radius");
+  const stylePopover = useResetPopover(styleInd, handleStyleReset, "border style");
+  const widthPopover = useResetPopover(widthInd, handleWidthReset, "border width");
 
   // ── Handlers ──
   const handleBorderStyleChange = useCallback((v: string) => {
@@ -264,15 +264,58 @@ export const BordersSection = memo(function BordersSection({
     [apply, radiusUnit]
   );
 
+  // Ghost-drag protection (same family as issue #73): the radius slider opens
+  // an undo batch on pointerdown, but the input's own pointerup is the only
+  // normal close path. A lost release — window blur (Cmd+Tab), pointercancel,
+  // Escape, or a mid-drag unmount (Cmd+Z remounts the panel) — must still
+  // close the batch exactly once, mirroring the SliderRow pattern.
+  const radiusDragEndRef = useRef<(() => void) | null>(null);
+
+  const handleRadiusSliderPointerDown = useCallback(() => {
+    // Defensive: if a previous drag somehow never closed, close it before
+    // opening a new batch so begin/end stay balanced.
+    radiusDragEndRef.current?.();
+    beginBatch();
+    let ended = false;
+    const end = () => {
+      if (ended) return; // terminal events can race — close exactly once
+      ended = true;
+      endBatch();
+      document.removeEventListener("pointercancel", end);
+      window.removeEventListener("blur", end);
+      window.removeEventListener("keydown", onKey);
+      radiusDragEndRef.current = null;
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") end();
+    };
+    radiusDragEndRef.current = end;
+    // Ghost-drag safety: a lost release (canceled pointer, Cmd+Tab blur,
+    // Escape) must still close the batch.
+    document.addEventListener("pointercancel", end);
+    window.addEventListener("blur", end);
+    window.addEventListener("keydown", onKey);
+  }, []);
+
+  const handleRadiusSliderPointerUp = useCallback(() => {
+    radiusDragEndRef.current?.();
+  }, []);
+
+  // Close any in-flight batch on unmount (e.g. Cmd+Z remounts the panel).
+  useEffect(() => {
+    return () => {
+      radiusDragEndRef.current?.();
+    };
+  }, []);
+
   return (
     <Section title="Borders" indicator={sectionInd(["border-width", "border-style", "border-color", "border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius", "outline"])} forceOpen={forceOpen} focusOpen={focusOpen} onToggle={onToggle}>
 
       {/* ── Radius row (compact) ── */}
       <div style={ROW}>
         <span
-          ref={radiusPopover.anchorRef}
+          {...radiusPopover.triggerProps}
           style={{ ...LABEL, cursor: radiusInd === "modified" ? "pointer" : "default" }}
-          onClick={(e) => { if (e.altKey) { handleRadiusReset(); return; } radiusPopover.triggerOpen(); }}
         >
           <span style={indicatorStyle(radiusInd)}>Radius</span>
         </span>
@@ -287,8 +330,8 @@ export const BordersSection = memo(function BordersSection({
           step={1}
           value={[radiusTL]}
           onValueChange={([v]) => handleRadiusAllChange(v)}
-          onPointerDown={() => beginBatch()}
-          onPointerUp={() => endBatch()}
+          onPointerDown={handleRadiusSliderPointerDown}
+          onPointerUp={handleRadiusSliderPointerUp}
         />
         <div style={{ display: "flex", alignItems: "center", height: 28, borderRadius: 4, border: `1px solid ${border.default}`, background: surface.subtle, flexShrink: 0, minWidth: 0 }}>
           <ValueInput value={radiusTL} onChange={handleRadiusAllChange} embedded />
@@ -339,9 +382,8 @@ export const BordersSection = memo(function BordersSection({
           {/* ── Style (icon toggle) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("style"), borderStyle)}>
             <span
-              ref={stylePopover.anchorRef}
+              {...stylePopover.triggerProps}
               style={{ width: layout.labelWidth, fontSize: 11, color: text.secondary, flexShrink: 0, paddingLeft: 1, cursor: styleInd === "modified" ? "pointer" : "default" }}
-              onClick={(e) => { if (e.altKey) { handleStyleReset(); return; } stylePopover.triggerOpen(); }}
             >
               <span style={indicatorStyle(styleInd)}>Style</span>
             </span>
@@ -358,8 +400,11 @@ export const BordersSection = memo(function BordersSection({
           {/* ── Width (value input + unit) ── */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, height: 32, padding: "4px 0" }} onContextMenu={ctxMenu(borderProp("width"), `${borderWidth}${borderWidthUnit}`)}>
             <LabelScrub value={borderWidth} onChange={handleBorderWidthChange} step={1} min={0} max={20} onAltClick={() => resetCss(borderProp("width"), setBorderWidth)}>
+              {/* Keyboard-only trigger: mouse stays on LabelScrub's drag-to-scrub,
+                  but Enter/Space still opens the width reset popover (issue #85). */}
               <span
-                ref={widthPopover.anchorRef}
+                {...widthPopover.triggerProps}
+                onClick={undefined}
                 style={{ width: layout.labelWidth, fontSize: 11, color: text.secondary, flexShrink: 0, cursor: "ew-resize", paddingLeft: 1 }}
               >
                 <span style={indicatorStyle(widthInd)}>Width</span>

@@ -15,12 +15,14 @@ export interface StateSelectorProps {
   onChange: (state: string) => void;
 }
 
+// "visited" is deliberately NOT offered: browser privacy restrictions make
+// :visited impossible to preview — getComputedStyle lies about visited-only
+// styles and the state can't be force-rendered, so selecting it did nothing.
 const STATE_OPTIONS = [
   { id: "none", label: "None — base styles" },
   { id: "hover", label: "Hover" },
   { id: "focus", label: "Focus" },
   { id: "active", label: "Active" },
-  { id: "visited", label: "Visited" },
   { id: "focus-within", label: "Focus Within" },
   { id: "focus-visible", label: "Focus Visible" },
 ];

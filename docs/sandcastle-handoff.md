@@ -38,7 +38,7 @@ smoke test is step one.
 | Auth path | bind-mount `~/.claude` | Skylar uses Claude subscription, not API key. |
 | Model default in committed code | `claude-opus-4-5` | Skylar wants a newer opus release than this, but that identifier can't be in tracked source for this public repo. |
 | Live model identifier | `.sandcastle/.env` (gitignored) | One-line edit, never committed. Skylar set it locally to the opus release he's using; update the same line when a newer one ships. |
-| Bash flow (`run-tasks-parallel.sh` etc.) | Kept alongside | Sandcastle adds an option, doesn't replace. |
+| Bash flow (`scripts/run-tasks-parallel.sh` etc.) | Kept alongside | Sandcastle adds an option, doesn't replace. |
 | Concurrency in `scripts/run-tasks.ts` | Node semaphore + `AbortController` | Matches bash semantics including the <15s fast-fail-on-auth heuristic. |
 | `branchStrategy` default | `merge-to-head` | Successful runs auto-merge to HEAD. Open question whether to flip to `branch` for review-before-merge — see below. |
 
@@ -92,7 +92,7 @@ finishing. Do not change any logic.
 ```
 
 ### Parallel checklist run
-Create a `tasks.md` (same format `run-tasks-parallel.sh` uses):
+Create a `tasks.md` (same format `scripts/run-tasks-parallel.sh` uses):
 
 ```md
 ## Tasks
@@ -130,7 +130,7 @@ documented. What remains is genuine future work, not blockers.
   against `node_modules/@ai-hero/sandcastle/dist/SandboxLifecycle.d.ts`).
   Approach taken: `.sandcastle/prompt.template.md` tells the agent to
   run `npm run typecheck && npm test` before signaling completion.
-- ~~TS replacement for `merge-workers.sh`~~ — done.
+- ~~TS replacement for `scripts/merge-workers.sh`~~ — done.
   `scripts/sandcastle-merge.ts` handles `sandcastle/*` branches.
 - ~~Auth approach for Claude subscription~~ — done. `~/.claude`
   bind-mount fails on macOS (token in Keychain). Use
@@ -187,9 +187,9 @@ docs/
 ```
 
 Coexists with:
-- `run-tasks-parallel.sh` — original host-side worker flow. Still works.
-- `merge-workers.sh`, `cleanup-workers.sh`, `dashboard.sh` — also still
-  work. `dashboard.sh` is provider-agnostic (just reads the PRD).
+- `scripts/run-tasks-parallel.sh` — original host-side worker flow. Still works.
+- `scripts/merge-workers.sh`, `scripts/cleanup-workers.sh`, `scripts/dashboard.sh` —
+  also still work. `dashboard.sh` is provider-agnostic (just reads the PRD).
 
 ---
 

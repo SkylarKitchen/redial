@@ -63,6 +63,9 @@ function makeMockCtx(): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none",
     sectionInd: () => "none",
     cs,
@@ -133,10 +136,10 @@ describe("Font-weight dropdown labels", () => {
   it("weight labels combine numeric value + name (e.g. '400 - Regular')", async () => {
     const { FONT_WEIGHT_OPTIONS } = await import("../panelConstants");
     const regular = FONT_WEIGHT_OPTIONS.find((o: { value: string }) => o.value === "400");
-    expect(regular.label).toBe("400 - Regular");
+    expect(regular!.label).toBe("400 - Regular");
 
     const bold = FONT_WEIGHT_OPTIONS.find((o: { value: string }) => o.value === "700");
-    expect(bold.label).toBe("700 - Bold");
+    expect(bold!.label).toBe("700 - Bold");
   });
 
   it("source uses FONT_WEIGHT_OPTIONS for the weight SelectRow", () => {

@@ -10,9 +10,11 @@ decision** that must be made by a human before implementation can start. Nothing
 should be picked up "cold" by an autonomous agent — they all need a product/design call
 or interactive exploration first.
 
-> **This file is the source of truth.** The linked GitHub issues are **closed** to keep
-> the v1.0 launch tracker clean; the issue history (full agent briefs, triage notes) is
-> preserved and each will be **reopened when work begins**. Nothing was abandoned.
+> **This file is the planning index for post-v1 work.** GitHub Issues remain the
+> tracker (via the `gh` CLI — see [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md)).
+> The linked issues are **closed** to keep the v1.0 launch tracker clean; the issue
+> history (full agent briefs, triage notes) is preserved and each will be
+> **reopened when work begins**. Nothing was abandoned.
 
 ## Decided — ready to build
 

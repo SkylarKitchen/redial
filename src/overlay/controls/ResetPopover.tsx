@@ -23,8 +23,15 @@ export interface ResetPopoverProps {
 
 export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [hovered, setHovered] = useState(false);
+
+  // Move focus to the Reset row on open so keyboard users (Enter/Space on
+  // the trigger) can activate it immediately (issue #85).
+  useEffect(() => {
+    rowRef.current?.focus?.();
+  }, []);
 
   // Position below anchor, clamped to viewport
   useEffect(() => {
@@ -65,6 +72,8 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
     <div
       ref={ref}
       data-tuner-portal
+      role="dialog"
+      aria-label="Reset property"
       style={{
         position: "fixed",
         zIndex: zIndex.max,
@@ -80,6 +89,7 @@ export function ResetPopover({ anchor, onReset, onClose }: ResetPopoverProps) {
       }}
     >
       <div
+        ref={rowRef}
         role="button"
         tabIndex={0}
         onClick={handleReset}

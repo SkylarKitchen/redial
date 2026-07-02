@@ -18,13 +18,12 @@ export function SubSectionHeader({ label, onAdd, onMenu, indicator, onReset }: {
   indicator?: IndicatorType;
   onReset?: () => void;
 }) {
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   return (
     <div style={SUB_HEADER_ROW}>
       <span
-        ref={resetPopover.anchorRef}
+        {...resetPopover.triggerProps}
         style={{ ...SUB_HEADER, display: "flex", alignItems: "center", gap: "4px", cursor: indicator === "modified" && onReset ? "pointer" : undefined }}
-        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
       >
         <span style={indicatorStyle(indicator)}>
           {label}

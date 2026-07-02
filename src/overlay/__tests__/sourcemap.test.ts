@@ -16,16 +16,50 @@ function makeEl(tag = "div"): HTMLElement {
   return el;
 }
 
-/** Attach a fake React fiber with optional _debugSource */
+/** Attach a fake React fiber with optional _debugSource / _debugStack */
 function attachFiber(
   el: Element,
-  chain: Array<{ _debugSource?: { fileName: string; lineNumber: number } }>
+  chain: Array<{
+    _debugSource?: { fileName: string; lineNumber: number };
+    _debugStack?: Error | string | null;
+  }>
 ) {
   // Build the linked list via .return pointers
   for (let i = 0; i < chain.length - 1; i++) {
     (chain[i] as any).return = chain[i + 1];
   }
   (el as any)["__reactFiber$abc123"] = chain[0] ?? null;
+}
+
+/**
+ * Build a React 19 dev _debugStack: an Error captured inside jsxDEV via
+ * `Error("react-stack-top-frame")`. React never rethrows it — only its
+ * .stack string is read (see formatOwnerStack in react-dom) — so tests
+ * overwrite .stack with a deterministic fixture.
+ */
+function makeDebugStack(stack: string): Error {
+  const err = new Error("react-stack-top-frame");
+  err.stack = stack;
+  return err;
+}
+
+/**
+ * A realistic React 19 + Next.js (webpack dev) owner stack. The first user
+ * frame after the jsx-dev-runtime frame is the JSX callsite in the owner
+ * component; everything at/below react_stack_bottom_frame is renderer
+ * internals.
+ */
+function nextWebpackStack(
+  userFrame = "    at Page (webpack-internal:///(app-pages-browser)/./app/page.tsx:12:88)"
+): string {
+  return [
+    "Error: react-stack-top-frame",
+    "    at exports.jsxDEV (webpack-internal:///(app-pages-browser)/./node_modules/react/cjs/react-jsx-dev-runtime.development.js:333:36)",
+    userFrame,
+    "    at react_stack_bottom_frame (webpack-internal:///(app-pages-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:23091:20)",
+    "    at renderWithHooks (webpack-internal:///(app-pages-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:4700:22)",
+    "    at updateFunctionComponent (webpack-internal:///(app-pages-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:6000:19)",
+  ].join("\n");
 }
 
 beforeEach(() => {
@@ -173,6 +207,20 @@ describe("getReactSource", () => {
     expect(getReactSource(el)).toBeNull();
   });
 
+  // React 19 removed _debugSource entirely (issue #67). A production-mode or
+  // owner-stack-disabled React 19 fiber has _debugStack: null and no
+  // _debugSource — resolution must return null FAST so the fallback
+  // discovery paths (className walk, CSS source maps) engage.
+  it("returns null for a React 19 fiber with _debugStack: null (no _debugSource exists)", () => {
+    const el = makeEl();
+    attachFiber(el, [
+      { _debugStack: null },
+      { _debugStack: null },
+      { _debugStack: null },
+    ]);
+    expect(getReactSource(el)).toBeNull();
+  });
+
   it("returns source info from immediate fiber _debugSource", () => {
     const el = makeEl();
     attachFiber(el, [
@@ -264,6 +312,154 @@ describe("getReactSource", () => {
     for (let i = 0; i < 15; i++) chain.push({});
     attachFiber(el, chain);
     expect(getReactSource(el)).toBeNull();
+  });
+});
+
+// ─── getReactSource — React 19 fibers (issue #67) ────────────────────
+//
+// React 19 removed _debugSource. Dev fibers instead carry _debugStack:
+// an Error captured at JSX element creation (jsxDEV) whose first user
+// frame is the JSX callsite inside the owner component. These tests use
+// the REAL React 19 fiber shape: no _debugSource anywhere.
+
+describe("getReactSource — React 19 _debugStack", () => {
+  it("extracts file and line from a Next.js webpack-internal owner stack", () => {
+    const el = makeEl();
+    attachFiber(el, [{ _debugStack: makeDebugStack(nextWebpackStack()) }]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "app/page.tsx",
+      line: 12,
+      displayPath: "app/page.tsx:12",
+    });
+  });
+
+  it("normalizes webpack-internal URLs without a route-group segment", () => {
+    const el = makeEl();
+    attachFiber(el, [
+      {
+        _debugStack: makeDebugStack(
+          nextWebpackStack(
+            "    at Button (webpack-internal:///./src/components/Button.tsx:42:13)"
+          )
+        ),
+      },
+    ]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "src/components/Button.tsx",
+      line: 42,
+      displayPath: "src/components/Button.tsx:42",
+    });
+  });
+
+  it("skips the react-jsx-dev-runtime and node_modules frames", () => {
+    const el = makeEl();
+    attachFiber(el, [{ _debugStack: makeDebugStack(nextWebpackStack()) }]);
+    const result = getReactSource(el);
+    // Must NOT resolve to the runtime frame that precedes the user frame
+    expect(result!.file).not.toContain("react-jsx-dev-runtime");
+    expect(result!.file).not.toContain("node_modules");
+  });
+
+  it("ignores frames at or below react_stack_bottom_frame", () => {
+    const el = makeEl();
+    // Only "user-looking" frame is BELOW the bottom marker — must not be used.
+    const stack = [
+      "Error: react-stack-top-frame",
+      "    at exports.jsxDEV (webpack-internal:///(app-pages-browser)/./node_modules/react/cjs/react-jsx-dev-runtime.development.js:333:36)",
+      "    at react_stack_bottom_frame (webpack-internal:///(app-pages-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:23091:20)",
+      "    at Sneaky (webpack-internal:///(app-pages-browser)/./app/decoy.tsx:1:1)",
+    ].join("\n");
+    attachFiber(el, [{ _debugStack: makeDebugStack(stack) }]);
+    expect(getReactSource(el)).toBeNull();
+  });
+
+  it("returns null for a Turbopack chunk-only stack (compiled URLs are unmappable)", () => {
+    const el = makeEl();
+    const stack = [
+      "Error: react-stack-top-frame",
+      "    at exports.jsxDEV (http://localhost:3000/_next/static/chunks/node_modules_react_cjs_8d1e37._.js:333:36)",
+      "    at Page (http://localhost:3000/_next/static/chunks/app_page_tsx_6a3f21._.js:12:88)",
+      "    at react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_react-dom_82bb97._.js:23091:20)",
+    ].join("\n");
+    attachFiber(el, [{ _debugStack: makeDebugStack(stack) }]);
+    expect(getReactSource(el)).toBeNull();
+  });
+
+  it("resolves Vite-style dev-server source URLs served at their original path", () => {
+    const el = makeEl();
+    const stack = [
+      "Error: react-stack-top-frame",
+      "    at jsxDEV (http://localhost:5173/node_modules/.vite/deps/react_jsx-dev-runtime.js:100:20)",
+      "    at App (http://localhost:5173/src/App.tsx:31:7)",
+      "    at react_stack_bottom_frame (http://localhost:5173/node_modules/.vite/deps/react-dom_client.js:9000:1)",
+    ].join("\n");
+    attachFiber(el, [{ _debugStack: makeDebugStack(stack) }]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "src/App.tsx",
+      line: 31,
+      displayPath: "src/App.tsx:31",
+    });
+  });
+
+  it("walks up the fiber chain to a parent with a usable _debugStack", () => {
+    const el = makeEl();
+    attachFiber(el, [
+      { _debugStack: null },
+      { _debugStack: null },
+      { _debugStack: makeDebugStack(nextWebpackStack()) },
+    ]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "app/page.tsx",
+      line: 12,
+      displayPath: "app/page.tsx:12",
+    });
+  });
+
+  it("accepts a plain-string _debugStack", () => {
+    const el = makeEl();
+    attachFiber(el, [{ _debugStack: nextWebpackStack() }]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "app/page.tsx",
+      line: 12,
+      displayPath: "app/page.tsx:12",
+    });
+  });
+
+  it("parses Firefox/Safari frame format (Name@url:line:col)", () => {
+    const el = makeEl();
+    const stack = [
+      "jsxDEV@webpack-internal:///(app-pages-browser)/./node_modules/react/cjs/react-jsx-dev-runtime.development.js:333:36",
+      "Page@webpack-internal:///(app-pages-browser)/./app/page.tsx:12:88",
+      "react_stack_bottom_frame@webpack-internal:///(app-pages-browser)/./node_modules/react-dom/cjs/react-dom-client.development.js:23091:20",
+    ].join("\n");
+    attachFiber(el, [{ _debugStack: makeDebugStack(stack) }]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "app/page.tsx",
+      line: 12,
+      displayPath: "app/page.tsx:12",
+    });
+  });
+
+  it("prefers _debugSource when both fields exist (React 18 fiber wins)", () => {
+    const el = makeEl();
+    attachFiber(el, [
+      {
+        _debugSource: { fileName: "/app/src/Legacy.tsx", lineNumber: 7 },
+        _debugStack: makeDebugStack(nextWebpackStack()),
+      },
+    ]);
+    const result = getReactSource(el);
+    expect(result).toEqual({
+      file: "/app/src/Legacy.tsx",
+      line: 7,
+      displayPath: "src/Legacy.tsx:7",
+    });
   });
 });
 

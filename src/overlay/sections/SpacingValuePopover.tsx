@@ -435,6 +435,8 @@ export function SpacingValuePopover({
           <button
             type="button"
             key={preset}
+            aria-label={`Set ${property} to ${preset}`}
+            aria-pressed={value === preset}
             onClick={() => onChange(preset)}
             style={{
               height: "28px",

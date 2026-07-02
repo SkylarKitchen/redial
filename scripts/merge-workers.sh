@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # merge-workers.sh — Merge all worker branches back into main
 # Reviews each branch, attempts merge, reports conflicts.
+# Usage (run from the repo root): ./scripts/merge-workers.sh
 
 set -euo pipefail
 
@@ -73,4 +74,4 @@ if [[ "$conflicted" -gt 0 ]]; then
 fi
 
 echo ""
-echo "When done, run: ./cleanup-workers.sh"
+echo "When done, run: ./scripts/cleanup-workers.sh"

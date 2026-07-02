@@ -75,13 +75,12 @@ export function SelectRow({
     labels: options.map((o) => o.label),
   });
 
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const current = options.find((o) => o.value === value);
   const labelContent = (
     <span
-      ref={resetPopover.anchorRef}
-      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
+      {...resetPopover.triggerProps}
       title={selectLabelTitle}
       style={labelStyle(indicator)}
     >
@@ -259,13 +258,12 @@ function SelectRowCustom({
     estimatedHeight: 220,
   });
   const current = options.find((o) => o.value === value);
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
 
   const selectLabelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
     <span
-      ref={resetPopover.anchorRef}
-      onClick={(e) => { if (e.altKey && onReset) { onReset(); return; } resetPopover.triggerOpen(); }}
+      {...resetPopover.triggerProps}
       title={selectLabelTitle}
       style={labelStyle(indicator)}
     >

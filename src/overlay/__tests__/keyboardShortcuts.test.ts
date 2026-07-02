@@ -60,9 +60,11 @@ describe("Escape closes panel", () => {
   });
 
   it("clears selectedEl on Escape (closing the panel)", () => {
+    // Window widened from 500: the Escape branch grew a closeWarning
+    // (unsaved-changes bar keep-editing) dismissal step before the close.
     const escBlock = overlaySrc.slice(
       srcIndex('e.key === "Escape"'),
-      srcIndex('e.key === "Escape"') + 500,
+      srcIndex('e.key === "Escape"') + 1500,
     );
     expect(escBlock).toContain("handleCloseAttempt()");
   });
@@ -70,7 +72,7 @@ describe("Escape closes panel", () => {
   it("dismisses active modal before closing panel", () => {
     const escBlock = overlaySrc.slice(
       srcIndex('e.key === "Escape"'),
-      srcIndex('e.key === "Escape"') + 500,
+      srcIndex('e.key === "Escape"') + 1500,
     );
     // Modal check comes before handleCloseAttempt()
     const modalIdx = escBlock.indexOf("activeModal");
@@ -78,6 +80,18 @@ describe("Escape closes panel", () => {
     expect(modalIdx).toBeGreaterThan(-1);
     expect(closeIdx).toBeGreaterThan(-1);
     expect(modalIdx).toBeLessThan(closeIdx);
+  });
+
+  it("dismisses the unsaved-changes bar (keep editing) before re-attempting the close", () => {
+    const escBlock = overlaySrc.slice(
+      srcIndex('e.key === "Escape"'),
+      srcIndex('e.key === "Escape"') + 1500,
+    );
+    const warningIdx = escBlock.indexOf("closeWarning");
+    const closeIdx = escBlock.indexOf("handleCloseAttempt()");
+    expect(warningIdx).toBeGreaterThan(-1);
+    expect(escBlock).toContain("setCloseWarning(false)");
+    expect(warningIdx).toBeLessThan(closeIdx);
   });
 });
 

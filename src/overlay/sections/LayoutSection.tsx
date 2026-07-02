@@ -17,7 +17,7 @@ import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
 import { parseNum } from "../cssParsers";
 import { detectUnit, type SectionCtx } from "../panelUtils";
-import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow } from "./layoutControls";
+import { RowLabel, DisplayTabs, GridTrackRow, MiniDropdown, FlexDirectionRow, useAppliedPropSync } from "./layoutControls";
 import { LAYOUT_UNITS, ALIGN_SELF_OPTIONS, GRID_ALIGN_OPTIONS, JUSTIFY_OPTIONS, ALIGN_ITEMS_OPTIONS, GRID_JUSTIFY_CONTENT_OPTIONS, GRID_ALIGN_CONTENT_OPTIONS } from "../panelConstants";
 import { GridRowDirectionIcon, GridColumnDirectionIcon } from "../webflowIcons";
 import { parseGridTemplate, serializeGridTemplate } from "./GridSettingsPopup";
@@ -30,11 +30,11 @@ import { ROW, LABEL, COMPACT_INPUT, COMPACT_INPUT_LABEL, SUB_LABEL } from "../pa
 
 function CompactLabel({ label, indicator, onReset }: { label: string; indicator: IndicatorType; onReset?: () => void }) {
   const m = indicator !== "none";
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   return (
     <>
-      <span ref={resetPopover.anchorRef} style={{ ...COMPACT_INPUT_LABEL, cursor: m && onReset ? "pointer" : undefined }}
-        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
+      <span {...resetPopover.triggerProps}
+        style={{ ...COMPACT_INPUT_LABEL, cursor: m && onReset ? "pointer" : undefined }}
       >
         <span style={{
           background: m ? labelIndicator.modified.bg : "transparent",
@@ -150,6 +150,14 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
   });
   const [gridAlignItems, setGridAlignItems] = useState(() => cs.getPropertyValue("align-items") || "stretch");
   const [gridAutoFlow, setGridAutoFlow] = useState(() => cs.getPropertyValue("grid-auto-flow") || "row");
+
+  // align-items is also written by the Size section's Children dropdown
+  // (issue #77). Sync both local mirrors from the shared apply engine so
+  // the two sections' controls can't disagree.
+  useAppliedPropSync(element, "align-items", (v) => {
+    setAlignItems(v);
+    setGridAlignItems(v);
+  });
 
   // Gap
   const [gap, setGap] = useState(() => parseNum(cs.gap));
@@ -635,11 +643,16 @@ export const LayoutSection = memo(function LayoutSection(props: LayoutSectionPro
             </>
           )}
 
-          {/* More alignment options toggle */}
-          <div onClick={() => setShowMoreAlign(!showMoreAlign)} style={{ padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, borderTop: `1px solid ${border.subtle}` }}>
+          {/* More alignment options toggle — native <button> so it is
+              Tab-reachable and activates on Enter/Space (issue #85). */}
+          <button
+            onClick={() => setShowMoreAlign(!showMoreAlign)}
+            aria-expanded={showMoreAlign}
+            style={{ width: "100%", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, background: "transparent", fontFamily: font.sans, textAlign: "left" as const, borderTop: `1px solid ${border.subtle}`, borderRight: "none", borderBottom: "none", borderLeft: "none" }}
+          >
             <ChevronRight size={9} strokeWidth={2} style={{ color: text.label, transition: `transform ${ms("expand")}`, transform: showMoreAlign ? "rotate(90deg)" : "rotate(0deg)" }} />
             <span style={{ fontSize: 10, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: text.label }}>More alignment options</span>
-          </div>
+          </button>
           {showMoreAlign && (
             <>
               {/* Columns: justify-content (grid track distribution) */}

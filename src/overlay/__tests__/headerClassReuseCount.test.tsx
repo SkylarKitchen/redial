@@ -32,8 +32,6 @@ function renderHeader(cssClasses: string[], selected: Element) {
       element: selected,
       onClose: vi.fn(),
       onDragStart: vi.fn(),
-      scope: "class",
-      activeClassName: cssClasses[0] ?? null,
       onScopeChange: vi.fn(),
       cssClasses,
     })

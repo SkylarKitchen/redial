@@ -336,6 +336,7 @@ export const PositionSection = memo(function PositionSection({
       {/* Float and clear collapsible button */}
       <button
         onClick={() => setShowFloatClear(!showFloatClear)}
+        aria-expanded={showFloatClear}
         style={{
           display: "flex",
           alignItems: "center",

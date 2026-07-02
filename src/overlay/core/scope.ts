@@ -9,7 +9,7 @@
  * - CSS custom properties: detected and editable on their definition scope
  */
 
-import { isValidCSSProp, sanitizeCSSValue } from "../../lib/css";
+import { isValidCSSProp, isValidCSSClassName, sanitizeCSSValue } from "../../lib/css";
 import { onClassChange } from "./apply";
 import { managedSheet, _readManagedSheetCss } from "./managedSheet";
 
@@ -256,6 +256,25 @@ export function getCSSModuleClasses(el: Element): string[] {
 }
 
 /**
+ * Default scope selection for a newly selected element: class scope targeting
+ * the first CSS-module class when one exists, element scope otherwise.
+ *
+ * This is the SINGLE derivation every selection-change path must apply
+ * (click, breadcrumb, arrow-key navigation, navigator). Swapping the selected
+ * element while a previous element's `activeClassName` stays active makes
+ * every subsequent edit silently rewrite the OLD element's class rule
+ * (audit: stale-scope-navigation).
+ */
+export function getDefaultScopeForElement(
+  el: Element
+): { scope: Scope; activeClassName: string | null } {
+  const classes = getCSSModuleClasses(el);
+  return classes.length > 0
+    ? { scope: "class", activeClassName: classes[0] }
+    : { scope: "element", activeClassName: null };
+}
+
+/**
  * Get the readable name from a CSS module class.
  * webpack:   "Button_btn__a8f2k"              → "btn"
  * Turbopack: "page-module__IiFEKa__btnPrimary" → "btnPrimary"
@@ -271,6 +290,149 @@ export function getReadableName(cls: string): string | null {
 /** Test-only read of the class-scope sheet's serialized CSS. */
 export function getClassScopeCss(): string | null {
   return _readManagedSheetCss(CLASS_SCOPE_KEY);
+}
+
+// ─── Session-attached classes (class creation — audit 05) ─────────────────
+//
+// The Webflow "type a class name" flow: the Header attaches a brand-new (or
+// existing page) class to the selected element and makes it the active scope,
+// so every subsequent edit targets the new class via the ordinary class-scope
+// machinery above. The attachment itself is UNSAVED session state — the
+// Discard path (CloseWarningBar → styleEngine.resetAll → apply.resetAll)
+// removes it via detachSessionClasses(). On save, commitUtils reads this
+// registry to ride a `createClass` descriptor on the commit payload.
+
+const sessionAttachedClasses = new Map<Element, Set<string>>();
+const attachedClassListeners = new Set<() => void>();
+let attachedClassesVersion = 0;
+
+function notifyAttachedClasses(): void {
+  attachedClassesVersion++;
+  attachedClassListeners.forEach((fn) => fn());
+}
+
+/** Subscribe to session-attach registry changes (for useSyncExternalStore). */
+export function subscribeAttachedClasses(callback: () => void): () => void {
+  attachedClassListeners.add(callback);
+  return () => { attachedClassListeners.delete(callback); };
+}
+
+/** Monotonic snapshot value for useSyncExternalStore. */
+export function getAttachedClassesVersion(): number {
+  return attachedClassesVersion;
+}
+
+export type AttachClassResult = { ok: true } | { ok: false; reason: string };
+
+/**
+ * Attach `name` to `el` (element.classList.add) and register it as
+ * session-attached state. Validates the name as a single CSS class identifier
+ * and rejects a class already present on the element. The caller (Header) is
+ * responsible for making the class the active scope afterwards.
+ */
+export function attachClassToElement(el: Element, rawName: string): AttachClassResult {
+  const name = rawName.trim().replace(/^\./, "");
+  if (!name || !isValidCSSClassName(name)) {
+    return { ok: false, reason: `"${name || rawName}" is not a valid CSS class name` };
+  }
+  if (el.classList.contains(name)) {
+    return { ok: false, reason: `.${name} is already on this element` };
+  }
+  el.classList.add(name);
+  if (!sessionAttachedClasses.has(el)) sessionAttachedClasses.set(el, new Set());
+  sessionAttachedClasses.get(el)!.add(name);
+  notifyAttachedClasses();
+  return { ok: true };
+}
+
+/** Classes attached to `el` during this session (unsaved). */
+export function getSessionAttachedClasses(el: Element): string[] {
+  return Array.from(sessionAttachedClasses.get(el) ?? []);
+}
+
+/** Whether `cls` was attached to `el` this session (i.e. is not yet in source). */
+export function isSessionAttachedClass(el: Element, cls: string): boolean {
+  return sessionAttachedClasses.get(el)?.has(cls) ?? false;
+}
+
+/**
+ * Remove every session-attached class from its element and clear the
+ * registry. Hooked into apply.resetAll() — the ONE reset the Discard path
+ * uses — so discarding a session also discards its class attachments.
+ */
+export function detachSessionClasses(): void {
+  if (sessionAttachedClasses.size === 0) return;
+  for (const [el, names] of sessionAttachedClasses) {
+    for (const name of names) el.classList.remove(name);
+  }
+  sessionAttachedClasses.clear();
+  notifyAttachedClasses();
+}
+
+/**
+ * Page-wide class suggestions for the Header's "+ class" input, so the flow
+ * doubles as "attach existing class". Harvests class tokens from both the
+ * loaded stylesheets (rules that exist but may be unused) and the live DOM
+ * (classes in use that may have no rule yet), excluding redial's own chrome
+ * (`__tuner*`, tuner-managed sheets, portal subtrees) and classes already on
+ * the element. Prefix match is case-insensitive; results are sorted, capped.
+ */
+export function collectPageClassSuggestions(
+  el: Element,
+  prefix: string,
+  limit = 6
+): string[] {
+  const query = prefix.trim().replace(/^\./, "").toLowerCase();
+  if (!query) return [];
+  const onElement = new Set(Array.from(el.classList));
+  const out = new Set<string>();
+
+  const consider = (cls: string) => {
+    if (!cls || onElement.has(cls) || cls.startsWith("__tuner")) return;
+    if (!cls.toLowerCase().startsWith(query)) return;
+    out.add(cls);
+  };
+
+  // Stylesheet walk — skip redial-managed sheets (state/class previews etc.).
+  try {
+    for (const sheet of document.styleSheets) {
+      const owner = sheet.ownerNode;
+      if (
+        owner instanceof Element &&
+        (owner.hasAttribute("data-tuner-scope") || /^(redial-|__tuner|tuner-)/.test(owner.id))
+      ) {
+        continue;
+      }
+      try {
+        for (const rule of sheet.cssRules) {
+          if (!(rule instanceof CSSStyleRule)) continue;
+          const re = /\.((?:[\w-]|\\.)+)/g;
+          let m: RegExpExecArray | null;
+          while ((m = re.exec(rule.selectorText)) !== null) {
+            consider(m[1].replace(/\\(.)/g, "$1"));
+          }
+        }
+      } catch {
+        // CORS or security error — skip this stylesheet
+      }
+    }
+  } catch {
+    // Stylesheet iteration failed
+  }
+
+  // DOM harvest — classes in use on the page.
+  try {
+    for (const node of Array.from(document.querySelectorAll("[class]"))) {
+      if (node.closest("[data-tuner-portal]")) continue;
+      const classes = (node as HTMLElement).className;
+      if (typeof classes !== "string") continue;
+      for (const cls of classes.split(/\s+/)) consider(cls);
+    }
+  } catch {
+    // Query failed
+  }
+
+  return Array.from(out).sort().slice(0, limit);
 }
 
 // Track class-scope overrides: className → Map<prop, value>

@@ -33,6 +33,62 @@ import { parseCSSText } from "../cssImport";
 import { SECTION_ORDER } from "../panelUtils";
 import type { ActivePanel, ActiveModal } from "../shell/overlayTypes";
 
+/**
+ * True when `target` is a text control (input/textarea) holding a RANGE
+ * selection. `window.getSelection()` reads empty inside text controls in some
+ * engines, so Cmd+C must consult selectionStart/End before claiming the combo.
+ */
+function hasTextControlSelection(target: Element | null): boolean {
+  if (
+    !(target instanceof HTMLInputElement) &&
+    !(target instanceof HTMLTextAreaElement)
+  ) {
+    return false;
+  }
+  try {
+    return (
+      target.selectionStart !== null &&
+      target.selectionEnd !== null &&
+      target.selectionStart !== target.selectionEnd
+    );
+  } catch {
+    return false; // input types without a selection API (e.g. number/email)
+  }
+}
+
+/**
+ * THE CSS-import implementation (issue #87): parse a CSS blob and apply every
+ * declaration through the engine at the panel's current scope, wrapped in ONE
+ * beginBatch/endBatch so a multi-property import is a SINGLE undo step (this
+ * repo's rule: batching via beginBatch/endBatch only, never time-based).
+ *
+ * Both triggers route through here — the Cmd+Shift+V hotkey below and the
+ * Footer's Clipboard ▸ Import CSS menu item. There is deliberately no second
+ * copy of this loop: the legacy Footer path (Overlay's handleCSSImport)
+ * pushed N separate undo entries, so reverting one paste took N undos.
+ *
+ * Returns the number of declarations applied (0 = nothing parseable).
+ */
+export function importCSSText(
+  el: Element,
+  scopeCtx: ScopeContext,
+  text: string,
+): number {
+  const declarations = parseCSSText(text);
+  if (declarations.length === 0) return 0;
+  styleEngine.beginBatch();
+  try {
+    for (const { prop, value } of declarations) {
+      // The whole scopeCtx — never a hand-built subset (ADR-0005): the
+      // active breakpoint must ride along or imports flatten to base.
+      styleEngine.apply(resolveTarget(el, scopeCtx), prop, value);
+    }
+  } finally {
+    styleEngine.endBatch();
+  }
+  return declarations.length;
+}
+
 export interface OverlayHotkeysDeps {
   // --- Values referenced in the effect (those in the dependency array) ---
   selectedEl: Element | null;
@@ -53,6 +109,12 @@ export interface OverlayHotkeysDeps {
   announce: (message: string) => void;
   handleResetAll: () => void;
   handleCloseAttempt: () => void;
+  /**
+   * Unsaved-changes bar visibility. While the bar is showing, Escape must act
+   * as its "Keep Editing" dismissal — re-running handleCloseAttempt would just
+   * re-assert the bar (overrideCount is still > 0), so Escape appeared dead.
+   */
+  closeWarning: boolean;
   /** Re-infer the selected element and remount the panel. */
   refreshPanel: (el: Element) => void;
   // --- Refs ---
@@ -68,6 +130,7 @@ export interface OverlayHotkeysDeps {
   setShowSearch: React.Dispatch<React.SetStateAction<boolean>>;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   setActiveModal: React.Dispatch<React.SetStateAction<ActiveModal>>;
+  setCloseWarning: React.Dispatch<React.SetStateAction<boolean>>;
   setFocusMode: React.Dispatch<React.SetStateAction<boolean>>;
   setPinned: React.Dispatch<React.SetStateAction<boolean>>;
   setChangesDrawerTab: React.Dispatch<React.SetStateAction<"pending" | "history">>;
@@ -97,6 +160,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
     announce,
     handleResetAll,
     handleCloseAttempt,
+    closeWarning,
     refreshPanel,
     selectedElRef,
     selectedSelectorRef,
@@ -109,6 +173,7 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
     setShowSearch,
     setSearchQuery,
     setActiveModal,
+    setCloseWarning,
     setFocusMode,
     setPinned,
     setChangesDrawerTab,
@@ -130,13 +195,36 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
       // Block all shortcuts while a LabelScrub drag is active
       if (isScrubActive()) return;
 
-      // Cmd+Shift+Z / Ctrl+Shift+Z for redo
+      // Interaction context for the modifier combos (audit issue 10: hotkey
+      // hijacking). A combo may only be claimed when the user is actually
+      // interacting with the overlay — or when the overlay legitimately owns
+      // it globally (Cmd+S, and the overlay-specific Alt/Shift chords).
+      // NOTE: the plain-key guard further down keeps its own `tag`/`isTyping`
+      // locals — its position after the modifier branches is pinned by tests.
+      const insideTunerUI =
+        !!insidePanel || !!target?.closest("[data-tuner-portal]");
+      const targetTag = target?.tagName?.toLowerCase();
+      const isEditableTarget =
+        targetTag === "input" ||
+        targetTag === "textarea" ||
+        targetTag === "select" ||
+        !!target?.isContentEditable;
+      // A text-entry surface that belongs to the HOST PAGE (not the tuner):
+      // its native undo/copy/find must always win over overlay shortcuts.
+      const isHostEditingContext = isEditableTarget && !insideTunerUI;
+
+      // Cmd+Shift+Z / Ctrl+Shift+Z for redo — same undo-focus gate as Cmd+Z:
+      // fires inside the tuner UI (even in panel inputs); host text fields keep
+      // their native redo; on the page it claims only when the engine actually
+      // replays an overlay step. styleEngine.redo() steps the ONE unified
+      // temporal stack (RFC #14 4a).
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) {
         if (diffMode) return;
+        if (isHostEditingContext) return;
+        const result = styleEngine.redo();
+        if (!result && !insideTunerUI) return;
         e.preventDefault();
         e.stopPropagation();
-        // styleEngine.redo() steps the ONE unified temporal stack (RFC #14 4a).
-        const result = styleEngine.redo();
         if (result) {
           refreshPanel(result.el);
           announce("Redo");
@@ -144,13 +232,18 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         return;
       }
 
-      // Cmd+Z / Ctrl+Z for undo — must fire even when focus is inside panel inputs
+      // Cmd+Z / Ctrl+Z for undo — claimed only with overlay undo focus: it
+      // must fire even in panel inputs, but host text fields keep their native
+      // undo, and on the page it claims only when the engine actually reverts
+      // an overlay step (styleEngine.undo() steps the ONE unified temporal
+      // stack, RFC #14 4a) — otherwise the host app keeps its own undo.
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) {
         if (diffMode) return; // Block undo during diff
+        if (isHostEditingContext) return;
+        const result = styleEngine.undo();
+        if (!result && !insideTunerUI) return;
         e.preventDefault();
         e.stopPropagation(); // prevent DialKit from processing native undo
-        // styleEngine.undo() steps the ONE unified temporal stack (RFC #14 4a).
-        const result = styleEngine.undo();
         if (result) {
           // Re-infer to update panel values
           refreshPanel(result.el);
@@ -178,17 +271,12 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         navigator.clipboard.readText().then((text) => {
           const el = selectedElRef.current;
           if (!el) return;
-          const declarations = parseCSSText(text);
-          if (declarations.length === 0) return;
-          styleEngine.beginBatch();
-          for (const { prop, value } of declarations) {
-            // The whole scopeCtx — never a hand-built subset (ADR-0005): the
-            // active breakpoint must ride along or imports flatten to base.
-            styleEngine.apply(resolveTarget(el, scopeCtx), prop, value);
-          }
-          styleEngine.endBatch();
+          // The ONE batched import implementation (issue #87) — shared with
+          // the Footer's Clipboard ▸ Import CSS menu item.
+          const count = importCSSText(el, scopeCtx, text);
+          if (count === 0) return;
           refreshPanel(el);
-          setClipboardMessage(`Imported ${declarations.length} propert${declarations.length === 1 ? "y" : "ies"}`);
+          setClipboardMessage(`Imported ${count} propert${count === 1 ? "y" : "ies"}`);
         }).catch(() => {
           setClipboardMessage("Clipboard access denied");
         });
@@ -220,11 +308,16 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         return;
       }
 
+      // Never steal a real copy (audit issue 10): pass through on a page text
+      // selection, on a text-control range selection (window.getSelection()
+      // reads empty inside text controls), and in host editing surfaces.
       // Cmd+C for copy CSS — must fire even when focus is inside panel inputs
       if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "c") {
         // Only intercept if no text is selected (don't break normal copy)
         const selection = window.getSelection();
-        if (!selection || selection.toString() === "") {
+        const skip = (!!selection && selection.toString() !== "") ||
+          isHostEditingContext || hasTextControlSelection(target);
+        if (!skip) {
           e.preventDefault();
           e.stopPropagation();
           if (overrideCount(selectedEl) > 0) {
@@ -234,16 +327,18 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
         }
       }
 
-      // Cmd+K for command palette
-      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "k") {
+      // Cmd+K for command palette — claimed only while focus is in the tuner
+      // UI, so host command palettes keep working on the page
+      if (selectedEl && insideTunerUI && (e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         e.stopPropagation();
         setActiveModal(prev => prev.type === "commandPalette" ? { type: "none" } : { type: "commandPalette" });
         return;
       }
 
-      // Cmd+F / Ctrl+F to toggle property search (when panel is open)
-      if (selectedEl && (e.metaKey || e.ctrlKey) && e.key === "f") {
+      // Cmd+F / Ctrl+F to toggle property search — claimed only while focus is
+      // in the tuner UI (browser find-in-page owns Cmd+F on the page)
+      if (selectedEl && insideTunerUI && (e.metaKey || e.ctrlKey) && e.key === "f") {
         e.preventDefault();
         e.stopPropagation();
         setShowSearch((v) => {
@@ -407,11 +502,21 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
       // N to toggle navigator — moved below input guard (line ~498)
       // so it doesn't fire while typing in text fields
 
-      // Escape: dismiss modal first, then close search, then close panel
+      // Escape: dismiss modal first, then the unsaved-changes bar, then close
+      // search, then close panel
       if (e.key === "Escape" && selectedEl && !selecting) {
         if (activeModal.type !== "none") {
           e.preventDefault();
           setActiveModal({ type: "none" });
+          return;
+        }
+        if (closeWarning) {
+          // The bar is the pending question — Escape answers it with "Keep
+          // Editing" (dismiss only). NOT the discard, and NOT another
+          // handleCloseAttempt: that would just re-set closeWarning to true
+          // (overrides are still unsaved), leaving Escape apparently dead.
+          e.preventDefault();
+          setCloseWarning(false);
           return;
         }
         if (showSearch) {
@@ -487,5 +592,5 @@ export function useOverlayHotkeys(deps: OverlayHotkeysDeps) {
       document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("keyup", handleKeyUp);
     };
-  }, [selectedEl, selecting, diffMode, showSearch, activeModal, handleSaveShortcut, handleCopyShortcut, scopeCtx, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll, handleCloseAttempt]);
+  }, [selectedEl, selecting, diffMode, showSearch, activeModal, closeWarning, handleSaveShortcut, handleCopyShortcut, scopeCtx, cssClasses, handleScopeChange, announce, focusMode, activePanel, expandedSection, handleResetAll, handleCloseAttempt]);
 }

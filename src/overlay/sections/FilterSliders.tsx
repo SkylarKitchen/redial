@@ -375,8 +375,14 @@ function FilterItemRow({
         transition: `opacity ${ms("normal")}`,
       }}
     >
-      {/* Summary row (always visible) */}
+      {/* Summary row (always visible). role="button" + keydown instead of a
+          native <button>: the row nests real buttons (visibility/remove) and
+          button-in-button is invalid HTML (issue #85). */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={item.expanded}
+        aria-label={`Toggle ${item.type} settings`}
         style={{
           display: "flex",
           alignItems: "center",
@@ -385,6 +391,14 @@ function FilterItemRow({
           cursor: "pointer",
         }}
         onClick={() => onToggleExpanded(index)}
+        onKeyDown={(e) => {
+          // Ignore keystrokes bubbling from nested controls.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleExpanded(index);
+          }
+        }}
       >
         {dragHandleProps && (
           <DragHandle
@@ -498,15 +512,22 @@ function CategorizedDropdown({
             {cat.label}
           </div>
 
-          {/* Filter types in category */}
+          {/* Filter types in category — native <button>s so the picker is
+              keyboard-reachable; aria-pressed announces active types (issue #85) */}
           {cat.types.map((type) => {
             const isActive = activeTypes.has(type);
             const meta = FILTER_META[type];
             return (
-              <div
+              <button
                 key={type}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => onSelect(type)}
                 style={{
+                  width: "100%",
+                  textAlign: "left",
+                  background: "transparent",
+                  border: "none",
                   padding: "4px 10px",
                   fontSize: "10px",
                   fontFamily: font.sans,
@@ -528,7 +549,7 @@ function CategorizedDropdown({
                   {isActive ? "✓" : ""}
                 </span>
                 {meta.label}
-              </div>
+              </button>
             );
           })}
         </div>

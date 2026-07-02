@@ -19,6 +19,7 @@ import { tmpdir } from "os";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { handleCommit } from "../../server/commit";
 import type { DiffEntry } from "../core/apply";
+import type { ScopeContext } from "../core/engine";
 
 let tempDir: string;
 const injectedStyles: HTMLStyleElement[] = [];
@@ -69,6 +70,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     // entry itself carries state:"hover".
     const enriched = enrichChangesForCommit(el, [hoverEntry], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(enriched[0].state).toBe("hover");
@@ -93,7 +95,10 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
 
     const el = makeEl("Button_btn__a1b2c");
     // ChangesDrawer.handleSaveAll passes only { scope: "element" }.
-    const enriched = enrichChangesForCommit(el, [hoverEntry], { scope: "element" });
+    const enriched = enrichChangesForCommit(el, [hoverEntry], {
+      // Deliberately partial — mirrors the historical Save-All payload shape.
+      scope: "element",
+    } as ScopeContext);
 
     const r = await handleCommit(enriched, tempDir);
 
@@ -110,6 +115,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     const el = makeEl("Button_btn__a1b2c");
     const enriched = enrichChangesForCommit(el, [hoverEntry], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
 
@@ -133,6 +139,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     const el = makeEl("btn");
     const enriched = enrichChangesForCommit(el, [hoverEntry], {
       scope: "element",
+      activeClassName: null,
       activeState: "none",
     });
     expect(enriched[0].className).toBe("btn");

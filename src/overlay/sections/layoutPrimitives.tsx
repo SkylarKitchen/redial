@@ -29,12 +29,12 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
   onReset?: () => void;
 }) {
   const effectiveIndicator: IndicatorType = indicator ?? (isSet ? "modified" : "none");
-  const resetPopover = useResetPopover(effectiveIndicator, onReset);
+  const resetPopover = useResetPopover(effectiveIndicator, onReset, label);
 
   return (
     <>
       <span
-        ref={resetPopover.anchorRef}
+        {...resetPopover.triggerProps}
         style={{
           fontSize: 11,
           flexShrink: 0,
@@ -44,7 +44,6 @@ export function RowLabel({ label, isSet, indicator, onReset }: {
           fontFamily: font.sans,
           cursor: onReset ? "default" : undefined,
         }}
-        onClick={(e) => { if (e.altKey && onReset) { e.stopPropagation(); onReset(); return; } resetPopover.triggerOpen(); }}
       >
         <span style={indicatorStyle(effectiveIndicator)}>
           {label}

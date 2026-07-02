@@ -167,8 +167,12 @@ export function Toolbar({
         }}
         transition={springConfig("toolbarExpand")}
       >
-        {/* Plus / Close icon — always visible */}
+        {/* Plus / Close icon — always visible. role="button" + keydown so THE
+            entry point to the panel is keyboard-reachable (issue #85). */}
         <motion.div
+          role="button"
+          tabIndex={0}
+          aria-label="Inspect element"
           style={{
             width: expanded ? HIT_SIZE : 48,
             height: expanded ? HIT_SIZE : 48,
@@ -179,6 +183,13 @@ export function Toolbar({
             justifyContent: "center",
           }}
           onClick={handleFabClick}
+          onKeyDown={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleFabClick();
+            }
+          }}
           title="Inspect element"
         >
           <Plus

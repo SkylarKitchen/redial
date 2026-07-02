@@ -2,19 +2,54 @@
 /**
  * layout-reset.test.ts — Regression test for Option+Click reset in Layout section
  *
- * Bug: LayoutSection never passes onReset/onAltClick to many controls, so
- * alt+click (Option+Click) to reset style changes silently does nothing for:
+ * Bug: LayoutSection never passed onReset/onAltClick to many controls, so
+ * alt+click (Option+Click) to reset style changes silently did nothing for:
  * - DisplayTabs (display)
- * - DirectionRow (flex-direction, flex-wrap)
- * - Align X/Y MiniDropdown (justify-content, align-items)
- * - Flex Grow/Shrink ValueInput + LabelScrub
- * - Flex Basis ValueInput + LabelScrub
+ * - FlexDirectionRow (flex-direction, flex-wrap)
+ * - Align RowLabel (justify-content, align-items)
+ * - Flex Grow/Shrink ValueInput + LabelScrub/CompactLabel
+ * - Flex Basis ValueInput + CompactLabel
  * - Align Self SelectRow
  * - Order ValueInput
+ *
+ * CONVERTED (issue #105): Part 2 was a source-text test (regexes over
+ * LayoutSection.tsx checking each control tag contained "onAltClick" /
+ * "onReset"). It now mounts the REAL LayoutSection against the real apply
+ * engine: every property is genuinely dirtied, the actual reset surface is
+ * Alt+clicked (value inputs AND label triggers — both original invariants),
+ * and the engine must report the property clean afterwards. If any control
+ * loses its onReset/onAltClick wiring, its property stays dirty and the
+ * assertion names it.
  */
 
-import { describe, it, expect } from "vitest";
-import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { createElement } from "react";
+import { render, cleanup, fireEvent, screen, type RenderResult } from "@testing-library/react";
+import { LayoutSection } from "../sections/LayoutSection";
+import {
+  applyInlineStyle,
+  isDirty,
+  resetProp,
+  resetAll,
+  resetAndReadNum,
+  resetAndReadStr,
+} from "../core/apply";
+import type { SectionCtx } from "../panelUtils";
+import type { UnitConversionContext } from "../unitConversion";
+
+beforeAll(() => {
+  // happy-dom doesn't implement pointer capture (LabelScrub needs it).
+  const proto = Element.prototype as unknown as Record<string, unknown>;
+  if (!proto.setPointerCapture) proto.setPointerCapture = () => {};
+  if (!proto.releasePointerCapture) proto.releasePointerCapture = () => {};
+  if (!proto.hasPointerCapture) proto.hasPointerCapture = () => false;
+});
+
+afterEach(() => {
+  cleanup();
+  resetAll();
+  document.body.innerHTML = "";
+});
 
 // ── Unit test: resetProp works for layout properties ──────────────────
 
@@ -49,139 +84,163 @@ describe("resetProp works for layout CSS properties", () => {
   }
 });
 
-// ── Source-level test: every Layout control must wire up reset ─────────
+// ── Behavioral: every Layout control's reset surface really resets ─────
 
-describe("LayoutSection wires onReset/onAltClick for all controls", () => {
-  let layoutSrc: string;
+/** SectionCtx wired to the REAL apply engine (indicators come from isDirty). */
+function makeRealCtx(): SectionCtx & { el: HTMLElement } {
+  const element = document.createElement("div");
+  document.body.appendChild(element);
+  const cs = getComputedStyle(element);
+  return {
+    el: element,
+    element,
+    apply: (p: string, v: string) => applyInlineStyle(element, p, v),
+    reset: (p: string) => resetProp(element, p),
+    resetRead: (p: string) => resetAndReadNum(element, p),
+    resetReadStr: (p: string) => resetAndReadStr(element, p),
+    ind: (p: string) => (isDirty(element, p) ? ("modified" as const) : ("none" as const)),
+    sectionInd: (props: string[]) =>
+      props.some((p) => isDirty(element, p)) ? ("modified" as const) : ("none" as const),
+    cs,
+    parentCs: null,
+    getConversionCtx: (): UnitConversionContext => ({
+      computedFontSize: 16,
+      rootFontSize: 16,
+      parentWidth: 800,
+      parentHeight: 600,
+      viewportWidth: 1280,
+      viewportHeight: 720,
+    }),
+    ctxMenu: () => () => {},
+    isTailwind: false,
+  };
+}
 
-  it("can read LayoutSection source", async () => {
-    const fs = await import("fs");
-    const path = await import("path");
-    layoutSrc = fs.readFileSync(
-      path.resolve(__dirname, "../sections/LayoutSection.tsx"),
-      "utf-8"
-    );
-    expect(layoutSrc).toBeTruthy();
+/** Dirty every layout property, then mount LayoutSection as a flex container
+ *  that is itself a flex child (so Grow/Shrink/Basis/Order render). */
+function renderDirtyLayout(): { ctx: ReturnType<typeof makeRealCtx>; utils: RenderResult } {
+  const ctx = makeRealCtx();
+  const dirty: Array<[string, string]> = [
+    ["display", "flex"],
+    ["flex-direction", "column"],
+    ["flex-wrap", "wrap"],
+    ["justify-content", "center"],
+    ["align-items", "center"],
+    ["flex-grow", "2"],
+    ["flex-shrink", "0"],
+    ["flex-basis", "100px"],
+    ["align-self", "center"],
+    ["order", "5"],
+  ];
+  for (const [p, v] of dirty) applyInlineStyle(ctx.el, p, v);
+  for (const [p] of dirty) expect(isDirty(ctx.el, p), `${p} should start dirty`).toBe(true);
+
+  const utils = render(
+    createElement(LayoutSection, {
+      ctx,
+      display: "flex",
+      onDisplayChange: () => {},
+      columnGap: 0,
+      columnGapUnit: "px",
+      onColumnGapChange: () => {},
+      onColumnGapUnitChange: () => {},
+      isFlex: true,
+      isGrid: false,
+      parentIsFlex: true,
+      parentIsGrid: false,
+      forceOpen: true,
+    }),
+  );
+  return { ctx, utils };
+}
+
+/** The reset trigger ([role=button]) that wraps a row/compact label. */
+function labelTrigger(labelText: string): HTMLElement {
+  const trigger = screen.getByText(labelText).closest('[role="button"]') as HTMLElement;
+  expect(trigger, `"${labelText}" label should be a reset trigger while modified`).toBeTruthy();
+  return trigger;
+}
+
+/** The ValueInput <input> living in the same compact cell as a label. */
+function cellInput(labelText: string): HTMLElement {
+  let node: HTMLElement | null = screen.getByText(labelText) as HTMLElement;
+  while (node && !node.querySelector("input")) node = node.parentElement;
+  expect(node, `compact cell with input for "${labelText}" should exist`).toBeTruthy();
+  return node!.querySelector("input") as HTMLElement;
+}
+
+describe("LayoutSection Option+Click reset — fired against the real engine", () => {
+  it("Display label Alt+click resets display", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Display"), { altKey: true });
+    expect(isDirty(ctx.el, "display")).toBe(false);
   });
 
-  // ── Flex Child: Grow / Shrink ValueInputs must have onAltClick ──
-
-  it("Flex Grow ValueInput has onAltClick", () => {
-    // Match the ValueInput line that uses handleFlexGrowChange
-    const growMatch = layoutSrc.match(
-      /<ValueInput.*handleFlexGrowChange.*\/>/
-    );
-    expect(growMatch, "Could not find Grow ValueInput").toBeTruthy();
-    expect(
-      growMatch![0],
-      "Grow ValueInput must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Direction label Alt+click resets flex-direction AND flex-wrap", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Direction"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-direction")).toBe(false);
+    expect(isDirty(ctx.el, "flex-wrap")).toBe(false);
   });
 
-  it("Flex Shrink ValueInput has onAltClick", () => {
-    const shrinkMatch = layoutSrc.match(
-      /<ValueInput.*handleFlexShrinkChange.*\/>/
-    );
-    expect(shrinkMatch, "Could not find Shrink ValueInput").toBeTruthy();
-    expect(
-      shrinkMatch![0],
-      "Shrink ValueInput must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Align label Alt+click resets justify-content AND align-items", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Align"), { altKey: true });
+    expect(isDirty(ctx.el, "justify-content")).toBe(false);
+    expect(isDirty(ctx.el, "align-items")).toBe(false);
   });
 
-  // ── Flex Child: Grow / Shrink LabelScrubs must have onAltClick ──
-
-  it("Flex Grow LabelScrub has onAltClick", () => {
-    const growScrub = layoutSrc.match(
-      /<LabelScrub[^>]*flexGrow[^>]*>/
-    );
-    expect(growScrub, "Could not find Grow LabelScrub").toBeTruthy();
-    expect(
-      growScrub![0],
-      "Grow LabelScrub must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Flex Grow ValueInput Alt+click resets flex-grow", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(cellInput("Grow"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-grow")).toBe(false);
   });
 
-  it("Flex Shrink LabelScrub has onAltClick", () => {
-    const shrinkScrub = layoutSrc.match(
-      /<LabelScrub[^>]*flexShrink[^>]*>/
-    );
-    expect(shrinkScrub, "Could not find Shrink LabelScrub").toBeTruthy();
-    expect(
-      shrinkScrub![0],
-      "Shrink LabelScrub must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Flex Shrink label (CompactLabel trigger) Alt+click resets flex-shrink", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Shrink"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-shrink")).toBe(false);
   });
 
-  // ── Flex Basis ValueInput + LabelScrub must have onAltClick ──
-
-  it("Flex Basis ValueInput has onAltClick", () => {
-    const basisMatch = layoutSrc.match(
-      /<ValueInput.*handleFlexBasisChange.*\/>/
-    );
-    expect(basisMatch, "Could not find Basis ValueInput").toBeTruthy();
-    expect(
-      basisMatch![0],
-      "Basis ValueInput must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Flex Basis ValueInput Alt+click resets flex-basis", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(cellInput("Basis"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-basis")).toBe(false);
   });
 
-  it("Flex Basis LabelScrub has onAltClick", () => {
-    const basisScrub = layoutSrc.match(
-      /<LabelScrub[^>]*flexBasis[^>]*>/
-    );
-    expect(basisScrub, "Could not find Basis LabelScrub").toBeTruthy();
-    expect(
-      basisScrub![0],
-      "Basis LabelScrub must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Order ValueInput Alt+click resets order", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(cellInput("Order"), { altKey: true });
+    expect(isDirty(ctx.el, "order")).toBe(false);
   });
 
-  // ── Align Self SelectRow must have onReset ──
-
-  it("Align Self SelectRow has onReset", () => {
-    const alignSelfMatch = layoutSrc.match(
-      /<SelectRow[\s\S]*?label="Align Self"[\s\S]*?\/>/
-    );
-    expect(alignSelfMatch, "Could not find Align Self SelectRow").toBeTruthy();
-    expect(
-      alignSelfMatch![0],
-      "Align Self SelectRow must have onReset prop for Option+Click reset"
-    ).toContain("onReset");
+  it("Grow label trigger Alt+click also resets flex-grow (label path, was LabelScrub onAltClick)", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Grow"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-grow")).toBe(false);
   });
 
-  // ── Order ValueInput must have onAltClick ──
-
-  it("Order ValueInput has onAltClick", () => {
-    const orderMatch = layoutSrc.match(
-      /<ValueInput.*handleFlexOrderChange.*\/>/
-    );
-    expect(orderMatch, "Could not find Order ValueInput").toBeTruthy();
-    expect(
-      orderMatch![0],
-      "Order ValueInput must have onAltClick prop for Option+Click reset"
-    ).toContain("onAltClick");
+  it("Basis label trigger Alt+click also resets flex-basis (label path, was LabelScrub onAltClick)", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Basis"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-basis")).toBe(false);
   });
 
-  // ── DisplayTabs must accept and use onReset ──
-
-  it("DisplayTabs is passed an onReset callback", () => {
-    const displayTabsUsage = layoutSrc.match(/<DisplayTabs.*\/>/);
-    expect(displayTabsUsage, "Could not find DisplayTabs usage").toBeTruthy();
-    expect(
-      displayTabsUsage![0],
-      "DisplayTabs must receive onReset prop for Option+Click reset"
-    ).toContain("onReset");
+  it("Shrink ValueInput Alt+click also resets flex-shrink (input path)", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(cellInput("Shrink"), { altKey: true });
+    expect(isDirty(ctx.el, "flex-shrink")).toBe(false);
   });
 
-  // ── FlexDirectionRow must accept and use onReset ──
+  it("Order label trigger Alt+click also resets order (label path)", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Order"), { altKey: true });
+    expect(isDirty(ctx.el, "order")).toBe(false);
+  });
 
-  it("FlexDirectionRow is passed an onReset callback", () => {
-    const dirRowUsage = layoutSrc.match(/<FlexDirectionRow[\s\S]*?\/>/);
-    expect(dirRowUsage, "Could not find FlexDirectionRow usage").toBeTruthy();
-    expect(
-      dirRowUsage![0],
-      "FlexDirectionRow must receive onReset prop for Option+Click reset"
-    ).toContain("onReset");
+  it("Align Self SelectRow label Alt+click resets align-self", () => {
+    const { ctx } = renderDirtyLayout();
+    fireEvent.click(labelTrigger("Align Self"), { altKey: true });
+    expect(isDirty(ctx.el, "align-self")).toBe(false);
   });
 });

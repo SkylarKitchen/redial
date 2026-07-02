@@ -9,7 +9,7 @@
  * A 3px dead zone distinguishes clicks from drags.
  */
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import { ms } from "../timing";
 import { setScrubActive } from "../core/scrubState";
 import { beginBatch, endBatch } from "../core/apply";
@@ -70,6 +70,20 @@ export function LabelScrub({
   const isDraggingRef = useRef(false);
   const altKeyRef = useRef(false);
 
+  // Ghost-drag protection (same family as issue #73): the active drag's
+  // idempotent cleanup, reachable from outside the pointerdown closure so a
+  // mid-drag unmount (Cmd+Z remounts the panel) can still close the batch —
+  // the pointerup/lostpointercapture listeners live on the removed element
+  // and can never fire again.
+  const cleanupRef = useRef<(() => void) | null>(null);
+
+  // Close any in-flight scrub on unmount.
+  useEffect(() => {
+    return () => {
+      cleanupRef.current?.();
+    };
+  }, []);
+
   const clamp = useCallback(
     (v: number) => {
       let clamped = v;
@@ -88,6 +102,10 @@ export function LabelScrub({
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       e.preventDefault();
+
+      // Defensive: if a previous drag somehow never closed, close it before
+      // starting a new one so beginBatch/endBatch stay balanced.
+      cleanupRef.current?.();
 
       const el = e.currentTarget;
       el.setPointerCapture(e.pointerId);
@@ -172,6 +190,8 @@ export function LabelScrub({
         el.removeEventListener("pointerup", handleUp);
         el.removeEventListener("lostpointercapture", handleUp);
         window.removeEventListener("blur", handleUp);
+        window.removeEventListener("keydown", handleEscape);
+        cleanupRef.current = null;
 
         if (isDraggingRef.current) {
           // Flush any pending trailing emit so the final value isn't dropped.
@@ -207,12 +227,21 @@ export function LabelScrub({
         }
       }
 
+      // Escape cancels the interaction: close the batch (if scrubbing) and
+      // drop the listeners without firing the click callbacks.
+      function handleEscape(ev: KeyboardEvent) {
+        if (ev.key === "Escape") cleanup();
+      }
+
       // Attach listeners synchronously — no useEffect gap
       el.addEventListener("pointermove", handleMove);
       el.addEventListener("pointerup", handleUp);
       el.addEventListener("lostpointercapture", handleUp);
       // Ghost drag safety: clean up if window loses focus
       window.addEventListener("blur", handleUp);
+      // Ghost drag safety: Escape mid-drag must also close the batch
+      window.addEventListener("keydown", handleEscape);
+      cleanupRef.current = cleanup;
     },
     [step, clamp, deadZone],
   );

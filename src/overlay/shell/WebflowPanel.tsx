@@ -7,12 +7,14 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { X } from "lucide-react";
 import type { SpacingValues } from "../core/infer";
 import { isTailwindElement } from "../core/scope";
+import { classifyStylingSystem } from "../core/stylingSystem";
 import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import { resetProp, resetAndReadNum, resetAndReadStr } from "../core/apply";
 import { buildConversionContext } from "../unitConversion";
-import { type IndicatorType, focusRing, text } from "../theme";
+import { type IndicatorType, focusRing, text, border, warningAlpha } from "../theme";
 import { parseNum } from "../cssParsers";
 import { getIndicatorType, detectUnit, isTextBearing, type SectionCtx } from "../panelUtils";
 import { sectionMatchesQuery } from "./PropertySearch";
@@ -172,6 +174,15 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
   // ── Tailwind detection ──
   const isTailwind = useMemo(() => isTailwindElement(element), [element]);
 
+  // ── Styling-system capability notice ──
+  // Classified once per selection; warns BEFORE the user invests edits when
+  // the element's styling system has no save path (styled-components, Emotion,
+  // runtime style tags, external stylesheets, inline-only). Dismissal is keyed
+  // to the element so a new selection surfaces the notice again.
+  const stylingInfo = useMemo(() => classifyStylingSystem(element), [element]);
+  const [noticeDismissedFor, setNoticeDismissedFor] = useState<Element | null>(null);
+  const showStylingNotice = !stylingInfo.saveable && noticeDismissedFor !== element;
+
   // ── SectionCtx bundle ──
   const ctx: SectionCtx = useMemo(() => ({
     element, apply, reset, resetRead, resetReadStr, ind, sectionInd, cs, parentCs, getConversionCtx, ctxMenu, isTailwind,
@@ -203,6 +214,46 @@ export function WebflowPanel({ element, spacing, onSpacingChange, onSpacingReset
       onUpdate={handleMemoryUpdate}
     >
     <div className="font-sans">
+      {/* Styling-system capability notice — compact, non-blocking, dismissible */}
+      {showStylingNotice && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8,
+            padding: "8px 12px",
+            background: warningAlpha(0.12),
+            borderBottom: `1px solid ${border.subtle}`,
+            fontSize: 11,
+            lineHeight: 1.45,
+            color: text.secondary,
+          }}
+        >
+          <span style={{ flex: 1, minWidth: 0 }}>{stylingInfo.reason}</span>
+          <button
+            type="button"
+            aria-label="Dismiss styling notice"
+            className="tuner-focusable"
+            onClick={() => setNoticeDismissedFor(element)}
+            style={{
+              flexShrink: 0,
+              border: "none",
+              background: "transparent",
+              padding: 2,
+              margin: -2,
+              cursor: "pointer",
+              color: text.label,
+              display: "flex",
+              alignItems: "center",
+              borderRadius: 3,
+            }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
       {noResults && (
         <div className="text-center px-5 py-10 text-xs" style={{ color: text.disabled }}>
           No matching properties

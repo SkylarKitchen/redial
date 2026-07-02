@@ -21,7 +21,7 @@ afterEach(() => {
 });
 
 function starWalks(spy: ReturnType<typeof vi.spyOn>): number {
-  return spy.mock.calls.filter((c) => c[0] === "*").length;
+  return spy.mock.calls.filter((c: unknown[]) => c[0] === "*").length;
 }
 
 function pressTab() {

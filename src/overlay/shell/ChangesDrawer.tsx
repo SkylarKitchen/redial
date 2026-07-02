@@ -12,7 +12,7 @@ import { diffAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { getDisplayClass, getSelector, formatCSSDiff } from "../util";
 import { composeExportCSS, serializeBreakpointCSS } from "../breakpoints";
-import { enrichChangesForCommit } from "../core/commitUtils";
+import { enrichChangesForCommit, filterClipboardBreakpointChanges } from "../core/commitUtils";
 import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
@@ -118,6 +118,8 @@ export function ChangesDrawer({
         >
           {/* Tab bar */}
           <div
+            role="tablist"
+            aria-label="Changes view"
             style={{
               display: "flex",
               alignItems: "center",
@@ -148,12 +150,19 @@ export function ChangesDrawer({
 
 function TabPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
+  // Native <button> so the pill is Tab-reachable and activates on Enter/Space
+  // for free (issue #85 — this was a mouse-only div).
   return (
-    <div
+    <button
+      role="tab"
+      aria-selected={active}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
+        border: "none",
+        paddingTop: 0,
+        paddingBottom: 0,
         paddingLeft: 8,
         paddingRight: 8,
         fontSize: 10,
@@ -171,7 +180,7 @@ function TabPill({ label, active, onClick }: { label: string; active: boolean; o
       }}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -207,29 +216,37 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     setMessage(null);
 
     // Mirror Footer.tsx: route through enrichChangesForCommit so Tailwind
-    // elements get the correct shape + `mode: "tailwind"` marker.
-    const enriched = allDiffs.flatMap(({ el, changes }) =>
-      enrichChangesForCommit(el, changes, {
+    // elements get the correct shape + `mode: "tailwind"` marker. Keep the
+    // per-element enrichment alongside its raw changes — the breakpoint
+    // partition below is per element.
+    const perElement = allDiffs.map(({ el, changes }) => ({
+      el,
+      changes,
+      enriched: enrichChangesForCommit(el, changes, {
         scope: "element",
         activeClassName: null,
         activeState: "none",
       }),
-    );
+    }));
+    const enriched = perElement.flatMap((e) => e.enriched);
     const mode = enriched.find((c) => c.mode)?.mode;
 
-    // Breakpoint-tagged changes aren't file-written yet (#53) — same
-    // side-channel as the Footer save: export them as @media CSS to the
-    // clipboard so Save All doesn't silently drop them.
-    const bpCSS = serializeBreakpointCSS(
-      allDiffs.map(({ el, changes }) => ({ selector: getSelector(el), changes })),
-    );
+    // Breakpoint file-save (#53): class-backed responsive edits ride the POST
+    // inside `enriched` and save like any other change. Only the leftover the
+    // enrichment could NOT bind to a file (classless / Tailwind-responsive /
+    // unresolvable stylesheet) keeps the clipboard side-channel — the same
+    // partition the Footer save presents (commitUtils).
+    const clipboardBpEntries = perElement
+      .map(({ el, changes, enriched: enrichedForEl }) => ({
+        selector: getSelector(el),
+        changes: filterClipboardBreakpointChanges(changes, enrichedForEl),
+      }))
+      .filter(({ changes }) => changes.length > 0);
+    const bpCSS = serializeBreakpointCSS(clipboardBpEntries);
     const copyBreakpointExtras = () => {
       if (!bpCSS) return;
       navigator.clipboard.writeText(bpCSS).then(() => {
-        const bpCount = allDiffs.reduce(
-          (n, { changes }) => n + changes.filter((c) => c.breakpoint).length,
-          0,
-        );
+        const bpCount = clipboardBpEntries.reduce((n, { changes }) => n + changes.length, 0);
         setMessage(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"} copied (not saved to file)`);
       }).catch(() => {});
     };

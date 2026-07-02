@@ -14,7 +14,7 @@
 
 import { getStableSelector } from "../util";
 import { isInvalidDeclaration } from "../../lib/css";
-import { beginClassStyleBatch, endClassStyleBatch } from "./scope";
+import { beginClassStyleBatch, endClassStyleBatch, detachSessionClasses } from "./scope";
 
 export type Override = {
   initial: string;
@@ -420,6 +420,34 @@ export function applyInlineStyle(
 }
 
 /**
+ * Keep the custom-property shadow map in sync when undo/redo rewrites a
+ * `--var` entry (issue #71). Only entries that went through
+ * applyCustomProperty live in the shadow map — `--` props applied via
+ * applyInlineStyle (Custom Properties section) are intentionally not tracked,
+ * so this only updates an EXISTING entry (never creates one). Reverting to
+ * the initial value keeps the entry (marking the var as custom-managed for
+ * priority alignment) but makes it non-dirty, so the dirty dot goes out.
+ */
+function syncCustomPropertyOverride(el: Element, prop: string, value: string): void {
+  if (!prop.startsWith("--")) return;
+  const cp = customPropertyOverrides.get(prop);
+  if (cp && cp.scope === el) cp.current = value;
+}
+
+/**
+ * Priority to use when undo/redo re-applies an inline value (issue #71).
+ * applyCustomProperty sets variables WITHOUT "important" — re-applying them
+ * with it would flip the effective cascade across undo/redo cycles. Everything
+ * else (including `--` props applied via applyInlineStyle, which are not in
+ * the shadow map) keeps the engine's standard "important".
+ */
+function undoRedoPriority(el: Element, prop: string): "" | "important" {
+  return prop.startsWith("--") && customPropertyOverrides.get(prop)?.scope === el
+    ? ""
+    : "important";
+}
+
+/**
  * Undo the most recent style change or batch of changes.
  * Pops from the undo stack, restores previous values, and pushes a redo entry.
  * Handles single overrides, batches, and DOM-move operations.
@@ -483,7 +511,7 @@ export function undo(): { el: Element; prop?: string } | null {
         if (className) notifyClassChange(className, prop, null);
         if (wasDirty) dirtyCount--;
       } else {
-        if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, "important");
+        if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, undoRedoPriority(el, prop));
         entry.current = prev;
         if (notifyState) notifyStateChange(el, stK, cssProp, prev);
         if (className) notifyClassChange(className, prop, prev);
@@ -491,6 +519,7 @@ export function undo(): { el: Element; prop?: string } | null {
         if (!wasDirty && isDirtyNow) dirtyCount++;
         else if (wasDirty && !isDirtyNow) dirtyCount--;
       }
+      syncCustomPropertyOverride(el, prop, prev);
       result = { el, prop };
     }
     if (redoEntries.length > 0) {
@@ -539,7 +568,7 @@ export function undo(): { el: Element; prop?: string } | null {
     if (className) notifyClassChange(className, prop, null);
     if (wasDirty) dirtyCount--;
   } else {
-    if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, "important");
+    if (writeInline) (el as HTMLElement).style.setProperty(prop, prev, undoRedoPriority(el, prop));
     entry.current = prev;
     if (notifyState) notifyStateChange(el, stK, cssProp, prev);
     if (className) notifyClassChange(className, prop, prev);
@@ -547,6 +576,7 @@ export function undo(): { el: Element; prop?: string } | null {
     if (!wasDirty && isDirtyNow) dirtyCount++;
     else if (wasDirty && !isDirtyNow) dirtyCount--;
   }
+  syncCustomPropertyOverride(el, prop, prev);
 
   schedulePersist();
   notifyListeners();
@@ -605,11 +635,12 @@ export function redo(): { el: Element; prop?: string } | null {
         if (initial !== redoValue) dirtyCount++;
       }
       if (writeInline) {
-        (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+        (el as HTMLElement).style.setProperty(prop, redoValue, undoRedoPriority(el, prop));
       } else if (notifyState) {
         notifyStateChange(el, stK, cssProp, redoValue);
       }
       if (className) notifyClassChange(className, prop, redoValue);
+      syncCustomPropertyOverride(el, prop, redoValue);
       result = { el, prop };
     }
     if (undoEntries.length > 0) {
@@ -644,11 +675,12 @@ export function redo(): { el: Element; prop?: string } | null {
     if (initial !== redoValue) dirtyCount++;
   }
   if (writeInline) {
-    (el as HTMLElement).style.setProperty(prop, redoValue, "important");
+    (el as HTMLElement).style.setProperty(prop, redoValue, undoRedoPriority(el, prop));
   } else if (notifyState) {
     notifyStateChange(el, stK, cssProp, redoValue);
   }
   if (className) notifyClassChange(className, prop, redoValue);
+  syncCustomPropertyOverride(el, prop, redoValue);
 
   schedulePersist();
   notifyListeners();
@@ -696,6 +728,9 @@ export function resetStateOverrides(el: Element, state: string, breakpoint: stri
     }
   }
 
+  // Write through to session persistence so the cleared state overrides don't
+  // resurrect from localStorage on the next reload (issue #72).
+  schedulePersist();
   notifyListeners();
 }
 
@@ -820,6 +855,10 @@ export function resetAll(): void {
       if (!isForeign(stack[i])) stack.splice(i, 1);
     }
   }
+  // Session-attached classes (class creation, audit 05) are unsaved session
+  // state too: Discard (CloseWarningBar → styleEngine.resetAll → here) must
+  // remove the attached class from the DOM along with every other override.
+  detachSessionClasses();
   clearPersistedSession();
   notifyListeners();
 }
@@ -987,7 +1026,12 @@ export function clearRedundantOverrides(): number {
     if (props.size === 0) overrides.delete(el);
   }
 
-  if (cleared > 0) notifyListeners();
+  if (cleared > 0) {
+    // Persist the post-clear state so redundant overrides don't resurrect
+    // from localStorage as phantom "changes" on the next reload (issue #72).
+    schedulePersist();
+    notifyListeners();
+  }
   return cleared;
 }
 
@@ -1183,6 +1227,10 @@ export function applyCustomProperty(
   name: string,
   value: string
 ): void {
+  // New action invalidates redo history (standard undo/redo semantics) —
+  // same as applyInlineStyle and removeCustomProperty (issue #71).
+  if (redoStack.length > 0) redoStack.length = 0;
+
   // Read initial value ONCE before any DOM mutation
   let initial: string | undefined;
   if (!customPropertyOverrides.has(name)) {

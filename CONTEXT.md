@@ -24,7 +24,7 @@ Everything that fails the rubric is either `nice-to-have` (kept) or `wontfix` (r
 
 ## nice-to-have
 
-A backlog item we want to keep but defer past v1.0. Lives as an **open GitHub Issue** carrying the `nice-to-have` and `post-v1` labels, with a state label from the canonical triage vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`). Does not live in an in-repo `.md` backlog. Milestones are not used for the v1 boundary — labels are the canonical cohort primitive here.
+A backlog item we want to keep but defer past v1.0. Lives as a **GitHub Issue** — the tracker, worked via the `gh` CLI (see [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md)) — carrying the `nice-to-have` and `post-v1` labels, with a state label from the canonical triage vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`). One launch-time exception to the old "no in-repo `.md` backlog" rule: the 2026-06-09 launch-readiness pass indexed every deferred post-v1 item in [`ROADMAP.md`](ROADMAP.md) and **closed** the linked issues to keep the v1.0 tracker clean — each issue holds the full brief and is **reopened when its work begins**. Milestones are not used for the v1 boundary — labels are the canonical cohort primitive here.
 
 ## wontfix
 

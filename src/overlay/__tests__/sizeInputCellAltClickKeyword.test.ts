@@ -3,80 +3,132 @@
  * sizeInputCellAltClickKeyword.test.ts — Regression test for Option+Click reset
  * on SizeInputCell when displaying "Auto", "None", or a CSS variable.
  *
- * Bug: When SizeInputCell is in keyword mode (showing "Auto"/"None") or variable
- * mode (showing a CSS var name), clicking with Alt/Option held does NOT trigger
- * onReset. Instead it clears the keyword/variable and enters editing mode.
+ * Bug: When SizeInputCell was in keyword mode (showing "Auto"/"None") or
+ * variable mode (showing a CSS var name), clicking with Alt/Option held did
+ * NOT trigger onReset. Instead it cleared the keyword/variable and entered
+ * editing mode.
  *
- * The keyword onClick handler is:
- *   onClick={() => { onKeywordChange?.(null); setEditing(true); }}
- *
- * It should check e.altKey first:
- *   onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } ... }}
+ * CONVERTED (issue #105): was a source-text test (regexes over
+ * SizeInputCell.tsx looking for `altKey` inside the keyword/variable onClick
+ * handlers and on the outer cell div). Now renders the real cell and fires
+ * the actual clicks. Invariant mapping:
+ *  - "keyword onClick checks altKey"  → Alt+click on the 'auto' keyword span
+ *    fires onReset and does NOT clear the keyword / enter edit mode; a plain
+ *    click still clears the keyword and starts editing (non-alt path intact).
+ *  - "variable onClick checks altKey" → Alt+click on a variable-linked cell
+ *    (label / cell chrome — the pill itself opens the picker by design, per
+ *    the unlink-via-Unlink2 contract) fires onReset and does NOT unlink or
+ *    change the variable. (The old regex targeted a value-area <span> that no
+ *    longer exists — variable mode now renders a VariableField pill and
+ *    alt+click is handled on the cell root — the behavioral form pins the
+ *    real, current contract.)
+ *  - "outer cell div altKey fallback" → Alt+click on the cell root (label /
+ *    empty space, numeric mode) fires onReset.
  */
 
-import { describe, it, expect } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { createElement } from "react";
+import { render, cleanup, fireEvent } from "@testing-library/react";
+import { SizeInputCell } from "../sections/SizeInputCell";
 
-const src = fs.readFileSync(
-  path.resolve(__dirname, "../sections/SizeInputCell.tsx"),
-  "utf-8"
-);
+afterEach(() => {
+  cleanup();
+  document.body.innerHTML = "";
+});
+
+function baseProps(overrides: Record<string, unknown> = {}) {
+  return {
+    label: "Width",
+    value: 100,
+    unit: "px",
+    units: ["px", "%"],
+    onValueChange: vi.fn(),
+    onUnitChange: vi.fn(),
+    isModified: true,
+    onReset: vi.fn(),
+    ...overrides,
+  };
+}
+
+function renderKeywordCell() {
+  const onReset = vi.fn();
+  const onKeywordChange = vi.fn();
+  const utils = render(
+    createElement(SizeInputCell, baseProps({
+      keyword: "auto" as const,
+      supportsAuto: true,
+      onKeywordChange,
+      onReset,
+    }) as unknown as Parameters<typeof SizeInputCell>[0]),
+  );
+  const keywordSpan = Array.from(utils.container.querySelectorAll("span")).find(
+    (s) => s.textContent === "auto",
+  ) as HTMLElement;
+  return { ...utils, keywordSpan, onReset, onKeywordChange };
+}
 
 describe("SizeInputCell Option+Click reset in keyword/variable mode", () => {
-  it("keyword mode ('Auto'/'None') click handler must check altKey for reset", () => {
-    // Find the isKeyword branch — the <span> that shows "Auto"/"None"
-    // It should check e.altKey before clearing keyword and entering edit mode.
-    //
-    // Current (broken): onClick={() => { onKeywordChange?.(null); setEditing(true); }}
-    // Expected: onClick handler checks e.altKey and calls onReset() if alt is held
+  it("keyword mode ('Auto'): Alt+click fires onReset — does not clear keyword or enter edit mode", () => {
+    const { container, keywordSpan, onReset, onKeywordChange } = renderKeywordCell();
+    expect(keywordSpan, "keyword span showing 'auto' should render").toBeTruthy();
 
-    // Extract the onClick handler for the keyword span
-    // The keyword span is inside the `isKeyword ?` ternary branch
-    const keywordBranch = src.match(/isKeyword\s*\?\s*\(\s*<span[\s\S]*?<\/span>\s*\)/);
-    expect(keywordBranch, "Could not find keyword branch in SizeInputCell").toBeTruthy();
+    fireEvent.click(keywordSpan, { altKey: true });
 
-    const keywordBlock = keywordBranch![0];
-
-    // The onClick handler MUST reference altKey (or e.altKey) for reset
-    expect(
-      keywordBlock,
-      "Keyword mode click handler must check altKey to support Option+Click reset"
-    ).toMatch(/altKey/);
+    // Fires the reset (the span handler + bubbled cell-root fallback both
+    // guard on altKey — reset is idempotent, so >=1 call is the contract).
+    expect(onReset).toHaveBeenCalled();
+    expect(onKeywordChange).not.toHaveBeenCalled();
+    // Not in edit mode: no text input appeared
+    expect(container.querySelector("input")).toBeNull();
   });
 
-  it("variable mode (CSS var) click handler must check altKey for reset", () => {
-    // Find the value-area variable branch — the <span> that shows CSS variable name
-    // and has onClick={() => { onCssVarChange?.(null); ... }}
-    // It must check e.altKey before clearing variable and entering edit mode.
+  it("keyword mode ('Auto'): plain click still clears the keyword (non-alt path unchanged)", () => {
+    const { onReset, keywordSpan, onKeywordChange } = renderKeywordCell();
 
-    // Match the span with onCssVarChange in its onClick (the value area, not the label)
-    const variableBranch = src.match(/onClick=\{[\s\S]*?onCssVarChange[\s\S]*?<\/span>\s*\)/);
-    expect(variableBranch, "Could not find variable value-area branch in SizeInputCell").toBeTruthy();
+    fireEvent.click(keywordSpan);
 
-    const variableBlock = variableBranch![0];
-
-    // The onClick handler MUST reference altKey for reset
-    expect(
-      variableBlock,
-      "Variable mode click handler must check altKey to support Option+Click reset"
-    ).toMatch(/altKey/);
+    // Clears the keyword so the parent flips the cell back to numeric editing
+    expect(onKeywordChange).toHaveBeenCalledWith(null);
+    expect(onReset).not.toHaveBeenCalled();
   });
 
-  it("outer cell div should have an altKey fallback handler", () => {
-    // As a defense-in-depth measure, the outermost clickable div should
-    // also intercept alt+click to call onReset, like SliderRow/SelectRow do.
-    // This ensures alt+click works even when clicking the label or empty space.
+  it("variable mode (CSS var): Alt+click on the cell fires onReset — does not unlink or change the variable", () => {
+    const onReset = vi.fn();
+    const onCssVarChange = vi.fn();
+    const { getByText } = render(
+      createElement(SizeInputCell, baseProps({
+        cssVar: "--panel-width",
+        cssVarResolved: "300",
+        onCssVarChange,
+        onReset,
+      }) as unknown as Parameters<typeof SizeInputCell>[0]),
+    );
 
-    // Find the outer cell div (the one with ref={cellRef})
-    const cellDiv = src.match(/ref=\{cellRef\}[\s\S]*?(?=\n\s*\{\/\*\s*Modified)/);
-    expect(cellDiv, "Could not find outer cell div in SizeInputCell").toBeTruthy();
+    // Variable mode really rendered: the pill shows the var name
+    const pillText = Array.from(document.querySelectorAll("span, div")).find((n) =>
+      n.textContent === "panel-width" || n.textContent === "--panel-width",
+    );
+    expect(pillText, "variable pill should render the linked var name").toBeTruthy();
 
-    // It should have an onClick that checks altKey
-    // Currently there's no onClick on this div at all
-    expect(
-      cellDiv![0],
-      "Outer cell div should have an onClick handler that checks altKey for reset"
-    ).toMatch(/onClick.*altKey/s);
+    // Alt+click the label area (bubbles to the cell root's altKey fallback).
+    // The pill itself intentionally swallows clicks — it opens the variable
+    // picker; unlinking goes through the Unlink2 affordance, never alt+click.
+    fireEvent.click(getByText("Width"), { altKey: true });
+
+    expect(onReset).toHaveBeenCalled();
+    expect(onCssVarChange).not.toHaveBeenCalled();
+  });
+
+  it("outer cell root: Alt+click on the label/empty space fires onReset (fallback handler)", () => {
+    const onReset = vi.fn();
+    const { container, getByText } = render(
+      createElement(SizeInputCell, baseProps({ onReset }) as unknown as Parameters<typeof SizeInputCell>[0]),
+    );
+    // Numeric mode — click the cell root (bubbling from the label area)
+    const label = getByText("Width");
+    fireEvent.click(label, { altKey: true });
+    expect(onReset).toHaveBeenCalledTimes(1);
+    // And it did not open the reset popover / editing input
+    expect(container.querySelector("input")).toBeNull();
   });
 });

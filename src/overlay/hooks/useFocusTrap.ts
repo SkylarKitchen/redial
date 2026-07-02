@@ -7,9 +7,10 @@
 
 import { useEffect, type RefObject } from "react";
 
-/** Exported for testing */
+/** Exported for testing. Mirrors shell/Modal.tsx — disabled controls are
+ * excluded because `.focus()` on them no-ops and breaks the wrap. */
 export const FOCUSABLE_SELECTOR =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** Pure logic: get the next focused element when Tab is pressed at a boundary */
 export function getNextFocusTarget(
@@ -33,6 +34,9 @@ export function useFocusTrap(
   useEffect(() => {
     if (!isOpen || !ref.current) return;
     const container = ref.current;
+    // Save the previously-focused element so we can restore it on close
+    // (same pattern as shell/Modal.tsx).
+    const previouslyFocused = document.activeElement as HTMLElement | null;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
@@ -52,6 +56,10 @@ export function useFocusTrap(
     const focusable = container.querySelectorAll(FOCUSABLE_SELECTOR);
     if (focusable.length > 0) (focusable[0] as HTMLElement).focus();
 
-    return () => container.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      container.removeEventListener("keydown", handleKeyDown);
+      // Restore focus to where the user was before the trap opened.
+      previouslyFocused?.focus?.();
+    };
   }, [isOpen, ref]);
 }

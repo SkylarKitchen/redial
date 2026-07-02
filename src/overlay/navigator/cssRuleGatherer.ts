@@ -24,8 +24,12 @@ export interface CSSRuleBlock {
 // stripPseudoClasses
 // ---------------------------------------------------------------------------
 
+// Longest-first alternation + boundary lookahead so `:focus` cannot match
+// inside `:focus-within` / `:focus-visible` and mangle the base selector (#76).
 const PSEUDO_CLASS_RE = new RegExp(
-  `:(?:${Array.from(VALID_STATES).join("|")})`,
+  `:(?:${Array.from(VALID_STATES)
+    .sort((a, b) => b.length - a.length)
+    .join("|")})(?![\\w-])`,
   "g",
 );
 const PSEUDO_ELEMENT_RE = /::[\w-]+/g;

@@ -281,7 +281,9 @@ describe("escape closes the palette", () => {
 
   it("modal dismiss happens before panel close (priority order)", () => {
     const escIdx = hotkeysSrc.indexOf('e.key === "Escape"');
-    const block = hotkeysSrc.slice(escIdx, escIdx + 500);
+    // Window widened from 500: the Escape branch grew a closeWarning
+    // (unsaved-changes bar keep-editing) dismissal step before the close.
+    const block = hotkeysSrc.slice(escIdx, escIdx + 1500);
     const modalIdx = block.indexOf("activeModal");
     const closeIdx = block.indexOf("handleCloseAttempt()");
     expect(modalIdx).toBeGreaterThan(-1);

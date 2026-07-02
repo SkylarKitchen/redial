@@ -7,14 +7,31 @@
  *   1. resetProp() works at the apply.ts level (unit test)
  *   2. The section component wires up a reset mechanism in its source code
  *      (onReset, onAltClick, altKey check, or resetProp/resetAndReadNum/resetAndReadStr)
+ *   3. SpacingBoxModel's Option+Click reset REALLY resets (behavioral —
+ *      real pointer events on the rendered box model, asserted on the engine)
  *
  * A property without a reset path means "the user edited it, but Option+Click
  * does nothing" — that's the bug class we're guarding against.
+ *
+ * PARTIALLY CONVERTED (issue #105): PART 3 was a source-text test (regex over
+ * SpacingBoxModel.tsx for the pev.altKey block). It now renders the real
+ * SpacingBoxModel and fires actual pointerdown/pointerup events with altKey —
+ * the mapping: "alt+click handler calls onReset after resetAndReadNum" →
+ * "alt+click on a margin/padding value really clears the engine override and
+ * propagates the reset value to the parent via onReset". PART 2 (per-property
+ * source audit across all 8 section files) is intentionally KEPT as a
+ * source-level completeness net: the behavioral per-section coverage lives in
+ * layout-reset / position-reset / size-reset / reset-audit, which seed and
+ * reset the mainstream properties; this sweep still catches properties those
+ * tests don't seed (complex editors, IconButtonGroups gaining new props).
  */
 
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterEach, vi } from "vitest";
 import fs from "fs";
 import path from "path";
+import { createElement } from "react";
+import { render, cleanup, fireEvent } from "@testing-library/react";
+import { SpacingBoxModel } from "../sections/SpacingBoxModel";
 import { applyInlineStyle, isDirty, resetProp, resetAll } from "../core/apply";
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -335,36 +352,96 @@ describe("Every editable CSS property has a reset path in its section component"
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// PART 3: SpacingBoxModel-specific regression test
+// PART 3: SpacingBoxModel-specific regression test (BEHAVIORAL — real events)
 // ═══════════════════════════════════════════════════════════════════════
 
 describe("SpacingBoxModel alt+click reset propagates value to parent", () => {
-  let src: string;
-
   beforeAll(() => {
-    src = readSrc("SpacingBoxModel.tsx");
+    // happy-dom doesn't implement pointer capture (the scrub logic needs it).
+    const proto = Element.prototype as unknown as Record<string, unknown>;
+    if (!proto.setPointerCapture) proto.setPointerCapture = () => {};
+    if (!proto.releasePointerCapture) proto.releasePointerCapture = () => {};
+    if (!proto.hasPointerCapture) proto.hasPointerCapture = () => false;
   });
 
-  it("alt+click handler calls onReset (or falls back to onChange) after reset", () => {
-    const altClickBlock = src.match(
-      /if\s*\(pev\.altKey\)\s*\{[\s\S]*?\}/
+  afterEach(() => {
+    cleanup();
+    resetAll();
+    document.body.innerHTML = "";
+  });
+
+  function renderBoxModel() {
+    const element = document.createElement("div");
+    document.body.appendChild(element);
+    // Genuinely dirty two spacing properties through the real engine
+    applyInlineStyle(element, "margin-top", "24px");
+    applyInlineStyle(element, "padding-left", "8px");
+    expect(isDirty(element, "margin-top")).toBe(true);
+    expect(isDirty(element, "padding-left")).toBe(true);
+
+    const onReset = vi.fn();
+    const utils = render(
+      createElement(SpacingBoxModel, {
+        margin: { top: 24, right: 0, bottom: 0, left: 0 },
+        padding: { top: 0, right: 0, bottom: 0, left: 8 },
+        onChange: vi.fn(),
+        marginUnit: "px",
+        paddingUnit: "px",
+        marginUnits: ["px", "%"],
+        paddingUnits: ["px", "%"],
+        onMarginUnitChange: vi.fn(),
+        onPaddingUnitChange: vi.fn(),
+        element,
+        ind: (p: string) => (isDirty(element, p) ? ("modified" as const) : ("none" as const)),
+        onReset,
+      }),
     );
-    expect(altClickBlock, "Could not find alt+click handler block").toBeTruthy();
+    return { ...utils, element, onReset };
+  }
 
-    const block = altClickBlock![0];
-    const callsResetOrChange =
-      block.includes("onReset") || block.includes("onChangeRef") || block.includes("onChange");
-    expect(
-      callsResetOrChange,
-      "Alt+click handler must call onReset (or onChange as fallback) after reset so the parent updates displayed values"
-    ).toBe(true);
+  /** Fire the alt+click gesture (pointerdown → pointerup, no movement). */
+  function altClick(target: HTMLElement) {
+    fireEvent.pointerDown(target, { button: 0, pointerId: 1, altKey: true, clientX: 5, clientY: 5 });
+    fireEvent.pointerUp(target, { button: 0, pointerId: 1, altKey: true, clientX: 5, clientY: 5 });
+  }
+
+  it("alt+click on the margin-top value clears the engine override and calls onReset with the reset value", () => {
+    const { container, element, onReset } = renderBoxModel();
+
+    const span = container.querySelector('[role="button"][aria-label^="Edit margin top"]') as HTMLElement;
+    expect(span, "margin-top value span should render").toBeTruthy();
+
+    altClick(span);
+
+    // The inline override is really gone (resetAndReadNum ran on the engine)…
+    expect(isDirty(element, "margin-top")).toBe(false);
+    // …and the parent was told, with the property and its post-reset value.
+    expect(onReset).toHaveBeenCalledTimes(1);
+    expect(onReset.mock.calls[0][0]).toBe("margin-top");
+    expect(typeof onReset.mock.calls[0][1]).toBe("number");
   });
 
-  it("imports resetAndReadNum for value propagation", () => {
-    expect(
-      src,
-      "SpacingBoxModel should import resetAndReadNum to read back the value after reset"
-    ).toContain("resetAndReadNum");
+  it("alt+click on the padding-left value resets it too (padding side of the box model)", () => {
+    const { container, element, onReset } = renderBoxModel();
+
+    const span = container.querySelector('[role="button"][aria-label^="Edit padding left"]') as HTMLElement;
+    expect(span, "padding-left value span should render").toBeTruthy();
+
+    altClick(span);
+
+    expect(isDirty(element, "padding-left")).toBe(false);
+    expect(onReset).toHaveBeenCalledWith("padding-left", expect.any(Number));
+  });
+
+  it("plain click (no alt) does NOT reset — the override survives", () => {
+    const { container, element, onReset } = renderBoxModel();
+
+    const span = container.querySelector('[role="button"][aria-label^="Edit margin top"]') as HTMLElement;
+    fireEvent.pointerDown(span, { button: 0, pointerId: 1, clientX: 5, clientY: 5 });
+    fireEvent.pointerUp(span, { button: 0, pointerId: 1, clientX: 5, clientY: 5 });
+
+    expect(isDirty(element, "margin-top")).toBe(true);
+    expect(onReset).not.toHaveBeenCalled();
   });
 });
 

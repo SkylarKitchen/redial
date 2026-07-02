@@ -3,8 +3,17 @@
  *
  * Two strategies for finding the source file + line for a CSS property:
  *
- * 1. React fiber __debugSource — gives the JSX file (e.g., Button.tsx:12)
- *    Available in dev mode via SWC/Babel automatic injection.
+ * 1. React fiber dev metadata — gives the JSX file (e.g., Button.tsx:12).
+ *    - React ≤18: `fiber._debugSource = { fileName, lineNumber }`, injected
+ *      by SWC/Babel in dev.
+ *    - React 19: `_debugSource` was REMOVED (issue #67). Dev fibers instead
+ *      carry `fiber._debugStack` — an Error captured at JSX element creation
+ *      (jsxDEV) whose first user frame is the JSX callsite in the owner
+ *      component. We parse that frame for file + line. Line numbers refer to
+ *      the dev-transformed module, so they are a near-line HINT, not exact.
+ *    When neither field yields a source (e.g. Turbopack compiled-chunk URLs,
+ *    production builds), this strategy returns null fast so the fallback
+ *    discovery paths (CSS source maps, server className walk) engage.
  *
  * 2. CSS Modules class → source map — gives the SCSS file (e.g., Button.module.scss:8)
  *    Reads source maps from loaded stylesheets via the CSSOM API.
@@ -18,9 +27,127 @@ export type SourceInfo = {
   displayPath: string; // shortened for UI display
 };
 
+/** Build a SourceInfo from a file path + optional line, shortening for display. */
+function toSourceInfo(file: string, line: number | undefined): SourceInfo {
+  const displayPath = file.replace(/^.*\/src\//, "src/");
+  return { file, line, displayPath: line ? `${displayPath}:${line}` : displayPath };
+}
+
+/**
+ * Normalize a stack-frame URL to a project source path, or null when the
+ * frame can't be mapped back to an original source file client-side.
+ *
+ *  - webpack-internal:///(app-pages-browser)/./app/page.tsx → app/page.tsx
+ *  - webpack-internal:///./src/Button.tsx                   → src/Button.tsx
+ *  - http://localhost:5173/src/App.tsx?t=123 (Vite)         → src/App.tsx
+ *  - file:///Users/me/app/src/App.tsx                       → /Users/me/app/src/App.tsx
+ *  - /Users/me/app/src/App.tsx                              → unchanged
+ *  - http://…/_next/static/chunks/….js (compiled chunk)     → null
+ */
+function normalizeStackFrameUrl(url: string): string | null {
+  if (url.includes("node_modules")) return null;
+
+  // webpack-internal:///(group)/./path or webpack-internal:///./path
+  const webpackInternal = url.match(/^webpack-internal:\/\/\/(?:\([^)]*\)\/)?(.+)$/);
+  if (webpackInternal) {
+    const path = webpackInternal[1].replace(/^\.\//, "");
+    return path || null;
+  }
+
+  // file:// URLs → filesystem path
+  if (url.startsWith("file://")) {
+    try {
+      return decodeURIComponent(new URL(url).pathname);
+    } catch {
+      return null;
+    }
+  }
+
+  // http(s) dev-server URLs: only original-source paths are usable.
+  // Compiled bundles (Next/Turbopack chunks, plain .js output) can't be
+  // mapped client-side — reject so the fallback paths engage instead.
+  if (/^https?:\/\//.test(url)) {
+    let pathname: string;
+    try {
+      pathname = decodeURIComponent(new URL(url).pathname);
+    } catch {
+      return null;
+    }
+    if (pathname.startsWith("/_next/")) return null;
+    // Vite (and similar) serve sources at their real path with the real
+    // extension. A served .js could be compiled output — too ambiguous.
+    if (!/\.(tsx|ts|jsx|mjsx|mtsx)$/.test(pathname)) return null;
+    return pathname.replace(/^\//, "");
+  }
+
+  // Bare filesystem path (some runtimes emit these directly)
+  if (url.startsWith("/")) return url;
+
+  return null;
+}
+
+/**
+ * Parse a React 19 `_debugStack` (Error captured in jsxDEV) into a SourceInfo.
+ *
+ * Mirrors React's own formatOwnerStack contract: the "react-stack-top-frame"
+ * message and runtime frames sit above the user frame; everything at/below
+ * `react_stack_bottom_frame` is renderer internals and must be ignored.
+ * The first mappable user frame is the JSX callsite in the owner component.
+ */
+function sourceFromDebugStack(debugStack: unknown): SourceInfo | null {
+  const stack =
+    typeof debugStack === "string"
+      ? debugStack
+      : debugStack instanceof Error
+        ? debugStack.stack
+        : typeof (debugStack as { stack?: unknown } | null)?.stack === "string"
+          ? (debugStack as { stack: string }).stack
+          : null;
+  if (!stack) return null;
+
+  for (const rawLine of stack.split("\n")) {
+    const frame = rawLine.trim();
+    if (!frame || /^Error\b/.test(frame)) continue; // the "Error: react-stack-top-frame" message line
+    // React internals below this marker — stop entirely (matches
+    // formatOwnerStack's cut in react-dom).
+    if (frame.includes("react_stack_bottom_frame")) break;
+
+    // Extract the "url:line:col" location from the frame. The URL itself may
+    // contain parens (webpack-internal route groups) and colons (http ports),
+    // so grab the outermost (...) group / @-suffix first, then split
+    // ":line:col" off the END greedily.
+    let loc: string | null = null;
+    const v8Named = frame.match(/^at\s.*?\((.*)\)$/); // V8: "at Name (url:line:col)"
+    if (v8Named) {
+      loc = v8Named[1];
+    } else if (frame.startsWith("at ")) {
+      loc = frame.slice(3); // V8 anonymous: "at url:line:col"
+    } else {
+      const firefox = frame.match(/^[^@]*@(.*)$/); // Firefox/Safari: "Name@url:line:col"
+      if (firefox) loc = firefox[1];
+    }
+    if (!loc) continue;
+
+    const locMatch = loc.match(/^(.*):(\d+):(\d+)$/);
+    if (!locMatch) continue;
+
+    const file = normalizeStackFrameUrl(locMatch[1]);
+    if (!file) continue; // runtime / compiled-chunk frame — keep looking
+
+    const line = parseInt(locMatch[2], 10) || undefined; // 0 → undefined
+    return toSourceInfo(file, line);
+  }
+
+  return null;
+}
+
 /**
  * Try to resolve source file info from React's dev-mode fiber data.
- * SWC and Babel both inject _debugSource = { fileName, lineNumber } in dev.
+ *
+ * React ≤18: SWC/Babel inject _debugSource = { fileName, lineNumber } in dev.
+ * React 19: _debugSource was removed — fall back to parsing the fiber's
+ * _debugStack owner stack (see sourceFromDebugStack). Feature-detected per
+ * fiber, so both React majors work (peer dep is react >=18).
  */
 export function getReactSource(el: Element): SourceInfo | null {
   const fiberKey = Object.keys(el).find(
@@ -33,15 +160,20 @@ export function getReactSource(el: Element): SourceInfo | null {
   const fiber = (el as any)[fiberKey];
   if (!fiber) return null;
 
-  // Walk up the fiber tree to find _debugSource
+  // Walk up the fiber tree looking for usable dev metadata
   let current = fiber;
   for (let i = 0; i < 10 && current; i++) {
+    // React ≤18
     if (current._debugSource) {
       const src = current._debugSource;
       const file = src.fileName ?? "";
       const line = src.lineNumber || undefined; // 0 → undefined
-      const displayPath = file.replace(/^.*\/src\//, "src/");
-      return { file, line, displayPath: line ? `${displayPath}:${line}` : displayPath };
+      return toSourceInfo(file, line);
+    }
+    // React 19
+    if (current._debugStack) {
+      const fromStack = sourceFromDebugStack(current._debugStack);
+      if (fromStack) return fromStack;
     }
     current = current.return;
   }

@@ -316,8 +316,23 @@ function TrackItem({ track, onTrackChange, onDelete, canDelete }: {
 
   return (
     <div>
+      {/* Track header. role="button" + keydown instead of a native <button>:
+          the row nests a real delete button and button-in-button is invalid
+          HTML (issue #85). */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
+        aria-label={`Toggle track ${sizeText} settings`}
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          // Ignore keystrokes bubbling from nested controls.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{

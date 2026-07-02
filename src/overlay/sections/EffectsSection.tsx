@@ -189,7 +189,7 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
   const [perspectiveOrigin, setPerspectiveOrigin] = useState(() => cs.getPropertyValue("perspective-origin") || "50% 50%");
 
   // ── Reset popover for Outline label ──
-  const outlineResetPopover = useResetPopover(ind("outline-style"), () => resetCssStr("outline-style", setOutlineStyle));
+  const outlineResetPopover = useResetPopover(ind("outline-style"), () => resetCssStr("outline-style", setOutlineStyle), "outline");
 
   // Refs to break cross-dependency between handleTransformsChange ↔ handleSelfPerspectiveChange
   const selfPerspectiveRef = useRef(selfPerspective);
@@ -327,10 +327,9 @@ export const EffectsSection = memo(function EffectsSection({ ctx, forceOpen, foc
       {/* 3. Outline */}
       <div style={ROW}>
         <span
-          ref={outlineResetPopover.anchorRef}
+          {...outlineResetPopover.triggerProps}
           style={{ ...LABEL, cursor: ind("outline-style") === "modified" ? "pointer" : "default" }}
           title={ind("outline-style") !== "none" ? "Click to reset" : undefined}
-          onClick={(e) => { if (e.altKey) { resetCssStr("outline-style", setOutlineStyle); return; } outlineResetPopover.triggerOpen(); }}
         >
           <span style={indicatorStyle(ind("outline-style"))}>
             Outline

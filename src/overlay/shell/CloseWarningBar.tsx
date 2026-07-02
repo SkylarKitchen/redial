@@ -10,6 +10,8 @@
 import type { RefObject } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { overrideCount } from "../core/apply";
+import { styleEngine } from "../core/engine";
+import { resetAllModeOverrides } from "../core/modeOverrides";
 import { font, text, border, surface, destructiveAlpha } from "../theme";
 
 export interface CloseWarningBarProps {
@@ -46,7 +48,18 @@ export function CloseWarningBar({ open, selectedElRef, onDiscard, onKeepEditing 
             <span>{count} unsaved change{count === 1 ? "" : "s"}</span>
             <div style={{ display: "flex", gap: 6 }}>
               <button
-                onClick={onDiscard}
+                onClick={() => {
+                  // "Discard" must actually discard ("Discard doesn't
+                  // discard" trust bug): revert EVERY unsaved override —
+                  // element/class/state via the engine's session-wide reset
+                  // (which also wipes the persisted localStorage session so
+                  // nothing resurrects on reload) PLUS global CSS-variable
+                  // mode overrides (their own dimension, in-memory only) —
+                  // before handing back to the host to close the panel.
+                  styleEngine.resetAll();
+                  resetAllModeOverrides();
+                  onDiscard();
+                }}
                 style={{
                   background: surface.hover,
                   border: `1px solid ${border.default}`,

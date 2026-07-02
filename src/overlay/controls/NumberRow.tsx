@@ -33,10 +33,12 @@ export function NumberRow({
   computedProp?: string;
   computedElement?: Element;
 }) {
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
-    <span ref={resetPopover.anchorRef} title={labelTitle} style={labelStyle(indicator)}>
+    // Keyboard-only trigger: mouse clicks flow through LabelScrub's onClick,
+    // Enter/Space opens the reset popover directly (issue #85).
+    <span {...resetPopover.triggerProps} onClick={undefined} title={labelTitle} style={labelStyle(indicator)}>
       {label}
     </span>
   );

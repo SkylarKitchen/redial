@@ -28,6 +28,9 @@ function makeMockCtx(): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none",
     sectionInd: () => "none",
     cs,
@@ -41,6 +44,7 @@ function makeMockCtx(): SectionCtx {
       viewportHeight: 720,
     }),
     ctxMenu: () => vi.fn(),
+    isTailwind: false,
   };
 }
 
@@ -161,48 +165,48 @@ describe("Section components export correctly", () => {
   it("LayoutSection is a function", async () => {
     const mod = await import("../sections/LayoutSection");
     expect(typeof mod.LayoutSection).toBe("object"); // memo wraps in object
-    expect(typeof mod.LayoutSection.type).toBe("function");
+    expect(typeof (mod.LayoutSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("SpacingSection is a function", async () => {
     const mod = await import("../sections/SpacingSection");
     expect(typeof mod.SpacingSection).toBe("object");
-    expect(typeof mod.SpacingSection.type).toBe("function");
+    expect(typeof (mod.SpacingSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("SizeSection is a function", async () => {
     const mod = await import("../sections/SizeSection");
     expect(typeof mod.SizeSection).toBe("object");
-    expect(typeof mod.SizeSection.type).toBe("function");
+    expect(typeof (mod.SizeSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("PositionSection is a function", async () => {
     const mod = await import("../sections/PositionSection");
     expect(typeof mod.PositionSection).toBe("object");
-    expect(typeof mod.PositionSection.type).toBe("function");
+    expect(typeof (mod.PositionSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("TypographySection is a function", async () => {
     const mod = await import("../sections/TypographySection");
     expect(typeof mod.TypographySection).toBe("object");
-    expect(typeof mod.TypographySection.type).toBe("function");
+    expect(typeof (mod.TypographySection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("BackgroundsSection is a function", async () => {
     const mod = await import("../sections/BackgroundsSection");
     expect(typeof mod.BackgroundsSection).toBe("object");
-    expect(typeof mod.BackgroundsSection.type).toBe("function");
+    expect(typeof (mod.BackgroundsSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("BordersSection is a function", async () => {
     const mod = await import("../sections/BordersSection");
     expect(typeof mod.BordersSection).toBe("object");
-    expect(typeof mod.BordersSection.type).toBe("function");
+    expect(typeof (mod.BordersSection as unknown as { type: unknown }).type).toBe("function");
   });
 
   it("EffectsSection is a function", async () => {
     const mod = await import("../sections/EffectsSection");
     expect(typeof mod.EffectsSection).toBe("object");
-    expect(typeof mod.EffectsSection.type).toBe("function");
+    expect(typeof (mod.EffectsSection as unknown as { type: unknown }).type).toBe("function");
   });
 });

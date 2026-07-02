@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
-# dashboard.sh — Live visual dashboard for run-tasks.sh
-# Usage: ./dashboard.sh [prd-file] [refresh-seconds]
-#   ./dashboard.sh docs/prd-v1-refinement.md 3
+# dashboard.sh — Live visual dashboard for run-tasks.sh / run-tasks-parallel.sh
+# Provider-agnostic: only reads the PRD checkbox state, so it also works
+# alongside sandcastle runs (npm run tasks).
+#
+# Usage (run from the repo root): ./scripts/dashboard.sh <prd-file> [refresh-seconds]
+#   ./scripts/dashboard.sh tasks-example.md 3
 
-PRD="${1:-docs/prd-v1-refinement.md}"
+PRD="${1:?Usage: ./scripts/dashboard.sh <prd-file> [refresh-seconds]}"
 INTERVAL="${2:-3}"
 LOG_DIR="./task-logs"
+
+if [ ! -f "$PRD" ]; then
+  echo "Error: $PRD not found" >&2
+  exit 1
+fi
 
 # Colors
 RESET="\033[0m"
@@ -62,7 +70,8 @@ while true; do
   # Calculate elapsed time from first log
   first_log=$(ls -tr "$LOG_DIR"/*.log 2>/dev/null | head -1)
   if [ -n "$first_log" ]; then
-    first_time=$(stat -f %m "$first_log" 2>/dev/null || echo 0)
+    # BSD stat (macOS) first, GNU stat (Linux) fallback
+    first_time=$(stat -f %m "$first_log" 2>/dev/null || stat -c %Y "$first_log" 2>/dev/null || echo 0)
     now=$(date +%s)
     elapsed=$((now - first_time))
     elapsed_min=$((elapsed / 60))

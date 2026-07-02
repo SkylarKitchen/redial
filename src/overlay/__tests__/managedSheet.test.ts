@@ -117,7 +117,7 @@ describe("managedSheet — fallback path (no adoptedStyleSheets)", () => {
 
     const k = "fallback-1";
     try {
-      // @ts-expect-error — purposely deleting for the test
+      // purposely deleting for the test (cast makes the property optional)
       delete (owner as { adoptedStyleSheets?: unknown }).adoptedStyleSheets;
       expect("adoptedStyleSheets" in Document.prototype).toBe(false);
 

@@ -33,6 +33,9 @@ function makeMockCtx(): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none",
     sectionInd: () => "none",
     cs,

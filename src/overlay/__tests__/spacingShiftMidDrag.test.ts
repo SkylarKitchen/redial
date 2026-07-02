@@ -32,7 +32,7 @@ describe("SpacingBoxModel shift mid-drag linking", () => {
   const stubElement = document.createElement("div");
   const stubInd = () => "none" as const;
 
-  function renderBoxModel(onChange: ReturnType<typeof vi.fn>) {
+  function renderBoxModel(onChange: (prop: string, value: number, unit: string) => void) {
     act(() => {
       root.render(
         createElement(SpacingBoxModel, {

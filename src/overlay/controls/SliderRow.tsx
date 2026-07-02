@@ -3,7 +3,7 @@
  * preset chips, and label-drag scrubbing.
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Slider } from "./Slider";
 import { LabelScrub } from "./LabelScrub";
 import { UnitSelector, type ConversionHint } from "./UnitSelector";
@@ -102,6 +102,51 @@ export function SliderRow({
 
   const [rowHovered, setRowHovered] = useState(false);
 
+  // Ghost-drag protection (same family as issue #73): the slider opens an
+  // undo batch on pointerdown, but the input's own pointerup is the only
+  // normal close path. A lost release — window blur (Cmd+Tab), pointercancel,
+  // Escape, or a mid-drag unmount (Cmd+Z remounts the panel) — must still
+  // close the batch exactly once, mirroring the ColorPickerEnhanced /
+  // LabelScrub pattern.
+  const endDragRef = useRef<(() => void) | null>(null);
+
+  const handleSliderPointerDown = useCallback(() => {
+    // Defensive: if a previous drag somehow never closed, close it before
+    // opening a new batch so begin/end stay balanced.
+    endDragRef.current?.();
+    beginBatch();
+    let ended = false;
+    const end = () => {
+      if (ended) return; // terminal events can race — close exactly once
+      ended = true;
+      endBatch();
+      document.removeEventListener("pointercancel", end);
+      window.removeEventListener("blur", end);
+      window.removeEventListener("keydown", onKey);
+      endDragRef.current = null;
+    };
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") end();
+    };
+    endDragRef.current = end;
+    // Ghost-drag safety: a lost release (canceled pointer, Cmd+Tab blur,
+    // Escape) must still close the batch.
+    document.addEventListener("pointercancel", end);
+    window.addEventListener("blur", end);
+    window.addEventListener("keydown", onKey);
+  }, []);
+
+  const handleSliderPointerUp = useCallback(() => {
+    endDragRef.current?.();
+  }, []);
+
+  // Close any in-flight batch on unmount (e.g. Cmd+Z remounts the panel).
+  useEffect(() => {
+    return () => {
+      endDragRef.current?.();
+    };
+  }, []);
+
   const handleUnlink = useCallback(() => {
     if (!variableElement || !computedProp) return;
     const computed = getComputedStyle(variableElement).getPropertyValue(computedProp);
@@ -112,11 +157,14 @@ export function SliderRow({
     }
   }, [variableElement, computedProp, onChange, onUnlink]);
 
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, label);
   const labelTitle = indicator ? getIndicatorTitle(indicator) : label;
   const labelContent = (
+    // Keyboard-only trigger: mouse clicks flow through LabelScrub's onClick,
+    // Enter/Space opens the reset popover directly (issue #85).
     <span
-      ref={resetPopover.anchorRef}
+      {...resetPopover.triggerProps}
+      onClick={undefined}
       title={labelTitle}
       style={labelStyle(indicator)}
     >
@@ -174,8 +222,8 @@ export function SliderRow({
         step={step}
         value={[value]}
         onValueChange={([v]) => onChange(snapValue(v))}
-        onPointerDown={() => beginBatch()}
-        onPointerUp={() => endBatch()}
+        onPointerDown={handleSliderPointerDown}
+        onPointerUp={handleSliderPointerUp}
       />
       {annotation && (
         <span style={{ fontSize: 9, fontFamily: font.mono, color: text.hint, flexShrink: 0, whiteSpace: "nowrap" }}>{annotation}</span>

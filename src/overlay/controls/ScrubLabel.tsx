@@ -59,8 +59,11 @@ export function ScrubLabel({
         onClick={onReset ? resetPopover.triggerOpen : undefined}
         onAltClick={onReset}
       >
+        {/* Keyboard-only trigger: mouse clicks flow through LabelScrub's
+            onClick, Enter/Space opens the reset popover directly (issue #85). */}
         <span
-          ref={resetPopover.anchorRef}
+          {...resetPopover.triggerProps}
+          onClick={undefined}
           title={title}
           style={{ ...style, cursor: "ew-resize" }}
         >

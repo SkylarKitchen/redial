@@ -10,7 +10,7 @@
  * attempts to merge each one into the current HEAD. Reports conflicts
  * without leaving the working tree in a merge state.
  *
- * Companion to scripts/run-tasks.ts. Replaces merge-workers.sh for the
+ * Companion to scripts/run-tasks.ts. Replaces scripts/merge-workers.sh for the
  * sandcastle branch naming convention.
  */
 import { execSync } from "node:child_process";

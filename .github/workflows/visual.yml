@@ -1,0 +1,86 @@
+# Visual-regression sweep (issue #103) — the Playwright e2e lane designed in
+# ADR-0002 (docs/adr/0002-visual-tests-in-browser-mode.md).
+#
+# Runs the geometric layout oracle in tests/visual/ against the real,
+# fully-composed panel on the test-app /demo page. Kept out of ci.yml's
+# verify job because e2e is slower and "lives in its own lane"
+# (`test:visual`), per ADR-0002.
+#
+# NOTE: like ci.yml, this workflow REPORTS ONLY — branch protection is
+# paywalled on this GitHub plan, so a red run cannot block merges.
+
+name: Visual
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Pushes to main can arrive in quick bursts (auto-commit hook); only the
+# newest run of this slower e2e lane matters.
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Resolve the pinned Playwright Docker image from scripts/visual-test.sh —
+  # the single source of truth for the tag. The vitest guard
+  # scripts/__tests__/playwrightDockerImageTag.test.ts (issue #108) keeps that
+  # tag in lockstep with the installed @playwright/test version, so reading it
+  # here guarantees CI renders in the exact same image as local
+  # Orbstack/Docker runs (identical browser build → identical layout).
+  resolve-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.pin.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pinned Playwright image tag
+        id: pin
+        run: |
+          image="$(grep -oE 'mcr\.microsoft\.com/playwright:v[0-9]+\.[0-9]+\.[0-9]+-[a-z0-9]+' scripts/visual-test.sh | head -n 1)"
+          if [ -z "$image" ]; then
+            echo "Could not find the pinned mcr.microsoft.com/playwright tag in scripts/visual-test.sh" >&2
+            exit 1
+          fi
+          echo "Pinned image: $image"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+  visual:
+    needs: resolve-image
+    runs-on: ubuntu-latest
+    # Same pinned image as local runs (scripts/visual-test.sh), with the
+    # matching browser builds preinstalled at /ms-playwright.
+    container:
+      image: ${{ needs.resolve-image.outputs.image }}
+    env:
+      # Match scripts/visual-test.sh: use the image's preinstalled browsers.
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+
+      # Root install also runs the `prepare` script (npm run build).
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install test-app dependencies
+        run: npm ci --prefix test-app
+
+      # `npm run test:visual:ci` = `playwright test` (testDir: tests/visual).
+      # On Linux (no Santa) Playwright starts the test-app dev server itself
+      # via the webServer block in playwright.config.ts — see
+      # tests/visual/README.md. --trace retain-on-failure keeps a per-failure
+      # trace in test-results/ so red runs are debuggable from the artifact
+      # uploaded below.
+      - name: Visual regression sweep
+        run: npm run test:visual:ci -- --trace retain-on-failure
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -88,7 +88,7 @@ export function PositionSelector({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const id = useId();
-  const resetPopover = useResetPopover(indicator, onReset);
+  const resetPopover = useResetPopover(indicator, onReset, "position");
   const current = POSITION_ITEMS.find((o) => o.value === value) ?? POSITION_ITEMS[0];
 
   const { dropdownPos, updateDropdownPos, portalRef } = usePortalDropdown({
@@ -131,7 +131,7 @@ export function PositionSelector({
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "2px 12px" }}>
       <span
-        ref={resetPopover.anchorRef}
+        {...resetPopover.triggerProps}
         style={{
           width: "64px",
           fontSize: "11px",
@@ -139,7 +139,6 @@ export function PositionSelector({
           display: "inline-flex",
           alignItems: "center",
         }}
-        onClick={(e) => { if (e.altKey && onReset) { e.preventDefault(); onReset(); return; } resetPopover.triggerOpen(); }}
       >
         <span style={{
           ...(indicator && indicator !== "none"

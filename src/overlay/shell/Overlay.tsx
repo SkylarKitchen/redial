@@ -24,8 +24,8 @@ import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import { buildBreadcrumb, getSelector, formatCSSDiff, isNavigableElement } from "../util";
 
 import { onHmrUpdate } from "../core/hmr";
-import { getCSSModuleClasses, syncWithApplyUndoRedo as syncClassScopeUndoRedo, type Scope } from "../core/scope";
-import { syncWithApplyUndoRedo } from "../core/statePreview";
+import { getCSSModuleClasses, getDefaultScopeForElement, syncWithApplyUndoRedo as syncClassScopeUndoRedo, type Scope } from "../core/scope";
+import { syncWithApplyUndoRedo, setForcedState } from "../core/statePreview";
 import { Toolbar } from "./Toolbar";
 import { GlobalVariablesPanel } from "../variables/GlobalVariablesPanel";
 import { getVariablesPanelWidth } from "../variables/panelWidth";
@@ -34,7 +34,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { isScrubActive } from "../core/scrubState";
 import { PropertySearch } from "./PropertySearch";
 import { parseCSSText } from "../cssImport";
-import { composeExportCSS, composeTailwindExport } from "../breakpoints";
+import { composeExportCSS, composeTailwindExport, BASE_BREAKPOINT_ID } from "../breakpoints";
 import { NavigatorPanel } from "../navigator/NavigatorPanel";
 import { OverlayScrollbarStyles, ReducedMotionStyles } from "./OverlayStyles";
 import { SelectionChrome } from "./SelectionChrome";
@@ -99,7 +99,7 @@ class PanelErrorBoundary extends Component<
 
 export function Overlay() {
   const [selecting, setSelecting] = useState(false);
-  const [selectedEl, setSelectedEl] = useState<Element | null>(null);
+  const [selectedEl, setSelectedElRaw] = useState<Element | null>(null);
   const [pinned, setPinned] = useState(false);
   const [showNavigator, setShowNavigator] = useState(false);
   const selectedElRef = useRef(selectedEl);
@@ -141,6 +141,30 @@ export function Overlay() {
   const [activeClassName, setActiveClassName] = useState<string | null>(null);
   const cssClasses = useMemo(() => selectedEl ? getCSSModuleClasses(selectedEl) : [], [selectedEl]);
 
+  /**
+   * THE selection-change gate (audit: stale-scope-navigation). Every path
+   * that swaps the selected element — click (handleSelect), breadcrumb,
+   * arrow-key navigation, navigator, modals — receives THIS setter, so moving
+   * to a different element always re-derives the class-scope defaults exactly
+   * like the click path. Paths that bypassed the recompute (breadcrumb, arrow
+   * keys) kept the PREVIOUS element's `activeClassName` active and silently
+   * wrote every subsequent edit to the old element's class rule.
+   *
+   * Only the HMR re-resolve effect uses `setSelectedElRaw`: there the element
+   * is the SAME logical node (re-queried by its stable selector), so the
+   * user's explicit scope choice must survive the swap.
+   */
+  const setSelectedEl = useCallback<React.Dispatch<React.SetStateAction<Element | null>>>((action) => {
+    const prev = selectedElRef.current;
+    setSelectedElRaw(action);
+    const next = typeof action === "function" ? action(prev) : action;
+    if (next && next !== prev) {
+      const defaults = getDefaultScopeForElement(next);
+      setScope(defaults.scope);
+      setActiveClassName(defaults.activeClassName);
+    }
+  }, []);
+
   // State selector
   const [activeState, setActiveState] = useState("none");
 
@@ -153,11 +177,20 @@ export function Overlay() {
   // Breakpoint selector (#35). "base" = un-mediated; "768" = ≥768px, etc.
   // Edits made while a non-base breakpoint is active are keyed to it (ADR-0005)
   // and rendered media-gated by breakpointPreview.ts.
-  const [activeBreakpoint, setActiveBreakpoint] = useState("base");
+  const [activeBreakpoint, setActiveBreakpoint] = useState(BASE_BREAKPOINT_ID);
   const handleBreakpointChange = useCallback((bp: string) => {
     if (isScrubActive()) return;
     setActiveBreakpoint(bp);
   }, []);
+
+  // The active breakpoint must NOT survive panel close (audit gap #12):
+  // reopening later would silently key every new edit to the stale
+  // breakpoint. handleClose (useElementSelection) resets scope/class/state;
+  // the breakpoint dimension is owned here, so clear it whenever the
+  // selection empties.
+  useEffect(() => {
+    if (!selectedEl) setActiveBreakpoint(BASE_BREAKPOINT_ID);
+  }, [selectedEl]);
 
   // THE scoping bundle (scope ▸ class ▸ state ▸ breakpoint). Overlay owns ONE
   // memoized ScopeContext and threads it whole — call sites never enumerate
@@ -266,6 +299,12 @@ export function Overlay() {
 
   // Sync statePreview.ts <style> tag with apply.ts undo/redo
   useEffect(() => syncWithApplyUndoRedo(), []);
+
+  // Force the selected pseudo-state visually while it's active in the panel
+  // (author :hover/:active/:focus rules + edits render without physical hover)
+  useEffect(() => {
+    setForcedState(selectedEl, activeState);
+  }, [selectedEl, activeState]);
 
   // Sync scope.ts class-scope <style> tag with apply.ts undo/redo (issue #29)
   useEffect(() => syncClassScopeUndoRedo(), []);
@@ -451,6 +490,10 @@ export function Overlay() {
     announce,
     handleResetAll,
     handleCloseAttempt,
+    // Escape while the unsaved-changes bar is showing must dismiss the bar
+    // (keep editing) instead of re-attempting the close.
+    closeWarning,
+    setCloseWarning,
     refreshPanel,
     selectedElRef,
     selectedSelectorRef,
@@ -569,12 +612,14 @@ export function Overlay() {
       if (selectedEl && !selectedEl.isConnected && selectedSelectorRef.current) {
         const resolved = document.querySelector(selectedSelectorRef.current);
         if (resolved) {
-          setSelectedEl(resolved);
+          // Raw setter on purpose: same logical element (same stable
+          // selector), so the user's scope choice must NOT be re-derived.
+          setSelectedElRaw(resolved);
           refreshPanel(resolved);
           return;
         } else {
           // Element no longer exists after HMR — close panel
-          setSelectedEl(null);
+          setSelectedElRaw(null);
           selectedSelectorRef.current = null;
           setInferResult(null);
           return;

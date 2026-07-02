@@ -75,6 +75,9 @@ function makeFlexCtx(element: HTMLElement): { ctx: SectionCtx; applyFn: ReturnTy
   const ctx: SectionCtx = {
     element,
     apply: applyFn,
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none",
     sectionInd: () => "none",
     cs,

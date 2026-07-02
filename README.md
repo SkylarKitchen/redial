@@ -1,10 +1,12 @@
 # Redial
 
+[![CI](https://github.com/SkylarKitchen/redial/actions/workflows/ci.yml/badge.svg)](https://github.com/SkylarKitchen/redial/actions/workflows/ci.yml)
+
 A floating Webflow-style CSS tuning panel for Next.js. Click any element, get context-aware controls, drag to tune, save directly to your source files.
 
 DevTools changes vanish on reload. AI coding tools add minutes of latency per visual tweak. Redial gives you the direct-manipulation workflow that Webflow proved essential — but inside your own Next.js codebase, writing changes straight to your source files.
 
-**Status: Pre-release — API may change.**
+**Status: v1.0 — shipped and stable.**
 
 ---
 
@@ -47,7 +49,7 @@ DOM Element
 Three layers:
 
 - **Intelligence** (`infer.ts`) — Reads `getComputedStyle()` from the selected DOM element and generates a configuration object describing what controls to show and their current values.
-- **Rendering** (`WebflowPanel.tsx` + section components) — Renders the panel with 8 CSS sections plus a CSS Variables section. Each section contains sliders, color pickers, dropdowns, and toggle groups.
+- **Rendering** (`WebflowPanel.tsx` + section components) — Renders the panel with 8 structured CSS sections plus a Custom properties section. Each section contains sliders, color pickers, dropdowns, and toggle groups.
 - **Persistence** (`apply.ts` → `commit.ts`) — Applies changes as inline styles with an undo stack. On save, traces the CSS property back to its source file and performs a surgical replacement. Next.js HMR picks up the file change immediately.
 
 ---
@@ -150,7 +152,7 @@ The panel mirrors the [Webflow Designer's style panel](https://help.webflow.com/
 
 Each section is context-aware — flex controls only appear when the element is `display: flex`, typography only appears for text-bearing elements, etc.
 
-A **CSS Variables** section also appears when the selected element uses custom properties, letting you tune `--var` values directly.
+A ninth **Custom properties** section accepts any CSS declaration the structured sections don't cover, with autocomplete over the full standard property list.
 
 ---
 
@@ -158,18 +160,28 @@ A **CSS Variables** section also appears when the selected element uses custom p
 
 | Key | Action |
 |-----|--------|
-| `` ` `` | Toggle selection mode |
+| `` ` `` | Toggle selection mode / close panel |
 | `Esc` | Close panel / cancel selection |
 | `Cmd+Z` | Undo |
 | `Cmd+Shift+Z` | Redo |
 | `Cmd+S` | Save changes to source files |
 | `Cmd+C` | Copy CSS |
-| `Cmd+K` | Command palette |
+| `Cmd+Alt+C` / `Cmd+Alt+V` | Copy / paste styles between elements |
+| `Cmd+Shift+V` | Import CSS from clipboard |
+| `Cmd+K` | Command palette (focus inside panel) |
+| `Cmd+F` / `/` | Search properties (`Cmd+F` only inside panel) |
 | `D` (hold) | Diff peek — strips overrides while held |
 | `S` | Cycle scope (element → class) |
-| `R` | Reset current element |
-| `↑` / `↓` | Navigate sections |
-| `Tab` | Move between controls |
+| `R` / `Shift+R` | Reset current element / reset all |
+| `P` | Pin / unpin element |
+| `N` | Toggle navigator |
+| `H` / `M` / `G` | Changes drawer / box model / grid overlay |
+| `↑ ↓ ← →` | Navigate elements (parent / child / siblings) |
+| `1`–`8` | Jump to section |
+| `[` / `]` | Cycle sections |
+| `?` | Shortcuts help (the canonical in-app list) |
+
+Modifier combos are context-aware and never hijack the host page: `Cmd+F` and `Cmd+K` are only claimed while focus is inside the panel (browser find and host command palettes keep working); `Cmd+C` passes through whenever text is selected; `Cmd+Z` / `Cmd+Shift+Z` pass through in host text fields, and on the page they're only claimed when the overlay actually has a step to revert or replay. `Cmd+S` is claimed globally while the panel is open.
 
 **Label-drag scrubbing:** Click and drag on any property label (e.g. the word "Width") to scrub its value — the same signature interaction from Webflow. Hold `Shift` for 10× speed, `Alt` for 0.1× fine control.
 
@@ -183,7 +195,7 @@ Toggle between **element** scope (inline style overrides on the specific element
 
 ### State Editing
 
-Edit pseudo-class styles (`hover`, `focus`, `active`, `focus-within`, `focus-visible`) via the state selector dropdown. Changes are previewed live and committed to the appropriate `:state` block in your source file.
+Edit pseudo-class styles (`hover`, `focus`, `active`, `focus-within`, `focus-visible`) via the state selector dropdown. Changes are previewed live and committed to the appropriate `:state` block in your source file. (`:visited` is not offered — browser privacy restrictions make it impossible to preview.)
 
 ### Undo / Redo
 
@@ -206,7 +218,7 @@ Discovers all CSS custom properties (`--var`) affecting the selected element. Or
 
 ### Style Indicators
 
-Modified properties show a blue highlight pill on their label. `Alt+click` any label to reset that individual property.
+Property labels carry cascade-provenance indicators (ADR-0007), matching the Webflow Designer: **blue** = authored on this element's own rule, **orange** = inherited from an ancestor, **pink** = element-scope (inline) override, **green** = pseudo-state style. Properties changed this session show an **amber** modified cue on top. `Alt+click` any label to reset that individual property.
 
 ### Commit Flow
 
@@ -217,7 +229,7 @@ Save writes changes back to source files:
 3. Performs a surgical string replacement
 4. Next.js HMR picks up the change — the page updates instantly
 
-Supports both CSS Modules (`.module.scss`, `.module.css`) and Tailwind CSS projects.
+Supports CSS Modules (`.module.scss`, `.module.css`), plain project CSS files, and Tailwind CSS projects (diffs convert to utility classes merged into `className`). Elements styled by systems with no save path — styled-components, Emotion, styled-jsx, runtime-injected style tags — get a non-blocking notice in the panel: edits preview live but can't be saved to source.
 
 ### Copy / Export
 
@@ -237,6 +249,7 @@ Supports both CSS Modules (`.module.scss`, `.module.css`) and Tailwind CSS proje
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `commitEndpoint` | `string` | `"/api/tuner/commit"` | API route path for the commit server. The client POSTs to this exact path — with the catch-all route above, it must include at least one segment after `/api/tuner` |
+| `breakpoints` | `{ label?: string; minWidth: number }[]` | auto-detected | Your project's responsive breakpoints (mobile-first min-widths). When omitted, they're auto-detected from your stylesheets' `@media (min-width)` rules, falling back to 640/768/1024/1280 |
 
 ---
 
@@ -255,9 +268,9 @@ const withTuner = require("redial/next-plugin"); // Next.js plugin
 
 ## Requirements
 
-- **Next.js** ≥ 13 (App Router)
+- **Next.js** ≥ 13.2 (App Router)
 - **React** ≥ 18
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20
 
 ---
 
@@ -278,21 +291,25 @@ The `test-app/` directory contains a full Next.js app for development:
 - `http://localhost:3000/demo` — Auto-opens the panel on sample content
 - `http://localhost:3000/showcase` — Visual component showcase (imports live design tokens from `theme.ts`)
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and PR expectations,
+[SECURITY.md](SECURITY.md) for reporting vulnerabilities, and
+[CHANGELOG.md](CHANGELOG.md) for release history.
+
 ### Autonomous runs (sandcastle)
 
 For sandboxed Claude Code runs — single tasks via `npm run sandcastle`, or
 parallel checklist runs via `npm run tasks -- tasks.md` — see
 [`docs/sandcastle.md`](docs/sandcastle.md). Replaces / complements the
-existing `run-tasks-parallel.sh` flow with Docker isolation.
+existing `scripts/run-tasks-parallel.sh` flow with Docker isolation.
 
 ---
 
 ## Roadmap
 
 v1.0 is shipped and stable. Planned post-v1 work — features, architectural
-improvements, and design decisions — is tracked in
-[`ROADMAP.md`](ROADMAP.md), the source of truth. The corresponding
-[GitHub issues](https://github.com/SkylarKitchen/redial/issues?q=is%3Aissue)
+improvements, and design decisions — is indexed in
+[`ROADMAP.md`](ROADMAP.md); GitHub Issues remain the tracker. The
+[linked issues](https://github.com/SkylarKitchen/redial/issues?q=is%3Aissue)
 are closed for a clean v1.0 tracker and reopened when work begins.
 
 ---

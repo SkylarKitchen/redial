@@ -50,6 +50,9 @@ function makePreflightCtx(overrides?: { borderWidth?: string }): SectionCtx {
   return {
     element,
     apply: vi.fn(),
+    reset: vi.fn(),
+    resetRead: () => 0,
+    resetReadStr: () => "",
     ind: () => "none" as const,
     sectionInd: () => "none" as const,
     cs,

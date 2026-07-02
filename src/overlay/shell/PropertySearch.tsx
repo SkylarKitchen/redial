@@ -31,7 +31,7 @@ export const SECTION_PROPERTIES: Record<string, string[]> = {
   ],
   Typography: [
     "font-family", "font-weight", "font-size", "line-height", "letter-spacing",
-    "color", "text-align", "text-decoration", "text-transform", "font-style",
+    "color", "text-align", "text-decoration-line", "text-transform", "font-style",
     "word-spacing", "white-space", "text-indent", "word-break", "hyphens",
     "direction", "column-count", "column-gap",
   ],
