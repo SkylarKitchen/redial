@@ -1,7 +1,7 @@
 # ADR-0008: Shadow DOM (not iframe) for overlay isolation
 
-**Status:** Proposed — decision-ready draft awaiting maintainer sign-off (issue #30)
-**Date:** 2026-06-09
+**Status:** Accepted (direction only) — Shadow DOM chosen over iframe; implementation remains open under issue #30 and must be validated by manual integration in real host apps before shipping. A stale draft implementation exists in PR #122.
+**Date:** 2026-06-09 (direction accepted 2026-07-06)
 
 ## Context
 

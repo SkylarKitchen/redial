@@ -31,6 +31,15 @@ A defensive `PreToolUse` hook is available at
 [`tools/claude-hooks/block-unreleased-models.sh`](tools/claude-hooks/README.md)
 that catches this automatically when installed globally.
 
+### Concurrent sessions use worktrees
+
+Interactive agent sessions should start via `scripts/new-session.sh`, which
+gives each session its own worktree on a `session/<name>` branch. This is
+the resolution of issue #63: the global auto-commit Stop hook refuses to
+commit on `main`/`master`, and a PreToolUse guard blocks
+`git commit`/`push`/`merge` while `main` is checked out — so work lands on
+branches and reaches `main` through PRs.
+
 ### Source of truth
 
 - Glossary / vocabulary: [`CONTEXT.md`](CONTEXT.md)
