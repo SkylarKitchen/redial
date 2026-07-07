@@ -347,7 +347,7 @@ export async function handleCommit(
       releaseLock = await acquireFileLock(filePath);
 
       const source = await readFile(filePath, "utf-8");
-      let lines = source.split("\n");
+      const lines = source.split("\n");
       let modified = false;
 
       // Recompute lazily: after any structural splice (state block creation) the

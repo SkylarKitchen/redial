@@ -6,7 +6,7 @@
  */
 
 import { readFile, writeFile, stat } from "fs/promises";
-import { resolve, join, extname } from "path";
+import { resolve, extname } from "path";
 import { findFirstMatchingFile, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
 
 export type TailwindChange = {

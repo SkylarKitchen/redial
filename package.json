@@ -36,7 +36,7 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.sandcastle.json && tsc -p tsconfig.tests.json",
     "test": "vitest run",
-    "lint": "eslint src/overlay",
+    "lint": "eslint src scripts",
     "test:visual": "bash scripts/visual-test.sh",
     "test:visual:ci": "playwright test",
     "prepare": "npm run build",

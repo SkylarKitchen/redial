@@ -40,6 +40,18 @@ commit on `main`/`master`, and a PreToolUse guard blocks
 `git commit`/`push`/`merge` while `main` is checked out — so work lands on
 branches and reaches `main` through PRs.
 
+### Testing policy (issue #105)
+
+Behavior and accessibility tests must mount the component (happy-dom) and
+assert rendered DOM — ARIA attributes, dispatched events, focus movement.
+Source-text assertions (`readFileSync` + regex) are reserved for true
+convention audits (`noShadcnInOverlay`, `themeCompliance`, `variableAudit`);
+never use them for behavior — they pass when runtime behavior breaks and
+fail on harmless renames. When touching a file that has source-text behavior
+tests, migrate them to behavioral in the same change (accessibility audits
+first). Exemplar migrations: `dropdownAccessibility.test.tsx`,
+`fontPreview.test.tsx`.
+
 ### Source of truth
 
 - Glossary / vocabulary: [`CONTEXT.md`](CONTEXT.md)

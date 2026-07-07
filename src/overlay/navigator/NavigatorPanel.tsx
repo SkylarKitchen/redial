@@ -142,7 +142,6 @@ export function NavigatorPanel({
     });
     ro.observe(el);
     return () => ro.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed]);
 
   // ── Build filtered tree ──
