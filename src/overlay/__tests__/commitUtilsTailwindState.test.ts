@@ -215,4 +215,24 @@ describe("enrichChangesForCommit — __tuner marker classes never leak into exis
     expect(enriched[0].existingClasses).toBe("flex items-center gap-2 p-4");
     expect(enriched[0].existingClasses).not.toContain("__tuner");
   });
+
+  it("passes existingClasses through byte-identical when no marker is present (preserves authored whitespace)", () => {
+    // The server's exact-content match (findClassNameForChange step 1, and
+    // the byte-exact Turbopack fallback) needs the payload to equal the
+    // authored JSX attribute exactly — including irregular whitespace like
+    // `className="flex  items-center"`. Normalizing unconditionally would
+    // silently break saves for elements whose classList was never mutated.
+    const el = document.createElement("div");
+    el.className = "flex  items-center gap-2 p-4 ";
+    document.body.appendChild(el);
+
+    const enriched = enrichChangesForCommit(el, [entry()], {
+      scope: "element",
+      activeClassName: null,
+      activeState: "none",
+    });
+
+    expect(enriched).toHaveLength(1);
+    expect(enriched[0].existingClasses).toBe("flex  items-center gap-2 p-4 ");
+  });
 });

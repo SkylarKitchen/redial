@@ -153,11 +153,20 @@ export function enrichChangesForCommit(
     // Strip redial's own marker classes (statePreview.ts tags the element
     // with __tuner-state-preview while a state preview is live) — they don't
     // exist in the JSX source, so leaking them breaks the server's className
-    // attribute match.
-    const existingClasses = (typeof element.className === "string" ? element.className : "")
+    // attribute match. Only rebuild the string when a marker is actually
+    // present: the server's exact-content match needs the payload to stay
+    // byte-identical to the authored attribute (including any irregular
+    // whitespace like `className="flex  items-center"`), so an unconditional
+    // split/join would silently break saves for untouched elements.
+    const rawClasses = typeof element.className === "string" ? element.className : "";
+    const existingClasses = rawClasses
       .split(/\s+/)
-      .filter((cls) => cls && !cls.startsWith("__tuner"))
-      .join(" ");
+      .some((cls) => cls.startsWith("__tuner"))
+      ? rawClasses
+          .split(/\s+/)
+          .filter((cls) => cls && !cls.startsWith("__tuner"))
+          .join(" ")
+      : rawClasses;
 
     return writable.map((c) => ({
       ...c,
