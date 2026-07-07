@@ -1,7 +1,7 @@
 # ADR-0009: CSP compatibility via constructable stylesheets
 
-**Status:** Proposed — decision-ready draft awaiting maintainer sign-off (issue #31)
-**Date:** 2026-06-09
+**Status:** Accepted — implemented; `core/managedSheet.ts` shipped and adopted at all 8 injection sites (scope, statePreview, modeOverrides, breakpointPreview, BezierEditor, WebflowPanel, useInjectedStyles) with tests
+**Date:** 2026-06-09 (accepted 2026-07-06)
 
 ## Context
 

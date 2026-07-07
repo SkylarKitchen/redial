@@ -16,7 +16,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, mkdir, rm, symlink } from "fs/promises";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
-import { resolveSourceFile, handleCommit } from "../commit";
+import { handleCommit } from "../commit";
+import { resolveSourceFile } from "../cssResolve";
 
 let sandbox: string;
 let projectRoot: string;

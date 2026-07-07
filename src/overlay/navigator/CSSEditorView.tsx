@@ -321,9 +321,6 @@ function RuleBlock({
   selectedEl: Element;
   totalBlocks: number;
 }) {
-  // Inline blocks are rendered by InlineStyleEditor instead
-  if (block.source === "inline") return null;
-
   const [hoveredDecl, setHoveredDecl] = useState<number | null>(null);
 
   // Find the next editable value position (for Tab navigation)
@@ -344,6 +341,10 @@ function RuleBlock({
     },
     [block.declarations.length, setEditingKey],
   );
+
+  // Inline blocks are rendered by InlineStyleEditor instead. (Checked after
+  // the hooks above so hook order stays stable across renders — rules-of-hooks.)
+  if (block.source === "inline") return null;
 
   const wrapperStyle = block.isState ? stateBlockStyle : blockStyle;
 

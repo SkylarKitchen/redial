@@ -21,7 +21,7 @@ import {
   type CSSVariable,
 } from "../variables/discoverVariables";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
-import { findPropertyInFile } from "../../server/commit";
+import { findPropertyInFile } from "../../server/cssSearch";
 
 // ─────────────────────────────────────────────────────────────────────
 // parseVarAlias — weird syntactic var() inputs

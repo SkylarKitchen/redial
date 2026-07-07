@@ -13,7 +13,7 @@ import { resolveSource, getCSSSource, getModuleClassInfo, getGlobalCSSSource, ge
 import { getReadableName, isTailwindElement, isSessionAttachedClass, getSessionAttachedClasses } from "./scope";
 import { getAuthoredValue } from "../getAuthoredValue";
 import { parseVarRef } from "../cssParsers";
-import { formatTailwindDiff } from "../tailwind";
+import { formatTailwindDiff, twStateVariant } from "../tailwind";
 import { getBreakpoints, BASE_BREAKPOINT_ID } from "../breakpoints";
 
 /**
@@ -126,27 +126,59 @@ export function enrichChangesForCommit(
   // (#53) targets CSS `@media` blocks) — drop breakpoint-tagged changes here;
   // the clipboard export (composeTailwindExport) carries them with their
   // sm:/md:/… variant prefixes instead.
-  if (isTailwindElement(element)) {
-    const baseChanges = changes.filter((c) => !c.breakpoint);
-    const reactSource = getReactSource(element);
-    const newClasses = formatTailwindDiff(baseChanges);
-    const existingClasses = typeof element.className === "string" ? element.className : "";
+  const isStateActive = opts.activeState !== undefined && opts.activeState !== "none";
 
-    return baseChanges.map((c) => {
+  if (isTailwindElement(element)) {
+    const reactSource = getReactSource(element);
+    // State arrives in two shapes: the Footer/Overlay pipeline sends
+    // diffState() entries with NO `.state` field (the active state lives in
+    // opts.activeState), while ChangesDrawer "Save All" sends diffAll()
+    // entries that carry `.state` per change. Normalize to per-change state
+    // before formatting so both shapes get their variant prefix (issue #57's
+    // Tailwind twin: a bare write silently restyles the RESTING state).
+    const stateful = changes.flatMap((c) => {
+      if (c.breakpoint) return [];
       const { breakpoint: _bp, ...base } = c;
-      return {
+      return [{
         ...base,
-        sourceFile: reactSource?.file,
-        sourceLine: reactSource?.line,
-        mode: "tailwind" as const,
-        newClasses,
-        existingClasses,
-      };
+        state: c.state ?? (isStateActive ? opts.activeState : undefined),
+      }];
     });
+    // Refusal-first, mirroring the breakpoint drop-filter above: a state with
+    // no Tailwind variant must never be written as a base utility.
+    const writable = stateful.filter(
+      (c) => c.state === undefined || twStateVariant(c.state) !== null,
+    );
+    const newClasses = formatTailwindDiff(writable);
+    // Strip redial's own marker classes (statePreview.ts tags the element
+    // with __tuner-state-preview while a state preview is live) — they don't
+    // exist in the JSX source, so leaking them breaks the server's className
+    // attribute match. Only rebuild the string when a marker is actually
+    // present: the server's exact-content match needs the payload to stay
+    // byte-identical to the authored attribute (including any irregular
+    // whitespace like `className="flex  items-center"`), so an unconditional
+    // split/join would silently break saves for untouched elements.
+    const rawClasses = typeof element.className === "string" ? element.className : "";
+    const existingClasses = rawClasses
+      .split(/\s+/)
+      .some((cls) => cls.startsWith("__tuner"))
+      ? rawClasses
+          .split(/\s+/)
+          .filter((cls) => cls && !cls.startsWith("__tuner"))
+          .join(" ")
+      : rawClasses;
+
+    return writable.map((c) => ({
+      ...c,
+      sourceFile: reactSource?.file,
+      sourceLine: reactSource?.line,
+      mode: "tailwind" as const,
+      newClasses,
+      existingClasses,
+    }));
   }
 
   // CSS path: standard enrichment
-  const isStateActive = opts.activeState !== undefined && opts.activeState !== "none";
 
   // ─── Class creation (audit 05) ───
   // When the active class was attached to the element THIS session, every

@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, mkdir, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { findPropertyInFile, resolveSourceFile, handleCommit } from "../commit";
+import { handleCommit } from "../commit";
+import { findPropertyInFile } from "../cssSearch";
+import { resolveSourceFile } from "../cssResolve";
 
 // --- Test helpers ---
 

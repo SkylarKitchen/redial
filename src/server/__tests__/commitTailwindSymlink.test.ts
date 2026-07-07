@@ -16,7 +16,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { readFile, writeFile, mkdir, mkdtemp, rm, symlink } from "fs/promises";
-import { join, dirname } from "path";
+import { join } from "path";
 import { tmpdir } from "os";
 import { handleTailwindCommit, clearClassNameFileCache } from "../commitTailwind";
 
