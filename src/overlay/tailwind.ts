@@ -7,10 +7,39 @@
 
 import type { DiffEntry } from "./core/apply";
 
-/** Convert a CSS diff to a space-separated Tailwind v4 class string. */
+// Redial pseudo-state → Tailwind variant prefix. Covers exactly the states
+// the panel's StateSelector offers (statePreview.ts's VALID_STATES is the
+// broader preview/server allowlist — `:visited`, `first-child`, and
+// `last-child` are deliberately NOT mapped here because the panel can't
+// produce them). A state without an entry has no sanctioned Tailwind
+// variant and must be REFUSED — writing a state edit as a bare base utility
+// would silently restyle the element's resting state. A Map (not a bare
+// object) so arbitrary state strings (e.g. from a corrupted persisted
+// session) can never resolve prototype members like "toString".
+const STATE_VARIANTS = new Map<string, string>([
+  ["hover", "hover"],
+  ["focus", "focus"],
+  ["active", "active"],
+  ["focus-within", "focus-within"],
+  ["focus-visible", "focus-visible"],
+]);
+
+/** Tailwind variant for a redial pseudo-state, or null if none exists. */
+export function twStateVariant(state: string): string | null {
+  return STATE_VARIANTS.get(state) ?? null;
+}
+
+/** Convert a CSS diff to a space-separated Tailwind v4 class string.
+ *  State-tagged entries compose their variant prefix (`hover:text-[red]`);
+ *  entries whose state has no variant are refused (excluded, never bare). */
 export function formatTailwindDiff(changes: DiffEntry[]): string {
   return changes
-    .map((c) => cssToTailwind(c.prop, c.to))
+    .map((c) => {
+      const cls = cssToTailwind(c.prop, c.to);
+      if (cls === null || !c.state) return cls;
+      const variant = twStateVariant(c.state);
+      return variant === null ? null : `${variant}:${cls}`;
+    })
     .filter((c): c is string => c !== null)
     .join(" ");
 }
