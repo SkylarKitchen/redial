@@ -5,9 +5,9 @@
  * using conflict-aware logic (e.g. w-4 + w-6 -> w-6, not w-4 w-6).
  */
 
-import { readFile, writeFile, stat, readdir } from "fs/promises";
+import { readFile, writeFile, stat } from "fs/promises";
 import { resolve, join, extname } from "path";
-import { EXCLUDED_DIRS, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
+import { findFirstMatchingFile, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
 
 export type TailwindChange = {
   sourceFile: string;
@@ -426,42 +426,29 @@ async function findFileByClassName(
 
   const JSX_EXTENSIONS = new Set([".tsx", ".jsx", ".js", ".ts"]);
 
-  async function walk(dir: string): Promise<string | null> {
-    let entries;
-    try {
-      entries = await readdir(dir, { withFileTypes: true });
-    } catch { return null; }
-
-    // Visit prioritized source directories first, then files, then the rest.
-    const dirs = entries.filter((e) => e.isDirectory() && !e.isSymbolicLink() && !EXCLUDED_DIRS.has(e.name));
-    dirs.sort((a, b) =>
-      Number(SOURCE_DIR_PRIORITY.has(b.name)) - Number(SOURCE_DIR_PRIORITY.has(a.name)));
-    const files = entries.filter((e) => e.isFile());
-
-    for (const entry of files) {
-      if (!JSX_EXTENSIONS.has(extname(entry.name))) continue;
-      const filePath = join(dir, entry.name);
+  // Depth-first, prioritized-source-dirs-first walk via the shared walker
+  // (pathSafety.findFirstMatchingFile — issue #138 walker consolidation).
+  const found = await findFirstMatchingFile(projectRoot, {
+    fileFilter: (name) => JSX_EXTENSIONS.has(extname(name)),
+    priorityDirs: SOURCE_DIR_PRIORITY,
+    accept: async (filePath) => {
       try {
         const content = await readFile(filePath, "utf-8");
-        if (content.includes(className)) {
-          // Verify it's actually inside a className attribute — any attribute
-          // in the file, not just the first (issue #66).
-          if (linesHaveExactClassName(content.split("\n"), className)) {
-            // Return path relative to project root
-            return filePath.slice(projectRoot.length + 1);
-          }
-        }
-      } catch { /* unreadable file */ }
-    }
+        // Verify it's actually inside a className attribute — any attribute
+        // in the file, not just the first (issue #66).
+        return (
+          content.includes(className) &&
+          linesHaveExactClassName(content.split("\n"), className)
+        );
+      } catch {
+        /* unreadable file */
+        return false;
+      }
+    },
+  });
 
-    for (const entry of dirs) {
-      const found = await walk(join(dir, entry.name));
-      if (found) return found;
-    }
-    return null;
-  }
-
-  const result = await walk(projectRoot);
+  // Return path relative to project root
+  const result = found ? found.slice(projectRoot.length + 1) : null;
   if (result) classNameFileCache.set(cacheKey, result);
   return result;
 }

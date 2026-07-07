@@ -745,6 +745,23 @@ function createRuleInBody(
 }
 
 /**
+ * The subset of a commit change the block-scoped save ladder needs. Kept
+ * structural (rather than importing CommitChange from commit.ts) so this
+ * module never depends on the orchestrator — commit.ts's CommitChange is
+ * assignable to it as-is.
+ */
+export type BlockChange = {
+  prop: string;
+  from: string;
+  to: string;
+  className?: string;
+  /** CSS pseudo-class state (e.g. "hover") — targets the `:state` block. */
+  state?: string;
+  /** Responsive breakpoint (issue #53) — targets the matching @media block. */
+  breakpoint?: { minWidth: number };
+};
+
+/**
  * The base save ladder (replace exact → broad rewrite → insert declaration →
  * create rule), scoped to ONE media block's body sub-document. Mutates `body`
  * in place; the caller splices it back on success.
