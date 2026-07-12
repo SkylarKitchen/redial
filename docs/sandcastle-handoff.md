@@ -1,5 +1,12 @@
 # Sandcastle integration — handoff
 
+> **Superseded (2026-07-12).** This doc describes the original single-prompt
+> integration. `.sandcastle/` now runs a four-phase issue loop
+> (plan → implement → review → merge) — see
+> [`.sandcastle/README.md`](../.sandcastle/README.md) and
+> [`sandcastle.md`](sandcastle.md). Kept for historical context;
+> `prompt.md` / `prompt.template.md` referenced below live in git history.
+
 **Purpose.** Pick up sandcastle integration work in a local Claude Code
 session. This doc is what a fresh assistant needs to know to continue
 without re-deriving context.

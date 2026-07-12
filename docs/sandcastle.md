@@ -10,8 +10,8 @@ tree is never touched until you merge.
 
 | Tool | Use it when |
 |---|---|
-| `npm run sandcastle` | One-off task. Edit `.sandcastle/prompt.md`, run, review the diff. |
-| `npm run tasks -- tasks.md` | Overnight / parallel runs over a checklist. Replaces `scripts/run-tasks-parallel.sh`. |
+| `npm run sandcastle` | AFK runs over the issue backlog. Four-phase loop (plan → implement → review → merge) over open `ready-for-agent` issues. See [`.sandcastle/README.md`](../.sandcastle/README.md). |
+| `npm run tasks -- tasks.md` | Overnight / parallel runs over a markdown checklist (no issue tracker involved). Replaces `scripts/run-tasks-parallel.sh`. |
 | `./scripts/run-tasks-parallel.sh` (existing) | Still works — kept around for runs you want to do without containers. |
 
 ## Prerequisites
@@ -92,31 +92,29 @@ npm install
 # 2. Build the agent image (re-run if .sandcastle/Dockerfile changes)
 npm run sandcastle:build-image
 
-# 3. Edit .sandcastle/prompt.md, then:
+# 3. Label the issues you want worked with `ready-for-agent`
+
+# 4. Start an integration branch — main.ts refuses to run from main,
+#    because the merge phase commits to the current branch and main
+#    only moves through PRs (issue #63):
+git switch -c sandcastle/integration-$(date +%F)
+
+# 5. Launch:
 npm run sandcastle
 ```
 
-The agent runs inside the container, edits the worktree mounted at
-`/home/agent/workspace`, and the result merges back to your current HEAD
-(strategy is `merge-to-head` by default; see "Branch strategy" below for
-review-before-merge).
+Each cycle, a planner picks the unblocked issues, each issue runs in its own
+container on a `sandcastle/issue-N-slug` branch (implementer, then reviewer),
+and a merge agent folds the branches that produced commits back into your
+integration branch. In the morning: QA the integration branch, PR it to
+`main`, close the issues that pass. Agents never close issues.
 
 ### Branch strategy
 
-`.sandcastle/main.ts` ships with `branchStrategy: { type: "merge-to-head" }`
-— the agent's commits land on a temp branch that's merged back to HEAD on
-success, then the temp branch is deleted. Good for solo iteration.
-
-For review-before-merge, edit `.sandcastle/main.ts`:
-
-```ts
-branchStrategy: { type: "branch", branch: "agent/<descriptive-name>" }
-```
-
-Commits stay on `agent/<name>`. Switch and review with `git diff
-HEAD...agent/<name>`, merge manually when satisfied. Use this when
-you don't fully trust the prompt or the agent's track record on the
-task.
+Issue branches (`sandcastle/issue-N-slug`) persist after the run — the merge
+agent merges them into the integration branch but doesn't delete them, so
+you can inspect any branch individually with
+`git diff <integration>...sandcastle/issue-N-slug`.
 
 The parallel runner (`scripts/run-tasks.ts`) always uses
 `{ type: "branch", branch: "sandcastle/<slug>-<ts>" }` — every task
@@ -166,9 +164,12 @@ reads the PRD checkbox state, doesn't care how tasks are dispatched.
 
 | Env var | Default | What it does |
 |---|---|---|
-| `SANDCASTLE_MODEL` | `claude-opus-4-5` | Model passed to `claudeCode(...)`. |
-| `SANDCASTLE_IMAGE` | `redial-sandcastle:local` | Docker image name. Used by `scripts/run-tasks.ts`. |
-| `PROMPT` | — | Override `.sandcastle/prompt.md` with an inline prompt (single-task runs only). |
+| `SANDCASTLE_MODEL` | `claude-opus-4-5` | Base model passed to `claudeCode(...)`. |
+| `SANDCASTLE_PLANNER_MODEL` | `$SANDCASTLE_MODEL` | Model for the phase-1 planner (opus-class recommended). |
+| `SANDCASTLE_WORKER_MODEL` | `claude-sonnet-4-5` | Model for implementer / reviewer / merger. |
+| `SANDCASTLE_MAX_CYCLES` | `4` | Plan → execute → merge cycles per `npm run sandcastle`. |
+| `SANDCASTLE_IMAGE` | `redial-sandcastle:local` | Docker image name. |
+| `GH_TOKEN` | host keyring via `gh auth token` | GitHub token injected into sandboxes for `gh`. |
 
 All of these can live in `.sandcastle/.env` (gitignored) so you don't
 have to re-export them every shell.
