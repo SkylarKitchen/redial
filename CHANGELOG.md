@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Tailwind pseudo-state save fix (#139; ported from stale PR #113 and locked with regression tests).
+
+## [1.1.0] - 2026-07-02
+
+Tagged `v1.1.0` (renamed on 2026-07-13 from the original `v1.0.0` tag name, which collided with the May `v1.0` release).
+
 ### Added
 - Breakpoint awareness (#35): breakpoint selector in the header, live media-gated preview, `@media` clipboard export, and a `breakpoints` prop on `<Tuner />` with auto-detection from the project's stylesheets.
 - Cascade-provenance style indicators per ADR-0007 (#46): blue = authored here, orange = inherited, pink = element-inline, green = state, plus the amber "modified this session" cue.
@@ -39,5 +46,6 @@ First stable release (tagged `v1.0`).
 - Copy/export: CSS rule block, CSS custom properties, Tailwind classes, and a before/after diff view.
 - Keyboard-first workflow with in-app shortcuts help (`?`).
 
-[Unreleased]: https://github.com/SkylarKitchen/redial/compare/v1.0...HEAD
+[Unreleased]: https://github.com/SkylarKitchen/redial/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/SkylarKitchen/redial/compare/v1.0...v1.1.0
 [1.0.0]: https://github.com/SkylarKitchen/redial/releases/tag/v1.0
