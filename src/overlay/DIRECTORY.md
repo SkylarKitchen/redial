@@ -35,7 +35,8 @@ src/overlay/
 | `hmr.ts` | HMR bridge — re-infers on hot reload | `onHmrUpdate` |
 | `config.ts` | Runtime configuration (commit endpoint, project breakpoints) | `getConfig`, `configure`, `TunerConfig` |
 | `sourcemap.ts` | React source detection (≤18 `_debugSource`, 19 `_debugStack`) + CSS source resolution | `resolveSource`, `getReactSource`, `getCSSSource`, `getModuleClassInfo` |
-| `commitUtils.ts` | Commit preparation (diff → file write payload) | `enrichChangesForCommit` |
+| `save.ts` | **THE save pipeline (ADR-0011)** — enrichment, file-vs-clipboard partition, per-mode transport, fallbacks, breakpoint reconciliation; every save surface calls this | `save`, `SaveOutcome`, `__setTransportForTests` |
+| `commitUtils.ts` | Commit preparation (provenance-driven diff → file write payload; internal to save.ts + tests) | `enrichChangesForCommit`, `partitionBreakpointChanges` |
 | `contrast.ts` | Pure WCAG contrast evaluation for the Typography color row | `evaluateContrast` |
 | `resolveBackdrop.ts` | Resolve the effective backdrop color behind an element | `resolveBackdropColor` |
 | `elementContext.ts` | Selected-element metadata for the AI prompt panel | `buildPromptContext` |

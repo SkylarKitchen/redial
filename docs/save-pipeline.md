@@ -14,7 +14,7 @@ When you drag a slider, `applyInlineStyle()` sets an **inline style with `!impor
 
 This is purely a **preview mechanism** — it gives you instant visual feedback while tuning. These inline styles are:
 
-- **Tracked in memory** — An `overrides` Map keyed by element → property → `{ initial, current }`
+- **Tracked in memory** — An `overrides` Map keyed by element → property → `{ initial, current, className? }`. The `className` is the edit's **provenance** (ADR-0011): the class it was applied under, absent for element-scope edits. Saving derives *where* a change lands from this record, never from the panel's toggle at save time.
 - **Persisted to `localStorage`** — Debounced at 150ms, keyed by pathname, so changes survive page refreshes and HMR reloads
 - **Fully undoable/redoable** — A 200-entry undo stack supports both single operations and batched changes (e.g., paste)
 
@@ -24,17 +24,17 @@ At this point, **no source files have been touched**. Everything is ephemeral an
 
 | Function | Purpose |
 |---|---|
-| `applyInlineStyle(el, prop, value)` | Set an inline override and track it |
-| `diff(el)` | Get list of `{ prop, from, to }` changes for an element |
+| `applyInlineStyle(el, prop, value, className?)` | Set an inline override and track it (with its provenance) |
+| `diff(el)` | Get list of `{ prop, from, to, state?, breakpoint?, className? }` changes for an element |
 | `undo()` / `redo()` | Step through the change history |
 | `reset(el)` | Remove all overrides for an element |
 | `isDirty(el, prop)` | Check if a property has been modified (used for amber indicators) |
 
 ---
 
-## Stage 2: Source Resolution (`sourcemap.ts`)
+## Stage 2: Source Resolution (`core/save.ts` → `commitUtils.ts` → `sourcemap.ts`)
 
-When you hit **Save**, the Footer collects `diff(element)` and enriches each change with source file information. It uses two strategies, in priority order:
+When you hit **Save** (Footer button, Cmd+S, palette) or **Save All** (ChangesDrawer), the surface collects its diffs and hands them to `save(entries)` in `core/save.ts` — THE save pipeline. It owns enrichment (`enrichChangesForCommit(element, changes)` — targeting flows from each entry's recorded provenance), the file-vs-clipboard partition, per-mode transport (a mixed batch POSTs CSS and Tailwind changes separately, since the route dispatches the whole request on `body.mode`), the no-endpoint/unreachable clipboard fallbacks, and post-save breakpoint reconciliation. Each change routes by what it carries: class provenance → the shared rule (or `.class:state` / `@media` block); element provenance (stateless, breakpointless) → an `elementScope` descriptor the server writes into the element's JSX `style` attribute. Source files are resolved with two strategies, in priority order:
 
 ### Strategy 1: CSS Modules Class Name Parsing
 
