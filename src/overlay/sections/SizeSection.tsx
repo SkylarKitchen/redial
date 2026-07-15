@@ -22,6 +22,7 @@ import { OverflowVisibleIcon, OverflowHiddenIcon, OverflowScrollIcon, MoreDotsIc
 import { ms } from "../timing";
 import { text, border, surface, font, layout, indicatorStyle } from "../theme";
 import { ROW, LABEL } from "../panelStyles";
+import { useResetPopover } from "../controls/helpers";
 import {
   SIZE_UNITS_W, SIZE_UNITS_H,
   CHILDREN_MODE_OPTIONS,
@@ -122,6 +123,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
   });
   const [overflowX, setOverflowX] = useState(() => cs.overflowX || "visible");
   const [overflowY, setOverflowY] = useState(() => cs.overflowY || "visible");
+  // Reset handlers for overflow properties use reset() to clear inline styles
   const [boxSizing, setBoxSizing] = useState(() => cs.boxSizing || "border-box");
   const [aspectRatio, setAspectRatio] = useState(() => cs.aspectRatio === "auto" ? "" : cs.aspectRatio);
   const [objectFit, setObjectFit] = useState(() => cs.objectFit);
@@ -218,6 +220,29 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       return !prev;
     });
   }, [overflowX, apply]);
+  const handleOverflowReset = useCallback(() => {
+    reset("overflow");
+    reset("overflow-x");
+    reset("overflow-y");
+    const val = resetReadStr("overflow");
+    setOverflow(val);
+    const valX = resetReadStr("overflow-x");
+    const valY = resetReadStr("overflow-y");
+    setOverflowX(valX);
+    setOverflowY(valY);
+    // Re-sync lock state: locked if both axes match
+    setOverflowLocked(valX === valY);
+  }, [reset, resetReadStr]);
+  const handleOverflowXReset = useCallback(() => {
+    reset("overflow-x");
+    const val = resetReadStr("overflow-x");
+    setOverflowX(val);
+  }, [reset, resetReadStr]);
+  const handleOverflowYReset = useCallback(() => {
+    reset("overflow-y");
+    const val = resetReadStr("overflow-y");
+    setOverflowY(val);
+  }, [reset, resetReadStr]);
   const handleChildrenModeChange = useCallback((v: string) => {
     setChildrenMode(v);
     if (v === "fill") apply("align-items", "stretch");
@@ -291,6 +316,12 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
     if (varName) { setMaxHeightNone(false); apply("max-height", `var(${varName})`); }
     else { const c = parseNum(getComputedStyle(element).getPropertyValue("max-height")); setMaxHeight(c); apply("max-height", c === 0 ? "none" : `${c}${maxHeightUnit}`); }
   }, [apply, element, maxHeightUnit]);
+
+  // ─── Reset popovers for overflow controls ──────────────────────────
+
+  const overflowResetPopover = useResetPopover(ind("overflow"), handleOverflowReset, "Overflow");
+  const overflowXResetPopover = useResetPopover(ind("overflow-x"), handleOverflowXReset, "Overflow X");
+  const overflowYResetPopover = useResetPopover(ind("overflow-y"), handleOverflowYReset, "Overflow Y");
 
   // ─── JSX ────────────────────────────────────────────────────────────
 
@@ -430,8 +461,14 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
       </div>
       {/* Overflow: lock/unlock per-axis controls */}
       {overflowLocked ? (
-        <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
-          <span style={{ ...LABEL, cursor: "default" }}>Overflow</span>
+        <div style={{ ...ROW, display: "flex", alignItems: "center" }} onClick={(e) => { if (e.altKey && handleOverflowReset) { e.preventDefault(); handleOverflowReset(); } }}>
+          <span
+            {...overflowResetPopover.triggerProps}
+            title={ind("overflow") ? `${ind("overflow") === "modified" ? "Modified - " : ""}Overflow` : "Overflow"}
+            style={{ ...LABEL, cursor: "default", ...indicatorStyle(ind("overflow")) }}
+          >
+            Overflow
+          </span>
           <WebflowSegmentedControl
             options={OVERFLOW_OPTS}
             value={overflow}
@@ -441,11 +478,18 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
           <button onClick={handleOverflowLockToggle} title="Unlock overflow-x/y" style={LOCK_BTN}>
             <Link size={12} strokeWidth={1.5} />
           </button>
+          {overflowResetPopover.node}
         </div>
       ) : (
         <>
-          <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
-            <span style={{ ...LABEL, cursor: "default" }}>Overflow X</span>
+          <div style={{ ...ROW, display: "flex", alignItems: "center" }} onClick={(e) => { if (e.altKey && handleOverflowXReset) { e.preventDefault(); handleOverflowXReset(); } }}>
+            <span
+              {...overflowXResetPopover.triggerProps}
+              title={ind("overflow-x") ? `${ind("overflow-x") === "modified" ? "Modified - " : ""}Overflow X` : "Overflow X"}
+              style={{ ...LABEL, cursor: "default", ...indicatorStyle(ind("overflow-x")) }}
+            >
+              Overflow X
+            </span>
             <WebflowSegmentedControl
               options={OVERFLOW_OPTS}
               value={overflowX}
@@ -455,9 +499,16 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
             <button onClick={handleOverflowLockToggle} title="Lock overflow" style={LOCK_BTN}>
               <Unlink size={12} strokeWidth={1.5} />
             </button>
+            {overflowXResetPopover.node}
           </div>
-          <div style={{ ...ROW, display: "flex", alignItems: "center" }}>
-            <span style={{ ...LABEL, cursor: "default" }}>Overflow Y</span>
+          <div style={{ ...ROW, display: "flex", alignItems: "center" }} onClick={(e) => { if (e.altKey && handleOverflowYReset) { e.preventDefault(); handleOverflowYReset(); } }}>
+            <span
+              {...overflowYResetPopover.triggerProps}
+              title={ind("overflow-y") ? `${ind("overflow-y") === "modified" ? "Modified - " : ""}Overflow Y` : "Overflow Y"}
+              style={{ ...LABEL, cursor: "default", ...indicatorStyle(ind("overflow-y")) }}
+            >
+              Overflow Y
+            </span>
             <WebflowSegmentedControl
               options={OVERFLOW_OPTS}
               value={overflowY}
@@ -466,6 +517,7 @@ export const SizeSection = memo(function SizeSection({ ctx, display, isMedia, fo
             />
             {/* Spacer matching lock button width for visual alignment */}
             <div style={{ width: 20, marginLeft: 4, flexShrink: 0 }} />
+            {overflowYResetPopover.node}
           </div>
         </>
       )}
