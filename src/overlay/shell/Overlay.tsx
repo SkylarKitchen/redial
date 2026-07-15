@@ -52,13 +52,13 @@ import { useOverlayHotkeys } from "../hooks/useOverlayHotkeys";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 import { useSelectionOutline } from "../hooks/useSelectionOutline";
 import { color, text, border, surface, font, shadow, blackAlpha, warningAlpha, layout, zIndex } from "../theme";
+import { executeCommand, type CommandContext } from "../core/commands";
 
 // --- Panel State Types (canonical defs in ./overlayTypes) ---
 import type { ActivePanel, ActiveModal } from "./overlayTypes";
 export type { ActivePanel, ActiveModal } from "./overlayTypes";
 
-// --- Action identifiers (typed dispatch maps below) ---
-type CommandAction = "Save" | "Reset" | "Copy CSS" | "Copy Tailwind" | "Paste Styles" | "Toggle Diff";
+// --- Action identifiers (context menu only — command palette now uses the registry) ---
 type ContextAction = "copy-styles" | "paste-styles" | "copy-css" | "copy-tailwind" | "select-parent" | "reset-styles";
 
 // --- Error Boundary for Panel resilience ---
@@ -693,31 +693,81 @@ export function Overlay() {
     }
   }, [diffMode, scopeCtx]);
 
-  // --- Command Palette action handler (typed dispatch map, no inline branching) ---
-  const handleCommandAction = useCallback((action: string) => {
-    const el = selectedEl;
-    if (!el) return;
-    const dispatch: Record<CommandAction, () => void> = {
-      "Save": () => handleSaveShortcut(),
-      "Reset": () => {
-        if (overrideCount(el) > 0) {
-          reset(el);
-          refreshPanel(el);
-        }
-      },
-      "Copy CSS": () => handleCopyShortcut(),
-      "Copy Tailwind": () => {
-        const changes = diff(el);
-        if (changes.length > 0) {
-          // Responsive edits keep their sm:/md:/lg:/xl: variant prefix.
-          navigator.clipboard.writeText(composeTailwindExport(changes)).catch(() => {});
-        }
-      },
-      "Paste Styles": () => handlePasteStyles(),
-      "Toggle Diff": () => handleToggleDiff(),
-    };
-    dispatch[action as CommandAction]?.();
-  }, [selectedEl, handleSaveShortcut, handleCopyShortcut, handlePasteStyles, handleToggleDiff]);
+  // --- Command Context (issue #148: ONE context built here, passed to registry) ---
+  // The former deps bag from useOverlayHotkeys, now the CommandContext interface.
+  // Commands receive this whole bundle and never enumerate state/setters by hand.
+  const commandContext = useMemo<CommandContext>(
+    () => ({
+      selectedEl,
+      scopeCtx,
+      cssClasses,
+      diffMode,
+      focusMode,
+      activePanel,
+      expandedSection,
+      announce,
+      refreshPanel,
+      handleScopeChange,
+      handleResetAll,
+      handleCloseAttempt,
+      handleSaveShortcut,
+      handleCopyShortcut,
+      handlePasteStyles,
+      handleToggleDiff,
+      setShowNavigator,
+      setShowSearch,
+      setSearchQuery,
+      setActiveModal,
+      setFocusMode,
+      setPinned,
+      setChangesDrawerTab,
+      setChangesDrawerOpen,
+      setShowBoxModel,
+      setShowGridOverlay,
+      setActivePanel,
+      setExpandedSection,
+      setClipboardMessage,
+    }),
+    [
+      selectedEl,
+      scopeCtx,
+      cssClasses,
+      diffMode,
+      focusMode,
+      activePanel,
+      expandedSection,
+      announce,
+      refreshPanel,
+      handleScopeChange,
+      handleResetAll,
+      handleCloseAttempt,
+      handleSaveShortcut,
+      handleCopyShortcut,
+      handlePasteStyles,
+      handleToggleDiff,
+      setShowNavigator,
+      setShowSearch,
+      setSearchQuery,
+      setActiveModal,
+      setFocusMode,
+      setPinned,
+      setChangesDrawerTab,
+      setChangesDrawerOpen,
+      setShowBoxModel,
+      setShowGridOverlay,
+      setActivePanel,
+      setExpandedSection,
+      setClipboardMessage,
+    ],
+  );
+
+  // --- Command execution handler (issue #148: single dispatch path for palette + hotkeys) ---
+  const handleExecuteCommand = useCallback(
+    (commandId: string) => {
+      executeCommand(commandId, commandContext);
+    },
+    [commandContext],
+  );
 
   // --- Context Menu action handler (typed dispatch map, no inline branching) ---
   const handleContextAction = useCallback((action: string) => {
@@ -975,7 +1025,7 @@ export function Overlay() {
         onSelectElement={handleSelect}
         setShowSearch={setShowSearch}
         setSearchQuery={setSearchQuery}
-        onCommandAction={handleCommandAction}
+        onExecuteCommand={handleExecuteCommand}
         onContextAction={handleContextAction}
       />
 
