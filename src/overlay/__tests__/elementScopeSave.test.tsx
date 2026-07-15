@@ -29,6 +29,7 @@ import { createRef } from "react";
 import { Footer } from "../shell/Footer";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import {
   attachClassToElement,
@@ -156,19 +157,19 @@ describe("element provenance — enrichment tags elementScope, not the class rul
 describe("Footer save POST — targeting follows recorded provenance, not the toggle", () => {
   let container: HTMLDivElement;
   let root: Root;
-  let fetchMock: ReturnType<typeof vi.fn>;
+  let transportMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
 
-    fetchMock = vi.fn().mockResolvedValue({
+    transportMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
       json: async () => ({ written: ["app/page.tsx"], failed: [] }),
     });
-    vi.stubGlobal("fetch", fetchMock);
+    __setTransportForTests(transportMock as unknown as SaveTransport);
 
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
@@ -178,7 +179,7 @@ describe("Footer save POST — targeting follows recorded provenance, not the to
 
   afterEach(() => {
     act(() => root.unmount());
-    vi.unstubAllGlobals();
+    __setTransportForTests(null);
   });
 
   async function flushMicrotasks() {
@@ -211,8 +212,8 @@ describe("Footer save POST — targeting follows recorded provenance, not the to
 
     await renderAndSave(el, "element");
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.mode).toBeUndefined();
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0].prop).toBe("color");
@@ -237,8 +238,8 @@ describe("Footer save POST — targeting follows recorded provenance, not the to
 
     await renderAndSave(el, "element");
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes.length).toBeGreaterThan(0);
     for (const c of body.changes) {
       expect(c.elementScope).toBeUndefined();

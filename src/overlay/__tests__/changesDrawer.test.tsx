@@ -13,6 +13,7 @@ import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/re
 import { ChangesDrawer, type HistoryEntry } from "../shell/ChangesDrawer";
 import { applyInlineStyle, diffAll } from "../core/apply";
 import { styleEngine } from "../core/engine";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 import { diffState } from "../core/statePreview";
 import {
   getModeOverrideCount,
@@ -161,18 +162,19 @@ describe("ChangesDrawer — pending tab", () => {
 // ─── Save All — breakpoint file-save partition (#53) ─────────────────
 
 describe("ChangesDrawer Save All — breakpoint file-save partition (#53)", () => {
-  let fetchMock: ReturnType<typeof vi.fn>;
+  let transportMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn().mockResolvedValue({
+    transportMock = vi.fn().mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({ written: ["Button.module.scss"], failed: [] }),
     });
-    vi.stubGlobal("fetch", fetchMock);
+    __setTransportForTests(transportMock as unknown as SaveTransport);
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    __setTransportForTests(null);
   });
 
   /** CSS-module-classed element: getModuleClassInfo → className "btn",
@@ -199,8 +201,8 @@ describe("ChangesDrawer Save All — breakpoint file-save partition (#53)", () =
     render(<ChangesDrawer {...baseProps} tab="pending" />);
     fireEvent.click(screen.getByText("Save All"));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    await waitFor(() => expect(transportMock).toHaveBeenCalledTimes(1));
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({
       prop: "color",
@@ -227,7 +229,7 @@ describe("ChangesDrawer Save All — breakpoint file-save partition (#53)", () =
     await flushSave();
 
     // Nothing file-bound → no POST at all; the edit rides the clipboard as @media.
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(transportMock).not.toHaveBeenCalled();
     expect(screen.getByText("1 breakpoint edit copied (not saved to file)")).toBeTruthy();
     const clipboard = writeText.mock.calls.map(([t]) => String(t)).join("\n");
     expect(clipboard).toContain("@media (min-width: 768px)");
@@ -245,8 +247,8 @@ describe("ChangesDrawer Save All — breakpoint file-save partition (#53)", () =
     await flushSave();
 
     // Only the class-backed edit reaches the POST …
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0].className).toBe("btn");
     // … and only the classless one reaches the clipboard. (A GLOBAL

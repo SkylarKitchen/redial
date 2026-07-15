@@ -24,6 +24,7 @@ import { render, act } from "@testing-library/react";
 import { Overlay } from "../shell/Overlay";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 
 // Not under test — keep the mounted tree light and deterministic.
 vi.mock("../shell/WebflowPanel", () => ({ WebflowPanel: () => null }));
@@ -48,7 +49,7 @@ function pressCmdS() {
   );
 }
 
-let fetchMock: ReturnType<typeof vi.fn>;
+let transportMock: ReturnType<typeof vi.fn>;
 let clipboardWrites: string[];
 let unmountOverlay: (() => void) | null = null;
 
@@ -58,11 +59,12 @@ beforeEach(() => {
   document.body.innerHTML = "";
   try { localStorage.clear(); } catch { /* ignore */ }
 
-  fetchMock = vi.fn().mockResolvedValue({
+  transportMock = vi.fn().mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => ({ written: ["app/page.tsx"], failed: [] }),
   });
-  vi.stubGlobal("fetch", fetchMock);
+  __setTransportForTests(transportMock as unknown as SaveTransport);
 
   clipboardWrites = [];
   Object.defineProperty(navigator, "clipboard", {
@@ -83,7 +85,7 @@ afterEach(() => {
     unmountOverlay = null;
   }
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  __setTransportForTests(null);
   styleEngine.resetAll();
   resetAllModeOverrides();
 });
@@ -110,9 +112,9 @@ describe("Cmd+S → saveRef end-to-end (Issue 5)", () => {
       await flushMicrotasks();
     });
 
-    // The REAL pipeline ran: one POST carrying the edit.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    // The REAL pipeline ran: one commit batch carrying the edit.
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({ prop: "color", to: "red" });
 
@@ -142,7 +144,7 @@ describe("Cmd+S with the Footer unmounted (Issue 3)", () => {
     });
 
     // No save happened (Footer is gone)...
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(transportMock).not.toHaveBeenCalled();
 
     // ...but the user MUST hear about it. THE BUG: pre-fix there is no live
     // region mounted at all in this state, and nothing is announced.

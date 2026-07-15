@@ -9,6 +9,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { ChangesDrawer } from "../shell/ChangesDrawer";
 import { applyInlineStyle, resetAll } from "../core/apply";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ async function flushMicrotasks() {
 
 let container: HTMLDivElement;
 let root: Root;
-let fetchMock: ReturnType<typeof vi.fn>;
+let transportMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   resetAll();
@@ -40,12 +41,13 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
 
-  // Mock fetch to capture the POST body and return a fake success response.
-  fetchMock = vi.fn().mockResolvedValue({
+  // Inject a transport to capture the commit body and return a fake success.
+  transportMock = vi.fn().mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => ({ written: ["app/page.tsx"], failed: [] }),
   });
-  vi.stubGlobal("fetch", fetchMock);
+  __setTransportForTests(transportMock as unknown as SaveTransport);
 });
 
 afterEach(() => {
@@ -53,7 +55,7 @@ afterEach(() => {
     root.unmount();
   });
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  __setTransportForTests(null);
   resetAll();
 });
 
@@ -92,12 +94,10 @@ describe("ChangesDrawer Save All — Tailwind path", () => {
       await flushMicrotasks();
     });
 
-    // Assert: fetch was called once.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Assert: the commit transport was called once (a single tailwind batch).
+    expect(transportMock).toHaveBeenCalledTimes(1);
 
-    const [, init] = fetchMock.mock.calls[0];
-    expect(init?.method).toBe("POST");
-    const body = JSON.parse(init?.body as string);
+    const [body] = transportMock.mock.calls[0];
 
     // Contract from Footer.tsx / Overlay.tsx:
     //   body = { mode: "tailwind", changes: [...enriched] }
