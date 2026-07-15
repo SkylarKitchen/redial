@@ -20,11 +20,18 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveRepoDep } from "./resolveRepoDep";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const tscBin = join(repoRoot, "node_modules", "typescript", "bin", "tsc");
 
-/** Run tsc, returning combined output (tsc exits non-zero on any error). */
+// Resolve the package dir and join bin/tsc rather than deep-resolving
+// "typescript/bin/tsc": an exports map (should typescript ever add one)
+// conventionally exposes ./package.json but would hide bin scripts.
+const typescriptDir = resolveRepoDep("typescript");
+if (!typescriptDir) throw new Error("typescript is not resolvable from the repo root");
+const tscBin = join(typescriptDir, "bin", "tsc");
+
+/** Run tsc, returning combined output; throws unless tsc itself ran. */
 function runTsc(args: string[]): string {
   try {
     return execFileSync(process.execPath, [tscBin, ...args], {
@@ -33,8 +40,16 @@ function runTsc(args: string[]): string {
       stdio: ["ignore", "pipe", "pipe"],
     });
   } catch (err) {
+    // Non-zero exit is the normal way tsc reports diagnostics — but only
+    // trust it when the output actually contains diagnostics. A loader
+    // crash (bad tscBin path) also exits non-zero, with none; swallowing
+    // it let this suite pass vacuously in worktrees (issue #151).
     const e = err as { stdout?: string; stderr?: string };
-    return `${e.stdout ?? ""}${e.stderr ?? ""}`;
+    const output = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+    if (!/error TS\d+/.test(output)) {
+      throw new Error(`tsc failed to run:\n${output || String(err)}`);
+    }
+    return output;
   }
 }
 
