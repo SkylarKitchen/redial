@@ -33,7 +33,7 @@ function renderPalette() {
   const props = {
     onSelectElement: vi.fn(),
     onScrollToSection: vi.fn(),
-    onAction: vi.fn(),
+    onExecuteCommand: vi.fn(),
     onClose: vi.fn(),
   };
   act(() => {
@@ -79,7 +79,7 @@ describe("CommandPalette keyboard + ARIA", () => {
     act(() => {
       fireEvent.keyDown(input(), { key: "Enter" });
     });
-    expect(props.onAction).toHaveBeenCalledWith("Save");
+    expect(props.onExecuteCommand).toHaveBeenCalledWith("save"); // command id is "save"
     expect(props.onClose).toHaveBeenCalled();
   });
 });

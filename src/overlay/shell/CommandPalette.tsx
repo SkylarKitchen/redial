@@ -15,6 +15,7 @@ import { useListKeyboardNav } from "../hooks/useListKeyboardNav";
 import { isNavigableElement, buildBreadcrumb, getDisplayClass } from "../util";
 import { SECTION_PROPERTIES } from "./PropertySearch";
 import { color, text, border, surface, font, primaryAlpha, badge } from "../theme";
+import { listCommands, type Command } from "../core/commands";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -28,22 +29,14 @@ interface SearchResult {
 export interface CommandPaletteProps {
   onSelectElement: (el: Element) => void;
   onScrollToSection: (sectionName: string) => void;
-  onAction: (action: string) => void;
+  /** Execute a command by id from the registry. */
+  onExecuteCommand: (commandId: string) => void;
   onClose: () => void;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────
 
-const ACTIONS = [
-  "Save",
-  "Reset",
-  "Copy CSS",
-  "Copy Tailwind",
-  "Paste Styles",
-  "Toggle Diff",
-  "Toggle Changes Drawer",
-  "Toggle Navigator",
-] as const;
+// Removed: ACTIONS array. Now sourced from the command registry.
 
 const CATEGORY_BADGE_STYLES: Record<SearchResult["category"], React.CSSProperties> = {
   Property: { color: color.primary, background: primaryAlpha(0.15) },
@@ -96,8 +89,9 @@ function searchProperties(query: string): Array<{ section: string; props: string
   return results;
 }
 
-function searchActions(query: string): string[] {
-  return ACTIONS.filter((a) => fuzzyMatch(query, a));
+function searchCommands(query: string): Command[] {
+  const all = listCommands();
+  return all.filter((cmd) => fuzzyMatch(query, cmd.title));
 }
 
 let _cachedAllElements: NodeListOf<Element> | null = null;
@@ -137,7 +131,7 @@ function clearElementCache() {
 export function CommandPalette({
   onSelectElement,
   onScrollToSection,
-  onAction,
+  onExecuteCommand,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
@@ -193,13 +187,13 @@ export function CommandPalette({
       }
     }
 
-    // Actions
-    const actionMatches = searchActions(query);
-    for (const act of actionMatches) {
+    // Commands from the registry
+    const commandMatches = searchCommands(query);
+    for (const cmd of commandMatches) {
       all.push({
         category: "Action",
-        label: act,
-        action: () => onAction(act),
+        label: cmd.title,
+        action: () => onExecuteCommand(cmd.id),
       });
     }
 
@@ -214,7 +208,7 @@ export function CommandPalette({
     }
 
     return all.slice(0, MAX_RESULTS);
-  }, [query, elementResults, onScrollToSection, onAction, onSelectElement]);
+  }, [query, elementResults, onScrollToSection, onExecuteCommand, onSelectElement]);
 
   // Group results by category
   const grouped = useMemo(() => {
