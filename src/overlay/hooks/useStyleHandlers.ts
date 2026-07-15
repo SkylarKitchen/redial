@@ -5,14 +5,12 @@
  * the panel: session-wide reset, paste, per-element reset, undo-to-history-index,
  * and the spacing box-model change/reset handlers.
  *
- * Scope-routing dispatch (element / class / state) and the session-wide reset
- * go through `styleEngine` (RFC #14) rather than calling apply.ts/scope.ts/
- * statePreview.ts directly — so the routing rule lives in exactly one place and
- * cannot drift. (`handleUndoToIndex` still calls apply.ts's `undo` directly: the
- * undo stacks were unified in Increment 4a, so it now also steps mode/dom-move
- * entries — which return the `document.body` sentinel and so don't halt the loop,
- * exactly as dom-move already did. Migrating this to `styleEngine.undo` with
- * history-row-aware scrub semantics is Increment 4b of #14.)
+ * All scope-routing dispatch (element / class / state) goes through `styleEngine`
+ * (RFC #14) rather than calling apply.ts/scope.ts/statePreview.ts directly — so
+ * the routing rule lives in exactly one place and cannot drift. `handleUndoToIndex`
+ * routes through `styleEngine.undoMultiple` (RFC #14 Increment 4b) with
+ * history-row-aware scrub semantics that dispatch on entry kind (style / mode /
+ * dom-move / batch) instead of relying on the document.body sentinel convention.
  *
  * Extracted from Overlay.tsx. The hook receives the values/setters each
  * callback closes over so nothing reaches back into Overlay's scope via
@@ -24,7 +22,7 @@
 
 import { useCallback } from "react";
 import { infer, type InferResult } from "../core/infer";
-import { pasteStyles, undo } from "../core/apply";
+import { pasteStyles } from "../core/apply";
 import { styleEngine, resolveTarget, type ScopeContext } from "../core/engine";
 import type { HistoryEntry } from "../shell/ChangesDrawer";
 
@@ -112,12 +110,12 @@ export function useStyleHandlers({
 
   // --- History: undo to a specific index ---
   const handleUndoToIndex = useCallback((targetIndex: number) => {
-    // Undo repeatedly until we've removed all entries after targetIndex
+    // Undo N entries to reach targetIndex. Routes through styleEngine.undoMultiple
+    // (RFC #14 Increment 4b) with history-row-aware scrub semantics — handles mixed
+    // histories (style / mode / dom-move) via engine dispatch on entry kind instead
+    // of relying on the document.body sentinel.
     const count = historyEntries.length - 1 - targetIndex;
-    for (let i = 0; i < count; i++) {
-      const result = undo();
-      if (!result) break;
-    }
+    styleEngine.undoMultiple(count);
     // Truncate history to targetIndex + 1
     setHistoryEntries((prev) => prev.slice(0, targetIndex + 1));
     // Re-infer if we have a selected element
