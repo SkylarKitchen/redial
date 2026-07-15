@@ -18,16 +18,26 @@ function withTuner(nextConfig = {}) {
           config.devtool = "eval-source-map";
         }
 
-        // Prevent webpack from watching generated/tooling dirs in parent root
+        // Prevent webpack from watching generated/tooling dirs in parent root.
+        // webpack's `ignored` is string | string[] | RegExp — a RegExp (Next 16's
+        // dev default) can't be spread or mixed into a string array, so keep it.
         const parentRoot = path.resolve(__dirname, "..");
+        const prevIgnored = config.watchOptions?.ignored;
         config.watchOptions = {
           ...config.watchOptions,
-          ignored: [
-            ...(config.watchOptions?.ignored || []),
-            path.join(parentRoot, ".claude", "**"),
-            path.join(parentRoot, ".git", "**"),
-            "**/node_modules/**",
-          ],
+          ignored:
+            prevIgnored instanceof RegExp
+              ? prevIgnored
+              : [
+                  ...(Array.isArray(prevIgnored)
+                    ? prevIgnored
+                    : prevIgnored
+                      ? [prevIgnored]
+                      : []),
+                  path.join(parentRoot, ".claude", "**"),
+                  path.join(parentRoot, ".git", "**"),
+                  "**/node_modules/**",
+                ],
         };
       }
 
