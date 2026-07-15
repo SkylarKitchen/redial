@@ -22,7 +22,8 @@
  * fixture's node_modules (equivalent to `npm install <tarball>` for
  * resolution purposes, but with zero registry traffic). Runtime deps the
  * dist bundle imports (react, react-dom, lucide-react, motion) are
- * symlinked from the repo's own node_modules.
+ * symlinked from wherever Node resolves them for the repo root — the main
+ * checkout's node_modules when running from a session worktree.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { execFileSync } from "node:child_process";
@@ -38,6 +39,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,6 +49,30 @@ const distBuilt = existsSync(join(repoRoot, "dist", "index.js"));
 
 /** Deps the published bundle imports at module scope (peers + hard deps). */
 const RUNTIME_DEPS = ["react", "react-dom", "lucide-react", "motion"];
+
+/**
+ * Locate a dep's package directory the way Node resolution does: from the
+ * repo root, walking up through ancestor node_modules. A direct
+ * `repoRoot/node_modules/<dep>` probe breaks in session worktrees
+ * (.worktrees/<name>/), where deps live up-tree in the main checkout by
+ * design (scripts/new-session.sh) and the worktree's own node_modules —
+ * when it exists at all — holds only tool caches (vitest's .vite), so the
+ * walk must probe for the dep itself, not the first node_modules dir.
+ */
+const requireFromRepoRoot = createRequire(join(repoRoot, "package.json"));
+function resolveRepoDep(dep: string): string | null {
+  try {
+    return dirname(requireFromRepoRoot.resolve(`${dep}/package.json`));
+  } catch {
+    // An exports map without "./package.json" makes require.resolve throw
+    // even when the dep is installed; redo Node's directory walk by hand.
+    for (let dir = repoRoot; ; dir = dirname(dir)) {
+      const candidate = join(dir, "node_modules", dep);
+      if (existsSync(join(candidate, "package.json"))) return candidate;
+      if (dirname(dir) === dir) return null;
+    }
+  }
+}
 
 describe.skipIf(!distBuilt)("published package smoke (issue #93)", () => {
   let packDir: string;
@@ -118,12 +144,13 @@ describe.skipIf(!distBuilt)("published package smoke (issue #93)", () => {
     execFileSync("tar", ["-xzf", tarball, "-C", extractDir]);
     renameSync(join(extractDir, "package"), join(nodeModules, "redial"));
 
-    // 3. Symlink runtime deps from the repo so the ESM bundle can actually
-    //    evaluate (node resolves through symlinks to their realpath, so the
-    //    deps' own transitive imports keep resolving in the repo tree).
+    // 3. Symlink runtime deps, resolved as Node would resolve them from the
+    //    repo root, so the ESM bundle can actually evaluate (node resolves
+    //    through symlinks to their realpath, so the deps' own transitive
+    //    imports keep resolving where they are installed).
     for (const dep of RUNTIME_DEPS) {
-      const target = join(repoRoot, "node_modules", dep);
-      if (!existsSync(target)) throw new Error(`missing repo dep: ${dep}`);
+      const target = resolveRepoDep(dep);
+      if (!target) throw new Error(`missing repo dep: ${dep}`);
       symlinkSync(target, join(nodeModules, dep), "dir");
     }
 
