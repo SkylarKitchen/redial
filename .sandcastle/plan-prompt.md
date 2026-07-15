@@ -22,6 +22,10 @@ An issue B is **blocked by** issue A if:
 
 An issue is **unblocked** if it has zero blocking dependencies on other open issues.
 
+**Exclude issues that are already done**: if an issue's comments say its branch
+was merged into the integration branch, it is awaiting human QA — do not
+include it in the plan, even if it still carries the `ready-for-agent` label.
+
 For each unblocked issue, assign a branch name using the format `sandcastle/issue-{id}-{slug}`.
 
 # OUTPUT

@@ -18,7 +18,11 @@ After all branches are merged, make a single commit summarizing the merge (prefi
 
 # DO NOT CLOSE ISSUES
 
-Leave all issues open. A human reviews the merged branch and closes issues manually after QA. For each branch that was merged, leave a comment on its issue summarizing what shipped, but do NOT run `gh issue close`.
+Leave all issues open. A human reviews the merged branch and closes issues manually after QA. For each branch that was merged:
+
+1. Leave a comment on its issue summarizing what shipped, but do NOT run `gh issue close`.
+2. Move it out of the agent queue so the next planning cycle doesn't re-pick it:
+   `gh issue edit <N> --remove-label ready-for-agent --add-label ready-for-human`
 
 Here are the issues whose branches were merged:
 
