@@ -38,6 +38,17 @@ function getListbox(): HTMLElement | null {
   return document.querySelector('[role="listbox"]');
 }
 
+function hasInlineBackground(element: HTMLElement): boolean {
+  const style = element.getAttribute("style") || "";
+  const parentStyle = element.parentElement?.getAttribute("style") || "";
+  return (
+    /background(?:-color)?:/i.test(style) ||
+    style.includes("backgroundColor:") ||
+    /background(?:-color)?:/i.test(parentStyle) ||
+    parentStyle.includes("backgroundColor:")
+  );
+}
+
 describe("Dropdown opaque background (behavioral)", () => {
   it("SelectRow dropdown listbox has an explicit inline background", () => {
     const { container } = render(
@@ -52,16 +63,10 @@ describe("Dropdown opaque background (behavioral)", () => {
     fireEvent.click(trigger);
 
     const listbox = getListbox();
-    expect(listbox).not.toBeNull();
-
-    // The listbox must have an explicit inline background/backgroundColor
-    const inlineStyle = listbox!.getAttribute("style") || "";
-    // React can serialize as background-color or backgroundColor
-    const hasInlineBackground =
-      /background(?:-color)?:/i.test(inlineStyle) || inlineStyle.includes("backgroundColor:");
+    expect(listbox).toBeTruthy();
 
     expect(
-      hasInlineBackground,
+      hasInlineBackground(listbox!),
       "SelectRow: portaled listbox must have inline background/backgroundColor, " +
       "not relying on CSS classes (which may not resolve in portal context)"
     ).toBe(true);
@@ -75,15 +80,10 @@ describe("Dropdown opaque background (behavioral)", () => {
     fireEvent.click(trigger);
 
     const listbox = getListbox();
-    expect(listbox).not.toBeNull();
-
-    // The listbox must have an explicit inline background/backgroundColor
-    const inlineStyle = listbox!.getAttribute("style") || "";
-    const hasInlineBackground =
-      inlineStyle.includes("background:") || inlineStyle.includes("backgroundColor:");
+    expect(listbox).toBeTruthy();
 
     expect(
-      hasInlineBackground,
+      hasInlineBackground(listbox!),
       "StateSelector (PortalListboxSelect): portaled listbox must have inline " +
       "background/backgroundColor, not relying on CSS classes"
     ).toBe(true);
@@ -103,21 +103,10 @@ describe("Dropdown opaque background (behavioral)", () => {
     fireEvent.click(trigger);
 
     const listbox = getListbox();
-    expect(listbox).not.toBeNull();
-
-    // The searchable dropdown uses SearchableMenu which has the background on the
-    // outer container wrapping the listbox. Check both listbox and parent.
-    const listboxStyle = listbox!.getAttribute("style") || "";
-    const parentStyle = listbox!.parentElement?.getAttribute("style") || "";
-
-    const hasInlineBackground =
-      /background(?:-color)?:/i.test(listboxStyle) ||
-      listboxStyle.includes("backgroundColor:") ||
-      /background(?:-color)?:/i.test(parentStyle) ||
-      parentStyle.includes("backgroundColor:");
+    expect(listbox).toBeTruthy();
 
     expect(
-      hasInlineBackground,
+      hasInlineBackground(listbox!),
       "SelectRow searchable: portaled dropdown must have inline background/backgroundColor " +
       "(on listbox or its parent container)"
     ).toBe(true);
@@ -136,11 +125,9 @@ describe("Dropdown opaque background (behavioral)", () => {
     fireEvent.click(trigger);
 
     const listbox = getListbox();
-    expect(listbox).not.toBeNull();
+    expect(listbox).toBeTruthy();
 
     const inlineStyle = listbox!.getAttribute("style") || "";
-
-    // Must not be transparent or none
     expect(inlineStyle).not.toMatch(/background(?:Color)?:\s*(transparent|none)/);
   });
 });

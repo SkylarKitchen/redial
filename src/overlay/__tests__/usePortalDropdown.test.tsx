@@ -15,7 +15,6 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, fireEvent, cleanup } from "@testing-library/react";
 import { UnitSelector } from "../controls/UnitSelector";
 import { SelectRow } from "../controls/SelectRow";
-import { createElement } from "react";
 
 afterEach(() => {
   cleanup();
@@ -148,7 +147,7 @@ describe("usePortalDropdown — click-outside handling", () => {
 
   it("keeps dropdown open on click inside trigger container", () => {
     const onChange = vi.fn();
-    const { container } = render(<UnitSelector value="px" onChange={onChange} />);
+    render(<UnitSelector value="px" onChange={onChange} />);
     const trigger = document.querySelector('button[role="combobox"]') as HTMLElement;
 
     fireEvent.click(trigger);

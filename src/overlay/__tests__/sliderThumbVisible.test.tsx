@@ -85,10 +85,9 @@ describe("slider thumb visibility (behavioral)", () => {
       s.textContent?.includes("-webkit-slider-thumb") &&
       s.textContent?.includes("__tuner-root")
     );
-    expect(thumbStylesheet).not.toBeNull();
+    expect(thumbStylesheet).toBeTruthy();
     const content = thumbStylesheet!.textContent!;
 
-    // Extract the webkit-slider-thumb rule (base, not hover/active)
     const thumbRuleStart = content.indexOf("input[type=\"range\"]::-webkit-slider-thumb {");
     const thumbRuleEnd = content.indexOf("}", thumbRuleStart);
     const thumbRule = content.slice(thumbRuleStart, thumbRuleEnd);
@@ -138,7 +137,7 @@ describe("slider thumb visibility (behavioral)", () => {
       s.textContent?.includes("-moz-range-thumb") &&
       s.textContent?.includes("__tuner-root")
     );
-    expect(thumbStylesheet).not.toBeNull();
+    expect(thumbStylesheet).toBeTruthy();
     const content = thumbStylesheet!.textContent!;
 
     const mozRuleStart = content.indexOf("input[type=\"range\"]::-moz-range-thumb {");

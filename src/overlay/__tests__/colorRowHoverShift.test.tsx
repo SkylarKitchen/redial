@@ -59,9 +59,8 @@ describe("ColorRow hover actions must not shift layout", () => {
       return style.includes("position") && div.textContent === "Duplicate";
     });
 
-    expect(actionsContainer).not.toBeNull();
+    expect(actionsContainer).toBeTruthy();
     const style = actionsContainer!.getAttribute("style")!;
-    expect(style).toContain("position");
     expect(style).toContain("absolute");
   });
 
@@ -102,10 +101,8 @@ describe("ColorRow hover actions must not shift layout", () => {
       return style.includes("position") && div.textContent === "Action";
     });
 
-    expect(actionsContainer).not.toBeNull();
+    expect(actionsContainer).toBeTruthy();
     const style = actionsContainer!.getAttribute("style")!;
-    // The actionsOverlayStyle includes zIndex to ensure actions appear above row content
-    const hasZIndex = style.includes("z-index") || style.includes("zIndex");
-    expect(hasZIndex).toBe(true);
+    expect(style).toMatch(/z-?[iI]ndex/);
   });
 });
