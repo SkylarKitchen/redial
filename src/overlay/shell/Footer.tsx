@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { styleEngine, type ScopeContext } from "../core/engine";
 import { enrichChangesForCommit, partitionBreakpointChanges } from "../core/commitUtils";
-import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
+import { REDIAL_MARKER_HEADER, type CommitResult } from "../../lib/protocol";
 import { formatCSSDiff, getSelector } from "../util";
 import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/engine";
@@ -52,10 +52,8 @@ function formatCSSVars(changes: DiffEntry[]): string {
   return `:root {\n${lines.join("\n")}\n}`;
 }
 
-interface SaveResult {
-  written?: string[];
-  failed?: Array<{ reason: string }>;
-}
+/** Network JSON is untrusted — the wire type with every field optional. */
+type SaveResult = Partial<CommitResult>;
 
 // --- Save-endpoint health check (audit: opaque first-save failures) ---
 // One GET per session, cached at module scope so the Footer's per-selection

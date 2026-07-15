@@ -9,6 +9,7 @@
 
 import type { DiffEntry } from "./apply";
 import type { ScopeContext } from "./engine";
+import type { CommitChange } from "../../lib/protocol";
 import { resolveSource, getCSSSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, getVariableDefinitionSource } from "./sourcemap";
 import { getReadableName, isTailwindElement, isSessionAttachedClass, getSessionAttachedClasses } from "./scope";
 import { getAuthoredValue } from "../getAuthoredValue";
@@ -22,48 +23,20 @@ import { getBreakpoints, BASE_BREAKPOINT_ID } from "../breakpoints";
  * server can locate/create the right `@media (min-width: Npx)` block without
  * knowing the client's breakpoint configuration.
  */
-export interface EnrichedChange extends Omit<DiffEntry, "breakpoint"> {
+/**
+ * The enriched wire entry — protocol.CommitChange plus the client-only
+ * envelope fields the transport needs before POSTing (`mode` routes the
+ * request; `newClasses`/`existingClasses` are the Tailwind payload). The
+ * breakpoint pair narrows `id` to required: the client always knows the
+ * engine id it resolved from (partition + post-save clearing key off it).
+ */
+export interface EnrichedChange extends Omit<CommitChange, "breakpoint"> {
   /** Responsive breakpoint (#53): engine id + config-aware min-width (px). */
   breakpoint?: { id: string; minWidth: number };
-  sourceFile?: string;
-  sourceLine?: number;
-  className?: string;
-  componentName?: string;
-  state?: string;
-  /** Compiled CSS href for server-side source map resolution */
-  cssHref?: string;
   mode?: "css" | "tailwind";
   /** Tailwind classes to merge (field name matches TailwindChange.newClasses) */
   newClasses?: string;
   existingClasses?: string;
-  /**
-   * Class-creation descriptor (audit 05): present when the change targets a
-   * class attached to the element THIS session (scope.ts registry). The server
-   * creates the `.name { }` rule in `sourceFile` when missing and attaches the
-   * class token to the JSX className attribute located via
-   * `jsxSourceFile`/`jsxSourceLine`/`existingClasses` (the element's classes
-   * BEFORE the session attach).
-   */
-  createClass?: {
-    name: string;
-    jsxSourceFile?: string;
-    jsxSourceLine?: number;
-    existingClasses?: string;
-  };
-  /**
-   * Element-scope persistence descriptor (audit 06): present when the panel's
-   * scope was "element" at save time (opted in via `elementScopeSave`).
-   * Element scope previews on ONE element, so it must save to that one
-   * element: the server merges the change into the element's JSX `style`
-   * attribute at the fiber-resolved location (same anchors createClass uses)
-   * — NEVER into a shared CSS rule. No resolvable anchor → the server fails
-   * per-item with an accurate message; it never falls back to the class rule.
-   */
-  elementScope?: {
-    jsxSourceFile?: string;
-    jsxSourceLine?: number;
-    existingClasses?: string;
-  };
 }
 
 /**
