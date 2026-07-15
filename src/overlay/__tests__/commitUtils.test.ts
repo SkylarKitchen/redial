@@ -11,7 +11,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { enrichChangesForCommit, filterClipboardBreakpointChanges } from "../core/commitUtils";
 import type { DiffEntry } from "../core/apply";
-import type { ScopeContext } from "../core/engine";
 import type { EnrichedChange } from "../core/commitUtils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -71,42 +70,33 @@ afterEach(() => {
 describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () => {
   it("leaves state undefined for a stateless entry when the panel state is inactive", () => {
     const el = makeEl();
-    const [c] = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry()]);
     expect(c.state).toBeUndefined();
   });
 
   it("keeps an entry's own state:'hover' when the panel state is 'none' (the bug)", () => {
     const el = makeEl();
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.state).toBe("hover");
   });
 
-  it("applies an active panel state to stateless entries without overwriting an entry's own state", () => {
+  it("keeps each entry's own state — there is no save-time fallback (ADR-0011)", () => {
+    // diffState() stamps state per entry since ADR-0011, so a mixed batch
+    // routes each change by what IT carries, never by the panel's view.
     const el = makeEl();
-    const [plain, hovered] = enrichChangesForCommit(
-      el,
-      [entry(), entry({ prop: "background-color", state: "hover" })],
-      { scope: "element", activeClassName: null, activeState: "focus" },
-    );
-    expect(plain.state).toBe("focus");
+    const [focused, hovered] = enrichChangesForCommit(el, [
+      entry({ state: "focus" }),
+      entry({ prop: "background-color", state: "hover" }),
+    ]);
+    expect(focused.state).toBe("focus");
     expect(hovered.state).toBe("hover");
   });
 
-  it("still populates className in class scope, preserving per-entry state", () => {
+  it("populates className from the entry's provenance, preserving per-entry state", () => {
     const el = makeEl("Button_btn__a1b2c");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "class",
-      activeClassName: "Button_btn__a1b2c",
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [
+      entry({ state: "hover", className: "Button_btn__a1b2c" }),
+    ]);
     expect(c.className).toBe("btn");
     expect(c.state).toBe("hover");
   });
@@ -115,11 +105,7 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
     const el = makeEl();
     // Inline style is the getAuthoredValue shortcut — no stylesheet needed.
     el.style.setProperty("color", "var(--brand)");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.prop).toBe("--brand");
     // happy-dom resolves the unset var to "" so `from` falls back to the entry's.
     expect(c.from).toBe("blue");
@@ -134,35 +120,16 @@ describe("enrichChangesForCommit — pseudo-state preservation (issue #57)", () 
 describe("enrichChangesForCommit — class info for state-tagged entries (issue #57)", () => {
   it("falls back to the CSS-module class in element scope with the panel on 'none'", () => {
     const el = makeEl("Button_btn__a1b2c");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.state).toBe("hover");
     expect(c.className).toBe("btn");
   });
 
-  it("resolves the CSS-module class on the ChangesDrawer Save-All path (scope only, no activeState/activeClassName)", () => {
+  it("resolves the CSS-module class for a state-tagged entry regardless of provenance class", () => {
+    // A hover edit whose provenance carries no class (element toggle at edit
+    // time) still needs a rule target — the module class is the fallback.
     const el = makeEl("Button_btn__a1b2c");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      // Deliberately partial: this path passes only { scope } — the function
-      // must tolerate missing activeState/activeClassName (checked upstream).
-      scope: "element",
-    } as ScopeContext);
-    expect(c.state).toBe("hover");
-    expect(c.className).toBe("btn");
-  });
-
-  it("resolves the CSS-module class in element scope while the panel state is active", () => {
-    const el = makeEl("Button_btn__a1b2c");
-    // Stateless entry + active panel state — the entry inherits "hover" and
-    // must carry class info with it.
-    const [c] = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "hover",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.state).toBe("hover");
     expect(c.className).toBe("btn");
   });
@@ -170,11 +137,7 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
   it("resolves a global class from an existing `.cls:state` stylesheet rule", () => {
     addStyle(".btn { color: blue; }\n.btn:hover { color: blue; }");
     const el = makeEl("btn");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.state).toBe("hover");
     expect(c.className).toBe("btn");
   });
@@ -182,22 +145,14 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
   it("resolves a global class from a matching base rule when no pseudo block exists yet", () => {
     addStyle(".btn { color: blue; }");
     const el = makeEl("btn");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.className).toBe("btn");
   });
 
   it("does not pick `.btn` off a `.btn-primary` rule (identifier boundary)", () => {
     addStyle(".btn-primary { color: blue; }");
     const el = makeEl("btn");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.className).toBeUndefined();
   });
 
@@ -211,31 +166,19 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
     const el = makeEl("btn");
     el.setAttribute("data-tuner-state-id", "3");
     el.classList.add("__tuner-state-preview");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.className).toBeUndefined();
   });
 
   it("leaves className undefined when no stylesheet evidence ties a class to the element", () => {
     const el = makeEl("btn");
-    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry({ state: "hover" })]);
     expect(c.className).toBeUndefined();
   });
 
   it("keeps className undefined for stateless element-scope entries", () => {
     const el = makeEl("Button_btn__a1b2c");
-    const [c] = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const [c] = enrichChangesForCommit(el, [entry()]);
     expect(c.className).toBeUndefined();
   });
 });
@@ -245,11 +188,7 @@ describe("filterClipboardBreakpointChanges — breakpoint partition (issue #144)
   it("returns empty array when no breakpoint changes exist", () => {
     const el = makeEl("btn");
     const changes = [entry(), entry({ prop: "background" })];
-    const enriched = enrichChangesForCommit(el, changes, {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, changes);
     const clipboard = filterClipboardBreakpointChanges(changes, enriched);
     expect(clipboard).toEqual([]);
   });
@@ -277,11 +216,7 @@ describe("filterClipboardBreakpointChanges — breakpoint partition (issue #144)
       entry({ prop: "background", breakpoint: "768" }),
       entry({ prop: "padding", breakpoint: "1024" }),
     ];
-    const enriched = enrichChangesForCommit(el, changes, {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, changes);
     // Enrichment drops breakpoint changes without a class
     expect(enriched.length).toBe(1); // only the base change
     expect(enriched[0].breakpoint).toBeUndefined();
@@ -318,11 +253,7 @@ describe("filterClipboardBreakpointChanges — breakpoint partition (issue #144)
       entry({ state: "hover", breakpoint: "768" }),
       entry({ prop: "background", state: "focus", breakpoint: "1024" }),
     ];
-    const enriched = enrichChangesForCommit(el, changes, {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, changes);
     // Without class, these should be clipboard-only
     const clipboard = filterClipboardBreakpointChanges(changes, enriched);
     expect(clipboard.length).toBe(2);
@@ -375,11 +306,7 @@ describe("filterClipboardBreakpointChanges — breakpoint partition (issue #144)
       entry({ breakpoint: "768" }),
       entry({ prop: "margin" }), // no breakpoint
     ];
-    const enriched = enrichChangesForCommit(el, changes, {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, changes);
     const clipboard = filterClipboardBreakpointChanges(changes, enriched);
     // Only items with breakpoint get returned
     clipboard.forEach((c) => {

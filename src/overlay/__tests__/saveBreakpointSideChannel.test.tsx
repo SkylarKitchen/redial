@@ -22,6 +22,7 @@ import { createRef } from "react";
 import { Footer } from "../shell/Footer";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 
 function makeEl(): HTMLElement {
   const el = document.createElement("div");
@@ -36,7 +37,7 @@ async function flushMicrotasks() {
 
 let container: HTMLDivElement;
 let root: Root;
-let fetchMock: ReturnType<typeof vi.fn>;
+let transportMock: ReturnType<typeof vi.fn>;
 let clipboardWrites: string[];
 
 beforeEach(() => {
@@ -47,11 +48,12 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
 
-  fetchMock = vi.fn().mockResolvedValue({
+  transportMock = vi.fn().mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => ({ written: ["app/page.tsx"], failed: [] }),
   });
-  vi.stubGlobal("fetch", fetchMock);
+  __setTransportForTests(transportMock as unknown as SaveTransport);
 
   clipboardWrites = [];
   Object.defineProperty(navigator, "clipboard", {
@@ -68,7 +70,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  __setTransportForTests(null);
   styleEngine.resetAll();
   resetAllModeOverrides();
 });
@@ -109,8 +111,8 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
     expect(mediaWrite).toContain("color: blue");
 
     // ...and the file-bound POST carried ONLY the base change (no flattening).
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({ prop: "color", to: "red" });
   });
@@ -189,7 +191,7 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
     expect(mediaWrite, "responsive-only save must still export @media CSS").toBeTruthy();
     expect(mediaWrite).toContain("gap: 16px");
     // Nothing was file-bound — no pointless POST with an empty changes array.
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(transportMock).not.toHaveBeenCalled();
   });
 
   it("ChangesDrawer Save All exports breakpoint edits as @media CSS instead of dropping them", async () => {
@@ -223,8 +225,8 @@ describe("one save pipeline, two triggers (Cmd+S must not lose breakpoint edits)
 
     // Same contract as the Footer pipeline: the POST carries only the
     // file-bound change, and the responsive edit reaches the clipboard.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({ prop: "color", to: "red" });
 

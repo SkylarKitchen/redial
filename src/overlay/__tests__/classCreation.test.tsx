@@ -226,16 +226,11 @@ describe("commit payload enrichment for created classes", () => {
     const res = attachClassToElement(el, "promo");
     expect(res.ok).toBe(true);
 
-    const ctx: ScopeContext = {
-      scope: "class",
-      activeClassName: "promo",
-      activeState: "none",
-    };
-    const enriched = enrichChangesForCommit(
-      el,
-      [{ prop: "color", from: "rgb(0, 0, 0)", to: "rgb(1, 2, 3)" }],
-      ctx
-    );
+    // The edit was applied under the freshly-attached class — provenance
+    // rides the entry (ADR-0011).
+    const enriched = enrichChangesForCommit(el, [
+      { prop: "color", from: "rgb(0, 0, 0)", to: "rgb(1, 2, 3)", className: "promo" },
+    ]);
 
     expect(enriched).toHaveLength(1);
     expect(enriched[0].className).toBe("promo");
@@ -250,16 +245,9 @@ describe("commit payload enrichment for created classes", () => {
     el.className = "Card_card__x1z2";
     document.body.appendChild(el);
 
-    const ctx: ScopeContext = {
-      scope: "class",
-      activeClassName: "Card_card__x1z2",
-      activeState: "none",
-    };
-    const enriched = enrichChangesForCommit(
-      el,
-      [{ prop: "color", from: "rgb(0, 0, 0)", to: "rgb(1, 2, 3)" }],
-      ctx
-    );
+    const enriched = enrichChangesForCommit(el, [
+      { prop: "color", from: "rgb(0, 0, 0)", to: "rgb(1, 2, 3)", className: "Card_card__x1z2" },
+    ]);
 
     expect(enriched[0].createClass).toBeUndefined();
     expect(enriched[0].className).toBe("card");

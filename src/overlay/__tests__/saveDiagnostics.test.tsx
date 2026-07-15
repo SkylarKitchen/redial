@@ -35,6 +35,7 @@ import { render, fireEvent, type RenderResult } from "@testing-library/react";
 import { Footer, __resetSaveHealthForTests } from "../shell/Footer";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { __setTransportForTests } from "../core/save";
 import { getConfig } from "../core/config";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -53,15 +54,13 @@ async function flushMicrotasks() {
 let fetchMock: ReturnType<typeof vi.fn>;
 let clipboardWrites: string[];
 
-/** Route the global fetch mock by HTTP method so the health-check GET and the
- *  save POST can be scripted independently within one test. */
-function stubFetch(handlers: {
-  GET?: () => Promise<unknown>;
-  POST?: () => Promise<unknown>;
-}) {
+/** Stub the global fetch for the health-check GET. The commit POST no longer
+ *  goes through global fetch — it crosses save()'s transport seam
+ *  (`__setTransportForTests`); only the Footer's health ping stays here. */
+function stubFetch(handlers: { GET?: () => Promise<unknown> }) {
   fetchMock = vi.fn((_url: string, init?: RequestInit) => {
     const method = (init?.method ?? "GET").toUpperCase();
-    const handler = handlers[method as "GET" | "POST"];
+    const handler = method === "GET" ? handlers.GET : undefined;
     if (!handler) return Promise.reject(new TypeError("Failed to fetch"));
     return handler();
   });
@@ -108,6 +107,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+  __setTransportForTests(null);
   document.body.innerHTML = "";
   styleEngine.resetAll();
   resetAllModeOverrides();
@@ -134,8 +134,8 @@ async function saveAndReadMessage(): Promise<{ message: string; view: RenderResu
 }
 
 describe("save failure diagnostics — message matrix", () => {
-  it("(a) fetch rejection → names the unreachable route, NOT a missing endpoint config", async () => {
-    stubFetch({ POST: () => Promise.reject(new TypeError("Failed to fetch")) });
+  it("(a) transport rejection → names the unreachable route, NOT a missing endpoint config", async () => {
+    __setTransportForTests(() => Promise.reject(new TypeError("Failed to fetch")));
 
     const { message } = await saveAndReadMessage();
 
@@ -150,7 +150,7 @@ describe("save failure diagnostics — message matrix", () => {
   });
 
   it("(b) 404 (route not mounted) → surfaces the HTTP status", async () => {
-    stubFetch({ POST: () => htmlResponse(404) });
+    __setTransportForTests(() => htmlResponse(404));
 
     const { message } = await saveAndReadMessage();
 
@@ -159,7 +159,7 @@ describe("save failure diagnostics — message matrix", () => {
   });
 
   it("(b) 500 with a JSON error body → surfaces status AND the server's error text", async () => {
-    stubFetch({ POST: () => jsonResponse(500, { error: "Internal server error" }) });
+    __setTransportForTests(() => jsonResponse(500, { error: "Internal server error" }));
 
     const { message } = await saveAndReadMessage();
 
@@ -168,13 +168,12 @@ describe("save failure diagnostics — message matrix", () => {
   });
 
   it("(c) 2xx with failed[] entries → truthful partial-save summary with the first reason", async () => {
-    stubFetch({
-      POST: () =>
-        jsonResponse(200, {
-          written: ["app/styles.css"],
-          failed: [{ reason: "selector not found in any stylesheet" }],
-        }),
-    });
+    __setTransportForTests(() =>
+      jsonResponse(200, {
+        written: ["app/styles.css"],
+        failed: [{ reason: "selector not found in any stylesheet" }],
+      }),
+    );
 
     const { message } = await saveAndReadMessage();
 
@@ -183,9 +182,7 @@ describe("save failure diagnostics — message matrix", () => {
   });
 
   it("(d) clean 2xx → unchanged success path (count + file hint)", async () => {
-    stubFetch({
-      POST: () => jsonResponse(200, { written: ["app/styles.css"], failed: [] }),
-    });
+    __setTransportForTests(() => jsonResponse(200, { written: ["app/styles.css"], failed: [] }));
 
     const { message } = await saveAndReadMessage();
 

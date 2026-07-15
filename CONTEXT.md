@@ -68,7 +68,8 @@ Its oracle, in priority order:
 
 ## Override
 
-A tracked style change Redial holds for one **override target**: a property's new value alongside its initial value, so the change can be diffed, saved, and undone.
+A tracked style change Redial holds for one **override target**: a property's new value alongside its initial value, so the change can be diffed, saved, and undone. An override **records the override target it was applied under — its provenance** (2026-07-14 sharpening): saving derives where a change lands from that record, never from the **scoping context** at save time. One override exists per (breakpoint, state, property) cell; a later edit to the same cell under a different target replaces the record (last write wins).
+_Avoid_: inferring an override's destination from the panel's current scope toggle — the toggle describes the *next* edit, not the recorded ones.
 
 ## Override target
 
