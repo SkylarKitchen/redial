@@ -792,9 +792,21 @@ function applyChangeWithinBody(
       const segment = propHit.range
         ? body[propHit.lineIdx].slice(propHit.range[0], propHit.range[1])
         : body[propHit.lineIdx];
-      const exact = replacePropRegex(change.prop, escapeRegex(change.from));
+      // An empty `from` (state saves post from:"" by contract) must never
+      // build the exact pattern — escapeRegex("") makes it zero-width and the
+      // replacement splices `to` into the middle of the old value — so only
+      // the broad whole-value rewrite may match.
+      const exact =
+        change.from.trim() === ""
+          ? null
+          : replacePropRegex(change.prop, escapeRegex(change.from));
       const broad = replacePropRegex(change.prop, "([^;!}]+)");
-      const pattern = exact.test(segment) ? exact : broad.test(segment) ? broad : null;
+      const pattern =
+        exact !== null && exact.test(segment)
+          ? exact
+          : broad.test(segment)
+            ? broad
+            : null;
       if (!pattern) {
         return {
           modified: false,

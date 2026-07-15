@@ -142,6 +142,25 @@ function changeValidationError(change: CommitChange): string | null {
     return `invalid CSS class name: "${change.className}"`;
   if (change.createClass != null && !isValidCSSClassName(change.createClass.name))
     return `invalid class name for createClass: "${change.createClass.name}"`;
+  // Zero-width splice guard: escapeRegex("") is "", so a replacement pattern
+  // built from an empty `from` matches only the declaration prefix and the
+  // substitution SPLICES `to` into the middle of the old value ("color: blue;"
+  // → "color: redblue;"). A plain base-path value replacement has no
+  // legitimate empty `from` (getComputedStyle never returns "" for a standard
+  // longhand), so it's malformed input. Exempt the shapes whose `from` is
+  // legitimately empty: state saves (diffState reports from:"" by contract —
+  // pseudo computed values can't be read), fresh custom-prop adds (unset vars
+  // compute to ""), and createClass / breakpoint / elementScope
+  // (append/create semantics — `from` is unused there).
+  if (
+    change.from.trim() === "" &&
+    change.createClass == null &&
+    change.breakpoint == null &&
+    change.state == null &&
+    change.elementScope == null &&
+    !change.prop.startsWith("--")
+  )
+    return `empty "from" value — a literal value replacement would zero-width match and splice the new value into the old one`;
   return null;
 }
 
@@ -454,8 +473,15 @@ export async function handleCommit(
               ? lines[pseudoIdx].slice(range[0], range[1])
               : lines[pseudoIdx];
 
-            const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
-            if (pattern.test(segment)) {
+            // An empty `from` (state saves post from:"" by contract) must
+            // never build the exact pattern — escapeRegex("") makes it
+            // zero-width and the replacement splices `to` into the middle of
+            // the old value. Skip to the broad whole-value rewrite below.
+            const pattern =
+              change.from.trim() === ""
+                ? null
+                : replacePropRegex(change.prop, escapeRegex(change.from));
+            if (pattern !== null && pattern.test(segment)) {
               const safeValue = change.to.replace(/\$/g, "$$$$");
               const replaced = segment.replace(pattern, `$1$2${safeValue}`);
               lines[pseudoIdx] = range
@@ -665,8 +691,15 @@ export async function handleCommit(
 
         // Surgical replacement: only change the value, preserve everything else.
         // The pattern carries a LEFT boundary so `color` can't match inside
-        // `background-color` even if both share a line.
-        const pattern = replacePropRegex(change.prop, escapeRegex(change.from));
+        // `background-color` even if both share a line. An empty `from`
+        // (only the validation-exempt shapes reach here with one, e.g. fresh
+        // custom-prop adds) must never build the exact pattern — it would be
+        // zero-width and splice `to` into the middle of the old value — so
+        // skip to the fuzzy broad rewrite / honest failure below.
+        const pattern =
+          change.from.trim() === ""
+            ? null
+            : replacePropRegex(change.prop, escapeRegex(change.from));
 
         // When a char range is set (minified same-line block, issue #47),
         // confine the match+replace to that block's body so an identical sibling
@@ -677,7 +710,7 @@ export async function handleCommit(
           ? lines[found.lineIdx].slice(range[0], range[1])
           : lines[found.lineIdx];
 
-        if (pattern.test(segment)) {
+        if (pattern !== null && pattern.test(segment)) {
           // Escape $ in replacement to prevent regex backreference interpretation
           const safeValue = change.to.replace(/\$/g, "$$$$");
           const replaced = segment.replace(pattern, `$1$2${safeValue}`);
