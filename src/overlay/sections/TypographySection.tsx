@@ -10,6 +10,7 @@
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import { Section, SelectRow, ColorRow, SubSectionHeader, ScrubLabel } from "../controls";
 import { IconButtonGroup } from "../controls/IconButtonGroup";
+import { useResetPopover, labelStyle } from "../controls/helpers";
 import { ShadowEditor, makeShadow, type ShadowValue } from "./ShadowEditor";
 import { convertUnit } from "../unitConversion";
 import { useConversionHint } from "../hooks/useConversionHint";
@@ -270,6 +271,13 @@ export const TypographySection = memo(function TypographySection({
 
   const resetCssStr = (prop: string, setter: (v: string) => void) => setter(resetReadStr(prop));
 
+  // Reset popover for text-align
+  const textAlignResetPopover = useResetPopover(
+    ind("text-align"),
+    () => resetCssStr("text-align", setTextAlign),
+    "Align"
+  );
+
   return (
     <Section
       title="Typography"
@@ -350,9 +358,10 @@ export const TypographySection = memo(function TypographySection({
 
       {/* Align */}
       <div style={ROW}>
-        <span style={LABEL}>Align</span>
-        <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} allowDeselect={false} />
+        <span {...textAlignResetPopover.triggerProps} style={labelStyle(ind("text-align"))}>Align</span>
+        <IconButtonGroup options={TEXT_ALIGN_OPTIONS} value={textAlign} onChange={handleTextAlignChange} allowDeselect={false} onReset={() => resetCssStr("text-align", setTextAlign)} />
       </div>
+      {textAlignResetPopover.node}
 
       {/* Style — Italicize + Decoration side by side with sub-labels */}
       <div style={{ ...ROW, alignItems: "flex-start" }}>
