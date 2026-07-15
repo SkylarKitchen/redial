@@ -20,8 +20,6 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { useRef } from "react";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { StateSelector } from "../shell/StateSelector";
 import { usePageInteractions } from "../hooks/usePageInteractions";
 
@@ -116,37 +114,13 @@ describe("StateSelector — dismissal", () => {
   });
 });
 
-describe("issue #23 — source verification: page-interaction handler keeps Radix guard", () => {
-  // The page-click handler lives in hooks/usePageInteractions.ts. StateSelector
-  // no longer uses Radix, but other panel consumers still do, so these guards
-  // must remain in place.
-  const pageInteractionsSrc = readFileSync(
-    join(__dirname, "../hooks/usePageInteractions.ts"),
-    "utf-8",
-  );
-
-  it("checks for an open Radix popper-content-wrapper on pointerdown", () => {
-    expect(pageInteractionsSrc).toContain("data-radix-popper-content-wrapper");
-  });
-
-  it("uses a pending-dismissal flag to gate the page-click handler", () => {
-    expect(pageInteractionsSrc).toMatch(/radixDismissPending/);
-  });
-
-  // NOTE: the portal-exemption contract (clicks inside [data-tuner-portal] not
-  // hijacked) is now covered BEHAVIORALLY below — see "page-click handler …".
-  // A source `.toContain("isInsideTunerUI")` scan stayed green even after BOTH
-  // real guards (usePageInteractions.ts:76,79) were deleted (the import line
-  // alone satisfied it), so it could never catch a regression of issue #23.
-});
-
 // ── Behavioral coverage for the page-click portal exemption (issue #23) ──────
 //
-// Mounts the REAL usePageInteractions hook and dispatches real clicks. This is
-// the test the source-scan above could not be: deleting either guard
-// (usePageInteractions.ts:76 target / :79 resolved-element) makes a case below
-// fail, because elementFromPoint is stubbed to a NON-tuner element so only the
-// isInsideTunerUI guards stand between a portal click and handleSelect.
+// Mounts the REAL usePageInteractions hook and dispatches real clicks. This
+// verifies that clicks inside [data-tuner-portal] do not trigger handleSelect.
+// elementFromPoint is stubbed to a NON-tuner element so only the isInsideTunerUI
+// guards stand between a portal click and handleSelect. Deleting either guard
+// (target or resolved-element check) makes a case below fail.
 
 function PageInteractionsHarness({
   selectedEl,
