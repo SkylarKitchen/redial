@@ -71,10 +71,12 @@ function searchProperties(query: string): Array<{ section: string; props: string
   return results;
 }
 
-const ACTIONS = ["Save", "Reset", "Copy CSS", "Copy Tailwind", "Paste Styles", "Toggle Diff", "Toggle Changes Drawer", "Toggle Navigator"];
+// Commands are now sourced from the registry, not a hardcoded ACTIONS array
+import { listCommands } from "../core/commands";
 
-function searchActions(query: string): string[] {
-  return ACTIONS.filter((a) => fuzzyMatch(query, a));
+function searchCommands(query: string) {
+  const all = listCommands();
+  return all.filter((cmd) => fuzzyMatch(query, cmd.title));
 }
 
 // ─── 1. Cmd+K opens the palette ─────────────────────────────────────
@@ -169,21 +171,26 @@ describe("typing filters commands", () => {
     });
   });
 
-  describe("action search", () => {
-    it("matches single action", () => {
-      expect(searchActions("save")).toEqual(["Save"]);
+  describe("command search", () => {
+    it("matches single command", () => {
+      const results = searchCommands("save");
+      expect(results.some((cmd) => cmd.title === "Save")).toBe(true);
     });
 
-    it("matches multiple actions with common substring", () => {
-      expect(searchActions("copy")).toEqual(["Copy CSS", "Copy Tailwind"]);
+    it("matches multiple commands with common substring", () => {
+      const results = searchCommands("copy");
+      const titles = results.map((cmd) => cmd.title);
+      expect(titles).toContain("Copy CSS");
+      expect(titles).toContain("Copy Tailwind");
     });
 
     it("returns empty for no-match queries", () => {
-      expect(searchActions("xyz")).toEqual([]);
+      expect(searchCommands("xyz")).toEqual([]);
     });
 
     it("is case-insensitive", () => {
-      expect(searchActions("RESET")).toEqual(["Reset"]);
+      const results = searchCommands("RESET");
+      expect(results.some((cmd) => cmd.title === "Reset")).toBe(true);
     });
   });
 
@@ -196,8 +203,9 @@ describe("typing filters commands", () => {
       expectInPalette("fuzzyMatch(query, p)");
     });
 
-    it("uses fuzzyMatch for action filtering", () => {
-      expectInPalette("ACTIONS.filter((a) => fuzzyMatch(query, a))");
+    it("uses fuzzyMatch for command filtering", () => {
+      expectInPalette("listCommands()");
+      expectInPalette("fuzzyMatch(query, cmd.title)");
     });
 
     it("searches across three categories: Property, Action, Element", () => {
@@ -255,8 +263,8 @@ describe("enter executes selected command", () => {
     expectInPalette("action: () => onScrollToSection(section)");
   });
 
-  it("action results dispatch onAction", () => {
-    expectInPalette("action: () => onAction(act)");
+  it("command results dispatch onExecuteCommand", () => {
+    expectInPalette("action: () => onExecuteCommand(cmd.id)");
   });
 
   it("element results dispatch onSelectElement", () => {
@@ -299,16 +307,26 @@ describe("escape closes the palette", () => {
 // ─── 5. Palette includes commands for all keyboard shortcuts ────────
 
 describe("palette includes commands for all keyboard shortcuts", () => {
-  describe("ACTIONS constant covers shortcut-equivalent commands", () => {
-    it.each(ACTIONS)("includes '%s' in ACTIONS array", (action) => {
-      expectInPalette(`"${action}"`);
+  describe("Command registry covers shortcut-equivalent commands", () => {
+    it("CommandPalette imports from command registry", () => {
+      expectInPalette('import { listCommands');
+      expectInPalette('from "../core/commands"');
     });
 
-    it("ACTIONS array has exactly 8 entries", () => {
-      // Verify the source defines exactly these actions
-      expectInPalette(
-        '[\n  "Save",\n  "Reset",\n  "Copy CSS",\n  "Copy Tailwind",\n  "Paste Styles",\n  "Toggle Diff",\n  "Toggle Changes Drawer",\n  "Toggle Navigator",\n]',
-      );
+    it("searches commands from the registry", () => {
+      const commands = listCommands();
+      expect(commands.length).toBeGreaterThan(0);
+
+      // Verify key commands exist
+      const titles = commands.map((cmd) => cmd.title);
+      expect(titles).toContain("Save");
+      expect(titles).toContain("Reset");
+      expect(titles).toContain("Copy CSS");
+      expect(titles).toContain("Copy Tailwind");
+      expect(titles).toContain("Paste Styles");
+      expect(titles).toContain("Toggle Diff");
+      expect(titles).toContain("Toggle Changes Drawer");
+      expect(titles).toContain("Toggle Navigator");
     });
   });
 
@@ -334,62 +352,65 @@ describe("palette includes commands for all keyboard shortcuts", () => {
 
   describe("shortcut-to-palette mapping", () => {
     it("save shortcut (Cmd+S) has palette equivalent 'Save'", () => {
-      expectInOverlay("handleSaveShortcut");
-      expectInPalette('"Save"');
+      const commands = listCommands();
+      const saveCmd = commands.find((cmd) => cmd.id === "save");
+      expect(saveCmd).toBeDefined();
+      expect(saveCmd?.title).toBe("Save");
     });
 
     it("copy shortcut (Cmd+C) has palette equivalent 'Copy CSS'", () => {
-      expectInOverlay("handleCopyShortcut");
-      expectInPalette('"Copy CSS"');
+      const commands = listCommands();
+      const copyCmd = commands.find((cmd) => cmd.id === "copy-css");
+      expect(copyCmd).toBeDefined();
+      expect(copyCmd?.title).toBe("Copy CSS");
     });
 
     it("paste styles shortcut (Cmd+Alt+V) has palette equivalent 'Paste Styles'", () => {
-      expectInOverlay("handlePasteStyles");
-      expectInPalette('"Paste Styles"');
+      const commands = listCommands();
+      const pasteCmd = commands.find((cmd) => cmd.id === "paste-styles");
+      expect(pasteCmd).toBeDefined();
+      expect(pasteCmd?.title).toBe("Paste Styles");
     });
 
     it("diff shortcut (D) has palette equivalent 'Toggle Diff'", () => {
-      expectInHotkeys('e.key === "d"');
-      expectInPalette('"Toggle Diff"');
+      const commands = listCommands();
+      const diffCmd = commands.find((cmd) => cmd.id === "toggle-diff");
+      expect(diffCmd).toBeDefined();
+      expect(diffCmd?.title).toBe("Toggle Diff");
     });
 
     it("reset shortcut (R) has palette equivalent 'Reset'", () => {
-      expectInHotkeys('e.key === "r"');
-      expectInPalette('"Reset"');
+      const commands = listCommands();
+      const resetCmd = commands.find((cmd) => cmd.id === "reset");
+      expect(resetCmd).toBeDefined();
+      expect(resetCmd?.title).toBe("Reset");
     });
   });
 
-  describe("Overlay dispatches palette actions correctly", () => {
-    it("handleCommandAction exists in Overlay", () => {
-      expectInOverlay("handleCommandAction");
+  describe("Overlay dispatches palette commands correctly", () => {
+    it("handleExecuteCommand uses the command registry", () => {
+      expectInOverlay("executeCommand");
+      expectInOverlay("commandContext");
     });
 
-    it("onAction prop calls handleCommandAction", () => {
-      // Palette markup lives in OverlayModals; its onAction invokes the
-      // onCommandAction prop, which Overlay wires to handleCommandAction.
+    it("onExecuteCommand prop calls handleExecuteCommand", () => {
+      // Palette markup lives in OverlayModals; its onExecuteCommand invokes
+      // handleExecuteCommand, which dispatches via the command registry.
       const idx = modalsSrc.indexOf("<CommandPalette");
       const block = modalsSrc.slice(idx, idx + 500);
-      expect(block).toContain("onAction=");
-      expect(block).toContain("onCommandAction(action)");
-      expect(overlaySrc).toContain("onCommandAction={handleCommandAction}");
+      expect(block).toContain("onExecuteCommand");
+      expect(overlaySrc).toContain("onExecuteCommand={handleExecuteCommand}");
     });
 
-    it("handleCommandAction dispatches Save", () => {
-      const idx = overlaySrc.indexOf("handleCommandAction");
-      const block = overlaySrc.slice(idx, idx + 600);
-      expect(block).toContain("Save");
+    it("commandContext includes selectedEl and scopeCtx", () => {
+      const idx = overlaySrc.indexOf("commandContext");
+      const block = overlaySrc.slice(idx, idx + 1000);
+      expect(block).toContain("selectedEl");
+      expect(block).toContain("scopeCtx");
     });
 
-    it("handleCommandAction dispatches Reset", () => {
-      const idx = overlaySrc.indexOf("handleCommandAction");
-      const block = overlaySrc.slice(idx, idx + 600);
-      expect(block).toContain("Reset");
-    });
-
-    it("handleCommandAction dispatches Copy CSS", () => {
-      const idx = overlaySrc.indexOf("handleCommandAction");
-      const block = overlaySrc.slice(idx, idx + 600);
-      expect(block).toContain("Copy CSS");
+    it("Overlay imports from core/commands", () => {
+      expectInOverlay('from "../core/commands"');
     });
   });
 });

@@ -214,6 +214,28 @@ function bpOrder(id: string): number {
 }
 
 /**
+ * Partition changes into base (un-mediated) vs breakpoint-tagged groups.
+ * Base changes have no `breakpoint` field and are rendered inline; breakpoint
+ * changes are media-gated. Every export surface uses this partition to ensure
+ * responsive edits are never flattened into the base rule.
+ */
+export function partitionByBreakpoint(changes: DiffEntry[]): {
+  base: DiffEntry[];
+  breakpoint: DiffEntry[];
+} {
+  const base: DiffEntry[] = [];
+  const breakpoint: DiffEntry[] = [];
+  for (const c of changes) {
+    if (c.breakpoint) {
+      breakpoint.push(c);
+    } else {
+      base.push(c);
+    }
+  }
+  return { base, breakpoint };
+}
+
+/**
  * Serialize breakpoint-tagged element changes into `@media` CSS blocks, ascending
  * by min-width. Base-breakpoint changes (no `breakpoint`) are skipped — those are
  * the live inline styles, not media-gated. A pseudo-state composes INTO the
@@ -281,7 +303,7 @@ export function composeExportCSS(
 ): string {
   const blocks: string[] = [];
   for (const { el, changes } of items) {
-    const base = changes.filter((c) => !c.breakpoint);
+    const { base } = partitionByBreakpoint(changes);
     if (base.length > 0) blocks.push(formatBase(el, base));
   }
   const bpCSS = serializeBreakpointCSS(
@@ -334,12 +356,12 @@ export function tailwindPrefixFor(id: string): string | null {
 export function composeTailwindExport(changes: DiffEntry[]): string {
   const parts: string[] = [];
 
-  const base = changes.filter((c) => !c.breakpoint);
+  const { base, breakpoint: bpChanges } = partitionByBreakpoint(changes);
   const baseTw = formatTailwindDiff(base);
   if (baseTw) parts.push(baseTw);
 
   const bpIds = Array.from(
-    new Set(changes.filter((c) => c.breakpoint).map((c) => c.breakpoint!)),
+    new Set(bpChanges.map((c) => c.breakpoint!)),
   ).sort((a, b) => bpOrder(a) - bpOrder(b));
 
   for (const id of bpIds) {

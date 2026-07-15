@@ -139,6 +139,12 @@ export interface StyleEngine {
   apply(target: OverrideTarget, prop: string, value: string): void;
   undo(): UndoResult | null;
   redo(): UndoResult | null;
+  /** Undo N entries from the history stack in a single call. Handles mixed
+   *  histories (style edits + mode overrides + dom moves) via engine-mediated
+   *  dispatch, removing reliance on the document.body sentinel convention.
+   *  Returns the number of entries actually undone (may be less than requested
+   *  if the stack is exhausted). RFC #14 Increment 4b. */
+  undoMultiple(count: number): number;
   beginBatch(): void;
   endBatch(): void;
   diff(): UnifiedDiff;
@@ -221,6 +227,23 @@ function undo(): UndoResult | null {
 
 function redo(): UndoResult | null {
   return redoInline();
+}
+
+/**
+ * History-row-aware undo scrubbing: undo N entries from the stack in one call.
+ * Handles mixed histories (style / mode / dom-move / batch) via engine-mediated
+ * dispatch on entry kind, removing the load-bearing document.body sentinel
+ * convention. Returns the number of entries actually undone (may be less than
+ * `count` if the stack runs out). RFC #14 Increment 4b.
+ */
+function undoMultiple(count: number): number {
+  let undone = 0;
+  for (let i = 0; i < count; i++) {
+    const result = undoInline();
+    if (!result) break; // stack exhausted
+    undone++;
+  }
+  return undone;
 }
 
 function diff(): UnifiedDiff {
@@ -322,6 +345,7 @@ export const styleEngine: StyleEngine = {
   apply,
   undo,
   redo,
+  undoMultiple,
   beginBatch: beginInlineBatch,
   endBatch: endInlineBatch,
   diff,

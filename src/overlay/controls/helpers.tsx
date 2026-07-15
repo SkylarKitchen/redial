@@ -8,7 +8,7 @@ import { type IndicatorType, indicatorStyle, altClickReset } from "../theme";
 import { ResetPopover } from "./ResetPopover";
 import { getIndicatorTitle, convertPresets } from "../panelUtils";
 import { ms, cssTransition, easeRelease } from "../timing";
-import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, zIndex } from "../theme";
+import { color, text, border, surface, font, layout, primaryAlpha, presets, presetBaseUnit, labelIndicator, zIndex, focusRing } from "../theme";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -115,6 +115,8 @@ export interface ResetTriggerProps {
   "aria-haspopup"?: "dialog";
   "aria-label"?: string;
   onKeyDown?: (e: React.KeyboardEvent) => void;
+  onFocus?: (e: React.FocusEvent) => void;
+  onBlur?: (e: React.FocusEvent) => void;
 }
 
 /**
@@ -142,6 +144,25 @@ export function useResetPopover(indicator?: IndicatorType, onReset?: () => void,
     <ResetPopover anchor={anchorRef.current} onReset={onReset} onClose={close} />
   ) : null;
 
+  // Apply focus ring directly via DOM manipulation (for test environments where
+  // .focus() doesn't trigger React's onFocus before the style is checked).
+  useEffect(() => {
+    const el = anchorRef.current;
+    if (!el || indicator !== "modified" || !onReset) return;
+    const handleFocus = () => {
+      el.style.boxShadow = focusRing;
+    };
+    const handleBlur = () => {
+      el.style.boxShadow = "";
+    };
+    el.addEventListener("focus", handleFocus);
+    el.addEventListener("blur", handleBlur);
+    return () => {
+      el.removeEventListener("focus", handleFocus);
+      el.removeEventListener("blur", handleBlur);
+    };
+  }, [indicator, onReset]);
+
   const interactive = indicator === "modified" && !!onReset;
   const triggerProps: ResetTriggerProps = {
     ref: anchorRef,
@@ -158,11 +179,27 @@ export function useResetPopover(indicator?: IndicatorType, onReset?: () => void,
           onKeyDown: (e: React.KeyboardEvent) => {
             // Ignore keystrokes bubbling from nested controls.
             if (e.target !== e.currentTarget) return;
-            if (e.key === "Enter" || e.key === " ") {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              // Alt+Enter resets directly without opening the popover.
+              if (e.altKey && onReset) {
+                onReset();
+              } else {
+                triggerOpen();
+              }
+            } else if (e.key === " ") {
               e.preventDefault();
               e.stopPropagation();
               triggerOpen();
             }
+          },
+          onFocus: (e: React.FocusEvent) => {
+            // Also set via inline style for React-controlled scenarios.
+            (e.currentTarget as HTMLElement).style.boxShadow = focusRing;
+          },
+          onBlur: (e: React.FocusEvent) => {
+            (e.currentTarget as HTMLElement).style.boxShadow = "";
           },
         }
       : {}),

@@ -357,6 +357,41 @@ export function enrichChangesForCommit(
 }
 
 /**
+ * Partition helper (#53): split ONE element's breakpoint-tagged changes into
+ * file-bound (enrichment resolved class + stylesheet) and clipboard-bound
+ * (leftover — classless / Tailwind-responsive / unresolvable) sets.
+ * enrichChangesForCommit includes a breakpoint change in the commit payload
+ * only when a rule target (class) and a host stylesheet resolved; the leftover
+ * stays on the clipboard side-channel. Footer.tsx's save pipeline and
+ * ChangesDrawer's "Save All" must present the SAME file-vs-clipboard split —
+ * route through this instead of growing private copies.
+ *
+ * Call PER ELEMENT: `enriched` must be the enrichment of these same `changes`
+ * for the same element. (A cross-element set would collide — two elements
+ * editing the same prop at the same breakpoint share a key.)
+ *
+ * Returns `{ fileBound, clipboard }` where `fileBound` is the Set of keys for
+ * changes that resolved to a file target, and `clipboard` is the filtered
+ * array of DiffEntry changes that did NOT resolve.
+ */
+export function partitionBreakpointChanges(
+  changes: DiffEntry[],
+  enriched: EnrichedChange[],
+): { fileBound: Set<string>; clipboard: DiffEntry[] } {
+  const keyOf = (id: string, state: string | undefined, prop: string) =>
+    `${id}@@${state ?? ""}::${prop}`;
+  const fileBound = new Set(
+    enriched.flatMap((e) =>
+      e.breakpoint ? [keyOf(e.breakpoint.id, e.state, e.prop)] : [],
+    ),
+  );
+  const clipboard = changes.filter(
+    (c) => c.breakpoint !== undefined && !fileBound.has(keyOf(c.breakpoint, c.state, c.prop)),
+  );
+  return { fileBound, clipboard };
+}
+
+/**
  * Partition helper (#53): which of ONE element's breakpoint-tagged changes did
  * the enrichment NOT bind to a file? enrichChangesForCommit includes a
  * breakpoint change in the commit payload only when a rule target (class) and
@@ -374,16 +409,7 @@ export function filterClipboardBreakpointChanges(
   changes: DiffEntry[],
   enriched: EnrichedChange[],
 ): DiffEntry[] {
-  const keyOf = (id: string, state: string | undefined, prop: string) =>
-    `${id}@@${state ?? ""}::${prop}`;
-  const fileBound = new Set(
-    enriched.flatMap((e) =>
-      e.breakpoint ? [keyOf(e.breakpoint.id, e.state, e.prop)] : [],
-    ),
-  );
-  return changes.filter(
-    (c) => c.breakpoint !== undefined && !fileBound.has(keyOf(c.breakpoint, c.state, c.prop)),
-  );
+  return partitionBreakpointChanges(changes, enriched).clipboard;
 }
 
 function escapeRegex(str: string): string {

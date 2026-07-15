@@ -167,6 +167,28 @@ describe("GradientEditor bar keyboard add-stop", () => {
     );
   });
 
+  it("keyboard-added stop is positioned at the midpoint of the largest gap (issue #145)", () => {
+    const UNEQUAL_GAPS: GradientStop[] = [
+      { color: "#ff0000", position: 0 },
+      { color: "#00ff00", position: 10 },
+      { color: "#0000ff", position: 100 },
+    ];
+    const { container, onChange } = renderEditor(UNEQUAL_GAPS);
+    const bar = container.querySelector('[aria-label="Add gradient stop"]') as HTMLElement;
+    expect(bar).toBeTruthy();
+    fireEvent.keyDown(bar, { key: "Enter" });
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stops: expect.arrayContaining([
+          expect.objectContaining({ position: 0 }),
+          expect.objectContaining({ position: 10 }),
+          expect.objectContaining({ position: 55 }),
+          expect.objectContaining({ position: 100 }),
+        ]),
+      }),
+    );
+  });
+
   it("mouse click-to-add still works (unchanged)", () => {
     const { container, onChange } = renderEditor(TWO_STOPS);
     const bar = container.querySelector('[aria-label="Add gradient stop"]') as HTMLElement;

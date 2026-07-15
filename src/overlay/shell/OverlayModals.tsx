@@ -21,7 +21,7 @@ export interface OverlayModalsProps {
   onSelectElement: (el: Element) => void;
   setShowSearch: Dispatch<SetStateAction<boolean>>;
   setSearchQuery: Dispatch<SetStateAction<string>>;
-  onCommandAction: ComponentProps<typeof CommandPalette>["onAction"];
+  onExecuteCommand: ComponentProps<typeof CommandPalette>["onExecuteCommand"];
   onContextAction: ComponentProps<typeof ContextMenu>["onAction"];
 }
 
@@ -32,7 +32,7 @@ export function OverlayModals({
   onSelectElement,
   setShowSearch,
   setSearchQuery,
-  onCommandAction,
+  onExecuteCommand,
   onContextAction,
 }: OverlayModalsProps) {
   return (
@@ -46,7 +46,7 @@ export function OverlayModals({
             setSearchQuery(section);
             setActiveModal({ type: "none" });
           }}
-          onAction={(action) => { onCommandAction(action); setActiveModal({ type: "none" }); }}
+          onExecuteCommand={(commandId) => { onExecuteCommand(commandId); setActiveModal({ type: "none" }); }}
           onClose={() => setActiveModal({ type: "none" })}
         />
       )}

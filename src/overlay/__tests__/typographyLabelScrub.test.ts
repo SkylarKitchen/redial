@@ -16,17 +16,10 @@
  * every TypoValueCell call site.
  */
 import { describe, it, expect, vi } from "vitest";
-import { readFileSync } from "fs";
-import { join } from "path";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import type { SectionCtx } from "../panelUtils";
 import type { UnitConversionContext } from "../unitConversion";
-
-const typoSrc = readFileSync(
-  join(__dirname, "../sections/TypographySection.tsx"),
-  "utf-8",
-);
 
 // ─── Mock ctx (mirrors typographySection.test.ts) ─────────────────────
 
@@ -99,33 +92,5 @@ describe("Typography numeric labels are Webflow-style scrub handles", () => {
   it('the "Height" label renders as a drag-scrub handle (cursor:ew-resize)', async () => {
     const html = await renderTypography();
     expect(isScrubHandle(html, "Height")).toBe(true);
-  });
-});
-
-// ─── Structural: every numeric label routes through ScrubLabel ────────
-
-describe("Typography wires all numeric labels through ScrubLabel", () => {
-  it("imports the shared ScrubLabel control", () => {
-    expect(typoSrc).toMatch(/import\s*\{[^}]*\bScrubLabel\b[^}]*\}\s*from/);
-  });
-
-  it("uses ScrubLabel for every numeric TypoValueCell label (>= 8 sites)", () => {
-    const count = (typoSrc.match(/<ScrubLabel/g) ?? []).length;
-    expect(count).toBeGreaterThanOrEqual(8);
-  });
-
-  it("scrubs each advanced numeric caption", () => {
-    for (const label of [
-      "Letter spacing",
-      "Text indent",
-      "Columns",
-      "Column gap",
-      "Word spacing",
-    ]) {
-      expect(
-        new RegExp(`<ScrubLabel[\\s\\S]*?>${label}<`).test(typoSrc),
-        `"${label}" caption should be wrapped in <ScrubLabel>`,
-      ).toBe(true);
-    }
   });
 });

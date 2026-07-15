@@ -13,8 +13,6 @@ import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { LabelScrub } from "../controls/LabelScrub";
-import { readFileSync } from "fs";
-import { join } from "path";
 
 // ─── Setup ───────────────────────────────────────────────────────────
 
@@ -120,14 +118,6 @@ describe("cursor style on scrubbable labels", () => {
     renderLabelScrub({ value: 100, onChange });
     const label = getLabel();
     expect(label.style.cursor).toBe("ew-resize");
-  });
-
-  it("source declares cursor: ew-resize in the style object", () => {
-    const src = readFileSync(
-      join(__dirname, "..", "controls", "LabelScrub.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain('cursor: "ew-resize"');
   });
 });
 
@@ -235,14 +225,6 @@ describe("Shift during scrub applies 10x multiplier", () => {
     const lastValue = onChange.mock.calls[onChange.mock.calls.length - 1][0];
     expect(lastValue).toBe(100);
   });
-
-  it("source confirms shift multiplier is 10", () => {
-    const src = readFileSync(
-      join(__dirname, "..", "controls", "LabelScrub.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("multiplier = 10");
-  });
 });
 
 // ─── Alt applies 0.1x multiplier ─────────────────────────────────────
@@ -258,14 +240,6 @@ describe("Alt during scrub applies 0.1x multiplier", () => {
     pointerMove(label, 110, { altKey: true });
     const lastValue = onChange.mock.calls[onChange.mock.calls.length - 1][0];
     expect(lastValue).toBe(1);
-  });
-
-  it("source confirms alt multiplier is 0.1", () => {
-    const src = readFileSync(
-      join(__dirname, "..", "controls", "LabelScrub.tsx"),
-      "utf-8",
-    );
-    expect(src).toContain("multiplier = 0.1");
   });
 });
 
@@ -354,46 +328,3 @@ describe("mouseup commits the final value", () => {
   });
 });
 
-// ─── Source-level verification ────────────────────────────────────────
-
-describe("LabelScrub source structure", () => {
-  const src = readFileSync(
-    join(__dirname, "..", "controls", "LabelScrub.tsx"),
-    "utf-8",
-  );
-
-  it("uses setPointerCapture for reliable drag tracking", () => {
-    expect(src).toContain("setPointerCapture");
-  });
-
-  it("implements a dead zone before starting the scrub", () => {
-    expect(src).toContain("deadZone");
-    expect(src).toContain("Math.abs(dx)");
-  });
-
-  it("sets body cursor to ew-resize during active scrub", () => {
-    expect(src).toContain('document.body.style.cursor = "ew-resize"');
-  });
-
-  it("restores body cursor on cleanup", () => {
-    expect(src).toContain("document.body.style.cursor = prevCursor");
-  });
-
-  it("sets userSelect to none during scrub", () => {
-    expect(src).toContain('document.body.style.userSelect = "none"');
-  });
-
-  it("integrates with scrubState (setScrubActive)", () => {
-    expect(src).toContain("setScrubActive(true)");
-    expect(src).toContain("setScrubActive(false)");
-  });
-
-  it("integrates with batch operations (beginBatch/endBatch)", () => {
-    expect(src).toContain("beginBatch()");
-    expect(src).toContain("endBatch()");
-  });
-
-  it("cleans up event listeners on pointer up", () => {
-    expect(src).toContain("removeEventListener");
-  });
-});

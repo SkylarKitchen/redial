@@ -7,3 +7,4 @@ state/
 sessions/
 logs/
 *.log
+worktrees/

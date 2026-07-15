@@ -252,13 +252,42 @@ export function GradientEditor({ type, angle, stops, onChange }: GradientEditorP
   );
 
   // --- Keyboard equivalent of click-to-add: Enter/Space on the bar adds a
-  // stop at the 50% midpoint (mouse adds at the pointer position) ---
+  // stop at the midpoint of the largest gap (issue #145) ---
   const handleBarKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.target !== e.currentTarget) return;
       if (e.key !== "Enter" && e.key !== " ") return;
       e.preventDefault();
-      const newStop: GradientStop = { color: "#ffffff", position: 50 };
+
+      // Find the largest gap between consecutive stops and insert at its midpoint.
+      const sorted = [...stops].sort((a, b) => a.position - b.position);
+      let largestGap = { start: 0, end: 100, size: 100 };
+
+      if (sorted.length === 0) {
+        largestGap = { start: 0, end: 100, size: 100 };
+      } else if (sorted.length === 1) {
+        // Single stop: choose the larger of [0, stop] or [stop, 100]
+        const gapBefore = sorted[0].position - 0;
+        const gapAfter = 100 - sorted[0].position;
+        largestGap = gapAfter >= gapBefore
+          ? { start: sorted[0].position, end: 100, size: gapAfter }
+          : { start: 0, end: sorted[0].position, size: gapBefore };
+      } else {
+        // Multiple stops: scan all gaps including edges
+        const gaps = [
+          { start: 0, end: sorted[0].position, size: sorted[0].position },
+          ...sorted.slice(0, -1).map((s, i) => ({
+            start: s.position,
+            end: sorted[i + 1].position,
+            size: sorted[i + 1].position - s.position,
+          })),
+          { start: sorted[sorted.length - 1].position, end: 100, size: 100 - sorted[sorted.length - 1].position },
+        ];
+        largestGap = gaps.reduce((max, gap) => (gap.size > max.size ? gap : max), gaps[0]);
+      }
+
+      const position = Math.round((largestGap.start + largestGap.end) / 2);
+      const newStop: GradientStop = { color: "#ffffff", position };
       const next = [...stops, newStop];
       setSelectedIndex(next.length - 1);
       emit({ stops: next });

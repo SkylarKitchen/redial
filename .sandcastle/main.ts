@@ -124,9 +124,11 @@ for (let cycle = 1; cycle <= MAX_CYCLES; cycle++) {
         maxIterations: 1,
         agent: sandcastle.claudeCode(workerModel()),
         promptFile: ".sandcastle/review-prompt.md",
+        // The integration branch reaches the prompt as {{TARGET_BRANCH}} — a
+        // sandcastle built-in (host's checked-out branch). Passing it here
+        // as a promptArg throws PromptError: built-ins can't be overridden.
         promptArgs: {
           BRANCH: issue.branch,
-          SOURCE_BRANCH: startBranch,
         },
       });
 
