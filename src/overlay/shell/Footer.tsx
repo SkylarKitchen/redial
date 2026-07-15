@@ -6,14 +6,14 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { styleEngine, type ScopeContext } from "../core/engine";
-import { enrichChangesForCommit, partitionBreakpointChanges } from "../core/commitUtils";
+import { enrichChangesForCommit, partitionBreakpointChanges, enrichModeOverridesForCommit } from "../core/commitUtils";
 import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { formatCSSDiff, getSelector } from "../util";
 import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha, warningAlpha } from "../theme";
 import { getConfig } from "../core/config";
-import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
+import { serializeModeOverrides, serializeModeOverrideEntries, getModeOverrideCount, getAllModeOverrides, resetAllModeOverrides, type ModeOverrideEntry } from "../core/modeOverrides";
 import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS, partitionByBreakpoint } from "../breakpoints";
 import { importCSSText } from "../hooks/useOverlayHotkeys";
 import { usePressScale } from "../controls/helpers";
@@ -263,18 +263,21 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
   }, [element, copyAndClose]);
 
   // Clipboard side-channel for edits that can't be file-written: CSS-variable
-  // mode overrides (still clipboard-only) plus any breakpoint edits the
-  // enrichment could NOT bind to a file (#53 writes class-backed breakpoint
-  // edits into `@media` blocks now; `clipboardBpChanges` is the leftover —
-  // e.g. a classless element or an unresolvable stylesheet).
-  const copyMediaGatedExtras = useCallback((clipboardBpChanges: DiffEntry[]) => {
+  // mode overrides the enrichment could NOT bind to a file (#53 second half
+  // writes resolvable ones into their defining blocks now) plus any breakpoint
+  // edits left over from #53's first half (classless element / unresolvable
+  // stylesheet).
+  const copyMediaGatedExtras = useCallback((
+    clipboardBpChanges: DiffEntry[],
+    clipboardModes: ModeOverrideEntry[],
+  ) => {
     const bpCSS = serializeElementBreakpointCSS(element, clipboardBpChanges);
-    const modeCSS = serializeModeOverrides();
+    const modeCSS = serializeModeOverrideEntries(clipboardModes);
     const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
     if (!extra) return;
     navigator.clipboard.writeText(extra).then(() => {
       const bpCount = clipboardBpChanges.filter((c) => c.breakpoint).length;
-      const mc = getModeOverrideCount();
+      const mc = clipboardModes.length;
       const parts: string[] = [];
       if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
       if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
@@ -311,6 +314,17 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     const { fileBound: fileBoundBp, clipboard: clipboardBpChanges } =
       partitionBreakpointChanges(changes, enriched);
 
+    // Mode overrides (#53 second half): file-bind every override whose
+    // variable definition resolved; the leftover keeps the clipboard
+    // side-channel. A Tailwind-mode body routes the WHOLE payload through the
+    // Tailwind writer, which has no mode-block machinery — overrides stay
+    // clipboard-bound there.
+    const modeSplit =
+      enriched.length > 0 && enriched[0]?.mode === "tailwind"
+        ? { fileBound: [], clipboard: getAllModeOverrides() }
+        : enrichModeOverridesForCommit();
+    const allEnriched = [...enriched, ...modeSplit.fileBound];
+
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
     if (!endpoint) {
@@ -333,8 +347,8 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
 
     // Nothing file-bound (e.g. only clipboard-bound breakpoint edits / mode
     // overrides): skip the pointless empty POST, go straight to the clipboard.
-    if (enriched.length === 0) {
-      copyMediaGatedExtras(clipboardBpChanges);
+    if (allEnriched.length === 0) {
+      copyMediaGatedExtras(clipboardBpChanges, modeSplit.clipboard);
       setSaving(false);
       savingRef.current = false;
       return;
@@ -346,7 +360,7 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
         headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
         body: JSON.stringify({
           ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
-          changes: enriched,
+          changes: allEnriched,
         }),
       });
 
@@ -374,9 +388,9 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
           const reason = failedList[0]?.reason || "unknown reason";
           showMessage(`Saved ${writtenFiles.length}, failed ${failed} — first failure: ${reason}`, 4000);
         } else {
-          // Count what reached the file \u2014 file-bound breakpoint edits (#53)
-          // included; show file path for context.
-          const savedCount = enriched.length;
+          // Count what reached the file \u2014 file-bound breakpoint edits and
+          // mode overrides (#53) included; show file path for context.
+          const savedCount = allEnriched.length;
           const filePath = writtenFiles[0]?.split("/").pop() ?? "";
           const fileHint = filePath ? ` \u2192 ${filePath}` : "";
           showMessage(`Saved ${savedCount} propert${savedCount === 1 ? "y" : "ies"}${fileHint}`, 3000);
@@ -407,9 +421,19 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
               activeBreakpoint: id,
             });
           }
+
+          // Clear the file-written mode overrides (#53 second half) — the
+          // same catch-up doctrine as breakpoints: the file now carries the
+          // value. All-or-keep granularity: only when EVERY pending override
+          // was file-bound and the save fully succeeded, because
+          // resetAllModeOverrides also purges mode undo history — a partial
+          // clear isn't expressible on the store today.
+          if (modeSplit.fileBound.length > 0 && modeSplit.clipboard.length === 0) {
+            resetAllModeOverrides();
+          }
         }
         onSaved?.();
-        copyMediaGatedExtras(clipboardBpChanges);
+        copyMediaGatedExtras(clipboardBpChanges, modeSplit.clipboard);
       }
     } catch {
       // Fetch REJECTION (not an HTTP error): the route itself is unreachable —

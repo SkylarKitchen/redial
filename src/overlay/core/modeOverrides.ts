@@ -155,13 +155,40 @@ export function resetAllModeOverrides(): void {
 }
 
 export function serializeModeOverrides(): string {
-  if (store.size === 0) return "";
+  return serializeModeOverrideEntries(getAllModeOverrides());
+}
+
+/** One pending override as a flat entry — the save pipeline's iteration shape
+ *  (issue #53, second half). */
+export type ModeOverrideEntry = {
+  selector: string;
+  varName: string;
+  value: string;
+};
+
+/** Every pending override, flattened in store order. */
+export function getAllModeOverrides(): ModeOverrideEntry[] {
+  const out: ModeOverrideEntry[] = [];
+  for (const [selector, vars] of store)
+    for (const [varName, value] of vars) out.push({ selector, varName, value });
+  return out;
+}
+
+/** serializeModeOverrides for a SUBSET — the clipboard side-channel copies
+ *  only the entries the save pipeline could NOT bind to a file. */
+export function serializeModeOverrideEntries(
+  entries: ModeOverrideEntry[],
+): string {
+  if (entries.length === 0) return "";
+  const bySelector = new Map<string, string[]>();
+  for (const { selector, varName, value } of entries) {
+    const props = bySelector.get(selector) ?? [];
+    props.push(`  ${varName}: ${value};`);
+    bySelector.set(selector, props);
+  }
   const blocks: string[] = [];
-  for (const [selector, vars] of store) {
-    const props = Array.from(vars.entries())
-      .map(([name, val]) => `  ${name}: ${val};`)
-      .join("\n");
-    blocks.push(`${selector} {\n${props}\n}`);
+  for (const [selector, props] of bySelector) {
+    blocks.push(`${selector} {\n${props.join("\n")}\n}`);
   }
   return blocks.join("\n\n");
 }
