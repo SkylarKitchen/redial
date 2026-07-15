@@ -47,7 +47,9 @@ export function ScrubLabel({
   style,
   title,
 }: ScrubLabelProps) {
-  const resetPopover = useResetPopover(indicator, onReset);
+  // Extract label text for ARIA (if children is a string).
+  const labelText = typeof children === "string" ? children : undefined;
+  const resetPopover = useResetPopover(indicator, onReset, labelText);
   return (
     <>
       <LabelScrub
@@ -59,18 +61,16 @@ export function ScrubLabel({
         onClick={onReset ? resetPopover.triggerOpen : undefined}
         onAltClick={onReset}
       >
-        {/* Keyboard-only trigger: mouse clicks flow through LabelScrub's
-            onClick, Enter/Space opens the reset popover directly (issue #85). */}
+        {/* Interactive trigger: handles both mouse clicks and keyboard (Enter/Space)
+            for opening the reset popover (issue #85, #143). */}
         <span
           {...resetPopover.triggerProps}
-          onClick={undefined}
-          title={title}
           style={{ ...style, cursor: "ew-resize" }}
         >
           {indicator ? (
-            <span style={indicatorStyle(indicator)}>{children}</span>
+            <span style={indicatorStyle(indicator)} title={title}>{children}</span>
           ) : (
-            children
+            <span title={title}>{children}</span>
           )}
         </span>
       </LabelScrub>
