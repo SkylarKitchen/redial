@@ -6,7 +6,7 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { styleEngine, type ScopeContext } from "../core/engine";
-import { enrichChangesForCommit } from "../core/commitUtils";
+import { enrichChangesForCommit, partitionBreakpointChanges } from "../core/commitUtils";
 import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
 import { formatCSSDiff, getSelector } from "../util";
 import { timing, ms } from "../timing";
@@ -14,7 +14,7 @@ import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha, warningAlpha } from "../theme";
 import { getConfig } from "../core/config";
 import { serializeModeOverrides, getModeOverrideCount } from "../core/modeOverrides";
-import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS } from "../breakpoints";
+import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS, partitionByBreakpoint } from "../breakpoints";
 import { importCSSText } from "../hooks/useOverlayHotkeys";
 import { usePressScale } from "../controls/helpers";
 
@@ -252,13 +252,11 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     // export targets :root (with var-name props) instead of the element's own
     // selector, so the shared serializer is fed `:root` directly.
     const blocks: string[] = [];
-    const base = changes.filter((c) => !c.breakpoint);
+    const { base, breakpoint: bpChanges } = partitionByBreakpoint(changes);
     if (base.length > 0) blocks.push(formatCSSVars(base));
     const bpCSS = serializeBreakpointCSS([{
       selector: ":root",
-      changes: changes
-        .filter((c) => c.breakpoint)
-        .map((c) => ({ ...c, prop: toVarName(c.prop) })),
+      changes: bpChanges.map((c) => ({ ...c, prop: toVarName(c.prop) })),
     }]);
     if (bpCSS) blocks.push(bpCSS);
     copyAndClose(blocks.join("\n\n"), "vars");
@@ -310,16 +308,8 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
       ...scopeCtx,
       elementScopeSave: true,
     });
-    const bpKeyOf = (id: string, state: string | undefined, prop: string) =>
-      `${id}@@${state ?? ""}::${prop}`;
-    const fileBoundBp = new Set(
-      enriched.flatMap((e) =>
-        e.breakpoint ? [bpKeyOf(e.breakpoint.id, e.state, e.prop)] : [],
-      ),
-    );
-    const clipboardBpChanges = changes.filter(
-      (c) => c.breakpoint && !fileBoundBp.has(bpKeyOf(c.breakpoint, c.state, c.prop)),
-    );
+    const { fileBound: fileBoundBp, clipboard: clipboardBpChanges } =
+      partitionBreakpointChanges(changes, enriched);
 
     // Clipboard fallback when no commit endpoint is configured
     const endpoint = getConfig().commitEndpoint;
@@ -400,6 +390,8 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
           // successful save IS their catch-up moment. Surgical per-breakpoint
           // (ADR-0005), and only for breakpoints whose EVERY change was
           // file-bound (clipboard leftovers keep their tracking).
+          const bpKeyOf = (id: string, state: string | undefined, prop: string) =>
+            `${id}@@${state ?? ""}::${prop}`;
           const clearableBp = new Map<string, boolean>();
           for (const c of changes) {
             if (!c.breakpoint) continue;

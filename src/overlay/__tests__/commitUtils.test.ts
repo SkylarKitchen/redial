@@ -9,9 +9,10 @@
  * flattened hover edits into the BASE rule.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { enrichChangesForCommit } from "../core/commitUtils";
+import { enrichChangesForCommit, filterClipboardBreakpointChanges } from "../core/commitUtils";
 import type { DiffEntry } from "../core/apply";
 import type { ScopeContext } from "../core/engine";
+import type { EnrichedChange } from "../core/commitUtils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -33,6 +34,20 @@ function addStyle(css: string, attrs: Record<string, string> = {}): void {
   injectedStyles.push(style);
 }
 
+/** Duck-typed fake CSSStyleSheet for href-based tests (breakpoint enrichment). */
+type FakeSheet = {
+  href: string | null;
+  ownerNode: Element | null;
+  cssRules: CSSRuleList | Array<CSSStyleRule>;
+};
+
+function stubStyleSheets(sheets: FakeSheet[]): void {
+  Object.defineProperty(document, "styleSheets", {
+    configurable: true,
+    get: () => sheets,
+  });
+}
+
 const entry = (over: Partial<DiffEntry> = {}): DiffEntry => ({
   prop: "color",
   from: "blue",
@@ -47,6 +62,8 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = "";
   for (const style of injectedStyles.splice(0)) style.remove();
+  // Restore the prototype styleSheets getter if a test stubbed it
+  delete (document as unknown as Record<string, unknown>).styleSheets;
 });
 
 // ─── Tests ────────────────────────────────────────────────────────────
@@ -220,5 +237,156 @@ describe("enrichChangesForCommit — class info for state-tagged entries (issue 
       activeState: "none",
     });
     expect(c.className).toBeUndefined();
+  });
+});
+
+// ─── filterClipboardBreakpointChanges — partition file-bound vs clipboard (#53) ───
+describe("filterClipboardBreakpointChanges — breakpoint partition (issue #144)", () => {
+  it("returns empty array when no breakpoint changes exist", () => {
+    const el = makeEl("btn");
+    const changes = [entry(), entry({ prop: "background" })];
+    const enriched = enrichChangesForCommit(el, changes, {
+      scope: "element",
+      activeClassName: null,
+      activeState: "none",
+    });
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    expect(clipboard).toEqual([]);
+  });
+
+  it("returns empty array when all breakpoint changes made it into enriched output", () => {
+    const el = makeEl();
+    const changes = [
+      entry({ breakpoint: "768" }),
+      entry({ prop: "background", breakpoint: "1024" }),
+    ];
+    // Simulate enriched output that includes both breakpoint changes
+    const enriched: EnrichedChange[] = [
+      { ...changes[0], breakpoint: { id: "768", minWidth: 768 } },
+      { ...changes[1], breakpoint: { id: "1024", minWidth: 1024 } },
+    ];
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    // All breakpoints were in enriched, so none go to clipboard
+    expect(clipboard).toEqual([]);
+  });
+
+  it("returns breakpoint changes that enrichment filtered out (no class resolution)", () => {
+    const el = makeEl(); // no classes
+    const changes = [
+      entry(),
+      entry({ prop: "background", breakpoint: "768" }),
+      entry({ prop: "padding", breakpoint: "1024" }),
+    ];
+    const enriched = enrichChangesForCommit(el, changes, {
+      scope: "element",
+      activeClassName: null,
+      activeState: "none",
+    });
+    // Enrichment drops breakpoint changes without a class
+    expect(enriched.length).toBe(1); // only the base change
+    expect(enriched[0].breakpoint).toBeUndefined();
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    expect(clipboard.length).toBe(2);
+    expect(clipboard[0].prop).toBe("background");
+    expect(clipboard[0].breakpoint).toBe("768");
+    expect(clipboard[1].prop).toBe("padding");
+    expect(clipboard[1].breakpoint).toBe("1024");
+  });
+
+  it("partitions based on what enrichment included vs filtered", () => {
+    const el = makeEl();
+    const changes = [
+      entry({ breakpoint: "768" }),
+      entry({ prop: "background", breakpoint: "1024" }),
+      entry({ prop: "margin", breakpoint: "1280" }),
+    ];
+    // Simulate enrichment kept only the first two
+    const enriched: EnrichedChange[] = [
+      { ...changes[0], breakpoint: { id: "768", minWidth: 768 } },
+      { ...changes[1], breakpoint: { id: "1024", minWidth: 1024 } },
+    ];
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    // Only the third change was filtered out
+    expect(clipboard.length).toBe(1);
+    expect(clipboard[0].prop).toBe("margin");
+    expect(clipboard[0].breakpoint).toBe("1280");
+  });
+
+  it("preserves state field when filtering breakpoint+state changes", () => {
+    const el = makeEl();
+    const changes = [
+      entry({ state: "hover", breakpoint: "768" }),
+      entry({ prop: "background", state: "focus", breakpoint: "1024" }),
+    ];
+    const enriched = enrichChangesForCommit(el, changes, {
+      scope: "element",
+      activeClassName: null,
+      activeState: "none",
+    });
+    // Without class, these should be clipboard-only
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    expect(clipboard.length).toBe(2);
+    expect(clipboard[0].state).toBe("hover");
+    expect(clipboard[0].breakpoint).toBe("768");
+    expect(clipboard[1].state).toBe("focus");
+    expect(clipboard[1].breakpoint).toBe("1024");
+  });
+
+  it("correctly keys changes by breakpoint+state+prop for matching", () => {
+    const el = makeEl();
+    // Multiple changes for same prop at different breakpoints and states
+    const changes = [
+      entry({ breakpoint: "768" }),
+      entry({ breakpoint: "1024" }),
+      entry({ prop: "color", state: "hover", breakpoint: "768" }),
+    ];
+    // Simulate all made it to enriched (different keys: 768@@::color, 1024@@::color, 768@@hover::color)
+    const enriched: EnrichedChange[] = [
+      { ...changes[0], breakpoint: { id: "768", minWidth: 768 } },
+      { ...changes[1], breakpoint: { id: "1024", minWidth: 1024 } },
+      { ...changes[2], breakpoint: { id: "768", minWidth: 768 }, state: "hover" },
+    ];
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    // All were in enriched, so clipboard is empty
+    expect(clipboard).toEqual([]);
+  });
+
+  it("distinguishes same prop at same breakpoint with different states", () => {
+    const el = makeEl();
+    const changes = [
+      entry({ breakpoint: "768" }), // base state at 768
+      entry({ prop: "color", state: "hover", breakpoint: "768" }), // hover state at 768
+    ];
+    // Simulate only the base one made it to enriched
+    const enriched: EnrichedChange[] = [
+      { ...changes[0], breakpoint: { id: "768", minWidth: 768 } },
+    ];
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    // The hover one was filtered out
+    expect(clipboard.length).toBe(1);
+    expect(clipboard[0].state).toBe("hover");
+    expect(clipboard[0].breakpoint).toBe("768");
+  });
+
+  it("only returns changes with breakpoint field defined", () => {
+    const el = makeEl();
+    const changes = [
+      entry(), // no breakpoint
+      entry({ breakpoint: "768" }),
+      entry({ prop: "margin" }), // no breakpoint
+    ];
+    const enriched = enrichChangesForCommit(el, changes, {
+      scope: "element",
+      activeClassName: null,
+      activeState: "none",
+    });
+    const clipboard = filterClipboardBreakpointChanges(changes, enriched);
+    // Only items with breakpoint get returned
+    clipboard.forEach((c) => {
+      expect(c.breakpoint).toBeDefined();
+    });
+    // Base changes never appear in clipboard
+    const hasBaseChange = clipboard.some((c) => !c.breakpoint);
+    expect(hasBaseChange).toBe(false);
   });
 });
