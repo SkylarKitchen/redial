@@ -20,6 +20,9 @@ export type Override = {
   initial: string;
   current: string;
   inlineOriginal: string | null;
+  /** Provenance (ADR-0011): the class the edit was applied under; absent =
+   *  element provenance. Last write to the cell wins. */
+  className?: string;
 };
 
 export type DiffEntry = {
@@ -30,6 +33,10 @@ export type DiffEntry = {
   /** Responsive breakpoint this change belongs to; absent = the base breakpoint
    *  (no `@media`). RFC #14 Increment C — see ADR-0005. */
   breakpoint?: string;
+  /** Provenance (ADR-0011): the class this change was applied under; absent =
+   *  element provenance. Save targeting derives from this record, never from
+   *  the scoping context at save time. */
+  className?: string;
 };
 
 // --- Composite key helpers (breakpoint ▸ state ▸ prop) ---
@@ -370,7 +377,7 @@ export function applyInlineStyle(
     // Also capture pre-existing inline value so undo/reset can restore it
     const inlineOriginal = writeInline ? ((el as HTMLElement).style.getPropertyValue(cssProp) || null) : null;
     const initial = getComputedStyle(el).getPropertyValue(cssProp).trim();
-    elOverrides.set(prop, { initial, current: value, inlineOriginal });
+    elOverrides.set(prop, { initial, current: value, inlineOriginal, className });
 
     // New override: dirty if initial !== value
     if (initial !== value) dirtyCount++;
@@ -396,6 +403,9 @@ export function applyInlineStyle(
       undoStack.push({ el, prop, prev: existing.current, state: parsed.state, className });
     }
     existing.current = value;
+    // Provenance is last-write-wins (ADR-0011): a re-edit under a different
+    // target replaces the record — including back to element (undefined).
+    existing.className = className;
 
     // Update dirtyCount based on transition
     const isDirtyNow = existing.initial !== value;
@@ -872,7 +882,7 @@ export function diff(el: Element): DiffEntry[] {
   if (!elOverrides) return [];
 
   const entries: DiffEntry[] = [];
-  for (const [key, { initial, current }] of elOverrides) {
+  for (const [key, { initial, current, className }] of elOverrides) {
     if (initial !== current) {
       const { breakpoint, state, prop } = parseKey(key);
       entries.push({
@@ -881,6 +891,7 @@ export function diff(el: Element): DiffEntry[] {
         to: current,
         state: state === "none" ? undefined : state,
         breakpoint: breakpoint === BASE_BREAKPOINT ? undefined : breakpoint,
+        className,
       });
     }
   }
@@ -1450,7 +1461,7 @@ export function clearForeignUndo(): void {
 
 // --- Session Persistence ---
 
-type SerializedOverride = { initial: string; current: string };
+type SerializedOverride = { initial: string; current: string; className?: string };
 type SerializedSession = Record<string, Record<string, SerializedOverride>>;
 
 const STORAGE_PREFIX = "__tuner_session:";
@@ -1480,7 +1491,11 @@ function persistToStorage(): void {
       const propData: Record<string, SerializedOverride> = {};
       for (const [prop, override] of props) {
         if (override.initial !== override.current) {
-          propData[prop] = { initial: override.initial, current: override.current };
+          propData[prop] = {
+            initial: override.initial,
+            current: override.current,
+            ...(override.className ? { className: override.className } : {}),
+          };
         }
       }
       if (Object.keys(propData).length > 0) {
@@ -1535,7 +1550,14 @@ export function restoreSession(): number {
         // already counted instead of unconditionally incrementing.
         const existing = elOverrides.get(prop);
         const wasDirty = existing ? existing.initial !== existing.current : false;
-        elOverrides.set(prop, { initial: override.initial, current: override.current, inlineOriginal: null });
+        // Pre-provenance sessions carry no className — absent restores as
+        // element provenance (ADR-0011's compatibility default).
+        elOverrides.set(prop, {
+          initial: override.initial,
+          current: override.current,
+          inlineOriginal: null,
+          className: override.className,
+        });
         const isDirtyNow = override.initial !== override.current;
         if (!wasDirty && isDirtyNow) dirtyCount++;
         else if (wasDirty && !isDirtyNow) dirtyCount--;

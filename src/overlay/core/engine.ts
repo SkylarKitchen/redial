@@ -46,7 +46,6 @@ import { applyClassStyle, destroyClassStyles, resetClassStyles } from "./scope";
 import {
   applyStateStyle,
   destroyStateStyles,
-  diffState as diffStateInline,
   resetStateStyles,
 } from "./statePreview";
 
@@ -75,7 +74,11 @@ import {
 export type OverrideTarget =
   | { scope: "element"; el: Element; breakpoint?: string }
   | { scope: "class"; el: Element; className: string; breakpoint?: string }
-  | { scope: "state"; el: Element; state: string; breakpoint?: string }
+  /** `className` on a state target is provenance (ADR-0011): the class that was
+   *  active when the pseudo-state edit was made — the `.class:state` rule the
+   *  edit will save into. Absent → the save pipeline falls back to the
+   *  element's own class resolution. */
+  | { scope: "state"; el: Element; state: string; className?: string; breakpoint?: string }
   | { scope: "mode"; selector: string; varName: string };
 
 /**
@@ -110,7 +113,16 @@ export function resolveTarget(el: Element, ctx: ScopeContext): OverrideTarget {
       ? { breakpoint: ctx.activeBreakpoint }
       : undefined;
   if (ctx.activeState !== "none") {
-    return { scope: "state", el, state: ctx.activeState, ...bp };
+    // Freeze the active class onto the state target (ADR-0011 provenance):
+    // today's save resolves the `.class:state` rule from the class at SAVE
+    // time, which drifts when the user re-pills before saving.
+    return {
+      scope: "state",
+      el,
+      state: ctx.activeState,
+      ...(ctx.activeClassName ? { className: ctx.activeClassName } : {}),
+      ...bp,
+    };
   }
   if (ctx.scope === "class" && ctx.activeClassName) {
     return { scope: "class", el, className: ctx.activeClassName, ...bp };
@@ -185,7 +197,7 @@ function apply(target: OverrideTarget, prop: string, value: string): void {
       // media-gated render deferred to #35. Always mirror into apply.ts's map
       // (keyed by breakpoint ▸ state ▸ prop) so undo/redo/diff observe the edit.
       if (bp === BASE_BREAKPOINT) applyStateStyle(target.el, target.state, prop, value);
-      applyInlineStyle(target.el, compositeKey(bp, target.state, prop), value);
+      applyInlineStyle(target.el, compositeKey(bp, target.state, prop), value, target.className);
       return;
     }
     case "class": {
@@ -195,8 +207,9 @@ function apply(target: OverrideTarget, prop: string, value: string): void {
         applyClassStyle(target.className, prop, value);
         applyInlineStyle(target.el, prop, value, target.className);
       } else {
-        // Breakpoint class edit: tracked only (per-breakpoint class rule = #35).
-        applyInlineStyle(target.el, compositeKey(bp, "none", prop), value);
+        // Breakpoint class edit: tracked only (per-breakpoint class rule = #35)
+        // — but the class provenance still records (ADR-0011).
+        applyInlineStyle(target.el, compositeKey(bp, "none", prop), value, target.className);
       }
       return;
     }
@@ -279,9 +292,17 @@ function diffElement(el: Element): DiffEntry[] {
   return diffElementInline(el);
 }
 
-/** Per-element, per-state diff from the pseudo-state preview map. */
+/**
+ * Per-element, per-state diff — read from the override store's mirror (the
+ * tracked truth: composite-keyed, provenance-carrying, breakpoint-aware), NOT
+ * statePreview's render map. The preview map captures `initial` as `""` (a
+ * pseudo-state computed value can't be read) and knows nothing of breakpoints
+ * or provenance; the mirror records the resting computed value, the class the
+ * edit was made under (ADR-0011), and breakpoint▸state composites. Entries
+ * come back with `state` stamped per change.
+ */
 function diffState(el: Element, state: string): DiffEntry[] {
-  return diffStateInline(el, state);
+  return diffElementInline(el).filter((c) => c.state === state);
 }
 
 /**
