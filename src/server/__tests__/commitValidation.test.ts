@@ -210,3 +210,208 @@ describe("comment-sequence injection (issue #55)", () => {
     expect(sanitizeCSSValue("/<*")).not.toContain("/*");
   });
 });
+
+describe('empty/whitespace `from` — zero-width splice guard', () => {
+  // escapeRegex("") is "", so replacePropRegex(prop, escapeRegex(from))
+  // degenerates to `(^|[;{\s])(prop\s*:\s*)` — the value pattern is
+  // zero-width, the "match" is just the declaration prefix, and the
+  // replacement SPLICES `to` into the middle of the old value:
+  // "color: blue;" + to:"red" → "color: redblue;". Splice sites:
+  // commit.ts (pseudo + base surgical replace) and cssSearch.ts
+  // applyChangeWithinBody (@media body replace).
+  //
+  // A plain base-path value replacement has no legitimate empty `from`
+  // (getComputedStyle never returns "" for a standard longhand), so it must
+  // be REJECTED as malformed input. Paths whose `from` is legitimately
+  // empty — state saves (diffState reports from:"" by contract, locked in
+  // outliers-scope-state.test.ts), fresh custom-prop adds (unset vars
+  // compute to ""), createClass / @media creation / elementScope (append
+  // semantics, `from` unused) — must NOT be rejected, and must never build
+  // a zero-width exact pattern either: the broad tier rewrites the whole
+  // value instead.
+
+  it('rejects an empty `from` on a plain value replacement and leaves the file untouched', async () => {
+    const original = await writeFixture(FIXTURE, BASE_CSS);
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "", to: "red", sourceFile: FIXTURE, sourceLine: 1 }],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    // Lock the reason so the rejection is identifiable, not a generic miss.
+    expect(result.failed[0].reason).toMatch(/empty "from" value/);
+
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toBe(original);
+    expect(content).not.toContain("redblue");
+  });
+
+  it('rejects a whitespace-only `from` the same way', async () => {
+    const original = await writeFixture(FIXTURE, BASE_CSS);
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "   ", to: "red", sourceFile: FIXTURE, sourceLine: 1 }],
+      tempDir
+    );
+
+    expect(result.written).toHaveLength(0);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].reason).toMatch(/empty "from" value/);
+    expect(await readFile(join(tempDir, FIXTURE), "utf-8")).toBe(original);
+  });
+
+  // ── Splice prevention on the contractually-empty paths (can't reject
+  // these — the client has no `from` to send). The exact tier must be
+  // skipped; the existing broad tier rewrites the WHOLE value cleanly.
+
+  it('state save with empty `from` rewrites an authored pseudo value cleanly (no splice)', async () => {
+    await writeFixture(
+      FIXTURE,
+      [".btn {", "  color: black;", "}", "", ".btn:hover {", "  color: blue;", "}"].join("\n")
+    );
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "", to: "red", className: "btn", state: "hover", sourceFile: FIXTURE }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toContain("color: red;");
+    expect(content).not.toContain("redblue");
+    // Only the :hover block changes — the base rule keeps its value.
+    expect(content).toContain("color: black;");
+  });
+
+  it('breakpoint state save with empty `from` rewrites an authored @media value cleanly (no splice)', async () => {
+    await writeFixture(
+      FIXTURE,
+      [
+        ".card {", "  color: black;", "}", "",
+        "@media (min-width: 768px) {", "  .card:hover {", "    color: blue;", "  }", "}",
+      ].join("\n")
+    );
+
+    const result = await handleCommit(
+      [{
+        prop: "color", from: "", to: "red",
+        className: "card", state: "hover",
+        breakpoint: { minWidth: 768 },
+        sourceFile: FIXTURE,
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toContain("color: red;");
+    expect(content).not.toContain("redblue");
+    expect(content).toContain("color: black;");
+  });
+
+  // ── Guards: append/create paths legitimately carry an empty `from` and
+  // must NOT be over-rejected.
+
+  it("still creates a pseudo block for a state change with empty `from`", async () => {
+    await writeFixture(FIXTURE, BASE_CSS); // no :hover block yet
+
+    const result = await handleCommit(
+      [{ prop: "color", from: "", to: "red", className: "btn", state: "hover", sourceFile: FIXTURE }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toContain(".btn:hover");
+    expect(content).toContain("color: red;");
+    expect(content).toContain("color: blue;"); // base untouched
+  });
+
+  it("still creates a fresh @media block for a breakpoint change with empty `from`", async () => {
+    await writeFixture(FIXTURE, BASE_CSS);
+
+    const result = await handleCommit(
+      [{
+        prop: "padding", from: "", to: "24px",
+        className: "btn", breakpoint: { minWidth: 640 },
+        sourceFile: FIXTURE,
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toContain("@media (min-width: 640px)");
+    expect(content).toContain("padding: 24px;");
+  });
+
+  it("still creates a class for a createClass change with empty `from`", async () => {
+    await writeFixture(FIXTURE, BASE_CSS);
+    // createClass always attaches the class in JSX too — seed a component.
+    const jsxFile = "src/Button.tsx";
+    await writeFixture(
+      jsxFile,
+      ['export const B = () => <div className="seed">x</div>;', ""].join("\n")
+    );
+
+    const result = await handleCommit(
+      [{
+        prop: "padding", from: "", to: "16px",
+        sourceFile: FIXTURE, className: "hero",
+        createClass: {
+          name: "hero", jsxSourceFile: jsxFile, jsxSourceLine: 1, existingClasses: "seed",
+        },
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+    const content = await readFile(join(tempDir, FIXTURE), "utf-8");
+    expect(content).toContain(".hero {");
+    expect(content).toContain("padding: 16px;");
+  });
+
+  it("still writes an element-scope change with empty `from` (inline merge never reads it)", async () => {
+    const jsxFile = "src/Card.tsx";
+    await writeFixture(
+      jsxFile,
+      ["export function Card() {", '  return <div className="card">hi</div>;', "}", ""].join("\n")
+    );
+
+    const result = await handleCommit(
+      [{
+        prop: "background-color", from: "", to: "rgb(1, 2, 3)",
+        elementScope: { jsxSourceFile: jsxFile, jsxSourceLine: 2, existingClasses: "card" },
+      }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(jsxFile);
+    expect(await readFile(join(tempDir, jsxFile), "utf-8")).toContain("backgroundColor");
+  });
+
+  it("still inserts a previously-unset custom property with empty `from`", async () => {
+    // getComputedStyle().getPropertyValue("--x") is "" when the var is unset,
+    // so a fresh custom-prop add legitimately posts from:"" on the base path.
+    await writeFixture(FIXTURE, BASE_CSS);
+
+    const result = await handleCommit(
+      [{ prop: "--radius", from: "", to: "8px", sourceFile: FIXTURE, className: "btn" }],
+      tempDir
+    );
+
+    expect(result.failed).toHaveLength(0);
+    expect(result.written).toContain(FIXTURE);
+    expect(await readFile(join(tempDir, FIXTURE), "utf-8")).toContain("--radius: 8px;");
+  });
+});
