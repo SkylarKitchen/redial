@@ -19,7 +19,6 @@ import { tmpdir } from "os";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import { handleCommit } from "../../server/commit";
 import type { DiffEntry } from "../core/apply";
-import type { ScopeContext } from "../core/engine";
 
 let tempDir: string;
 const injectedStyles: HTMLStyleElement[] = [];
@@ -68,11 +67,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     const el = makeEl("Button_btn__a1b2c");
     // Footer save / Cmd+S with the state selector back on "None": the diff
     // entry itself carries state:"hover".
-    const enriched = enrichChangesForCommit(el, [hoverEntry], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, [hoverEntry]);
     expect(enriched[0].state).toBe("hover");
     expect(enriched[0].className).toBe("btn");
 
@@ -86,7 +81,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     expect(after).toMatch(/\.btn:hover \{\n {2}color: red;/);
   });
 
-  it("targets the pseudo block on the ChangesDrawer Save-All path (scope only)", async () => {
+  it("targets the pseudo block for a class-provenance hover edit (every save surface shares the pipeline)", async () => {
     const F = "src/Button.module.scss";
     await writeFixture(
       F,
@@ -94,11 +89,11 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     );
 
     const el = makeEl("Button_btn__a1b2c");
-    // ChangesDrawer.handleSaveAll passes only { scope: "element" }.
-    const enriched = enrichChangesForCommit(el, [hoverEntry], {
-      // Deliberately partial — mirrors the historical Save-All payload shape.
-      scope: "element",
-    } as ScopeContext);
+    // A hover edit made while the class was active records it as provenance
+    // (ADR-0011) — Save All and the Footer enrich it identically.
+    const enriched = enrichChangesForCommit(el, [
+      { ...hoverEntry, className: "Button_btn__a1b2c" },
+    ]);
 
     const r = await handleCommit(enriched, tempDir);
 
@@ -113,11 +108,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
     await writeFixture(F, [".btn {", "  color: blue;", "}"].join("\n"));
 
     const el = makeEl("Button_btn__a1b2c");
-    const enriched = enrichChangesForCommit(el, [hoverEntry], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, [hoverEntry]);
 
     const r = await handleCommit(enriched, tempDir);
 
@@ -137,11 +128,7 @@ describe("state-tagged save → pseudo block targeting (issue #57, end-to-end)",
 
     addStyle(".btn { color: blue; }\n.btn:hover { color: blue; }");
     const el = makeEl("btn");
-    const enriched = enrichChangesForCommit(el, [hoverEntry], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, [hoverEntry]);
     expect(enriched[0].className).toBe("btn");
     // happy-dom <style> sheets have no href, so getGlobalCSSSource can't name
     // the file here (a browser resolves it from the stylesheet URL). Pin the

@@ -19,6 +19,7 @@ import { createRef } from "react";
 import { Footer } from "../shell/Footer";
 import { styleEngine } from "../core/engine";
 import { resetAllModeOverrides } from "../core/modeOverrides";
+import { __setTransportForTests, type SaveTransport } from "../core/save";
 
 /** CSS-module-classed element: getModuleClassInfo → className "btn",
  *  deriveSourceFromClassName → sourceFile "Button.module.scss". */
@@ -35,7 +36,7 @@ async function flushMicrotasks() {
 
 let container: HTMLDivElement;
 let root: Root;
-let fetchMock: ReturnType<typeof vi.fn>;
+let transportMock: ReturnType<typeof vi.fn>;
 let clipboardWrites: string[];
 
 beforeEach(() => {
@@ -46,11 +47,12 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
 
-  fetchMock = vi.fn().mockResolvedValue({
+  transportMock = vi.fn().mockResolvedValue({
     ok: true,
+    status: 200,
     json: async () => ({ written: ["Button.module.scss"], failed: [] }),
   });
-  vi.stubGlobal("fetch", fetchMock);
+  __setTransportForTests(transportMock as unknown as SaveTransport);
 
   clipboardWrites = [];
   Object.defineProperty(navigator, "clipboard", {
@@ -67,7 +69,7 @@ beforeEach(() => {
 afterEach(() => {
   act(() => root.unmount());
   document.body.innerHTML = "";
-  vi.unstubAllGlobals();
+  __setTransportForTests(null);
   styleEngine.resetAll();
   resetAllModeOverrides();
 });
@@ -102,8 +104,8 @@ describe("breakpoint edits are file-saved (#53)", () => {
 
     // The responsive edit is FILE-BOUND now: one POST, carrying the change
     // with its resolved media condition.
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({
       prop: "color",
@@ -131,8 +133,8 @@ describe("breakpoint edits are file-saved (#53)", () => {
 
     await renderAndSave(el);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(2);
 
     const base = body.changes.find((c: { prop: string }) => c.prop === "color");
@@ -156,8 +158,9 @@ describe("breakpoint edits are file-saved (#53)", () => {
     const el = makeModuleEl();
     styleEngine.apply({ scope: "element", el, breakpoint: "768" }, "color", "blue");
 
-    fetchMock.mockResolvedValue({
+    transportMock.mockResolvedValue({
       ok: true,
+      status: 200,
       json: async () => ({
         written: [],
         failed: [{ prop: "color", reason: "file not found" }],
@@ -176,8 +179,8 @@ describe("breakpoint edits are file-saved (#53)", () => {
 
     await renderAndSave(el);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(transportMock).toHaveBeenCalledTimes(1);
+    const body = transportMock.mock.calls[0][0];
     expect(body.changes).toHaveLength(1);
     expect(body.changes[0]).toMatchObject({
       prop: "color",

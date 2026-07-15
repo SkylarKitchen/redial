@@ -6,15 +6,14 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { styleEngine, type ScopeContext } from "../core/engine";
-import { enrichChangesForCommit, partitionBreakpointChanges, enrichModeOverridesForCommit } from "../core/commitUtils";
-import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
+import { save, type SideChannelReport } from "../core/save";
 import { formatCSSDiff, getSelector } from "../util";
 import { timing, ms } from "../timing";
 import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha, warningAlpha } from "../theme";
 import { getConfig } from "../core/config";
-import { serializeModeOverrides, serializeModeOverrideEntries, getModeOverrideCount, getAllModeOverrides, resetAllModeOverrides, type ModeOverrideEntry } from "../core/modeOverrides";
-import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, serializeElementBreakpointCSS, partitionByBreakpoint } from "../breakpoints";
+import { getModeOverrideCount } from "../core/modeOverrides";
+import { composeExportCSS, composeTailwindExport, serializeBreakpointCSS, partitionByBreakpoint } from "../breakpoints";
 import { importCSSText } from "../hooks/useOverlayHotkeys";
 import { usePressScale } from "../controls/helpers";
 
@@ -50,11 +49,6 @@ function toVarName(prop: string): string {
 function formatCSSVars(changes: DiffEntry[]): string {
   const lines = changes.map((c) => `  ${toVarName(c.prop)}: ${c.to};`);
   return `:root {\n${lines.join("\n")}\n}`;
-}
-
-interface SaveResult {
-  written?: string[];
-  failed?: Array<{ reason: string }>;
 }
 
 // --- Save-endpoint health check (audit: opaque first-save failures) ---
@@ -262,32 +256,24 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     copyAndClose(blocks.join("\n\n"), "vars");
   }, [element, copyAndClose]);
 
-  // Clipboard side-channel for edits that can't be file-written: CSS-variable
-  // mode overrides the enrichment could NOT bind to a file (#53 second half
-  // writes resolvable ones into their defining blocks now) plus any breakpoint
-  // edits left over from #53's first half (classless element / unresolvable
-  // stylesheet).
-  const copyMediaGatedExtras = useCallback((
-    clipboardBpChanges: DiffEntry[],
-    clipboardModes: ModeOverrideEntry[],
-  ) => {
-    const bpCSS = serializeElementBreakpointCSS(element, clipboardBpChanges);
-    const modeCSS = serializeModeOverrideEntries(clipboardModes);
-    const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
-    if (!extra) return;
-    navigator.clipboard.writeText(extra).then(() => {
-      const bpCount = clipboardBpChanges.filter((c) => c.breakpoint).length;
-      const mc = clipboardModes.length;
-      const parts: string[] = [];
-      if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
-      if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
-      showMessage(`${parts.join(" + ")} copied to clipboard (not saved to file)`, 4000);
-    }).catch(() => {});
-  }, [element, showMessage]);
+  // Phrase the side-channel notice from what save() copied: edits that can't
+  // be file-written (mode overrides are clipboard-only; breakpoint edits the
+  // enrichment could not bind to a file).
+  const showExtrasMessage = useCallback((extras: SideChannelReport) => {
+    if (!extras.clipboardWritten) return;
+    const parts: string[] = [];
+    if (extras.breakpointCount) parts.push(`${extras.breakpointCount} breakpoint edit${extras.breakpointCount === 1 ? "" : "s"}`);
+    if (extras.modeCount) parts.push(`${extras.modeCount} mode override${extras.modeCount === 1 ? "" : "s"}`);
+    if (parts.length === 0) return;
+    showMessage(`${parts.join(" + ")} copied to clipboard (not saved to file)`, 4000);
+  }, [showMessage]);
 
-  // THE save pipeline. The Save button, Cmd+S, and the command palette all end
-  // up here (via `saveRef`) — there is deliberately no second copy of the
-  // file-vs-clipboard partition anywhere else.
+  // THE save trigger. The Save button, Cmd+S, and the command palette all end
+  // up here (via `saveRef`). SELECTION is the panel's concern — a pseudo-state
+  // view saves that state's diff, otherwise the whole element — while
+  // TARGETING rides each entry's recorded provenance inside core/save.ts
+  // (ADR-0011), which owns enrichment, partition, transport, fallbacks, and
+  // reconciliation for every save surface.
   const handleSave = useCallback(async () => {
     if (savingRef.current) return;
     savingRef.current = true;
@@ -300,158 +286,54 @@ export function Footer({ element, onReset, onSaved, scopeCtx = DEFAULT_SCOPE_CTX
     setSaving(true);
     setMessage(null);
 
-    // File-bound changes. Breakpoint-tagged changes are INCLUDED with a
-    // resolved `breakpoint: { id, minWidth }` (#53) when a class + stylesheet
-    // resolved; the leftover (classless / unresolvable) stays clipboard-bound
-    // via copyMediaGatedExtras. `elementScopeSave` (audit 06): the Footer
-    // KNOWS the user's scope choice, so element scope saves with element
-    // semantics — the server merges stateless base changes into the element's
-    // JSX `style` attribute instead of rewriting the shared class rule.
-    const enriched = enrichChangesForCommit(element, changes, {
-      ...scopeCtx,
-      elementScopeSave: true,
-    });
-    const { fileBound: fileBoundBp, clipboard: clipboardBpChanges } =
-      partitionBreakpointChanges(changes, enriched);
+    const outcome = await save([{ el: element, changes }]);
 
-    // Mode overrides (#53 second half): file-bind every override whose
-    // variable definition resolved; the leftover keeps the clipboard
-    // side-channel. A Tailwind-mode body routes the WHOLE payload through the
-    // Tailwind writer, which has no mode-block machinery — overrides stay
-    // clipboard-bound there.
-    const modeSplit =
-      enriched.length > 0 && enriched[0]?.mode === "tailwind"
-        ? { fileBound: [], clipboard: getAllModeOverrides() }
-        : enrichModeOverridesForCommit();
-    const allEnriched = [...enriched, ...modeSplit.fileBound];
-
-    // Clipboard fallback when no commit endpoint is configured
-    const endpoint = getConfig().commitEndpoint;
-    if (!endpoint) {
-      // Breakpoint edits export as @media blocks (#35); keep them out of the
-      // base rule so they aren't flattened to un-mediated styles.
-      const css = composeExportCSS([{ el: element, changes }], formatCleanCSS);
-      const modeCSS = serializeModeOverrides();
-      const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
-      const modeCount = getModeOverrideCount();
-      const modeSuffix = modeCount > 0 ? ` + ${modeCount} mode override${modeCount === 1 ? "" : "s"}` : "";
-      navigator.clipboard.writeText(fullCSS).then(() => {
-        showMessage(`Copied ${changes.length} propert${changes.length === 1 ? "y" : "ies"}${modeSuffix} to clipboard`, 3000);
-      }).catch(() => {
-        showMessage("Clipboard access denied", 2000);
-      });
-      setSaving(false);
-      savingRef.current = false;
-      return;
-    }
-
-    // Nothing file-bound (e.g. only clipboard-bound breakpoint edits / mode
-    // overrides): skip the pointless empty POST, go straight to the clipboard.
-    if (allEnriched.length === 0) {
-      copyMediaGatedExtras(clipboardBpChanges, modeSplit.clipboard);
-      setSaving(false);
-      savingRef.current = false;
-      return;
-    }
-
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
-        body: JSON.stringify({
-          ...(enriched[0]?.mode ? { mode: enriched[0].mode } : {}),
-          changes: allEnriched,
-        }),
-      });
-
-      if (!res.ok) {
-        // Status-aware failure (audit: opaque first-save failures): a 404
-        // (route not mounted) and a 500 (server bug) are different problems —
-        // surface the HTTP status plus any server-provided error text.
-        let detail = "";
-        try {
-          const body: unknown = await res.json();
-          const err = (body as { error?: unknown } | null)?.error;
-          if (typeof err === "string" && err) detail = ` — ${err}`;
-        } catch {
-          // Non-JSON error body (e.g. an HTML 404 page) — status alone.
-        }
-        showMessage(`Save failed (${res.status})${detail}`, 4000);
-      } else {
-        const result: SaveResult = await res.json();
-        const writtenFiles = result.written ?? [];
-        const failedList = result.failed ?? [];
-        const failed = failedList.length;
-        if (failed > 0) {
-          // Partial success — the response carries written[]/failed[];
-          // surface them truthfully instead of a success-ish toast.
-          const reason = failedList[0]?.reason || "unknown reason";
-          showMessage(`Saved ${writtenFiles.length}, failed ${failed} — first failure: ${reason}`, 4000);
+    switch (outcome.kind) {
+      case "nothing-to-save":
+        break;
+      case "clipboard": {
+        if (outcome.clipboardWritten) {
+          const modeSuffix = outcome.modeCount > 0 ? ` + ${outcome.modeCount} mode override${outcome.modeCount === 1 ? "" : "s"}` : "";
+          showMessage(`Copied ${outcome.propertyCount} propert${outcome.propertyCount === 1 ? "y" : "ies"}${modeSuffix} to clipboard`, 3000);
         } else {
-          // Count what reached the file \u2014 file-bound breakpoint edits and
-          // mode overrides (#53) included; show file path for context.
-          const savedCount = allEnriched.length;
-          const filePath = writtenFiles[0]?.split("/").pop() ?? "";
-          const fileHint = filePath ? ` \u2192 ${filePath}` : "";
-          showMessage(`Saved ${savedCount} propert${savedCount === 1 ? "y" : "ies"}${fileHint}`, 3000);
+          showMessage("Clipboard access denied", 2000);
+        }
+        break;
+      }
+      case "extras-only":
+        void outcome.extras.then(showExtrasMessage);
+        break;
+      case "http-error":
+        showMessage(`Save failed (${outcome.status})${outcome.detail ? ` — ${outcome.detail}` : ""}`, 4000);
+        break;
+      case "unreachable":
+        showMessage("Can't reach the dev server route — is app/api/tuner/[...path]/route.ts mounted?", 5000);
+        break;
+      case "saved": {
+        if (outcome.failed.length > 0) {
+          // Partial success — surface written[]/failed[] truthfully instead
+          // of a success-ish toast.
+          const reason = outcome.failed[0]?.reason || "unknown reason";
+          showMessage(`Saved ${outcome.written.length}, failed ${outcome.failed.length} — first failure: ${reason}`, 4000);
+        } else {
+          const filePath = outcome.written[0]?.split("/").pop() ?? "";
+          const fileHint = filePath ? ` → ${filePath}` : "";
+          showMessage(`Saved ${outcome.savedCount} propert${outcome.savedCount === 1 ? "y" : "ies"}${fileHint}`, 3000);
           setSaved(true);
           if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
           savedTimerRef.current = setTimeout(() => setSaved(false), 1500);
-
-          // Clear the file-written breakpoint overrides (#53). Base edits
-          // clear via HMR redundancy detection once the reloaded CSS catches
-          // up \u2014 breakpoint keys are tracked-only (never inline), so a fully
-          // successful save IS their catch-up moment. Surgical per-breakpoint
-          // (ADR-0005), and only for breakpoints whose EVERY change was
-          // file-bound (clipboard leftovers keep their tracking).
-          const bpKeyOf = (id: string, state: string | undefined, prop: string) =>
-            `${id}@@${state ?? ""}::${prop}`;
-          const clearableBp = new Map<string, boolean>();
-          for (const c of changes) {
-            if (!c.breakpoint) continue;
-            const bound = fileBoundBp.has(bpKeyOf(c.breakpoint, c.state, c.prop));
-            clearableBp.set(c.breakpoint, (clearableBp.get(c.breakpoint) ?? true) && bound);
-          }
-          for (const [id, allBound] of clearableBp) {
-            if (!allBound) continue;
-            styleEngine.resetScope(element, {
-              scope: "element",
-              activeClassName: null,
-              activeState: "none",
-              activeBreakpoint: id,
-            });
-          }
-
-          // Clear the file-written mode overrides (#53 second half) — the
-          // same catch-up doctrine as breakpoints: the file now carries the
-          // value. All-or-keep granularity: only when EVERY pending override
-          // was file-bound and the save fully succeeded, because
-          // resetAllModeOverrides also purges mode undo history — a partial
-          // clear isn't expressible on the store today.
-          if (modeSplit.fileBound.length > 0 && modeSplit.clipboard.length === 0) {
-            resetAllModeOverrides();
-          }
         }
         onSaved?.();
-        copyMediaGatedExtras(clipboardBpChanges, modeSplit.clipboard);
+        // The side-channel copy lands later — the saved toast stays visible
+        // until the clipboard write resolves (matching the legacy sequencing).
+        void outcome.extras.then(showExtrasMessage);
+        break;
       }
-    } catch {
-      // Fetch REJECTION (not an HTTP error): the route itself is unreachable —
-      // dev server down or the catch-all handler isn't mounted. The old
-      // message blamed a missing endpoint *config* ("No commit endpoint"),
-      // a misdiagnosis: this branch only runs when an endpoint IS configured.
-      // Diagnose truthfully, and still copy the CSS as a best-effort fallback
-      // so the edit isn't lost.
-      const css = composeExportCSS([{ el: element, changes }], formatCleanCSS);
-      const modeCSS = serializeModeOverrides();
-      const fullCSS = modeCSS ? (css ? css + "\n\n/* Mode overrides */\n" + modeCSS : modeCSS) : css;
-      navigator.clipboard.writeText(fullCSS).catch(() => {});
-      showMessage("Can't reach the dev server route \u2014 is app/api/tuner/[...path]/route.ts mounted?", 5000);
-    } finally {
-      setSaving(false);
-      savingRef.current = false;
     }
-  }, [element, onSaved, showMessage, scopeCtx, activeState, copyMediaGatedExtras]);
+
+    setSaving(false);
+    savingRef.current = false;
+  }, [element, onSaved, showMessage, activeState, showExtrasMessage]);
 
   // One pipeline, two triggers: expose the save to Overlay (Cmd+S / palette).
   useEffect(() => {

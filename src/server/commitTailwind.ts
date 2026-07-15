@@ -9,17 +9,11 @@ import { readFile, writeFile, stat } from "fs/promises";
 import { resolve, extname } from "path";
 import { findFirstMatchingFile, isRealPathWithinRoot, resolveSafe } from "./pathSafety";
 
-export type TailwindChange = {
-  sourceFile: string;
-  sourceLine?: number;
-  existingClasses: string;
-  newClasses: string;
-};
-
-export type TailwindCommitResult = {
-  written: string[];
-  failed: Array<TailwindChange & { reason: string }>;
-};
+// Wire contract single-sourced in lib/protocol.ts (imported by both the
+// overlay and this handler so the two sides cannot drift). Re-exported so
+// existing importers keep working.
+import type { TailwindChange, TailwindCommitResult } from "../lib/protocol";
+export type { TailwindChange, TailwindCommitResult } from "../lib/protocol";
 
 /**
  * Known single-segment Tailwind utility prefixes.

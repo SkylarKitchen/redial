@@ -73,11 +73,11 @@ describe("resolveTarget()", () => {
     ).toEqual({ scope: "state", el, state: "hover" });
   });
 
-  it("state takes precedence over class (a pseudo-state edit on a class is a state edit)", () => {
+  it("state takes precedence over class — and freezes the class on as provenance (ADR-0011)", () => {
     const el = makeEl();
     expect(
       resolveTarget(el, { scope: "class", activeClassName: "box", activeState: "focus" }),
-    ).toEqual({ scope: "state", el, state: "focus" });
+    ).toEqual({ scope: "state", el, state: "focus", className: "box" });
   });
 });
 

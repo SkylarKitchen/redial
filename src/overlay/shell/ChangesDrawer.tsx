@@ -10,14 +10,11 @@ import { useState, useCallback, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { diffAll, type DiffEntry } from "../core/apply";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { getDisplayClass, getSelector, formatCSSDiff } from "../util";
-import { composeExportCSS, serializeBreakpointCSS } from "../breakpoints";
-import { enrichChangesForCommit, filterClipboardBreakpointChanges, enrichModeOverridesForCommit } from "../core/commitUtils";
-import { getAllModeOverrides, serializeModeOverrideEntries, resetAllModeOverrides } from "../core/modeOverrides";
-import { REDIAL_MARKER_HEADER } from "../../lib/protocol";
+import { getDisplayClass, formatCSSDiff } from "../util";
+import { composeExportCSS } from "../breakpoints";
+import { save, type SideChannelReport } from "../core/save";
 import { timing, ms } from "../timing";
 import { text, border, surface, color, font, destructiveAlpha, blackAlpha, layout } from "../theme";
-import { getConfig } from "../core/config";
 
 // ─── Shared types ────────────────────────────────────────────────
 
@@ -216,98 +213,60 @@ function PendingContent({ onResetAll, onSaved }: { onResetAll: () => void; onSav
     setSaving(true);
     setMessage(null);
 
-    // Mirror Footer.tsx: route through enrichChangesForCommit so Tailwind
-    // elements get the correct shape + `mode: "tailwind"` marker. Keep the
-    // per-element enrichment alongside its raw changes — the breakpoint
-    // partition below is per element.
-    const perElement = allDiffs.map(({ el, changes }) => ({
-      el,
-      changes,
-      enriched: enrichChangesForCommit(el, changes, {
-        scope: "element",
-        activeClassName: null,
-        activeState: "none",
-      }),
-    }));
-    const enriched = perElement.flatMap((e) => e.enriched);
-    const mode = enriched.find((c) => c.mode)?.mode;
+    // SELECTION here is "every element's diff"; targeting, the
+    // file-vs-clipboard partition, per-mode transport, fallbacks, and
+    // post-save breakpoint reconciliation all live in core/save.ts
+    // (ADR-0011) — the SAME pipeline as the Footer save, so the two
+    // surfaces structurally cannot diverge (which button you press no
+    // longer changes which file is written).
+    const outcome = await save(allDiffs);
 
-    // Mode overrides ride along (#53 second half): same file-vs-clipboard
-    // split as the Footer save. (A mode-ONLY session still saves via the
-    // Footer — the drawer's Pending tab doesn't list mode overrides yet, so
-    // its gate stays on element diffs.) Tailwind-mode bodies route the whole
-    // payload through the Tailwind writer — overrides stay clipboard-bound.
-    const modeSplit =
-      mode === "tailwind"
-        ? { fileBound: [], clipboard: getAllModeOverrides() }
-        : enrichModeOverridesForCommit();
-    const allEnriched = [...enriched, ...modeSplit.fileBound];
-
-    // Breakpoint file-save (#53): class-backed responsive edits ride the POST
-    // inside `enriched` and save like any other change. Only the leftover the
-    // enrichment could NOT bind to a file (classless / Tailwind-responsive /
-    // unresolvable stylesheet) keeps the clipboard side-channel — the same
-    // partition the Footer save presents (commitUtils).
-    const clipboardBpEntries = perElement
-      .map(({ el, changes, enriched: enrichedForEl }) => ({
-        selector: getSelector(el),
-        changes: filterClipboardBreakpointChanges(changes, enrichedForEl),
-      }))
-      .filter(({ changes }) => changes.length > 0);
-    const bpCSS = serializeBreakpointCSS(clipboardBpEntries);
-    const modeCSS = serializeModeOverrideEntries(modeSplit.clipboard);
-    const copyClipboardExtras = () => {
-      const extra = [bpCSS, modeCSS].filter(Boolean).join("\n\n");
-      if (!extra) return;
-      navigator.clipboard.writeText(extra).then(() => {
-        const bpCount = clipboardBpEntries.reduce((n, { changes }) => n + changes.length, 0);
-        const mc = modeSplit.clipboard.length;
-        const parts: string[] = [];
-        if (bpCount) parts.push(`${bpCount} breakpoint edit${bpCount === 1 ? "" : "s"}`);
-        if (mc) parts.push(`${mc} mode override${mc === 1 ? "" : "s"}`);
-        setMessage(`${parts.join(" + ")} copied (not saved to file)`);
-      }).catch(() => {});
+    const showExtras = (extras: SideChannelReport) => {
+      if (!extras.clipboardWritten) return;
+      const parts: string[] = [];
+      if (extras.breakpointCount) parts.push(`${extras.breakpointCount} breakpoint edit${extras.breakpointCount === 1 ? "" : "s"}`);
+      if (extras.modeCount) parts.push(`${extras.modeCount} mode override${extras.modeCount === 1 ? "" : "s"}`);
+      if (parts.length > 0) setMessage(`${parts.join(" + ")} copied (not saved to file)`);
     };
 
-    // Nothing file-bound (only clipboard-bound edits): skip the empty POST.
-    if (allEnriched.length === 0) {
-      copyClipboardExtras();
-      setSaving(false);
-      setTimeout(() => setMessage(null), timing.dismissal);
-      return;
-    }
-
-    try {
-      const res = await fetch(getConfig().commitEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", [REDIAL_MARKER_HEADER]: "1" },
-        body: JSON.stringify({
-          ...(mode ? { mode } : {}),
-          changes: allEnriched,
-        }),
-      });
-
-      if (!res.ok) {
-        setMessage("Save failed");
-      } else {
-        const result = await res.json();
-        const written = result.written?.length ?? 0;
-        const failed = result.failed?.length ?? 0;
+    switch (outcome.kind) {
+      case "nothing-to-save":
+        break;
+      case "clipboard":
+        // No commit endpoint configured — the full export went to the
+        // clipboard instead of silently POSTing into the void (the old
+        // Save All fetch(undefined) path).
+        setMessage(
+          outcome.clipboardWritten
+            ? `Copied ${outcome.propertyCount} change${outcome.propertyCount === 1 ? "" : "s"} to clipboard (no save endpoint)`
+            : "Clipboard access denied",
+        );
+        break;
+      case "extras-only":
+        void outcome.extras.then(showExtras);
+        break;
+      case "http-error":
+        setMessage(`Save failed (${outcome.status})${outcome.detail ? ` — ${outcome.detail}` : ""}`);
+        break;
+      case "unreachable":
+        setMessage(
+          outcome.clipboardWritten
+            ? "Can't reach the dev server route — CSS copied to clipboard"
+            : "Can't reach the dev server route",
+        );
+        break;
+      case "saved": {
+        const written = outcome.written.length;
+        const failed = outcome.failed.length;
         setMessage(
           failed > 0
             ? `Saved ${written}, ${failed} failed`
             : `Saved ${written} change${written === 1 ? "" : "s"}`,
         );
-        // Clear file-written mode overrides on a fully successful save —
-        // same all-or-keep catch-up doctrine as the Footer pipeline.
-        if (failed === 0 && modeSplit.fileBound.length > 0 && modeSplit.clipboard.length === 0) {
-          resetAllModeOverrides();
-        }
         onSaved?.();
-        copyClipboardExtras();
+        void outcome.extras.then(showExtras);
+        break;
       }
-    } catch {
-      setMessage("Save failed — no route?");
     }
 
     setSaving(false);
