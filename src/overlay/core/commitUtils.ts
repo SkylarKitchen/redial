@@ -8,7 +8,6 @@
  */
 
 import type { DiffEntry } from "./apply";
-import type { ScopeContext } from "./engine";
 import type { CommitChange } from "../../lib/protocol";
 import { resolveSource, getCSSSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, getVariableDefinitionSource } from "./sourcemap";
 import { getReadableName, isTailwindElement, isSessionAttachedClass, getSessionAttachedClasses } from "./scope";
@@ -76,46 +75,33 @@ function getStylesheetHref(el: Element): string | undefined {
 /**
  * Enrich raw diff changes with source file, class, and state info
  * so the commit endpoint can locate and update the correct source blocks.
+ *
+ * Targeting is PROVENANCE-DRIVEN (ADR-0011): each DiffEntry records the
+ * class it was applied under (`className`; absent = element provenance) and
+ * its own pseudo-state/breakpoint, so this function needs no scoping-context
+ * parameter — where a change lands derives from what each edit was MADE
+ * under, never from the panel's toggle position at save time. That is what
+ * makes every save surface (Footer, Cmd+S, palette, Save All) resolve the
+ * same edit to the same file.
  */
 export function enrichChangesForCommit(
   element: Element,
   changes: DiffEntry[],
-  opts: ScopeContext & {
-    /**
-     * Element-scope persistence opt-in (audit 06). Only surfaces that KNOW
-     * the user's scope choice set this (the Footer save pipeline — Save
-     * button, Cmd+S, palette): in element scope, stateless base changes are
-     * then tagged `elementScope` (inline JSX style write) instead of
-     * resolving a shared CSS rule target. Scope-less aggregate surfaces
-     * (ChangesDrawer "Save All" enriches every element with a placeholder
-     * `scope: "element"` and no per-edit scope provenance) leave it unset and
-     * keep legacy rule targeting.
-     */
-    elementScopeSave?: boolean;
-  },
 ): EnrichedChange[] {
   // Tailwind path: convert CSS diffs to Tailwind classes and target JSX source.
   // Responsive Tailwind variants are NOT file-written (breakpoint file-save
   // (#53) targets CSS `@media` blocks) — drop breakpoint-tagged changes here;
   // the clipboard export (composeTailwindExport) carries them with their
   // sm:/md:/… variant prefixes instead.
-  const isStateActive = opts.activeState !== undefined && opts.activeState !== "none";
-
   if (isTailwindElement(element)) {
     const reactSource = getReactSource(element);
-    // State arrives in two shapes: the Footer/Overlay pipeline sends
-    // diffState() entries with NO `.state` field (the active state lives in
-    // opts.activeState), while ChangesDrawer "Save All" sends diffAll()
-    // entries that carry `.state` per change. Normalize to per-change state
-    // before formatting so both shapes get their variant prefix (issue #57's
-    // Tailwind twin: a bare write silently restyles the RESTING state).
+    // Every entry carries its own `state` since the engine stamps it at diff
+    // time (issue #57's Tailwind twin: a bare write silently restyles the
+    // RESTING state — the per-entry state gets its variant prefix instead).
     const stateful = changes.flatMap((c) => {
       if (c.breakpoint) return [];
-      const { breakpoint: _bp, ...base } = c;
-      return [{
-        ...base,
-        state: c.state ?? (isStateActive ? opts.activeState : undefined),
-      }];
+      const { breakpoint: _bp, className: _prov, ...base } = c;
+      return [{ ...base, state: c.state }];
     });
     // Refusal-first, mirroring the breakpoint drop-filter above: a state with
     // no Tailwind variant must never be written as a base utility.
@@ -153,78 +139,64 @@ export function enrichChangesForCommit(
 
   // CSS path: standard enrichment
 
-  // ─── Class creation (audit 05) ───
-  // When the active class was attached to the element THIS session, every
-  // change targeting it rides a `createClass` descriptor and is routed to ONE
-  // conservatively-chosen target stylesheet (so the rule is created once, in
-  // one file). No resolvable target → sourceFile stays undefined and the
-  // server fails with an accurate "cannot create" message — never guesses.
-  const attachedActive =
-    opts.scope === "class" &&
-    !!opts.activeClassName &&
-    isSessionAttachedClass(element, opts.activeClassName);
-  let createClass: EnrichedChange["createClass"];
-  let createTargetFile: string | undefined;
-  if (attachedActive) {
-    const name = opts.activeClassName!;
-    createTargetFile = resolveNewClassStylesheet(element);
-    const jsxSource = getReactSource(element);
-    const attached = new Set(getSessionAttachedClasses(element));
-    const existingClasses = Array.from(element.classList)
-      .filter((c) => !attached.has(c) && !c.startsWith("__tuner"))
-      .join(" ");
-    createClass = {
-      name,
-      jsxSourceFile: jsxSource?.file,
-      jsxSourceLine: jsxSource?.line,
-      existingClasses,
-    };
-  }
-  // ─── Element-scope persistence (audit 06) ───
-  // Element scope previews on ONE element, so saving must persist to that ONE
-  // element: stateless base changes are tagged `elementScope` (the server
-  // merges them into the element's JSX `style` attribute) instead of
-  // resolving the shared class rule — the silent blast-radius widening this
-  // fixes. Deliberately NOT rerouted:
-  //   - var-redirected edits (a var edit is inherently global — the
-  //     definition site stays the target);
-  //   - state-tagged entries (an inline style can't express `:hover`; the
-  //     `.class:state` rule path is the issue-#57 contract);
-  //   - breakpoint-tagged entries (an inline style can't express `@media`;
-  //     class-backed ones keep the #53 file-bound `@media` path, the rest
-  //     stay on the clipboard side-channel).
-  const elementScoped = opts.scope === "element" && opts.elementScopeSave === true;
-  let elementScope: EnrichedChange["elementScope"];
-  if (elementScoped) {
-    const jsxSource = getReactSource(element);
-    const attached = new Set(getSessionAttachedClasses(element));
-    // Same anchor derivation as createClass: the element's classes as they
-    // exist in SOURCE (session-attached classes and tuner chrome excluded).
-    const existingClasses = Array.from(element.classList)
-      .filter((c) => !attached.has(c) && !c.startsWith("__tuner"))
-      .join(" ");
-    elementScope = {
-      jsxSourceFile: jsxSource?.file,
-      jsxSourceLine: jsxSource?.line,
-      existingClasses,
-    };
-  }
-  // Class info is needed whenever ANY entry will carry a pseudo-state — the
-  // panel's active state OR the entry's own state (diff() returns state-keyed
-  // entries even when the panel is back on "None") — issue #57 — and for every
-  // breakpoint-tagged entry (#53: the server writes `.class` rules inside the
-  // `@media` block, so it needs a rule target).
-  const needsClassInfo =
-    opts.scope === "class" ||
-    isStateActive ||
-    changes.some((c) => c.state !== undefined || c.breakpoint !== undefined);
+  // ─── Shared JSX anchors (audits 05/06) ───
+  // The element's classes as they exist in SOURCE (session-attached classes
+  // and tuner chrome excluded) + the fiber-resolved location. Derived once,
+  // lazily — used by createClass descriptors and elementScope tagging alike.
+  let jsxAnchors: NonNullable<EnrichedChange["elementScope"]> | null = null;
+  const getJsxAnchors = () => {
+    if (!jsxAnchors) {
+      const jsxSource = getReactSource(element);
+      const attached = new Set(getSessionAttachedClasses(element));
+      const existingClasses = Array.from(element.classList)
+        .filter((c) => !attached.has(c) && !c.startsWith("__tuner"))
+        .join(" ");
+      jsxAnchors = {
+        jsxSourceFile: jsxSource?.file,
+        jsxSourceLine: jsxSource?.line,
+        existingClasses,
+      };
+    }
+    return jsxAnchors;
+  };
+
+  // ─── Class creation (audit 05), per PROVENANCE class ───
+  // A change whose recorded class was attached to the element THIS session
+  // rides a `createClass` descriptor and is routed to ONE conservatively-
+  // chosen target stylesheet (so the rule is created once, in one file). No
+  // resolvable target → sourceFile stays undefined and the server fails with
+  // an accurate "cannot create" message — never guesses. Memoized per class:
+  // provenance makes several created classes in one batch expressible.
+  const createDescriptors = new Map<
+    string,
+    { createClass: NonNullable<EnrichedChange["createClass"]>; targetFile?: string }
+  >();
+  const createFor = (name: string) => {
+    let d = createDescriptors.get(name);
+    if (!d) {
+      d = {
+        createClass: { name, ...getJsxAnchors() },
+        targetFile: resolveNewClassStylesheet(element),
+      };
+      createDescriptors.set(name, d);
+    }
+    return d;
+  };
+
+  // Class info is needed whenever ANY entry carries class provenance, a
+  // pseudo-state (issue #57), or a breakpoint (#53: the server writes
+  // `.class` rules inside the `@media` block, so it needs a rule target).
+  const needsClassInfo = changes.some(
+    (c) => c.className !== undefined || c.state !== undefined || c.breakpoint !== undefined,
+  );
   const moduleInfo = needsClassInfo ? getModuleClassInfo(element) : null;
   const cssHref = getStylesheetHref(element);
 
   return changes.flatMap((c): EnrichedChange[] => {
-    // Keep the entry's OWN state; only fall back to the panel's active state
-    // for stateless entries — issue #57.
-    const state = c.state ?? (isStateActive ? opts.activeState : undefined);
+    // Every dimension rides the entry itself (ADR-0011): its own state
+    // (issue #57), its own breakpoint, its own provenance class.
+    const state = c.state;
+    const provClass = c.className;
 
     // Responsive dimension (#53): resolve the engine breakpoint id to its
     // config-aware min-width. An unresolvable id can't be located or written
@@ -235,8 +207,10 @@ export function enrichChangesForCommit(
     const breakpoint = c.breakpoint
       ? { id: c.breakpoint, minWidth: bpMinWidth! }
       : undefined;
-    // The payload replaces the string id with the resolved pair.
-    const { breakpoint: _bpId, ...base } = c;
+    // The payload replaces the string id with the resolved pair, and the raw
+    // provenance token never travels — `className` is re-set below to the
+    // RESOLVED source class (readable name), or left unset.
+    const { breakpoint: _bpId, className: _prov, ...base } = c;
 
     // Check if the authored value is a var() reference. Breakpoint edits never
     // redirect: a responsive override writes the property into the `@media`
@@ -266,45 +240,50 @@ export function enrichChangesForCommit(
       }];
     }
 
-    // Element scope (audit 06): stateless base changes persist to the
+    // Element provenance (audit 06 / ADR-0011): a stateless base change made
+    // under NO class previews on one element, so it persists to that one
     // element's JSX style attribute. NO CSS rule targeting at all —
     // sourceFile/className stay unset so the server structurally cannot route
-    // this into the shared class rule.
-    if (elementScope && state === undefined && breakpoint === undefined) {
-      return [{ ...base, elementScope }];
+    // this into the shared class rule. Deliberately NOT rerouted:
+    //   - var-redirected edits (handled above — a var edit is inherently
+    //     global, the definition site stays the target);
+    //   - state-tagged entries (an inline style can't express `:hover`; the
+    //     `.class:state` rule path is the issue-#57 contract);
+    //   - breakpoint-tagged entries (an inline style can't express `@media`).
+    if (provClass === undefined && state === undefined && breakpoint === undefined) {
+      return [{ ...base, elementScope: getJsxAnchors() }];
     }
 
     const source = resolveSource(element, c.prop);
     // The server only routes a change into a `.class:state { }` block when
     // BOTH `state` AND `className` are present — a state-tagged entry without
     // class info gets flattened into the base rule (issue #57). So resolve a
-    // class for EVERY stateful entry, not just when the panel scope/state says
-    // so: panel class first, then the element's CSS-module class, then a
-    // global class backed by stylesheet evidence. Breakpoint entries need the
-    // same resolution — the media block's rule is written against the class.
-    const needsClassName =
-      opts.scope === "class" || state !== undefined || breakpoint !== undefined;
-    // A session-attached class has no readable-name mapping — its raw token IS
-    // the source class name (audit 05, class creation).
-    const resolvedClassName = needsClassName
-      ? ((opts.activeClassName
-          ? getReadableName(opts.activeClassName) ?? (attachedActive ? opts.activeClassName : null)
-          : null)
-          ?? moduleInfo?.className
-          ?? (state !== undefined || breakpoint !== undefined
-              ? findGlobalClassName(element, c.prop, state)
-              : undefined))
-      : undefined;
+    // class for EVERY stateful entry, not just class-provenance ones: the
+    // entry's recorded class first, then the element's CSS-module class, then
+    // a global class backed by stylesheet evidence. Breakpoint entries need
+    // the same resolution — the media block's rule is written against the
+    // class. A session-attached class has no readable-name mapping — its raw
+    // token IS the source class name (audit 05, class creation).
+    const attachedProv = provClass !== undefined && isSessionAttachedClass(element, provClass);
+    const resolvedClassName =
+      (provClass !== undefined
+        ? getReadableName(provClass) ?? (attachedProv ? provClass : null)
+        : null)
+        ?? moduleInfo?.className
+        ?? (state !== undefined || breakpoint !== undefined
+            ? findGlobalClassName(element, c.prop, state)
+            : undefined);
     // Breakpoint edits never ride the createClass descriptor: media-rule
     // creation is the server's breakpoint path; base-edit saves drive class
     // creation + JSX attach.
     const isCreateChange =
-      createClass != null && resolvedClassName === createClass.name && breakpoint === undefined;
+      attachedProv && resolvedClassName === provClass && breakpoint === undefined;
+    const created = isCreateChange ? createFor(provClass) : null;
     // Breakpoint edits may target a prop the element's stylesheet never
     // authored at base — fall back to the element's conservative stylesheet
     // so the server can create the media block there.
-    const sourceFile = isCreateChange
-      ? createTargetFile
+    const sourceFile = created
+      ? created.targetFile
       : source?.file ?? (breakpoint ? resolveNewClassStylesheet(element) : undefined);
 
     // A breakpoint edit is FILE-BOUND only with a rule target and a host
@@ -324,7 +303,7 @@ export function enrichChangesForCommit(
       state,
       cssHref,
       ...(breakpoint ? { breakpoint } : {}),
-      ...(isCreateChange ? { createClass } : {}),
+      ...(created ? { createClass: created.createClass } : {}),
     }];
   });
 }
@@ -351,17 +330,31 @@ export function partitionBreakpointChanges(
   changes: DiffEntry[],
   enriched: EnrichedChange[],
 ): { fileBound: Set<string>; clipboard: DiffEntry[] } {
-  const keyOf = (id: string, state: string | undefined, prop: string) =>
-    `${id}@@${state ?? ""}::${prop}`;
   const fileBound = new Set(
     enriched.flatMap((e) =>
-      e.breakpoint ? [keyOf(e.breakpoint.id, e.state, e.prop)] : [],
+      e.breakpoint ? [breakpointChangeKey(e.breakpoint.id, e.state, e.prop)] : [],
     ),
   );
   const clipboard = changes.filter(
-    (c) => c.breakpoint !== undefined && !fileBound.has(keyOf(c.breakpoint, c.state, c.prop)),
+    (c) =>
+      c.breakpoint !== undefined &&
+      !fileBound.has(breakpointChangeKey(c.breakpoint, c.state, c.prop)),
   );
   return { fileBound, clipboard };
+}
+
+/**
+ * The key `partitionBreakpointChanges` stores in its `fileBound` set — shared
+ * with the post-save reconciliation in save.ts, which must test membership
+ * with the SAME key shape (this used to be duplicated byte-for-byte in
+ * Footer.tsx).
+ */
+export function breakpointChangeKey(
+  id: string,
+  state: string | undefined,
+  prop: string,
+): string {
+  return `${id}@@${state ?? ""}::${prop}`;
 }
 
 /**

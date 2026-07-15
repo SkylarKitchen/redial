@@ -9,13 +9,9 @@
  *
  *  1. `formatTailwindDiff` (src/overlay/tailwind.ts) ignores `DiffEntry.state`
  *     entirely, and the Tailwind branch of `enrichChangesForCommit`
- *     (src/overlay/core/commitUtils.ts) passes state-tagged changes through it
- *     without consulting `opts.activeState`. State reaches that branch in two
- *     shapes and BOTH must produce prefixed classes:
- *       - Footer/Overlay save: diffState() entries carry NO `.state` field;
- *         the active state arrives via `opts.activeState`.
- *       - ChangesDrawer "Save All": diffAll() entries DO carry `.state`,
- *         with no `opts.activeState`.
+ *     (src/overlay/core/commitUtils.ts) passes state-tagged changes through
+ *     it bare. Since ADR-0011 every diff shape (diffState() and diffAll())
+ *     stamps `.state` per entry, so the branch routes on the entry alone.
  *     Valid panel states (StateSelector.tsx; `:visited` is deliberately not
  *     offered) map identity to Tailwind variants: hover, focus, active,
  *     focus-within, focus-visible. A state with no variant mapping must be
@@ -29,7 +25,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { formatTailwindDiff } from "../tailwind";
 import { enrichChangesForCommit } from "../core/commitUtils";
 import type { DiffEntry } from "../core/apply";
-import type { ScopeContext } from "../core/engine";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -103,13 +98,9 @@ describe("formatTailwindDiff — pseudo-state variant prefixes", () => {
 // ─── enrichChangesForCommit — Tailwind branch ────────────────────────
 
 describe("enrichChangesForCommit — Tailwind state prefixes", () => {
-  it("prefixes via opts.activeState when entries carry no state (Footer/Overlay diffState() shape)", () => {
+  it("prefixes via the entry's own state (every diff shape carries state since ADR-0011)", () => {
     const el = makeTailwindEl();
-    const enriched = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "hover",
-    });
+    const enriched = enrichChangesForCommit(el, [entry({ state: "hover" })]);
 
     expect(enriched).toHaveLength(1);
     expect(enriched[0].newClasses).toBe("hover:text-[red]");
@@ -119,36 +110,10 @@ describe("enrichChangesForCommit — Tailwind state prefixes", () => {
     expect(enriched[0].state).toBe("hover");
   });
 
-  it("prefixes via per-change .state when opts has none (ChangesDrawer diffAll() shape)", () => {
+  it("leaves base (stateless) changes unprefixed", () => {
     const el = makeTailwindEl();
-    const enriched = enrichChangesForCommit(
-      el,
-      [entry({ state: "hover" })],
-      // Deliberately partial: Save All passes only { scope } — checked upstream.
-      { scope: "element" } as ScopeContext,
-    );
-
-    expect(enriched).toHaveLength(1);
-    expect(enriched[0].newClasses).toBe("hover:text-[red]");
-    expect(enriched[0].newClasses).not.toMatch(/(^| )text-\[red\]/);
-  });
-
-  it("leaves base changes unprefixed when activeState is 'none' or absent", () => {
-    const el = makeTailwindEl();
-
-    const withNone = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
-    expect(withNone[0].newClasses).toBe("text-[red]");
-
-    const withAbsent = enrichChangesForCommit(
-      el,
-      [entry()],
-      { scope: "element" } as ScopeContext,
-    );
-    expect(withAbsent[0].newClasses).toBe("text-[red]");
+    const enriched = enrichChangesForCommit(el, [entry()]);
+    expect(enriched[0].newClasses).toBe("text-[red]");
   });
 
   it("excludes a change whose state has no Tailwind variant from the payload (refused, not written bare)", () => {
@@ -158,8 +123,7 @@ describe("enrichChangesForCommit — Tailwind state prefixes", () => {
       [
         entry({ prop: "display", from: "block", to: "flex" }),
         entry({ state: "checked-marker" }),
-      ],
-      { scope: "element" } as ScopeContext,
+      ]
     );
 
     expect(enriched).toHaveLength(1);
@@ -172,8 +136,7 @@ describe("enrichChangesForCommit — Tailwind state prefixes", () => {
     const el = makeTailwindEl();
     const enriched = enrichChangesForCommit(
       el,
-      [entry({ state: "hover" })],
-      { scope: "element" } as ScopeContext,
+      [entry({ state: "hover" })]
     );
 
     expect(enriched).toHaveLength(1);
@@ -193,8 +156,7 @@ describe("enrichChangesForCommit — __tuner marker classes never leak into exis
     el.classList.add("__tuner-state-preview");
     const enriched = enrichChangesForCommit(
       el,
-      [entry({ state: "hover" })],
-      { scope: "element" } as ScopeContext,
+      [entry({ state: "hover" })]
     );
 
     expect(enriched).toHaveLength(1);
@@ -205,11 +167,7 @@ describe("enrichChangesForCommit — __tuner marker classes never leak into exis
   it("strips __tuner-prefixed markers from existingClasses on base (stateless) saves too", () => {
     const el = makeTailwindEl();
     el.classList.add("__tuner-state-preview");
-    const enriched = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, [entry()]);
 
     expect(enriched).toHaveLength(1);
     expect(enriched[0].existingClasses).toBe("flex items-center gap-2 p-4");
@@ -226,11 +184,7 @@ describe("enrichChangesForCommit — __tuner marker classes never leak into exis
     el.className = "flex  items-center gap-2 p-4 ";
     document.body.appendChild(el);
 
-    const enriched = enrichChangesForCommit(el, [entry()], {
-      scope: "element",
-      activeClassName: null,
-      activeState: "none",
-    });
+    const enriched = enrichChangesForCommit(el, [entry()]);
 
     expect(enriched).toHaveLength(1);
     expect(enriched[0].existingClasses).toBe("flex  items-center gap-2 p-4 ");
