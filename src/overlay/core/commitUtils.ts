@@ -11,6 +11,7 @@ import type { DiffEntry } from "./apply";
 import type { CommitChange } from "../../lib/protocol";
 import { resolveSource, getCSSSource, getModuleClassInfo, getGlobalCSSSource, getReactSource, getVariableDefinitionSource } from "./sourcemap";
 import { getReadableName, isTailwindElement, isSessionAttachedClass, getSessionAttachedClasses } from "./scope";
+import { getAllModeOverrides, type ModeOverrideEntry } from "./modeOverrides";
 import { getAuthoredValue } from "../getAuthoredValue";
 import { parseVarRef } from "../cssParsers";
 import { formatTailwindDiff, twStateVariant } from "../tailwind";
@@ -326,6 +327,42 @@ export function enrichChangesForCommit(
  * changes that resolved to a file target, and `clipboard` is the filtered
  * array of DiffEntry changes that did NOT resolve.
  */
+/**
+ * Enrichment for CSS-variable mode overrides (#53, second half): every pending
+ * override whose variable definition resolves to a stylesheet becomes a commit
+ * change carrying `modeSelector` — the mode's defining selector as RECORDED at
+ * edit time (override provenance; never re-derived at save time). The leftover
+ * keeps the clipboard side-channel.
+ *
+ * `from` is deliberately empty: a mode override is last-write-wins per
+ * (selector, varName) cell, so the server's mode ladder replaces whatever the
+ * block currently declares (broad rewrite) and inserts when absent — custom
+ * props are exempt from the server's empty-`from` guard by the same contract.
+ */
+export function enrichModeOverridesForCommit(): {
+  fileBound: EnrichedChange[];
+  clipboard: ModeOverrideEntry[];
+} {
+  const fileBound: EnrichedChange[] = [];
+  const clipboard: ModeOverrideEntry[] = [];
+  for (const entry of getAllModeOverrides()) {
+    const varSource = getVariableDefinitionSource(entry.varName);
+    if (varSource?.file) {
+      fileBound.push({
+        prop: entry.varName,
+        from: "",
+        to: entry.value,
+        sourceFile: varSource.file,
+        sourceLine: varSource.line,
+        modeSelector: entry.selector,
+      });
+    } else {
+      clipboard.push(entry);
+    }
+  }
+  return { fileBound, clipboard };
+}
+
 export function partitionBreakpointChanges(
   changes: DiffEntry[],
   enriched: EnrichedChange[],

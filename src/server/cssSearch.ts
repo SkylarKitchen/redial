@@ -759,6 +759,9 @@ export type BlockChange = {
   state?: string;
   /** Responsive breakpoint (issue #53) — targets the matching @media block. */
   breakpoint?: { minWidth: number };
+  /** Theme-mode defining selector (issue #53, second half) — targets the
+   *  top-level rule block whose selector text matches (find-or-refuse). */
+  modeSelector?: string;
 };
 
 /**
@@ -1023,6 +1026,167 @@ export function applyBreakpointChange(
   const res = applyChangeWithinBody(body, bodyMasked, change, fileIndent, sourceFile);
   if (res.modified) spliceBlockBody(lines, target.open, target.close, body);
   return res;
+}
+
+// --- Mode-override file-save (issue #53, second half) ---
+// A change carrying `modeSelector` (a theme mode's defining selector —
+// ".dark", ":root.dark", '[data-theme="ocean"]', ":root") is a CSS-variable
+// mode override: the declaration is written INSIDE the top-level rule block
+// whose selector text matches. Find-or-REFUSE: a missing block is a per-item
+// failure (the client keeps its clipboard side-channel) — never a write into
+// a different block, never a newly created block. Media-wrapped modes are
+// read-only in the UI and can't reach the override store, so blocks nested in
+// at-rules (@media, @layer, @supports) are skipped whole: a mode defined only
+// inside one refuses to file-save rather than risking a wrong-scope write.
+
+/**
+ * Selector text normalized for tolerant equality: block comments dropped,
+ * attribute values unquoted (CSSOM reports `[data-theme=ocean]` back as
+ * `[data-theme="ocean"]`; authored files are often unquoted), whitespace
+ * around combinators/commas dropped, remaining runs collapsed. Case is
+ * preserved — class names and attribute values are case-sensitive.
+ */
+function normalizeSelectorText(sel: string): string {
+  return sel
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(
+      /\[\s*([-\w]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\]]*?))\s*\]/g,
+      (_m, name, dq, sq, bare) => `[${name}=${dq ?? sq ?? bare}]`
+    )
+    .replace(/\s*([>+~,])\s*/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type RuleBlockPos = { open: BracePos; close: BracePos };
+
+/**
+ * Every TOP-LEVEL rule block whose selector equals `selector` under
+ * normalizeSelectorText. Structure (braces, at-rule statement semicolons) is
+ * read from the masked view; the header TEXT is sliced from the ORIGINAL
+ * lines, because masking blanks string interiors — `[data-theme="ocean"]`
+ * has no value left on the mask. At-rule blocks are skipped whole.
+ */
+function findTopLevelSelectorBlocks(
+  lines: string[],
+  masked: string[],
+  selector: string
+): RuleBlockPos[] {
+  const want = normalizeSelectorText(selector);
+  const out: RuleBlockPos[] = [];
+  let hLine = 0; // where the current header's text starts (original view)
+  let hCol = 0;
+  const headerText = (endLine: number, endCol: number): string => {
+    if (hLine === endLine) return lines[endLine].slice(hCol, endCol);
+    let text = lines[hLine].slice(hCol);
+    for (let l = hLine + 1; l < endLine; l++) text += "\n" + lines[l];
+    return text + "\n" + lines[endLine].slice(0, endCol);
+  };
+  for (let line = 0; line < masked.length; line++) {
+    for (let col = 0; col < masked[line].length; col++) {
+      const ch = masked[line][col];
+      if (ch === "{") {
+        const open: BracePos = { line, col };
+        const close = findBlockClose(masked, open);
+        if (!close) return out; // unbalanced file — stop scanning
+        const header = headerText(line, col);
+        // At-rule headers (@media, @layer, @import-with-block…) are skipped;
+        // the comment strip runs BEFORE the "@" test so a leading comment
+        // can't hide one.
+        const isAtRule = /^\s*@/.test(header.replace(/\/\*[\s\S]*?\*\//g, " ").trimStart());
+        if (!isAtRule && normalizeSelectorText(header) === want) {
+          out.push({ open, close });
+        }
+        line = close.line;
+        col = close.col;
+        hLine = line;
+        hCol = col + 1;
+      } else if (ch === ";" || ch === "}") {
+        // `;` ends a statement at-rule (@import); a stray top-level `}` is
+        // malformed — either way the next header starts after it.
+        hLine = line;
+        hCol = col + 1;
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Write a mode override into its defining block: replace the declaration when
+ * the block already declares the var (exact `from` first, broad
+ * representation-tolerant rewrite second), insert it as the block's last
+ * declaration otherwise. Among duplicate same-selector blocks the cascade's
+ * effective declaration is the LAST one that declares the var (same
+ * specificity, later wins) — the write goes where the browser reads.
+ */
+export function applyModeChange(
+  lines: string[],
+  masked: string[],
+  change: BlockChange,
+  fileIndent: string,
+  sourceFile: string
+): { modified: boolean; reason?: string } {
+  const selector = change.modeSelector ?? "";
+  const blocks = findTopLevelSelectorBlocks(lines, masked, selector);
+  if (blocks.length === 0) {
+    return {
+      modified: false,
+      reason: `mode block "${selector}" not found in ${sourceFile} — the override stays on the clipboard export`,
+    };
+  }
+  const declaring = blocks.filter(
+    (b) => findPropInBlock(masked, b.open, change.prop) != null
+  );
+  const target =
+    declaring.length > 0
+      ? declaring[declaring.length - 1]
+      : blocks[blocks.length - 1];
+
+  const propHit = findPropInBlock(masked, target.open, change.prop);
+  if (propHit) {
+    // Authored — rewrite the value, confined to the block's body span on
+    // minified same-line blocks (issue #47 machinery). An empty `from`
+    // (a var the mode never declared elsewhere computes to "") must never
+    // build the exact pattern — zero-width match splices instead of replaces.
+    const segment = propHit.range
+      ? lines[propHit.lineIdx].slice(propHit.range[0], propHit.range[1])
+      : lines[propHit.lineIdx];
+    const exact =
+      change.from.trim() === ""
+        ? null
+        : replacePropRegex(change.prop, escapeRegex(change.from));
+    const broad = replacePropRegex(change.prop, "([^;!}]+)");
+    const pattern =
+      exact !== null && exact.test(segment)
+        ? exact
+        : broad.test(segment)
+          ? broad
+          : null;
+    if (!pattern) {
+      return {
+        modified: false,
+        reason: `value "${change.from}" not found in mode block "${selector}" in ${sourceFile}`,
+      };
+    }
+    const safeValue = change.to.replace(/\$/g, "$$$$");
+    const replaced = segment.replace(pattern, `$1$2${safeValue}`);
+    lines[propHit.lineIdx] = propHit.range
+      ? lines[propHit.lineIdx].slice(0, propHit.range[0]) +
+        replaced +
+        lines[propHit.lineIdx].slice(propHit.range[1])
+      : replaced;
+    return { modified: true };
+  }
+
+  const outcome = insertDeclarationIntoBlock(
+    lines, masked, target.open, change.prop, change.to, fileIndent
+  );
+  if (outcome === "inserted") return { modified: true };
+  return {
+    modified: false,
+    reason: `mode block "${selector}" in ${sourceFile} couldn't take the declaration (${outcome})`,
+  };
 }
 
 /**

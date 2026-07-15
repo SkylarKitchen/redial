@@ -21,12 +21,19 @@ import type { DiffEntry } from "./apply";
 import { styleEngine } from "./engine";
 import {
   enrichChangesForCommit,
+  enrichModeOverridesForCommit,
   partitionBreakpointChanges,
   breakpointChangeKey,
   type EnrichedChange,
 } from "./commitUtils";
 import { getConfig } from "./config";
-import { serializeModeOverrides, getModeOverrideCount } from "./modeOverrides";
+import {
+  serializeModeOverrides,
+  serializeModeOverrideEntries,
+  getModeOverrideCount,
+  resetAllModeOverrides,
+  type ModeOverrideEntry,
+} from "./modeOverrides";
 import { composeExportCSS, serializeElementBreakpointCSS } from "../breakpoints";
 import { getSelector } from "../util";
 import {
@@ -39,10 +46,12 @@ import {
 export type SaveEntry = { el: Element; changes: DiffEntry[] };
 
 /**
- * What the clipboard side-channel did: edits that structurally can't be
- * file-written (mode overrides are clipboard-only; breakpoint edits the
- * enrichment could not bind to a file) get copied, and the UI phrases a
- * "copied, not saved" notice from these counts.
+ * What the clipboard side-channel did: edits that can't be file-written
+ * (mode overrides whose variable definition didn't resolve to a stylesheet;
+ * breakpoint edits the enrichment could not bind to a file) get copied, and
+ * the UI phrases a "copied, not saved" notice from these counts. Resolvable
+ * mode overrides ride the POST instead (#53, second half) and never appear
+ * here.
  */
 export type SideChannelReport = {
   breakpointCount: number;
@@ -137,8 +146,13 @@ type PerElement = SaveEntry & {
   clipboardBp: DiffEntry[];
 };
 
-/** Copy the side-channel extras (unbindable breakpoint edits + mode overrides). */
-async function copySideChannel(perElement: PerElement[]): Promise<SideChannelReport> {
+/** Copy the side-channel extras: unbindable breakpoint edits plus the mode
+ *  overrides that did NOT make the POST (an explicit snapshot, not the store —
+ *  a fully successful save clears the store before this runs). */
+async function copySideChannel(
+  perElement: PerElement[],
+  clipboardModes: ModeOverrideEntry[],
+): Promise<SideChannelReport> {
   const parts: string[] = [];
   let breakpointCount = 0;
   for (const { el, clipboardBp } of perElement) {
@@ -147,9 +161,9 @@ async function copySideChannel(perElement: PerElement[]): Promise<SideChannelRep
     const css = serializeElementBreakpointCSS(el, clipboardBp);
     if (css) parts.push(css);
   }
-  const modeCSS = serializeModeOverrides();
+  const modeCSS = serializeModeOverrideEntries(clipboardModes);
   if (modeCSS) parts.push(modeCSS);
-  const modeCount = getModeOverrideCount();
+  const modeCount = clipboardModes.length;
   const text = parts.join("\n\n");
   if (!text) return { breakpointCount: 0, modeCount, clipboardWritten: false };
   const clipboardWritten = await writeClipboard(text);
@@ -199,7 +213,13 @@ export async function save(entries: SaveEntry[]): Promise<SaveOutcome> {
     const { fileBound, clipboard } = partitionBreakpointChanges(changes, enriched);
     return { el, changes, enriched, fileBound, clipboardBp: clipboard };
   });
-  const enrichedAll = perElement.flatMap((e) => e.enriched);
+  // Mode overrides (#53, second half): overrides whose variable definition
+  // resolves to a stylesheet become file-bound changes carrying
+  // `modeSelector` (the server writes find-or-refuse into that mode's
+  // block); the rest stay on the clipboard side-channel. Mode writes are
+  // always CSS, so they ride the css batch even in a Tailwind save.
+  const modeSplit = enrichModeOverridesForCommit();
+  const enrichedAll = [...perElement.flatMap((e) => e.enriched), ...modeSplit.fileBound];
 
   // No commit endpoint configured (and no injected transport): everything —
   // base rules, @media blocks, mode overrides — exports to the clipboard.
@@ -213,10 +233,11 @@ export async function save(entries: SaveEntry[]): Promise<SaveOutcome> {
     };
   }
 
-  // Nothing file-bound (e.g. only clipboard-bound breakpoint edits / mode
-  // overrides): skip the pointless empty POST, go straight to the extras.
+  // Nothing file-bound (e.g. only clipboard-bound breakpoint edits /
+  // unresolvable mode overrides): skip the pointless empty POST, go
+  // straight to the extras.
   if (enrichedAll.length === 0) {
-    return { kind: "extras-only", extras: copySideChannel(perElement) };
+    return { kind: "extras-only", extras: copySideChannel(perElement, modeSplit.clipboard) };
   }
 
   // Per-mode batches: the route dispatches the WHOLE request on `body.mode`
@@ -265,7 +286,14 @@ export async function save(entries: SaveEntry[]): Promise<SaveOutcome> {
 
   if (failed.length === 0) {
     for (const entry of perElement) reconcileBreakpoints(entry);
+    // Mode catch-up mirrors the breakpoint reconciliation above, but
+    // all-or-keep: the store is one undo history, so it clears only when
+    // every pending override was file-written (a clipboard remainder or any
+    // per-item failure keeps everything pending).
+    if (modeSplit.fileBound.length > 0 && modeSplit.clipboard.length === 0) {
+      resetAllModeOverrides();
+    }
   }
-  const extras = copySideChannel(perElement);
+  const extras = copySideChannel(perElement, modeSplit.clipboard);
   return { kind: "saved", savedCount: enrichedAll.length, written, failed, extras };
 }

@@ -33,6 +33,7 @@ import {
   detectIndentUnit,
   appendClassBlock,
   applyBreakpointChange,
+  applyModeChange,
   searchClassBlockFuzzy,
   tryShorthandFallback,
   findPropertyInFile,
@@ -83,6 +84,24 @@ function changeValidationError(change: CommitChange): string | null {
     return `semantically invalid value "${change.to}" for property "${change.prop}"`;
   if (change.className != null && !isValidCSSClassName(change.className))
     return `invalid CSS class name: "${change.className}"`;
+  // Mode overrides (issue #53) are CSS-variable writes into a mode's defining
+  // block. The selector travels into a block-text comparison, so structural
+  // CSS characters would let a crafted payload break out of selector position;
+  // and the narrow prop contract keeps this from becoming a generic
+  // write-anything-anywhere backdoor.
+  if (change.modeSelector != null) {
+    if (!change.prop.startsWith("--"))
+      return `modeSelector is only valid for CSS custom properties, got "${change.prop}"`;
+    if (
+      change.modeSelector.trim() === "" ||
+      /[{};\n\r]|\/\*|\*\//.test(change.modeSelector)
+    )
+      return `unsafe mode selector: "${change.modeSelector}"`;
+    if (change.breakpoint != null)
+      return `a change can't carry both modeSelector and breakpoint — modes and breakpoints are distinct override dimensions`;
+    if (change.state != null)
+      return `a change can't carry both modeSelector and state — a mode block has no pseudo-state dimension`;
+  }
   if (change.createClass != null && !isValidCSSClassName(change.createClass.name))
     return `invalid class name for createClass: "${change.createClass.name}"`;
   // Zero-width splice guard: escapeRegex("") is "", so a replacement pattern
@@ -149,6 +168,9 @@ function isWellFormedChange(change: unknown): change is CommitChange {
     typeof c.prop === "string" &&
     typeof c.from === "string" &&
     typeof c.to === "string" &&
+    // modeSelector, when present, must be a string — it is compared against
+    // selector text and interpolated into failure reasons.
+    (c.modeSelector === undefined || typeof c.modeSelector === "string") &&
     // elementScope, when present, must be an object whose (all optional)
     // anchor fields carry the right types — they flow into path resolution
     // and line arithmetic, so anything else fails per-item, never as a 500.
@@ -346,6 +368,24 @@ export async function handleCommit(
         const invalid = changeValidationError(change);
         if (invalid) {
           failed.push({ ...change, reason: invalid });
+          continue;
+        }
+
+        // --- Theme-mode override handling (issue #53, second half) ---
+        // A change carrying `modeSelector` targets that mode's defining block
+        // — it must NEVER fall through to the base/variable search (tier 1.5
+        // would land the value in `:root` or a sibling mode's block: exactly
+        // the wrong-destination write find-or-refuse exists to prevent).
+        if (change.modeSelector) {
+          const res = applyModeChange(
+            lines, masked, change, fileIndent, sourceFile
+          );
+          if (res.modified) {
+            modified = true;
+            remask();
+          } else {
+            failed.push({ ...change, reason: res.reason ?? "mode write failed" });
+          }
           continue;
         }
 

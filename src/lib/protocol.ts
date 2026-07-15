@@ -77,6 +77,17 @@ export type CommitChange = {
     /** min-width in px. Positive finite number. */
     minWidth: number;
   };
+  /**
+   * Theme-mode defining selector (issue #53, second half). When present, the
+   * change is a CSS-variable mode override: `prop` (a custom property) is
+   * written inside the top-level rule block whose selector text matches —
+   * find-or-REFUSE. A missing block is a per-item failure (the client keeps
+   * its clipboard side-channel); the change never falls through to the
+   * base/variable search, which would happily land the value in `:root` or a
+   * sibling mode's block. Mutually exclusive with `breakpoint` and `state`:
+   * modes are their own override dimension.
+   */
+  modeSelector?: string;
 };
 
 export type TailwindChange = {
