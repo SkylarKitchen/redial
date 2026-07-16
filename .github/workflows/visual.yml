@@ -6,20 +6,25 @@
 # verify job because e2e is slower and "lives in its own lane"
 # (`test:visual`), per ADR-0002.
 #
-# NOTE: like ci.yml, this workflow REPORTS ONLY — branch protection is
-# paywalled on this GitHub plan, so a red run cannot block merges.
+# The account is on GitHub Pro, so the `protect-main` branch ruleset can
+# require this workflow's `visual` job as a PR status check — a red run
+# blocks merges. The pull_request trigger below is what makes the check
+# reportable on PRs.
 
 name: Visual
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
-# Pushes to main can arrive in quick bursts (auto-commit hook); only the
-# newest run of this slower e2e lane matters.
+# Pushes to main can arrive in quick bursts (auto-commit hook), and PRs get
+# rapid follow-up pushes; only the newest run of this slower e2e lane
+# matters. head_ref scopes cancellation per-PR so PR runs never cancel (or
+# get cancelled by) main pushes.
 concurrency:
-  group: visual-${{ github.ref }}
+  group: visual-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
