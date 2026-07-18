@@ -185,9 +185,20 @@ export function SpacingBoxModel({
     const target = e.target as HTMLElement;
     const idx = target.dataset.spacingIndex;
     if (idx === undefined) return;
-    e.preventDefault();
     const current = Number(idx);
-    const next = e.shiftKey ? (current + 7) % 8 : (current + 1) % 8;
+    const next = e.shiftKey ? current - 1 : current + 1;
+    if (next < 0 || next > 7) {
+      // Past either end: exit the box model instead of wrapping — wrapping
+      // is a keyboard trap (WCAG 2.1.2) that made everything after Spacing
+      // unreachable by Tab. Visual order differs from DOM order, so hand
+      // focus to the DOM-boundary cell and let the browser's default Tab
+      // continue from there, out of the widget.
+      const cells = containerRef.current?.querySelectorAll<HTMLElement>("[data-spacing-index]");
+      if (!cells?.length) return;
+      (e.shiftKey ? cells[0] : cells[cells.length - 1]).focus();
+      return;
+    }
+    e.preventDefault();
     containerRef.current?.querySelector<HTMLElement>(`[data-spacing-index="${next}"]`)?.focus();
   }, []);
 

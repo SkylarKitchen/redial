@@ -188,6 +188,17 @@ Enter/Space toggle (Space preventDefault-ed), plain SelectRow combobox
 ArrowDown-open + aria-activedescendant, SliderRow `tuner-focusable` ring
 opt-in, Footer button reachability. No bugs found.
 
+**Real-browser traversal pass 2026-07-18** (QA loop iteration 6):
+`tests/visual/keyboard-traversal.spec.ts` walks the fully-expanded panel
+with actual Tab presses in Chromium and asserts no focus cycles, eventual
+exit, all section headers visited in DOM order, one stop per radiogroup
+(roving tabIndex), only visible elements focused, and `:focus-visible`
+rings painting. **Found and fixed a real WCAG 2.1.2 keyboard trap**:
+SpacingBoxModel's Tab handler wrapped `% 8` in both directions, so Tab
+could never leave the box model — everything below Spacing was
+keyboard-unreachable. Boundary Tab/Shift+Tab now exits the widget;
+interior clockwise order preserved.
+
 ### Escape Key
 - [x] SelectRow dropdown → Escape → closes
 - [x] ColorPicker → Escape → closes
