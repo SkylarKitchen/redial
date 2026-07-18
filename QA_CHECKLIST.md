@@ -135,6 +135,23 @@ flash verified end-to-end with a mocked save transport (green "✓ Saved" for
 1.5s, then reverts). Animation *smoothness* itself needs a visible browser —
 spot-check alongside Alignment in a later iteration.
 
+**Smoothness spot-check 2026-07-18** (QA loop iteration 9):
+`tests/visual/animation-smoothness.spec.ts` (Playwright-in-Orbstack, 3 tests)
+verifies the real-browser half: the section chevron's 150ms `expand`
+transition interpolates through intermediate frames and settles exactly 90°
+from where it started (bounded easeRelease overshoot); no in-flow panel
+element transitions a layout-triggering property (out-of-flow exemption:
+the fixed panel/navigator roots animate their own collapse geometry and the
+absolute tab-indicator pills slide via left/width — deliberate, census in
+the spec header); and every transition duration in the panel is a timing.ts
+token, checked at runtime. **Found and fixed a reduced-motion gap**: three
+press/hover-scale sites (PresetChips, VariableLinkDot, Footer dropdown
+items) hardcoded their durations instead of using `ms()`/`cssTransition()`,
+so `prefers-reduced-motion` didn't disable them — locked in as
+`src/overlay/__tests__/reducedMotionTransitions.test.tsx`, plus a browser
+test that emulates reduced motion and asserts the chevron toggle snaps with
+zero intermediate frames.
+
 ### Alignment
 - [x] Labels align vertically across all sections
 - [x] Section padding consistent between all 8 sections

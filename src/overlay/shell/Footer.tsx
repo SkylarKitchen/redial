@@ -8,7 +8,7 @@ import { ChevronDown } from "lucide-react";
 import { styleEngine, type ScopeContext } from "../core/engine";
 import { save, type SideChannelReport } from "../core/save";
 import { formatCSSDiff, getSelector } from "../util";
-import { timing, ms } from "../timing";
+import { timing, ms, cssTransition } from "../timing";
 import type { DiffEntry } from "../core/engine";
 import { color, text, border, surface, font, shadow, zIndex, blackAlpha, primaryAlpha, destructiveAlpha, successAlpha, successMutedAlpha, warningAlpha } from "../theme";
 import { getConfig } from "../core/config";
@@ -652,7 +652,7 @@ function DropdownItem({ children, onClick, disabled, shortcut }: {
         textAlign: "left" as const,
         cursor: disabled ? "default" : "pointer",
         color: disabled ? text.disabled : color.foreground,
-        transition: `transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1), background ${ms("fast")}`,
+        transition: `${cssTransition("transform", "fast")}, background ${ms("fast")}`,
       }}
     >
       <span>{children}</span>

@@ -280,7 +280,7 @@ export function PresetChips({ property, onSelect, unit }: {
             padding: "1px 6px",
             cursor: "pointer",
             lineHeight: "16px",
-            transition: "transform 80ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+            transition: cssTransition("transform", "fast"),
           }}
           onMouseDown={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(0.93)"; }}
           onMouseUp={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; }}
