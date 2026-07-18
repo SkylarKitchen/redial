@@ -16,9 +16,10 @@
  * got clipped near the right edge / bottom.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { ColorPickerEnhanced } from "./ColorPickerEnhanced";
+import { useEscapeClose } from "../hooks/useEscapeClose";
 import { computeColorPickerPosition } from "./colorPickerPosition";
 import { cssColorToHex } from "../colorUtils";
 import { parseVarRef, resolveVarColor } from "../variables/colorVariables";
@@ -56,17 +57,7 @@ export function SwatchColorPicker({
   const swatchRef = useRef<HTMLButtonElement>(null);
 
   // Close on Escape (outside-click is handled inside ColorPickerEnhanced).
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", onKey, true);
-    return () => document.removeEventListener("keydown", onKey, true);
-  }, [open]);
+  useEscapeClose(open, () => setOpen(false));
 
   const resolved = resolveVarColor(value) ?? value;
   const swatchBackground = resolved || fallbackColor;
