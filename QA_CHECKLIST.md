@@ -136,13 +136,18 @@ flash verified end-to-end with a mocked save transport (green "✓ Saved" for
 spot-check alongside Alignment in a later iteration.
 
 ### Alignment
-- [ ] Labels align vertically across all sections
-- [ ] Section padding consistent between all 8 sections
-- [ ] Footer buttons evenly spaced
+- [x] Labels align vertically across all sections
+- [x] Section padding consistent between all 8 sections
+- [x] Footer buttons evenly spaced
 
-*(Deferred to a later QA-loop iteration: alignment needs real layout geometry —
-visible browser or Playwright-in-Orbstack `tests/visual/` — happy-dom has no
-box model.)*
+*Verified 2026-07-18 (QA loop iteration 5) as real-browser consistency oracles
+in `tests/visual/panel-alignment.spec.ts` (Playwright-in-Orbstack — happy-dom
+has no box model). No constants asserted on faith: labels must share one
+measured left edge (all 13 standard-row labels do — Typography 5, Backgrounds
+2, Effects 6; Spacing/Size/Position use bespoke layouts with no standard
+labels), section headers must agree on padding/left/width (9 of 9 do), and
+footer buttons must share height/top with the designed 6px Reset↔Save gap and
+symmetric insets. All 3 pass at 1440×900.*
 
 ### Indicators
 - [x] Modified property — orange highlight appears on label when value differs from computed
