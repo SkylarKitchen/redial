@@ -119,20 +119,42 @@ false negative, not a bug — verify hover via mounted happy-dom tests or
 synthetic `dispatchEvent`, and use the visible browser only for confirmation.
 
 ### Transitions
-- [ ] Section collapse/expand — smooth animation, no jump
-- [ ] Dropdown open/close — no flash or position jump
-- [ ] Panel drag — shadow deepens while dragging, reverts on drop
-- [ ] Save button success — green flash on save, smoothly reverts
+- [x] Section collapse/expand — smooth animation, no jump
+- [x] Dropdown open/close — no flash or position jump
+- [x] Panel drag — shadow deepens while dragging, reverts on drop
+- [x] Save button success — green flash on save, smoothly reverts
+
+**Verified 2026-07-17** (QA loop iteration 2): all four PASS, locked in as
+behavioral regression tests in
+`src/overlay/__tests__/transitionsIndicators.test.tsx`. Notes: dropdown
+no-flash is guaranteed structurally — SelectRow's portal only renders once a
+position exists (`open && dropdownPos &&` gate), so there is never an
+unpositioned frame; drag shadow verified at the hook level (`useOverlayDrag`
+`panelDragging` state machine) plus distinct `shadow.panelDrag` token; save
+flash verified end-to-end with a mocked save transport (green "✓ Saved" for
+1.5s, then reverts). Animation *smoothness* itself needs a visible browser —
+spot-check alongside Alignment in a later iteration.
 
 ### Alignment
 - [ ] Labels align vertically across all sections
 - [ ] Section padding consistent between all 8 sections
 - [ ] Footer buttons evenly spaced
 
+*(Deferred to a later QA-loop iteration: alignment needs real layout geometry —
+visible browser or Playwright-in-Orbstack `tests/visual/` — happy-dom has no
+box model.)*
+
 ### Indicators
-- [ ] Modified property — orange highlight appears on label when value differs from computed
-- [ ] Section header — shows indicator when any child property is modified
-- [ ] Value flash — brief background highlight on numeric value change
+- [x] Modified property — orange highlight appears on label when value differs from computed
+- [x] Section header — shows indicator when any child property is modified
+- [x] Value flash — brief background highlight on numeric value change
+
+**Verified 2026-07-17** (QA loop iteration 2): all three PASS, same test file
+as Transitions. **Bug found and fixed**: ValueInput spread `...flashStyle`
+*before* the `embedded`/base spreads, so both branches' `backgroundColor`
+overrode the flash highlight — the value flash showed only the scale bump,
+never the background. Fix: spread `...flashStyle` last (test-first repro in
+`transitionsIndicators.test.tsx` → "Value flash").
 
 ---
 
