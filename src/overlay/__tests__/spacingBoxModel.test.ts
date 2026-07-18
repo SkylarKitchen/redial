@@ -343,58 +343,87 @@ describe("SpacingBoxModel tab navigation", () => {
     expect(document.activeElement).toBe(nextCell);
   });
 
-  it("Tab from padding-left wraps around to margin-top", () => {
+  // Wrapping at the ends was a keyboard trap (WCAG 2.1.2): Tab could never
+  // leave the box model, so everything after Spacing was unreachable. At the
+  // boundaries the handler must instead hand focus to the DOM-boundary cell
+  // WITHOUT preventDefault, so the browser's native Tab exits the widget
+  // (caught by the real-browser traversal in tests/visual/).
+
+  it("Tab from padding-left exits the box model instead of wrapping", () => {
     const onChange = vi.fn();
     renderBoxModel(root, onChange);
 
-    const cell = findCellByIndex(container, 7); // padding-left (last)
+    const cell = findCellByIndex(container, 7); // padding-left (visual last)
     cell.focus();
 
+    let notPrevented = true;
     act(() => {
-      cell.dispatchEvent(new KeyboardEvent("keydown", {
-        key: "Tab", bubbles: true,
+      notPrevented = cell.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Tab", bubbles: true, cancelable: true,
       }));
     });
 
-    const nextCell = findCellByIndex(container, 0); // margin-top (first)
-    expect(document.activeElement).toBe(nextCell);
+    // Default NOT prevented — the browser is free to move on — and focus sits
+    // on the DOM-last cell so native Tab leaves the widget going forward.
+    expect(notPrevented).toBe(true);
+    const cells = container.querySelectorAll<HTMLElement>("[data-spacing-index]");
+    expect(document.activeElement).toBe(cells[cells.length - 1]);
+    expect(document.activeElement).not.toBe(findCellByIndex(container, 0));
   });
 
-  it("Shift+Tab from margin-top wraps to padding-left", () => {
+  it("Shift+Tab from margin-top exits the box model instead of wrapping", () => {
     const onChange = vi.fn();
     renderBoxModel(root, onChange);
 
-    const cell = findCellByIndex(container, 0); // margin-top
+    const cell = findCellByIndex(container, 0); // margin-top (visual first)
     cell.focus();
 
+    let notPrevented = true;
     act(() => {
-      cell.dispatchEvent(new KeyboardEvent("keydown", {
-        key: "Tab", shiftKey: true, bubbles: true,
+      notPrevented = cell.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Tab", shiftKey: true, bubbles: true, cancelable: true,
       }));
     });
 
-    const nextCell = findCellByIndex(container, 7); // padding-left
-    expect(document.activeElement).toBe(nextCell);
+    // Default NOT prevented, focus on the DOM-first cell so native Shift+Tab
+    // leaves the widget going backward.
+    expect(notPrevented).toBe(true);
+    const cells = container.querySelectorAll<HTMLElement>("[data-spacing-index]");
+    expect(document.activeElement).toBe(cells[0]);
+    expect(document.activeElement).not.toBe(findCellByIndex(container, 7));
   });
 
-  it("full forward cycle: mT → mR → mB → mL → pT → pR → pB → pL → mT", () => {
+  it("full forward pass: mT → mR → mB → mL → pT → pR → pB → pL, then exits", () => {
     const onChange = vi.fn();
     renderBoxModel(root, onChange);
 
-    const expectedOrder = [0, 1, 2, 3, 4, 5, 6, 7, 0];
+    const expectedOrder = [0, 1, 2, 3, 4, 5, 6, 7];
 
     findCellByIndex(container, 0).focus();
 
     for (let i = 0; i < expectedOrder.length - 1; i++) {
       const current = findCellByIndex(container, expectedOrder[i]);
+      let notPrevented = true;
       act(() => {
-        current.dispatchEvent(new KeyboardEvent("keydown", {
-          key: "Tab", bubbles: true,
+        notPrevented = current.dispatchEvent(new KeyboardEvent("keydown", {
+          key: "Tab", bubbles: true, cancelable: true,
         }));
       });
+      // Interior moves stay in visual order and consume the event.
+      expect(notPrevented).toBe(false);
       const next = findCellByIndex(container, expectedOrder[i + 1]);
       expect(document.activeElement).toBe(next);
     }
+
+    // One more Tab from the visual end: not consumed, no wrap to margin-top.
+    let notPrevented = true;
+    act(() => {
+      notPrevented = findCellByIndex(container, 7).dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Tab", bubbles: true, cancelable: true,
+      }));
+    });
+    expect(notPrevented).toBe(true);
+    expect(document.activeElement).not.toBe(findCellByIndex(container, 0));
   });
 });
 
