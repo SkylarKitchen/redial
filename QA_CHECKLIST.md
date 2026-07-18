@@ -163,12 +163,25 @@ never the background. Fix: spread `...flashStyle` last (test-first repro in
 Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 
 ### Tab Order
-- [ ] Tab from Header → section headers → controls → Footer
-- [ ] Section headers: Enter/Space toggles collapse/expand
-- [ ] SegmentedControl: arrow keys move between options
-- [ ] SliderRow: focus ring visible on slider thumb
-- [ ] SelectRow: opens on Enter, arrow keys navigate options
-- [ ] Footer buttons: all reachable via Tab
+- [x] Tab from Header → section headers → controls → Footer
+- [x] Section headers: Enter/Space toggles collapse/expand
+- [x] SegmentedControl: arrow keys move between options
+- [x] SliderRow: focus ring visible on slider thumb
+- [x] SelectRow: opens on Enter, arrow keys navigate options
+- [x] Footer buttons: all reachable via Tab
+
+**Verified 2026-07-18** (QA loop iteration 4). happy-dom can't simulate real
+Tab traversal, so item 1 is verified as the focusability contract it depends
+on: Section headers are `tabIndex=0` `role="button"` divs, Header/Footer
+buttons and controls are native `<button>`s / focusable inputs, none opt out
+with `tabIndex=-1` (a true traversal-order pass needs a browser). Existing
+coverage: SegmentedControl arrows (`segmentedControlKeyboard.test.tsx`),
+option navigation Enter/arrows/Home/End/type-ahead
+(`dropdownAccessibility.test.tsx`). Gaps locked in by
+`src/overlay/__tests__/keyboardTabOrderAria.test.tsx`: Section header
+Enter/Space toggle (Space preventDefault-ed), plain SelectRow combobox
+ArrowDown-open + aria-activedescendant, SliderRow `tuner-focusable` ring
+opt-in, Footer button reachability. No bugs found.
 
 ### Escape Key
 - [x] SelectRow dropdown → Escape → closes
@@ -200,11 +213,26 @@ TransitionOptionsMenu restores focus via `useFocusTrap`; the focus ring is
 `:focus-visible`-gated so mouse clicks don't show it.
 
 ### ARIA
-- [ ] SegmentedControl: role="radiogroup", children role="radio", aria-checked
-- [ ] Section headers: aria-expanded reflects collapse state
-- [ ] Toolbar buttons: aria-label and aria-pressed present
-- [ ] Slider: aria-valuemin, aria-valuemax, aria-valuenow
-- [ ] Footer status message: role="status", aria-live="polite"
+- [x] SegmentedControl: role="radiogroup", children role="radio", aria-checked
+- [x] Section headers: aria-expanded reflects collapse state
+- [x] Toolbar buttons: aria-label and aria-pressed present
+- [x] Slider: aria-valuemin, aria-valuemax, aria-valuenow
+- [x] Footer status message: role="status", aria-live="polite"
+
+**Verified 2026-07-18** (QA loop iteration 4). Existing coverage:
+radio/aria-checked (`segmentedControlKeyboard.test.tsx`), Section
+aria-expanded (`sectionToggle`/`transitionsIndicators`/`hoverStates`),
+Toolbar aria-label + aria-pressed (`toolbar.test.tsx`,
+`shellSweepA11y.test.tsx`). Gaps locked in by
+`keyboardTabOrderAria.test.tsx`: the radiogroup container role + aria-label +
+roving tabIndex, and the Footer status region (`role="status"`
+`aria-live="polite"`, mounted before its first message so announcements
+aren't dropped). Slider note: the panel sliders are native
+`<input type="range">` (explicit `role="slider"` + `aria-label`), which
+derive aria-valuemin/max/now implicitly from min/max/value — those source
+attributes are asserted; adding explicit aria-value* would be redundant ARIA.
+(Div-based sliders in the color picker set them explicitly and are covered by
+`colorPickerKeyboard`/`gradientStopA11y`.) No bugs found.
 
 ---
 
