@@ -21,7 +21,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { color } from "../theme";
-import { ms } from "../timing";
+import { ms, cssTransition } from "../timing";
 import { VariablePicker } from "./VariablePicker";
 
 const DOT_SIZE = 14;
@@ -106,7 +106,7 @@ export function VariableLinkDot({
           background: color.variable,
           opacity: visible ? 1 : 0,
           transform: dotHovered ? "scale(1.15)" : "scale(1)",
-          transition: `opacity ${ms("fast")}, transform 100ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+          transition: `opacity ${ms("fast")}, ${cssTransition("transform", "normal")}`,
           pointerEvents: visible ? "auto" : "none",
           outline: "none",
         }}
