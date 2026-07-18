@@ -97,11 +97,26 @@ No content should clip or overflow the panel bounds.
 Hover states, transitions, indicators, and alignment consistency.
 
 ### Hover States
-- [ ] Section header hover — background highlight appears (collapsed state)
-- [ ] SliderRow track — hover brightening works
-- [ ] Footer buttons — all 3 (Clipboard, Reset, Save) show hover state
-- [ ] Close button (Header) — hover background appears
-- [ ] IconButtonGroup items — hover distinct from active state
+- [x] Section header hover — background highlight appears (collapsed state)
+- [x] SliderRow track — hover brightening works
+- [x] Footer buttons — all 3 (Clipboard, Reset, Save) show hover state
+- [x] Close button (Header) — hover background appears
+- [x] IconButtonGroup items — hover distinct from active state
+
+**Verified 2026-07-17** (QA loop iteration 1): all five PASS, locked in as
+behavioral regression tests in `src/overlay/__tests__/hoverStates.test.tsx`
+(mounted components + fired events per issue #105 policy). Item 1 additionally
+confirmed in a live browser. Notes: Reset intentionally shows no hover feedback
+while there is nothing to reset (count 0); Save sits at 0.5 opacity until
+changes exist; the active IconButtonGroup item keeps `color.primary` through
+hover so selection never washes out.
+
+**Browser-QA methodology caveat**: claude-in-chrome tabs run with
+`document.visibilityState === "hidden"`, where trusted CDP hover sets `:hover`
+matching but React `onMouseEnter` state never updates (no frames → scheduler
+starves continuous events). A "hover looks dead" result in that pane is a
+false negative, not a bug — verify hover via mounted happy-dom tests or
+synthetic `dispatchEvent`, and use the visible browser only for confirmation.
 
 ### Transitions
 - [ ] Section collapse/expand — smooth animation, no jump
