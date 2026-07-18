@@ -15,6 +15,7 @@ import {
   endModeCoalesce,
 } from "../core/modeOverrides";
 import { ColorPickerEnhanced } from "../controls/ColorPickerEnhanced";
+import { useEscapeClose } from "../hooks/useEscapeClose";
 import { VariableLinkDot } from "../controls/VariableLinkDot";
 import { VariableField } from "../controls/VariableField";
 import { cssColorToHex, hexToRgba } from "../colorUtils";
@@ -44,6 +45,9 @@ export function ModeValueCell({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Same close routine as the picker's own onClose: end the coalesced undo
+  // batch before dismissing.
+  useEscapeClose(pickerOpen, () => { endModeCoalesce(); setPickerOpen(false); });
   const [cellHovered, setCellHovered] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);

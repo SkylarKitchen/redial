@@ -19,6 +19,7 @@ import { VariableField } from "./VariableField";
 import { ms, cssTransition } from "../timing";
 import { color, text, font, layout, primaryAlpha, blackAlpha, checkerboard, zIndex } from "../theme";
 import { labelStyle, rowStyle, actionsOverlayStyle, useResetPopover, usePressScale } from "./helpers";
+import { useEscapeClose } from "../hooks/useEscapeClose";
 import { computeColorPickerPosition } from "./colorPickerPosition";
 
 /** Walk the alias chain for a CSS variable, returning all names in the chain. */
@@ -91,6 +92,7 @@ export function ColorRow({
   showContrast?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  useEscapeClose(pickerOpen, () => setPickerOpen(false));
   const [rowHovered, setRowHovered] = useState(false);
   const swatchRef = useRef<HTMLDivElement>(null);
   const resetPopover = useResetPopover(indicator, onReset, label);

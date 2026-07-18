@@ -171,15 +171,33 @@ Tab navigation, Escape dismissal, focus rings, and ARIA attributes.
 - [ ] Footer buttons: all reachable via Tab
 
 ### Escape Key
-- [ ] SelectRow dropdown → Escape → closes
-- [ ] ColorPicker → Escape → closes
-- [ ] UnitSelector dropdown → Escape → closes
-- [ ] Clipboard dropdown (Footer) → Escape → closes
-- [ ] TransitionOptionsMenu → Escape → closes
+- [x] SelectRow dropdown → Escape → closes
+- [x] ColorPicker → Escape → closes
+- [x] UnitSelector dropdown → Escape → closes
+- [x] Clipboard dropdown (Footer) → Escape → closes
+- [x] TransitionOptionsMenu → Escape → closes
 
 ### Focus Management
-- [ ] Focus rings visible on all interactive elements (tuner-focusable class)
-- [ ] After dropdown closes, focus returns to trigger element
+- [x] Focus rings visible on all interactive elements (tuner-focusable class)
+- [x] After dropdown closes, focus returns to trigger element
+
+**Verified 2026-07-18** (QA loop iteration 3). Coverage split: UnitSelector +
+searchable SelectRow Escape were already covered by
+`dropdownAccessibility.test.tsx`, SwatchColorPicker by
+`swatchColorPickerPortal.test.tsx`, Footer clipboard (Escape + focus return)
+by `footerClipboardA11y.test.tsx`; the gaps — plain SelectRow Escape,
+ColorRow/ModeValueCell picker Escape, TransitionOptionsMenu Escape + focus
+return, and the `.tuner-focusable:focus-visible` ring contract — are locked in
+by `src/overlay/__tests__/keyboardEscapeFocus.test.tsx` (5 tests).
+**Bug found and fixed**: pickers opened from ColorRow and ModeValueCell had
+no Escape handling at all (only outside-click closed them; only
+SwatchColorPicker listened for Escape). Fix: shared
+`hooks/useEscapeClose.ts` (document-level capture keydown, mirroring
+SwatchColorPicker's semantics), wired into both. Notes: plain
+SelectRow/UnitSelector handle Escape via `useDropdownKeyboard` on the
+*trigger* (focus never leaves it, so focus-return is inherent);
+TransitionOptionsMenu restores focus via `useFocusTrap`; the focus ring is
+`:focus-visible`-gated so mouse clicks don't show it.
 
 ### ARIA
 - [ ] SegmentedControl: role="radiogroup", children role="radio", aria-checked
