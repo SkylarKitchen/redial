@@ -77,7 +77,6 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
       onDoubleClick={selectAllOnDoubleClick}
       className="tuner-focusable"
       style={{
-        ...flashStyle,
         width: 0,
         minWidth: 40,
         flex: 1,
@@ -93,6 +92,9 @@ export function ValueInput({ value, onChange, onAltClick, emptyKeyword, onKeywor
           backgroundColor: color.input,
           border: `1px solid ${color.border}`,
         }),
+        // Last so the active flash's backgroundColor wins over the resting
+        // background above (spread order is the cascade here).
+        ...flashStyle,
       }}
     />
   );
